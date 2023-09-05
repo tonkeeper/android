@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="HeaderView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:action" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="WalletActionView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:icon" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="BottomTabsView">
+        <attr name="menu"/>
+    </declare-styleable>
+</resources>

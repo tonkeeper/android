@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name" translatable="false">Tonkeeper</string>
+    <string name="ton" translatable="false">TON</string>
+    <string name="wallet">Wallet</string>
+    <string name="send">Send</string>
+    <string name="receive">Receive</string>
+    <string name="buy_ton">Buy TON</string>
+    <string name="swap">Swap</string>
+    <string name="tokens">Tokens</string>
+    <string name="collectibles">Collectibles</string>
+    <string name="activity">Activity</string>
+    <string name="browser">Browser</string>
+    <string name="settings">Settings</string>
+    <string name="staking">Staking</string>
+    <string name="staking_description">Earn up to 5.32% on your TON</string>
+    <string name="wallet_address">Wallet address</string>
+    <string name="ok">OK</string>
+</resources>

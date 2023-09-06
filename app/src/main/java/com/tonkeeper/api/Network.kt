@@ -1,5 +1,6 @@
 package com.tonkeeper.api
 
+import android.net.Uri
 import android.util.Log
 import com.tonkeeper.api.method.AccountMethod
 import com.tonkeeper.api.method.JettonsMethod
@@ -19,6 +20,8 @@ object Network {
     val okHttpClient = OkHttpClient()
 
     fun newRequest(url: String) = Request.Builder().url(url)
+
+    fun newRequest(uri: Uri) = newRequest(uri.toString())
 
     fun newCall(request: Request) = okHttpClient.newCall(request)
 

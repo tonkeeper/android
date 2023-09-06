@@ -11,9 +11,9 @@ import com.tonkeeper.extensions.createCorners
 import com.tonkeeper.extensions.dp
 import com.tonkeeper.ui.list.wallet.item.WalletCellItem
 
-class CellDrawableUi(
+class CellDrawable(
     private val position: WalletCellItem.Position
-): UiBaseDrawable() {
+): BaseDrawable() {
 
     private companion object {
 

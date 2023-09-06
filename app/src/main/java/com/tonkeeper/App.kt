@@ -7,6 +7,7 @@ import androidx.annotation.DimenRes
 import androidx.annotation.Dimension
 import androidx.core.content.ContextCompat
 import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.core.ImagePipelineConfig
 
 class App: Application() {
 
@@ -27,7 +28,13 @@ class App: Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        Fresco.initialize(this)
+        initFresco()
+    }
+
+    private fun initFresco() {
+        val config = ImagePipelineConfig.newBuilder(this)
+            .experiment().setNativeCodeDisabled(true)
+        Fresco.initialize(this, config.build())
     }
 
 }

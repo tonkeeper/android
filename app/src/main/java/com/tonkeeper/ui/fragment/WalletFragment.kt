@@ -83,7 +83,7 @@ class WalletFragment: BaseFragment(R.layout.fragment_wallet) {
         initState(state)
     }
 
-    private fun loadWallet(address: String = "EQB7GLGF3Xng2kMKLInjq7VWkz8qie8pQtZd1Z8EaqyCIYTw") {
+    private fun loadWallet(address: String = "EQD2NmD_lH5f5u1Kj3KfGyTvhZSX0Eg6qp2a5IQUKXxOG21n") {
         emptyState()
 
         lifecycleScope.launch(Dispatchers.IO) {

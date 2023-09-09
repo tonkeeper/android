@@ -2,12 +2,14 @@ package com.tonkeeper.ui.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.TypedArray
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MenuInflater
+import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.view.menu.MenuBuilder
@@ -21,9 +23,11 @@ class BottomTabsView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : LinearLayoutCompat(context, attrs, defStyle) {
 
-    private var selectedIndex = 0
     private val menu: MenuBuilder by lazy { MenuBuilder(context) }
     private val menuInflater: MenuInflater by lazy { MenuInflater(context) }
+    private var selectedIndex = 0
+
+    var doOnClick: ((index: Int, itemId: Int) -> Unit)? = null
 
     init {
         orientation = HORIZONTAL
@@ -53,20 +57,47 @@ class BottomTabsView @JvmOverloads constructor(
     private fun initMenu() {
         for (i in 0 until menu.size()) {
             val item = menu.getItem(i)
-            addMenu(i, item.title!!, item.icon!!)
+            if (item.isChecked) {
+                selectedIndex = i
+            }
+            addMenu(i, item)
+        }
+
+        updateSelected()
+    }
+
+    private fun updateSelected() {
+        val colorAccent = context.getColor(R.color.accent)
+        val colorSecondary = context.getColor(R.color.secondary)
+
+        for (i in 0 until childCount) {
+            val view = getChildAt(i)
+            val iconView = view.findViewById<ImageView>(R.id.iv_tab_icon)
+            val titleView = view.findViewById<TextView>(R.id.tv_tab_title)
+            if (view.tag == selectedIndex) {
+                iconView.imageTintList = ColorStateList.valueOf(colorAccent)
+                titleView.setTextColor(colorAccent)
+            } else {
+                iconView.imageTintList = ColorStateList.valueOf(colorSecondary)
+                titleView.setTextColor(colorSecondary)
+            }
         }
     }
 
-    private fun addMenu(index: Int, title: CharSequence, icon: Drawable) {
+    private fun addMenu(index: Int, menuItem: MenuItem) {
         val view = inflate(context, R.layout.view_bottom_tab, null)
+        view.tag = index
         val iconView = view.findViewById<ImageView>(R.id.iv_tab_icon)
         val titleView = view.findViewById<TextView>(R.id.tv_tab_title)
-        iconView.setImageDrawable(icon)
-        titleView.text = title
+        iconView.setImageDrawable(menuItem.icon!!)
+        titleView.text = menuItem.title!!
 
-        if (selectedIndex == index) {
-            iconView.isSelected = true
-            titleView.setTextColor(context.getColor(R.color.accent))
+        if (menuItem.isCheckable) {
+            view.setOnClickListener {
+                selectedIndex = index
+                doOnClick?.invoke(index, menuItem.itemId)
+                updateSelected()
+            }
         }
 
         addView(view, LayoutParams(0, LayoutParams.MATCH_PARENT, 1f))

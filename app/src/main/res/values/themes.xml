@@ -39,14 +39,20 @@
         <item name="android:orientation">horizontal</item>
     </style>
 
+    <style name="Theme.Tonkeeper.Switch">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/view_bar_height</item>
+        <item name="android:paddingHorizontal">@dimen/offset</item>
+        <item name="android:textAppearance">@style/TextAppearance.Tonkeeper.Title</item>
+    </style>
+
     <style name="TextAppearance.Tonkeeper.Tabs" parent="Widget.Design.TabLayout">
-        <item name="tabGravity">center</item>
+        <!--item name="tabGravity">center</item>
         <item name="tabMode">fixed</item>
         <item name="tabRippleColor">@color/divider</item>
         <item name="tabIndicatorFullWidth">false</item>
-        <item name="tabIndicatorHeight">3dp</item>
         <item name="tabIndicatorAnimationMode">elastic</item>
-        <item name="tabIndicator">@drawable/bg_tab_indicator</item>
+        <item name="tabIndicator">@drawable/bg_tab_indicator</item-->
         <item name="tabTextAppearance">@style/TextAppearance.Tonkeeper.Tab</item>
     </style>
 
@@ -55,4 +61,5 @@
         <item name="textAllCaps">false</item>
         <item name="android:textSize">16sp</item>
     </style>
+
 </resources>

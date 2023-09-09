@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import com.tonkeeper.AppSettings
 import com.tonkeeper.R
 import com.tonkeeper.WalletState
 import com.tonkeeper.api.Network
@@ -29,7 +30,9 @@ import com.tonkeeper.ui.list.pager.PagerHolder
 import com.tonkeeper.ui.list.pager.PagerItem
 import com.tonkeeper.ui.list.wallet.item.WalletGhostItem
 import com.tonkeeper.ui.widget.HeaderView
+import com.tonkeeper.ui.widget.TabLayoutEx
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
@@ -40,8 +43,11 @@ class WalletFragment: BaseFragment(R.layout.fragment_wallet) {
     private lateinit var amountView: AppCompatTextView
     private lateinit var addressView: AppCompatTextView
     private lateinit var tabsContainerView: View
-    private lateinit var tabsView: TabLayout
+    private lateinit var tabsView: TabLayoutEx
     private lateinit var pagerView: ViewPager2
+
+    private var lastWallet: Wallet? = null
+    private var loadWalletJob: Job? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -57,8 +63,15 @@ class WalletFragment: BaseFragment(R.layout.fragment_wallet) {
         tabsContainerView = view.findViewById(R.id.tabs_container)
         tabsView = view.findViewById(R.id.tabs)
         pagerView = view.findViewById(R.id.pager)
+    }
 
-        loadWallet()
+    override fun onResume() {
+        super.onResume()
+        if (lastWallet == null) {
+            loadWallet()
+        } else {
+            buildUIList()
+        }
     }
 
     private fun openWalletDialog() {
@@ -86,46 +99,81 @@ class WalletFragment: BaseFragment(R.layout.fragment_wallet) {
     private fun loadWallet(address: String = "EQD2NmD_lH5f5u1Kj3KfGyTvhZSX0Eg6qp2a5IQUKXxOG21n") {
         emptyState()
 
-        lifecycleScope.launch(Dispatchers.IO) {
+        loadWalletJob?.cancel()
+
+        loadWalletJob = lifecycleScope.launch(Dispatchers.IO) {
             val wallet = Network.getWalletOrNull(address) ?: return@launch
-
-            val tokens = buildTokensList(wallet)
-            val collectibles = buildCollectibles(wallet)
-            val itemsSize = tokens.size + collectibles.size
-            val pages = mutableListOf<PagerItem>()
-
-            if (itemsSize >= 10) {
-                val tokensPage = PagerItem(
-                    title = getString(R.string.tokens),
-                    items = tokens
-                )
-
-                pages.add(tokensPage)
-
-                val collectiblesPage = PagerItem(
-                    title = getString(R.string.collectibles),
-                    items = collectibles
-                )
-                pages.add(collectiblesPage)
-            } else {
-                val fullPage = PagerItem(
-                    title = getString(R.string.tokens),
-                    items = tokens + collectibles
-                )
-
-                pages.add(fullPage)
-            }
-
-            val state = WalletState(
-                address = address,
-                amountUSD = wallet.balanceUSD,
-                pages = pages
-            )
-
             withContext(Dispatchers.Main) {
-                initState(state)
+                lastWallet = wallet
+                buildUIList()
             }
         }
+    }
+
+    private fun buildUIList() {
+        val wallet = lastWallet ?: return
+        val context = context ?: return
+
+        val tokens = buildTokensList(wallet)
+        val collectibles = buildCollectibles(wallet)
+        val itemsSize = tokens.size + collectibles.size
+        val pages = mutableListOf<PagerItem>()
+
+        val langTokens = if (AppSettings.russianLanguage) {
+            R.string.tokens_rus
+        } else {
+            R.string.tokens
+        }
+
+        val langApps = if (AppSettings.russianLanguage) {
+            R.string.apps_rus
+        } else {
+            R.string.apps
+        }
+
+        val langCollectibles = if (AppSettings.russianLanguage) {
+            R.string.collectibles_rus
+        } else {
+            R.string.collectibles
+        }
+
+        if (itemsSize >= 10 && !AppSettings.singleColumn) {
+            val tokensPage = PagerItem(
+                title = context.getString(langTokens),
+                items = tokens
+            )
+
+            pages.add(tokensPage)
+
+            if (AppSettings.appsTabs) {
+                val appsPage = PagerItem(
+                    title = context.getString(langApps),
+                    items = collectibles
+                )
+                pages.add(appsPage)
+            }
+
+            val collectiblesPage = PagerItem(
+                title = context.getString(langCollectibles),
+                items = collectibles
+            )
+            pages.add(collectiblesPage)
+        } else {
+            val fullPage = PagerItem(
+                title = context.getString(langTokens),
+                items = tokens + collectibles
+            )
+
+            pages.add(fullPage)
+        }
+
+        val state = WalletState(
+            address = wallet.address,
+            amountUSD = wallet.balanceUSD,
+            pages = pages
+        )
+
+        initState(state)
     }
 
     private fun buildTokensList(wallet: Wallet): List<WalletItem> {
@@ -186,6 +234,14 @@ class WalletFragment: BaseFragment(R.layout.fragment_wallet) {
             TabLayoutMediator(tabsView, pagerView) { tab, position ->
                 tab.text = state.pages[position].title
             }.attach()
+
+            tabsView.requestLayout()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        loadWalletJob?.cancel()
+        loadWalletJob = null
     }
 }

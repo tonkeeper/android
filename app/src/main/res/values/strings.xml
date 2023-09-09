@@ -6,8 +6,6 @@
     <string name="receive">Receive</string>
     <string name="buy_ton">Buy TON</string>
     <string name="swap">Swap</string>
-    <string name="tokens">Tokens</string>
-    <string name="collectibles">Collectibles</string>
     <string name="activity">Activity</string>
     <string name="browser">Browser</string>
     <string name="settings">Settings</string>
@@ -15,4 +13,17 @@
     <string name="staking_description">Earn up to 5.32% on your TON</string>
     <string name="wallet_address">Wallet address</string>
     <string name="ok">OK</string>
+
+
+    <string name="single_column">Single column</string>
+    <string name="apps_tabs">Enable "Apps" tab</string>
+    <string name="russian_tabs">Русские табы</string>
+
+    <string name="tokens">Tokens</string>
+    <string name="collectibles">Collectibles</string>
+    <string name="apps">Apps</string>
+
+    <string name="tokens_rus">Валюты и токены</string>
+    <string name="collectibles_rus">Коллекции</string>
+    <string name="apps_rus">Приложения</string>
 </resources>

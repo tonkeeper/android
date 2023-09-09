@@ -28,11 +28,9 @@ object Network {
     fun request(request: Request) = newCall(request).execute()
 
     fun getWalletOrNull(address: String): Wallet? {
-        Log.d("NetworkLog", "start")
         return try {
             getWallet(address)
         } catch (e: Exception) {
-            Log.e("NetworkLog", "getWalletOrNull", e)
             null
         }
     }

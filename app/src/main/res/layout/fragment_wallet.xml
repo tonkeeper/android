@@ -46,11 +46,12 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/view_bar_height">
 
-            <com.google.android.material.tabs.TabLayout
+            <com.tonkeeper.ui.widget.TabLayoutEx
                 style="@style/TextAppearance.Tonkeeper.Tabs"
                 android:id="@+id/tabs"
                 android:layout_width="match_parent"
                 android:layout_height="38dp"
+                android:clipToPadding="false"
                 android:layout_gravity="center"/>
 
         </FrameLayout>

@@ -1,29 +1,38 @@
 <resources>
-    <string name="app_name" translatable="false">Tonkeeper</string>
+    <string name="tonconsole_token" translatable="false">AF77F5JND26OLHQAAAAKQMSCYW3UVPFRA7CF2XHX6QG4M5WAMF5QRS24R7J4TF2UTSXOZEY</string>
+    <string name="app_name" translatable="false">Tonkeeper R</string>
     <string name="ton" translatable="false">TON</string>
-    <string name="wallet">Wallet</string>
-    <string name="send">Send</string>
-    <string name="receive">Receive</string>
-    <string name="buy_ton">Buy TON</string>
-    <string name="swap">Swap</string>
-    <string name="activity">Activity</string>
-    <string name="browser">Browser</string>
-    <string name="settings">Settings</string>
-    <string name="staking">Staking</string>
-    <string name="staking_description">Earn up to 5.32% on your TON</string>
-    <string name="wallet_address">Wallet address</string>
-    <string name="ok">OK</string>
 
+    <string name="continue_action">Continue</string>
+    <string name="get_started">Get started</string>
 
-    <string name="single_column">Single column</string>
-    <string name="apps_tabs">Enable "Apps" tab</string>
-    <string name="russian_tabs">Русские табы</string>
+    <string name="intro_title" formatted="true">Welcome to <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_line_1_title">World-class speed</string>
+    <string name="intro_line_1_description">TON is a network designed for speed and throughput. Fees are significantly lower than on other blockchains, and transactions are confirmed in a matter of seconds.</string>
 
-    <string name="tokens">Tokens</string>
-    <string name="collectibles">Collectibles</string>
-    <string name="apps">Apps</string>
+    <string name="intro_line_2_title">End-to-end security</string>
+    <string name="intro_line_2_description">Tonkeeper stores your cryptographic keys on your device without requiring documents, personal information, contact details, or KYC.</string>
 
-    <string name="tokens_rus">Валюты и токены</string>
-    <string name="collectibles_rus">Коллекции</string>
-    <string name="apps_rus">Приложения</string>
+    <string name="intro_line_3_title">Built-in subscriptions</string>
+    <string name="intro_line_3_description">TON subscriptions are peer-to-peer and borderless so that no one can restrict providers or customers. Near-zero fees and full control for you.</string>
+
+    <string name="start_title">Tonkeeper</string>
+    <string name="start_description">Create a new wallet or add an existing one</string>
+    <string name="start_create_new_wallet">Create new wallet</string>
+    <string name="start_import_wallet">Import existing wallet</string>
+    <string name="passcode_enter">Enter passcode</string>
+    <string name="passcode_create">Create passcode</string>
+    <string name="passcode_re_enter">Re-enter passcode</string>
+
+    <string name="import_wallet_title">Enter your recovery phrase</string>
+    <string name="import_wallet_description">To restore access to your wallet, enter the 24 secret recovery words given to you when you created your wallet.</string>
+
+    <string name="start_dialog_title">Let’s set up your wallet</string>
+    <string name="start_dialog_description">You need a connected wallet to use Tonkeeper. Either create a new wallet or import an existing one.</string>
+
+    <string name="wallet_generating">Generating wallet…</string>
+    <string name="wallet_created">Your wallet has just been created!</string>
+
+    <string name="wallet_attention_title">Grab a pen and a piece of paper</string>
+    <string name="wallet_attention_description">We strongly recommend you write down the recovery phrase because it’s the only way to have access to and recover your wallet should you lose your device. Do not send it to yourself via email or take a screenshot. It’s safer when kept offline.</string>
 </resources>

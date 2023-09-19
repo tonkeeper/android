@@ -1,40 +1,29 @@
 package com.tonkeeper
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import com.tonkeeper.ui.fragment.SettingsFragment
-import com.tonkeeper.ui.fragment.WalletFragment
-import com.tonkeeper.ui.widget.BottomTabsView
+import com.tonkeeper.uikit.base.BaseActivity
+import com.tonkeeper.uikit.base.BaseFragment
+import com.tonkeeper.fragment.intro.IntroFragment
+import com.tonkeeper.fragment.Navigation
 
-class MainActivity : AppCompatActivity() {
+class MainActivity: BaseActivity(), Navigation {
 
-    private val walletFragment = WalletFragment()
-    private val settingsFragment = SettingsFragment()
+    companion object {
+        private val hostFragmentId = R.id.nav_host_fragment
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val bottomTabs = findViewById<BottomTabsView>(R.id.bottom_tabs)
-        bottomTabs.doOnClick = { _, itemId ->
-            when (itemId) {
-                R.id.wallet -> {
-                    setFragment(walletFragment)
-                }
-                R.id.settings -> {
-                    setFragment(settingsFragment)
-                }
-            }
+        if (savedInstanceState == null) {
+            replace(IntroFragment.newInstance())
         }
-
-        setFragment(walletFragment)
     }
 
-    private fun setFragment(fragment: Fragment) {
-        val tr = supportFragmentManager.beginTransaction()
-        tr.replace(R.id.fragment_container_view, fragment)
-        tr.commit()
+    override fun replace(fragment: BaseFragment) {
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.replace(hostFragmentId, fragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
     }
-
 }

@@ -13,5 +13,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Tonkeeper"
+rootProject.name = "Tonkeeper R"
 include(":app")
+include(":uikit")
+include(":core-ton")

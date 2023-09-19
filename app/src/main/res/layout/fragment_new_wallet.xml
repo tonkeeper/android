@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:layout_weight="1">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/start_cover_background"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="224dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/gradient_background"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="144dp"
+            android:layout_height="144dp"
+            android:layout_gravity="bottom|center"
+            android:src="@drawable/ic_logo_48"/>
+
+    </FrameLayout>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:paddingHorizontal="@dimen/offsetLarge"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/start_title"
+            android:textColor="@color/textPrimary"
+            android:textAppearance="@style/TextAppearance.H2"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:gravity="center"
+            android:text="@string/start_description"
+            android:textColor="@color/textSecondary"
+            android:textAppearance="@style/TextAppearance.Body1"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetLarge"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatButton
+            style="@style/Widget.App.Button"
+            android:id="@+id/create_new_wallet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/start_create_new_wallet"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/import_wallet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:text="@string/start_import_wallet"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="cornerExtraExtraSmall">4dp</dimen>
+    <dimen name="cornerExtraSmall">8dp</dimen>
+    <dimen name="cornerSmall">12dp</dimen>
+    <dimen name="cornerMedium">16dp</dimen>
+    <dimen name="cornerLarge">20dp</dimen>
+
+    <dimen name="offsetExtraExtraSmall">2dp</dimen>
+    <dimen name="offsetExtraSmall">4dp</dimen>
+    <dimen name="offsetMedium">16dp</dimen>
+    <dimen name="offsetLarge">32dp</dimen>
+</resources>

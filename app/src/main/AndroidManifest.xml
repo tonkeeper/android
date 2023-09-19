@@ -11,10 +11,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Tonkeeper"
-        android:name=".App"
+        android:theme="@style/Theme.Splash"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
+        android:name=".App"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"

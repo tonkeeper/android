@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.tonkeeper"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.tonkeeper"
-        minSdk = 26
-        targetSdk = 33
+        minSdk = 28
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.activity:activity-ktx:1.7.2")
     implementation("androidx.fragment:fragment-ktx:1.6.1")
@@ -45,4 +45,11 @@ dependencies {
     implementation("com.google.android.material:material:1.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.facebook.fresco:fresco:3.0.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("com.airbnb.android:lottie:6.1.0")
+    implementation(project(":uikit"))
+
+    implementation(project(":core-ton"))
 }

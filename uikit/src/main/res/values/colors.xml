@@ -23,6 +23,7 @@
 
     <color name="buttonPrimaryBackground">#0077FF</color>
     <color name="buttonPrimaryForeground">#FFFFFF</color>
+    <color name="buttonPrimaryForegroundDisabled">#7AFFFFFF</color>
     <color name="buttonSecondaryBackground">#E6E6EB</color>
     <color name="buttonSecondaryForeground">#000000</color>
     <color name="buttonTertiaryBackground">#FFFFFF</color>

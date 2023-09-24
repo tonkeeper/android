@@ -1,3 +1,5 @@
+int attr menu 0x0
+int bool use_light_system_bars 0x0
 int color accentBlue 0x0
 int color accentGreen 0x0
 int color accentOrange 0x0
@@ -16,6 +18,7 @@ int color buttonPrimaryBackground 0x0
 int color buttonPrimaryBackgroundDisabled 0x0
 int color buttonPrimaryBackgroundHighlighted 0x0
 int color buttonPrimaryForeground 0x0
+int color buttonPrimaryForegroundDisabled 0x0
 int color buttonSecondaryBackground 0x0
 int color buttonSecondaryBackgroundDisabled 0x0
 int color buttonSecondaryBackgroundHighlighted 0x0
@@ -24,6 +27,8 @@ int color buttonTertiaryBackground 0x0
 int color buttonTertiaryBackgroundDisabled 0x0
 int color buttonTertiaryBackgroundHighlighted 0x0
 int color buttonTertiaryForeground 0x0
+int color button_primary_background_selector 0x0
+int color button_primary_foreground_selector 0x0
 int color constantBlack 0x0
 int color constantBlue 0x0
 int color constantRed 0x0
@@ -45,6 +50,7 @@ int color textPrimary 0x0
 int color textPrimaryAlternate 0x0
 int color textSecondary 0x0
 int color textTertiary 0x0
+int dimen barHeight 0x0
 int dimen cornerExtraExtraSmall 0x0
 int dimen cornerExtraSmall 0x0
 int dimen cornerLarge 0x0
@@ -54,30 +60,42 @@ int dimen offsetExtraExtraSmall 0x0
 int dimen offsetExtraSmall 0x0
 int dimen offsetLarge 0x0
 int dimen offsetMedium 0x0
-int drawable button_primary_background 0x0
-int drawable button_secondary_background 0x0
-int drawable button_secondary_oval_background 0x0
+int drawable bg_button_primary 0x0
+int drawable bg_button_secondary 0x0
+int drawable bg_gradient 0x0
+int drawable bg_modal 0x0
+int drawable bg_oval_button_secondary 0x0
+int drawable bg_oval_button_tertiary 0x0
+int drawable bg_page_gradient 0x0
+int drawable bg_splash 0x0
 int drawable cursor 0x0
-int drawable gradient_background 0x0
+int drawable ic_chevron_left_16 0x0
 int drawable ic_close_16 0x0
 int drawable ic_logo_128 0x0
-int drawable modal_background 0x0
-int drawable splash_background 0x0
 int font montserrat 0x0
 int font montserrat_bold 0x0
 int font montserrat_light 0x0
 int font montserrat_medium 0x0
 int font montserrat_regular 0x0
 int font montserrat_semi_bold 0x0
+int id action 0x0
+int id back 0x0
 int id close 0x0
 int id content 0x0
 int id description 0x0
+int id header 0x0
 int id icon 0x0
 int id index 0x0
 int id input 0x0
 int id title 0x0
 int layout dialog_base 0x0
+int layout fragment_with_back 0x0
+int layout view_back_header 0x0
+int layout view_bottom_tab 0x0
+int layout view_header 0x0
+int layout view_icon_button 0x0
 int layout view_intro_block 0x0
+int layout view_text_header 0x0
 int layout view_word_input 0x0
 int layout view_word_suggestion 0x0
 int style Base_Widget_App_Button 0x0
@@ -94,12 +112,25 @@ int style TextAppearance_Label3 0x0
 int style TextAppearance_NUM1 0x0
 int style TextAppearance_NUM2 0x0
 int style Theme_App 0x0
-int style Theme_Splash 0x0
+int style Theme_App_Base 0x0
 int style Widget_App_Button 0x0
 int style Widget_App_Button_Secondary 0x0
 int style Widget_BottomSheet 0x0
 int style Widget_BottomSheet_Modal 0x0
+int[] styleable BackHeaderView { 0x10101e1 }
+int styleable BackHeaderView_android_title 0
+int[] styleable BottomTabsView { 0x0 }
+int styleable BottomTabsView_menu 0
+int[] styleable HeaderView { 0x101002d, 0x10101e1 }
+int styleable HeaderView_android_action 0
+int styleable HeaderView_android_title 1
+int[] styleable IconButtonView { 0x1010002, 0x10101e1 }
+int styleable IconButtonView_android_icon 0
+int styleable IconButtonView_android_title 1
 int[] styleable IntroBlockView { 0x1010020, 0x1010002, 0x10101e1 }
 int styleable IntroBlockView_android_description 0
 int styleable IntroBlockView_android_icon 1
 int styleable IntroBlockView_android_title 2
+int[] styleable TextHeaderView { 0x1010020, 0x10101e1 }
+int styleable TextHeaderView_android_description 0
+int styleable TextHeaderView_android_title 1

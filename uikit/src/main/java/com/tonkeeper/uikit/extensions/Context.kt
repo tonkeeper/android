@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.res.TypedArray
 import android.text.SpannableString
+import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +15,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
+import androidx.annotation.StyleableRes
 
 fun Context.inflate(
     @LayoutRes layoutId: Int,
@@ -56,3 +59,22 @@ val Context.activity: Activity?
 
 val Context.window: Window?
     get() = activity?.window
+
+fun Context.useAttributes(
+    set: AttributeSet?,
+    @StyleableRes attrs: IntArray,
+    block: (TypedArray) -> Unit) {
+    theme.obtainStyledAttributes(set, attrs, 0, 0).apply {
+        try {
+            block(this)
+        } finally {
+            recycle()
+        }
+    }
+}
+
+val Context.statusBarHeight: Int
+    get() {
+        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return resourceId.takeIf { it > 0 }?.let { resources.getDimensionPixelSize(it) } ?: 0
+    }

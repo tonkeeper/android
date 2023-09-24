@@ -1,4 +1,6 @@
 com.tonkeeper.uikit
+attr menu
+bool use_light_system_bars
 color accentBlue
 color accentGreen
 color accentOrange
@@ -17,6 +19,7 @@ color buttonPrimaryBackground
 color buttonPrimaryBackgroundDisabled
 color buttonPrimaryBackgroundHighlighted
 color buttonPrimaryForeground
+color buttonPrimaryForegroundDisabled
 color buttonSecondaryBackground
 color buttonSecondaryBackgroundDisabled
 color buttonSecondaryBackgroundHighlighted
@@ -25,6 +28,8 @@ color buttonTertiaryBackground
 color buttonTertiaryBackgroundDisabled
 color buttonTertiaryBackgroundHighlighted
 color buttonTertiaryForeground
+color button_primary_background_selector
+color button_primary_foreground_selector
 color constantBlack
 color constantBlue
 color constantRed
@@ -46,6 +51,7 @@ color textPrimary
 color textPrimaryAlternate
 color textSecondary
 color textTertiary
+dimen barHeight
 dimen cornerExtraExtraSmall
 dimen cornerExtraSmall
 dimen cornerLarge
@@ -55,30 +61,42 @@ dimen offsetExtraExtraSmall
 dimen offsetExtraSmall
 dimen offsetLarge
 dimen offsetMedium
-drawable button_primary_background
-drawable button_secondary_background
-drawable button_secondary_oval_background
+drawable bg_button_primary
+drawable bg_button_secondary
+drawable bg_gradient
+drawable bg_modal
+drawable bg_oval_button_secondary
+drawable bg_oval_button_tertiary
+drawable bg_page_gradient
+drawable bg_splash
 drawable cursor
-drawable gradient_background
+drawable ic_chevron_left_16
 drawable ic_close_16
 drawable ic_logo_128
-drawable modal_background
-drawable splash_background
 font montserrat
 font montserrat_bold
 font montserrat_light
 font montserrat_medium
 font montserrat_regular
 font montserrat_semi_bold
+id action
+id back
 id close
 id content
 id description
+id header
 id icon
 id index
 id input
 id title
 layout dialog_base
+layout fragment_with_back
+layout view_back_header
+layout view_bottom_tab
+layout view_header
+layout view_icon_button
 layout view_intro_block
+layout view_text_header
 layout view_word_input
 layout view_word_suggestion
 style Base_Widget_App_Button
@@ -95,9 +113,14 @@ style TextAppearance_Label3
 style TextAppearance_NUM1
 style TextAppearance_NUM2
 style Theme_App
-style Theme_Splash
+style Theme_App_Base
 style Widget_App_Button
 style Widget_App_Button_Secondary
 style Widget_BottomSheet
 style Widget_BottomSheet_Modal
+styleable BackHeaderView android_title
+styleable BottomTabsView menu
+styleable HeaderView android_action android_title
+styleable IconButtonView android_icon android_title
 styleable IntroBlockView android_description android_icon android_title
+styleable TextHeaderView android_description android_title

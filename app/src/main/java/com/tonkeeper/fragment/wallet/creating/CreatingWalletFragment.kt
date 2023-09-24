@@ -4,9 +4,10 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
+import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.fragment.wallet.creating.list.PagerAdapter
-import com.tonkeeper.uikit.base.BaseFragment
+import com.tonkeeper.uikit.base.fragment.BaseFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -30,9 +31,9 @@ class CreatingWalletFragment: BaseFragment(R.layout.fragment_creating_wallet) {
 
     private fun createWallet() {
         lifecycleScope.launch(Dispatchers.Main) {
-            delay(2000)
+            App.walletManager.createWallet()
             walletCreated()
-            delay(3000)
+            delay(2000)
             walletAttention()
         }
     }

@@ -1,8 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <declare-styleable name="HeaderView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:action" format="reference"/>
+    </declare-styleable>
+
     <declare-styleable name="IntroBlockView">
         <attr name="android:icon" format="reference"/>
         <attr name="android:title" format="string|reference"/>
         <attr name="android:description" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="TextHeaderView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:description" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="BackHeaderView">
+        <attr name="android:title" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="BottomTabsView">
+        <attr name="menu" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="IconButtonView">
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:title" format="string|reference"/>
     </declare-styleable>
 </resources>

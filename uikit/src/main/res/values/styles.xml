@@ -6,7 +6,7 @@
     </style>
 
     <style name="Widget.BottomSheet.Modal" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/modal_background</item>
+        <item name="android:background">@drawable/bg_modal</item>
         <item name="android:maxWidth">640dp</item>
     </style>
 
@@ -18,12 +18,12 @@
     </style>
 
     <style name="Widget.App.Button" parent="Base.Widget.App.Button">
-        <item name="android:background">@drawable/button_primary_background</item>
-        <item name="android:textColor">@color/buttonPrimaryForeground</item>
+        <item name="android:background">@drawable/bg_button_primary</item>
+        <item name="android:textColor">@color/button_primary_foreground_selector</item>
     </style>
 
     <style name="Widget.App.Button.Secondary" parent="Base.Widget.App.Button">
-        <item name="android:background">@drawable/button_secondary_background</item>
+        <item name="android:background">@drawable/bg_button_secondary</item>
         <item name="android:textColor">@color/buttonSecondaryForeground</item>
     </style>
 </resources>

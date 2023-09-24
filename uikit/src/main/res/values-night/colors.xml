@@ -23,6 +23,7 @@
 
     <color name="buttonPrimaryBackground">#45AEF5</color>
     <color name="buttonPrimaryForeground">#FFFFFF</color>
+    <color name="buttonPrimaryForegroundDisabled">#7AFFFFFF</color>
     <color name="buttonSecondaryBackground">#1D2633</color>
     <color name="buttonSecondaryForeground">#FFFFFF</color>
     <color name="buttonTertiaryBackground">#2E3847</color>
@@ -37,7 +38,7 @@
     <color name="fieldBackground">#1D2633</color>
     <color name="fieldActiveBorder">#45AEF5</color>
     <color name="fieldErrorBorder">#FF4766</color>
-    <color name="fieldErrorBackground">#14FF4766</color>
+    <color name="fieldErrorBackground">#241A25</color>
 
     <color name="accentBlue">#45AEF5</color>
     <color name="accentGreen">#39CC83</color>

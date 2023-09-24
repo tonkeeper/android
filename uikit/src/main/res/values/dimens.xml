@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="barHeight">64dp</dimen>
+
     <dimen name="cornerExtraExtraSmall">4dp</dimen>
     <dimen name="cornerExtraSmall">8dp</dimen>
     <dimen name="cornerSmall">12dp</dimen>

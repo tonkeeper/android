@@ -15,6 +15,10 @@ android {
         versionName = "1.0"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -50,6 +54,5 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("com.airbnb.android:lottie:6.1.0")
     implementation(project(":uikit"))
-
-    implementation(project(":core-ton"))
+    implementation(project(":ton"))
 }

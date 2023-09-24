@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="224dp"
             android:layout_gravity="bottom"
-            android:background="@drawable/gradient_background"/>
+            android:background="@drawable/bg_gradient"/>
 
         <androidx.appcompat.widget.AppCompatImageView
             android:layout_width="144dp"

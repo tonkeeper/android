@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import com.tonkeeper.uikit.ArgbEvaluator
 import com.tonkeeper.uikit.R
 import com.tonkeeper.uikit.base.BaseDrawable
 import com.tonkeeper.uikit.extensions.dp
@@ -15,12 +16,6 @@ import com.tonkeeper.uikit.extensions.getDimension
 class InputDrawable(
     context: Context
 ): BaseDrawable() {
-
-    enum class State {
-        ACTIVE,
-        ERROR,
-        NORMAL
-    }
 
     private val animator = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = 160
@@ -44,9 +39,17 @@ class InputDrawable(
         style = Paint.Style.STROKE
     }
 
-    var state: State = State.NORMAL
+    var error: Boolean = false
         set(value) {
-            if (field != value) {
+            if (value != field) {
+                field = value
+                updateState()
+            }
+        }
+
+    var active: Boolean = false
+        set(value) {
+            if (value != field) {
                 field = value
                 updateState()
             }
@@ -91,19 +94,15 @@ class InputDrawable(
 
         val newBackgroundColor: Int
         val newBorderColor: Int
-        when (state) {
-            State.ACTIVE -> {
-                newBackgroundColor = backgroundColor
-                newBorderColor = borderColor
-            }
-            State.ERROR -> {
-                newBackgroundColor = errorBackgroundColor
-                newBorderColor = errorBorderColor
-            }
-            else -> {
-                newBackgroundColor = backgroundColor
-                newBorderColor = Color.TRANSPARENT
-            }
+        if (error) {
+            newBackgroundColor = errorBackgroundColor
+            newBorderColor = errorBorderColor
+        } else if (active) {
+            newBackgroundColor = backgroundColor
+            newBorderColor = borderColor
+        } else {
+            newBackgroundColor = backgroundColor
+            newBorderColor = Color.TRANSPARENT
         }
 
         backgroundPaint.color = newBackgroundColor

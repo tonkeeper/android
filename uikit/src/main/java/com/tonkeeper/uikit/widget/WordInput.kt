@@ -30,6 +30,7 @@ class WordInput @JvmOverloads constructor(
 
     var doOnNext: (() -> Unit)? = null
     var doOnPrev: (() -> Unit)? = null
+    var doOnFocus: ((focus: Boolean) -> Unit)? = null
     var doOnTextChanged: ((String) -> Unit)? = null
 
     var text: String
@@ -87,7 +88,8 @@ class WordInput @JvmOverloads constructor(
     }
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {
-        inputDrawable.state = if (hasFocus) InputDrawable.State.ACTIVE else InputDrawable.State.NORMAL
+        doOnFocus?.invoke(hasFocus)
+        inputDrawable.active = hasFocus
     }
 
     override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
@@ -114,6 +116,10 @@ class WordInput @JvmOverloads constructor(
 
     override fun isFocused(): Boolean {
         return inputEditText.isFocused
+    }
+
+    fun setError(error: Boolean) {
+        inputDrawable.error = error
     }
 
 

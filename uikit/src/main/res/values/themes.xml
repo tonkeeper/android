@@ -1,27 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.Splash" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@drawable/splash_background</item>
-        <item name="android:statusBarColor">@color/backgroundPage</item>
+    <style name="Theme.App.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_splash</item>
         <item name="android:colorBackground">@color/backgroundPage</item>
+        <item name="android:windowLightStatusBar">@bool/use_light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/use_light_system_bars</item>
+        <!--item name="android:statusBarColor">@color/backgroundPage</item-->
         <item name="android:navigationBarColor">@color/backgroundPage</item>
         <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:isLightTheme" tools:targetApi="q">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
-    <style name="Theme.App" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:statusBarColor">@color/backgroundPage</item>
-        <item name="android:colorBackground">@color/backgroundPage</item>
-        <item name="android:navigationBarColor">@color/backgroundPage</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:isLightTheme" tools:targetApi="q">true</item>
+    <style name="Theme.App" parent="Theme.App.Base">
         <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
     </style>
 </resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/close"
+        android:scaleType="centerInside"
+        android:layout_width="@dimen/barHeight"
+        android:layout_height="@dimen/barHeight"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.H3"
+        android:textColor="@color/textPrimary"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/action"
+        android:scaleType="centerInside"
+        android:layout_width="@dimen/barHeight"
+        android:layout_height="@dimen/barHeight"/>
+
+</merge>

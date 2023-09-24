@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="http://schemas.android.com/tools">
+    <color name="accentBlue">#45AEF5</color>
+    <color name="accentGreen">#39CC83</color>
+    <color name="accentOrange">#F5A73B</color>
+    <color name="accentPurple">#7665E5</color>
+    <color name="accentRed">#FF4766</color>
+    <color name="backgroundContent">#1D2633</color>
+    <color name="backgroundContentAttention">#424C5C</color>
+    <color name="backgroundContentTint">#2E3847</color>
+    <color name="backgroundHighlighted">#14C2DAFF</color>
+    <color name="backgroundOverlayExtraLight">#3D000000</color>
+    <color name="backgroundOverlayLight">#7A000000</color>
+    <color name="backgroundOverlayStrong">#B8000000</color>
+    <color name="backgroundPage">#10161F</color>
+    <color name="backgroundTransparent">#F510161F</color>
+    <color name="buttonPrimaryBackground">#45AEF5</color>
+    <color name="buttonPrimaryBackgroundDisabled">#378AC2</color>
+    <color name="buttonPrimaryBackgroundHighlighted">#5BB8F6</color>
+    <color name="buttonPrimaryForeground">#FFFFFF</color>
+    <color name="buttonSecondaryBackground">#1D2633</color>
+    <color name="buttonSecondaryBackgroundDisabled">#171F29</color>
+    <color name="buttonSecondaryBackgroundHighlighted">#222C3B</color>
+    <color name="buttonSecondaryForeground">#FFFFFF</color>
+    <color name="buttonTertiaryBackground">#2E3847</color>
+    <color name="buttonTertiaryBackgroundDisabled">#28303D</color>
+    <color name="buttonTertiaryBackgroundHighlighted">#364052</color>
+    <color name="buttonTertiaryForeground">#FFFFFF</color>
+    <color name="fieldActiveBorder">#45AEF5</color>
+    <color name="fieldBackground">#1D2633</color>
+    <color name="fieldErrorBackground">#14FF4766</color>
+    <color name="fieldErrorBorder">#FF4766</color>
+    <color name="iconPrimary">#FFFFFF</color>
+    <color name="iconPrimaryAlternate">#10161F</color>
+    <color name="iconSecondary">#8994A3</color>
+    <color name="iconTertiary">#556170</color>
+    <color name="separatorAlternate">#14FFFFFF</color>
+    <color name="separatorCommon">#14C2DAFF</color>
+    <color name="tabBarActiveIcon">#45AEF5</color>
+    <color name="tabBarInactiveIcon">#8994A3</color>
+    <color name="textAccent">#45AEF5</color>
+    <color name="textPrimary">#FFFFFF</color>
+    <color name="textPrimaryAlternate">#10161F</color>
+    <color name="textSecondary">#8994A3</color>
+    <color name="textTertiary">#556170</color>
+    <style name="Theme.App" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/backgroundPage</item>
+        <item name="android:colorBackground">@color/backgroundPage</item>
+        <item name="android:navigationBarColor">@color/backgroundPage</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:isLightTheme" ns1:targetApi="q">false</item>
+        <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
+    </style>
+    <style name="Theme.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">@color/backgroundPage</item>
+        <item name="android:colorBackground">@color/backgroundPage</item>
+        <item name="android:navigationBarColor">@color/backgroundPage</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:isLightTheme" ns1:targetApi="q">false</item>
+    </style>
+</resources>

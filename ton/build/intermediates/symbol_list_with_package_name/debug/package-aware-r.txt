@@ -1,0 +1,2 @@
+com.tonkeeper.ton
+string tonconsole_token

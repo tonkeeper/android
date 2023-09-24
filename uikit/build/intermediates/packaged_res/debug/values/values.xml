@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:ns1="http://schemas.android.com/tools">
+<resources>
+    <bool name="use_light_system_bars">true</bool>
     <color name="accentBlue">#0077FF</color>
     <color name="accentGreen">#34C751</color>
     <color name="accentOrange">#FF9500</color>
@@ -18,6 +19,7 @@
     <color name="buttonPrimaryBackgroundDisabled">#FFFFFF</color>
     <color name="buttonPrimaryBackgroundHighlighted">#FFFFFF</color>
     <color name="buttonPrimaryForeground">#FFFFFF</color>
+    <color name="buttonPrimaryForegroundDisabled">#7AFFFFFF</color>
     <color name="buttonSecondaryBackground">#E6E6EB</color>
     <color name="buttonSecondaryBackgroundDisabled">#FFFFFF</color>
     <color name="buttonSecondaryBackgroundHighlighted">#FFFFFF</color>
@@ -47,6 +49,7 @@
     <color name="textPrimaryAlternate">#000000</color>
     <color name="textSecondary">#7E868F</color>
     <color name="textTertiary">#A0A6AD</color>
+    <dimen name="barHeight">64dp</dimen>
     <dimen name="cornerExtraExtraSmall">4dp</dimen>
     <dimen name="cornerExtraSmall">8dp</dimen>
     <dimen name="cornerLarge">20dp</dimen>
@@ -113,45 +116,54 @@
         <item name="android:textSize">28sp</item>
         <item name="android:fontFamily">@font/montserrat_semi_bold</item>
     </style>
-    <style name="Theme.App" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:statusBarColor">@color/backgroundPage</item>
-        <item name="android:colorBackground">@color/backgroundPage</item>
-        <item name="android:navigationBarColor">@color/backgroundPage</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:isLightTheme" ns1:targetApi="q">true</item>
+    <style name="Theme.App" parent="Theme.App.Base">
         <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
     </style>
-    <style name="Theme.Splash" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@drawable/splash_background</item>
-        <item name="android:statusBarColor">@color/backgroundPage</item>
+    <style name="Theme.App.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_splash</item>
         <item name="android:colorBackground">@color/backgroundPage</item>
+        <item name="android:windowLightStatusBar">@bool/use_light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/use_light_system_bars</item>
+        
         <item name="android:navigationBarColor">@color/backgroundPage</item>
         <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:isLightTheme" ns1:targetApi="q">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
     <style name="Widget.App.Button" parent="Base.Widget.App.Button">
-        <item name="android:background">@drawable/button_primary_background</item>
-        <item name="android:textColor">@color/buttonPrimaryForeground</item>
+        <item name="android:background">@drawable/bg_button_primary</item>
+        <item name="android:textColor">@color/button_primary_foreground_selector</item>
     </style>
     <style name="Widget.App.Button.Secondary" parent="Base.Widget.App.Button">
-        <item name="android:background">@drawable/button_secondary_background</item>
+        <item name="android:background">@drawable/bg_button_secondary</item>
         <item name="android:textColor">@color/buttonSecondaryForeground</item>
     </style>
     <style name="Widget.BottomSheet" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Widget.BottomSheet.Modal</item>
     </style>
     <style name="Widget.BottomSheet.Modal" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/modal_background</item>
+        <item name="android:background">@drawable/bg_modal</item>
         <item name="android:maxWidth">640dp</item>
     </style>
+    <declare-styleable name="BackHeaderView">
+        <attr format="string|reference" name="android:title"/>
+    </declare-styleable>
+    <declare-styleable name="BottomTabsView">
+        <attr format="reference" name="menu"/>
+    </declare-styleable>
+    <declare-styleable name="HeaderView">
+        <attr format="string|reference" name="android:title"/>
+        <attr format="reference" name="android:action"/>
+    </declare-styleable>
+    <declare-styleable name="IconButtonView">
+        <attr format="reference" name="android:icon"/>
+        <attr format="string|reference" name="android:title"/>
+    </declare-styleable>
     <declare-styleable name="IntroBlockView">
         <attr format="reference" name="android:icon"/>
+        <attr format="string|reference" name="android:title"/>
+        <attr format="string|reference" name="android:description"/>
+    </declare-styleable>
+    <declare-styleable name="TextHeaderView">
         <attr format="string|reference" name="android:title"/>
         <attr format="string|reference" name="android:description"/>
     </declare-styleable>

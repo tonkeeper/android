@@ -1,7 +1,9 @@
 package com.tonkeeper.uikit.base
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import com.tonkeeper.uikit.R
 
 open class BaseActivity: AppCompatActivity() {

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.tonkeeper.uikit.widget.TextHeaderView
+        android:id="@+id/text_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:title="@string/phrase_check_title"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.tonkeeper.uikit.widget.WordInput
+                android:id="@+id/word_input_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge"/>
+
+            <com.tonkeeper.uikit.widget.WordInput
+                android:id="@+id/word_input_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"/>
+
+            <com.tonkeeper.uikit.widget.WordInput
+                android:id="@+id/word_input_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </ScrollView>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/next"
+        android:text="@string/continue_action"
+        android:enabled="false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:layout_marginBottom="@dimen/offsetLarge"
+        android:textAppearance="@style/TextAppearance.Label1"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:ns1="http://schemas.android.com/tools">
+<resources>
+    <bool name="use_light_system_bars">false</bool>
     <color name="accentBlue">#45AEF5</color>
     <color name="accentGreen">#39CC83</color>
     <color name="accentOrange">#F5A73B</color>
@@ -18,6 +19,7 @@
     <color name="buttonPrimaryBackgroundDisabled">#378AC2</color>
     <color name="buttonPrimaryBackgroundHighlighted">#5BB8F6</color>
     <color name="buttonPrimaryForeground">#FFFFFF</color>
+    <color name="buttonPrimaryForegroundDisabled">#7AFFFFFF</color>
     <color name="buttonSecondaryBackground">#1D2633</color>
     <color name="buttonSecondaryBackgroundDisabled">#171F29</color>
     <color name="buttonSecondaryBackgroundHighlighted">#222C3B</color>
@@ -28,7 +30,7 @@
     <color name="buttonTertiaryForeground">#FFFFFF</color>
     <color name="fieldActiveBorder">#45AEF5</color>
     <color name="fieldBackground">#1D2633</color>
-    <color name="fieldErrorBackground">#14FF4766</color>
+    <color name="fieldErrorBackground">#241A25</color>
     <color name="fieldErrorBorder">#FF4766</color>
     <color name="iconPrimary">#FFFFFF</color>
     <color name="iconPrimaryAlternate">#10161F</color>
@@ -43,26 +45,4 @@
     <color name="textPrimaryAlternate">#10161F</color>
     <color name="textSecondary">#8994A3</color>
     <color name="textTertiary">#556170</color>
-    <style name="Theme.App" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:statusBarColor">@color/backgroundPage</item>
-        <item name="android:colorBackground">@color/backgroundPage</item>
-        <item name="android:navigationBarColor">@color/backgroundPage</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:isLightTheme" ns1:targetApi="q">false</item>
-        <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
-    </style>
-    <style name="Theme.Splash" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@drawable/splash_background</item>
-        <item name="android:statusBarColor">@color/backgroundPage</item>
-        <item name="android:colorBackground">@color/backgroundPage</item>
-        <item name="android:navigationBarColor">@color/backgroundPage</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:isLightTheme" ns1:targetApi="q">false</item>
-    </style>
 </resources>

@@ -8,6 +8,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.tonkeeper.uikit.R
+import com.tonkeeper.uikit.extensions.useAttributes
 
 class IntroBlockView @JvmOverloads constructor(
     context: Context,
@@ -26,18 +27,10 @@ class IntroBlockView @JvmOverloads constructor(
         titleView = findViewById(R.id.title)
         descriptionView = findViewById(R.id.description)
 
-        context.theme.obtainStyledAttributes(attrs, R.styleable.IntroBlockView,0, 0).apply {
-            try {
-                initAttrs(this)
-            } finally {
-                recycle()
-            }
+        context.useAttributes(attrs, R.styleable.IntroBlockView) {
+            iconView.setImageDrawable(it.getDrawable(R.styleable.IntroBlockView_android_icon))
+            titleView.text = it.getString(R.styleable.IntroBlockView_android_title)
+            descriptionView.text = it.getString(R.styleable.IntroBlockView_android_description)
         }
-    }
-
-    private fun initAttrs(attrs: TypedArray) {
-        iconView.setImageDrawable(attrs.getDrawable(R.styleable.IntroBlockView_android_icon))
-        titleView.text = attrs.getString(R.styleable.IntroBlockView_android_title)
-        descriptionView.text = attrs.getString(R.styleable.IntroBlockView_android_description)
     }
 }

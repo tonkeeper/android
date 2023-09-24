@@ -1,13 +1,11 @@
 package com.tonkeeper.fragment.intro
 
-import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonkeeper.R
-import com.tonkeeper.uikit.base.BaseFragment
-import com.tonkeeper.uikit.base.BaseSheetDialog
+import com.tonkeeper.uikit.base.fragment.BaseFragment
 
 class IntroFragment: BaseFragment(R.layout.fragment_intro) {
 

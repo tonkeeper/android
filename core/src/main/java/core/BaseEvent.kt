@@ -1,0 +1,4 @@
+package core
+
+class BaseEvent {
+}

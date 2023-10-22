@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "tonapi"
-    compileSdk = 34
+    compileSdk = rootProject.extra["compileSdkVersion"] as Int
 
     defaultConfig {
-        minSdk = 28
+        minSdk = rootProject.extra["minSdkVersion"] as Int
         consumerProguardFiles("consumer-rules.pro")
     }
     compileOptions {

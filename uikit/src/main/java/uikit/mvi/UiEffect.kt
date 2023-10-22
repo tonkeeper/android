@@ -1,4 +1,4 @@
 package uikit.mvi
 
-class UiAction {
+class UiEffect {
 }

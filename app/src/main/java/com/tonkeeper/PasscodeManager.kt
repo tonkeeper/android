@@ -1,4 +1,4 @@
 package com.tonkeeper
 
-class Settings {
+class PasscodeManager {
 }

@@ -1,4 +1,4 @@
-package com.tonkeeper.api.collection.db
+package com.tonkeeper.api.nft.db
 
-class CollectionEntity {
+class NftEntity {
 }

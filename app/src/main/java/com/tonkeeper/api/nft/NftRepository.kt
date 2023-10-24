@@ -1,4 +1,4 @@
-package com.tonkeeper.api.collectibles
+package com.tonkeeper.api.nft
 
-class CollectiblesRepository {
+class NftRepository {
 }

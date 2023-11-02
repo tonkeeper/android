@@ -1,6 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/hint"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/barHeight"
+        android:layout_marginStart="@dimen/offsetMedium"
+        android:gravity="center_vertical"
+        android:transformPivotX="0dp"
+        android:transformPivotY="0dp"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="@color/textSecondary"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="@dimen/barHeight"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="@color/textPrimary"
+                android:textCursorDrawable="@drawable/cursor"
+                android:background="@null"/>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/clear"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:src="@drawable/ic_xmark_circle_16"/>
+
+            <uikit.widget.LoaderView
+                android:id="@+id/loader"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/options"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/barHeight"
+            android:layout_gravity="end"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/action"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:textColor="@color/textAccent"
+                android:textAppearance="@style/TextAppearance.Label1" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/icon"
+                android:visibility="gone"
+                android:scaleType="centerInside"
+                android:tint="@color/textAccent" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+    </FrameLayout>
+
+
+</FrameLayout>

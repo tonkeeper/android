@@ -1,3 +1,3 @@
-package com.tonkeeper.uikit.mvi
+package uikit.mvi
 
 open class UiState

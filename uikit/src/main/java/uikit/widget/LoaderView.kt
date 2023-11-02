@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.widget
+package uikit.widget
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -13,8 +13,9 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.extensions.dp
+import uikit.R
+import uikit.extensions.dp
+import uikit.extensions.useAttributes
 
 class LoaderView @JvmOverloads constructor(
     context: Context,
@@ -46,8 +47,12 @@ class LoaderView @JvmOverloads constructor(
         animSteps = 3
         paint = Paint(Paint.ANTI_ALIAS_FLAG)
         bounds = RectF()
-        setColor(context.getColor(R.color.iconSecondary))
         updatePaint()
+
+        context.useAttributes(attrs, R.styleable.LoaderView) {
+            val color = it.getColor(R.styleable.LoaderView_android_color, context.getColor(R.color.iconSecondary))
+            setColor(color)
+        }
     }
 
     fun setProgressType(type: Int) {

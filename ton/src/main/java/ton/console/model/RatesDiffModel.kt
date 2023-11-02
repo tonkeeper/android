@@ -1,7 +1,7 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
 import android.util.ArrayMap
-import com.tonkeeper.ton.SupportedCurrency
+import ton.SupportedCurrency
 import org.json.JSONObject
 
 data class RatesDiffModel(

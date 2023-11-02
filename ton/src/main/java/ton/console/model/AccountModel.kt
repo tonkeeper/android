@@ -1,6 +1,6 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
-import com.tonkeeper.ton.extensions.getStringsList
+import ton.extensions.getStringsList
 import org.json.JSONObject
 
 data class AccountModel(

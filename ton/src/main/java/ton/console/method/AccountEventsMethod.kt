@@ -1,8 +1,7 @@
-package com.tonkeeper.ton.console.method
+package ton.console.method
 
-import android.util.Log
-import com.tonkeeper.ton.console.model.AccountEventModel
-import com.tonkeeper.ton.console.model.AccountEventsModel
+import ton.console.model.AccountEventModel
+import ton.console.model.AccountEventsModel
 import org.json.JSONObject
 
 class AccountEventsMethod(

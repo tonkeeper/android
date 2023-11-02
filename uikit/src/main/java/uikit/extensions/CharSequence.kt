@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.extensions
+package uikit.extensions
 
 import android.content.Context
 import android.text.SpannableString

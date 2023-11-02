@@ -1,6 +1,6 @@
 package com.tonkeeper.fragment.wallet.creating.list
 
-import com.tonkeeper.uikit.list.BaseListItem
+import uikit.list.BaseListItem
 
 internal sealed class PagerItem(
     type: Int

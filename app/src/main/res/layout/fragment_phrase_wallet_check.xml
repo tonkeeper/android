@@ -2,9 +2,10 @@
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
 
-    <com.tonkeeper.uikit.widget.TextHeaderView
+    <uikit.widget.TextHeaderView
         android:id="@+id/text_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,19 +27,19 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <com.tonkeeper.uikit.widget.WordInput
+            <uikit.widget.WordInput
                 android:id="@+id/word_input_1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"/>
 
-            <com.tonkeeper.uikit.widget.WordInput
+            <uikit.widget.WordInput
                 android:id="@+id/word_input_2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetMedium"/>
 
-            <com.tonkeeper.uikit.widget.WordInput
+            <uikit.widget.WordInput
                 android:id="@+id/word_input_3"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

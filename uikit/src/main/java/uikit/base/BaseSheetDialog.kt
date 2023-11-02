@@ -1,10 +1,10 @@
-package com.tonkeeper.uikit.base
+package uikit.base
 
 import android.content.Context
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.tonkeeper.uikit.R
+import uikit.R
 
 open class BaseSheetDialog(
     context: Context

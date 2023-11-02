@@ -1,9 +1,10 @@
-package com.tonkeeper.uikit.widget
+package uikit.widget
 
 import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -11,10 +12,10 @@ import android.widget.TextView
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.drawable.InputDrawable
-import com.tonkeeper.uikit.extensions.dp
-import com.tonkeeper.uikit.extensions.focusWidthKeyboard
+import uikit.R
+import uikit.drawable.InputDrawable
+import uikit.extensions.dp
+import uikit.extensions.focusWidthKeyboard
 
 class WordInput @JvmOverloads constructor(
     context: Context,

@@ -1,4 +1,4 @@
-package com.tonkeeper.ton
+package ton
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences

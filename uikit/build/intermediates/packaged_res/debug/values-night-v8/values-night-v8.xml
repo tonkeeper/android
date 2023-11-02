@@ -14,6 +14,7 @@
     <color name="backgroundOverlayLight">#7A000000</color>
     <color name="backgroundOverlayStrong">#B8000000</color>
     <color name="backgroundPage">#10161F</color>
+    <color name="backgroundPageDark">#0A0D13</color>
     <color name="backgroundTransparent">#F510161F</color>
     <color name="buttonPrimaryBackground">#45AEF5</color>
     <color name="buttonPrimaryBackgroundDisabled">#378AC2</color>

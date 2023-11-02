@@ -1,8 +1,11 @@
-package com.tonkeeper.core
+package com.tonkeeper.core.currency
 
-import android.util.Log
 import com.tonkeeper.App
+import com.tonkeeper.api.address
+import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.rates.RatesRepository
+import com.tonkeeper.event.UpdateCurrencyRateEvent
+import core.EventBus
 import ton.SupportedCurrency
 import ton.SupportedTokens
 
@@ -22,11 +25,20 @@ class CurrencyManager {
         }
     }
 
+    private val jettonRepository = JettonRepository()
     private val repository = RatesRepository()
 
     suspend fun sync() {
         val wallet = App.walletManager.getWalletInfo() ?: return
-        repository.sync(wallet.address)
+        val address = wallet.address
+
+        val jettons = jettonRepository.get(address).map {
+            it.address
+        }
+
+        repository.sync(address, jettons)
+
+        EventBus.post(UpdateCurrencyRateEvent)
     }
 
     suspend fun get(accountId: String): Rates {

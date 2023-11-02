@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.nft
 
-class NftScreenEffect {
-}
+import uikit.mvi.UiEffect
+
+class NftScreenEffect: UiEffect()

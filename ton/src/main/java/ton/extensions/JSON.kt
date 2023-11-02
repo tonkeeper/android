@@ -1,4 +1,4 @@
-package com.tonkeeper.ton.extensions
+package ton.extensions
 
 import org.json.JSONObject
 

@@ -1,10 +1,11 @@
-package com.tonkeeper.uikit.widget
+package uikit.widget
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.extensions.getDimensionPixelSize
+import uikit.R
+import uikit.extensions.getDimensionPixelSize
 
 class WordFormView @JvmOverloads constructor(
     context: Context,
@@ -18,12 +19,8 @@ class WordFormView @JvmOverloads constructor(
     }
 
     var doOnTextChanged: ((String) -> Unit)? = null
-        set(value) {
-            field = value
-            for (i in 0 until count) {
-                getInput(i).doOnTextChanged = value
-            }
-        }
+    var doOnFocusInput: ((WordInput, Int) -> Unit)? = null
+    var doOnComplete: ((words: List<String>) -> Unit)? = null
 
     init {
         orientation = VERTICAL
@@ -31,20 +28,61 @@ class WordFormView @JvmOverloads constructor(
             val view = WordInput(context)
             view.doOnNext = { nextFocus(i) }
             view.doOnPrev = { prevFocus(i) }
+            view.doOnTextChanged = { text ->
+                if (i == 0) {
+                    checkPaste(text)
+                }
+                checkIsFull()
+                doOnTextChanged?.invoke(text)
+            }
             view.setIndex(i + 1)
             addView(view, inputLayoutParams)
         }
     }
 
+    private fun checkPaste(text: String) {
+        val isFullPhrase = text.contains(",") || text.contains("\n") || text.contains(" ")
+        if (!isFullPhrase) {
+            return
+        }
+
+        val words = text.split(",", "\n", " ").map {
+            it.trim()
+        }.filter {
+            it.isNotEmpty()
+        }
+        for (i in 0 until count) {
+            val input = getInput(i)
+            if (i < words.size) {
+                input.text = words[i]
+            }
+            nextFocus(i)
+        }
+        checkIsFull()
+    }
+
+    private fun checkIsFull() {
+        val words = getWords()
+        if (words.size == count) {
+            doOnComplete?.invoke(words)
+        }
+    }
+
     private fun nextFocus(index: Int) {
-        if (index >= count - 1) return
-        val input = getInput(index)
-        input.focus()
+        if ((index + 1) > count - 1) return
+        val input = getInput(index + 1)
+        focus(input)
     }
 
     private fun prevFocus(index: Int) {
         if (index <= 0) return
-        getInput(index - 1).focus()
+        val input = getInput(index - 1)
+        focus(input)
+    }
+
+    private fun focus(input: WordInput) {
+        input.focus()
+        doOnFocusInput?.invoke(input, indexOfChild(input))
     }
 
     private fun getInput(index: Int): WordInput {
@@ -84,7 +122,11 @@ class WordFormView @JvmOverloads constructor(
     fun getWords(): List<String> {
         val words = mutableListOf<String>()
         for (i in 0 until count) {
-            words.add(getInput(i).text)
+            val text = getInput(i).text.trim()
+            if (text.isEmpty()) {
+                break
+            }
+            words.add(text)
         }
         return words
     }

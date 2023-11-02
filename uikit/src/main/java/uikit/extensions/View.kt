@@ -1,12 +1,23 @@
-package com.tonkeeper.uikit.extensions
+package uikit.extensions
 
+import android.graphics.Outline
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.view.Window
 import android.widget.EditText
+import android.widget.ScrollView
+import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.transition.AutoTransition
+import androidx.transition.Transition
+import androidx.transition.TransitionListenerAdapter
+import androidx.transition.TransitionManager
 
 var View.scale: Float
     get() = scaleX
@@ -15,8 +26,37 @@ var View.scale: Float
         scaleY = value
     }
 
+var View.pivot: Float
+    get() = pivotX
+    set(value) {
+        pivotX = value
+        pivotY = value
+    }
+
 val View.window: Window?
     get() = context.window
+
+fun ScrollView.scrollToView(view: View) {
+    val scrollBounds = Rect()
+    getHitRect(scrollBounds)
+    if (!view.getLocalVisibleRect(scrollBounds)) {
+        post {
+            smoothScrollTo(0, view.top)
+        }
+    }
+}
+
+fun ScrollView.scrollToBottom() {
+    post {
+        fullScroll(View.FOCUS_DOWN)
+    }
+}
+
+fun ScrollView.scrollToTop() {
+    post {
+        fullScroll(View.FOCUS_UP)
+    }
+}
 
 fun View.getInsetsControllerCompat(): WindowInsetsControllerCompat? {
     val window = window ?: return null
@@ -25,6 +65,9 @@ fun View.getInsetsControllerCompat(): WindowInsetsControllerCompat? {
 
 fun EditText.focusWidthKeyboard() {
     requestFocus()
+    try {
+        setSelection(text.length)
+    } catch (ignored: Throwable) { }
     getInsetsControllerCompat()?.show(WindowInsetsCompat.Type.ime())
 }
 
@@ -59,3 +102,65 @@ fun View.setPaddingVertical(paddingVertical: Int) {
     setPadding(paddingLeft, paddingVertical, paddingRight, paddingVertical)
 }
 
+fun ViewGroup.setView(view: View) {
+    removeAllViews()
+    addView(view)
+}
+
+fun View.roundTop(radius: Int) {
+    if (radius == 0) {
+        outlineProvider = null
+        clipToOutline = false
+    } else {
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height + radius * 2, radius.toFloat())
+            }
+        }
+        clipToOutline = true
+    }
+}
+
+fun View.round(radius: Int) {
+    if (radius == 0) {
+        outlineProvider = null
+        clipToOutline = false
+    } else {
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, radius.toFloat())
+            }
+        }
+        clipToOutline = true
+    }
+}
+
+fun View.getDrawable(@DrawableRes resId: Int): Drawable {
+    return AppCompatResources.getDrawable(context, resId)!!
+}
+
+
+fun View.withAnimation(duration: Long = 120, block: () -> Unit) {
+    if (this !is ViewGroup) {
+        block()
+        return
+    }
+
+    val transitionAdapter = object : TransitionListenerAdapter() {
+        override fun onTransitionStart(transition: Transition) {
+            setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        }
+
+        override fun onTransitionEnd(transition: Transition) {
+            transition.removeListener(this)
+            setLayerType(View.LAYER_TYPE_NONE, null)
+        }
+    }
+
+    val transition = AutoTransition()
+    transition.duration = duration
+    transition.addListener(transitionAdapter)
+
+    TransitionManager.beginDelayedTransition(this, transition)
+    block()
+}

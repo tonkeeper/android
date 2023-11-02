@@ -1,72 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/body"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    
-    <com.tonkeeper.uikit.widget.LoaderView
-        android:id="@+id/loader"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_gravity="center"/>
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/body"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:stateListAnimator="@null"
+        app:elevation="0dp">
+        <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <com.tonkeeper.uikit.widget.HeaderView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:title="@string/wallet"/>
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/amount"
-                android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:textColor="@color/textPrimary"
-                android:textAppearance="@style/TextAppearance.NUM2"
-                android:gravity="center"/>
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/address"
-                android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:textColor="@color/textSecondary"
-                android:textAppearance="@style/TextAppearance.Body2"
-                android:gravity="center"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetLarge"
-                android:layout_gravity="center"
-                android:orientation="horizontal">
-
-                <com.tonkeeper.uikit.widget.IconButtonView
-                    android:id="@+id/send"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:icon="@drawable/ic_arrow_up_28"
-                    android:title="@string/send"/>
-
-                <com.tonkeeper.uikit.widget.IconButtonView
-                    android:id="@+id/receive"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:icon="@drawable/ic_arrow_down_28"
-                    android:title="@string/receive"/>
-
+                android:layout_marginTop="@dimen/barHeight"
+                android:orientation="vertical">
+                <include layout="@layout/view_wallet_balance"/>
+                <include layout="@layout/view_wallet_actions"/>
             </androidx.appcompat.widget.LinearLayoutCompat>
-        </androidx.appcompat.widget.LinearLayoutCompat>
 
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+            <uikit.widget.HeaderView
+                android:id="@+id/header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/wallet"
+                app:layout_collapseMode="pin"/>
 
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
 
+        <FrameLayout
+            android:id="@+id/tabs_container"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/barHeight">
 
-</FrameLayout>
+            <uikit.widget.TabLayoutEx
+                style="@style/Widget.App.Tabs"
+                android:id="@+id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:overScrollMode="never"
+                android:clipToPadding="false"
+                android:layout_gravity="center"/>
+
+        </FrameLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit
+package uikit
 
 import android.animation.TypeEvaluator
 import kotlin.math.pow

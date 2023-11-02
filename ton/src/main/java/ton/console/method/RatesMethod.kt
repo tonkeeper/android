@@ -1,17 +1,25 @@
-package com.tonkeeper.ton.console.method
+package ton.console.method
 
 import android.util.ArrayMap
-import com.tonkeeper.ton.SupportedCurrency
-import com.tonkeeper.ton.SupportedTokens
-import com.tonkeeper.ton.console.model.RatesModel
-import com.tonkeeper.ton.console.model.RatesTokenModel
+import ton.SupportedCurrency
+import ton.SupportedTokens
+import ton.console.model.RatesModel
+import ton.console.model.RatesTokenModel
 import org.json.JSONObject
 
-class RatesMethod: BaseMethod<RatesModel>("rates") {
+class RatesMethod(
+    tokens: List<String>,
+    currency: List<String>
+): BaseMethod<RatesModel>("rates") {
+
+    constructor() : this(
+        SupportedTokens.values().map { it.code },
+        SupportedCurrency.values().map { it.code }
+    )
 
     init {
-        querySet("tokens", SupportedTokens.TON)
-        querySet("currencies", SupportedCurrency.values().joinToString(","))
+        querySet("tokens", tokens.joinToString(","))
+        querySet("currencies", currency.joinToString(","))
     }
 
     override fun parseJSON(response: JSONObject): RatesModel {

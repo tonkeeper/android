@@ -26,7 +26,7 @@
                 android:lineHeight="40sp"
                 android:text="@string/intro_title"/>
 
-            <com.tonkeeper.uikit.widget.IntroBlockView
+            <uikit.widget.IntroBlockView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"
@@ -34,7 +34,7 @@
                 android:title="@string/intro_line_1_title"
                 android:description="@string/intro_line_1_description"/>
 
-            <com.tonkeeper.uikit.widget.IntroBlockView
+            <uikit.widget.IntroBlockView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"
@@ -42,7 +42,7 @@
                 android:title="@string/intro_line_2_title"
                 android:description="@string/intro_line_2_description"/>
 
-            <com.tonkeeper.uikit.widget.IntroBlockView
+            <uikit.widget.IntroBlockView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"

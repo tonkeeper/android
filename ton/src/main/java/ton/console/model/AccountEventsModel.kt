@@ -1,4 +1,4 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
 data class AccountEventsModel(
     val events: List<AccountEventModel>,

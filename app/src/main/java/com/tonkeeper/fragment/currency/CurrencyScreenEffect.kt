@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.currency
 
-class CurrencyScreenEffect {
-}
+import uikit.mvi.UiEffect
+
+class CurrencyScreenEffect: UiEffect()

@@ -1,4 +1,4 @@
-package com.tonkeeper.ton.console
+package ton.console
 
 import okhttp3.Interceptor
 import okhttp3.Response

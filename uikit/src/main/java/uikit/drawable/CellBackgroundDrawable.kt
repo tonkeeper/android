@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.drawable
+package uikit.drawable
 
 import android.content.Context
 import android.graphics.Canvas
@@ -6,15 +6,16 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.base.BaseDrawable
-import com.tonkeeper.uikit.extensions.dp
-import com.tonkeeper.uikit.extensions.getDimension
-import com.tonkeeper.uikit.list.BaseListItem
+import uikit.R
+import uikit.base.BaseDrawable
+import uikit.extensions.dp
+import uikit.extensions.getDimension
+import uikit.list.BaseListItem
+import uikit.list.ListCell
 
 class CellBackgroundDrawable(
     context: Context,
-    private val position: BaseListItem.Cell.Position
+    private val position: ListCell.Position
 ): BaseDrawable() {
 
     companion object {
@@ -51,7 +52,7 @@ class CellBackgroundDrawable(
 
     override fun draw(canvas: Canvas) {
         canvas.drawPath(path, backgroundPaint)
-        if (position != BaseListItem.Cell.Position.SINGLE && position != BaseListItem.Cell.Position.LAST) {
+        if (position != ListCell.Position.SINGLE && position != ListCell.Position.LAST) {
             drawDivider(canvas, bounds)
         }
     }
@@ -101,10 +102,10 @@ class CellBackgroundDrawable(
     override fun onBoundsChange(bounds: Rect) {
         super.onBoundsChange(bounds)
         when (position) {
-            BaseListItem.Cell.Position.FIRST -> firstPath(bounds)
-            BaseListItem.Cell.Position.MIDDLE -> middlePath(bounds)
-            BaseListItem.Cell.Position.LAST -> lastPath(bounds)
-            BaseListItem.Cell.Position.SINGLE -> singlePath(bounds)
+            ListCell.Position.FIRST -> firstPath(bounds)
+            ListCell.Position.MIDDLE -> middlePath(bounds)
+            ListCell.Position.LAST -> lastPath(bounds)
+            ListCell.Position.SINGLE -> singlePath(bounds)
         }
     }
 }

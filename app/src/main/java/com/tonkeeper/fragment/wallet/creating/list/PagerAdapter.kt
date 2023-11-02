@@ -1,9 +1,9 @@
 package com.tonkeeper.fragment.wallet.creating.list
 
 import android.view.ViewGroup
-import com.tonkeeper.uikit.list.BaseListAdapter
-import com.tonkeeper.uikit.list.BaseListHolder
-import com.tonkeeper.uikit.list.BaseListItem
+import uikit.list.BaseListAdapter
+import uikit.list.BaseListHolder
+import uikit.list.BaseListItem
 
 internal object PagerAdapter: BaseListAdapter<PagerItem>(
     listOf(PagerItem.Generating, PagerItem.Created, PagerItem.Attention)

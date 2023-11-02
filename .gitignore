@@ -8,8 +8,12 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
-/build
+/uikit/build
+/ton/build
+/app/build
+/app/release
 /captures
 .externalNativeBuild
 .cxx
+*.apk
 local.properties

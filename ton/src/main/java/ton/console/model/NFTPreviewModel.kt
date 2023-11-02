@@ -1,4 +1,4 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
 import org.json.JSONArray
 import org.json.JSONObject

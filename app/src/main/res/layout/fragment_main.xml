@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         android:layout_weight="1"/>
 
-    <com.tonkeeper.uikit.widget.BottomTabsView
+    <uikit.widget.BottomTabsView
         android:id="@+id/bottom_tabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

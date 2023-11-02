@@ -1,14 +1,12 @@
-package com.tonkeeper.uikit.widget
+package uikit.widget
 
 import android.content.Context
-import android.content.res.TypedArray
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.extensions.useAttributes
+import uikit.R
+import uikit.extensions.useAttributes
 
 class IntroBlockView @JvmOverloads constructor(
     context: Context,

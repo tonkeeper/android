@@ -1,9 +1,9 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
 import android.util.ArrayMap
-import com.tonkeeper.ton.Amount
-import com.tonkeeper.ton.SupportedCurrency
-import com.tonkeeper.ton.extensions.getFloat
+import ton.Amount
+import ton.SupportedCurrency
+import ton.extensions.getFloat
 import org.json.JSONObject
 
 data class RatesPricesModel(

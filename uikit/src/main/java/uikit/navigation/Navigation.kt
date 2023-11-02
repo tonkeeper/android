@@ -1,10 +1,10 @@
-package com.tonkeeper.uikit.navigation
+package uikit.navigation
 
 import android.app.Dialog
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.fragment.app.Fragment
-import com.tonkeeper.uikit.base.fragment.BaseFragment
+import uikit.base.fragment.BaseFragment
 
 interface Navigation {
 
@@ -30,9 +30,13 @@ interface Navigation {
         fun Dialog.nav() = from(context)
     }
 
+    fun init(skipPasscode: Boolean)
+
     fun replace(fragment: BaseFragment, addToBackStack: Boolean)
 
     fun add(fragment: BaseFragment)
 
-    fun back()
+    fun remove(fragment: BaseFragment)
+
+    fun openURL(url: String)
 }

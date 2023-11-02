@@ -1,4 +1,4 @@
-package com.tonkeeper.fragment.settings
+package com.tonkeeper.fragment.settings.main
 
 import com.tonkeeper.fragment.settings.list.item.SettingsItem
 import uikit.mvi.UiState

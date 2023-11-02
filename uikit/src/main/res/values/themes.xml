@@ -6,10 +6,11 @@
         <item name="android:colorBackground">@color/backgroundPage</item>
         <item name="android:windowLightStatusBar">@bool/use_light_system_bars</item>
         <item name="android:windowLightNavigationBar">@bool/use_light_system_bars</item>
-        <!--item name="android:statusBarColor">@color/backgroundPage</item-->
-        <item name="android:navigationBarColor">@color/backgroundPage</item>
+        <item name="android:navigationBarColor">@color/backgroundPageDark</item>
+        <item name="android:statusBarColor">@color/backgroundPage</item>
         <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="colorAccent">@color/textAccent</item>
     </style>
 
     <style name="Theme.App" parent="Theme.App.Base">

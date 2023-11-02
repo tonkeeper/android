@@ -1,4 +1,4 @@
-package com.tonkeeper.api.jetton.cache
+package com.tonkeeper.api.jetton.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -21,9 +21,8 @@ data class JettonEntity(
 
         fun map(accountId: String, list: List<JettonBalance>): List<JettonEntity> {
             return list.map { JettonEntity(
-                id = createId(accountId, it.symbol),
                 accountId = accountId,
-                data = toJSON(it)
+                jetton = it
             ) }
         }
     }

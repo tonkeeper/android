@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ScrollView
@@ -37,7 +38,7 @@
                 android:textColor="@color/textSecondary"
                 android:textAppearance="@style/TextAppearance.Body1"/>
 
-            <com.tonkeeper.uikit.widget.PhraseWords
+            <uikit.widget.PhraseWords
                 android:id="@+id/words"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

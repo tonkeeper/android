@@ -22,5 +22,12 @@
         android:gravity="center_vertical"
         android:textColor="@color/textSecondary"
         android:textAppearance="@style/TextAppearance.Body1"/>
+    
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/check"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_donemark_thin_28"/>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

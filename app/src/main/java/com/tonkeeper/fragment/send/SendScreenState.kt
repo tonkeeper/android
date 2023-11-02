@@ -1,4 +1,10 @@
 package com.tonkeeper.fragment.send
 
-class SendScreenState {
+import uikit.mvi.UiState
+
+data class SendScreenState(
+    val ss: Boolean = false
+): UiState() {
+
+
 }

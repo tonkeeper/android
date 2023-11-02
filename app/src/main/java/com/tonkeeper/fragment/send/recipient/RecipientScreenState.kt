@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.send.recipient
 
-class RecipientScreenState {
-}
+import uikit.mvi.UiState
+
+class RecipientScreenState: UiState()

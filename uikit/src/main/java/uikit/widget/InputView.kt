@@ -13,12 +13,13 @@ import androidx.appcompat.widget.AppCompatTextView
 import uikit.R
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
+import uikit.extensions.focusWidthKeyboard
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.range
 import uikit.extensions.scale
 import uikit.extensions.useAttributes
 
-class InputFieldView @JvmOverloads constructor(
+class InputView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
@@ -45,22 +46,55 @@ class InputFieldView @JvmOverloads constructor(
                 field = value
                 if (value) {
                     hintAnimation.start()
+                    optionsView.visibility = View.GONE
+                    clearView.visibility = View.VISIBLE
                 } else {
                     hintAnimation.reverse()
+                    optionsView.visibility = View.VISIBLE
+                    clearView.visibility = View.GONE
+                    loaderView.visibility = View.GONE
+                    loaderView.stopAnimation()
                 }
             }
         }
 
     private val hintAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = 80
-        addUpdateListener(this@InputFieldView)
+        addUpdateListener(this@InputView)
     }
 
     private val inputDrawable = InputDrawable(context)
     private val hintView: AppCompatTextView
     private val editText: AppCompatEditText
+    private val optionsView: View
     private val actionView: AppCompatTextView
     private val iconView: AppCompatImageView
+    private val clearView: AppCompatImageView
+    private val loaderView: LoaderView
+
+    var error: Boolean
+        get() = inputDrawable.error
+        set(value) {
+            inputDrawable.error = value
+        }
+
+    var loading: Boolean = false
+        set(value) {
+            if (field != value) {
+                field = value
+                if (value && hintReduced) {
+                    clearView.visibility = View.GONE
+                    loaderView.visibility = View.VISIBLE
+                    loaderView.resetAnimation()
+                } else {
+                    if (hintReduced) {
+                        clearView.visibility = View.VISIBLE
+                    }
+                    loaderView.visibility = View.GONE
+                    loaderView.stopAnimation()
+                }
+            }
+        }
 
     private var actionValue: String? = null
         set(value) {
@@ -76,21 +110,62 @@ class InputFieldView @JvmOverloads constructor(
             iconView.visibility = if (value == 0) View.GONE else View.VISIBLE
         }
 
+    var doOnTextChange: ((String) -> Unit)? = null
+    var doOnButtonClick: (() -> Unit)? = null
+        set(value) {
+            field = value
+            actionView.setOnClickListener {
+                value?.invoke()
+            }
+        }
+
+    var doOnIconClick: (() -> Unit)? = null
+        set(value) {
+            field = value
+            iconView.setOnClickListener {
+                value?.invoke()
+            }
+        }
+
+    var text: String
+        get() = editText.text.toString()
+        set(value) {
+            val text = editText.text ?: return
+            text.replace(0, text.length, value)
+        }
+
     init {
         background = inputDrawable
         minimumHeight = context.getDimensionPixelSize(R.dimen.barHeight)
+
         inflate(context, R.layout.view_input, this)
+
         hintView = findViewById(R.id.hint)
         editText = findViewById(R.id.input)
         editText.onFocusChangeListener = this
         editText.addTextChangedListener(this)
+
+        optionsView = findViewById(R.id.options)
         actionView = findViewById(R.id.action)
         iconView = findViewById(R.id.icon)
-        context.useAttributes(attrs, R.styleable.InputFieldView) {
-            hintView.text = it.getString(R.styleable.InputFieldView_android_hint)
-            iconValue = it.getResourceId(R.styleable.InputFieldView_android_icon, 0)
-            actionValue = it.getString(R.styleable.InputFieldView_android_button)
+        clearView = findViewById(R.id.clear)
+        loaderView = findViewById(R.id.loader)
+
+        clearView.setOnClickListener {
+            editText.text = null
         }
+
+        context.useAttributes(attrs, R.styleable.InputView) {
+            hintView.text = it.getString(R.styleable.InputView_android_hint)
+            iconValue = it.getResourceId(R.styleable.InputView_android_icon, 0)
+            actionValue = it.getString(R.styleable.InputView_android_button)
+        }
+    }
+
+    fun focus() {
+        postDelayed({
+            editText.focusWidthKeyboard()
+        }, 16)
     }
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {
@@ -120,6 +195,7 @@ class InputFieldView @JvmOverloads constructor(
 
     override fun afterTextChanged(s: Editable?) {
         hintReduced = !s.isNullOrBlank()
+        doOnTextChange?.invoke(s.toString())
     }
 
 }

@@ -7,6 +7,7 @@
     <color name="textPrimaryAlternate">#000000</color>
 
     <color name="backgroundPage">#F0F0F5</color>
+    <color name="backgroundPageDark">#909093</color>
     <color name="backgroundTransparent">#F5F0F0F5</color>
     <color name="backgroundContent">#FFFFFF</color>
     <color name="backgroundContentTint">#F0F0F5</color>

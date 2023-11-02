@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.widget
+package uikit.widget
 
 import android.content.Context
 import android.util.AttributeSet

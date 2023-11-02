@@ -1,4 +1,7 @@
 package com.tonkeeper.fragment.send.confirm
 
-class ConfirmScreenFeature {
+import uikit.mvi.UiFeature
+
+class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(ConfirmScreenState()) {
+
 }

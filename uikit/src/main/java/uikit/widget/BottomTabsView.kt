@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.widget
+package uikit.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -10,9 +10,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.extensions.dp
-import com.tonkeeper.uikit.extensions.useAttributes
+import uikit.R
+import uikit.extensions.dp
+import uikit.extensions.useAttributes
 
 @SuppressLint("RestrictedApi")
 class BottomTabsView @JvmOverloads constructor(

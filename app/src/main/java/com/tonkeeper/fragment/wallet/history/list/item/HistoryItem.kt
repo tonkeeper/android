@@ -1,15 +1,14 @@
-package com.tonkeeper.fragment.wallet.history.list
+package com.tonkeeper.fragment.wallet.history.list.item
 
 import uikit.list.BaseListItem
 
-data class HistoryItem(
-    val action: Action,
-    val subtitle: String,
-    val timestamp: Long,
-): BaseListItem() {
+open class HistoryItem(
+    type: Int,
+): BaseListItem(type) {
 
-    enum class Action {
-        Received, Send
+    companion object {
+        const val TYPE_ACTION = 1
+        const val TYPE_HEADER = 2
     }
 
 }

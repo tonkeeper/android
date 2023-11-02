@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.wallet.main
 
-class WalletScreenEffect {
-}
+import uikit.mvi.UiEffect
+
+class WalletScreenEffect: UiEffect()

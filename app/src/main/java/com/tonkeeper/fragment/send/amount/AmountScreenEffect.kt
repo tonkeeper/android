@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.send.amount
 
-class AmountScreenEffect {
-}
+import uikit.mvi.UiEffect
+
+class AmountScreenEffect: UiEffect()

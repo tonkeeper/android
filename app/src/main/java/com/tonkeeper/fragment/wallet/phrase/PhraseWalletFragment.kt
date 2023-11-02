@@ -6,9 +6,9 @@ import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
-import com.tonkeeper.uikit.navigation.Navigation.Companion.nav
-import com.tonkeeper.uikit.base.fragment.WithBackFragment
-import com.tonkeeper.uikit.widget.PhraseWords
+import uikit.navigation.Navigation.Companion.nav
+import uikit.base.fragment.WithBackFragment
+import uikit.widget.PhraseWords
 import kotlinx.coroutines.launch
 
 class PhraseWalletFragment: WithBackFragment(R.layout.fragment_phrase_wallet) {

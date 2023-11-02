@@ -6,12 +6,11 @@ import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
-import com.tonkeeper.uikit.navigation.Navigation.Companion.nav
-import com.tonkeeper.fragment.passcode.PasscodeFragment
-import com.tonkeeper.ton.WalletManager
-import com.tonkeeper.uikit.base.fragment.WithBackFragment
-import com.tonkeeper.uikit.widget.TextHeaderView
-import com.tonkeeper.uikit.widget.WordInput
+import uikit.navigation.Navigation.Companion.nav
+import ton.WalletManager
+import uikit.base.fragment.WithBackFragment
+import uikit.widget.TextHeaderView
+import uikit.widget.WordInput
 import kotlinx.coroutines.launch
 
 class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_wallet_check) {
@@ -99,7 +98,7 @@ class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_walle
 
         nextButton = view.findViewById(R.id.next)
         nextButton.setOnClickListener {
-            nav()?.replace(PasscodeFragment.newInstance(), true)
+            nav()?.init(false)
         }
 
         headerView.bindContentPadding(contentView)

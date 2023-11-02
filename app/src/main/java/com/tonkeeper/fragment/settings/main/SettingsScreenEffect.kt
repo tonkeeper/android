@@ -1,4 +1,7 @@
 package com.tonkeeper.fragment.settings.main
 
-class SettingsScreenEffect {
+import uikit.mvi.UiEffect
+
+sealed class SettingsScreenEffect: UiEffect() {
+    data object Logout: SettingsScreenEffect()
 }

@@ -1,4 +1,4 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
 import okhttp3.internal.toLongOrDefault
 import org.json.JSONObject

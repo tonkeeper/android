@@ -2,15 +2,67 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/barHeight"
-        android:orientation="horizontal">
+        android:paddingHorizontal="@dimen/offsetMedium">
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <WebView
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/back"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:layout_gravity="center_vertical|start"
+            android:tint="@color/buttonSecondaryForeground"
+            android:backgroundTint="@color/buttonSecondaryBackground"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_chevron_left_16"
+            android:alpha="0"/>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/barHeight"
+            android:layout_gravity="center"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:singleLine="true"
+                android:textColor="@color/textPrimary"
+                android:textAppearance="@style/TextAppearance.H3"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:singleLine="true"
+                android:textColor="@color/textSecondary"
+                android:drawablePadding="4dp"
+                android:drawableStart="@drawable/ic_lock_12"
+                android:textAppearance="@style/TextAppearance.Body2"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </FrameLayout>
+
+    <androidx.core.widget.ContentLoadingProgressBar
+        android:id="@+id/progress_bar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never"
+        android:background="@android:color/transparent"/>
 </LinearLayout>

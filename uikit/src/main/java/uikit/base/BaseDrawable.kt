@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.base
+package uikit.base
 
 import android.graphics.ColorFilter
 import android.graphics.PixelFormat

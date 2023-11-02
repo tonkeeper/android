@@ -1,13 +1,14 @@
-package com.tonkeeper.api.nft.db
+package com.tonkeeper.api.collectibles.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tonkeeper.api.toJSON
 import io.tonapi.models.NftItem
 
-@Entity(tableName = "nft")
-data class NftEntity(
+@Entity(tableName = "collectibles")
+data class CollectiblesEntity(
     @PrimaryKey val id: String,
+    val nftAddress: String,
     val accountId: String,
     val data: String
 ) {
@@ -18,8 +19,8 @@ data class NftEntity(
             return "$accountId-$address"
         }
 
-        fun map(accountId: String, list: List<NftItem>): List<NftEntity> {
-            return list.map { NftEntity(
+        fun map(accountId: String, list: List<NftItem>): List<CollectiblesEntity> {
+            return list.map { CollectiblesEntity(
                 accountId = accountId,
                 nft = it
             ) }
@@ -31,6 +32,7 @@ data class NftEntity(
         nft: NftItem
     ) : this(
         id = createId(accountId, nft.address),
+        nftAddress = nft.address,
         accountId = accountId,
         data = toJSON(nft)
     )

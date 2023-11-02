@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.mvi
+package uikit.mvi
 
 enum class AsyncState {
     Default, Loading, All, Error

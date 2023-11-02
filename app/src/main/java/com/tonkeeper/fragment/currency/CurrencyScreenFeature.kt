@@ -1,32 +1,55 @@
 package com.tonkeeper.fragment.currency
 
 import androidx.annotation.StringRes
+import com.tonkeeper.App
 import com.tonkeeper.R
+import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.fragment.currency.list.CurrencyItem
-import com.tonkeeper.ton.SupportedCurrency
-import com.tonkeeper.uikit.list.BaseListItem
-import com.tonkeeper.uikit.mvi.UiFeature
+import ton.SupportedCurrency
+import core.EventBus
+import uikit.list.ListCell
+import uikit.mvi.UiFeature
 
-class CurrencyScreenFeature: UiFeature<CurrencyScreenState>(CurrencyScreenState()) {
+class CurrencyScreenFeature: UiFeature<CurrencyScreenState, CurrencyScreenEffect>(CurrencyScreenState()) {
 
     init {
+        requestItems()
+    }
+
+    private fun requestItems() {
+        updateUiState {
+            it.copy(
+                items = buildItems()
+            )
+        }
+    }
+
+    fun setSelect(currency: SupportedCurrency) {
+        App.settings.currency = currency
+
+        EventBus.post(ChangeCurrencyEvent(currency))
+
+        updateUiState {
+            it.copy(
+                items = buildItems()
+            )
+        }
+    }
+
+    private fun buildItems(): List<CurrencyItem> {
         val items = mutableListOf<CurrencyItem>()
         val codes = SupportedCurrency.values()
         for ((index, currency) in codes.withIndex()) {
             items.add(
                 CurrencyItem(
-                    code = currency.code,
+                    currency = currency,
                     nameResId = getNameResIdForCurrency(currency),
-                    selected = index == 0,
-                    position = BaseListItem.Cell.getPosition(codes.size, index)
+                    selected = currency == App.settings.currency,
+                    position = ListCell.getPosition(codes.size, index)
                 )
             )
         }
-        updateUiState {
-            it.copy(
-                items = items
-            )
-        }
+        return items
     }
 
     @StringRes
@@ -45,6 +68,7 @@ class CurrencyScreenFeature: UiFeature<CurrencyScreenState>(CurrencyScreenState(
             SupportedCurrency.IDR -> R.string.currency_idr_name
             SupportedCurrency.INR -> R.string.currency_inr_name
             SupportedCurrency.JPY -> R.string.currency_jpy_name
+            SupportedCurrency.TON -> R.string.toncoin
             else -> throw IllegalArgumentException("Unsupported currency: $currency")
         }
 

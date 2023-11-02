@@ -1,4 +1,7 @@
 package com.tonkeeper.fragment.send.recipient
 
-class RecipientFeature {
+import uikit.mvi.UiFeature
+
+class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEffect>(RecipientScreenState()) {
+
 }

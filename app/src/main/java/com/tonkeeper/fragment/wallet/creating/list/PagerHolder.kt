@@ -4,9 +4,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.annotation.LayoutRes
 import com.tonkeeper.R
-import com.tonkeeper.uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.nav
 import com.tonkeeper.fragment.wallet.phrase.PhraseWalletFragment
-import com.tonkeeper.uikit.list.BaseListHolder
+import uikit.list.BaseListHolder
 
 internal open class PagerHolder(
     parent: ViewGroup,

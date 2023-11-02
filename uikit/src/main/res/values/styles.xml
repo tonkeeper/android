@@ -26,4 +26,23 @@
         <item name="android:background">@drawable/bg_button_secondary</item>
         <item name="android:textColor">@color/buttonSecondaryForeground</item>
     </style>
+
+    <style name="Widget.App.Button.Small.Secondary" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_small_button_secondary</item>
+        <item name="android:textColor">@color/buttonSecondaryForeground</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.Label2</item>
+        <item name="minHeight">0dp</item>
+    </style>
+
+    <style name="Widget.App.Tabs" parent="Widget.Design.TabLayout">
+        <item name="tabTextAppearance">@style/Widget.App.Tabs.TextAppearance</item>
+    </style>
+
+    <style name="Widget.App.Tabs.TextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
 </resources>

@@ -1,16 +1,24 @@
-package com.tonkeeper.api.nft
+package com.tonkeeper.api.collectibles
 
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.base.BaseAccountRepository
-import com.tonkeeper.api.nft.db.NftDao
+import com.tonkeeper.api.collectibles.db.CollectiblesDao
+import com.tonkeeper.api.fromJSON
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.NftItem
 
-class NftRepository(
+class CollectiblesRepository(
     private val api: AccountsApi = Tonapi.accounts,
-    private val dao: NftDao = App.db.nftDao()
+    private val dao: CollectiblesDao = App.db.collectiblesDao()
 ): BaseAccountRepository<NftItem>() {
+
+    suspend fun getNftItemCache(
+        nftAddress: String
+    ): NftItem? {
+        val entity = dao.getItem(nftAddress) ?: return null
+        return fromJSON(entity.data)
+    }
 
     override suspend fun fromCache(
         accountId: String

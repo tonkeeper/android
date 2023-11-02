@@ -1,4 +1,3 @@
 package uikit.mvi
 
-class UiEffect {
-}
+open class UiEffect

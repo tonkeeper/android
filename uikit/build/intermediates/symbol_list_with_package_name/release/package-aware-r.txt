@@ -1,4 +1,9 @@
-com.tonkeeper.uikit
+uikit
+anim bottom_sheet_enter
+anim bottom_sheet_exit
+attr menu
+attr position
+bool use_light_system_bars
 color accentBlue
 color accentGreen
 color accentOrange
@@ -12,11 +17,13 @@ color backgroundOverlayExtraLight
 color backgroundOverlayLight
 color backgroundOverlayStrong
 color backgroundPage
+color backgroundPageDark
 color backgroundTransparent
 color buttonPrimaryBackground
 color buttonPrimaryBackgroundDisabled
 color buttonPrimaryBackgroundHighlighted
 color buttonPrimaryForeground
+color buttonPrimaryForegroundDisabled
 color buttonSecondaryBackground
 color buttonSecondaryBackgroundDisabled
 color buttonSecondaryBackgroundHighlighted
@@ -25,9 +32,12 @@ color buttonTertiaryBackground
 color buttonTertiaryBackgroundDisabled
 color buttonTertiaryBackgroundHighlighted
 color buttonTertiaryForeground
+color button_primary_background_selector
+color button_primary_foreground_selector
 color constantBlack
 color constantBlue
 color constantRed
+color constantTon
 color constantWhite
 color fieldActiveBorder
 color fieldBackground
@@ -46,39 +56,91 @@ color textPrimary
 color textPrimaryAlternate
 color textSecondary
 color textTertiary
+dimen actionSize
+dimen barHeight
 dimen cornerExtraExtraSmall
 dimen cornerExtraSmall
 dimen cornerLarge
 dimen cornerMedium
 dimen cornerSmall
+dimen gap
+dimen itemHeight
 dimen offsetExtraExtraSmall
 dimen offsetExtraSmall
 dimen offsetLarge
 dimen offsetMedium
-drawable button_primary_background
-drawable button_secondary_background
-drawable button_secondary_oval_background
+dimen shadowSize
+drawable bg_button_primary
+drawable bg_button_secondary
+drawable bg_content
+drawable bg_content_tint
+drawable bg_gradient
+drawable bg_island_border
+drawable bg_modal
+drawable bg_oval
+drawable bg_oval_button_secondary
+drawable bg_oval_button_tertiary
+drawable bg_page_gradient
+drawable bg_shadow_horizontal
+drawable bg_small_button_secondary
+drawable bg_splash
+drawable bg_tab_indicator
 drawable cursor
-drawable gradient_background
+drawable ic_chevron_left_16
+drawable ic_chevron_right_16
 drawable ic_close_16
+drawable ic_delete_36
+drawable ic_done_bold_16
 drawable ic_logo_128
-drawable modal_background
-drawable splash_background
+drawable ic_xmark_circle_16
 font montserrat
 font montserrat_bold
 font montserrat_light
 font montserrat_medium
 font montserrat_regular
 font montserrat_semi_bold
+font roboto_mono
+id action
+id back
+id bg
+id check
+id clear
 id close
 id content
+id data
 id description
+id first
+id header
+id hint
 id icon
 id index
 id input
+id last
+id loader
+id middle
+id options
+id right
+id shadow
+id single
+id subtitle
+id subtitle_container
+id text
 id title
 layout dialog_base
+layout fragment_with_back
+layout view_back_header
+layout view_bottom_sheet
+layout view_bottom_tab
+layout view_cell
+layout view_header
+layout view_icon_button
+layout view_input
 layout view_intro_block
+layout view_item_icon
+layout view_item_switch
+layout view_item_text
+layout view_swipe_back
+layout view_text_header
 layout view_word_input
 layout view_word_suggestion
 style Base_Widget_App_Button
@@ -95,9 +157,22 @@ style TextAppearance_Label3
 style TextAppearance_NUM1
 style TextAppearance_NUM2
 style Theme_App
-style Theme_Splash
+style Theme_App_Base
 style Widget_App_Button
 style Widget_App_Button_Secondary
+style Widget_App_Button_Small_Secondary
+style Widget_App_Tabs
+style Widget_App_Tabs_TextAppearance
 style Widget_BottomSheet
 style Widget_BottomSheet_Modal
+styleable BackHeaderView android_title
+styleable BottomTabsView menu
+styleable HeaderView android_action android_icon android_title
+styleable IconButtonView android_icon android_title
+styleable InputView android_button android_hint android_icon
 styleable IntroBlockView android_description android_icon android_title
+styleable ItemIconView android_icon android_text position
+styleable ItemSwitchView android_checked android_text position
+styleable ItemTextView android_data android_text position
+styleable LoaderView android_color
+styleable TextHeaderView android_description android_title

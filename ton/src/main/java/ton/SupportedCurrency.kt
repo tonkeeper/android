@@ -1,4 +1,4 @@
-package com.tonkeeper.ton
+package ton
 
 import java.util.Currency
 
@@ -19,5 +19,6 @@ enum class SupportedCurrency(
     KRW("KRW"),
     IDR("IDR"),
     INR("INR"),
-    JPY("JPY");
+    JPY("JPY"),
+    TON("TON");
 }

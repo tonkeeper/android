@@ -1,4 +1,4 @@
-package com.tonkeeper.ton
+package ton
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -7,7 +7,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.ton.api.liteclient.config.LiteClientConfigGlobal
-import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.lite.client.LiteClient
 import org.ton.mnemonic.Mnemonic
 import java.net.URL

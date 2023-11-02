@@ -1,16 +1,18 @@
 package com.tonkeeper.fragment.wallet.main
 
-import com.tonkeeper.ton.SupportedCurrency
-import com.tonkeeper.ton.Ton
-import com.tonkeeper.uikit.mvi.AsyncState
-import com.tonkeeper.uikit.mvi.UiState
+import com.tonkeeper.fragment.wallet.main.pager.WalletScreenItem
+import ton.SupportedCurrency
+import ton.Ton
+import uikit.mvi.AsyncState
+import uikit.mvi.UiState
 
 data class WalletScreenState(
     val asyncState: AsyncState = AsyncState.Default,
     val currency: SupportedCurrency = SupportedCurrency.USD,
-    val address: String = "0",
-    val tonBalance: Ton = Ton.ZERO,
-    val displayBalance: String = "0",
+    val address: String = "",
+    val tonBalance: Long = 0L,
+    val displayBalance: String = "",
+    val pages: List<WalletScreenItem> = emptyList()
 ): UiState() {
 
 

@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.interpolator
+package uikit.interpolator
 
 import android.view.animation.Interpolator
 import kotlin.math.abs

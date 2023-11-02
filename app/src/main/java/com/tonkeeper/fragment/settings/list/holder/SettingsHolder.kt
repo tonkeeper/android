@@ -1,11 +1,24 @@
 package com.tonkeeper.fragment.settings.list.holder
 
+import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import com.tonkeeper.fragment.settings.list.item.SettingsItem
-import com.tonkeeper.uikit.list.BaseListHolder
+import uikit.extensions.inflate
+import uikit.list.BaseListHolder
 
 abstract class SettingsHolder<I: SettingsItem>(
-    parent: ViewGroup,
-    @LayoutRes resId: Int
-): BaseListHolder<I>(parent, resId)
+    view: View,
+    val onClick: ((SettingsItem) -> Unit)? = null
+): BaseListHolder<I>(view) {
+
+    constructor(
+        parent: ViewGroup,
+        @LayoutRes resId: Int,
+        onClick: ((SettingsItem) -> Unit)? = null
+    ) : this(
+        parent.inflate(resId),
+        onClick
+    )
+
+}

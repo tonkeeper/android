@@ -1,9 +1,9 @@
-package com.tonkeeper.ton.console.method
+package ton.console.method
 
 import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
-import com.tonkeeper.ton.console.Network
+import ton.console.Network
 import org.json.JSONObject
 
 abstract class BaseMethod<R>(path: String) {

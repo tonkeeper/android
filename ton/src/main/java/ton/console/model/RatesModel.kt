@@ -1,7 +1,7 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
 import android.util.ArrayMap
-import com.tonkeeper.ton.SupportedTokens
+import ton.SupportedTokens
 
 data class RatesModel(
     val tokens: ArrayMap<String, RatesTokenModel>

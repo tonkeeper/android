@@ -5,7 +5,7 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonkeeper.R
-import com.tonkeeper.uikit.base.fragment.BaseFragment
+import uikit.base.fragment.BaseFragment
 
 class IntroFragment: BaseFragment(R.layout.fragment_intro) {
 

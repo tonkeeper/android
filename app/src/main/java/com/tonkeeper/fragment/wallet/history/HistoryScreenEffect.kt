@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.wallet.history
 
-class HistoryScreenEffect {
-}
+import uikit.mvi.UiEffect
+
+class HistoryScreenEffect: UiEffect()

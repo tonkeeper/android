@@ -5,7 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <com.tonkeeper.uikit.widget.HeaderView
+    <uikit.widget.HeaderView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:title="@string/settings"/>

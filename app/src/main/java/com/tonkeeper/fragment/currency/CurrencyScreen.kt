@@ -6,17 +6,21 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.R
 import com.tonkeeper.fragment.currency.list.CurrencyAdapter
-import com.tonkeeper.uikit.mvi.UiScreen
-import com.tonkeeper.uikit.navigation.Navigation.Companion.nav
-import com.tonkeeper.uikit.widget.BackHeaderView
+import uikit.base.fragment.BaseFragment
+import uikit.mvi.UiScreen
+import uikit.navigation.Navigation.Companion.nav
+import uikit.widget.BackHeaderView
 
-class CurrencyScreen: UiScreen<CurrencyScreenState, CurrencyScreenFeature>(R.layout.fragment_currency) {
+class CurrencyScreen: UiScreen<CurrencyScreenState, CurrencyScreenEffect, CurrencyScreenFeature>(R.layout.fragment_currency), BaseFragment.SwipeBack {
 
     companion object {
         fun newInstance() = CurrencyScreen()
     }
 
-    override val viewModel: CurrencyScreenFeature by viewModels()
+    override val feature: CurrencyScreenFeature by viewModels()
+
+    override var doOnDraggingProgress: ((Float) -> Unit)? = null
+    override var doOnDragging: ((Boolean) -> Unit)? = null
 
     private lateinit var listView: RecyclerView
     private lateinit var headerView: BackHeaderView
@@ -27,12 +31,13 @@ class CurrencyScreen: UiScreen<CurrencyScreenState, CurrencyScreenFeature>(R.lay
         headerView = view.findViewById(R.id.header)
 
         headerView.doOnBackClick = {
-            nav()?.back()
+            finish()
         }
-        headerView.bindContentPadding(listView)
     }
 
     override fun newUiState(state: CurrencyScreenState) {
-        listView.adapter = CurrencyAdapter(state.items)
+        listView.adapter = CurrencyAdapter(state.items) {
+            feature.setSelect(it.currency)
+        }
     }
 }

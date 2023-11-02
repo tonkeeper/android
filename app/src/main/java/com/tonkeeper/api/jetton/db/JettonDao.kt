@@ -1,4 +1,4 @@
-package com.tonkeeper.api.jetton.cache
+package com.tonkeeper.api.jetton.db
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -10,18 +10,21 @@ import io.tonapi.models.JettonBalance
 @Dao
 interface JettonDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertJettons(jettons: List<JettonEntity>)
+    @Query("DELETE FROM jetton WHERE accountId = :accountId")
+    suspend fun delete(accountId: String)
 
-    suspend fun insertJettons(accountId: String, jettons: List<JettonBalance>) {
-        insertJettons(JettonEntity.map(accountId, jettons))
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(jettons: List<JettonEntity>)
+
+    suspend fun insert(accountId: String, jettons: List<JettonBalance>) {
+        insert(JettonEntity.map(accountId, jettons))
     }
 
     @Query("SELECT * FROM jetton WHERE accountId = :accountId")
-    suspend fun getAllJettons(accountId: String): List<JettonEntity>
+    suspend fun getByAccountId(accountId: String): List<JettonEntity>
 
-    suspend fun getJettons(accountId: String): List<JettonBalance> {
-        return getAllJettons(accountId).map {
+    suspend fun get(accountId: String): List<JettonBalance> {
+        return getByAccountId(accountId).map {
             fromJSON(it.data)
         }
     }

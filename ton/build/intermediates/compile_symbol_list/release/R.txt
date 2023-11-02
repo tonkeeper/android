@@ -1,0 +1,1 @@
+int string tonconsole_token 0x0

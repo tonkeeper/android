@@ -17,3 +17,5 @@ rootProject.name = "Tonkeeper R"
 include(":app")
 include(":uikit")
 include(":ton")
+include(":core")
+include(":tonapi")

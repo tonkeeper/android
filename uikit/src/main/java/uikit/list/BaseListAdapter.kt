@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.list
+package uikit.list
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView

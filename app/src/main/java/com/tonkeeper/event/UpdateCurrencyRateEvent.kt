@@ -1,4 +1,5 @@
 package com.tonkeeper.event
 
-class UpdateCurrencyEvent {
-}
+import core.BaseEvent
+
+object UpdateCurrencyRateEvent: BaseEvent()

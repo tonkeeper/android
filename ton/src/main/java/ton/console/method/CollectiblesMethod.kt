@@ -1,6 +1,6 @@
-package com.tonkeeper.ton.console.method
+package ton.console.method
 
-import com.tonkeeper.ton.console.model.NFTItemModel
+import ton.console.model.NFTItemModel
 import org.json.JSONObject
 
 class CollectiblesMethod(

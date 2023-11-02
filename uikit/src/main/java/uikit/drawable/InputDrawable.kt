@@ -1,4 +1,4 @@
-package com.tonkeeper.uikit.drawable
+package uikit.drawable
 
 import android.animation.ValueAnimator
 import android.content.Context
@@ -7,11 +7,11 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
-import com.tonkeeper.uikit.ArgbEvaluator
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.base.BaseDrawable
-import com.tonkeeper.uikit.extensions.dp
-import com.tonkeeper.uikit.extensions.getDimension
+import uikit.ArgbEvaluator
+import uikit.R
+import uikit.base.BaseDrawable
+import uikit.extensions.dp
+import uikit.extensions.getDimension
 
 class InputDrawable(
     context: Context

@@ -1,4 +1,7 @@
+int anim bottom_sheet_enter 0x0
+int anim bottom_sheet_exit 0x0
 int attr menu 0x0
+int attr position 0x0
 int bool use_light_system_bars 0x0
 int color accentBlue 0x0
 int color accentGreen 0x0
@@ -13,6 +16,7 @@ int color backgroundOverlayExtraLight 0x0
 int color backgroundOverlayLight 0x0
 int color backgroundOverlayStrong 0x0
 int color backgroundPage 0x0
+int color backgroundPageDark 0x0
 int color backgroundTransparent 0x0
 int color buttonPrimaryBackground 0x0
 int color buttonPrimaryBackgroundDisabled 0x0
@@ -32,6 +36,7 @@ int color button_primary_foreground_selector 0x0
 int color constantBlack 0x0
 int color constantBlue 0x0
 int color constantRed 0x0
+int color constantTon 0x0
 int color constantWhite 0x0
 int color fieldActiveBorder 0x0
 int color fieldBackground 0x0
@@ -50,51 +55,90 @@ int color textPrimary 0x0
 int color textPrimaryAlternate 0x0
 int color textSecondary 0x0
 int color textTertiary 0x0
+int dimen actionSize 0x0
 int dimen barHeight 0x0
 int dimen cornerExtraExtraSmall 0x0
 int dimen cornerExtraSmall 0x0
 int dimen cornerLarge 0x0
 int dimen cornerMedium 0x0
 int dimen cornerSmall 0x0
+int dimen gap 0x0
+int dimen itemHeight 0x0
 int dimen offsetExtraExtraSmall 0x0
 int dimen offsetExtraSmall 0x0
 int dimen offsetLarge 0x0
 int dimen offsetMedium 0x0
+int dimen shadowSize 0x0
 int drawable bg_button_primary 0x0
 int drawable bg_button_secondary 0x0
+int drawable bg_content 0x0
+int drawable bg_content_tint 0x0
 int drawable bg_gradient 0x0
+int drawable bg_island_border 0x0
 int drawable bg_modal 0x0
+int drawable bg_oval 0x0
 int drawable bg_oval_button_secondary 0x0
 int drawable bg_oval_button_tertiary 0x0
 int drawable bg_page_gradient 0x0
+int drawable bg_shadow_horizontal 0x0
+int drawable bg_small_button_secondary 0x0
 int drawable bg_splash 0x0
+int drawable bg_tab_indicator 0x0
 int drawable cursor 0x0
 int drawable ic_chevron_left_16 0x0
+int drawable ic_chevron_right_16 0x0
 int drawable ic_close_16 0x0
+int drawable ic_delete_36 0x0
+int drawable ic_done_bold_16 0x0
 int drawable ic_logo_128 0x0
+int drawable ic_xmark_circle_16 0x0
 int font montserrat 0x0
 int font montserrat_bold 0x0
 int font montserrat_light 0x0
 int font montserrat_medium 0x0
 int font montserrat_regular 0x0
 int font montserrat_semi_bold 0x0
+int font roboto_mono 0x0
 int id action 0x0
 int id back 0x0
+int id bg 0x0
+int id check 0x0
+int id clear 0x0
 int id close 0x0
 int id content 0x0
+int id data 0x0
 int id description 0x0
+int id first 0x0
 int id header 0x0
+int id hint 0x0
 int id icon 0x0
 int id index 0x0
 int id input 0x0
+int id last 0x0
+int id loader 0x0
+int id middle 0x0
+int id options 0x0
+int id right 0x0
+int id shadow 0x0
+int id single 0x0
+int id subtitle 0x0
+int id subtitle_container 0x0
+int id text 0x0
 int id title 0x0
 int layout dialog_base 0x0
 int layout fragment_with_back 0x0
 int layout view_back_header 0x0
+int layout view_bottom_sheet 0x0
 int layout view_bottom_tab 0x0
+int layout view_cell 0x0
 int layout view_header 0x0
 int layout view_icon_button 0x0
+int layout view_input 0x0
 int layout view_intro_block 0x0
+int layout view_item_icon 0x0
+int layout view_item_switch 0x0
+int layout view_item_text 0x0
+int layout view_swipe_back 0x0
 int layout view_text_header 0x0
 int layout view_word_input 0x0
 int layout view_word_suggestion 0x0
@@ -115,22 +159,44 @@ int style Theme_App 0x0
 int style Theme_App_Base 0x0
 int style Widget_App_Button 0x0
 int style Widget_App_Button_Secondary 0x0
+int style Widget_App_Button_Small_Secondary 0x0
+int style Widget_App_Tabs 0x0
+int style Widget_App_Tabs_TextAppearance 0x0
 int style Widget_BottomSheet 0x0
 int style Widget_BottomSheet_Modal 0x0
 int[] styleable BackHeaderView { 0x10101e1 }
 int styleable BackHeaderView_android_title 0
 int[] styleable BottomTabsView { 0x0 }
 int styleable BottomTabsView_menu 0
-int[] styleable HeaderView { 0x101002d, 0x10101e1 }
+int[] styleable HeaderView { 0x101002d, 0x1010002, 0x10101e1 }
 int styleable HeaderView_android_action 0
-int styleable HeaderView_android_title 1
+int styleable HeaderView_android_icon 1
+int styleable HeaderView_android_title 2
 int[] styleable IconButtonView { 0x1010002, 0x10101e1 }
 int styleable IconButtonView_android_icon 0
 int styleable IconButtonView_android_title 1
+int[] styleable InputView { 0x1010107, 0x1010150, 0x1010002 }
+int styleable InputView_android_button 0
+int styleable InputView_android_hint 1
+int styleable InputView_android_icon 2
 int[] styleable IntroBlockView { 0x1010020, 0x1010002, 0x10101e1 }
 int styleable IntroBlockView_android_description 0
 int styleable IntroBlockView_android_icon 1
 int styleable IntroBlockView_android_title 2
+int[] styleable ItemIconView { 0x1010002, 0x101014f, 0x0 }
+int styleable ItemIconView_android_icon 0
+int styleable ItemIconView_android_text 1
+int styleable ItemIconView_position 2
+int[] styleable ItemSwitchView { 0x1010106, 0x101014f, 0x0 }
+int styleable ItemSwitchView_android_checked 0
+int styleable ItemSwitchView_android_text 1
+int styleable ItemSwitchView_position 2
+int[] styleable ItemTextView { 0x101002e, 0x101014f, 0x0 }
+int styleable ItemTextView_android_data 0
+int styleable ItemTextView_android_text 1
+int styleable ItemTextView_position 2
+int[] styleable LoaderView { 0x10101a5 }
+int styleable LoaderView_android_color 0
 int[] styleable TextHeaderView { 0x1010020, 0x10101e1 }
 int styleable TextHeaderView_android_description 0
 int styleable TextHeaderView_android_title 1

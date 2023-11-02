@@ -1,6 +1,6 @@
-package com.tonkeeper.ton.console.method
+package ton.console.method
 
-import com.tonkeeper.ton.console.model.AccountModel
+import ton.console.model.AccountModel
 import org.json.JSONObject
 
 class AccountMethod(

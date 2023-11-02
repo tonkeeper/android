@@ -1,6 +1,6 @@
-package com.tonkeeper.ton.console.model
+package ton.console.model
 
-import com.tonkeeper.ton.TonAddress
+import ton.TonAddress
 import org.json.JSONArray
 import org.json.JSONObject
 

@@ -1,6 +1,6 @@
 package com.tonkeeper.event
 
-import com.tonkeeper.ton.SupportedCurrency
+import ton.SupportedCurrency
 import core.BaseEvent
 
-data class ChangeCurrency(val value: SupportedCurrency): BaseEvent()
+data class ChangeCurrencyEvent(val value: SupportedCurrency): BaseEvent()

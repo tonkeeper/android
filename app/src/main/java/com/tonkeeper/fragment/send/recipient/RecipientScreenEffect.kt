@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.send.recipient
 
-class RecipientScreenEffect {
-}
+import uikit.mvi.UiEffect
+
+class RecipientScreenEffect: UiEffect()

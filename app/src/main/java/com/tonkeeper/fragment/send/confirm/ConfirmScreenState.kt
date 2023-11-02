@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.send.confirm
 
-class ConfirmScreenState {
-}
+import uikit.mvi.UiState
+
+class ConfirmScreenState: UiState()

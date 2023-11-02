@@ -1,4 +1,4 @@
-package com.tonkeeper.core
+package com.tonkeeper.core.currency
 
 import android.content.Context
 import androidx.work.Constraints
@@ -20,6 +20,10 @@ class CurrencyUpdateWorker(
         private const val WORKER_NAME = "CurrencyUpdateWorker"
 
         fun enable(context: Context = App.instance) {
+            if (isEnable(context)) {
+                return
+            }
+
             val constraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -31,6 +35,10 @@ class CurrencyUpdateWorker(
                 .build()
 
             WorkManager.getInstance(context).enqueue(hourlyWork)
+        }
+
+        fun isEnable(context: Context = App.instance): Boolean {
+            return WorkManager.getInstance(context).getWorkInfosByTag(WORKER_NAME).get().isNotEmpty()
         }
 
         fun disable(context: Context = App.instance) {

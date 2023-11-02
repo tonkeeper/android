@@ -1,28 +1,31 @@
-package com.tonkeeper.fragment.settings
+package com.tonkeeper.fragment.settings.main
 
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.fragment.currency.CurrencyScreen
-import com.tonkeeper.fragment.legal.LegalFragment
+import com.tonkeeper.fragment.settings.legal.LegalFragment
 import com.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonkeeper.fragment.settings.list.SettingsItemDecoration
-import com.tonkeeper.fragment.settings.list.item.SettingsCellItem
-import kotlinx.coroutines.launch
+import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
+import com.tonkeeper.fragment.settings.list.item.SettingsItem
+import com.tonkeeper.fragment.settings.security.SecurityFragment
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.nav
 
-class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenFeature>(R.layout.fragment_settings) {
+class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(R.layout.fragment_settings) {
 
     companion object {
         fun newInstance() = SettingsScreen()
     }
 
-    override val viewModel: SettingsScreenFeature by viewModels()
+    override val feature: SettingsScreenFeature by viewModels()
+
+    private val logoutDialog: LogoutDialog by lazy {
+        LogoutDialog(requireContext())
+    }
 
     private lateinit var listView: RecyclerView
 
@@ -34,27 +37,40 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenFeature>(R.lay
 
     override fun newUiState(state: SettingsScreenState) {
         listView.adapter = SettingsAdapter(state.items) { item ->
-            if (item is SettingsCellItem) {
+            if (item is SettingsIdItem) {
                 onCellClick(item)
             }
         }
     }
 
-    private fun onCellClick(item: SettingsCellItem) {
+    override fun newUiEffect(effect: SettingsScreenEffect) {
+        super.newUiEffect(effect)
+        if (effect is SettingsScreenEffect.Logout) {
+            nav()?.init(true)
+        }
+    }
+
+    private fun showLogoutDialog() {
+        logoutDialog.show {
+            feature.logout()
+        }
+    }
+
+    private fun onCellClick(item: SettingsIdItem) {
         val nav = nav() ?: return
 
         when (item.id) {
-            SettingsCellItem.LOGOUT_ID -> {
-                lifecycleScope.launch {
-                    App.walletManager.clear()
-                    nav.init()
-                }
+            SettingsIdItem.LOGOUT_ID -> {
+                showLogoutDialog()
             }
-            SettingsCellItem.CURRENCY_ID -> {
+            SettingsIdItem.CURRENCY_ID -> {
                 nav.add(CurrencyScreen.newInstance())
             }
-            SettingsCellItem.LEGAL_ID -> {
+            SettingsIdItem.LEGAL_ID -> {
                 nav.add(LegalFragment.newInstance())
+            }
+            SettingsIdItem.SECURITY_ID -> {
+                nav.add(SecurityFragment.newInstance())
             }
         }
     }

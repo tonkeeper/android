@@ -1,11 +1,11 @@
-package com.tonkeeper.uikit.widget
+package uikit.widget
 
 import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.extensions.dp
+import uikit.R
+import uikit.extensions.dp
 
 class WordHintView @JvmOverloads constructor(
     context: Context,
@@ -28,11 +28,6 @@ class WordHintView @JvmOverloads constructor(
     }
 
     fun setWords(words: List<String>) {
-        if (words.isEmpty()) {
-            hide()
-            return
-        }
-
         visibility = VISIBLE
         removeAllViews()
 

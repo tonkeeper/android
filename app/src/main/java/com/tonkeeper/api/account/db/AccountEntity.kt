@@ -1,4 +1,18 @@
 package com.tonkeeper.api.account.db
 
-class AccountEntity {
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.tonkeeper.api.toJSON
+import io.tonapi.models.Account
+
+@Entity(tableName = "account")
+data class AccountEntity(
+    @PrimaryKey val accountId: String,
+    val data: String
+) {
+
+    constructor(account: Account) : this(
+        accountId = account.address,
+        data = toJSON(account)
+    )
 }

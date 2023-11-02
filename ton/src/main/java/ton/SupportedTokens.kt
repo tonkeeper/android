@@ -1,4 +1,4 @@
-package com.tonkeeper.ton
+package ton
 
 enum class SupportedTokens(
     val code: String

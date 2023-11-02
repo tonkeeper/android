@@ -2,9 +2,11 @@
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <com.tonkeeper.uikit.widget.HeaderView
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:title="@string/activity"/>
@@ -13,12 +15,64 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.tonkeeper.uikit.widget.LoaderView
-            android:id="@+id/loader"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"/>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingHorizontal="@dimen/offsetLarge"
+            android:visibility="gone"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/empty_history_title"
+                android:textAppearance="@style/TextAppearance.H2"
+                android:textColor="@color/textPrimary"
+                android:gravity="center"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetExtraSmall"
+                android:text="@string/empty_history_subtitle"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="@color/textSecondary"
+                android:gravity="center"/>
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:layout_gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    style="@style/Widget.App.Button.Secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:text="@string/buy_toncoin"/>
+
+                <Button
+                    style="@style/Widget.App.Button.Secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/offsetMedium"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:text="@string/receive"/>
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
     </FrameLayout>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

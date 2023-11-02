@@ -1,28 +1,12 @@
-package com.tonkeeper.ton
+package ton
 
 import android.app.Application
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import org.ton.api.liteclient.config.LiteClientConfigGlobal
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.block.MsgAddressInt
-import org.ton.contract.wallet.WalletContract
-import org.ton.contract.wallet.WalletV4R2Contract
-import org.ton.crypto.Ed25519
-import org.ton.lite.client.LiteClient
 import org.ton.mnemonic.Mnemonic
-import java.net.URL
-import java.security.KeyStore
-import java.security.PublicKey
-import java.util.Enumeration
-import javax.crypto.Cipher
-import javax.crypto.SecretKey
 
 class WalletManager(
     application: Application

@@ -1,10 +1,22 @@
-package com.tonkeeper.ton
+package ton
 
 import org.ton.block.AddrStd
 
 data class TonAddress(
     private val address: AddrStd
 ) {
+
+    companion object {
+
+        fun isValid(address: String): Boolean {
+            return try {
+                AddrStd(address)
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
 
     constructor(address: String) : this(AddrStd(address))
 

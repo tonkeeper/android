@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Rect
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.uikit.R
-import com.tonkeeper.uikit.extensions.getDimensionPixelSize
+import uikit.R
+import uikit.extensions.getDimensionPixelSize
 
 class SettingsItemDecoration(
     context: Context

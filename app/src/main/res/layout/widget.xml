@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_button_primary"
+    android:padding="@dimen/offsetMedium"
+    android:orientation="vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:id="@+id/rate"
+        android:singleLine="true"
+        android:textColor="@color/textPrimary"
+        android:textAppearance="@style/TextAppearance.H2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/diff24h"
+        android:singleLine="true"
+        android:textColor="@color/textPrimary"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/last_update"
+        android:singleLine="true"
+        android:textColor="@color/textPrimary"
+        android:textAppearance="@style/TextAppearance.Label2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>

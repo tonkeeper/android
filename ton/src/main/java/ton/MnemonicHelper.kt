@@ -1,6 +1,5 @@
-package com.tonkeeper.ton
+package ton
 
-import org.ton.contract.wallet.WalletV4R2Contract
 import org.ton.mnemonic.Mnemonic
 
 object MnemonicHelper {

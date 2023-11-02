@@ -1,4 +1,4 @@
-package com.tonkeeper.ton
+package ton
 
 import java.text.DecimalFormat
 import java.text.NumberFormat

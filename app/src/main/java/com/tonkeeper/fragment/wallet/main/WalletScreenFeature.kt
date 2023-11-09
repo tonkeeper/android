@@ -12,6 +12,7 @@ import com.tonkeeper.api.collectibles.CollectiblesRepository
 import com.tonkeeper.api.collectionName
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.title
+import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
@@ -145,7 +146,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             currentState.copy(
                 asyncState = AsyncState.Default,
                 currency = currency,
-                address = data.accountId,
+                address = data.accountId.userLikeAddress,
                 tonBalance = data.account.balance,
                 displayBalance = Coin.format(currency, allInCurrency),
                 pages = pages

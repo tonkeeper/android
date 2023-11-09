@@ -16,8 +16,10 @@ import com.tonkeeper.api.collectibles.db.CollectiblesDao
 import com.tonkeeper.api.collectibles.db.CollectiblesEntity
 import com.tonkeeper.api.nft.db.NftDao
 import com.tonkeeper.api.nft.db.NftEntity
-import com.tonkeeper.tonconnect.db.ManifestDao
-import com.tonkeeper.tonconnect.db.ManifestEntity
+import com.tonkeeper.core.tonconnect.db.AppDao
+import com.tonkeeper.core.tonconnect.db.AppEntity
+import com.tonkeeper.core.tonconnect.db.ManifestDao
+import com.tonkeeper.core.tonconnect.db.ManifestEntity
 
 @Database(entities = [
     JettonEntity::class,
@@ -25,8 +27,9 @@ import com.tonkeeper.tonconnect.db.ManifestEntity
     CollectiblesEntity::class,
     AccountEntity::class,
     NftEntity::class,
-    ManifestEntity::class
-], version = 14, exportSchema = false)
+    ManifestEntity::class,
+    AppEntity::class
+], version = 16, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     companion object {
@@ -76,5 +79,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun nftDao(): NftDao
 
     abstract fun tonConnectManifestDao(): ManifestDao
+
+    abstract fun tonConnectAppDao(): AppDao
 
 }

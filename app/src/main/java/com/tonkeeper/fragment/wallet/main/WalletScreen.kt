@@ -1,5 +1,6 @@
 package com.tonkeeper.fragment.wallet.main
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
@@ -7,6 +8,7 @@ import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import com.tonkeeper.R
+import com.tonkeeper.fragment.camera.CameraFragment
 import com.tonkeeper.fragment.receive.ReceiveScreen
 import com.tonkeeper.fragment.send.SendScreen
 import com.tonkeeper.fragment.wallet.main.pager.WalletScreenAdapter
@@ -36,6 +38,11 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
+        headerView.actionView.background = null
+        headerView.actionView.imageTintList = ColorStateList.valueOf(getColor(uikit.R.color.accentBlue))
+        headerView.doOnActionClick = {
+            nav()?.add(CameraFragment.newInstance())
+        }
 
         amountView = view.findViewById(R.id.amount)
         addressView = view.findViewById(R.id.address)

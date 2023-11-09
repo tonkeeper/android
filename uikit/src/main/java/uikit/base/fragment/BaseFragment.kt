@@ -1,6 +1,7 @@
 package uikit.base.fragment
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.SpannableString
 import android.util.Log
@@ -18,6 +19,7 @@ import androidx.annotation.ColorRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.core.app.SharedElementCallback
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.transition.TransitionInflater
 import uikit.R
@@ -169,6 +171,10 @@ open class BaseFragment(
     @ColorInt
     fun getColor(@ColorRes colorRes: Int): Int {
         return requireContext().getColor(colorRes)
+    }
+
+    fun hasPermission(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED
     }
 
 }

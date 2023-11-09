@@ -62,13 +62,28 @@
             android:textColor="@color/textSecondary"
             android:gravity="center"/>
 
-        <Button
-            style="@style/Widget.App.Button"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/offsetMedium"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:text="@string/connect_wallet"/>
+            android:layout_height="@dimen/itemHeight"
+            android:layout_marginTop="@dimen/offsetMedium">
+
+            <Button
+                style="@style/Widget.App.Button"
+                android:id="@+id/connect_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:text="@string/connect_wallet"/>
+
+            <uikit.widget.LoaderView
+                android:id="@+id/connect_loader"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                />
+        </FrameLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="match_parent"

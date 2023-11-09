@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.ton.api.liteclient.config.LiteClientConfigGlobal
+import org.ton.block.AccountInfo
 import org.ton.lite.client.LiteClient
 import org.ton.mnemonic.Mnemonic
 import java.net.URL
@@ -30,12 +31,18 @@ internal class TonWrapper(
         json.decodeFromString(data)
     }
 
-    suspend fun createWallet(): WalletInfo = withContext(Dispatchers.Main) {
+    suspend fun createWallet(): WalletInfo = withContext(Dispatchers.IO) {
         val words = Mnemonic.generate()
         WalletInfo(words)
     }
 
-    suspend fun restoreWallet(words: List<String>): WalletInfo = withContext(Dispatchers.Main) {
+    suspend fun restoreWallet(words: List<String>): WalletInfo = withContext(Dispatchers.IO) {
         WalletInfo(words)
+    }
+
+    suspend fun getAccount(
+        address: String
+    ): AccountInfo? = withContext(Dispatchers.IO) {
+        return@withContext liteClient!!.getAccount(address)
     }
 }

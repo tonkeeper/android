@@ -23,4 +23,5 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation("androidx.security:security-crypto:1.0.0")
 }

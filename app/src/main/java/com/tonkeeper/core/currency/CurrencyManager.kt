@@ -28,6 +28,11 @@ class CurrencyManager {
     private val jettonRepository = JettonRepository()
     private val repository = RatesRepository()
 
+    suspend fun init(accountId: String) {
+        repository.get(accountId)
+        jettonRepository.get(accountId)
+    }
+
     suspend fun sync() {
         val wallet = App.walletManager.getWalletInfo() ?: return
         val address = wallet.address

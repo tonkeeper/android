@@ -24,10 +24,11 @@ class HeaderView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : LinearLayoutCompat(context, attrs, defStyle) {
 
-    private val closeView: AppCompatImageView
+    val closeView: AppCompatImageView
+    val actionView: AppCompatImageView
+
     private val titleView: AppCompatTextView
     private val subtitleContainerView: View
-    private val actionView: AppCompatImageView
     private val subtitleView: AppCompatTextView
     private val loaderView: LoaderView
 

@@ -12,7 +12,7 @@ import uikit.navigation.Navigation
 import com.tonkeeper.fragment.main.MainFragment
 import com.tonkeeper.fragment.passcode.PasscodeScreen
 import com.tonkeeper.fragment.web.WebFragment
-import com.tonkeeper.tonconnect.TonConnect
+import com.tonkeeper.core.tonconnect.TonConnect
 import kotlinx.coroutines.launch
 
 class MainActivity: BaseActivity(), Navigation {
@@ -28,10 +28,8 @@ class MainActivity: BaseActivity(), Navigation {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        if (savedInstanceState == null) {
-            init(false)
-        }
         handleIntent(intent)
+        tonConnect.start()
     }
 
     private fun handleIntent(intent: Intent) {
@@ -88,6 +86,11 @@ class MainActivity: BaseActivity(), Navigation {
 
     override fun openURL(url: String) {
         add(WebFragment.newInstance(url))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        tonConnect.destroy()
     }
 
 }

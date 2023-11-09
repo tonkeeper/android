@@ -12,6 +12,7 @@
     <string name="details">Details</string>
     <string name="view_in_explorer">View in explorer</string>
     <string name="owner">Owner</string>
+    <string name="scan_qr_code">Scan QR code</string>
 
     <string name="tokens">Tokens</string>
     <string name="today">Today</string>

@@ -23,18 +23,22 @@ abstract class BaseBlobRepository<Data>(
     private val memory = ConcurrentHashMap<String, Data>(100, 1.0f, 2)
 
     suspend fun fromCache(
-        accountId: String
+        accountId: String = "global"
     ): Data? = withContext(Dispatchers.IO) {
         val file = getFile(accountId)
         if (!file.exists()) return@withContext null
-        val blob = file.readText()
-        val response = onParse(blob)
-        setMemory(accountId, response)
-        return@withContext response
+        try {
+            val blob = file.readText()
+            val response = onParse(blob)
+            setMemory(accountId, response)
+            return@withContext response
+        } catch (e: Exception) {
+            return@withContext null
+        }
     }
 
     suspend fun saveCache(
-        accountId: String,
+        accountId: String = "global",
         blob: String
     ) = withContext(Dispatchers.IO) {
         val file = getFile(accountId)
@@ -42,7 +46,7 @@ abstract class BaseBlobRepository<Data>(
     }
 
     fun getFile(
-        accountId: String
+        accountId: String = "global"
     ): File {
         val folder = File(cacheFolder, accountId)
         if (!folder.exists()) {
@@ -51,11 +55,11 @@ abstract class BaseBlobRepository<Data>(
         return File(folder, "${name}.json")
     }
 
-    fun setMemory(accountId: String, data: Data) {
+    fun setMemory(accountId: String = "global", data: Data) {
         memory[accountId] = data
     }
 
-    fun getFromMemory(accountId: String): Data? {
+    fun getFromMemory(accountId: String = "global"): Data? {
         return memory[accountId]
     }
 

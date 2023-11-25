@@ -38,6 +38,12 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
     }
 
     fun setValue(value: Float) {
+        updateUiState { currentState ->
+            currentState.copy(
+                canContinue = false
+            )
+        }
+
         queueScope.submit {
             val data = getWalletData()
             val balance = Coin.toCoins(data.account.balance)
@@ -56,7 +62,7 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
                     rate = getRateDisplay(tonInCurrency),
                     insufficientBalance = insufficientBalance,
                     remaining = remaining,
-                    canContinue = !insufficientBalance,
+                    canContinue = !insufficientBalance && value > 0,
                     maxActive = balance == value
                 )
             }

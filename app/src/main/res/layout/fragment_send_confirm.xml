@@ -16,12 +16,12 @@
                 android:id="@+id/icon"
                 android:layout_width="96dp"
                 android:layout_height="96dp"
-                android:background="@color/constantRed"
                 android:layout_gravity="center"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
                 android:text="@string/confirm_action"
                 android:gravity="center"
                 android:textAppearance="@style/TextAppearance.Body1"
@@ -31,28 +31,25 @@
                 android:id="@+id/title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetExtraSmall"
                 android:text="Transfer"
                 android:gravity="center"
                 android:textAppearance="@style/TextAppearance.H3"
                 android:textColor="@color/textPrimary"/>
 
             <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/items"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:background="@drawable/bg_content">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="fsdfdsfds"/>
-
-            </androidx.appcompat.widget.LinearLayoutCompat>
+                android:orientation="vertical"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:layout_marginHorizontal="@dimen/offsetMedium"/>
         </androidx.appcompat.widget.LinearLayoutCompat>
 
     </ScrollView>
 
     <Button
+        android:id="@+id/send"
         style="@style/Widget.App.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -61,6 +58,5 @@
         android:textAppearance="@style/TextAppearance.Label1"
         android:textColor="@color/textPrimary"
         android:layout_gravity="bottom"
-        android:enabled="false"
         android:text="@string/confirm_and_send"/>
 </FrameLayout>

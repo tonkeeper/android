@@ -16,6 +16,7 @@ import androidx.annotation.DimenRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleableRes
+import java.util.Locale
 
 fun Context.inflate(
     @LayoutRes layoutId: Int,
@@ -78,3 +79,9 @@ val Context.statusBarHeight: Int
         val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
         return resourceId.takeIf { it > 0 }?.let { resources.getDimensionPixelSize(it) } ?: 0
     }
+
+val Context.locale: Locale
+    get() {
+        return resources.configuration.locales.get(0)
+    }
+

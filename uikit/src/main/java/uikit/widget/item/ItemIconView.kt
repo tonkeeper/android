@@ -1,6 +1,7 @@
 package uikit.widget.item
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
@@ -39,5 +40,9 @@ class ItemIconView @JvmOverloads constructor(
             iconRes = it.getResourceId(R.styleable.ItemIconView_android_icon, R.drawable.ic_chevron_right_16)
             position = ListCell.from(it.getString(R.styleable.ItemIconView_position))
         }
+    }
+
+    fun setIconTintColor(color: Int) {
+        iconView.imageTintList = ColorStateList.valueOf(color)
     }
 }

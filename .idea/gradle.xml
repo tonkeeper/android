@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/shimmer" />
             <option value="$PROJECT_DIR$/ton" />
             <option value="$PROJECT_DIR$/tonapi" />
             <option value="$PROJECT_DIR$/uikit" />

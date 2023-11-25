@@ -24,6 +24,7 @@ android {
 dependencies {
     implementation("org.ton:ton-kotlin:0.2.15")
     implementation("androidx.security:security-crypto:1.0.0")
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(project(":tonapi"))
+    implementation(project(":core"))
 }

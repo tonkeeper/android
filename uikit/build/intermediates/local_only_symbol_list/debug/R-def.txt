@@ -91,8 +91,12 @@ drawable ic_chevron_left_16
 drawable ic_chevron_right_16
 drawable ic_close_16
 drawable ic_delete_36
+drawable ic_done_16
 drawable ic_done_bold_16
+drawable ic_gear_16
 drawable ic_logo_128
+drawable ic_magnifying_glass_16
+drawable ic_plus_alternate_16
 drawable ic_xmark_circle_16
 font montserrat
 font montserrat_bold
@@ -110,8 +114,11 @@ id close
 id content
 id data
 id description
+id dialog_header
+id field
 id first
 id header
+id header_title
 id hint
 id icon
 id index
@@ -129,6 +136,8 @@ id text
 id title
 layout dialog_base
 layout fragment_with_back
+layout shimmer_icon_button
+layout view_action_sheet_item
 layout view_back_header
 layout view_bottom_sheet
 layout view_bottom_tab
@@ -140,6 +149,7 @@ layout view_intro_block
 layout view_item_icon
 layout view_item_switch
 layout view_item_text
+layout view_search_input
 layout view_swipe_back
 layout view_text_header
 layout view_word_input
@@ -170,10 +180,11 @@ styleable BackHeaderView android:title
 styleable BottomTabsView menu
 styleable HeaderView android:icon android:title android:action
 styleable IconButtonView android:icon android:title
-styleable InputView android:hint android:icon android:button
+styleable InputView android:hint android:icon android:button android:enabled
 styleable IntroBlockView android:icon android:title android:description
 styleable ItemIconView android:text android:icon position
 styleable ItemSwitchView android:text android:checked position
 styleable ItemTextView android:text android:data position
 styleable LoaderView android:color
+styleable SearchInput android:text android:hint android:button
 styleable TextHeaderView android:title android:description

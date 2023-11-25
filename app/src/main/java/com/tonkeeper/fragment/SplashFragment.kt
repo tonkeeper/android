@@ -9,13 +9,10 @@ import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.collectibles.CollectiblesRepository
 import com.tonkeeper.api.event.EventRepository
 import com.tonkeeper.api.jetton.JettonRepository
-import com.tonkeeper.api.nft.NftRepository
 import com.tonkeeper.core.currency.CurrencyManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ton.WalletManager
 import uikit.navigation.Navigation.Companion.nav
 
 class SplashFragment: Fragment(R.layout.fragment_splash) {
@@ -28,7 +25,8 @@ class SplashFragment: Fragment(R.layout.fragment_splash) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
-            initWallet()
+            // initWallet()
+            App.fiat.init(App.settings.country)
 
             withContext(Dispatchers.Main) {
                 nav()?.init(false)

@@ -3,6 +3,9 @@ package com.tonkeeper.fragment.currency
 import androidx.annotation.StringRes
 import com.tonkeeper.App
 import com.tonkeeper.R
+import com.tonkeeper.core.widget.Widget
+import com.tonkeeper.core.widget.WidgetBalanceProvider
+import com.tonkeeper.core.widget.WidgetRateProvider
 import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.fragment.currency.list.CurrencyItem
 import ton.SupportedCurrency
@@ -28,6 +31,8 @@ class CurrencyScreenFeature: UiFeature<CurrencyScreenState, CurrencyScreenEffect
         App.settings.currency = currency
 
         EventBus.post(ChangeCurrencyEvent(currency))
+
+        Widget.updateAll()
 
         updateUiState {
             it.copy(

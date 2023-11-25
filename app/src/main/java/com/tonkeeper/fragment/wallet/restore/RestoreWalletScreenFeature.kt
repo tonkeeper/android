@@ -15,7 +15,7 @@ class RestoreWalletScreenFeature: UiFeature<RestoreWalletScreenState, RestoreWal
             state.copy(loading = true)
         }
         viewModelScope.launch {
-            App.walletManager.restoreWallet(words)
+            App.walletManager.addWallet(words)
             updateUiState { state ->
                 state.copy(done = true)
             }

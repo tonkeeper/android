@@ -38,8 +38,9 @@ class PhraseWalletFragment: WithBackFragment(R.layout.fragment_phrase_wallet) {
 
     private fun loadWords() {
         lifecycleScope.launch {
-            val words = App.walletManager.getWalletInfo()?.words
-            wordsView.setWords(words ?: emptyList())
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            val words = App.walletManager.getMnemonic(wallet.id)
+            wordsView.setWords(words)
         }
     }
 

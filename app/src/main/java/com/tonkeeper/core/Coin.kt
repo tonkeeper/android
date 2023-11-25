@@ -30,7 +30,8 @@ object Coin {
         put("JPY", "¥")
         put("TRY", "₺")
         put("THB", "฿")
-        put("TON", "\uD83D\uDC8E")
+        // put("TON", "\uD83D\uDC8E")
+        put("TON", "TON")
     }
 
     private val currencyFormat = (NumberFormat.getCurrencyInstance() as DecimalFormat)
@@ -62,31 +63,35 @@ object Coin {
     fun format(
         currency: SupportedCurrency,
         value: Long,
-        useCurrencyCode: Boolean = false
+        useCurrencyCode: Boolean = false,
+        decimals: Int = 2
     ): String {
-        return format(currency.code, toCoins(value), useCurrencyCode)
+        return format(currency.code, toCoins(value), useCurrencyCode, decimals)
     }
 
     fun format(
         currency: SupportedCurrency,
         value: Float,
-        useCurrencyCode: Boolean = false
+        useCurrencyCode: Boolean = false,
+        decimals: Int = 2
     ): String {
-        return format(currency.code, value, useCurrencyCode)
+        return format(currency.code, value, useCurrencyCode, decimals)
     }
 
     fun format(
         currency: String = "",
         value: Long,
-        useCurrencyCode: Boolean = false
+        useCurrencyCode: Boolean = false,
+        decimals: Int = 2
     ): String {
-        return format(currency, toCoins(value), useCurrencyCode)
+        return format(currency, toCoins(value), useCurrencyCode, decimals)
     }
 
     fun format(
         currency: String = "",
         value: Float,
-        useCurrencyCode: Boolean = false
+        useCurrencyCode: Boolean = false,
+        decimals: Int = 2
     ): String {
         if (currency.isNotEmpty()) {
             val customSymbol = getSymbols(currency, useCurrencyCode)
@@ -96,6 +101,7 @@ object Coin {
             currencyFormat.currency = Currency.getInstance(currency)
             return currencyFormat.format(value)
         }
+        simpleFormat.maximumFractionDigits = decimals
         return simpleFormat.format(value)
     }
 

@@ -4,7 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 
 abstract class BaseListAdapter<T>(
-    private val items: List<BaseListItem>
+    val items: MutableList<BaseListItem>
 ): RecyclerView.Adapter<BaseListHolder<out BaseListItem>>() {
 
     fun get(position: Int) = items[position]

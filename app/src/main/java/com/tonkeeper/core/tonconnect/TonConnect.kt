@@ -6,39 +6,29 @@ import android.util.Log
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.google.crypto.tink.subtle.Hex
 import com.tonkeeper.App
+import com.tonkeeper.api.TonNetwork
 import com.tonkeeper.dialog.TonConnectDialog
 import com.tonkeeper.core.tonconnect.models.TCApp
 import com.tonkeeper.core.tonconnect.models.TCData
 import com.tonkeeper.core.tonconnect.models.TCItem
 import com.tonkeeper.core.tonconnect.models.TCKeyPair
 import com.tonkeeper.core.tonconnect.models.TCManifest
-import com.tonkeeper.core.tonconnect.models.TCProofPayload
 import com.tonkeeper.core.tonconnect.models.TCRequest
 import com.tonkeeper.core.tonconnect.models.reply.TCAddressItemReply
 import com.tonkeeper.core.tonconnect.models.reply.TCConnectEventSuccess
-import com.tonkeeper.core.tonconnect.models.reply.TCProofItemReplySuccess
 import com.tonkeeper.core.tonconnect.models.reply.TCReply
-import core.EncryptedKeyValue
+import core.keyvalue.EncryptedKeyValue
 import core.extensions.toBase64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import org.ton.block.AddrStd
 import org.ton.block.StateInit
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletContract
-import ton.WalletInfo
+import ton.wallet.WalletInfo
 import java.net.URL
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.security.KeyFactory
-import java.security.MessageDigest
-import java.security.Signature
-import java.security.spec.PKCS8EncodedKeySpec
 
 class TonConnect(
     private val context: Context,
@@ -78,6 +68,7 @@ class TonConnect(
     fun processUri(uri: Uri) {
         val request = TCRequest(uri)
 
+        Log.d("TonConnectLog", "open client: ${request}")
         dialog.show()
         scope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
@@ -93,12 +84,14 @@ class TonConnect(
     }
 
     private fun connect(data: TCData) {
+        Log.d("TonConnectLog", "target client id: ${data.clientId}")
         scope.launch(Dispatchers.IO) {
             try {
                 val accountId = getAccountId()
                 val app = appRepository.createApp(accountId, data.url, data.clientId)
+
                 val appKeyPair = TCKeyPair(
-                    publicKey = app.publicKey,
+                    // publicKey = app.publicKey,
                     privateKey = app.privateKey
                 )
 
@@ -116,9 +109,13 @@ class TonConnect(
                     }
                 }
 
+                Log.d("TonConnectLog", "response items: $items")
+
                 val event = TCConnectEventSuccess(items)
 
-                val data = Json.encodeToString(event)
+                Log.d("TonConnectLog", "event: $event")
+
+                val data = event.toJSON().toString()
 
                 Log.d("TonConnectLog", "data: $data")
 
@@ -126,7 +123,6 @@ class TonConnect(
             } catch (e: Throwable) {
                 Log.e("TonConnectLog", "error", e)
             }
-
 
         }
     }
@@ -136,20 +132,19 @@ class TonConnect(
     ): TCAddressItemReply {
         val wallet = App.walletManager.getWalletInfo()!!
 
-        val walletStateInit = getWalletStateInit(wallet)
+        val walletStateInit = getWalletStateInit(wallet.stateInit)
 
         return TCAddressItemReply(
             address = accountId,
-            network = "mainnet",
+            network = TonNetwork.MAINNET.value.toString(),
             walletStateInit = walletStateInit,
             publicKey = Hex.encode(wallet.publicKey.key.toByteArray())
         )
     }
 
     private fun getWalletStateInit(
-        wallet: WalletInfo
+        stateInit: StateInit
     ): String {
-        val stateInit = wallet.stateInit
         val builder = CellBuilder()
         StateInit.storeTlb(builder, stateInit)
         val cell = builder.endCell()

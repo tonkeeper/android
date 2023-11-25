@@ -29,4 +29,9 @@ abstract class PagerScreen<S: UiState, E: UiEffect, F: UiFeature<S, E>>(
     open fun onVisibleChange(visible: Boolean) {
 
     }
+
+    override fun onResume() {
+        super.onResume()
+        visible = true
+    }
 }

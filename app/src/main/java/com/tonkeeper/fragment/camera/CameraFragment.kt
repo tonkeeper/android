@@ -1,5 +1,6 @@
 package com.tonkeeper.fragment.camera
 
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -7,10 +8,21 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.mlkit.vision.MlKitAnalyzer
+import androidx.camera.view.CameraController
+import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.tonkeeper.MainActivity
 import com.tonkeeper.R
 import uikit.base.fragment.BaseFragment
 import uikit.widget.HeaderView
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
@@ -30,8 +42,8 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
 
     private lateinit var cameraView: PreviewView
     private lateinit var headerView: HeaderView
-
-    private var cameraProvider: ProcessCameraProvider? = null
+    private lateinit var cameraExecutor: ExecutorService
+    private lateinit var barcodeScanner: BarcodeScanner
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -40,30 +52,46 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         headerView = view.findViewById(R.id.header)
         headerView.background = null
         headerView.doOnCloseClick = { finish() }
+
+        cameraExecutor = Executors.newSingleThreadExecutor()
+
+        barcodeScanner = BarcodeScanning.getClient(
+            BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                .build()
+        )
     }
 
     private fun startCamera() {
         val context = requireContext()
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-        cameraProviderFuture.addListener({
-            try {
-                cameraProvider = cameraProviderFuture.get()
-                val cameraSelectorUseCase = CameraHelper.getCameraSelector(cameraProvider!!)
-                val previewUseCase = Preview.Builder().build().apply {
-                    setSurfaceProvider(cameraView.surfaceProvider)
+        val cameraController = LifecycleCameraController(context)
+        cameraController.setImageAnalysisAnalyzer(
+            mainExecutor,
+            MlKitAnalyzer(
+                listOf(barcodeScanner),
+                CameraController.COORDINATE_SYSTEM_VIEW_REFERENCED,
+                mainExecutor
+            ) { result: MlKitAnalyzer.Result? ->
+                val barcodeResults = result?.getValue(barcodeScanner)
+                if ((barcodeResults == null) ||
+                    (barcodeResults.size == 0) ||
+                    (barcodeResults.first() == null)
+                ) {
+                    cameraView.overlay.clear()
+                    cameraView.setOnTouchListener { _, _ -> false }
+                    return@MlKitAnalyzer
                 }
-                cameraProvider?.unbindAll()
-                cameraProvider?.bindToLifecycle(this, cameraSelectorUseCase, previewUseCase)
-                Log.d("CameraFragmentLog", "bindToLifecycle")
-            } catch (e: Throwable) {
-                Log.e("CameraFragmentLog", "startCamera error", e)
-                finish()
+
+                handleBarcode(barcodeResults[0])
+                cameraView.overlay.clear()
             }
-        }, context.mainExecutor)
+        )
+
+        cameraController.bindToLifecycle(this)
+        cameraView.controller = cameraController
     }
 
-    override fun onResume() {
-        super.onResume()
+    private fun checkAndStartCamera() {
         if (hasPermission(android.Manifest.permission.CAMERA)) {
             startCamera()
         } else {
@@ -71,8 +99,30 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         }
     }
 
+    private fun handleBarcode(barcode: Barcode) {
+        when (barcode.valueType) {
+            Barcode.TYPE_URL -> {
+                barcode.url?.url?.let { url ->
+                    pushUri(Uri.parse(url))
+                }
+            }
+        }
+    }
+
+    private fun pushUri(uri: Uri) {
+        val activity = activity as? MainActivity ?: return
+        activity.handleUri(uri)
+        finish()
+    }
+
+    override fun onEndShowingAnimation() {
+        super.onEndShowingAnimation()
+        checkAndStartCamera()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        cameraProvider?.unbindAll()
+        cameraExecutor.shutdown()
+        barcodeScanner.close()
     }
 }

@@ -9,7 +9,7 @@ import uikit.list.BaseListItem
 
 class WalletScreenAdapter(
     items: List<WalletScreenItem>
-): BaseListAdapter<WalletScreenHolder>(items) {
+): BaseListAdapter<WalletScreenHolder>(items.toMutableList()) {
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return WalletScreenHolder(parent)
     }

@@ -30,7 +30,7 @@ class SwipeBackLayout @JvmOverloads constructor(
     }
 
     private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = 180
+        duration = 120
         interpolator = SwipeBackLayout.interpolator
         addUpdateListener(this@SwipeBackLayout)
         doOnStart { setLayerType(LAYER_TYPE_HARDWARE, null) }
@@ -46,6 +46,7 @@ class SwipeBackLayout @JvmOverloads constructor(
     var doOnCloseScreen: (() -> Unit)? = null
     var doOnDragging: ((Boolean) -> Unit)? = null
     var doOnDraggingProgress: ((Float) -> Unit)? = null
+    var doOnEndShowingAnimation: (() -> Unit)? = null
 
     init {
         inflate(context, R.layout.view_swipe_back, this)
@@ -166,6 +167,7 @@ class SwipeBackLayout @JvmOverloads constructor(
         shadowView.translationX = animationOffsetX
         setLayerType(LAYER_TYPE_HARDWARE, null)
         doOnLayout {
+            animation.doOnEnd { doOnEndShowingAnimation?.invoke() }
             animation.start()
         }
     }

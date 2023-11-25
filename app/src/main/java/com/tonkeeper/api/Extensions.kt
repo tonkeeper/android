@@ -5,6 +5,8 @@ import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.ImagePreview
 import io.tonapi.models.JettonBalance
+import io.tonapi.models.JettonPreview
+import io.tonapi.models.JettonSwapAction
 import io.tonapi.models.NftItem
 import io.tonapi.models.TonTransferAction
 import kotlinx.coroutines.delay
@@ -38,6 +40,24 @@ inline fun <reified T> toJSON(obj: T): String {
 inline fun <reified T> fromJSON(json: String): T {
     return Serializer.moshi.adapter(T::class.java).fromJson(json)!!
 }
+
+val JettonSwapAction.jettonPreview: JettonPreview?
+    get() {
+        return jettonMasterIn ?: jettonMasterOut
+    }
+
+val JettonSwapAction.amount: String
+    get() {
+        if (amountIn.isEmpty()) {
+            return amountOut
+        }
+        return amountIn
+    }
+
+val JettonSwapAction.ton: Long
+    get() {
+        return tonIn ?: tonOut ?: 0
+    }
 
 val AccountAddress.nameOrAddress: String
     get() {

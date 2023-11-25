@@ -1,5 +1,6 @@
 package com.tonkeeper.api.account
 
+import android.util.Log
 import androidx.collection.ArrayMap
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
@@ -54,7 +55,6 @@ class AccountRepository(
         if (cache != null) {
             return@withContext cache
         }
-
         return@withContext fromCloud(accountId)
     }
 }

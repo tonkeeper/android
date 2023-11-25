@@ -1,10 +1,14 @@
 package com.tonkeeper
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonkeeper.core.Coin
 import com.tonkeeper.fragment.intro.IntroFragment
 import uikit.base.BaseActivity
 import uikit.base.fragment.BaseFragment
@@ -13,7 +17,9 @@ import com.tonkeeper.fragment.main.MainFragment
 import com.tonkeeper.fragment.passcode.PasscodeScreen
 import com.tonkeeper.fragment.web.WebFragment
 import com.tonkeeper.core.tonconnect.TonConnect
+import com.tonkeeper.fragment.send.SendScreen
 import kotlinx.coroutines.launch
+import uikit.navigation.Navigation.Companion.nav
 
 class MainActivity: BaseActivity(), Navigation {
 
@@ -30,6 +36,12 @@ class MainActivity: BaseActivity(), Navigation {
         setContentView(R.layout.activity_main)
         handleIntent(intent)
         tonConnect.start()
+        initDebugVersion()
+    }
+
+    private fun initDebugVersion() {
+        val debugVersionView = findViewById<AppCompatTextView>(R.id.debug_version)
+        debugVersionView.text = BuildConfig.VERSION_NAME+" ("+BuildConfig.VERSION_CODE+")"
     }
 
     private fun handleIntent(intent: Intent) {
@@ -37,9 +49,26 @@ class MainActivity: BaseActivity(), Navigation {
         handleUri(data)
     }
 
-    private fun handleUri(uri: Uri) {
+    fun handleUri(uri: Uri) {
         if (tonConnect.isSupportUri(uri)) {
             tonConnect.processUri(uri)
+        } else if (uri.scheme == "ton" || uri.host == "app.tonkeeper.com") {
+            handleTON(uri)
+        }
+    }
+
+    private fun handleTON(uri: Uri) {
+        val action = if (uri.scheme == "ton") {
+            uri.host
+        } else {
+            uri.pathSegments.firstOrNull()
+        }
+        if (action == "transfer") {
+            val address = uri.lastPathSegment ?: return
+            val text = uri.getQueryParameter("text")
+            val amount = uri.getQueryParameter("amount")?.toLongOrNull() ?: 0
+            // val allowCustom = uri.getQueryParameter("allow_custom")
+            nav()?.add(SendScreen.newInstance(address, text, Coin.toCoins(amount)))
         }
     }
 
@@ -59,6 +88,17 @@ class MainActivity: BaseActivity(), Navigation {
                 replace(MainFragment.newInstance(), false)
             }
         }
+    }
+
+    override fun setFragmentResult(requestKey: String, result: Bundle) {
+        supportFragmentManager.setFragmentResult(requestKey, result)
+    }
+
+    override fun setFragmentResultListener(
+        requestKey: String,
+        listener: (requestKey: String, bundle: Bundle) -> Unit
+    ) {
+        supportFragmentManager.setFragmentResultListener(requestKey, this, listener)
     }
 
     override fun replace(fragment: BaseFragment, addToBackStack: Boolean) {
@@ -84,8 +124,20 @@ class MainActivity: BaseActivity(), Navigation {
         transaction.commit()
     }
 
-    override fun openURL(url: String) {
-        add(WebFragment.newInstance(url))
+    override fun openURL(url: String, external: Boolean) {
+        if (external) {
+            val uri = Uri.parse(url)
+            val action = if (url.startsWith("mailto:")) {
+                Intent.ACTION_SENDTO
+            } else {
+                Intent.ACTION_VIEW
+            }
+            val intent = Intent(action, uri)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+        } else {
+            add(WebFragment.newInstance(url))
+        }
     }
 
     override fun onDestroy() {

@@ -7,7 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
 import uikit.navigation.Navigation.Companion.nav
-import ton.WalletManager
+import ton.wallet.WalletManager
 import uikit.base.fragment.WithBackFragment
 import uikit.widget.TextHeaderView
 import uikit.widget.WordInput
@@ -109,7 +109,8 @@ class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_walle
     private fun load() {
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            setWords(wallet.words)
+            val words = App.walletManager.getMnemonic(wallet.id)
+            setWords(words)
         }
     }
 

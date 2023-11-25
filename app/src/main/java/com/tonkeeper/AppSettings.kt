@@ -8,6 +8,7 @@ import com.tonkeeper.extensions.putEnum
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
+import uikit.extensions.locale
 
 class AppSettings(context: Context) {
 
@@ -16,6 +17,7 @@ class AppSettings(context: Context) {
         private const val CURRENCY_KEY = "currency"
         private const val LOCK_SCREEN_KEY = "lock_screen"
         private const val BIOMETRIC_KEY = "biometric"
+        private const val COUNTRY_KEY = "country"
     }
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -40,6 +42,14 @@ class AppSettings(context: Context) {
         set(value) {
             if (value != field) {
                 prefs.edit().putBoolean(BIOMETRIC_KEY, value).apply()
+                field = value
+            }
+        }
+
+    var country: String = prefs.getString(COUNTRY_KEY, null) ?: App.instance.locale.country
+        set(value) {
+            if (value != field) {
+                prefs.edit().putString(COUNTRY_KEY, value).apply()
                 field = value
             }
         }

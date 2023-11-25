@@ -13,6 +13,7 @@ import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonkeeper.R
+import com.tonkeeper.fragment.jetton.JettonScreen
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletJettonCellItem
 
@@ -32,6 +33,9 @@ class WalletCellJettonHolder(
     }
 
     override fun onBind(item: WalletJettonCellItem) {
+        itemView.setOnClickListener {
+            nav?.add(JettonScreen.newInstance(item.address, item.name))
+        }
         loadIcon(item.iconURI)
         titleView.text = item.code
         rateView.text = createRate(item.rate, item.rateDiff24h)

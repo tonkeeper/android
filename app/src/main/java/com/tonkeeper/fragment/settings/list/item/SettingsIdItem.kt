@@ -14,5 +14,9 @@ open class SettingsIdItem(
         const val PRIVACY_ID = 6
         const val LICENSES_FONT_ID = 7
         const val USE_BIOMETRIC_ID = 8
+        const val SUPPORT_ID = 9
+        const val TONKEEPER_NEWS_ID = 10
+        const val CONTACT_US_ID = 11
+        const val MANAGE_WALLETS_ID = 12
     }
 }

@@ -8,6 +8,7 @@ import uikit.mvi.UiState
 
 data class WalletScreenState(
     val asyncState: AsyncState = AsyncState.Default,
+    val title: String? = null,
     val currency: SupportedCurrency = SupportedCurrency.USD,
     val address: String = "",
     val tonBalance: Long = 0L,

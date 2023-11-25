@@ -25,5 +25,10 @@ object Network {
 
     fun request(request: Request) = newCall(request).execute()
 
+    fun get(url: String): String {
+        val request = newRequest(url).build()
+        val response = newCall(request).execute()
+        return response.body?.string()!!
+    }
 
 }

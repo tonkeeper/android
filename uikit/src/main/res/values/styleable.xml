@@ -38,6 +38,7 @@
         <attr name="android:hint" format="string|reference"/>
         <attr name="android:icon" format="reference"/>
         <attr name="android:button" format="string|reference"/>
+        <attr name="android:enabled" format="boolean"/>
     </declare-styleable>
 
     <attr name="position">
@@ -63,5 +64,11 @@
         <attr name="android:text" format="string|reference"/>
         <attr name="android:data" format="string|reference"/>
         <attr name="position"/>
+    </declare-styleable>
+
+    <declare-styleable name="SearchInput">
+        <attr name="android:text" format="string|reference"/>
+        <attr name="android:hint" format="string|reference"/>
+        <attr name="android:button" format="string|reference"/>
     </declare-styleable>
 </resources>

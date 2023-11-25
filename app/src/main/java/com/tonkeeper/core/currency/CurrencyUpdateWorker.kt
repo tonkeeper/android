@@ -37,7 +37,7 @@ class CurrencyUpdateWorker(
             WorkManager.getInstance(context).enqueue(hourlyWork)
         }
 
-        fun isEnable(context: Context = App.instance): Boolean {
+        private fun isEnable(context: Context = App.instance): Boolean {
             return WorkManager.getInstance(context).getWorkInfosByTag(WORKER_NAME).get().isNotEmpty()
         }
 

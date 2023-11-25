@@ -3,7 +3,7 @@ package com.tonkeeper.core.tonconnect
 import com.tonkeeper.App
 import com.tonkeeper.core.tonconnect.db.AppEntity
 import com.tonkeeper.core.tonconnect.models.TCApp
-import core.EncryptedKeyValue
+import core.keyvalue.EncryptedKeyValue
 import core.extensions.toBase64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

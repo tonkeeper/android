@@ -1,78 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <uikit.widget.HeaderView
-        android:id="@+id/header"
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/body"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:title="@string/activity"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="@dimen/offsetMedium"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:id="@+id/empty"
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:paddingHorizontal="@dimen/offsetLarge"
-            android:visibility="gone"
-            android:orientation="vertical">
+            android:title="@string/activity"/>
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/empty_history_title"
-                android:textAppearance="@style/TextAppearance.H2"
-                android:textColor="@color/textPrimary"
-                android:gravity="center"/>
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-            <androidx.appcompat.widget.AppCompatTextView
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/list"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetExtraSmall"
-                android:text="@string/empty_history_subtitle"
-                android:textAppearance="@style/TextAppearance.Body1"
-                android:textColor="@color/textSecondary"
-                android:gravity="center"/>
+                android:layout_height="match_parent"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
             <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="wrap_content"
+                android:id="@+id/empty"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetMedium"
                 android:layout_gravity="center"
-                android:orientation="horizontal">
+                android:paddingHorizontal="@dimen/offsetLarge"
+                android:visibility="gone"
+                android:orientation="vertical">
 
-                <Button
-                    style="@style/Widget.App.Button.Secondary"
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/empty_history_title"
+                    android:textAppearance="@style/TextAppearance.H2"
+                    android:textColor="@color/textPrimary"
+                    android:gravity="center"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/offsetExtraSmall"
+                    android:text="@string/empty_history_subtitle"
+                    android:textAppearance="@style/TextAppearance.Body1"
+                    android:textColor="@color/textSecondary"
+                    android:gravity="center"/>
+
+                <androidx.appcompat.widget.LinearLayoutCompat
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.Label1"
-                    android:text="@string/buy_toncoin"/>
+                    android:layout_marginTop="@dimen/offsetMedium"
+                    android:layout_gravity="center"
+                    android:orientation="horizontal">
 
-                <Button
-                    style="@style/Widget.App.Button.Secondary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/offsetMedium"
-                    android:textAppearance="@style/TextAppearance.Label1"
-                    android:text="@string/receive"/>
+                    <Button
+                        style="@style/Widget.App.Button.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.Label1"
+                        android:text="@string/buy_toncoin"/>
+
+                    <Button
+                        style="@style/Widget.App.Button.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/offsetMedium"
+                        android:textAppearance="@style/TextAppearance.Label1"
+                        android:text="@string/receive"/>
+
+                </androidx.appcompat.widget.LinearLayoutCompat>
 
             </androidx.appcompat.widget.LinearLayoutCompat>
+        </FrameLayout>
 
-        </androidx.appcompat.widget.LinearLayoutCompat>
-    </FrameLayout>
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/shimmer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/shimmer_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="@string/activity"/>
+
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <include layout="@layout/shimmer_history"/>
+        </com.facebook.shimmer.ShimmerFrameLayout>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</FrameLayout>

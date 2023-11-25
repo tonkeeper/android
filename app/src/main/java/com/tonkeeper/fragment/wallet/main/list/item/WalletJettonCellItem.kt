@@ -5,6 +5,8 @@ import uikit.list.ListCell
 
 class WalletJettonCellItem(
     position: ListCell.Position,
+    val address: String,
+    val name: String,
     val iconURI: Uri,
     val code: String,
     val balance: String,

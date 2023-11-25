@@ -10,13 +10,14 @@ import org.ton.api.liteclient.config.LiteClientConfigGlobal
 import org.ton.block.AccountInfo
 import org.ton.lite.client.LiteClient
 import org.ton.mnemonic.Mnemonic
+import ton.wallet.WalletInfo
 import java.net.URL
 
 internal class TonWrapper(
     scope: CoroutineScope
 ) {
 
-    private var liteClient: LiteClient? = null
+    var liteClient: LiteClient? = null
 
     init {
         scope.launch {
@@ -29,15 +30,6 @@ internal class TonWrapper(
         val data = URL("https://ton.org/global-config.json").readText()
         val json = Json { ignoreUnknownKeys = true }
         json.decodeFromString(data)
-    }
-
-    suspend fun createWallet(): WalletInfo = withContext(Dispatchers.IO) {
-        val words = Mnemonic.generate()
-        WalletInfo(words)
-    }
-
-    suspend fun restoreWallet(words: List<String>): WalletInfo = withContext(Dispatchers.IO) {
-        WalletInfo(words)
     }
 
     suspend fun getAccount(

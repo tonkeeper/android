@@ -152,14 +152,22 @@ class InputView @JvmOverloads constructor(
         loaderView = findViewById(R.id.loader)
 
         clearView.setOnClickListener {
-            editText.text = null
+            if (isEnabled) {
+                editText.text = null
+            }
         }
 
         context.useAttributes(attrs, R.styleable.InputView) {
             hintView.text = it.getString(R.styleable.InputView_android_hint)
             iconValue = it.getResourceId(R.styleable.InputView_android_icon, 0)
             actionValue = it.getString(R.styleable.InputView_android_button)
+            isEnabled = it.getBoolean(R.styleable.InputView_android_enabled, true)
         }
+    }
+
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+        editText.isEnabled = enabled
     }
 
     fun focus() {

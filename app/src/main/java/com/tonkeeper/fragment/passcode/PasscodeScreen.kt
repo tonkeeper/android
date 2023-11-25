@@ -1,23 +1,16 @@
 package com.tonkeeper.fragment.passcode
 
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.HapticFeedbackConstants
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import com.tonkeeper.App
 import com.tonkeeper.R
-import com.tonkeeper.fragment.currency.CurrencyScreenFeature
-import com.tonkeeper.fragment.currency.CurrencyScreenState
-import uikit.base.fragment.BaseFragment
-import com.tonkeeper.widget.NumPadView
-import com.tonkeeper.widget.PasscodeView
+import com.tonkeeper.view.NumPadView
+import com.tonkeeper.view.PasscodeView
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.nav
 import java.util.concurrent.Executor

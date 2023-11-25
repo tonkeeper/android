@@ -245,24 +245,24 @@ class LoaderView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        // resetAnimation();
+        resetAnimation()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        // stopAnimation();
+        stopAnimation()
     }
 
     override fun setVisibility(visibility: Int) {
         val currentVisibility = getVisibility()
         super.setVisibility(visibility)
-        /* if (visibility != currentVisibility) {
-            if (visibility == View.VISIBLE){
-                resetAnimation();
-            } else if (visibility == View.GONE || visibility == View.INVISIBLE) {
-                stopAnimation();
+        if (visibility != currentVisibility) {
+            if (visibility == VISIBLE) {
+                resetAnimation()
+            } else if (visibility == GONE || visibility == INVISIBLE) {
+                stopAnimation()
             }
-        } */
+        }
     }
 
     companion object {

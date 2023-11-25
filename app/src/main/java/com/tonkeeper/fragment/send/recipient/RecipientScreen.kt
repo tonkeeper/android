@@ -24,24 +24,18 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
     private lateinit var commentInput: InputView
     private lateinit var nextButton: Button
 
-    private var checkAddressRunnable = Runnable { checkAddress() }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         addressInput = view.findViewById(R.id.address)
         addressInput.doOnTextChange = {
-            if (it.isEmpty()) {
-                addressInput.error = false
-            } else {
-                addressInput.loading = true
-                postDelayed(500, checkAddressRunnable)
-            }
+            feature.requestAddressCheck(it)
         }
-        addressInput.doOnButtonClick = {
-            paste()
-        }
+        addressInput.doOnButtonClick = { paste() }
 
         commentInput = view.findViewById(R.id.comment)
+        commentInput.doOnTextChange = {
+            feature.setComment(it)
+        }
 
         nextButton = view.findViewById(R.id.next)
         nextButton.setOnClickListener {
@@ -49,25 +43,34 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         }
     }
 
-    private fun next() {
-        val address = addressInput.text
-        parentScreen?.let {
-            setFlowRecipient()
-
-            it.next()
-            val subtitle = getString(R.string.to_address, address.shortAddress)
-            it.setSubtitle(subtitle)
-        }
-    }
-
-    private fun setFlowRecipient() {
-        val address = addressInput.text
-        val comment = commentInput.text
+    override fun newUiState(state: RecipientScreenState) {
+        setAddressState(state.addressState)
 
         parentFeature?.recipient = SendScreenFeature.Recipient(
-            address = address,
-            comment = comment
+            address = state.address,
+            comment = state.comment,
+            name = state.name
         )
+    }
+
+    private fun setAddressState(state: RecipientScreenState.AddressState) {
+        nextButton.isEnabled = state == RecipientScreenState.AddressState.VALID
+
+        if (state == RecipientScreenState.AddressState.LOADING) {
+            addressInput.loading = true
+            addressInput.error = false
+            return
+        }
+        addressInput.loading = false
+        addressInput.error = state == RecipientScreenState.AddressState.INVALID
+    }
+
+    private fun next() {
+        parentScreen?.let {
+            val subtitle = getString(R.string.to_address, feature.displayAddress)
+            it.setSubtitle(subtitle)
+            it.next()
+        }
     }
 
     private fun paste() {
@@ -76,26 +79,8 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         }
     }
 
-    private fun checkAddress() {
-        addressInput.loading = false
-        val value = addressInput.text
-        if (value.isEmpty()) {
-            addressInput.error = false
-            nextButton.isEnabled = false
-            return
-        }
-        val isValid = TonAddress.isValid(value)
-        addressInput.error = isValid.not()
-        nextButton.isEnabled = isValid
-    }
-
     override fun onResume() {
         super.onResume()
         addressInput.focus()
-    }
-
-
-    override fun newUiState(state: RecipientScreenState) {
-
     }
 }

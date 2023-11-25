@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingHorizontal="@dimen/offsetMedium"
+    android:orientation="vertical">
+
+    <uikit.widget.InputView
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/wallet_name"/>
+
+    <uikit.widget.InputView
+        android:id="@+id/address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:enabled="false"
+        android:hint="@string/address"/>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/save"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="@color/textPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="@dimen/offsetMedium"
+        android:text="@string/save"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -18,8 +18,30 @@ import uikit.widget.HeaderView
 class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>(R.layout.fragment_send), BaseFragment.BottomSheet {
 
     companion object {
-        fun newInstance() = SendScreen()
+
+        private const val ADDRESS_KEY = "address"
+        private const val COMMENT_KEY = "text"
+        private const val AMOUNT_KEY = "amount"
+
+        fun newInstance(
+            address: String? = null,
+            comment: String? = null,
+            amount: Float = 0f
+        ): SendScreen {
+            val fragment = SendScreen()
+            fragment.arguments = Bundle().apply {
+                putString(ADDRESS_KEY, address)
+                putString(COMMENT_KEY, comment)
+                putFloat(AMOUNT_KEY, amount)
+            }
+            return fragment
+        }
     }
+
+
+    private val startAddress: String by lazy { arguments?.getString(ADDRESS_KEY) ?: "" }
+    private val startComment: String by lazy { arguments?.getString(COMMENT_KEY) ?: "" }
+    private val startAmount: Float by lazy { arguments?.getFloat(AMOUNT_KEY) ?: 0f }
 
     override val feature: SendScreenFeature by viewModels()
 
@@ -70,6 +92,14 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         headerView.showSubtitle(subtitle)
     }
 
+    fun hideText() {
+        headerView.hideText()
+    }
+
+    fun showText() {
+        headerView.showText()
+    }
+
     fun prev() {
         val prevItem = pagerView.currentItem - 1
         if (prevItem >= 0) {
@@ -85,5 +115,25 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
 
     override fun newUiState(state: SendScreenState) {
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        var page = 0
+        if (startAddress.isNotEmpty()) {
+            feature.recipient = SendScreenFeature.Recipient(
+                address = startAddress,
+                comment = startComment,
+                name = null
+            )
+            page++
+        }
+        if (startAmount > 0) {
+            feature.amount = SendScreenFeature.Amount(
+                amount = startAmount,
+            )
+            page++
+        }
+        pagerView.currentItem = page
     }
 }

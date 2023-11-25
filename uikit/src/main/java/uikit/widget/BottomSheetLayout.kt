@@ -46,7 +46,7 @@ class BottomSheetLayout @JvmOverloads constructor(
     private val drawCallback: ViewDragHelper.Callback
 
     private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = 120
+        duration = 220
         interpolator = BottomSheetLayout.interpolator
         addUpdateListener(this@BottomSheetLayout)
         doOnStart { setLayerType(LAYER_TYPE_HARDWARE, null) }
@@ -54,6 +54,7 @@ class BottomSheetLayout @JvmOverloads constructor(
     }
 
     var doOnCloseScreen: (() -> Unit)? = null
+    var doOnEndShowingAnimation: (() -> Unit)? = null
 
     init {
         inflate(context, R.layout.view_bottom_sheet, this)
@@ -163,7 +164,10 @@ class BottomSheetLayout @JvmOverloads constructor(
 
     fun startShowAnimation() {
         setLayerType(LAYER_TYPE_HARDWARE, null)
-        doOnLayout { animation.start() }
+        doOnLayout {
+            animation.doOnEnd { doOnEndShowingAnimation?.invoke() }
+            animation.start()
+        }
     }
 
     fun startHideAnimation(callback: () -> Unit) {

@@ -1,9 +1,12 @@
 package com.tonkeeper.core.currency
 
 import com.tonkeeper.App
+import com.tonkeeper.core.widget.WidgetBalanceProvider
 import com.tonkeeper.api.address
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.rates.RatesRepository
+import com.tonkeeper.core.widget.Widget
+import com.tonkeeper.core.widget.WidgetRateProvider
 import com.tonkeeper.event.UpdateCurrencyRateEvent
 import core.EventBus
 import ton.SupportedCurrency
@@ -44,6 +47,8 @@ class CurrencyManager {
         repository.sync(address, jettons)
 
         EventBus.post(UpdateCurrencyRateEvent)
+
+        Widget.updateAll()
     }
 
     suspend fun get(accountId: String): Rates {
@@ -65,6 +70,23 @@ class CurrencyManager {
     ): String {
         val rates = get(accountId)[token] ?: return ""
         return rates.diff24h[currency] ?: ""
+    }
+
+    suspend fun getRate7d(
+        accountId: String,
+        token: SupportedTokens,
+        currency: SupportedCurrency
+    ): String {
+        return getRate7d(accountId, token.name, currency.name)
+    }
+
+    suspend fun getRate7d(
+        accountId: String,
+        token: String,
+        currency: String
+    ): String {
+        val rates = get(accountId)[token] ?: return ""
+        return rates.diff7d[currency] ?: ""
     }
 
     suspend fun getRate(

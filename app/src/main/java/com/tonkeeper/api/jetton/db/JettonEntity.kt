@@ -2,6 +2,7 @@ package com.tonkeeper.api.jetton.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.tonkeeper.api.address
 import com.tonkeeper.api.symbol
 import com.tonkeeper.api.toJSON
 import io.tonapi.models.JettonBalance
@@ -10,6 +11,7 @@ import io.tonapi.models.JettonBalance
 data class JettonEntity(
     @PrimaryKey val id: String,
     val accountId: String,
+    val jettonAddress: String,
     val data: String
 ) {
 
@@ -33,6 +35,7 @@ data class JettonEntity(
     ) : this(
         id = createId(accountId, jetton.symbol),
         accountId = accountId,
+        jettonAddress = jetton.address,
         data = toJSON(jetton)
     )
 }

@@ -15,7 +15,8 @@ import uikit.list.ListCell
 
 class CellBackgroundDrawable(
     context: Context,
-    private val position: ListCell.Position
+    private val position: ListCell.Position,
+    backgroundColor: Int = context.getColor(R.color.backgroundContent)
 ): BaseDrawable() {
 
     companion object {
@@ -35,7 +36,7 @@ class CellBackgroundDrawable(
     }
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.backgroundContent)
+        color = backgroundColor
     }
     private val radius = context.getDimension(R.dimen.cornerMedium)
     private val firstCorners = createCorners(radius, radius, 0f, 0f)

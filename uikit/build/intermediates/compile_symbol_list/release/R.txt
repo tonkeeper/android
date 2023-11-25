@@ -89,8 +89,11 @@ int drawable ic_chevron_left_16 0x0
 int drawable ic_chevron_right_16 0x0
 int drawable ic_close_16 0x0
 int drawable ic_delete_36 0x0
+int drawable ic_done_16 0x0
 int drawable ic_done_bold_16 0x0
 int drawable ic_logo_128 0x0
+int drawable ic_magnifying_glass_16 0x0
+int drawable ic_plus_alternate_16 0x0
 int drawable ic_xmark_circle_16 0x0
 int font montserrat 0x0
 int font montserrat_bold 0x0
@@ -108,6 +111,7 @@ int id close 0x0
 int id content 0x0
 int id data 0x0
 int id description 0x0
+int id field 0x0
 int id first 0x0
 int id header 0x0
 int id hint 0x0
@@ -127,6 +131,7 @@ int id text 0x0
 int id title 0x0
 int layout dialog_base 0x0
 int layout fragment_with_back 0x0
+int layout view_action_sheet_item 0x0
 int layout view_back_header 0x0
 int layout view_bottom_sheet 0x0
 int layout view_bottom_tab 0x0
@@ -138,6 +143,7 @@ int layout view_intro_block 0x0
 int layout view_item_icon 0x0
 int layout view_item_switch 0x0
 int layout view_item_text 0x0
+int layout view_search_input 0x0
 int layout view_swipe_back 0x0
 int layout view_text_header 0x0
 int layout view_word_input 0x0
@@ -197,6 +203,10 @@ int styleable ItemTextView_android_text 1
 int styleable ItemTextView_position 2
 int[] styleable LoaderView { 0x10101a5 }
 int styleable LoaderView_android_color 0
+int[] styleable SearchInput { 0x1010107, 0x1010150, 0x101014f }
+int styleable SearchInput_android_button 0
+int styleable SearchInput_android_hint 1
+int styleable SearchInput_android_text 2
 int[] styleable TextHeaderView { 0x1010020, 0x10101e1 }
 int styleable TextHeaderView_android_description 0
 int styleable TextHeaderView_android_title 1

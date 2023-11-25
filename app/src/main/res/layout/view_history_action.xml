@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="horizontal"
     android:padding="@dimen/offsetMedium">
 
     <com.facebook.drawee.view.SimpleDraweeView
@@ -19,9 +20,9 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="44dp"
+        android:layout_weight="1"
         android:paddingHorizontal="@dimen/offsetMedium"
         android:orientation="vertical">
 
@@ -106,7 +107,6 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -117,6 +117,17 @@
             android:textAppearance="@style/TextAppearance.Label1"
             android:textColor="@color/textPrimary"
             android:singleLine="true"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/amount2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginTop="2dp"
+            android:gravity="end"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="@color/textPrimary"
+            android:singleLine="true" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/date"
@@ -131,4 +142,4 @@
     </androidx.appcompat.widget.LinearLayoutCompat>
 
 
-</FrameLayout>
+</androidx.appcompat.widget.LinearLayoutCompat>

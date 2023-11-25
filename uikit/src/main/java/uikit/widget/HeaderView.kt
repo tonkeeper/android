@@ -18,7 +18,7 @@ import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.useAttributes
 import uikit.extensions.withAnimation
 
-class HeaderView @JvmOverloads constructor(
+open class HeaderView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
@@ -26,11 +26,12 @@ class HeaderView @JvmOverloads constructor(
 
     val closeView: AppCompatImageView
     val actionView: AppCompatImageView
+    val titleView: AppCompatTextView
 
-    private val titleView: AppCompatTextView
     private val subtitleContainerView: View
     private val subtitleView: AppCompatTextView
     private val loaderView: LoaderView
+    private val textView: View
 
     var doOnCloseClick: (() -> Unit)? = null
         set(value) {
@@ -53,7 +54,7 @@ class HeaderView @JvmOverloads constructor(
 
     init {
         orientation = HORIZONTAL
-        setBackgroundResource(R.color.backgroundPage)
+        super.setBackgroundResource(R.color.backgroundPage)
         setPaddingHorizontal(context.getDimensionPixelSize(R.dimen.offsetMedium))
 
         inflate(context, R.layout.view_header, this)
@@ -64,6 +65,7 @@ class HeaderView @JvmOverloads constructor(
         actionView = findViewById(R.id.action)
         subtitleView = findViewById(R.id.subtitle)
         loaderView = findViewById(R.id.loader)
+        textView = findViewById(R.id.text)
 
         context.useAttributes(attrs, R.styleable.HeaderView) {
             val iconResId = it.getResourceId(R.styleable.HeaderView_android_icon, 0)
@@ -113,6 +115,18 @@ class HeaderView @JvmOverloads constructor(
         withAnimation {
             subtitleContainerView.visibility = View.VISIBLE
             subtitleView.text = text
+        }
+    }
+
+    fun hideText() {
+        withAnimation {
+            textView.alpha = 0f
+        }
+    }
+
+    fun showText() {
+        withAnimation {
+            textView.alpha = 1f
         }
     }
 

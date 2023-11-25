@@ -1,6 +1,5 @@
 package com.tonkeeper.fragment.currency.list
 
-import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
@@ -18,7 +17,6 @@ class CurrencyHolder(
     private val checkView = findViewById<AppCompatImageView>(R.id.check)
 
     override fun onBind(item: CurrencyItem) {
-        Log.d("CurrenyHolderLog", "position: ${adapterPosition}")
         itemView.background = CellBackgroundDrawable(itemView.context, item.position)
         codeView.text = item.currency.code
         nameView.setText(item.nameResId)

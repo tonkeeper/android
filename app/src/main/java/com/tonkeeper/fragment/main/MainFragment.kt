@@ -2,11 +2,17 @@ package com.tonkeeper.fragment.main
 
 import android.os.Bundle
 import android.view.View
+import androidx.lifecycle.lifecycleScope
+import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.core.currency.CurrencyUpdateWorker
+import com.tonkeeper.core.widget.Widget
+import com.tonkeeper.core.widget.WidgetBalanceProvider
+import com.tonkeeper.core.widget.WidgetRateProvider
 import com.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonkeeper.fragment.settings.main.SettingsScreen
 import com.tonkeeper.fragment.wallet.main.WalletScreen
+import kotlinx.coroutines.launch
 import uikit.base.fragment.BaseFragment
 import uikit.widget.BottomTabsView
 
@@ -30,6 +36,10 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CurrencyUpdateWorker.enable()
+
+        lifecycleScope.launch {
+            App.walletManager.getWallets()
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -65,5 +75,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
     override fun onResume() {
         super.onResume()
         window?.setBackgroundDrawableResource(uikit.R.color.constantBlack)
+
+        Widget.updateAll()
     }
 }

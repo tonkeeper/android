@@ -3,6 +3,7 @@ package uikit.navigation
 import android.app.Dialog
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Bundle
 import androidx.fragment.app.Fragment
 import uikit.base.fragment.BaseFragment
 
@@ -34,9 +35,16 @@ interface Navigation {
 
     fun replace(fragment: BaseFragment, addToBackStack: Boolean)
 
+    fun setFragmentResult(requestKey: String, result: Bundle = Bundle())
+
+    fun setFragmentResultListener(
+        requestKey: String,
+        listener: ((requestKey: String, bundle: Bundle) -> Unit)
+    )
+
     fun add(fragment: BaseFragment)
 
     fun remove(fragment: BaseFragment)
 
-    fun openURL(url: String)
+    fun openURL(url: String, external: Boolean = false)
 }

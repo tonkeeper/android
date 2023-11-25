@@ -4,6 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.fragment.settings.list.item.SettingsIconItem
 import com.tonkeeper.fragment.settings.list.item.SettingsItem
+import uikit.drawable.CellBackgroundDrawable
 import uikit.widget.item.ItemIconView
 
 class SettingsIconHolder(
@@ -21,7 +22,11 @@ class SettingsIconHolder(
     }
 
     override fun onBind(item: SettingsIconItem) {
+        view.background = CellBackgroundDrawable(context, item.position)
         view.setOnClickListener { onClick?.invoke(item) }
+        if (item.colorRes != 0) {
+            view.setIconTintColor(context.getColor(item.colorRes))
+        }
         view.iconRes = item.iconRes
         view.text = getString(item.titleRes)
     }

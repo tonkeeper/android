@@ -9,6 +9,7 @@ import android.view.ViewOutlineProvider
 import android.view.Window
 import android.widget.EditText
 import android.widget.ScrollView
+import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.appcompat.content.res.AppCompatResources
@@ -65,10 +66,24 @@ fun View.getInsetsControllerCompat(): WindowInsetsControllerCompat? {
 
 fun EditText.focusWidthKeyboard() {
     requestFocus()
-    try {
-        setSelection(text.length)
-    } catch (ignored: Throwable) { }
-    getInsetsControllerCompat()?.show(WindowInsetsCompat.Type.ime())
+    selectionAll()
+    post {
+        requestFocus()
+        getInsetsControllerCompat()?.show(WindowInsetsCompat.Type.ime())
+    }
+}
+
+fun EditText.hideKeyboard() {
+    clearFocus()
+    getInsetsControllerCompat()?.hide(WindowInsetsCompat.Type.ime())
+}
+
+fun EditText.selectionAll() {
+    if (text.isNotEmpty()) {
+        try {
+            setSelection(text.length)
+        } catch (ignored: Throwable) { }
+    }
 }
 
 fun ViewGroup.inflate(
@@ -163,4 +178,24 @@ fun View.withAnimation(duration: Long = 120, block: () -> Unit) {
 
     TransitionManager.beginDelayedTransition(this, transition)
     block()
+}
+
+fun TextView.setEndDrawable(drawable: Drawable?) {
+    setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null)
+}
+
+fun TextView.setStartDrawable(drawable: Drawable?) {
+    setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+}
+
+fun TextView.setEndDrawable(@DrawableRes resId: Int) {
+    setCompoundDrawablesWithIntrinsicBounds(null, null, getDrawable(resId), null)
+}
+
+fun TextView.setStartDrawable(@DrawableRes resId: Int) {
+    setCompoundDrawablesWithIntrinsicBounds(getDrawable(resId), null, null, null)
+}
+
+fun View.getColor(resId: Int): Int {
+    return context.getColor(resId)
 }

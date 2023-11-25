@@ -24,7 +24,7 @@
                 android:textColor="@color/textPrimary"
                 android:textAppearance="@style/TextAppearance.H3"/>
 
-            <com.tonkeeper.widget.PasscodeView
+            <com.tonkeeper.view.PasscodeView
                 android:id="@+id/passcode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -35,7 +35,7 @@
 
     </FrameLayout>
 
-    <com.tonkeeper.widget.NumPadView
+    <com.tonkeeper.view.NumPadView
         android:id="@+id/num_pad"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

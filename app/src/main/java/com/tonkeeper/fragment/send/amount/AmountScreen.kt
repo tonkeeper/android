@@ -1,8 +1,6 @@
 package com.tonkeeper.fragment.send.amount
 
-import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatEditText
@@ -10,13 +8,11 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.fragment.send.SendScreenFeature
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import kotlinx.coroutines.launch
 import uikit.extensions.focusWidthKeyboard
-import uikit.mvi.UiScreen
 
 class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScreenFeature>(R.layout.fragment_send_amount) {
 
@@ -97,13 +93,6 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         super.onVisibleChange(visible)
         if (visible) {
             valueView.focusWidthKeyboard()
-        } else {
-            valueView.setText("")
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        valueView.focusWidthKeyboard()
     }
 }

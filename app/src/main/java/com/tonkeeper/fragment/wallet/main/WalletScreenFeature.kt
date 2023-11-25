@@ -5,7 +5,6 @@ import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.address
-import com.tonkeeper.api.description
 import com.tonkeeper.api.imageURL
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.collectibles.CollectiblesRepository
@@ -17,6 +16,7 @@ import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.event.ChangeCurrencyEvent
+import com.tonkeeper.event.ChangeWalletNameEvent
 import com.tonkeeper.event.UpdateCurrencyRateEvent
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletJettonCellItem
@@ -25,7 +25,6 @@ import com.tonkeeper.fragment.wallet.main.list.item.WalletTonCellItem
 import com.tonkeeper.fragment.wallet.main.pager.WalletScreenItem
 import ton.SupportedCurrency
 import ton.SupportedTokens
-import ton.WalletInfo
 import core.EventBus
 import core.QueueScope
 import io.tonapi.models.Account
@@ -48,6 +47,18 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         queueScope.submit { updateWalletState() }
     }
 
+    private val updateWalletNameAction = fun (event: ChangeWalletNameEvent) {
+        updateUiState { currentState ->
+            if (currentState.address == event.address) {
+                currentState.copy(
+                    title = event.name
+                )
+            } else {
+                currentState
+            }
+        }
+    }
+
     private val currency: SupportedCurrency
         get() = App.settings.currency
 
@@ -62,6 +73,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         syncWallet()
         EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
         EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
+        EventBus.subscribe(ChangeWalletNameEvent::class.java, updateWalletNameAction)
     }
 
     private fun syncWallet() {
@@ -145,6 +157,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         updateUiState { currentState ->
             currentState.copy(
                 asyncState = AsyncState.Default,
+                title = wallet.name,
                 currency = currency,
                 address = data.accountId.userLikeAddress,
                 tonBalance = data.account.balance,
@@ -220,6 +233,8 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             )
 
             val item = WalletJettonCellItem(
+                address = jetton.address,
+                name = jetton.jetton.name,
                 position = cellPosition,
                 iconURI = Uri.parse(jetton.jetton.image),
                 code = jetton.jetton.symbol,
@@ -254,6 +269,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         queueScope.cancel()
         EventBus.unsubscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.unsubscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
+        EventBus.unsubscribe(ChangeWalletNameEvent::class.java, updateWalletNameAction)
     }
 
     private suspend fun getWalletData(

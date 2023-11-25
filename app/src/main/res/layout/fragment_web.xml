@@ -59,10 +59,8 @@
         android:layout_height="wrap_content"
         android:visibility="gone"/>
 
-    <WebView
+    <uikit.widget.WebViewFixed
         android:id="@+id/web_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:overScrollMode="never"
-        android:background="@android:color/transparent"/>
+        android:layout_height="match_parent"/>
 </LinearLayout>

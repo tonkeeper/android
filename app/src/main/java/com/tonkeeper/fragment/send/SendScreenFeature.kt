@@ -8,5 +8,9 @@ class SendScreenFeature: UiFeature<SendScreenState, SendScreenEffect>(SendScreen
     var amount: Amount? = null
 
     data class Amount(val amount: Float)
-    data class Recipient(val address: String, val comment: String)
+    data class Recipient(
+        val address: String,
+        val comment: String,
+        val name: String?
+    )
 }

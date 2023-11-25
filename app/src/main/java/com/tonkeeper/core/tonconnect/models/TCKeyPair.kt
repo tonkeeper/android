@@ -21,6 +21,13 @@ data class TCKeyPair(
         privateKey = PrivateKeyEd25519(privateKey)
     )
 
+    constructor(
+        privateKey: ByteArray
+    ) : this(
+        publicKey = PrivateKeyEd25519(privateKey).publicKey(),
+        privateKey = PrivateKeyEd25519(privateKey)
+    )
+
     fun sing(message: ByteArray): ByteArray {
         return privateKey.sign(message)
     }

@@ -15,8 +15,8 @@ android {
         applicationId = "com.tonkeeper"
         minSdk = rootProject.extra["minSdkVersion"] as Int
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 5
+        versionName = "0.0.4-beta"
     }
 
     buildFeatures {
@@ -68,6 +68,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.4.0-alpha02")
     implementation("androidx.camera:camera-view:1.4.0-alpha02")
     implementation("androidx.camera:camera-mlkit-vision:1.4.0-alpha02")
+    implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0")
 
     implementation("com.google.guava:guava:31.0.1-android")
     implementation("com.google.crypto.tink:tink-android:1.10.0")
@@ -103,4 +104,5 @@ dependencies {
     implementation(project(":uikit"))
     implementation(project(":ton"))
     implementation(project(":tonapi"))
+    implementation(project(":shimmer"))
 }

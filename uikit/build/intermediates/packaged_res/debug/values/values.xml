@@ -167,6 +167,8 @@
     </style>
     <style name="Widget.BottomSheet" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Widget.BottomSheet.Modal</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize|stateVisible</item>
     </style>
     <style name="Widget.BottomSheet.Modal" parent="Widget.Design.BottomSheet.Modal">
         <item name="android:background">@drawable/bg_modal</item>
@@ -191,6 +193,7 @@
         <attr format="string|reference" name="android:hint"/>
         <attr format="reference" name="android:icon"/>
         <attr format="string|reference" name="android:button"/>
+        <attr format="boolean" name="android:enabled"/>
     </declare-styleable>
     <declare-styleable name="IntroBlockView">
         <attr format="reference" name="android:icon"/>
@@ -214,6 +217,11 @@
     </declare-styleable>
     <declare-styleable name="LoaderView">
         <attr format="color|reference" name="android:color"/>
+    </declare-styleable>
+    <declare-styleable name="SearchInput">
+        <attr format="string|reference" name="android:text"/>
+        <attr format="string|reference" name="android:hint"/>
+        <attr format="string|reference" name="android:button"/>
     </declare-styleable>
     <declare-styleable name="TextHeaderView">
         <attr format="string|reference" name="android:title"/>

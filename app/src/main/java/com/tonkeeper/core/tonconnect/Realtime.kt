@@ -28,6 +28,9 @@ internal class Realtime(
         }
 
     fun start(clientIds: List<String>) {
+        if (true) {
+            return
+        }
         release()
 
         val value = clientIds.joinToString(",")

@@ -2,6 +2,8 @@ package uikit.base.fragment
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
 import android.util.Log
@@ -33,6 +35,8 @@ import uikit.extensions.scale
 import uikit.extensions.statusBarHeight
 import uikit.widget.BottomSheetLayout
 import uikit.widget.SwipeBackLayout
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
 
 open class BaseFragment(
     @LayoutRes layoutId: Int
@@ -41,9 +45,17 @@ open class BaseFragment(
     interface SwipeBack {
         var doOnDragging: ((Boolean) -> Unit)?
         var doOnDraggingProgress: ((Float) -> Unit)?
+
+        fun onEndShowingAnimation() {
+
+        }
     }
 
-    interface BottomSheet
+    interface BottomSheet {
+        fun onEndShowingAnimation() {
+
+        }
+    }
 
     val window: Window?
         get() = activity?.window
@@ -60,6 +72,9 @@ open class BaseFragment(
                 it != this && it.isVisible
             }
         }
+
+    val mainExecutor: Executor
+        get() = ContextCompat.getMainExecutor(requireContext())
 
     open val secure: Boolean = false
 
@@ -95,15 +110,23 @@ open class BaseFragment(
         }
         swipeBackLayout.doOnDragging = doOnDragging
         swipeBackLayout.doOnDraggingProgress = doOnDraggingProgress
+        swipeBackLayout.doOnEndShowingAnimation = {
+            onEndShowingAnimation()
+        }
         swipeBackLayout.setContentView(view)
         swipeBackLayout.startShowAnimation()
         return swipeBackLayout
     }
 
     private fun onCreateBottomSheet(context: Context, view: View): BottomSheetLayout {
+        this as BottomSheet
+
         val bottomSheetLayout = BottomSheetLayout(context)
         bottomSheetLayout.doOnCloseScreen = {
             finishInternal()
+        }
+        bottomSheetLayout.doOnEndShowingAnimation = {
+            onEndShowingAnimation()
         }
         bottomSheetLayout.fragment = this
         bottomSheetLayout.setContentView(view)
@@ -171,6 +194,17 @@ open class BaseFragment(
     @ColorInt
     fun getColor(@ColorRes colorRes: Int): Int {
         return requireContext().getColor(colorRes)
+    }
+
+    fun getDrawable(
+        drawableRes: Int,
+        @ColorInt tintColor: Int = Color.TRANSPARENT
+    ): Drawable {
+        val drawable = ContextCompat.getDrawable(requireContext(), drawableRes)!!
+        if (tintColor != Color.TRANSPARENT) {
+            drawable.setTint(tintColor)
+        }
+        return drawable
     }
 
     fun hasPermission(permission: String): Boolean {

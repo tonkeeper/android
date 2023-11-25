@@ -13,20 +13,28 @@
     <string name="view_in_explorer">View in explorer</string>
     <string name="owner">Owner</string>
     <string name="scan_qr_code">Scan QR code</string>
+    <string name="loading">Loading…</string>
 
     <string name="tokens">Tokens</string>
     <string name="today">Today</string>
+    <string name="address">Address</string>
     <string name="yesterday">Yesterday</string>
     <string name="collectibles">Collectibles</string>
     <string name="call_contract">Call contract</string>
     <string name="contract_address">Contract address</string>
     <string name="about_collection">About collection</string>
+    <string name="save">Save</string>
     <string name="view_on_nft_market">View on NFT Market</string>
 
     <string name="empty_history_title">Your activity will be shown here</string>
     <string name="empty_history_subtitle">Make your first transaction!</string>
 
     <string name="buy_toncoin">Buy Toncoin</string>
+    <string name="buy_or_sell">Buy or sell</string>
+    <string name="fiat_open_description">You are opening an external app not operated by Tonkeeper.</string>
+    <string name="buy">Buy</string>
+    <string name="search">Search</string>
+    <string name="country_title">Choose your country</string>
     <string name="intro_title" formatted="true">Welcome to <annotation colorRes="textAccent">Tonkeeper</annotation></string>
     <string name="intro_line_1_title">World-class speed</string>
     <string name="intro_line_1_description">TON is a network designed for speed and throughput. Fees are significantly lower than on other blockchains, and transactions are confirmed in a matter of seconds.</string>
@@ -45,6 +53,7 @@
     <string name="passcode_create">Create passcode</string>
     <string name="passcode_re_enter">Re-enter passcode</string>
     <string name="cancel">Cancel</string>
+    <string name="period_24h">24h</string>
 
     <string name="import_wallet_title">Enter your recovery phrase</string>
     <string name="import_wallet_description">To restore access to your wallet, enter the 24 secret recovery words given to you when you created your wallet.</string>
@@ -67,14 +76,21 @@
     <string name="security">Security</string>
 
     <string name="send">Send</string>
+    <string name="swap">Swap</string>
+    <string name="manage">Manage</string>
+    <string name="manage_wallets">Manage wallets</string>
     <string name="receive">Receive</string>
     <string name="log_out">Log out</string>
     <string name="recipient">Recipient</string>
+    <string name="amount">Amount</string>
+    <string name="recipient_address">Recipient address</string>
     <string name="address_hint">Address or name</string>
     <string name="comment">Comment</string>
     <string name="paste">Paste</string>
     <string name="version">Version %1$s (%2$d)</string>
     <string name="currency">Currency</string>
+    <string name="rename">Rename</string>
+    <string name="wallet_name">Wallet name</string>
     <string name="primary_currency">Primary currency</string>
     <string name="currency_usd_name">United States Dollar</string>
     <string name="currency_eur_name">Euro</string>
@@ -96,6 +112,7 @@
     <string name="legal">Legal</string>
     <string name="terms">Terms of use</string>
     <string name="privacy">Privacy policy</string>
+    <string name="do_not_show_again">Do not show again</string>
     <string name="licenses">Licenses</string>
     <string name="montserrat_font">Montserrat font</string>
     <string name="use_biometric">Use biometric</string>
@@ -120,4 +137,11 @@
     <string name="insufficient_balance">Insufficient balance</string>
     <string name="to_address">To: %1$s</string>
     <string name="remaining_balance">Remaining: %1$s</string>
+    <string name="wallet_balance">Wallet balance</string>
+    <string name="rate">Rate</string>
+    <string name="widget_updated">Updated at %1$s</string>
+    <string name="set_up_wallet">Set up wallet</string>
+    <string name="support">Support</string>
+    <string name="tonkeeper_news">Tonkeeper news</string>
+    <string name="contact_us">Contact us</string>
 </resources>

@@ -1,6 +1,6 @@
 package com.tonkeeper.fragment.wallet.history
 
-import com.tonkeeper.fragment.wallet.history.list.item.HistoryItem
+import com.tonkeeper.core.history.list.item.HistoryItem
 import uikit.mvi.AsyncState
 import uikit.mvi.UiState
 

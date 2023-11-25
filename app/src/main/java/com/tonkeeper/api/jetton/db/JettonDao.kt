@@ -23,6 +23,9 @@ interface JettonDao {
     @Query("SELECT * FROM jetton WHERE accountId = :accountId")
     suspend fun getByAccountId(accountId: String): List<JettonEntity>
 
+    @Query("SELECT * FROM jetton WHERE accountId = :accountId AND jettonAddress = :address LIMIT 1")
+    suspend fun getByAddress(accountId: String, address: String): JettonEntity?
+
     suspend fun get(accountId: String): List<JettonBalance> {
         return getByAccountId(accountId).map {
             fromJSON(it.data)

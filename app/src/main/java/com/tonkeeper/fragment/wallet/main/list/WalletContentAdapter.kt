@@ -11,7 +11,7 @@ import uikit.list.BaseListItem
 
 class WalletContentAdapter(
     items: List<WalletItem>
-): BaseListAdapter<WalletItem>(items) {
+): BaseListAdapter<WalletItem>(items.toMutableList()) {
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when (viewType) {

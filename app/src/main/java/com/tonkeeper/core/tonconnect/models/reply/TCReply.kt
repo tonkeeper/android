@@ -1,7 +1,14 @@
 package com.tonkeeper.core.tonconnect.models.reply
 
-import kotlinx.serialization.Serializable
+import org.json.JSONArray
 
-@Serializable
-open class TCReply {
+abstract class TCReply: TCBase() {
+
+    companion object {
+        fun toJSONArray(items: List<TCReply>): JSONArray {
+            val jsonArray = JSONArray()
+            items.forEach { jsonArray.put(it.toJSON()) }
+            return jsonArray
+        }
+    }
 }

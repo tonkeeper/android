@@ -2,12 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <meta-data
+        android:name="com.google.mlkit.vision.DEPENDENCIES"
+        android:value="barcode"/>
+
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.CAMERA" />
+
 
     <application
         android:allowBackup="true"
@@ -52,13 +57,25 @@
                 <data android:host="app.tonkeeper.com"/>
             </intent-filter>
         </activity>
-        <receiver android:name=".WidgetProvider"
-            android:exported="false">
+        <receiver
+            android:name=".core.widget.WidgetBalanceProvider"
+            android:exported="true"
+            android:label="@string/wallet_balance">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
-                android:resource="@xml/widget" />
+                android:resource="@xml/widget_balance" />
+        </receiver>
+        <receiver
+            android:name=".core.widget.WidgetRateProvider"
+            android:exported="true"
+            android:label="@string/rate">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/widget_rate" />
         </receiver>
     </application>
 

@@ -1,5 +1,6 @@
 package com.tonkeeper.core.currency
 
+import com.tonkeeper.App
 import com.tonkeeper.core.Coin
 import ton.SupportedCurrency
 import ton.SupportedTokens
@@ -33,7 +34,7 @@ class CurrencyConverter(
         value(Coin.toCoins(value))
     }
 
-    suspend fun to(to: SupportedCurrency): Float {
+    suspend fun to(to: SupportedCurrency = App.settings.currency): Float {
         return to(to.code)
     }
 

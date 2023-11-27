@@ -1,2 +1,0 @@
-ton
-string tonconsole_token

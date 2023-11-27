@@ -27,9 +27,8 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         addressInput = view.findViewById(R.id.address)
-        addressInput.doOnTextChange = {
-            feature.requestAddressCheck(it)
-        }
+        addressInput.doOnTextChange = { feature.requestAddressCheck(it) }
+        addressInput.doOnIconClick = { parentScreen?.openCamera() }
         addressInput.doOnButtonClick = { paste() }
 
         commentInput = view.findViewById(R.id.comment)
@@ -61,6 +60,7 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
             addressInput.error = false
             return
         }
+
         addressInput.loading = false
         addressInput.error = state == RecipientScreenState.AddressState.INVALID
     }

@@ -96,16 +96,29 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <Button
-        style="@style/Widget.App.Button"
-        android:id="@+id/continue_action"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/offsetMedium"
-        android:layout_marginBottom="@dimen/offsetMedium"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
         android:layout_gravity="bottom"
-        android:enabled="false"
-        android:text="@string/continue_action"/>
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginBottom="@dimen/offsetMedium">
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/continue_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="@color/textPrimary"
+            android:enabled="false"
+            android:text="@string/continue_action"/>
+
+        <uikit.widget.LoaderView
+            android:id="@+id/loader"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:color="@color/textPrimary"/>
+    </FrameLayout>
 </FrameLayout>

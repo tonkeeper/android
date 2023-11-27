@@ -29,7 +29,7 @@ import com.tonkeeper.core.tonconnect.db.ManifestEntity
     NftEntity::class,
     ManifestEntity::class,
     AppEntity::class
-], version = 17, exportSchema = false)
+], version = 20, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     companion object {

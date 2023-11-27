@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
 import ton.wallet.Wallet
-import ton.wallet.WalletInfo
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 

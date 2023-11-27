@@ -6,6 +6,3 @@ plugins {
     id("com.google.firebase.crashlytics") version "2.9.9" apply false
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
 }
-
-extra["compileSdkVersion"] = 34
-extra["minSdkVersion"] = 28

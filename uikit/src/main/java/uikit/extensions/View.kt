@@ -15,10 +15,12 @@ import androidx.annotation.LayoutRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.AutoTransition
 import androidx.transition.Transition
 import androidx.transition.TransitionListenerAdapter
 import androidx.transition.TransitionManager
+import androidx.viewpager2.widget.ViewPager2
 
 var View.scale: Float
     get() = scaleX
@@ -198,4 +200,14 @@ fun TextView.setStartDrawable(@DrawableRes resId: Int) {
 
 fun View.getColor(resId: Int): Int {
     return context.getColor(resId)
+}
+
+val ViewPager2.recyclerView: RecyclerView
+    get() = getChildAt(0) as RecyclerView
+
+val ViewPager2.layoutManager: RecyclerView.LayoutManager?
+    get() = recyclerView.layoutManager
+
+fun ViewPager2.findViewHolderForAdapterPosition(position: Int): RecyclerView.ViewHolder? {
+    return recyclerView.findViewHolderForAdapterPosition(position)
 }

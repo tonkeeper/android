@@ -14,11 +14,16 @@ class WalletScreenHolder(
 ): BaseListHolder<WalletScreenItem>(parent, R.layout.view_wallet_pager) {
 
     companion object {
-        const val spanCount = 3
+        private const val spanCount = 3
+        private val decoration = WalletItemDecoration()
     }
 
+    private val layoutManager = object : GridLayoutManager(itemView.context, spanCount) {
+        override fun supportsPredictiveItemAnimations() = false
+    }
+
+    private val adapter = WalletContentAdapter()
     private val listView = findViewById<RecyclerView>(R.id.list)
-    private val layoutManager = GridLayoutManager(itemView.context, spanCount)
 
     init {
         listView.layoutManager = layoutManager
@@ -31,12 +36,13 @@ class WalletScreenHolder(
                     spanCount
                 }
             }
+
         }
-        listView.addItemDecoration(WalletItemDecoration(context, spanCount))
+        listView.adapter = adapter
+        listView.addItemDecoration(decoration)
     }
 
     override fun onBind(item: WalletScreenItem) {
-        listView.adapter = WalletContentAdapter(item.items)
+        adapter.submitList(item.items)
     }
-
 }

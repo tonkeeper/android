@@ -13,7 +13,6 @@ class WebViewFixed @JvmOverloads constructor(
 
     init {
         setLayerType(LAYER_TYPE_SOFTWARE, null)
-        overScrollMode = OVER_SCROLL_NEVER
         settings.allowContentAccess = true
         settings.allowFileAccess = true
         settings.cacheMode = android.webkit.WebSettings.LOAD_CACHE_ELSE_NETWORK

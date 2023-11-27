@@ -17,7 +17,7 @@ data class Wallet(
 ) {
 
     companion object {
-        private const val WORKCHAIN = 0
+        const val WORKCHAIN = 0
     }
 
     val contract: WalletV4R2Contract by lazy {

@@ -9,10 +9,4 @@ import io.tonapi.models.Account
 data class AccountEntity(
     @PrimaryKey val accountId: String,
     val data: String
-) {
-
-    constructor(account: Account) : this(
-        accountId = account.address,
-        data = toJSON(account)
-    )
-}
+)

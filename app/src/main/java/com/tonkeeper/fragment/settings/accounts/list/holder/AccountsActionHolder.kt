@@ -2,10 +2,9 @@ package com.tonkeeper.fragment.settings.accounts.list.holder
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.R
 import com.tonkeeper.dialog.IntroWalletDialog
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsActionItem
-import uikit.drawable.CellBackgroundDrawable
+import uikit.list.ListCell.Companion.drawable
 import uikit.widget.item.ItemIconView
 
 class AccountsActionHolder(
@@ -22,7 +21,7 @@ class AccountsActionHolder(
     }
 
     override fun onBind(item: AccountsActionItem) {
-        view.background = CellBackgroundDrawable(context, item.position)
+        view.background = item.position.drawable(context)
         view.setIconTintColor(context.getColor(uikit.R.color.accentBlue))
         view.iconRes = item.iconRes
         view.text = getString(item.titleRes)

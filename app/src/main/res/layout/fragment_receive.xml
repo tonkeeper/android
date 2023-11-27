@@ -42,10 +42,24 @@
             android:layout_marginTop="@dimen/offsetLarge"
             android:background="@drawable/bg_receive">
             
-            <view class="com.tonkeeper.fragment.receive.ReceiveScreen$SquareImageView"
-                android:id="@+id/qr_code"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content">
+                <view class="com.tonkeeper.fragment.receive.ReceiveScreen$SquareImageView"
+                    android:id="@+id/qr_code"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:layout_gravity="center"
+                    android:padding="8dp"
+                    android:visibility="gone"
+                    android:background="@color/constantWhite"
+                    android:src="@drawable/ic_toncoin"/>
+
+            </FrameLayout>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/address"

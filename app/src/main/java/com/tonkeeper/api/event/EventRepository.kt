@@ -27,9 +27,9 @@ class EventRepository(
         accountId: String,
         eventId: String
     ): AccountEvent? {
-        val entity = dao.getByEventId(accountId, eventId)
-        return if (entity != null) {
-            fromJSON(entity.data)
+        val data = dao.getByEventId(accountId, eventId)
+        return if (data != null) {
+            fromJSON(data)
         } else {
             getSingle(accountId, eventId)
         }

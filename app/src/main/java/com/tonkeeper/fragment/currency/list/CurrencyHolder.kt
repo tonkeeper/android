@@ -4,8 +4,8 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonkeeper.R
-import uikit.drawable.CellBackgroundDrawable
 import uikit.list.BaseListHolder
+import uikit.list.ListCell.Companion.drawable
 
 class CurrencyHolder(
     parent: ViewGroup,
@@ -17,7 +17,7 @@ class CurrencyHolder(
     private val checkView = findViewById<AppCompatImageView>(R.id.check)
 
     override fun onBind(item: CurrencyItem) {
-        itemView.background = CellBackgroundDrawable(itemView.context, item.position)
+        itemView.background = item.position.drawable(itemView.context)
         codeView.text = item.currency.code
         nameView.setText(item.nameResId)
         checkView.visibility = if (item.selected) {

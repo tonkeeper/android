@@ -8,8 +8,8 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonkeeper.R
 import com.tonkeeper.core.history.list.item.HistoryActionItem
-import uikit.drawable.CellBackgroundDrawable
 import uikit.list.ListCell
+import uikit.list.ListCell.Companion.drawable
 
 class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryActionItem>(parent, R.layout.view_history_action) {
 
@@ -30,7 +30,7 @@ class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryActionItem>(p
     private val nftCollectionView = findViewById<AppCompatTextView>(R.id.nft_collection)
 
     override fun onBind(item: HistoryActionItem) {
-        itemView.background = CellBackgroundDrawable(context, ListCell.Position.SINGLE)
+        itemView.background = ListCell.Position.SINGLE.drawable(context)
         titleView.setText(getTitle(item.action))
         subtitleView.text = item.subtitle
         dateView.text = item.date

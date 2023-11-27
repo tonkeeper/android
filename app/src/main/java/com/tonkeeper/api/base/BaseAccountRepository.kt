@@ -1,5 +1,6 @@
 package com.tonkeeper.api.base
 
+import android.util.Log
 import com.tonkeeper.api.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -9,10 +10,9 @@ abstract class BaseAccountRepository<Item> {
 
     private val memory = ConcurrentHashMap<String, List<Item>>(100, 1.0f, 2)
 
-    suspend fun sync(accountId: String) {
+    suspend fun clear(accountId: String) {
         memory.remove(accountId)
         clearCache(accountId)
-        get(accountId)
     }
 
     suspend fun getSingle(accountId: String, value: String): Item? {
@@ -33,6 +33,7 @@ abstract class BaseAccountRepository<Item> {
             if (cache != null) {
                 return@withContext cache
             }
+
             return@withContext getFromNetwork(accountId)
         } catch (e: Throwable) {
             return@withContext emptyList<Item>()

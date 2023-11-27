@@ -3,8 +3,8 @@ package com.tonkeeper.fragment.wallet.main.list.item
 import android.net.Uri
 import uikit.list.ListCell
 
-class WalletJettonCellItem(
-    position: ListCell.Position,
+data class WalletJettonCellItem(
+    override val position: ListCell.Position,
     val address: String,
     val name: String,
     val iconURI: Uri,

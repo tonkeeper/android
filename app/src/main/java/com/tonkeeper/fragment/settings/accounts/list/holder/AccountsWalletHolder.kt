@@ -7,8 +7,7 @@ import com.tonkeeper.R
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsWalletItem
 import com.tonkeeper.fragment.settings.accounts.popup.WalletActionsPopup
-import uikit.drawable.CellBackgroundDrawable
-import uikit.list.ListCell
+import uikit.list.ListCell.Companion.drawable
 
 class AccountsWalletHolder(parent: ViewGroup): AccountsHolder<AccountsWalletItem>(parent, R.layout.view_accounts_wallet) {
 
@@ -21,7 +20,7 @@ class AccountsWalletHolder(parent: ViewGroup): AccountsHolder<AccountsWalletItem
     private val actionsView = findViewById<View>(R.id.actions)
 
     override fun onBind(item: AccountsWalletItem) {
-        itemView.background = CellBackgroundDrawable(context, item.position)
+        itemView.background = item.position.drawable(context)
         nameView.text = item.nameOrDefault
         addressView.text = item.address.shortAddress
         actionsView.setOnClickListener { showPopup(it, item) }

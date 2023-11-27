@@ -20,8 +20,7 @@
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="@dimen/barHeight"
-        android:overScrollMode="never">
+        android:layout_marginTop="@dimen/barHeight">
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"

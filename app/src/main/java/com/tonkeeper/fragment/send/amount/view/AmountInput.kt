@@ -48,6 +48,6 @@ class AmountInput @JvmOverloads constructor(
     }
 
     override fun afterTextChanged(s: Editable?) {
-        s?.let { checkTextSize(it) }
+        // s?.let { checkTextSize(it) }
     }
 }

@@ -1,11 +1,18 @@
 package com.tonkeeper.api.collectibles.db
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tonkeeper.api.toJSON
 import io.tonapi.models.NftItem
 
-@Entity(tableName = "collectibles")
+@Entity(
+    tableName = "collectibles",
+    indices = [
+        Index(value = ["accountId"]),
+        Index(value = ["nftAddress"])
+    ]
+)
 data class CollectiblesEntity(
     @PrimaryKey val id: String,
     val nftAddress: String,

@@ -4,8 +4,8 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonkeeper.R
-import uikit.drawable.CellBackgroundDrawable
 import uikit.list.BaseListHolder
+import uikit.list.ListCell.Companion.drawable
 
 class CountryHolder(
     parent: ViewGroup,
@@ -18,7 +18,7 @@ class CountryHolder(
 
     override fun onBind(item: CountryItem) {
         itemView.setOnClickListener { onClick(item) }
-        itemView.background = CellBackgroundDrawable(itemView.context, item.position)
+        itemView.background = item.position.drawable(itemView.context)
         emojiView.text = item.emoji
         titleView.text = item.title
         if (item.selected) {

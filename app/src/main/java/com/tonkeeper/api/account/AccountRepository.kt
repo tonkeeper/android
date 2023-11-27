@@ -1,28 +1,26 @@
 package com.tonkeeper.api.account
 
-import android.util.Log
 import androidx.collection.ArrayMap
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.account.db.AccountDao
-import com.tonkeeper.api.account.db.AccountEntity
 import com.tonkeeper.api.withRetry
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.Account
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 
 class AccountRepository(
     private val api: AccountsApi = Tonapi.accounts,
     private val dao: AccountDao = App.db.accountDao()
 ) {
 
-    private val memory = ArrayMap<String, Account>()
+    private val memory = ConcurrentHashMap<String, Account>()
 
-    suspend fun sync(accountId: String) {
-        memory.remove(accountId)
+    suspend fun clear(accountId: String) {
+        memory.clear()
         dao.delete(accountId)
-        get(accountId)
     }
 
     private fun fromMemory(accountId: String): Account? {
@@ -37,7 +35,7 @@ class AccountRepository(
 
     private suspend fun fromCloud(accountId: String): Account {
         val account = fetch(accountId)
-        dao.insert(AccountEntity(account))
+        dao.insert(accountId, account)
         memory[accountId] = account
         return account
     }

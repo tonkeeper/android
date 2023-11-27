@@ -15,7 +15,5 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingHorizontal="@dimen/offsetMedium"
-        android:overScrollMode="never"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:layout_weight="1"/>
 </androidx.appcompat.widget.LinearLayoutCompat>

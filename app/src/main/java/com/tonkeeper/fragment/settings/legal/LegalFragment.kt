@@ -2,9 +2,7 @@ package com.tonkeeper.fragment.settings.legal
 
 import android.os.Bundle
 import android.view.View
-import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.R
-import com.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonkeeper.fragment.settings.list.item.SettingsIconItem
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
 import com.tonkeeper.fragment.settings.list.item.SettingsItem

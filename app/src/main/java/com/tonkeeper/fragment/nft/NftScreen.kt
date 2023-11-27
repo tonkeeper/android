@@ -1,7 +1,6 @@
 package com.tonkeeper.fragment.nft
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
@@ -15,14 +14,10 @@ import com.tonkeeper.api.shortAddress
 import com.tonkeeper.api.title
 import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.core.ExternalUrl
-import com.tonkeeper.fragment.wallet.main.WalletScreenEffect
-import com.tonkeeper.fragment.wallet.main.WalletScreenFeature
-import com.tonkeeper.fragment.wallet.main.WalletScreenState
 import io.tonapi.models.NftItem
-import org.ton.block.AddrStd
 import uikit.base.fragment.BaseFragment
-import uikit.drawable.CellBackgroundDrawable
 import uikit.list.ListCell
+import uikit.list.ListCell.Companion.drawable
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.nav
@@ -92,11 +87,11 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         }
 
         ownerContainer = view.findViewById(R.id.owner_container)
-        ownerContainer.background = CellBackgroundDrawable(view.context, ListCell.Position.FIRST)
+        ownerContainer.background = ListCell.Position.FIRST.drawable(view.context)
         ownerView = view.findViewById(R.id.owner)
 
         addressContainer = view.findViewById(R.id.address_container)
-        addressContainer.background = CellBackgroundDrawable(view.context, ListCell.Position.LAST)
+        addressContainer.background = ListCell.Position.LAST.drawable(view.context)
 
         addressView = view.findViewById(R.id.address)
 

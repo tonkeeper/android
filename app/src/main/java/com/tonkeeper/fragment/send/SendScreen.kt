@@ -6,6 +6,8 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.tonkeeper.R
+import com.tonkeeper.core.PaymentURL
+import com.tonkeeper.fragment.camera.CameraFragment
 import com.tonkeeper.fragment.send.amount.AmountScreen
 import com.tonkeeper.fragment.send.confirm.ConfirmScreen
 import com.tonkeeper.fragment.send.pager.PagerScreen
@@ -13,6 +15,7 @@ import com.tonkeeper.fragment.send.pager.SendScreenAdapter
 import com.tonkeeper.fragment.send.recipient.RecipientScreen
 import uikit.base.fragment.BaseFragment
 import uikit.mvi.UiScreen
+import uikit.navigation.Navigation.Companion.nav
 import uikit.widget.HeaderView
 
 class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>(R.layout.fragment_send), BaseFragment.BottomSheet {
@@ -78,6 +81,7 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         headerView.doOnCloseClick = { prev() }
 
         pagerView = view.findViewById(R.id.pager)
+        pagerView.offscreenPageLimit = 3
         pagerView.isUserInputEnabled = false
         pagerView.adapter = pageAdapter
         pagerView.registerOnPageChangeCallback(pageChangeCallback)
@@ -86,6 +90,10 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
     override fun onDestroyView() {
         super.onDestroyView()
         pagerView.unregisterOnPageChangeCallback(pageChangeCallback)
+    }
+
+    fun openCamera() {
+        nav()?.add(CameraFragment.newInstance())
     }
 
     fun setSubtitle(subtitle: String) {
@@ -128,12 +136,24 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
             )
             page++
         }
-        if (startAmount > 0) {
+        /*if (startAmount > 0) {
             feature.amount = SendScreenFeature.Amount(
                 amount = startAmount,
             )
             page++
-        }
+        }*/
         pagerView.currentItem = page
+    }
+
+    fun setAddress(address: String?) {
+
+    }
+
+    fun setText(text: String?) {
+
+    }
+
+    fun setAmount(amount: Float) {
+
     }
 }

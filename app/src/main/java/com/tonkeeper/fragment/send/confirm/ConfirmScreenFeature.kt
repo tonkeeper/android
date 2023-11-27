@@ -5,29 +5,16 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.R
-import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.from
+import com.tonkeeper.core.transaction.TransactionHelper
 import com.tonkeeper.fragment.send.SendScreenFeature
-import core.extensions.toBase64
-import io.tonapi.models.EmulateMessageToEventRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Instant
-import org.ton.block.AddrStd
-import org.ton.block.Coins
-import org.ton.block.Message
-import org.ton.boc.BagOfCells
-import org.ton.cell.Cell
-import org.ton.cell.buildCell
-import org.ton.contract.wallet.WalletTransfer
-import org.ton.tlb.constructor.AnyTlbConstructor
-import org.ton.tlb.storeTlb
 import ton.SupportedCurrency
 import ton.SupportedTokens
-import ton.contract.WalletV4R2Contract
 import uikit.mvi.UiFeature
 
 class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(ConfirmScreenState()) {
@@ -35,11 +22,11 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
     private val currency: SupportedCurrency
         get() = App.settings.currency
 
-    private val emulationApi = Tonapi.emulation
 
     private var destinationAddress: String = ""
     private var amountValue = 0f
     private var comment: String? = null
+    private var fee: Long = 0
 
     fun send() {
         viewModelScope.launch {
@@ -48,57 +35,14 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
     }
 
     private suspend fun transferMessage() = withContext(Dispatchers.IO) {
-        if (true) {
-            return@withContext
-        }
-        Log.d("ConfirmLog", "start")
+        Log.d("ConfirmLog", "start: $destinationAddress")
         try {
             val walletManager = App.walletManager
             val wallet = walletManager.getWalletInfo()!!
-            val liteClient = walletManager.liteClient!!
 
-            val accountInfo = walletManager.getAccount(wallet.accountId)!!
-            val contract = WalletV4R2Contract(accountInfo)
-
-            val transfer = WalletTransfer {
-                destination = AddrStd.parse(destinationAddress)
-                coins = Coins.of(amountValue.toDouble())
-            }
-
-            /*contract.transfer(
-                liteClient.liteApi,
-                wallet.privateKey,
-                Instant.DISTANT_FUTURE,
-                transfer
-            )*/
+            TransactionHelper.send(wallet, destinationAddress, amountValue, comment, false)
 
             Log.d("ConfirmLog", "done!")
-
-            /*
-
-            val message = contract.createTransferMessage(
-                wallet.privateKey,
-                Instant.DISTANT_FUTURE,
-                transfer
-            )
-
-
-            val cell = buildCell {
-                storeTlb(Message.tlbCodec(AnyTlbConstructor), message)
-            }
-
-            Log.d("ConfirmLog", "transferMessage: cell = $cell")
-
-
-            val content = BagOfCells(cell).toByteArray().toBase64()
-
-            Log.d("ConfirmLog", "transferMessage: content = $content")
-            val res = emulationApi.emulateMessageToWallet(EmulateMessageToEventRequest(
-                boc = content
-
-            ))
-
-            Log.d("ConfirmLog", "transferMessage: res = $res")*/
 
         } catch (e: Throwable) {
             Log.e("ConfirmLog", "error", e)
@@ -134,6 +78,8 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         amount: SendScreenFeature.Amount
     ): List<ConfirmScreenState.Item> = withContext(Dispatchers.IO) {
         amountValue = amount.amount
+        fee = amount.fee
+
         val items = arrayListOf<ConfirmScreenState.Item>()
         val wallet = App.walletManager.getWalletInfo() ?: return@withContext items
 
@@ -145,8 +91,20 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         items.add(ConfirmScreenState.Item(
             context.getString(R.string.amount),
             Coin.format(value = amount.amount),
-            Coin.format(currency, tonInCurrency)
+            "≈ " + Coin.format(currency, tonInCurrency)
         ))
+
+        if (fee > 0) {
+            val feeInCurrency = from(SupportedTokens.TON, wallet.accountId)
+                .value(fee)
+                .to(currency)
+
+            items.add(ConfirmScreenState.Item(
+                context.getString(R.string.fee),
+                "≈ " + Coin.format(value = fee, decimals = 9),
+                "≈ " + Coin.format(currency, feeInCurrency, decimals = 9)
+            ))
+        }
 
         return@withContext items
     }

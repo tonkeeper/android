@@ -22,15 +22,15 @@ interface EventDao {
         insert(EventEntity.map(accountId, events))
     }
 
-    @Query("SELECT * FROM event WHERE accountId = :accountId")
-    suspend fun getByAccountId(accountId: String): List<EventEntity>
+    @Query("SELECT data FROM event WHERE accountId = :accountId")
+    suspend fun getByAccountId(accountId: String): List<String>
 
-    @Query("SELECT * FROM event WHERE accountId = :accountId AND eventId = :eventId")
-    suspend fun getByEventId(accountId: String, eventId: String): EventEntity?
+    @Query("SELECT data FROM event WHERE accountId = :accountId AND eventId = :eventId LIMIT 1")
+    suspend fun getByEventId(accountId: String, eventId: String): String?
 
     suspend fun get(accountId: String): List<AccountEvent> {
         return getByAccountId(accountId).map {
-            fromJSON(it.data)
+            fromJSON(it)
         }
     }
 }

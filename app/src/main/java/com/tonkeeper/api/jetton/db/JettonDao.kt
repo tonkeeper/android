@@ -20,15 +20,15 @@ interface JettonDao {
         insert(JettonEntity.map(accountId, jettons))
     }
 
-    @Query("SELECT * FROM jetton WHERE accountId = :accountId")
-    suspend fun getByAccountId(accountId: String): List<JettonEntity>
+    @Query("SELECT data FROM jetton WHERE accountId = :accountId")
+    suspend fun getByAccountId(accountId: String): List<String>
 
-    @Query("SELECT * FROM jetton WHERE accountId = :accountId AND jettonAddress = :address LIMIT 1")
-    suspend fun getByAddress(accountId: String, address: String): JettonEntity?
+    @Query("SELECT data FROM jetton WHERE accountId = :accountId AND jettonAddress = :address LIMIT 1")
+    suspend fun getByAddress(accountId: String, address: String): String?
 
     suspend fun get(accountId: String): List<JettonBalance> {
         return getByAccountId(accountId).map {
-            fromJSON(it.data)
+            fromJSON(it)
         }
     }
 }

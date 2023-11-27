@@ -20,5 +20,6 @@ enum class SupportedCurrency(
     IDR("IDR"),
     INR("INR"),
     JPY("JPY"),
-    TON("TON");
+    TON("TON"),
+    // BTC("BTC");
 }

@@ -17,6 +17,7 @@ import uikit.base.fragment.BaseFragment
 import uikit.widget.BottomTabsView
 
 class MainFragment: BaseFragment(R.layout.fragment_main) {
+
     companion object {
         fun newInstance() = MainFragment()
     }
@@ -36,10 +37,6 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CurrencyUpdateWorker.enable()
-
-        lifecycleScope.launch {
-            App.walletManager.getWallets()
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

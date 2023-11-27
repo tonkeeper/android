@@ -163,7 +163,6 @@ class BottomSheetLayout @JvmOverloads constructor(
     }
 
     fun startShowAnimation() {
-        setLayerType(LAYER_TYPE_HARDWARE, null)
         doOnLayout {
             animation.doOnEnd { doOnEndShowingAnimation?.invoke() }
             animation.start()

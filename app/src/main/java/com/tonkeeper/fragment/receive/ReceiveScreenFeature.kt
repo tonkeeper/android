@@ -26,7 +26,10 @@ class ReceiveScreenFeature: UiFeature<ReceiveScreenState, ReceiveScreenEffect>(R
         }
     }
 
-    private suspend fun createQRCode(wallet: Wallet, size: Int): Bitmap = withContext(Dispatchers.IO) {
+    private suspend fun createQRCode(
+        wallet: Wallet,
+        size: Int
+    ): Bitmap = withContext(Dispatchers.IO) {
         val deepLink = "ton://transfer/${wallet.address}"
         QRCodeHelper.createLink(deepLink, size)
     }

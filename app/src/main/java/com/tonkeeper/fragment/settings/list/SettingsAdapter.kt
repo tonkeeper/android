@@ -6,14 +6,13 @@ import com.tonkeeper.fragment.settings.list.holder.SettingsLogoHolder
 import com.tonkeeper.fragment.settings.list.holder.SettingsTextHolder
 import com.tonkeeper.fragment.settings.list.holder.SettingsTitleHolder
 import com.tonkeeper.fragment.settings.list.item.SettingsItem
-import uikit.list.BaseListAdapter
 import uikit.list.BaseListHolder
 import uikit.list.BaseListItem
+import uikit.list.BaseListAdapter
 
 class SettingsAdapter(
-    items: List<SettingsItem>,
     private val onClick: (SettingsItem) -> Unit
-): BaseListAdapter<SettingsItem>(items.toMutableList()) {
+): BaseListAdapter() {
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when (viewType) {

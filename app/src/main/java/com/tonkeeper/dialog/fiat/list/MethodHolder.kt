@@ -4,8 +4,8 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonkeeper.R
-import uikit.drawable.CellBackgroundDrawable
 import uikit.list.BaseListHolder
+import uikit.list.ListCell.Companion.drawable
 
 class MethodHolder(
     parent: ViewGroup,
@@ -17,7 +17,7 @@ class MethodHolder(
     private val subtitleView = findViewById<AppCompatTextView>(R.id.subtitle)
 
     override fun onBind(item: MethodItem) {
-        itemView.background = CellBackgroundDrawable(itemView.context, item.position)
+        itemView.background = item.position.drawable(itemView.context)
         iconView.setImageURI(item.iconUrl)
         itemView.setOnClickListener { onClick(item) }
 

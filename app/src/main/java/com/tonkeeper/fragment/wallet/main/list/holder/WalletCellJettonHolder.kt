@@ -4,6 +4,7 @@ import android.net.Uri
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.ColorInt
@@ -33,6 +34,7 @@ class WalletCellJettonHolder(
     }
 
     override fun onBind(item: WalletJettonCellItem) {
+
         itemView.setOnClickListener {
             nav?.add(JettonScreen.newInstance(item.address, item.name))
         }

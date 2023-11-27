@@ -1,10 +1,13 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.get
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -16,10 +19,15 @@ import com.tonkeeper.fragment.camera.CameraFragment
 import com.tonkeeper.fragment.receive.ReceiveScreen
 import com.tonkeeper.fragment.send.SendScreen
 import com.tonkeeper.fragment.wallet.main.pager.WalletScreenAdapter
+import com.tonkeeper.fragment.wallet.main.pager.WalletScreenHolder
+import com.tonkeeper.fragment.wallet.main.pager.WalletScreenItem
 import com.tonkeeper.fragment.wallet.main.popup.NewWalletPopup
 import com.tonkeeper.fragment.wallet.main.popup.WalletPickerPopup
 import com.tonkeeper.fragment.wallet.main.view.WalletHeaderView
 import kotlinx.coroutines.launch
+import uikit.extensions.findViewHolderForAdapterPosition
+import uikit.extensions.layoutManager
+import uikit.extensions.recyclerView
 import uikit.extensions.withAnimation
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
@@ -38,6 +46,8 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
     private val fiatDialog: FiatDialog by lazy {
         FiatDialog(requireContext(), lifecycleScope)
     }
+
+    private val adapter = WalletScreenAdapter()
 
     private lateinit var bodyView: View
     private lateinit var headerView: WalletHeaderView
@@ -67,7 +77,9 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        nav()?.setFragmentResultListener(FiatDialog.FIAT_DIALOG_REQUEST) { _, _ ->
+        val nav = nav() ?: return
+
+        nav.setFragmentResultListener(FiatDialog.FIAT_DIALOG_REQUEST) { _, _ ->
             fiatDialog.show()
         }
     }
@@ -77,9 +89,7 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
         bodyView = view.findViewById(R.id.body)
 
         headerView = view.findViewById(R.id.header)
-        headerView.doOnActionClick = {
-            nav()?.add(CameraFragment.newInstance())
-        }
+        headerView.doOnActionClick = { openCamera() }
         headerView.doOnTitleClick = { selectWallet(headerView.titleView) }
 
         amountView = view.findViewById(R.id.amount)
@@ -103,13 +113,16 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
         tabsView = view.findViewById(R.id.tabs)
 
         pagerView = view.findViewById(R.id.pager)
+        pagerView.adapter = adapter
 
         shimmerView = view.findViewById(R.id.shimmer)
         shimmerHeaderView = view.findViewById(R.id.shimmer_header)
-        shimmerHeaderView.doOnActionClick = {
-            nav()?.add(CameraFragment.newInstance())
-        }
+        shimmerHeaderView.doOnActionClick = { openCamera() }
         shimmerHeaderView.doOnTitleClick = { selectWallet(shimmerHeaderView.titleView) }
+    }
+
+    private fun openCamera() {
+        nav()?.add(CameraFragment.newInstance())
     }
 
     private fun selectWallet(view: View) {
@@ -121,6 +134,18 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
                 return@launch
             }
             walletPickerPopup.show(wallets, selectedWallet, view)
+        }
+    }
+
+    private fun setPages(pages: List<WalletScreenItem>) {
+        if (adapter.itemCount != pages.size) {
+            adapter.submitList(pages)
+            return
+        }
+
+        for ((index, page) in pages.withIndex()) {
+            val holder = pagerView.findViewHolderForAdapterPosition(index) as? WalletScreenHolder ?: continue
+            holder.bind(page)
         }
     }
 
@@ -137,7 +162,9 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
 
         amountView.text = state.displayBalance
         addressView.text = state.shortAddress
-        pagerView.adapter = WalletScreenAdapter(state.pages)
+
+        setPages(state.pages)
+
         if (state.pages.size > 1) {
             tabsContainerView.visibility = View.VISIBLE
             TabLayoutMediator(tabsView, pagerView) { tab, position ->

@@ -21,9 +21,9 @@ class ListCellDecoration(
         state: RecyclerView.State
     ) {
         super.getItemOffsets(outRect, view, parent, state)
-        val adapter = parent.adapter as? BaseListAdapter<*> ?: return
+        val adapter = parent.adapter as? BaseListAdapter ?: return
         val position = parent.getChildAdapterPosition(view)
-        val item = adapter.get(position)
+        val item = adapter.getItem(position)
         if (item is ListCell) {
             val cellPosition = item.position
             if (cellPosition == ListCell.Position.SINGLE || cellPosition == ListCell.Position.LAST) {

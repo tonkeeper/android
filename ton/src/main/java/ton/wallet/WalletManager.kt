@@ -42,6 +42,12 @@ class WalletManager(
         return storage.getMnemonic(id)
     }
 
+    suspend fun getPrivateKey(id: Long): PrivateKeyEd25519 {
+        val mnemonic = getMnemonic(id)
+        val seed = Mnemonic.toSeed(mnemonic)
+        return PrivateKeyEd25519(seed)
+    }
+
     fun setWalletName(address: String, name: String) {
         scope.launch {
             val createDate = getIdAddress(address)

@@ -16,7 +16,7 @@ interface NftDao {
         insert(NftEntity(nftItem))
     }
 
-    @Query("SELECT * FROM nft WHERE nftAddress = :nftAddress LIMIT 1")
-    suspend fun get(nftAddress: String): NftEntity?
+    @Query("SELECT data FROM nft WHERE nftAddress = :nftAddress LIMIT 1")
+    suspend fun get(nftAddress: String): String?
 
 }

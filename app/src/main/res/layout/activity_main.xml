@@ -5,8 +5,7 @@
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.tonkeeper.fragment.SplashFragment"/>
+        android:layout_height="match_parent"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/debug_version"

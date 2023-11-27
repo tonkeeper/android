@@ -1,5 +1,10 @@
 package uikit.list
 
+import android.content.Context
+import android.graphics.drawable.Drawable
+import uikit.R
+import uikit.drawable.CellBackgroundDrawable
+
 interface ListCell {
 
     companion object {
@@ -30,6 +35,13 @@ interface ListCell {
                 "last", "2" -> Position.LAST
                 else -> Position.SINGLE
             }
+        }
+
+        fun Position.drawable(
+            context: Context,
+            backgroundColor: Int = context.getColor(R.color.backgroundContent)
+        ): Drawable {
+            return CellBackgroundDrawable.create(context, this, backgroundColor)
         }
     }
 

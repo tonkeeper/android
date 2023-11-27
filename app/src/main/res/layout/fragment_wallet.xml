@@ -54,7 +54,6 @@
                     android:id="@+id/tabs"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
-                    android:overScrollMode="never"
                     android:clipToPadding="false"
                     android:layout_gravity="center"/>
 

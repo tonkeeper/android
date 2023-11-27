@@ -16,8 +16,8 @@ class CollectiblesRepository(
     suspend fun getNftItemCache(
         nftAddress: String
     ): NftItem? {
-        val entity = dao.getItem(nftAddress) ?: return null
-        return fromJSON(entity.data)
+        val data = dao.getItemData(nftAddress) ?: return null
+        return fromJSON(data)
     }
 
     override suspend fun fromCache(

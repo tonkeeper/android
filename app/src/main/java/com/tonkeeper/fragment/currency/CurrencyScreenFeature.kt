@@ -74,6 +74,7 @@ class CurrencyScreenFeature: UiFeature<CurrencyScreenState, CurrencyScreenEffect
             SupportedCurrency.INR -> R.string.currency_inr_name
             SupportedCurrency.JPY -> R.string.currency_jpy_name
             SupportedCurrency.TON -> R.string.toncoin
+            // SupportedCurrency.BTC -> R.string.bitcoin
             else -> throw IllegalArgumentException("Unsupported currency: $currency")
         }
 

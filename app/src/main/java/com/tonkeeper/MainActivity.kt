@@ -5,10 +5,15 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.WindowCompat
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.PaymentURL
 import com.tonkeeper.fragment.intro.IntroFragment
 import uikit.base.BaseActivity
 import uikit.base.fragment.BaseFragment
@@ -17,27 +22,37 @@ import com.tonkeeper.fragment.main.MainFragment
 import com.tonkeeper.fragment.passcode.PasscodeScreen
 import com.tonkeeper.fragment.web.WebFragment
 import com.tonkeeper.core.tonconnect.TonConnect
+import com.tonkeeper.fragment.camera.CameraFragment
 import com.tonkeeper.fragment.send.SendScreen
 import kotlinx.coroutines.launch
 import uikit.navigation.Navigation.Companion.nav
 
-class MainActivity: BaseActivity(), Navigation {
+class MainActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
 
     companion object {
         private val hostFragmentId = R.id.nav_host_fragment
     }
 
-    private val tonConnect: TonConnect by lazy {
-        TonConnect(this, lifecycleScope)
-    }
+    private lateinit var contentView: View
+    private lateinit var tonConnect: TonConnect
+    private var initialized = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        contentView = findViewById(android.R.id.content)
+        contentView.viewTreeObserver.addOnPreDrawListener(this)
+
+        init(false)
+
         handleIntent(intent)
-        tonConnect.start()
+        tonConnect = TonConnect(this)
+        tonConnect.onCreate()
         initDebugVersion()
     }
+
 
     private fun initDebugVersion() {
         val debugVersionView = findViewById<AppCompatTextView>(R.id.debug_version)
@@ -58,17 +73,18 @@ class MainActivity: BaseActivity(), Navigation {
     }
 
     private fun handleTON(uri: Uri) {
-        val action = if (uri.scheme == "ton") {
-            uri.host
-        } else {
-            uri.pathSegments.firstOrNull()
-        }
-        if (action == "transfer") {
-            val address = uri.lastPathSegment ?: return
-            val text = uri.getQueryParameter("text")
-            val amount = uri.getQueryParameter("amount")?.toLongOrNull() ?: 0
-            // val allowCustom = uri.getQueryParameter("allow_custom")
-            nav()?.add(SendScreen.newInstance(address, text, Coin.toCoins(amount)))
+        val paymentURL = PaymentURL(uri)
+
+        if (paymentURL.action == PaymentURL.ACTION_TRANSFER) {
+            val amount = Coin.toCoins(paymentURL.amount)
+            val currentFragment = supportFragmentManager.findFragmentById(hostFragmentId)
+            if (currentFragment is SendScreen) {
+                currentFragment.setAddress(paymentURL.address)
+                currentFragment.setText(paymentURL.text)
+                currentFragment.setAmount(amount)
+            } else {
+                nav()?.add(SendScreen.newInstance(paymentURL.address, paymentURL.text, amount))
+            }
         }
     }
 
@@ -107,7 +123,8 @@ class MainActivity: BaseActivity(), Navigation {
         if (addToBackStack) {
             transaction.addToBackStack(null)
         }
-        transaction.commit()
+        transaction.runOnCommit { initialized = true }
+        transaction.commitNow()
     }
 
     override fun add(fragment: BaseFragment) {
@@ -142,7 +159,15 @@ class MainActivity: BaseActivity(), Navigation {
 
     override fun onDestroy() {
         super.onDestroy()
-        tonConnect.destroy()
+        tonConnect.onDestroy()
+    }
+
+    override fun onPreDraw(): Boolean {
+        if (!initialized) {
+            return false
+        }
+        contentView.viewTreeObserver.removeOnPreDrawListener(this)
+        return true
     }
 
 }

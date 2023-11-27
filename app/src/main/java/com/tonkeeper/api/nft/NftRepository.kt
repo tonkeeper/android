@@ -33,7 +33,7 @@ class NftRepository(
     private suspend fun fromCache(
         address: String
     ): NftItem? = withContext(Dispatchers.IO) {
-        dao.get(address)?.let { fromJSON(it.data) }
+        dao.get(address)?.let { fromJSON(it) }
     }
 
     private suspend fun fromCloud(

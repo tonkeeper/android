@@ -2,16 +2,8 @@ package uikit.widget.item
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
-import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.appcompat.widget.LinearLayoutCompat
-import androidx.appcompat.widget.SwitchCompat
 import uikit.R
-import uikit.drawable.CellBackgroundDrawable
-import uikit.extensions.dp
-import uikit.extensions.getDimensionPixelSize
-import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.useAttributes
 import uikit.list.ListCell
 import uikit.widget.SwitchView

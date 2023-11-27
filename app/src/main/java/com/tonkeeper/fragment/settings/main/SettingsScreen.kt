@@ -13,6 +13,7 @@ import com.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
 import com.tonkeeper.fragment.settings.security.SecurityFragment
 import uikit.decoration.ListCellDecoration
+import uikit.list.LinearLayoutManager
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.nav
 
@@ -28,20 +29,24 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
         LogoutDialog(requireContext())
     }
 
+    private val adapter = SettingsAdapter { item ->
+        if (item is SettingsIdItem) {
+            onCellClick(item)
+        }
+    }
+
     private lateinit var listView: RecyclerView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         listView = view.findViewById(R.id.list)
+        listView.layoutManager = LinearLayoutManager(view.context)
         listView.addItemDecoration(ListCellDecoration(view.context))
+        listView.adapter = adapter
     }
 
     override fun newUiState(state: SettingsScreenState) {
-        listView.adapter = SettingsAdapter(state.items) { item ->
-            if (item is SettingsIdItem) {
-                onCellClick(item)
-            }
-        }
+        adapter.submitList(state.items)
     }
 
     override fun newUiEffect(effect: SettingsScreenEffect) {

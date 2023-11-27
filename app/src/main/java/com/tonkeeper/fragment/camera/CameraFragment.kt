@@ -2,24 +2,21 @@ package com.tonkeeper.fragment.camera
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.mlkit.vision.MlKitAnalyzer
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
-import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tonkeeper.MainActivity
 import com.tonkeeper.R
+import org.ton.block.AddrStd
 import uikit.base.fragment.BaseFragment
+import uikit.navigation.Navigation.Companion.nav
 import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -27,6 +24,7 @@ import java.util.concurrent.Executors
 class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
     companion object {
+
         fun newInstance() = CameraFragment()
     }
 
@@ -34,11 +32,13 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-
+            startCamera()
         } else {
             finish()
         }
     }
+
+    private var readyUrl = false
 
     private lateinit var cameraView: PreviewView
     private lateinit var headerView: HeaderView
@@ -100,19 +100,40 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
     }
 
     private fun handleBarcode(barcode: Barcode) {
-        when (barcode.valueType) {
-            Barcode.TYPE_URL -> {
-                barcode.url?.url?.let { url ->
-                    pushUri(Uri.parse(url))
-                }
-            }
+        val activity = activity ?: return
+
+        if (readyUrl || activity !is MainActivity) {
+            return
         }
+
+        val url = getUrlFromBarcode(barcode) ?: return
+        readyUrl = true
+
+        activity.handleUri(Uri.parse(url))
+
+        finish()
     }
 
-    private fun pushUri(uri: Uri) {
-        val activity = activity as? MainActivity ?: return
-        activity.handleUri(uri)
-        finish()
+    private fun getUrlFromBarcode(barcode: Barcode): String? {
+        var url: String? = null
+        if (barcode.valueType == Barcode.TYPE_TEXT) {
+            url = createTransferLink(barcode.rawValue)
+        } else if (barcode.valueType == Barcode.TYPE_URL) {
+            url = barcode.url?.url
+        }
+        return url
+    }
+
+    private fun createTransferLink(value: String?): String? {
+        if (value == null) {
+            return null
+        }
+        return try {
+            val address = AddrStd.parse(value).toString(userFriendly = true)
+            "ton://transfer/$address"
+        } catch (e: Exception) {
+            null
+        }
     }
 
     override fun onEndShowingAnimation() {

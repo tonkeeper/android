@@ -3,13 +3,12 @@ package com.tonkeeper.core.tonconnect
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.LifecycleCoroutineScope
-import com.google.crypto.tink.subtle.Hex
 import com.tonkeeper.App
 import com.tonkeeper.api.TonNetwork
-import com.tonkeeper.dialog.TonConnectDialog
+import com.tonkeeper.dialog.tc.TonConnectDialog
 import com.tonkeeper.core.tonconnect.models.TCApp
 import com.tonkeeper.core.tonconnect.models.TCData
+import com.tonkeeper.core.tonconnect.models.TCEvent
 import com.tonkeeper.core.tonconnect.models.TCItem
 import com.tonkeeper.core.tonconnect.models.TCKeyPair
 import com.tonkeeper.core.tonconnect.models.TCManifest
@@ -18,29 +17,35 @@ import com.tonkeeper.core.tonconnect.models.reply.TCAddressItemReply
 import com.tonkeeper.core.tonconnect.models.reply.TCConnectEventSuccess
 import com.tonkeeper.core.tonconnect.models.reply.TCReply
 import core.keyvalue.EncryptedKeyValue
-import core.extensions.toBase64
+import io.ktor.util.Identity.decode
+import io.ktor.util.hex
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import org.ton.block.StateInit
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletContract
-import ton.wallet.WalletInfo
+import org.ton.crypto.base64
 import java.net.URL
+import java.nio.charset.Charset
 
-class TonConnect(
-    private val context: Context,
-    private val scope: LifecycleCoroutineScope,
-) {
+class TonConnect(private val context: Context) {
 
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val storage = EncryptedKeyValue(context, "ton-connect")
     private val manifestDao = App.db.tonConnectManifestDao()
     private val appRepository = AppRepository(storage)
     private val bridge = Bridge()
     private val proof = Proof()
-    private val realtime = Realtime(context)
+    private val realtime = Realtime(context) { event ->
+        onEvent(event)
+    }
 
     private val onConnectApp: (TCData) -> Unit = { data ->
         connect(data)
@@ -50,12 +55,24 @@ class TonConnect(
         TonConnectDialog(context, onConnectApp)
     }
 
-    fun start() {
-        scope.launch(Dispatchers.IO) {
-            val accountId = getAccountId()
-            val clientIds = appRepository.getClientIds(accountId)
-            realtime.start(clientIds)
-        }
+    fun onCreate() {
+        scope.launch { startEventHandler() }
+    }
+
+    fun onDestroy() {
+        stopEventHandler()
+        scope.cancel()
+    }
+
+    private fun restartEventHandler() {
+        stopEventHandler()
+        scope.launch { startEventHandler() }
+    }
+
+    private suspend fun startEventHandler() {
+        val accountId = getAccountId()
+        val clientIds = appRepository.getClientIds(accountId)
+        realtime.start(clientIds)
     }
 
     fun isSupportUri(uri: Uri): Boolean {
@@ -68,10 +85,11 @@ class TonConnect(
     fun processUri(uri: Uri) {
         val request = TCRequest(uri)
 
-        Log.d("TonConnectLog", "open client: ${request}")
         dialog.show()
+
         scope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
+
             val manifest = manifest(request.payload.manifestUrl)
             val data = TCData(
                 manifest = manifest,
@@ -83,15 +101,28 @@ class TonConnect(
         }
     }
 
+    private fun onEvent(event: TCEvent) {
+        scope.launch {
+            val app = getApp(event.from) ?: return@launch
+            try {
+                val msg = app.decrypt(event.body).toString(Charset.defaultCharset())
+                val json = JSONObject(msg)
+                val method = json.getString("method")
+
+                Log.d("TonConnectLog", "method: $method")
+            } catch (ignored: Throwable) {
+                Log.e("TonConnectLog", "error", ignored)
+            }
+        }
+    }
+
     private fun connect(data: TCData) {
-        Log.d("TonConnectLog", "target client id: ${data.clientId}")
         scope.launch(Dispatchers.IO) {
             try {
                 val accountId = getAccountId()
                 val app = appRepository.createApp(accountId, data.url, data.clientId)
 
                 val appKeyPair = TCKeyPair(
-                    // publicKey = app.publicKey,
                     privateKey = app.privateKey
                 )
 
@@ -109,21 +140,17 @@ class TonConnect(
                     }
                 }
 
-                Log.d("TonConnectLog", "response items: $items")
-
                 val event = TCConnectEventSuccess(items)
+                bridge.sendEvent(event.toJSON(), app)
 
-                Log.d("TonConnectLog", "event: $event")
+                restartEventHandler()
 
-                val data = event.toJSON().toString()
-
-                Log.d("TonConnectLog", "data: $data")
-
-                bridge.sendEvent(data, app.clientId, appKeyPair)
+                withContext(Dispatchers.Main) {
+                    dialog.dismiss()
+                }
             } catch (e: Throwable) {
                 Log.e("TonConnectLog", "error", e)
             }
-
         }
     }
 
@@ -138,7 +165,7 @@ class TonConnect(
             address = accountId,
             network = TonNetwork.MAINNET.value.toString(),
             walletStateInit = walletStateInit,
-            publicKey = Hex.encode(wallet.publicKey.key.toByteArray())
+            publicKey = hex(wallet.publicKey.key.toByteArray())
         )
     }
 
@@ -148,7 +175,7 @@ class TonConnect(
         val builder = CellBuilder()
         StateInit.storeTlb(builder, stateInit)
         val cell = builder.endCell()
-        return BagOfCells(cell).toByteArray().toBase64()
+        return base64(BagOfCells(cell).toByteArray())
     }
 
     private suspend fun manifest(url: String): TCManifest {
@@ -181,13 +208,13 @@ class TonConnect(
     }
 
     private suspend fun getApp(
-        url: String
-    ): TCApp = withContext(Dispatchers.IO) {
+        clientId: String
+    ): TCApp? = withContext(Dispatchers.IO) {
         val accountId = getAccountId()
-        return@withContext appRepository.getApp(accountId, url)
+        return@withContext appRepository.getApp(accountId, clientId)
     }
 
-    fun destroy() {
+    private fun stopEventHandler() {
         realtime.release()
     }
 

@@ -2,23 +2,18 @@ package com.tonkeeper.fragment.fiat
 
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.webkit.WebView
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
-import com.tonkeeper.api.internal.repositories.KeysRepository
 import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
-import core.extensions.toHex
 import kotlinx.coroutines.launch
-import org.ton.crypto.digest.sha512
 import uikit.base.fragment.BaseFragment
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
 import uikit.widget.WebViewFixed
-import java.util.UUID
 
 class FiatWebFragment: BaseFragment(R.layout.fragment_web_fiat) {
 

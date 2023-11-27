@@ -1,6 +1,5 @@
 package com.tonkeeper.core
 
-import android.util.Log
 import androidx.collection.arrayMapOf
 import ton.SupportedCurrency
 import java.text.DecimalFormat
@@ -11,6 +10,8 @@ import kotlin.math.pow
 object Coin {
 
     private const val DefaultDecimals = 18
+    private const val MIN_DECIMALS = 2
+
     private const val BASE = 1000000000L
     private const val SMALL_SPACE = " "
 
@@ -18,18 +19,19 @@ object Coin {
         put("USD", "$")
         put("EUR", "€")
         put("RUB", "₽")
-        put("AED", "DH")
+        put("AED", "د.إ")
         put("UAH", "₴")
         put("UZS", "лв")
         put("GBP", "£")
         put("CHF", "₣")
         put("CNY", "¥")
+        put("JPY", "¥")
         put("KRW", "₩")
         put("IDR", "Rp")
         put("INR", "₹")
-        put("JPY", "¥")
         put("TRY", "₺")
         put("THB", "฿")
+        put("BTC", "₿")
         // put("TON", "\uD83D\uDC8E")
         put("TON", "TON")
     }
@@ -64,7 +66,7 @@ object Coin {
         currency: SupportedCurrency,
         value: Long,
         useCurrencyCode: Boolean = false,
-        decimals: Int = 2
+        decimals: Int = MIN_DECIMALS
     ): String {
         return format(currency.code, toCoins(value), useCurrencyCode, decimals)
     }
@@ -73,7 +75,7 @@ object Coin {
         currency: SupportedCurrency,
         value: Float,
         useCurrencyCode: Boolean = false,
-        decimals: Int = 2
+        decimals: Int = MIN_DECIMALS
     ): String {
         return format(currency.code, value, useCurrencyCode, decimals)
     }
@@ -91,18 +93,24 @@ object Coin {
         currency: String = "",
         value: Float,
         useCurrencyCode: Boolean = false,
-        decimals: Int = 2
+        decimals: Int = MIN_DECIMALS
     ): String {
+        var format: String
         if (currency.isNotEmpty()) {
             val customSymbol = getSymbols(currency, useCurrencyCode)
             if (customSymbol != null) {
                 return customFormat(customSymbol, value)
             }
             currencyFormat.currency = Currency.getInstance(currency)
-            return currencyFormat.format(value)
+            format = currencyFormat.format(value)
+        } else {
+            simpleFormat.maximumFractionDigits = decimals
+            format = simpleFormat.format(value)
         }
-        simpleFormat.maximumFractionDigits = decimals
-        return simpleFormat.format(value)
+        if (format.endsWith(".00")) {
+            format = format.substring(0, format.length - 3)
+        }
+        return format
     }
 
     private fun getSymbols(

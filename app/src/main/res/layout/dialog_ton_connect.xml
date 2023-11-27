@@ -31,9 +31,11 @@
                 android:scaleType="centerCrop"
                 app:roundedCornerRadius="20dp"/>
             
-            <uikit.widget.TonConnectAnimationView
+            <com.tonkeeper.dialog.tc.TonConnectCryptoView
+                android:id="@+id/crypto"
                 android:layout_width="86dp"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"/>
 
             <com.facebook.drawee.view.SimpleDraweeView
                 android:id="@+id/site_icon"

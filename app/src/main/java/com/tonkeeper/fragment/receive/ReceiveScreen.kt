@@ -35,7 +35,7 @@ class ReceiveScreen: UiScreen<ReceiveScreenState, ReceiveScreenEffect, ReceiveSc
 
         qrCodeView = view.findViewById(R.id.qr_code)
         qrCodeView.doOnLayout {
-            feature.requestQRCode(it.width)
+            feature.requestQRCode(it.measuredWidth)
         }
 
         addressView = view.findViewById(R.id.address)
@@ -53,6 +53,10 @@ class ReceiveScreen: UiScreen<ReceiveScreenState, ReceiveScreenEffect, ReceiveSc
         attrs: AttributeSet? = null,
         defStyle: Int = 0,
     ) : AppCompatImageView(context, attrs, defStyle) {
+
+        init {
+            scaleType = ScaleType.CENTER_CROP
+        }
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             super.onMeasure(widthMeasureSpec, widthMeasureSpec)

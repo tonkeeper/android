@@ -5,13 +5,11 @@ import com.tonkeeper.fragment.wallet.main.list.holder.WalletCellJettonHolder
 import com.tonkeeper.fragment.wallet.main.list.holder.WalletCellTonHolder
 import com.tonkeeper.fragment.wallet.main.list.holder.WalletNftHolder
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
-import uikit.list.BaseListAdapter
 import uikit.list.BaseListHolder
 import uikit.list.BaseListItem
+import uikit.list.BaseListAdapter
 
-class WalletContentAdapter(
-    items: List<WalletItem>
-): BaseListAdapter<WalletItem>(items.toMutableList()) {
+class WalletContentAdapter: BaseListAdapter() {
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when (viewType) {

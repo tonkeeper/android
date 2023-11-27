@@ -4,9 +4,10 @@ import com.tonkeeper.App
 import com.tonkeeper.core.tonconnect.db.AppEntity
 import com.tonkeeper.core.tonconnect.models.TCApp
 import core.keyvalue.EncryptedKeyValue
-import core.extensions.toBase64
+import io.ktor.util.hex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.libsodium.jni.Sodium
 import org.ton.api.pk.PrivateKeyEd25519
 
 internal class AppRepository(
@@ -35,39 +36,43 @@ internal class AppRepository(
     ) = withContext(Dispatchers.IO) {
         val storageKey = createStorageKey(accountId, app.url)
         storage.putByteArray(storageKey, app.privateKey)
+
         val entity = AppEntity(
             id = "${accountId}_${app.url}",
             url = app.url,
             accountId = accountId,
             clientId = app.clientId,
-            publicKeyBase64 = app.publicKey.toBase64()
+            publicKeyHex = hex(app.publicKey),
         )
         appDao.insertApp(entity)
     }
 
     private fun buildApp(url: String, clientId: String): TCApp {
-        val keyPair = PrivateKeyEd25519()
+        val publicKey = ByteArray(32)
+        val privateKey = ByteArray(32)
+        Sodium.crypto_box_keypair(publicKey, privateKey)
+
         return TCApp(
             url = url,
             clientId = clientId,
-            privateKey = keyPair.key.toByteArray(),
-            publicKey = keyPair.publicKey().toByteArray()
+            publicKey = publicKey,
+            privateKey = privateKey,
         )
     }
 
     suspend fun getApp(
         accountId: String,
-        url: String
-    ): TCApp = withContext(Dispatchers.IO) {
-        val entity = appDao.getAppEntity(accountId, url)
-        val storageKey = createStorageKey(accountId, url)
+        clientId: String
+    ): TCApp? = withContext(Dispatchers.IO) {
+        val entity = appDao.getAppEntity(accountId, clientId) ?: return@withContext null
+        val storageKey = createStorageKey(accountId, entity.url)
         val privateKey = storage.getByteArray(storageKey)
 
         return@withContext TCApp(
             url = entity.url,
             clientId = entity.clientId,
+            publicKey = hex(entity.publicKeyHex),
             privateKey = privateKey!!,
-            publicKey = entity.publicKey
         )
     }
 
@@ -81,7 +86,8 @@ internal class AppRepository(
     suspend fun getClientIds(
         accountId: String
     ): List<String> = withContext(Dispatchers.IO) {
-        return@withContext appDao.getClientIds(accountId)
+        val apps = appDao.getApps(accountId)
+        return@withContext apps.map { it.publicKeyHex }
     }
 
 }

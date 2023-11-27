@@ -2,16 +2,15 @@ package com.tonkeeper.fragment.country
 
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.R
 import com.tonkeeper.fragment.country.list.CountryAdapter
 import uikit.base.fragment.BaseFragment
+import uikit.list.LinearLayoutManager
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.nav
 import uikit.widget.HeaderView
-import uikit.widget.InputView
 import uikit.widget.SearchInput
 
 class CountryScreen: UiScreen<CountryScreenState, CountryScreenEffect, CountryScreenFeature>(R.layout.fragment_country), BaseFragment.BottomSheet {
@@ -32,6 +31,7 @@ class CountryScreen: UiScreen<CountryScreenState, CountryScreenEffect, CountrySc
     override val feature: CountryScreenFeature by viewModels()
 
     private val request: String by lazy { arguments?.getString(REQUEST_KEY) ?: "" }
+    private val adapter = CountryAdapter { selectCountry(it.code) }
 
     private lateinit var headerView: HeaderView
     private lateinit var searchInput: SearchInput
@@ -46,12 +46,12 @@ class CountryScreen: UiScreen<CountryScreenState, CountryScreenEffect, CountrySc
         searchInput.doOnTextChanged = { feature.search(it.toString()) }
 
         listView = view.findViewById(R.id.list)
+        listView.layoutManager = LinearLayoutManager(view.context)
+        listView.adapter = adapter
     }
 
     override fun newUiState(state: CountryScreenState) {
-        listView.adapter = CountryAdapter(state.items) {
-            selectCountry(it.code)
-        }
+        adapter.submitList(state.items)
     }
 
     override fun onEndShowingAnimation() {

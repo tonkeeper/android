@@ -1,13 +1,20 @@
 package com.tonkeeper.api.jetton.db
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tonkeeper.api.address
 import com.tonkeeper.api.symbol
 import com.tonkeeper.api.toJSON
 import io.tonapi.models.JettonBalance
 
-@Entity(tableName = "jetton")
+@Entity(
+    tableName = "jetton",
+    indices = [
+        Index(value = ["accountId"]),
+        Index(value = ["jettonAddress"]),
+    ]
+)
 data class JettonEntity(
     @PrimaryKey val id: String,
     val accountId: String,

@@ -1,6 +1,7 @@
 package com.tonkeeper.api.base
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -8,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 abstract class BaseBlobRepository<Data>(
     private val name: String,
-    private val context: Context
+    private val context: Context,
 ) {
 
     private val cacheFolder: File
@@ -25,6 +26,11 @@ abstract class BaseBlobRepository<Data>(
     suspend fun fromCache(
         accountId: String = "global"
     ): Data? = withContext(Dispatchers.IO) {
+        val memory = getFromMemory(accountId)
+        if (memory != null) {
+            return@withContext memory
+        }
+
         val file = getFile(accountId)
         if (!file.exists()) return@withContext null
         try {
@@ -45,7 +51,7 @@ abstract class BaseBlobRepository<Data>(
         file.writeText(blob)
     }
 
-    fun getFile(
+    private fun getFile(
         accountId: String = "global"
     ): File {
         val folder = File(cacheFolder, accountId)
@@ -59,7 +65,7 @@ abstract class BaseBlobRepository<Data>(
         memory[accountId] = data
     }
 
-    fun getFromMemory(accountId: String = "global"): Data? {
+    private fun getFromMemory(accountId: String = "global"): Data? {
         return memory[accountId]
     }
 

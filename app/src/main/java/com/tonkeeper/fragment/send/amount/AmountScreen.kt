@@ -8,11 +8,14 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.tonkeeper.App
 import com.tonkeeper.R
+import com.tonkeeper.core.transaction.TransactionHelper
 import com.tonkeeper.fragment.send.SendScreenFeature
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import kotlinx.coroutines.launch
 import uikit.extensions.focusWidthKeyboard
+import uikit.widget.LoaderView
 
 class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScreenFeature>(R.layout.fragment_send_amount) {
 
@@ -27,6 +30,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     private lateinit var availableView: AppCompatTextView
     private lateinit var maxButton: Button
     private lateinit var continueButton: Button
+    private lateinit var loaderView: LoaderView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -43,6 +47,8 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
 
         continueButton = view.findViewById(R.id.continue_action)
         continueButton.setOnClickListener { next() }
+
+        loaderView = view.findViewById(R.id.loader)
     }
 
     private fun getValue(): Float {
@@ -50,12 +56,27 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     private fun next() {
-        setFlowAmount()
-        parentScreen?.next()
+        continueButton.text = ""
+        continueButton.isEnabled = false
+        loaderView.visibility = View.VISIBLE
+
+        val value = getValue()
+        lifecycleScope.launch {
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            val to = parentFeature?.recipient?.address ?: return@launch
+            val comment = parentFeature?.recipient?.comment ?: return@launch
+            val fee = TransactionHelper.getFee(wallet, to, value, comment)
+            setFlowAmount(value, fee)
+            parentScreen?.next()
+
+            continueButton.setText(R.string.continue_action)
+            continueButton.isEnabled = true
+            loaderView.visibility = View.GONE
+        }
     }
 
-    private fun setFlowAmount() {
-        parentFeature?.amount = SendScreenFeature.Amount(getValue())
+    private fun setFlowAmount(value: Float, fee: Long) {
+        parentFeature?.amount = SendScreenFeature.Amount(value, fee)
     }
 
     private fun setMaxValue() {

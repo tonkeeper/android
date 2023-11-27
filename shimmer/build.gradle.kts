@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "com.facebook.shimmer"
-    compileSdk = rootProject.extra["compileSdkVersion"] as Int
+    compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.extra["minSdkVersion"] as Int
+        minSdk = Build.minSdkVersion
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -22,5 +22,5 @@ android {
 }
 
 dependencies {
-    implementation("androidx.annotation:annotation:1.7.0")
+    implementation(Libs.AndroidX.annotation)
 }

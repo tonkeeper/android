@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "core"
-    compileSdk = rootProject.extra["compileSdkVersion"] as Int
+    compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.extra["minSdkVersion"] as Int
+        minSdk = Build.minSdkVersion
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -22,6 +22,7 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
-    implementation("androidx.security:security-crypto:1.0.0")
+    implementation(Libs.KotlinX.coroutines)
+    implementation(Libs.AndroidX.security)
+    api(Libs.ton)
 }

@@ -1,5 +1,6 @@
 package com.tonkeeper.api
 
+import com.squareup.moshi.adapter
 import com.tonkeeper.core.Coin
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.AccountAddress
@@ -33,12 +34,14 @@ suspend fun <R> withRetry(
     throw lastError!!
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> toJSON(obj: T): String {
-    return Serializer.moshi.adapter(T::class.java).toJson(obj)
+    return Serializer.moshi.adapter<T>().toJson(obj)
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> fromJSON(json: String): T {
-    return Serializer.moshi.adapter(T::class.java).fromJson(json)!!
+    return Serializer.moshi.adapter<T>().fromJson(json)!!
 }
 
 val JettonSwapAction.jettonPreview: JettonPreview?

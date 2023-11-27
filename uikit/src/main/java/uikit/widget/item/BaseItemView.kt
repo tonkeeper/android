@@ -2,13 +2,12 @@ package uikit.widget.item
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R
-import uikit.drawable.CellBackgroundDrawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 import uikit.list.ListCell
+import uikit.list.ListCell.Companion.drawable
 
 open class BaseItemView @JvmOverloads constructor(
     context: Context,
@@ -19,7 +18,7 @@ open class BaseItemView @JvmOverloads constructor(
     var position: ListCell.Position = ListCell.Position.SINGLE
         set(value) {
             field = value
-            background = CellBackgroundDrawable(context, value)
+            background = value.drawable(context)
         }
 
     init {

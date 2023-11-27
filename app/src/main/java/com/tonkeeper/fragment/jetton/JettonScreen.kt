@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
-import android.util.Log
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
@@ -15,12 +14,14 @@ import com.tonkeeper.R
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.core.history.list.HistoryAdapter
 import com.tonkeeper.core.history.list.HistoryItemDecoration
+import com.tonkeeper.fragment.receive.ReceiveScreen
 import io.tonapi.models.JettonBalance
 import uikit.base.fragment.BaseFragment
 import uikit.extensions.withAlpha
-import uikit.extensions.withAnimation
+import uikit.list.LinearLayoutManager
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
+import uikit.navigation.Navigation.Companion.nav
 import uikit.widget.HeaderView
 
 class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScreenFeature>(R.layout.fragment_jetton), BaseFragment.SwipeBack {
@@ -52,6 +53,8 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
     override var doOnDragging: ((Boolean) -> Unit)? = null
     override var doOnDraggingProgress: ((Float) -> Unit)? = null
 
+    private val adapter = HistoryAdapter()
+
     private lateinit var headerView: HeaderView
     private lateinit var shimmerView: View
     private lateinit var bodyView: View
@@ -60,6 +63,7 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
     private lateinit var currencyBalanceView: AppCompatTextView
     private lateinit var rateView: AppCompatTextView
     private lateinit var listView: RecyclerView
+    private lateinit var receiveView: View
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -67,13 +71,19 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
         headerView.title = jettonName
         headerView.doOnCloseClick = { finish() }
 
+        receiveView = view.findViewById(R.id.receive)
+        receiveView.setOnClickListener { nav()?.add(ReceiveScreen.newInstance()) }
+
         shimmerView = view.findViewById(R.id.shimmer)
         bodyView = view.findViewById(R.id.body)
         iconView = view.findViewById(R.id.icon)
         balanceView = view.findViewById(R.id.balance)
         currencyBalanceView = view.findViewById(R.id.currency_balance)
         rateView = view.findViewById(R.id.rate)
+
         listView = view.findViewById(R.id.list)
+        listView.layoutManager = LinearLayoutManager(view.context)
+        listView.adapter = adapter
         listView.addItemDecoration(HistoryItemDecoration(view.context))
     }
 
@@ -86,7 +96,7 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
         updateAsyncState(state.asyncState)
         currencyBalanceView.text = state.currencyBalance
         rateView.text = createRate(state.rateFormat, state.rate24h)
-        listView.adapter = HistoryAdapter(state.historyItems)
+        adapter.submitList(state.historyItems)
 
         state.jetton?.let { setJetton(it) }
     }

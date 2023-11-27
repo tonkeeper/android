@@ -4,18 +4,15 @@ import com.tonkeeper.App
 import com.tonkeeper.api.event.EventRepository
 import com.tonkeeper.core.history.HistoryHelper
 import core.QueueScope
-import ton.wallet.WalletInfo
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import ton.wallet.Wallet
 
 class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(HistoryScreenState()) {
 
     private val queueScope = QueueScope(Dispatchers.IO)
     private val eventRepository = EventRepository()
-
 
     init {
         requestEventsState()
@@ -32,7 +29,7 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
 
             val wallet = getWallet() ?: return@submit
 
-            eventRepository.sync(wallet.address)
+            eventRepository.clear(wallet.accountId)
 
             updateEventsState()
         }
@@ -40,7 +37,7 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
 
     private suspend fun updateEventsState() {
         val wallet = getWallet() ?: return
-        val events = eventRepository.get(wallet.address)
+        val events = eventRepository.get(wallet.accountId)
         val items = HistoryHelper.mapping(wallet, events)
 
         updateUiState { currentState ->
@@ -52,13 +49,13 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
     }
 
     private fun requestEventsState() {
-        updateUiState { currentState ->
-            currentState.copy(
-                asyncState = AsyncState.Loading
-            )
-        }
-
         queueScope.submit {
+            updateUiState { currentState ->
+                currentState.copy(
+                    asyncState = AsyncState.Loading
+                )
+            }
+
             updateEventsState()
         }
     }

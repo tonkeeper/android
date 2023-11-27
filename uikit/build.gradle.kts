@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "uikit"
-    compileSdk = rootProject.extra["compileSdkVersion"] as Int
+    compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.extra["minSdkVersion"] as Int
+        minSdk = Build.minSdkVersion
         consumerProguardFiles("consumer-rules.pro")
     }
     compileOptions {
@@ -21,10 +21,11 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.activity:activity-ktx:1.8.0")
-    implementation("androidx.fragment:fragment-ktx:1.6.2")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.10.0")
-    implementation("com.airbnb.android:lottie:6.1.0")
+    implementation(Libs.AndroidX.core)
+    implementation(Libs.AndroidX.activity)
+    implementation(Libs.AndroidX.fragment)
+    implementation(Libs.AndroidX.appCompat)
+    implementation(Libs.AndroidX.splashscreen)
+    implementation(Libs.UI.material)
+    implementation(Libs.lottie)
 }

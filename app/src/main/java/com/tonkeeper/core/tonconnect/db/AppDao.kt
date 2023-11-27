@@ -11,9 +11,9 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertApp(appEntity: AppEntity)
 
-    @Query("SELECT * FROM ton_connect_app WHERE accountId = :accountId AND url = :url")
-    suspend fun getAppEntity(accountId: String, url: String): AppEntity
+    @Query("SELECT * FROM ton_connect_app WHERE accountId = :accountId AND clientId = :clientId LIMIT 1")
+    suspend fun getAppEntity(accountId: String, clientId: String): AppEntity?
 
-    @Query("SELECT clientId FROM ton_connect_app WHERE accountId = :accountId")
-    suspend fun getClientIds(accountId: String): List<String>
+    @Query("SELECT * FROM ton_connect_app WHERE accountId = :accountId")
+    suspend fun getApps(accountId: String): List<AppEntity>
 }

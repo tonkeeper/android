@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "tonapi"
-    compileSdk = rootProject.extra["compileSdkVersion"] as Int
+    compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.extra["minSdkVersion"] as Int
+        minSdk = Build.minSdkVersion
         consumerProguardFiles("consumer-rules.pro")
     }
     compileOptions {
@@ -21,7 +21,7 @@ android {
 }
 
 dependencies {
-    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
-    implementation("com.squareup.moshi:moshi-adapters:1.14.0")
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation(Libs.Squareup.moshi)
+    implementation(Libs.Squareup.moshiAdapters)
+    implementation(Libs.Squareup.okhttp)
 }

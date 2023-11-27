@@ -2,19 +2,18 @@ package com.tonkeeper.dialog.fiat
 
 import android.content.Context
 import android.graphics.Color
-import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.core.fiat.models.FiatItem
 import com.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import com.tonkeeper.dialog.fiat.list.MethodAdapter
-import com.tonkeeper.dialog.fiat.list.MethodItem
 import com.tonkeeper.fragment.country.CountryScreen
 import com.tonkeeper.fragment.fiat.FiatWebFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import uikit.base.BaseSheetDialog
+import uikit.list.LinearLayoutManager
 import uikit.navigation.Navigation.Companion.nav
 import uikit.widget.HeaderView
 
@@ -31,7 +30,7 @@ class FiatDialog(
         ConfirmationDialog(context)
     }
 
-    private val onItemClick: (item: MethodItem) -> Unit = {
+    private val adapter = MethodAdapter {
         openItem(it.body)
     }
 
@@ -48,6 +47,8 @@ class FiatDialog(
         headerView.doOnActionClick = { dismiss() }
 
         listView = findViewById(R.id.list)!!
+        listView.adapter = adapter
+        listView.layoutManager = LinearLayoutManager(context)
     }
 
     override fun show() {
@@ -59,7 +60,7 @@ class FiatDialog(
 
     private  fun showWithData(items: List<FiatItem>) {
         super.show()
-        listView.adapter = MethodAdapter(MethodAdapter.buildMethodItems(items), onItemClick)
+        adapter.submitList(MethodAdapter.buildMethodItems(items))
     }
 
     private fun openItem(item: FiatItem) {

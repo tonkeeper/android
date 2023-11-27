@@ -41,9 +41,4 @@ class SendScreenAdapter(
             else -> throw IllegalStateException("Unknown position: $position")
         }
     }
-
-    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
-        super.onAttachedToRecyclerView(recyclerView)
-        recyclerView.overScrollMode = RecyclerView.OVER_SCROLL_NEVER
-    }
 }

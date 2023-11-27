@@ -1,16 +1,15 @@
 package com.tonkeeper.core.fiat
 
 import android.app.Application
-import com.tonkeeper.App
 import com.tonkeeper.core.fiat.models.FiatData
 import com.tonkeeper.core.fiat.models.FiatItem
 import com.tonkeeper.api.internal.repositories.FiatMethodsRepository
 import com.tonkeeper.api.internal.repositories.KeysRepository
-import core.extensions.toHex
 import core.keyvalue.KeyValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.crypto.digest.sha512
+import org.ton.crypto.hex
 import ton.SupportedCurrency
 import java.util.UUID
 
@@ -37,7 +36,7 @@ class Fiat(
 
         if (replacedUrl.contains("TX_ID")) {
             val mercuryoSecret = keysRepository.getValue("mercuryoSecret") ?: ""
-            val signature = sha512((address+mercuryoSecret).toByteArray()).toHex()
+            val signature = hex(sha512((address+mercuryoSecret).toByteArray()))
             val tx = "mercuryo_" + UUID.randomUUID().toString()
             replacedUrl = replacedUrl.replace("{TX_ID}", tx)
             replacedUrl = replacedUrl.replace("=TON&", "=TONCOIN&")

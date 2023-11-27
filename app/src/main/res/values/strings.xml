@@ -53,6 +53,7 @@
     <string name="passcode_create">Create passcode</string>
     <string name="passcode_re_enter">Re-enter passcode</string>
     <string name="cancel">Cancel</string>
+    <string name="fee">Fee</string>
     <string name="period_24h">24h</string>
 
     <string name="import_wallet_title">Enter your recovery phrase</string>
@@ -129,6 +130,7 @@
     <string name="confirm_and_send">Confirm and send</string>
     <string name="confirm_action">Confirm action</string>
     <string name="toncoin">Toncoin</string>
+    <string name="bitcoin">Bitcoin</string>
     <string name="ton_connect_title">Connect to %1$s?</string>
     <string name="ton_connect_description">%1$s is requesting access to your wallet address %2$s %3$s</string>
     <string name="connect_wallet">Connect wallet</string>

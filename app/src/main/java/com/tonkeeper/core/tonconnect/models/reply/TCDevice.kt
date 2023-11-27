@@ -1,6 +1,7 @@
 package com.tonkeeper.core.tonconnect.models.reply
 
 import com.tonkeeper.BuildConfig
+import org.json.JSONArray
 import org.json.JSONObject
 
 data class TCDevice(
@@ -16,7 +17,15 @@ data class TCDevice(
         json.put("appName", appName)
         json.put("appVersion", appVersion)
         json.put("maxProtocolVersion", maxProtocolVersion)
-        // json.put("features", features)
+
+        // TODO: fix this
+        json.put("features", JSONArray("[\n" +
+                "    \"SendTransaction\",\n" +
+                "    {\n" +
+                "        \"name\": \"SendTransaction\",\n" +
+                "        \"maxMessages\": 4\n" +
+                "    }\n" +
+                "]"))
         return json
     }
 

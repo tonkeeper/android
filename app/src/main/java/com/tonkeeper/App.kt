@@ -1,6 +1,7 @@
 package com.tonkeeper
 
 import android.app.Application
+import android.os.SystemClock
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
@@ -10,6 +11,7 @@ import com.tonkeeper.core.fiat.Fiat
 import com.tonkeeper.event.ChangeWalletNameEvent
 import com.tonkeeper.event.WalletRemovedEvent
 import core.EventBus
+import org.libsodium.jni.NaCl
 import ton.wallet.WalletManager
 
 class App: Application(), CameraXConfig.Provider {
@@ -27,6 +29,7 @@ class App: Application(), CameraXConfig.Provider {
     override fun onCreate() {
         super.onCreate()
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        NaCl.sodium()
 
         instance = this
         db = AppDatabase.getInstance(this)

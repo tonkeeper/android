@@ -1,11 +1,17 @@
 package com.tonkeeper.api.event.db
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tonkeeper.api.toJSON
 import io.tonapi.models.AccountEvent
 
-@Entity(tableName = "event")
+@Entity(
+    tableName = "event",
+    indices = [
+        Index(value = ["accountId"]),
+    ]
+)
 data class EventEntity(
     @PrimaryKey val eventId: String,
     val accountId: String,

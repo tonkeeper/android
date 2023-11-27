@@ -2,7 +2,7 @@ package core.extensions
 
 import android.util.Base64
 
-fun ByteArray.toBase64(): String {
+/*fun ByteArray.toBase64(): String {
     return Base64.encodeToString(this, Base64.NO_WRAP)
 }
 
@@ -21,4 +21,4 @@ fun String.hexToByteArray(): ByteArray {
         data[i / 2] = ((this[i].digitToInt(16) shl 4) + this[i + 1].digitToInt(16)).toByte()
     }
     return data
-}
+}*/

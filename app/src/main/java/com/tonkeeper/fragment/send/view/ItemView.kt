@@ -5,11 +5,10 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.tonkeeper.R
-import uikit.drawable.CellBackgroundDrawable
 import uikit.extensions.getDimensionPixelSize
-import uikit.extensions.inflate
 import uikit.extensions.setPaddingHorizontal
 import uikit.list.ListCell
+import uikit.list.ListCell.Companion.drawable
 
 class ItemView @JvmOverloads constructor(
     context: Context,
@@ -20,7 +19,7 @@ class ItemView @JvmOverloads constructor(
     var position: ListCell.Position = ListCell.Position.SINGLE
         set(value) {
             field = value
-            background = CellBackgroundDrawable(context, value)
+            background = value.drawable(context)
         }
 
     private val titleView: AppCompatTextView

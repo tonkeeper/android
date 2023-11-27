@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "ton"
-    compileSdk = rootProject.extra["compileSdkVersion"] as Int
+    compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.extra["minSdkVersion"] as Int
+        minSdk = Build.minSdkVersion
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -22,9 +22,10 @@ android {
 }
 
 dependencies {
-    implementation("org.ton:ton-kotlin:0.2.15")
-    implementation("androidx.security:security-crypto:1.0.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation(project(":tonapi"))
-    implementation(project(":core"))
+    implementation(Libs.ton)
+    implementation(Libs.AndroidX.security)
+    implementation(Libs.Squareup.okhttp)
+
+    implementation(project(Libs.Module.core))
+    implementation(project(Libs.Module.tonApi))
 }

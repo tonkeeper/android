@@ -2,19 +2,16 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:fitsSystemWindows="true">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:overScrollMode="never"
         android:paddingHorizontal="@dimen/offsetMedium"
         android:paddingTop="@dimen/barHeight"
-        android:paddingBottom="@dimen/offsetMedium"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+        android:paddingBottom="@dimen/offsetMedium"/>
 
     <uikit.widget.BackHeaderView
         android:id="@+id/header"

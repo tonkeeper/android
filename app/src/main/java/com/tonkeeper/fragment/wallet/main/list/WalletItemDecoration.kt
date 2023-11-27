@@ -1,19 +1,13 @@
 package com.tonkeeper.fragment.wallet.main.list
 
-import android.content.Context
 import android.graphics.Rect
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.fragment.wallet.main.list.item.WalletCellItem
-import com.tonkeeper.fragment.wallet.main.pager.WalletScreenAdapter
 import uikit.extensions.dp
-import uikit.extensions.getDimensionPixelSize
 import uikit.list.ListCell
 
-class WalletItemDecoration(
-    context: Context,
-    private val spanCount: Int,
-): RecyclerView.ItemDecoration() {
+class WalletItemDecoration: RecyclerView.ItemDecoration() {
 
     private val edgeSpacing = 12.dp
 
@@ -27,7 +21,7 @@ class WalletItemDecoration(
         val adapter = parent.adapter as? WalletContentAdapter ?: return
 
         val position = parent.getChildAdapterPosition(view)
-        val item = adapter.get(position)
+        val item = adapter.getItem(position)
         if (item is WalletCellItem) {
             getCellItemOffsets(outRect, item)
             return

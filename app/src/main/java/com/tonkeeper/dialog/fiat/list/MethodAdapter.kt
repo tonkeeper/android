@@ -4,13 +4,12 @@ import android.view.ViewGroup
 import com.tonkeeper.core.fiat.models.FiatItem
 import uikit.list.BaseListHolder
 import uikit.list.BaseListItem
-import uikit.list.DiffListAdapter
+import uikit.list.BaseListAdapter
 import uikit.list.ListCell
 
 class MethodAdapter(
-    items: List<MethodItem>,
     private val onClick: (item: MethodItem) -> Unit
-): DiffListAdapter(items) {
+): BaseListAdapter() {
 
     companion object {
         fun buildMethodItems(list: List<FiatItem>): List<MethodItem> {

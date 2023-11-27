@@ -1,6 +1,8 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.net.Uri
+import android.util.Log
+import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.api.account.AccountRepository
@@ -34,17 +36,20 @@ import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.list.ListCell
+import kotlin.system.measureTimeMillis
 
 class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(WalletScreenState()) {
 
     private val changeCurrencyAction = fun(_: ChangeCurrencyEvent) {
-        queueScope.submit { updateWalletState() }
+        queueScope.submit { updateWalletState(false) }
     }
 
     private val updateCurrencyRateAction = fun(_: UpdateCurrencyRateEvent) {
-        queueScope.submit { updateWalletState() }
+        queueScope.submit { updateWalletState(false) }
     }
 
     private val updateWalletNameAction = fun (event: ChangeWalletNameEvent) {
@@ -85,39 +90,43 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             }
 
             val wallet = App.walletManager.getWalletInfo() ?: return@submit
-            val address = wallet.address
 
-            accountRepository.sync(address)
-            jettonRepository.sync(address)
-            collectiblesRepository.sync(address)
+            val accountId = wallet.accountId
 
-            updateWalletState()
+            accountRepository.clear(accountId)
+            jettonRepository.clear(accountId)
+            collectiblesRepository.clear(accountId)
+
+            currencyManager.sync()
+
+            updateWalletState(true)
         }
     }
 
     private fun requestWalletState() {
-        updateUiState { currentState ->
-            currentState.copy(
-                asyncState = AsyncState.Loading
-            )
-        }
-
         queueScope.submit {
-            updateWalletState()
+            updateUiState { currentState ->
+                currentState.copy(
+                    asyncState = AsyncState.Loading
+                )
+            }
+
+            updateWalletState(false)
         }
     }
 
-    private suspend fun updateWalletState() {
+    private suspend fun updateWalletState(pushAsyncState: Boolean) {
         val wallet = App.walletManager.getWalletInfo() ?: return
 
-        val data = getWalletData(wallet.address)
+        val data = getWalletData(wallet.accountId)
 
         val tonInCurrency = from(SupportedTokens.TON, data.accountId)
             .value(data.account.balance)
             .to(currency)
 
         val tokens = buildTokensList(
-            data.accountId,
+            wallet.address,
+            wallet.accountId,
             data.account.balance,
             tonInCurrency,
             data.jettons
@@ -154,9 +163,15 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             allInCurrency += jettonInCurrency
         }
 
+        val asyncState = if (pushAsyncState) {
+            AsyncState.Default
+        } else {
+            uiState.value.asyncState
+        }
+
         updateUiState { currentState ->
             currentState.copy(
-                asyncState = AsyncState.Default,
+                asyncState = asyncState,
                 title = wallet.name,
                 currency = currency,
                 address = data.accountId.userLikeAddress,
@@ -168,22 +183,22 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     }
 
     private suspend fun getRate(
-        address: String,
+        accountId: String,
         token: String
     ): Float {
         return currencyManager.getRate(
-            address,
+            accountId,
             token,
             currency.code
         )
     }
 
     private suspend fun getRate24h(
-        address: String,
+        accountId: String,
         token: String
     ): String {
         return currencyManager.getRate24h(
-            address,
+            accountId,
             token,
             currency.code
         )
@@ -191,6 +206,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
     private suspend fun buildTokensList(
         address: String,
+        accountId: String,
         balance: Long,
         tonInCurrency: Float,
         jettons: List<JettonBalance>
@@ -198,12 +214,12 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         val items = mutableListOf<WalletItem>()
 
         val rate = getRate(
-            address,
+            accountId,
             SupportedTokens.TON.code,
         )
 
         val rate24h = getRate24h(
-            address,
+            accountId,
             SupportedTokens.TON.code,
         )
 
@@ -217,20 +233,26 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
         for ((index, jetton) in jettons.withIndex()) {
             val cellPosition = ListCell.getPosition(jettons.size, index)
-            val balance = jetton.parsedBalance
-            val balanceCurrency = from(jetton.address, address)
-                .value(balance)
+            val tokenBalance = jetton.parsedBalance
+            val tokenBalanceCurrency = from(jetton.address, accountId)
+                .value(tokenBalance)
                 .to(currency)
 
-            val rate = getRate(
-                address,
+            val tokenRate = getRate(
+                accountId,
                 jetton.address,
             )
 
-            val rate24h = getRate24h(
-                address,
+            val tokenRate24h = getRate24h(
+                accountId,
                 jetton.address,
             )
+
+            val decimals = if (tokenBalance > 1f) {
+                2
+            } else {
+                jetton.jetton.decimals
+            }
 
             val item = WalletJettonCellItem(
                 address = jetton.address,
@@ -238,10 +260,10 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 position = cellPosition,
                 iconURI = Uri.parse(jetton.jetton.image),
                 code = jetton.jetton.symbol,
-                balance = Coin.format(value = balance),
-                balanceCurrency = Coin.format(currency, balanceCurrency),
-                rate = Coin.format(currency, rate),
-                rateDiff24h = rate24h,
+                balance = Coin.format(value = tokenBalance, decimals = decimals),
+                balanceCurrency = Coin.format(currency, tokenBalanceCurrency),
+                rate = Coin.format(currency, tokenRate),
+                rateDiff24h = tokenRate24h,
             )
             items.add(item)
         }
@@ -273,18 +295,25 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     }
 
     private suspend fun getWalletData(
-        address: String
+        accountId: String,
     ): WalletData = withContext(Dispatchers.IO) {
-        val accountDeferred = async { accountRepository.get(address) }
-        val jettonsDeferred = async { jettonRepository.get(address) }
-        val collectiblesDeferred = async { collectiblesRepository.get(address) }
+        val accountDeferred = async {
+            accountRepository.get(accountId)
+        }
+        val jettonsDeferred = async {
+            jettonRepository.get(accountId)
+        }
+        val collectiblesDeferred = async {
+            collectiblesRepository.get(accountId)
+        }
 
         val account = accountDeferred.await()
         val jettons = jettonsDeferred.await()
         val collectibles = collectiblesDeferred.await()
 
+
         return@withContext WalletData(
-            accountId = address,
+            accountId = accountId,
             account = account,
             jettons = jettons,
             collectibles = collectibles

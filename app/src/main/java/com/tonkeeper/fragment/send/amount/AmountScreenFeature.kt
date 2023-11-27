@@ -105,8 +105,8 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
             val wallet = App.walletManager.getWalletInfo()!!
             val address = wallet.address
 
-            val accountDeferred = async { accountRepository.get(address) }
-            val jettonsDeferred = async { jettonRepository.get(address) }
+            val accountDeferred = async { accountRepository.get(wallet.accountId) }
+            val jettonsDeferred = async { jettonRepository.get(wallet.accountId) }
 
             val account = accountDeferred.await()
             val jettons = jettonsDeferred.await()

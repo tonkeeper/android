@@ -3,8 +3,9 @@ package com.tonkeeper.core.tonconnect
 import com.tonkeeper.core.tonconnect.models.TCKeyPair
 import com.tonkeeper.core.tonconnect.models.TCProofPayload
 import com.tonkeeper.core.tonconnect.models.reply.TCProofItemReplySuccess
-import core.extensions.toBase64
 import org.ton.block.AddrStd
+import org.ton.crypto.base64
+import org.ton.crypto.digest.sha256
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
@@ -16,8 +17,6 @@ internal class Proof {
         const val tonConnectPrefix = "ton-connect"
     }
 
-    private val sha256 = MessageDigest.getInstance("SHA-256")
-
     fun createProofItemReplySuccess(
         payload: String,
         host: String,
@@ -26,7 +25,7 @@ internal class Proof {
     ): TCProofItemReplySuccess {
         val proof = createProofPayload(payload, host, accountId)
 
-        val bufferDigest = sha256.digest(proof.bufferToSign)
+        val bufferDigest = sha256(proof.bufferToSign)
 
         val signature = keyPair.sing(bufferDigest)
 
@@ -38,7 +37,7 @@ internal class Proof {
                     value = proof.domainBuffer.toString(Charsets.UTF_8)
                 ),
                 payload = proof.payload,
-                signature = signature.toBase64(),
+                signature = base64(signature),
             )
         )
     }
@@ -87,9 +86,10 @@ internal class Proof {
         messageBuffer.put(payloadBuffer)
 
 
-        val messageDigest = sha256.digest(messageBuffer.array())
+        val messageDigest = sha256(messageBuffer.array())
 
         val tonConnectPrefix = Proof.tonConnectPrefix.toByteArray(Charsets.UTF_8)
+
         val bufferToSign = ByteBuffer.allocate(2 + tonConnectPrefix.size + messageDigest.size).apply {
             put(0xff.toByte())
             put(0xff.toByte())

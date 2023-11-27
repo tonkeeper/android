@@ -1,11 +1,15 @@
 package uikit.drawable
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.RippleDrawable
 import uikit.R
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
@@ -31,6 +35,19 @@ class CellBackgroundDrawable(
                 topRight, topRight,
                 bottomRight, bottomRight,
                 bottomLeft, bottomLeft
+            )
+        }
+
+        fun create(
+            context: Context,
+            position: ListCell.Position,
+            backgroundColor: Int = context.getColor(R.color.backgroundContent)
+        ): Drawable {
+            val color = context.getColor(R.color.backgroundHighlighted)
+            return RippleDrawable(
+                ColorStateList.valueOf(color),
+                CellBackgroundDrawable(context, position, backgroundColor),
+                null
             )
         }
     }

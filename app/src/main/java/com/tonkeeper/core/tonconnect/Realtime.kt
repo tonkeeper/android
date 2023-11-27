@@ -3,6 +3,7 @@ package com.tonkeeper.core.tonconnect
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.tonkeeper.core.tonconnect.models.TCEvent
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.sse.EventSource
@@ -11,7 +12,8 @@ import okhttp3.sse.EventSources
 import ton.console.Network
 
 internal class Realtime(
-    context: Context
+    context: Context,
+    private val onEvent: (TCEvent) -> Unit
 ): EventSourceListener() {
 
     private companion object {
@@ -28,9 +30,6 @@ internal class Realtime(
         }
 
     fun start(clientIds: List<String>) {
-        if (true) {
-            return
-        }
         release()
 
         val value = clientIds.joinToString(",")
@@ -38,8 +37,6 @@ internal class Realtime(
         if (lastEventId != "") {
             uri = uri.buildUpon().appendQueryParameter("last_event_id", lastEventId).build()
         }
-
-        Log.d("TonConnectLog", "uri: $uri")
 
         val builder = Request.Builder()
             .url(uri.toString())
@@ -53,22 +50,11 @@ internal class Realtime(
 
     override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
         super.onEvent(eventSource, id, type, data)
-        Log.d("TonConnectLog", "onEvent($id): $data")
-    }
+        id?.let { lastEventId = it }
 
-    override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-        super.onFailure(eventSource, t, response)
-        Log.d("TonConnectLog", "onFailure", t)
-    }
-
-    override fun onOpen(eventSource: EventSource, response: Response) {
-        super.onOpen(eventSource, response)
-        Log.d("TonConnectLog", "onOpen")
-    }
-
-    override fun onClosed(eventSource: EventSource) {
-        super.onClosed(eventSource)
-        Log.d("TonConnectLog", "onClosed")
+        try {
+            onEvent(TCEvent(data))
+        } catch (ignored: Throwable) { }
     }
 
     fun release() {

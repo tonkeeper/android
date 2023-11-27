@@ -1,5 +1,6 @@
 package com.tonkeeper.api.jetton
 
+import android.util.Log
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.base.BaseAccountRepository
@@ -21,8 +22,8 @@ class JettonRepository(
         accountId: String,
         address: String
     ): JettonBalance? {
-        val entity = dao.getByAddress(accountId, address) ?: return null
-        return fromJSON(entity.data)
+        val data = dao.getByAddress(accountId, address) ?: return null
+        return fromJSON(data)
     }
 
     override suspend fun insertCache(

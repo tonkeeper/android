@@ -1,30 +1,18 @@
 package com.tonkeeper.core.tonconnect.models
 
-import com.google.crypto.tink.subtle.Hex
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.crypto.hex
 
 data class TCKeyPair(
-    val publicKey: PublicKeyEd25519,
     val privateKey: PrivateKeyEd25519
 ) {
 
-    val sessionId: String by lazy {
-        Hex.encode(publicKey.toByteArray())
+    val publicKey: PublicKeyEd25519 by lazy {
+        privateKey.publicKey()
     }
 
-    constructor(
-        publicKey: ByteArray,
-        privateKey: ByteArray
-    ) : this(
-        publicKey = PublicKeyEd25519(publicKey),
-        privateKey = PrivateKeyEd25519(privateKey)
-    )
-
-    constructor(
-        privateKey: ByteArray
-    ) : this(
-        publicKey = PrivateKeyEd25519(privateKey).publicKey(),
+    constructor(privateKey: ByteArray) : this(
         privateKey = PrivateKeyEd25519(privateKey)
     )
 

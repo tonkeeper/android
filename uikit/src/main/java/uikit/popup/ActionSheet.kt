@@ -2,7 +2,6 @@ package uikit.popup
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupWindow
@@ -10,12 +9,11 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R
-import uikit.drawable.CellBackgroundDrawable
 import uikit.extensions.dp
-import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getDrawable
 import uikit.extensions.inflate
 import uikit.list.ListCell
+import uikit.list.ListCell.Companion.drawable
 
 open class ActionSheet(
     val context: Context
@@ -87,7 +85,7 @@ open class ActionSheet(
                 doOnItemClick?.invoke(item)
                 dismiss()
             }
-            itemView.background = CellBackgroundDrawable(context, position, backgroundColor)
+            itemView.background = position.drawable(context, backgroundColor)
             val itemHeight = if (item.subtitle == null) {
                 singleLineItemHeight
             } else {

@@ -20,15 +20,15 @@ interface CollectiblesDao {
         insert(CollectiblesEntity.map(accountId, events))
     }
 
-    @Query("SELECT * FROM collectibles WHERE accountId = :accountId")
-    suspend fun getByAccountId(accountId: String): List<CollectiblesEntity>
+    @Query("SELECT data FROM collectibles WHERE accountId = :accountId")
+    suspend fun getByAccountId(accountId: String): List<String>
 
-    @Query("SELECT * FROM collectibles WHERE nftAddress = :nftAddress LIMIT 1")
-    suspend fun getItem(nftAddress: String): CollectiblesEntity?
+    @Query("SELECT data FROM collectibles WHERE nftAddress = :nftAddress LIMIT 1")
+    suspend fun getItemData(nftAddress: String): String?
 
     suspend fun get(accountId: String): List<NftItem> {
         return getByAccountId(accountId).map {
-            fromJSON(it.data)
+            fromJSON(it)
         }
     }
 }

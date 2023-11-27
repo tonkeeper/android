@@ -1,6 +1,7 @@
 package com.tonkeeper.api.rates
 
 import android.content.Context
+import android.util.Log
 import androidx.collection.ArrayMap
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
@@ -23,7 +24,10 @@ class RatesRepository(
     private val api: RatesApi = Tonapi.rates
 ): BaseBlobRepository<GetRates200Response>("rates", context) {
 
-    suspend fun sync(accountId: String, jettons: List<String>): GetRates200Response {
+    suspend fun sync(
+        accountId: String,
+        jettons: List<String>
+    ): GetRates200Response {
         val tokens = jettons + SupportedTokens.values().map {
             it.code
         }

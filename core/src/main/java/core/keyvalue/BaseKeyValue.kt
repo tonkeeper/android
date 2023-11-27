@@ -2,12 +2,11 @@ package core.keyvalue
 
 import android.content.SharedPreferences
 import android.os.Parcelable
-import core.extensions.toBase64
 import core.extensions.toByteArray
-import core.extensions.toByteArrayFromBase64
 import core.extensions.toParcel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.ton.crypto.base64
 
 abstract class BaseKeyValue {
 
@@ -94,7 +93,8 @@ abstract class BaseKeyValue {
         key: String,
         defValue: ByteArray? = null
     ): ByteArray? = withContext(Dispatchers.IO) {
-        return@withContext preferences.getString(key, null)?.toByteArrayFromBase64() ?: defValue
+        val value = preferences.getString(key, null) ?: return@withContext defValue
+        base64(value)
     }
 
     suspend fun putByteArray(
@@ -102,7 +102,7 @@ abstract class BaseKeyValue {
         value: ByteArray?
     ) = withContext(Dispatchers.IO) {
         with (preferences.edit()) {
-            putString(key, value?.toBase64())
+            putString(key, value?.let { base64(it) })
             apply()
         }
     }

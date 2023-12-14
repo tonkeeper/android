@@ -1,12 +1,14 @@
 package com.tonkeeper.fragment.send.recipient
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.fragment.app.viewModels
 import com.tonkeeper.R
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.extensions.clipboardText
+import com.tonkeeper.fragment.send.SendScreenEffect
 import com.tonkeeper.fragment.send.SendScreenFeature
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import ton.TonAddress
@@ -26,30 +28,39 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         addressInput = view.findViewById(R.id.address)
         addressInput.doOnTextChange = { feature.requestAddressCheck(it) }
-        addressInput.doOnIconClick = { parentScreen?.openCamera() }
+        addressInput.doOnIconClick = {
+            addressInput.hideKeyboard()
+            sendFeature.sendEffect(SendScreenEffect.OpenCamera)
+        }
         addressInput.doOnButtonClick = { paste() }
 
         commentInput = view.findViewById(R.id.comment)
         commentInput.doOnTextChange = {
-            feature.setComment(it)
+            sendFeature.setComment(it)
         }
 
         nextButton = view.findViewById(R.id.next)
         nextButton.setOnClickListener {
-            next()
+            sendFeature.nextPage()
         }
+    }
+
+    fun setAddress(address: String?) {
+        addressInput.text = address ?: ""
+    }
+
+    fun setComment(comment: String?) {
+        commentInput.text = comment ?: ""
     }
 
     override fun newUiState(state: RecipientScreenState) {
         setAddressState(state.addressState)
 
-        parentFeature?.recipient = SendScreenFeature.Recipient(
-            address = state.address,
-            comment = state.comment,
-            name = state.name
-        )
+        sendFeature.setAddress(state.address)
+        sendFeature.setName(state.name)
     }
 
     private fun setAddressState(state: RecipientScreenState.AddressState) {
@@ -65,22 +76,21 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         addressInput.error = state == RecipientScreenState.AddressState.INVALID
     }
 
-    private fun next() {
-        parentScreen?.let {
-            val subtitle = getString(R.string.to_address, feature.displayAddress)
-            it.setSubtitle(subtitle)
-            it.next()
-        }
-    }
-
     private fun paste() {
-        context?.clipboardText()?.let {
-            addressInput.text = it
+        val text = context?.clipboardText()
+        if (!text.isNullOrEmpty()) {
+            setAddress(text)
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        addressInput.focus()
+    override fun onVisibleChange(visible: Boolean) {
+        super.onVisibleChange(visible)
+        if (visible) {
+            addressInput.focus()
+            sendFeature.setHeaderTitle(getString(R.string.recipient))
+            sendFeature.setHeaderSubtitle(null)
+        } else {
+            addressInput.hideKeyboard()
+        }
     }
 }

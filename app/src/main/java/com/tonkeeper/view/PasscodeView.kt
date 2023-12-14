@@ -11,6 +11,8 @@ import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R
 import uikit.extensions.dp
+import uikit.extensions.hapticConfirm
+import uikit.extensions.hapticReject
 import uikit.extensions.scale
 import uikit.interpolator.ReverseInterpolator
 
@@ -25,6 +27,7 @@ class PasscodeView @JvmOverloads constructor(
     private val margin = 8.dp
 
     init {
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         orientation = HORIZONTAL
         for (i in 0 until count) {
             val view = DotView(context)
@@ -40,33 +43,28 @@ class PasscodeView @JvmOverloads constructor(
     fun setCount(fullCount: Int) {
         if (fullCount == 0) {
             setDefault()
+            return
         }
 
         for (i in 0 until count) {
             val view = getDotView(i)
-            view.state = if (i < fullCount) DotView.State.ACTIVE else DotView.State.DEFAULT
+            if (fullCount > i && view.state != DotView.State.ERROR) {
+                view.state = DotView.State.ACTIVE
+            } else if (fullCount < i) {
+                view.state = DotView.State.DEFAULT
+            }
         }
     }
 
 
     fun setError() {
         setState(DotView.State.ERROR)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            performHapticFeedback(HapticFeedbackConstants.REJECT)
-        } else {
-            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        }
+        hapticReject()
     }
 
     fun setSuccess() {
         setState(DotView.State.DONE)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-        } else {
-            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        }
+        hapticConfirm()
     }
 
     fun setDefault() {

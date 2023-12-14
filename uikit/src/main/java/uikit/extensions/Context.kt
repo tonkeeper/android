@@ -4,18 +4,25 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.res.ColorStateList
 import android.content.res.TypedArray
+import android.graphics.drawable.RippleDrawable
+import android.text.Spannable
 import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.animation.AnimationUtils
+import androidx.annotation.AnimRes
 import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleableRes
+import uikit.R
 import java.util.Locale
 
 fun Context.inflate(
@@ -33,6 +40,8 @@ fun Context.getDimensionPixelSize(@DimenRes id: Int): Int {
 fun Context.getDimension(@DimenRes id: Int): Float {
     return resources.getDimension(id)
 }
+
+fun Context.getAnimation(@AnimRes id: Int) = AnimationUtils.loadAnimation(this, id)
 
 fun Context.getSpannable(@StringRes id: Int): SpannableString {
     return getText(id).processAnnotation(this)
@@ -85,3 +94,22 @@ val Context.locale: Locale
         return resources.configuration.locales.get(0)
     }
 
+fun Context.createRipple(): RippleDrawable {
+    val color = getColor(R.color.backgroundHighlighted)
+    return RippleDrawable(
+        ColorStateList.valueOf(color),
+        null,
+        null
+    )
+}
+
+fun Context.textWithLabel(text: String, label: String?): CharSequence {
+    if (label.isNullOrEmpty()) {
+        return text
+    }
+
+    val labelColor = getColor(R.color.textTertiary)
+    val span = SpannableString("$text $label")
+    span.setSpan(ForegroundColorSpan(labelColor), text.length, text.length + label.length + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    return span
+}

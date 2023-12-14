@@ -23,6 +23,11 @@ android {
 
 dependencies {
     implementation(Libs.KotlinX.coroutines)
+    implementation(Libs.AndroidX.lifecycle)
     implementation(Libs.AndroidX.security)
+
+    implementation(Libs.Squareup.okhttp)
+    implementation(Libs.Squareup.sse)
+
     api(Libs.ton)
 }

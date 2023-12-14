@@ -1,17 +1,20 @@
 package com.tonkeeper.api
 
 import com.squareup.moshi.adapter
+import com.tonkeeper.R
 import com.tonkeeper.core.Coin
 import io.tonapi.infrastructure.Serializer
+import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.ImagePreview
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.JettonPreview
 import io.tonapi.models.JettonSwapAction
+import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.NftItem
-import io.tonapi.models.TonTransferAction
 import kotlinx.coroutines.delay
-import org.ton.block.AddrStd
+import ton.SupportedTokens
+import ton.extensions.toUserFriendly
 
 private val nftItemPreviewSizes = arrayOf(
     "250x250", "500x500", "100x100"
@@ -44,6 +47,38 @@ inline fun <reified T> fromJSON(json: String): T {
     return Serializer.moshi.adapter<T>().fromJson(json)!!
 }
 
+val JettonPreview.isTon: Boolean
+    get() {
+        return address == SupportedTokens.TON.code
+    }
+
+val JettonBalance.isTon: Boolean
+    get() {
+        return jetton.isTon
+    }
+
+fun Account.asJettonBalance(): JettonBalance {
+    val icon = "drawable:///${R.drawable.ic_toncoin}"
+    return JettonBalance(
+        balance = balance.toString(),
+        walletAddress = AccountAddress(
+            address = address,
+            isScam = false,
+            isWallet = true,
+            name = name,
+            icon = icon,
+        ),
+        jetton = JettonPreview(
+            address = SupportedTokens.TON.code,
+            name = SupportedTokens.TON.code,
+            symbol = SupportedTokens.TON.code,
+            decimals = 9,
+            image = icon,
+            verification = JettonVerificationType.whitelist
+        )
+    )
+}
+
 val JettonSwapAction.jettonPreview: JettonPreview?
     get() {
         return jettonMasterIn ?: jettonMasterOut
@@ -67,7 +102,7 @@ val AccountAddress.nameOrAddress: String
         if (!name.isNullOrBlank()) {
             return name!!
         }
-        return address.userLikeAddress.shortAddress
+        return address.toUserFriendly().shortAddress
     }
 
 val AccountAddress.iconURL: String?
@@ -77,15 +112,6 @@ val String.shortAddress: String
     get() {
         if (length < 8) return this
         return substring(0, 4) + "…" + substring(length - 4, length)
-    }
-
-val String.userLikeAddress: String
-    get() {
-        return try {
-            AddrStd.toString(AddrStd.parse(this))
-        } catch (e: Throwable) {
-            this
-        }
     }
 
 val JettonBalance.address: String
@@ -142,5 +168,5 @@ val NftItem.collectionDescription: String?
 
 val NftItem.ownerAddress: String?
     get() {
-        return owner?.address?.userLikeAddress
+        return owner?.address?.toUserFriendly()
     }

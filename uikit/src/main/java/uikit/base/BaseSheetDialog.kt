@@ -13,6 +13,8 @@ open class BaseSheetDialog(
     context: Context
 ): BottomSheetDialog(context) {
 
+    val view: View
+
     private val headerView: View
     private val titleView: AppCompatTextView
     private val closeView: AppCompatImageView
@@ -20,6 +22,8 @@ open class BaseSheetDialog(
 
     init {
         super.setContentView(R.layout.dialog_base)
+        view = super.findViewById(R.id.dialog_root)!!
+
         headerView = super.findViewById(R.id.dialog_header)!!
 
         titleView = super.findViewById(R.id.header_title)!!
@@ -29,7 +33,7 @@ open class BaseSheetDialog(
             dismiss()
         }
 
-        contentView = super.findViewById(R.id.content)!!
+        contentView = super.findViewById(R.id.dialog_content)!!
     }
 
     override fun setTitle(@StringRes resId: Int) {
@@ -38,6 +42,12 @@ open class BaseSheetDialog(
 
     fun hideHeader() {
         headerView.visibility = View.GONE
+    }
+
+    fun dismissDelay(delay: Long = 1000L) {
+        contentView.postDelayed({
+            dismiss()
+        }, delay)
     }
 
     override fun setContentView(layoutResID: Int) {

@@ -1,18 +1,26 @@
 package uikit.extensions
 
+import android.animation.ValueAnimator
 import android.graphics.Outline
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.os.Build
+import android.util.Log
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.Window
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.annotation.AnimRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +29,7 @@ import androidx.transition.Transition
 import androidx.transition.TransitionListenerAdapter
 import androidx.transition.TransitionManager
 import androidx.viewpager2.widget.ViewPager2
+import kotlin.math.sin
 
 var View.scale: Float
     get() = scaleX
@@ -156,7 +165,6 @@ fun View.getDrawable(@DrawableRes resId: Int): Drawable {
     return AppCompatResources.getDrawable(context, resId)!!
 }
 
-
 fun View.withAnimation(duration: Long = 120, block: () -> Unit) {
     if (this !is ViewGroup) {
         block()
@@ -210,4 +218,47 @@ val ViewPager2.layoutManager: RecyclerView.LayoutManager?
 
 fun ViewPager2.findViewHolderForAdapterPosition(position: Int): RecyclerView.ViewHolder? {
     return recyclerView.findViewHolderForAdapterPosition(position)
+}
+
+fun View.hapticConfirm() {
+    post {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        } else {
+            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        }
+    }
+}
+
+fun View.hapticReject() {
+    post {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            performHapticFeedback(HapticFeedbackConstants.REJECT)
+        } else {
+            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        }
+    }
+}
+
+fun View.startAnimation(@AnimRes resId: Int): Animation {
+    val animation = context.getAnimation(resId)
+    startAnimation(animation)
+    return animation
+}
+
+fun View.startSnakeAnimation(
+    count: Int = 3,
+    offset: Int = 16.dp,
+    duration: Long = 400
+) {
+    val animator = ValueAnimator.ofFloat(0f, 1f)
+    animator.addUpdateListener { animation ->
+        val x = animation.animatedValue as Float
+        translationX = (4 * x * (1 - x) * sin(count * (x * Math.PI)) * offset).toFloat()
+    }
+    animator.doOnEnd {
+        translationX = 0f
+    }
+    animator.duration = duration
+    animator.start()
 }

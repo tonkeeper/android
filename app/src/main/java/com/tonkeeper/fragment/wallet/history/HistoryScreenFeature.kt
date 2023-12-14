@@ -3,13 +3,20 @@ package com.tonkeeper.fragment.wallet.history
 import com.tonkeeper.App
 import com.tonkeeper.api.event.EventRepository
 import com.tonkeeper.core.history.HistoryHelper
+import com.tonkeeper.event.WalletStateUpdateEvent
+import core.EventBus
 import core.QueueScope
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import ton.wallet.Wallet
 
 class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(HistoryScreenState()) {
+
+    private val newTransactionItem = fun(_: WalletStateUpdateEvent) {
+        syncEvents()
+    }
 
     private val queueScope = QueueScope(Dispatchers.IO)
     private val eventRepository = EventRepository()
@@ -17,6 +24,8 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
     init {
         requestEventsState()
         syncEvents()
+
+        EventBus.subscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
     }
 
     private fun syncEvents() {
@@ -46,6 +55,10 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
                 items = items
             )
         }
+
+        delay(100)
+
+        sendEffect(HistoryScreenEffect.UpScroll)
     }
 
     private fun requestEventsState() {
@@ -67,6 +80,8 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
     override fun onCleared() {
         super.onCleared()
         queueScope.cancel()
+
+        EventBus.unsubscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
     }
 
 }

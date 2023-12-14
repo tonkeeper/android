@@ -32,6 +32,7 @@
 
     <declare-styleable name="LoaderView">
         <attr name="android:color" format="color|reference"/>
+        <attr name="android:trackTint" format="color|reference"/>
     </declare-styleable>
 
     <declare-styleable name="InputView">
@@ -70,5 +71,10 @@
         <attr name="android:text" format="string|reference"/>
         <attr name="android:hint" format="string|reference"/>
         <attr name="android:button" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ProcessTaskView">
+        <attr name="successLabel" format="string|reference"/>
+        <attr name="errorLabel" format="string|reference"/>
     </declare-styleable>
 </resources>

@@ -12,7 +12,7 @@ import com.tonkeeper.core.fiat.models.FiatButton
 import com.tonkeeper.core.fiat.models.FiatItem
 import uikit.base.BaseSheetDialog
 import uikit.extensions.dp
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.CheckBoxView
 
 internal class ConfirmationDialog(
@@ -74,7 +74,7 @@ internal class ConfirmationDialog(
         val buttonView = AppCompatTextView(context)
         buttonView.text = button.title
         buttonView.setOnClickListener {
-            nav()?.openURL(button.url, true)
+            navigation?.openURL(button.url, true)
         }
         buttonView.setTextAppearance(uikit.R.style.TextAppearance_Body1)
         buttonView.setTextColor(context.getColor(uikit.R.color.textSecondary))

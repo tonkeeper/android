@@ -7,9 +7,11 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
@@ -25,13 +27,15 @@ class LoaderView @JvmOverloads constructor(
 
     var type = TYPE_DEFAULT
     private val paint: Paint
-    private var size = 0
+    private val trackPaint: Paint
+    private var size = 0f
     private var progress = 0.4f
     private val bounds: RectF
     private var indeterminateSweep = 0f
     private var indeterminateRotateOffset = 0f
-    private var thickness: Int
+    private var thickness: Float
     private var color = 0
+    private var trackColor = Color.TRANSPARENT
     private val animDuration: Int
     private val animSteps: Int
     private var startAngle: Float
@@ -41,17 +45,21 @@ class LoaderView @JvmOverloads constructor(
     private var animator: ObjectAnimator? = null
 
     init {
-        thickness = 2.dp
+        thickness = 1.5f.dp
         startAngle = -90f
         animDuration = 4000
         animSteps = 3
         paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        trackPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         bounds = RectF()
         updatePaint()
 
         context.useAttributes(attrs, R.styleable.LoaderView) {
             val color = it.getColor(R.styleable.LoaderView_android_color, context.getColor(R.color.iconSecondary))
             setColor(color)
+
+            val trackColor = it.getColor(R.styleable.LoaderView_android_trackTint, Color.TRANSPARENT)
+            setTrackColor(trackColor)
         }
     }
 
@@ -83,7 +91,7 @@ class LoaderView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun setSize(size: Int) {
+    fun setSize(size: Float) {
         thickness = size
         updatePaint()
     }
@@ -93,38 +101,52 @@ class LoaderView @JvmOverloads constructor(
         updatePaint()
     }
 
+    fun setTrackColor(color: Int) {
+        this.trackColor = color
+        updatePaint()
+    }
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         val xPad = paddingLeft + paddingRight
         val yPad = paddingTop + paddingBottom
         val width = measuredWidth - xPad
         val height = measuredHeight - yPad
-        size = width.coerceAtMost(height)
-        setMeasuredDimension(size + xPad, size + yPad)
+        size = width.coerceAtMost(height).toFloat()
+        setMeasuredDimension((size + xPad).toInt(), (size + yPad).toInt())
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        size = w.coerceAtMost(h)
+        size = w.coerceAtMost(h).toFloat()
         updateBounds()
     }
 
     private fun updateBounds() {
         val paddingLeft = paddingLeft
         val paddingTop = paddingTop
-        bounds[(paddingLeft + thickness).toFloat(), (paddingTop + thickness).toFloat(), (size - paddingLeft - thickness).toFloat()] =
-            (size - paddingTop - thickness).toFloat()
+        bounds[(paddingLeft + thickness), (paddingTop + thickness), (size - paddingLeft - thickness)] =
+            (size - paddingTop - thickness)
     }
 
     private fun updatePaint() {
         paint.color = color
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = thickness.toFloat()
+        paint.strokeWidth = thickness
         paint.strokeCap = Paint.Cap.ROUND
+
+        trackPaint.color = trackColor
+        trackPaint.style = Paint.Style.STROKE
+        trackPaint.strokeWidth = thickness
+        trackPaint.strokeCap = Paint.Cap.ROUND
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        if (trackColor != Color.TRANSPARENT) {
+            canvas.drawArc(bounds, 0f, 360f, false, trackPaint)
+        }
+
         when (type) {
             TYPE_DEFAULT -> canvas.drawArc(
                 bounds,
@@ -253,17 +275,7 @@ class LoaderView @JvmOverloads constructor(
         stopAnimation()
     }
 
-    override fun setVisibility(visibility: Int) {
-        val currentVisibility = getVisibility()
-        super.setVisibility(visibility)
-        if (visibility != currentVisibility) {
-            if (visibility == VISIBLE) {
-                resetAnimation()
-            } else if (visibility == GONE || visibility == INVISIBLE) {
-                stopAnimation()
-            }
-        }
-    }
+    override fun hasOverlappingRendering() = false
 
     companion object {
         private const val INDETERMINANT_MIN_SWEEP = 15f

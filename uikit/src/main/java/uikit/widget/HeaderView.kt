@@ -46,8 +46,8 @@ open class HeaderView @JvmOverloads constructor(
         }
 
 
-    var title: String
-        get() = titleView.text.toString()
+    var title: CharSequence
+        get() = titleView.text
         set(value) {
             titleView.text = value
         }
@@ -60,12 +60,12 @@ open class HeaderView @JvmOverloads constructor(
         inflate(context, R.layout.view_header, this)
 
         subtitleContainerView = findViewById(R.id.subtitle_container)
-        closeView = findViewById(R.id.close)
-        titleView = findViewById(R.id.title)
-        actionView = findViewById(R.id.action)
-        subtitleView = findViewById(R.id.subtitle)
-        loaderView = findViewById(R.id.loader)
-        textView = findViewById(R.id.text)
+        closeView = findViewById(R.id.header_close)
+        titleView = findViewById(R.id.header_title)
+        actionView = findViewById(R.id.header_action)
+        subtitleView = findViewById(R.id.header_subtitle)
+        loaderView = findViewById(R.id.header_loader)
+        textView = findViewById(R.id.header_text)
 
         context.useAttributes(attrs, R.styleable.HeaderView) {
             val iconResId = it.getResourceId(R.styleable.HeaderView_android_icon, 0)
@@ -86,6 +86,18 @@ open class HeaderView @JvmOverloads constructor(
         setDrawableForView(actionView, resId)
     }
 
+    fun contentMatchParent() {
+        titleView.layoutParams = titleView.layoutParams.apply {
+            width = ViewGroup.LayoutParams.MATCH_PARENT
+        }
+        subtitleContainerView.layoutParams = subtitleContainerView.layoutParams.apply {
+            width = ViewGroup.LayoutParams.MATCH_PARENT
+        }
+        subtitleView.layoutParams = subtitleView.layoutParams.apply {
+            width = ViewGroup.LayoutParams.MATCH_PARENT
+        }
+    }
+
     private fun setDrawableForView(view: AppCompatImageView, @DrawableRes resId: Int) {
         if (resId == 0) {
             view.alpha = 0f
@@ -96,7 +108,7 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     fun setUpdating(@StringRes textResId: Int) {
-        showSubtitle(textResId)
+        setSubtitle(textResId)
         loaderView.resetAnimation()
     }
 
@@ -107,13 +119,17 @@ open class HeaderView @JvmOverloads constructor(
         }
     }
 
-    fun showSubtitle(@StringRes textResId: Int) {
-        showSubtitle(context.getString(textResId))
+    fun setSubtitle(@StringRes textResId: Int) {
+        setSubtitle(context.getString(textResId))
     }
 
-    fun showSubtitle(text: String) {
+    fun setSubtitle(text: CharSequence?) {
         withAnimation {
-            subtitleContainerView.visibility = View.VISIBLE
+            subtitleContainerView.visibility = if (text.isNullOrEmpty()) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
             subtitleView.text = text
         }
     }

@@ -33,6 +33,7 @@
                 android:textAppearance="@style/TextAppearance.Body1"
                 android:textColor="@color/textPrimary"
                 android:textCursorDrawable="@drawable/cursor"
+                android:inputType="textCapSentences|textAutoCorrect"
                 android:background="@null"/>
 
             <androidx.appcompat.widget.AppCompatImageView

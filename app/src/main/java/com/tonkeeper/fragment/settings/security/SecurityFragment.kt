@@ -1,17 +1,22 @@
 package com.tonkeeper.fragment.settings.security
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.App
 import com.tonkeeper.R
-import uikit.base.fragment.BaseFragment
+import com.tonkeeper.fragment.passcode.lock.LockScreen
+import com.tonkeeper.fragment.wallet.phrase.PhraseWalletFragment
+import uikit.base.BaseFragment
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemSwitchView
 
 class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.SwipeBack {
 
     companion object {
+        private const val RECORD_PHRASE_REQUEST = "record_phrase"
+
         fun newInstance() = SecurityFragment()
     }
 
@@ -21,6 +26,14 @@ class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.
     private lateinit var headerView: HeaderView
     private lateinit var biometricView: ItemSwitchView
     private lateinit var lockScreenView: ItemSwitchView
+    private lateinit var recoveryPhraseView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        navigation?.setFragmentResultListener(RECORD_PHRASE_REQUEST) { _, _ ->
+            navigation?.add(PhraseWalletFragment.newInstance())
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -35,5 +48,13 @@ class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.
         lockScreenView.checked = App.settings.lockScreen
         lockScreenView.doOnCheckedChanged = { App.settings.lockScreen = it }
 
+        recoveryPhraseView = view.findViewById(R.id.recovery_phrase)
+        recoveryPhraseView.setOnClickListener {
+            openRecoveryPhrase()
+        }
+    }
+
+    private fun openRecoveryPhrase() {
+        navigation?.add(LockScreen.newInstance(RECORD_PHRASE_REQUEST))
     }
 }

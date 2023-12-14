@@ -8,7 +8,6 @@ object Libs {
     const val mlKitBarcode = "com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0"
     const val sodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.1"
 
-
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1"
         const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0"
@@ -30,6 +29,7 @@ object Libs {
         const val biometric = "androidx.biometric:biometric:1.1.0"
         const val annotation = "androidx.annotation:annotation:1.7.0"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.0"
+        const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
 
         object Camera {
             private const val version = "1.4.0-alpha02"

@@ -7,8 +7,10 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import com.tonkeeper.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
+import uikit.extensions.withAnimation
 import uikit.list.ListCell
 import uikit.list.ListCell.Companion.drawable
+import uikit.widget.LoaderView
 
 class ItemView @JvmOverloads constructor(
     context: Context,
@@ -25,6 +27,7 @@ class ItemView @JvmOverloads constructor(
     private val titleView: AppCompatTextView
     private val valueView: AppCompatTextView
     private val descriptionView: AppCompatTextView
+    private val loaderView: LoaderView
 
     var title: CharSequence?
         get() = titleView.text
@@ -58,8 +61,30 @@ class ItemView @JvmOverloads constructor(
         titleView = findViewById(R.id.title)
         valueView = findViewById(R.id.value)
         descriptionView = findViewById(R.id.description)
+        loaderView = findViewById(R.id.loader)
     }
 
+    fun setLoading() {
+        valueView.visibility = GONE
+        descriptionView.visibility = GONE
+        loaderView.visibility = VISIBLE
+    }
 
+    fun setDefault() {
+        valueView.visibility = VISIBLE
+        descriptionView.visibility = VISIBLE
+        loaderView.visibility = GONE
+    }
+
+    fun setData(value: String, description: String?) {
+        setDefault()
+        valueView.text = value
+        if (description.isNullOrEmpty()) {
+            descriptionView.visibility = GONE
+        } else {
+            descriptionView.visibility = VISIBLE
+            descriptionView.text = description
+        }
+    }
 
 }

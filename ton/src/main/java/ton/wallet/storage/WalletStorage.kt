@@ -26,6 +26,10 @@ internal class WalletStorage(context: Context) {
         setSelectedWallet(wallet.id)
     }
 
+    fun hasWallet(): Boolean {
+        return wallets.hasWallet()
+    }
+
     suspend fun setWalletName(createDate: Long, name: String) {
         wallets.setName(createDate, name)
     }

@@ -16,12 +16,12 @@ import com.tonkeeper.core.history.list.HistoryAdapter
 import com.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonkeeper.fragment.receive.ReceiveScreen
 import io.tonapi.models.JettonBalance
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.extensions.withAlpha
 import uikit.list.LinearLayoutManager
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScreenFeature>(R.layout.fragment_jetton), BaseFragment.SwipeBack {
@@ -72,7 +72,7 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
         headerView.doOnCloseClick = { finish() }
 
         receiveView = view.findViewById(R.id.receive)
-        receiveView.setOnClickListener { nav()?.add(ReceiveScreen.newInstance()) }
+        receiveView.setOnClickListener { navigation?.add(ReceiveScreen.newInstance()) }
 
         shimmerView = view.findViewById(R.id.shimmer)
         bodyView = view.findViewById(R.id.body)

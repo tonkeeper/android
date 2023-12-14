@@ -6,7 +6,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.R
 import com.tonkeeper.fragment.settings.accounts.list.AccountsAdapter
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.decoration.ListCellDecoration
 import uikit.list.LinearLayoutManager
 import uikit.mvi.UiScreen

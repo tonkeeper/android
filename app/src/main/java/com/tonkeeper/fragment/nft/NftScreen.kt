@@ -12,15 +12,14 @@ import com.tonkeeper.api.imageURL
 import com.tonkeeper.api.ownerAddress
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.api.title
-import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.core.ExternalUrl
 import io.tonapi.models.NftItem
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.list.ListCell
 import uikit.list.ListCell.Companion.drawable
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
 
@@ -32,7 +31,7 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         fun newInstance(nftAddress: String): NftScreen {
             val screen = NftScreen()
             screen.arguments = Bundle().apply {
-                putString(NFT_ADDRESS_KEY, nftAddress.userLikeAddress)
+                putString(NFT_ADDRESS_KEY, nftAddress)
             }
             return screen
         }
@@ -77,13 +76,13 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         openMarkerButton = view.findViewById(R.id.open_marker)
         openMarkerButton.setOnClickListener {
             val url = ExternalUrl.nftMarketView(nftAddress)
-            nav()?.openURL(url)
+            navigation?.openURL(url)
         }
 
         openExplorerView = view.findViewById(R.id.open_explorer)
         openExplorerView.setOnClickListener {
             val url = ExternalUrl.nftExplorerView(nftAddress)
-            nav()?.openURL(url)
+            navigation?.openURL(url)
         }
 
         ownerContainer = view.findViewById(R.id.owner_container)

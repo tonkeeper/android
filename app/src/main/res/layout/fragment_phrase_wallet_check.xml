@@ -5,18 +5,15 @@
     android:orientation="vertical"
     android:fitsSystemWindows="true">
 
-    <uikit.widget.TextHeaderView
-        android:id="@+id/text_header"
-        android:layout_width="match_parent"
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/offsetMedium"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
-        android:title="@string/phrase_check_title"/>
+        android:icon="@drawable/ic_chevron_left_16"/>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
         android:layout_weight="1"
         android:fillViewport="true">
 
@@ -24,7 +21,16 @@
             android:id="@+id/content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/offsetLarge"
             android:orientation="vertical">
+
+            <uikit.widget.TextHeaderView
+                android:id="@+id/text_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:layout_marginHorizontal="@dimen/offsetLarge"
+                android:title="@string/phrase_check_title"/>
 
             <uikit.widget.WordInput
                 android:id="@+id/word_input_1"
@@ -56,8 +62,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/offsetLarge"
-        android:layout_marginTop="@dimen/offsetMedium"
-        android:layout_marginBottom="@dimen/offsetLarge"
+        android:layout_marginVertical="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"/>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

@@ -5,15 +5,13 @@ import android.view.View
 import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.api.shortAddress
-import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.fragment.settings.accounts.AccountsScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ton.wallet.Wallet
-import ton.wallet.WalletInfo
 import ton.wallet.WalletManager
 import uikit.extensions.getDrawable
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.popup.ActionSheet
 
 class WalletPickerPopup(
@@ -31,7 +29,7 @@ class WalletPickerPopup(
     init {
         doOnItemClick = {
             if (it.id == SET_UP_WALLET_ID) {
-                context.nav()?.add(AccountsScreen.newInstance())
+                navigation?.add(AccountsScreen.newInstance())
             } else {
                 setActiveWallet(it.id)
             }
@@ -51,7 +49,7 @@ class WalletPickerPopup(
                 wallet.name!!
             }
 
-            val address = wallet.address.userLikeAddress.shortAddress
+            val address = wallet.address.shortAddress
             val createDate = wallet.id
             if (createDate == selectedWalletId) {
                 addItem(createDate, title, address, view.getDrawable(uikit.R.drawable.ic_done_16))
@@ -72,7 +70,7 @@ class WalletPickerPopup(
                 return@launch
             }
             walletManager.setActiveWallet(createDate)
-            context.nav()?.init(true)
+            navigation?.initRoot(true)
         }
     }
 }

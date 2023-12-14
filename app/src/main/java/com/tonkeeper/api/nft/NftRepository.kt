@@ -3,10 +3,8 @@ package com.tonkeeper.api.nft
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.fromJSON
-import com.tonkeeper.api.jetton.db.JettonDao
 import com.tonkeeper.api.nft.db.NftDao
 import com.tonkeeper.api.nft.db.NftEntity
-import com.tonkeeper.api.userLikeAddress
 import io.tonapi.apis.NFTApi
 import io.tonapi.models.NftItem
 import kotlinx.coroutines.Dispatchers
@@ -20,12 +18,11 @@ class NftRepository(
     suspend fun getItem(
         address: String
     ): NftItem = withContext(Dispatchers.IO) {
-        val userLikeAddress = address.userLikeAddress
-        val cached = fromCache(userLikeAddress)
+        val cached = fromCache(address)
         if (cached != null) {
             return@withContext cached
         }
-        val cloud = fromCloud(userLikeAddress)
+        val cloud = fromCloud(address)
         dao.insert(NftEntity(cloud))
         cloud
     }
@@ -39,6 +36,6 @@ class NftRepository(
     private suspend fun fromCloud(
         address: String
     ): NftItem = withContext(Dispatchers.IO) {
-        api.getNftItemByAddress(address.userLikeAddress)
+        api.getNftItemByAddress(address)
     }
 }

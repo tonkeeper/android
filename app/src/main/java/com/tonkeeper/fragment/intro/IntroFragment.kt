@@ -3,10 +3,10 @@ package com.tonkeeper.fragment.intro
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import androidx.appcompat.widget.AppCompatTextView
 import com.tonkeeper.R
-import com.tonkeeper.dialog.IntroWalletDialog
-import uikit.base.fragment.BaseFragment
+import com.tonkeeper.fragment.wallet.init.InitScreen
+import uikit.base.BaseFragment
+import uikit.navigation.Navigation.Companion.navigation
 
 class IntroFragment: BaseFragment(R.layout.fragment_intro) {
 
@@ -14,21 +14,17 @@ class IntroFragment: BaseFragment(R.layout.fragment_intro) {
         fun newInstance() = IntroFragment()
     }
 
-    private lateinit var titleView: AppCompatTextView
-    private lateinit var startButton: Button
-
-    private val bottomSheet: IntroWalletDialog by lazy {
-        IntroWalletDialog(requireContext())
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        titleView = view.findViewById(R.id.title)
-        titleView.text = getSpannable(R.string.intro_title)
 
-        startButton = view.findViewById(R.id.start)
-        startButton.setOnClickListener {
-            bottomSheet.show()
+        val newWalletButton = view.findViewById<Button>(R.id.new_wallet)
+        newWalletButton.setOnClickListener {
+            navigation?.add(InitScreen.newInstance(true))
+        }
+
+        val importWalletButton = view.findViewById<Button>(R.id.import_wallet)
+        importWalletButton.setOnClickListener {
+            navigation?.add(InitScreen.newInstance(false))
         }
     }
 

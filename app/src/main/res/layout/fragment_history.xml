@@ -15,7 +15,7 @@
             android:id="@+id/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:title="@string/activity"/>
+            android:title="@string/history"/>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -62,6 +62,7 @@
 
                     <Button
                         style="@style/Widget.App.Button.Secondary"
+                        android:id="@+id/buy"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="@style/TextAppearance.Label1"
@@ -69,6 +70,7 @@
 
                     <Button
                         style="@style/Widget.App.Button.Secondary"
+                        android:id="@+id/receive"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/offsetMedium"
@@ -93,7 +95,7 @@
             android:id="@+id/shimmer_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:title="@string/activity"/>
+            android:title="@string/history"/>
 
         <com.facebook.shimmer.ShimmerFrameLayout
             android:layout_width="match_parent"

@@ -80,7 +80,7 @@ class WordFormView @JvmOverloads constructor(
         focus(input)
     }
 
-    private fun focus(input: WordInput) {
+    fun focus(input: WordInput = getInput(0)) {
         input.focus()
         doOnFocusInput?.invoke(input, indexOfChild(input))
     }

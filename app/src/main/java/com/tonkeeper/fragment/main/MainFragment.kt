@@ -6,14 +6,13 @@ import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.core.currency.CurrencyUpdateWorker
+import com.tonkeeper.core.history.HistoryMonitor
 import com.tonkeeper.core.widget.Widget
-import com.tonkeeper.core.widget.WidgetBalanceProvider
-import com.tonkeeper.core.widget.WidgetRateProvider
 import com.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonkeeper.fragment.settings.main.SettingsScreen
 import com.tonkeeper.fragment.wallet.main.WalletScreen
 import kotlinx.coroutines.launch
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.widget.BottomTabsView
 
 class MainFragment: BaseFragment(R.layout.fragment_main) {
@@ -42,14 +41,24 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
-        bottomTabsView.doOnClick = { _, itemId ->
+        bottomTabsView.doOnClick = { itemId ->
             setFragment(itemId)
         }
         setFragment(R.id.wallet)
+
+        lifecycleScope.launch {
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            HistoryMonitor(lifecycleScope, wallet.accountId)
+        }
     }
 
     private fun fragmentByItemId(itemId: Int): BaseFragment {
         return fragmentMap[itemId] ?: throw IllegalArgumentException("Unknown itemId: $itemId")
+    }
+
+    fun forceSelectTab(itemId: Int) {
+        bottomTabsView.setItemChecked(itemId)
+        setFragment(itemId)
     }
 
     private fun setFragment(itemId: Int) {
@@ -60,6 +69,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         val transaction = childFragmentManager.beginTransaction()
         currentFragment?.let { transaction.hide(it) }
         if (isAlreadyFragment) {
+            (newFragment as? MainTabScreen<*, *, *>)?.onUpScroll()
             transaction.show(newFragment)
         } else {
             transaction.add(R.id.child_fragment, newFragment, tag)

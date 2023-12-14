@@ -7,10 +7,10 @@ import android.webkit.WebView
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
-import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import kotlinx.coroutines.launch
-import uikit.base.fragment.BaseFragment
+import ton.extensions.toUserFriendly
+import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
 import uikit.widget.WebViewFixed
@@ -86,7 +86,7 @@ class FiatWebFragment: BaseFragment(R.layout.fragment_web_fiat) {
     private fun loadUrl() {
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            val address = wallet.address.userLikeAddress
+            val address = wallet.address
             val replacedUrl = App.fiat.replaceUrl(url, address, App.settings.currency)
             loadUrl(replacedUrl)
         }

@@ -17,7 +17,6 @@ import com.tonkeeper.core.tonconnect.models.reply.TCAddressItemReply
 import com.tonkeeper.core.tonconnect.models.reply.TCConnectEventSuccess
 import com.tonkeeper.core.tonconnect.models.reply.TCReply
 import core.keyvalue.EncryptedKeyValue
-import io.ktor.util.Identity.decode
 import io.ktor.util.hex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -142,14 +141,14 @@ class TonConnect(private val context: Context) {
 
                 val event = TCConnectEventSuccess(items)
                 bridge.sendEvent(event.toJSON(), app)
-
                 restartEventHandler()
-
                 withContext(Dispatchers.Main) {
-                    dialog.dismiss()
+                    dialog.setSuccess()
                 }
             } catch (e: Throwable) {
-                Log.e("TonConnectLog", "error", e)
+                withContext(Dispatchers.Main) {
+                    dialog.setFailure()
+                }
             }
         }
     }

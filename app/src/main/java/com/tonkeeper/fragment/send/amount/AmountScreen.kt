@@ -13,8 +13,11 @@ import com.tonkeeper.R
 import com.tonkeeper.core.transaction.TransactionHelper
 import com.tonkeeper.fragment.send.SendScreenFeature
 import com.tonkeeper.fragment.send.pager.PagerScreen
+import com.tonkeeper.fragment.send.popup.SelectTokenPopup
 import kotlinx.coroutines.launch
+import ton.SupportedTokens
 import uikit.extensions.focusWidthKeyboard
+import uikit.extensions.hideKeyboard
 import uikit.widget.LoaderView
 
 class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScreenFeature>(R.layout.fragment_send_amount) {
@@ -25,19 +28,33 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
 
     override val feature: AmountScreenFeature by viewModels()
 
+    private val selectTokenPopup: SelectTokenPopup by lazy {
+        val popup = SelectTokenPopup(requireContext())
+        popup.doOnSelectJetton = { jetton ->
+            feature.selectJetton(jetton)
+        }
+        popup
+    }
+
+    private lateinit var tokenView: AppCompatTextView
     private lateinit var valueView: AppCompatEditText
+    private lateinit var valueCurrencyView: AppCompatTextView
     private lateinit var rateView: AppCompatTextView
     private lateinit var availableView: AppCompatTextView
     private lateinit var maxButton: Button
     private lateinit var continueButton: Button
-    private lateinit var loaderView: LoaderView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        tokenView = view.findViewById(R.id.token)
+        tokenView.setOnClickListener { selectTokenPopup.show(it) }
+
         valueView = view.findViewById(R.id.value)
         valueView.doOnTextChanged { _, _, _, _ ->
             feature.setValue(getValue())
         }
+
+        valueCurrencyView = view.findViewById(R.id.value_currency)
 
         rateView = view.findViewById(R.id.rate)
         availableView = view.findViewById(R.id.available)
@@ -48,7 +65,11 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         continueButton = view.findViewById(R.id.continue_action)
         continueButton.setOnClickListener { next() }
 
-        loaderView = view.findViewById(R.id.loader)
+        feature.setValue(0f)
+    }
+
+    fun forceSetAmount(amount: Float) {
+        valueView.setText(amount.toString())
     }
 
     private fun getValue(): Float {
@@ -56,39 +77,31 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     private fun next() {
-        continueButton.text = ""
-        continueButton.isEnabled = false
-        loaderView.visibility = View.VISIBLE
-
-        val value = getValue()
-        lifecycleScope.launch {
-            val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            val to = parentFeature?.recipient?.address ?: return@launch
-            val comment = parentFeature?.recipient?.comment ?: return@launch
-            val fee = TransactionHelper.getFee(wallet, to, value, comment)
-            setFlowAmount(value, fee)
-            parentScreen?.next()
-
-            continueButton.setText(R.string.continue_action)
-            continueButton.isEnabled = true
-            loaderView.visibility = View.GONE
-        }
-    }
-
-    private fun setFlowAmount(value: Float, fee: Long) {
-        parentFeature?.amount = SendScreenFeature.Amount(value, fee)
+        sendFeature.setAmount(getValue())
+        sendFeature.nextPage()
     }
 
     private fun setMaxValue() {
-        lifecycleScope.launch {
-            val maxValue = feature.getMaxValue()
-            val text = valueView.text ?: return@launch
-            text.replace(0, text.length, maxValue.toString())
-        }
+        val maxValue = feature.currentBalance
+        val text = valueView.text ?: return
+        text.replace(0, text.length, maxValue.toString())
     }
 
     override fun newUiState(state: AmountScreenState) {
         rateView.text = state.rate
+
+        if (1 >= state.jettons.size) {
+            tokenView.visibility = View.GONE
+        } else {
+            tokenView.visibility = View.VISIBLE
+            tokenView.text = state.selectedToken
+            selectTokenPopup.selectedJetton = state.selectedJetton
+            selectTokenPopup.jettons = state.jettons
+        }
+
+        sendFeature.setJetton(state.selectedJetton)
+
+        valueCurrencyView.text = state.selectedToken
 
         if (state.insufficientBalance) {
             availableView.setText(R.string.insufficient_balance)
@@ -108,12 +121,17 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         } else {
             maxButton.background.setTint(getColor(uikit.R.color.buttonSecondaryBackground))
         }
+
+        sendFeature.setMax(state.maxActive)
     }
 
     override fun onVisibleChange(visible: Boolean) {
         super.onVisibleChange(visible)
         if (visible) {
+            sendFeature.setAmountHeader(requireContext())
             valueView.focusWidthKeyboard()
+        } else {
+            valueView.hideKeyboard()
         }
     }
 }

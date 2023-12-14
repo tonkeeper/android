@@ -18,16 +18,24 @@
             android:background="@drawable/bg_content">
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/currency"
+                android:id="@+id/token"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_button_tertiary"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="@color/buttonTertiaryForeground"
+                android:gravity="center"
+                android:drawableEnd="@drawable/ic_chevron_down_16"
+                android:drawablePadding="6dp"/>
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center">
 
-                <com.tonkeeper.fragment.send.amount.view.AmountInput
+                <com.tonkeeper.fragment.send.view.AmountInput
                     android:id="@+id/value"
                     android:layout_width="wrap_content"
                     android:layout_height="48.76dp"
@@ -36,20 +44,21 @@
                     android:singleLine="true"
                     android:inputType="numberDecimal"
                     android:fontFamily="@font/montserrat_semi_bold"
-                    android:maxLength="24"
+                    android:maxLength="6"
                     android:textColor="@color/textPrimary"
                     android:textCursorDrawable="@drawable/cursor"
                     android:gravity="center_vertical"
+                    android:text="0"
                     android:hint="0"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/value_currency"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:text="TON"
                     android:textAppearance="@style/TextAppearance.NUM2"
                     android:textColor="@color/textSecondary"
                     app:layout_constraintStart_toEndOf="@id/value"
@@ -96,29 +105,17 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <FrameLayout
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/continue_action"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:layout_marginHorizontal="@dimen/offsetMedium"
-        android:layout_marginBottom="@dimen/offsetMedium">
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:layout_gravity="bottom"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="@color/textPrimary"
+        android:enabled="false"
+        android:text="@string/continue_action"/>
 
-        <Button
-            style="@style/Widget.App.Button"
-            android:id="@+id/continue_action"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary"
-            android:enabled="false"
-            android:text="@string/continue_action"/>
-
-        <uikit.widget.LoaderView
-            android:id="@+id/loader"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:visibility="gone"
-            android:color="@color/textPrimary"/>
-    </FrameLayout>
 </FrameLayout>

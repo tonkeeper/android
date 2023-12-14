@@ -6,10 +6,11 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonkeeper.R
-import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.core.tonconnect.models.TCData
+import ton.extensions.toUserFriendly
 import uikit.base.BaseSheetDialog
 import uikit.widget.LoaderView
+import uikit.widget.ProcessTaskView
 
 class TonConnectDialog(
     context: Context,
@@ -23,7 +24,7 @@ class TonConnectDialog(
     private val nameView: AppCompatTextView
     private val descriptionView: AppCompatTextView
     private val connectButton: Button
-    private val connectLoaderView: LoaderView
+    private val connectProcessView: ProcessTaskView
     private val cryptoView: TonConnectCryptoView
     private var data: TCData? = null
 
@@ -38,32 +39,28 @@ class TonConnectDialog(
         descriptionView = findViewById(R.id.description)!!
         connectButton = findViewById(R.id.connect_button)!!
         connectButton.setOnClickListener { connectWallet() }
-        connectLoaderView = findViewById(R.id.connect_loader)!!
+        connectProcessView = findViewById(R.id.connect_process)!!
         cryptoView = findViewById(R.id.crypto)!!
     }
 
     private fun connectWallet() {
         connectButton.visibility = View.GONE
-
-        connectLoaderView.visibility = View.VISIBLE
-        connectLoaderView.resetAnimation()
-
+        connectProcessView.visibility = View.VISIBLE
+        connectProcessView.state = ProcessTaskView.State.LOADING
         data?.let(doOnConnect)
     }
 
     override fun show() {
         super.show()
         loaderView.visibility = View.VISIBLE
-        loaderView.resetAnimation()
 
+        connectProcessView.visibility = View.GONE
         contentView.visibility = View.GONE
+        connectButton.visibility = View.VISIBLE
     }
 
-    fun setData(
-        d: TCData,
-    ) {
-
-        cryptoView.setKey(d.accountId.userLikeAddress)
+    fun setData(d: TCData) {
+        cryptoView.setKey(d.accountId.toUserFriendly())
         siteIconView.setImageURI(d.manifest.iconUrl)
         nameView.text = context.getString(R.string.ton_connect_title, d.manifest.name)
         descriptionView.text = context.getString(R.string.ton_connect_description, d.host, d.shortAddress, "V")
@@ -73,10 +70,18 @@ class TonConnectDialog(
         showContent()
     }
 
+    fun setSuccess() {
+        connectProcessView.state = ProcessTaskView.State.SUCCESS
+        dismissDelay()
+    }
+
+    fun setFailure() {
+        connectProcessView.state = ProcessTaskView.State.FAILED
+        dismissDelay()
+    }
+
     private fun showContent() {
         loaderView.visibility = View.GONE
-        loaderView.stopAnimation()
-
         contentView.visibility = View.VISIBLE
     }
 

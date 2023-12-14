@@ -12,11 +12,10 @@ import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
-import com.tonkeeper.MainActivity
+import com.tonkeeper.fragment.root.RootActivity
 import com.tonkeeper.R
 import org.ton.block.AddrStd
-import uikit.base.fragment.BaseFragment
-import uikit.navigation.Navigation.Companion.nav
+import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -28,9 +27,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         fun newInstance() = CameraFragment()
     }
 
-    private val activityResultLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
+    private val activityResultLauncher = registerForPermission { isGranted: Boolean ->
         if (isGranted) {
             startCamera()
         } else {
@@ -102,7 +99,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
     private fun handleBarcode(barcode: Barcode) {
         val activity = activity ?: return
 
-        if (readyUrl || activity !is MainActivity) {
+        if (readyUrl || activity !is RootActivity) {
             return
         }
 
@@ -115,9 +112,12 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
     }
 
     private fun getUrlFromBarcode(barcode: Barcode): String? {
+        val rawValue = barcode.rawValue
         var url: String? = null
-        if (barcode.valueType == Barcode.TYPE_TEXT) {
-            url = createTransferLink(barcode.rawValue)
+        if (rawValue?.startsWith("ton://transfer/") == true) {
+            url = rawValue
+        } else if (barcode.valueType == Barcode.TYPE_TEXT) {
+            url = createTransferLink(rawValue)
         } else if (barcode.valueType == Barcode.TYPE_URL) {
             url = barcode.url?.url
         }

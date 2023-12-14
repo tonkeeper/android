@@ -1,16 +1,25 @@
 package com.tonkeeper.core
 
+import android.icu.math.MathContext
+import android.util.Log
 import androidx.collection.arrayMapOf
+import org.ton.bigint.BigInt
 import ton.SupportedCurrency
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.Currency
+import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.pow
 
 object Coin {
 
-    private const val DefaultDecimals = 18
-    private const val MIN_DECIMALS = 2
+    private const val DEFAULT_DECIMALS = 18
+
+    const val MIN_DECIMALS = 2
+    const val MAX_DECIMALS = 9
 
     private const val BASE = 1000000000L
     private const val SMALL_SPACE = " "
@@ -37,14 +46,15 @@ object Coin {
     }
 
     private val currencyFormat = (NumberFormat.getCurrencyInstance() as DecimalFormat)
+
     private val simpleFormat = NumberFormat.getNumberInstance().apply {
-        minimumFractionDigits = 2
-        maximumFractionDigits = 2
+        minimumFractionDigits = MIN_DECIMALS
+        maximumFractionDigits = MAX_DECIMALS
     }
 
     fun parseFloat(
         value: String,
-        decimals: Any = DefaultDecimals
+        decimals: Any = DEFAULT_DECIMALS
     ): Float {
         val actualDecimals = when (decimals) {
             is String -> decimals.toInt()
@@ -99,16 +109,15 @@ object Coin {
         if (currency.isNotEmpty()) {
             val customSymbol = getSymbols(currency, useCurrencyCode)
             if (customSymbol != null) {
-                return customFormat(customSymbol, value)
+                simpleFormat.maximumFractionDigits = decimals
+                format = customFormat(customSymbol, value)
+            } else {
+                currencyFormat.currency = Currency.getInstance(currency)
+                format = currencyFormat.format(value)
             }
-            currencyFormat.currency = Currency.getInstance(currency)
-            format = currencyFormat.format(value)
         } else {
             simpleFormat.maximumFractionDigits = decimals
             format = simpleFormat.format(value)
-        }
-        if (format.endsWith(".00")) {
-            format = format.substring(0, format.length - 3)
         }
         return format
     }

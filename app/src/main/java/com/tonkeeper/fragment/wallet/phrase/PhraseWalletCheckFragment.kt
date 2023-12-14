@@ -6,18 +6,21 @@ import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
-import uikit.navigation.Navigation.Companion.nav
 import ton.wallet.WalletManager
-import uikit.base.fragment.WithBackFragment
 import uikit.widget.TextHeaderView
 import uikit.widget.WordInput
 import kotlinx.coroutines.launch
+import uikit.base.BaseFragment
+import uikit.widget.HeaderView
 
-class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_wallet_check) {
+class PhraseWalletCheckFragment: BaseFragment(R.layout.fragment_phrase_wallet_check), BaseFragment.SwipeBack {
 
     companion object {
         fun newInstance() = PhraseWalletCheckFragment()
     }
+
+    override var doOnDragging: ((Boolean) -> Unit)? = null
+    override var doOnDraggingProgress: ((Float) -> Unit)? = null
 
     private val wordIndexes: List<Int> by lazy {
         val numbers = mutableSetOf<Int>()
@@ -28,6 +31,7 @@ class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_walle
     }
     private var words = listOf<String>()
 
+    private lateinit var headerView: HeaderView
     private lateinit var textHeaderView: TextHeaderView
     private lateinit var contentView: View
     private lateinit var wordInput1: WordInput
@@ -37,6 +41,9 @@ class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_walle
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        headerView = view.findViewById(R.id.header)
+        headerView.doOnCloseClick = { finish() }
+
         textHeaderView = view.findViewById(R.id.text_header)
         textHeaderView.desciption = getString(R.string.phrase_check_description, wordIndexes[0], wordIndexes[1], wordIndexes[2])
 
@@ -98,10 +105,8 @@ class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_walle
 
         nextButton = view.findViewById(R.id.next)
         nextButton.setOnClickListener {
-            nav()?.init(false)
+            // navigation?.init(false)
         }
-
-        headerView.bindContentPadding(contentView)
 
         load()
     }
@@ -141,5 +146,9 @@ class PhraseWalletCheckFragment: WithBackFragment(R.layout.fragment_phrase_walle
         view.setError(text != word)
     }
 
+    override fun onResume() {
+        super.onResume()
+        wordInput1.focus()
+    }
 
 }

@@ -15,6 +15,7 @@ import uikit.drawable.InputDrawable
 import uikit.extensions.dp
 import uikit.extensions.focusWidthKeyboard
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.hideKeyboard
 import uikit.extensions.range
 import uikit.extensions.scale
 import uikit.extensions.useAttributes
@@ -174,6 +175,10 @@ class InputView @JvmOverloads constructor(
         postDelayed({
             editText.focusWidthKeyboard()
         }, 16)
+    }
+
+    fun hideKeyboard() {
+        editText.hideKeyboard()
     }
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {

@@ -3,7 +3,6 @@ package uikit.widget
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -14,8 +13,7 @@ import androidx.core.math.MathUtils
 import androidx.core.view.doOnLayout
 import androidx.customview.widget.ViewDragHelper
 import uikit.R
-import uikit.base.fragment.BaseFragment
-import uikit.extensions.dp
+import uikit.base.BaseFragment
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.range
 import uikit.extensions.roundTop

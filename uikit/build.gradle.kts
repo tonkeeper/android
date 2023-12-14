@@ -28,4 +28,5 @@ dependencies {
     implementation(Libs.AndroidX.splashscreen)
     implementation(Libs.UI.material)
     implementation(Libs.lottie)
+    implementation(Libs.fresco)
 }

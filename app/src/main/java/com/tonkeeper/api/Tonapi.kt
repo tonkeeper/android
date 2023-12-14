@@ -14,10 +14,7 @@ import io.tonapi.apis.StakingApi
 import io.tonapi.apis.StorageApi
 import io.tonapi.apis.TracesApi
 import io.tonapi.apis.WalletApi
-import io.tonapi.models.Account
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import ton.console.Network
+import core.network.Network
 
 object Tonapi {
 

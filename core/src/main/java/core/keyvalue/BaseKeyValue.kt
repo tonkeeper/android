@@ -24,7 +24,11 @@ abstract class BaseKeyValue {
         value: String?
     ) = withContext(Dispatchers.IO) {
         with (preferences.edit()) {
-            putString(key, value)
+            if (value.isNullOrBlank()) {
+                remove(key)
+            } else {
+                putString(key, value)
+            }
             apply()
         }
     }
@@ -140,5 +144,9 @@ abstract class BaseKeyValue {
             clear()
             apply()
         }
+    }
+
+    fun contains(key: String): Boolean {
+        return preferences.contains(key)
     }
 }

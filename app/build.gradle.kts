@@ -15,8 +15,8 @@ android {
         applicationId = "com.tonkeeper"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 5
-        versionName = "0.0.4-beta"
+        versionCode = 8
+        versionName = "0.0.8-beta"
     }
 
     buildFeatures {

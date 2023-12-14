@@ -1,17 +1,16 @@
 package ton.wallet
 
 import android.app.Application
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.block.AccountInfo
-import org.ton.lite.client.LiteClient
 import org.ton.mnemonic.Mnemonic
-import ton.TonWrapper
-import ton.contract.WalletV4R2Contract
 import ton.wallet.storage.WalletStorage
 
 class WalletManager(
@@ -22,20 +21,13 @@ class WalletManager(
         const val MNEMONIC_WORD_COUNT = Mnemonic.DEFAULT_WORD_COUNT
     }
 
-    private var scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val tonWrapper = TonWrapper(scope)
     private val storage = WalletStorage(application)
 
     private var cacheWallet: Wallet? = null
     private var cacheWallets: MutableList<Wallet> = mutableListOf()
 
-    val liteClient: LiteClient?
-        get() = tonWrapper.liteClient
-
-    init {
-        scope.launch {
-            getWalletInfo()
-        }
+    fun hasWallet(): Boolean {
+        return storage.hasWallet()
     }
 
     suspend fun getMnemonic(id: Long): List<String> {
@@ -48,12 +40,10 @@ class WalletManager(
         return PrivateKeyEd25519(seed)
     }
 
-    fun setWalletName(address: String, name: String) {
-        scope.launch {
-            val createDate = getIdAddress(address)
-            storage.setWalletName(createDate, name)
-            cacheWallets.clear()
-        }
+    suspend fun setWalletName(address: String, name: String) {
+        val createDate = getIdAddress(address)
+        storage.setWalletName(createDate, name)
+        cacheWallets.clear()
     }
 
     private suspend fun getIdAddress(
@@ -64,22 +54,18 @@ class WalletManager(
         return wallet?.id ?: 0
     }
 
-    fun logout() {
-        scope.launch {
-            logout(getActiveWallet())
-        }
+    suspend fun logout() {
+        logout(getActiveWallet())
     }
 
-    fun logout(address: String? = null) {
+    suspend fun logout(address: String? = null) {
         if (address == null) {
             logout()
             return
         }
 
-        scope.launch {
-            val createDate = getIdAddress(address)
-            logout(createDate)
-        }
+        val createDate = getIdAddress(address)
+        logout(createDate)
     }
 
     suspend fun logout(
@@ -136,12 +122,7 @@ class WalletManager(
         cacheWallet = null
     }
 
-    suspend fun createWallet() = withContext(Dispatchers.IO) {
-        val mnemonic = Mnemonic.generate()
-        addWallet(mnemonic)
-    }
-
-    suspend fun addWallet(mnemonic: List<String>) {
+    suspend fun addWallet(mnemonic: List<String>, name: String? = null) = withContext(Dispatchers.IO) {
         val seed = Mnemonic.toSeed(mnemonic)
         val privateKey = PrivateKeyEd25519(seed)
         val publicKey = privateKey.publicKey()
@@ -153,14 +134,12 @@ class WalletManager(
         )
 
         storage.addWallet(wallet, mnemonic)
+        name?.let {
+            storage.setWalletName(wallet.id, it)
+        }
 
         cacheWallet = null
         cacheWallets.clear()
     }
-
-    suspend fun getAccount(accountId: String): AccountInfo? {
-        return tonWrapper.getAccount(accountId)
-    }
-
 
 }

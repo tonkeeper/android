@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import uikit.base.BaseSheetDialog
 import uikit.list.LinearLayoutManager
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class FiatDialog(
@@ -99,11 +99,11 @@ class FiatDialog(
         pattern: FiatSuccessUrlPattern?
     ) {
         dismiss()
-        nav()?.add(FiatWebFragment.newInstance(url, pattern))
+        navigation?.add(FiatWebFragment.newInstance(url, pattern))
     }
 
     private fun pickCountry() {
         dismiss()
-        nav()?.add(CountryScreen.newInstance(FIAT_DIALOG_REQUEST))
+        navigation?.add(CountryScreen.newInstance(FIAT_DIALOG_REQUEST))
     }
 }

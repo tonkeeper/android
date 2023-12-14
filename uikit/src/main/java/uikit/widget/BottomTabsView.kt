@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R
+import uikit.extensions.createRipple
 import uikit.extensions.dp
 import uikit.extensions.useAttributes
 
@@ -23,9 +24,15 @@ class BottomTabsView @JvmOverloads constructor(
 
     private val menu: MenuBuilder by lazy { MenuBuilder(context) }
     private val menuInflater: MenuInflater by lazy { MenuInflater(context) }
-    private var selectedIndex = 0
+    private var selectedItemId = 0
+        set(value) {
+            if (field != value) {
+                field = value
+                updateSelected()
+            }
+        }
 
-    var doOnClick: ((index: Int, itemId: Int) -> Unit)? = null
+    var doOnClick: ((itemId: Int) -> Unit)? = null
 
     init {
         orientation = HORIZONTAL
@@ -48,9 +55,9 @@ class BottomTabsView @JvmOverloads constructor(
         for (i in 0 until menu.size()) {
             val item = menu.getItem(i)
             if (item.isChecked) {
-                selectedIndex = i
+                selectedItemId = item.itemId
             }
-            addMenu(i, item)
+            addMenu(item)
         }
 
         updateSelected()
@@ -64,7 +71,7 @@ class BottomTabsView @JvmOverloads constructor(
             val view = getChildAt(i)
             val iconView = view.findViewById<ImageView>(R.id.icon)
             val titleView = view.findViewById<TextView>(R.id.title)
-            if (view.tag == selectedIndex) {
+            if (view.tag == selectedItemId) {
                 iconView.imageTintList = ColorStateList.valueOf(colorActive)
                 titleView.setTextColor(colorActive)
             } else {
@@ -74,9 +81,10 @@ class BottomTabsView @JvmOverloads constructor(
         }
     }
 
-    private fun addMenu(index: Int, menuItem: MenuItem) {
+    private fun addMenu(menuItem: MenuItem) {
         val view = inflate(context, R.layout.view_bottom_tab, null)
-        view.tag = index
+        view.tag = menuItem.itemId
+        view.background = context.createRipple()
         val iconView = view.findViewById<ImageView>(R.id.icon)
         val titleView = view.findViewById<TextView>(R.id.title)
         iconView.setImageDrawable(menuItem.icon!!)
@@ -84,13 +92,16 @@ class BottomTabsView @JvmOverloads constructor(
 
         if (menuItem.isCheckable) {
             view.setOnClickListener {
-                selectedIndex = index
-                doOnClick?.invoke(index, menuItem.itemId)
-                updateSelected()
+                selectedItemId = menuItem.itemId
+                doOnClick?.invoke(menuItem.itemId)
             }
         }
 
         addView(view, LayoutParams(0, LayoutParams.MATCH_PARENT, 1f))
+    }
+
+    fun setItemChecked(itemId: Int) {
+        selectedItemId = itemId
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

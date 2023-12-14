@@ -5,7 +5,8 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.os.Bundle
 import androidx.fragment.app.Fragment
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
+import uikit.popup.ActionSheet
 
 interface Navigation {
 
@@ -21,19 +22,21 @@ interface Navigation {
             return null
         }
 
-        fun Context.nav(): Navigation? = from(this)
+        val Context.navigation: Navigation?
+            get() = from(this)
 
-        fun Fragment.nav(): Navigation? {
-            val context = context ?: return null
-            return from(context)
-        }
+        val Fragment.navigation: Navigation?
+            get() {
+                val context = context ?: return null
+                return from(context)
+            }
 
-        fun Dialog.nav() = from(context)
+        val Dialog.navigation: Navigation?
+            get() = from(context)
+
+        val ActionSheet.navigation: Navigation?
+            get() = from(context)
     }
-
-    fun init(skipPasscode: Boolean)
-
-    fun replace(fragment: BaseFragment, addToBackStack: Boolean)
 
     fun setFragmentResult(requestKey: String, result: Bundle = Bundle())
 
@@ -42,9 +45,13 @@ interface Navigation {
         listener: ((requestKey: String, bundle: Bundle) -> Unit)
     )
 
+    fun initRoot(skipPasscode: Boolean)
+
     fun add(fragment: BaseFragment)
 
-    fun remove(fragment: BaseFragment)
+    fun remove(fragment: Fragment)
 
     fun openURL(url: String, external: Boolean = false)
+
+    fun toast(message: String)
 }

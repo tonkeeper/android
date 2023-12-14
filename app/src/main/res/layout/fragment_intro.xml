@@ -5,60 +5,42 @@
     android:fitsSystemWindows="true"
     android:orientation="vertical">
 
-    <ScrollView
+    <androidx.appcompat.widget.AppCompatImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:fillViewport="true">
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="@dimen/offsetLarge">
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/textPrimary"
-                android:fontFamily="@font/montserrat_bold"
-                android:textSize="32sp"
-                android:lineHeight="40sp"
-                android:text="@string/intro_title"/>
+        android:src="@drawable/bg_intro"/>
 
-            <uikit.widget.IntroBlockView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetLarge"
-                android:icon="@drawable/ic_rocket_28"
-                android:title="@string/intro_line_1_title"
-                android:description="@string/intro_line_1_description"/>
-
-            <uikit.widget.IntroBlockView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetLarge"
-                android:icon="@drawable/ic_shield_28"
-                android:title="@string/intro_line_2_title"
-                android:description="@string/intro_line_2_description"/>
-
-            <uikit.widget.IntroBlockView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetLarge"
-                android:icon="@drawable/ic_ticket_28"
-                android:title="@string/intro_line_3_title"
-                android:description="@string/intro_line_3_description"/>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
-    </ScrollView>
-
-    <Button
-        style="@style/Widget.App.Button"
-        android:id="@+id/start"
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/offsetLarge"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:text="@string/get_started"/>
+        android:orientation="vertical"
+        android:padding="@dimen/offsetLarge">
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="@string/app_name"
+            android:description="@string/intro_description"/>
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/new_wallet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/start_create_new_wallet"/>
+
+        <Button
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/import_wallet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/start_import_wallet"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

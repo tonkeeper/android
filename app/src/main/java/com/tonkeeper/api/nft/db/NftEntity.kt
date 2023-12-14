@@ -3,7 +3,6 @@ package com.tonkeeper.api.nft.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tonkeeper.api.toJSON
-import com.tonkeeper.api.userLikeAddress
 import io.tonapi.models.NftItem
 
 @Entity(tableName = "nft")
@@ -13,7 +12,7 @@ class NftEntity(
 ) {
 
     constructor(nftItem: NftItem) : this(
-        nftItem.address.userLikeAddress,
+        nftItem.address,
         toJSON(nftItem)
     )
 }

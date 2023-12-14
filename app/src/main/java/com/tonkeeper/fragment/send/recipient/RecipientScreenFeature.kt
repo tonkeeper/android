@@ -11,11 +11,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ton.TonAddress
+import ton.extensions.toUserFriendly
 import uikit.mvi.UiFeature
 
 class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEffect>(RecipientScreenState()) {
 
-    private val account = Tonapi.accounts
+    private val accounts = Tonapi.accounts
 
     private var checkAddressJob: Job? = null
 
@@ -24,10 +25,6 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
             val state = uiState.value
             return state.name ?: state.address.shortAddress
         }
-
-    fun setComment(comment: String) {
-        updateUiState { it.copy(comment = comment) }
-    }
 
     fun requestAddressCheck(value: String) {
         updateUiState { it.copy(address = value) }
@@ -57,6 +54,7 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
 
             updateUiState { it.copy(
                 addressState = RecipientScreenState.AddressState.VALID,
+                address = account.address.toUserFriendly(),
                 name = account.name,
             ) }
         }
@@ -67,29 +65,31 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
     ): Account? = withContext(Dispatchers.IO) {
         try {
             if (!TonAddress.isValid(value)) {
-                return@withContext resolveDomain(value)
+                return@withContext resolveDomain(value.lowercase())
             }
-            return@withContext account.getAccount(value)
+            return@withContext accounts.getAccount(value)
         } catch (ignored: Throwable) {}
         return@withContext null
     }
 
-    private fun resolveDomain(domain: String): Account? {
+    private fun resolveDomain(
+        domain: String,
+        suffixList: Array<String> = arrayOf(".ton", ".t.me")
+    ): Account? {
         var account: Account? = null
         try {
-            account = Tonapi.accounts.getAccount(domain)
+            account = accounts.getAccount(domain)
         } catch (ignored: Throwable) {}
 
-        if (account == null && !domain.endsWith(".ton")) {
-            try {
-                account = Tonapi.accounts.getAccount("$domain.ton")
-            } catch (ignored: Throwable) {}
+        for (suffix in suffixList) {
+            if (account == null && !domain.endsWith(suffix)) {
+                try {
+                    account = accounts.getAccount("$domain$suffix")
+                } catch (ignored: Throwable) {}
+            }
         }
-
-        if (account == null && !domain.endsWith(".t.me")) {
-            try {
-                account = Tonapi.accounts.getAccount("$domain.t.me")
-            } catch (ignored: Throwable) {}
+        if (account?.name == null) {
+            account = account?.copy(name = domain)
         }
         return account
     }

@@ -3,6 +3,7 @@ package com.tonkeeper
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import core.keyvalue.EncryptedKeyValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -15,35 +16,18 @@ class PasscodeManager(context: Context) {
         private const val CODE_KEY = "code"
     }
 
-    private val prefs = EncryptedSharedPreferences.create(
-        NAME,
-        MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-        context,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val keyValue = EncryptedKeyValue(context, NAME)
 
     val hasPinCode: Boolean
-        get() = prefs.contains(CODE_KEY)
+        get() = keyValue.contains(CODE_KEY)
 
-    var temporalPinCode: String? = null
-
-    suspend fun setPinCode(code: String) = withContext(Dispatchers.IO) {
-        prefs.edit().putString(CODE_KEY, code).apply()
+    suspend fun setPinCode(code: String) {
+        keyValue.putString(CODE_KEY, code)
     }
 
-    fun checkTemporalPinCode(code: String): Boolean {
-        if (code.length != CODE_LENGTH) {
-            return false
-        }
-        return temporalPinCode == code
-    }
-
-    suspend fun checkPinCode(code: String): Boolean = withContext(Dispatchers.IO) {
-        if (code.length != CODE_LENGTH) {
-            return@withContext false
-        }
-        prefs.getString(CODE_KEY, null) == code
+    suspend fun compare(code: String): Boolean = withContext(Dispatchers.IO){
+        val savedCode = keyValue.getString(CODE_KEY)
+        savedCode == code
     }
 
 }

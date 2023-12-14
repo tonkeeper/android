@@ -6,41 +6,61 @@ import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
-import uikit.navigation.Navigation.Companion.nav
-import uikit.base.fragment.WithBackFragment
 import uikit.widget.PhraseWords
 import kotlinx.coroutines.launch
+import uikit.base.BaseFragment
+import uikit.navigation.Navigation.Companion.navigation
+import uikit.widget.HeaderView
 
-class PhraseWalletFragment: WithBackFragment(R.layout.fragment_phrase_wallet) {
+class PhraseWalletFragment: BaseFragment(R.layout.fragment_phrase_wallet), BaseFragment.SwipeBack {
 
     companion object {
         fun newInstance() = PhraseWalletFragment()
     }
 
+    override var doOnDragging: ((Boolean) -> Unit)? = null
+    override var doOnDraggingProgress: ((Float) -> Unit)? = null
+
+    private var words = listOf<String>()
+
+    private lateinit var headerView: HeaderView
     private lateinit var contentView: View
     private lateinit var wordsView: PhraseWords
     private lateinit var nextButton: Button
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        loadWords()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        headerView = view.findViewById(R.id.header)
+        headerView.doOnCloseClick = { finish() }
 
         contentView = view.findViewById(R.id.content)
         wordsView = view.findViewById(R.id.words)
 
         nextButton = view.findViewById(R.id.next)
         nextButton.setOnClickListener {
-            nav()?.replace(PhraseWalletCheckFragment.newInstance(), true)
+            navigation?.add(PhraseWalletCheckFragment.newInstance())
         }
+    }
 
-        headerView.bindContentPadding(contentView)
-        loadWords()
+    override fun onEndShowingAnimation() {
+        super.onEndShowingAnimation()
+        if (words.isEmpty()) {
+            loadWords()
+        } else {
+            wordsView.setWords(words)
+        }
     }
 
     private fun loadWords() {
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            val words = App.walletManager.getMnemonic(wallet.id)
-            wordsView.setWords(words)
+            words = App.walletManager.getMnemonic(wallet.id)
         }
     }
 

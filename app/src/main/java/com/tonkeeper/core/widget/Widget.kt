@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.IBinder
 import com.tonkeeper.App
-import com.tonkeeper.MainActivity
+import com.tonkeeper.fragment.root.RootActivity
 import com.tonkeeper.core.currency.CurrencyManager
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -25,7 +25,7 @@ abstract class Widget: AppWidgetProvider() {
         }
 
         private val defaultIntent: Intent by lazy {
-            val intent = Intent(App.instance, MainActivity::class.java)
+            val intent = Intent(App.instance, RootActivity::class.java)
             intent
         }
 

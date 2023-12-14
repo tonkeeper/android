@@ -1,5 +1,6 @@
 package ton.contract
 
+import android.os.SystemClock
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -22,6 +23,7 @@ import org.ton.lite.client.LiteClient
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
+import org.ton.tlb.storeTlb
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 import kotlin.time.Duration.Companion.seconds
@@ -103,6 +105,9 @@ class WalletV4R2Contract private constructor(
         val OP_TRANSFER = 0
 
         @JvmStatic
+        val OP_JETTON = 0xf8a7ea5
+
+        @JvmStatic
         suspend fun loadContract(liteClient: LiteClient, address: AddrStd): WalletV4R2Contract? {
             val blockId = liteClient.getLastBlockId()
             return loadContract(liteClient, blockId, address)
@@ -161,6 +166,29 @@ class WalletV4R2Contract private constructor(
                 code = CODE,
                 data = data
             )
+        }
+
+        fun createJettonBody(
+            queryId: Long = System.currentTimeMillis(),
+            jettonAmount: Long,
+            toAddress: MsgAddressInt,
+            responseAddress: MsgAddressInt,
+            forwardAmount: Long,
+            forwardPayload: Cell?
+        ): Cell {
+            return CellBuilder.createCell {
+                storeUInt(OP_JETTON, 32)
+                storeUInt(queryId, 64)
+                storeTlb(Coins, Coins.ofNano(jettonAmount))
+                storeTlb(MsgAddressInt, toAddress)
+                storeTlb(MsgAddressInt, responseAddress)
+                storeBit(false)
+                storeTlb(Coins, Coins.ofNano(forwardAmount))
+                storeBit(false)
+                if (forwardPayload != null) {
+                    storeRef(AnyTlbConstructor, CellRef(forwardPayload))
+                }
+            }
         }
 
         private fun createTransferMessageBody(

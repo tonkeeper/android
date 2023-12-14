@@ -14,7 +14,7 @@
         android:background="@drawable/bg_shadow_horizontal"/>
 
     <FrameLayout
-        android:id="@+id/content"
+        android:id="@+id/swipe_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

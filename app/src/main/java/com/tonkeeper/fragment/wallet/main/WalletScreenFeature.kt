@@ -1,7 +1,6 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.R
@@ -13,12 +12,12 @@ import com.tonkeeper.api.collectibles.CollectiblesRepository
 import com.tonkeeper.api.collectionName
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.title
-import com.tonkeeper.api.userLikeAddress
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.event.ChangeWalletNameEvent
+import com.tonkeeper.event.WalletStateUpdateEvent
 import com.tonkeeper.event.UpdateCurrencyRateEvent
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletJettonCellItem
@@ -36,11 +35,10 @@ import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ton.extensions.toUserFriendly
 import uikit.list.ListCell
-import kotlin.system.measureTimeMillis
 
 class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(WalletScreenState()) {
 
@@ -50,6 +48,10 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
     private val updateCurrencyRateAction = fun(_: UpdateCurrencyRateEvent) {
         queueScope.submit { updateWalletState(false) }
+    }
+
+    private val newTransactionItem = fun(_: WalletStateUpdateEvent) {
+        queueScope.submit { syncWallet() }
     }
 
     private val updateWalletNameAction = fun (event: ChangeWalletNameEvent) {
@@ -79,6 +81,14 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
         EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.subscribe(ChangeWalletNameEvent::class.java, updateWalletNameAction)
+        EventBus.subscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
+    }
+
+    fun copyAddress() {
+        viewModelScope.launch {
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            sendEffect(WalletScreenEffect.CopyAddress(wallet.address))
+        }
     }
 
     private fun syncWallet() {
@@ -174,7 +184,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 asyncState = asyncState,
                 title = wallet.name,
                 currency = currency,
-                address = data.accountId.userLikeAddress,
+                address = data.accountId.toUserFriendly(),
                 tonBalance = data.account.balance,
                 displayBalance = Coin.format(currency, allInCurrency),
                 pages = pages
@@ -292,6 +302,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         EventBus.unsubscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.unsubscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
         EventBus.unsubscribe(ChangeWalletNameEvent::class.java, updateWalletNameAction)
+        EventBus.unsubscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
     }
 
     private suspend fun getWalletData(

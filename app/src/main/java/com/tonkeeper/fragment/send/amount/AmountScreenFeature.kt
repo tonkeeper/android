@@ -3,11 +3,14 @@ package com.tonkeeper.fragment.send.amount
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository
+import com.tonkeeper.api.address
+import com.tonkeeper.api.asJettonBalance
 import com.tonkeeper.api.jetton.JettonRepository
+import com.tonkeeper.api.parsedBalance
+import com.tonkeeper.api.symbol
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.from
 import core.QueueScope
-import io.tonapi.models.Account
 import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -22,19 +25,94 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
     private val currency: SupportedCurrency
         get() = App.settings.currency
 
-    private var selectedToken = SupportedTokens.TON.code
-    private var walletData: WalletData? = null
+    private val currentJetton: JettonBalance?
+        get() = uiState.value.selectedJetton
+
+    private val currentTokenAddress: String
+        get() = currentJetton?.address ?: SupportedTokens.TON.code
+
+    private val currentTokenCode: String
+        get() = currentJetton?.symbol ?: SupportedTokens.TON.code
+
+    val currentBalance: Float
+        get() = currentJetton?.parsedBalance ?: uiState.value.tonBalance
 
     private val queueScope = QueueScope(Dispatchers.IO)
     private val accountRepository = AccountRepository()
     private val jettonRepository = JettonRepository()
 
     init {
-        viewModelScope.launch { initWallet() }
+        viewModelScope.launch {
+            loadData()
+        }
     }
 
-    suspend fun getMaxValue(): Float {
-        return Coin.toCoins(getWalletData().account.balance)
+    private suspend fun loadData() = withContext(Dispatchers.IO) {
+        val wallet = App.walletManager.getWalletInfo()!!
+        val accountId = wallet.accountId
+
+        val accountDeferred = async { accountRepository.get(accountId) }
+        val jettonsDeferred = async { jettonRepository.get(accountId) }
+
+        val account = accountDeferred.await()
+        val jettons = jettonsDeferred.await()
+        val tonAsJetton = account.asJettonBalance()
+
+        updateUiState {
+            it.copy(
+                wallet = wallet,
+                tonBalance = Coin.toCoins(account.balance),
+                jettons = listOf(tonAsJetton) + jettons,
+                selectedJetton = tonAsJetton,
+            )
+        }
+    }
+
+    fun selectJetton(jettonBalance: JettonBalance) {
+        updateUiState {
+            it.copy(
+                selectedJetton = jettonBalance,
+                canContinue = false,
+            )
+        }
+
+        viewModelScope.launch {
+            updateValue(uiState.value.amount)
+        }
+    }
+
+    private suspend fun updateValue(newValue: Float) {
+        val wallet = App.walletManager.getWalletInfo() ?: return
+        val accountId = wallet.accountId
+
+        val balanceInCurrency = from(currentTokenAddress, accountId)
+            .value(currentBalance)
+            .to(currency)
+
+        val insufficientBalance = newValue > currentBalance
+        var remaining = ""
+        if (newValue > 0) {
+            remaining = Coin.format(
+                currency = currentTokenCode,
+                value = currentBalance - newValue,
+                useCurrencyCode = true,
+            )
+        }
+
+        updateUiState { currentState ->
+            currentState.copy(
+                rate = Coin.format(currency, balanceInCurrency, true),
+                insufficientBalance = insufficientBalance,
+                remaining = remaining,
+                canContinue = !insufficientBalance && currentBalance > 0 && newValue > 0,
+                maxActive = currentBalance == newValue,
+                available = Coin.format(
+                    currency = currentTokenCode,
+                    value = currentBalance,
+                    useCurrencyCode = true,
+                )
+            )
+        }
     }
 
     fun setValue(value: Float) {
@@ -44,91 +122,13 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
             )
         }
 
-        queueScope.submit {
-            val data = getWalletData()
-            val balance = Coin.toCoins(data.account.balance)
-
-            val tonInCurrency = getTonInCurrency(data.accountId, value)
-            val insufficientBalance = value > balance
-            val remaining = if (value > 0) {
-                Coin.format(
-                    currency = selectedToken,
-                    value = balance - value
-                )
-            } else ""
-
-            updateUiState { currentState ->
-                currentState.copy(
-                    rate = getRateDisplay(tonInCurrency),
-                    insufficientBalance = insufficientBalance,
-                    remaining = remaining,
-                    canContinue = !insufficientBalance && value > 0,
-                    maxActive = balance == value
-                )
-            }
+        viewModelScope.launch {
+            updateValue(value)
         }
-    }
-
-    private suspend fun getTonInCurrency(accountId: String, value: Float): Float {
-        return from(SupportedTokens.TON, accountId)
-            .value(value)
-            .to(currency)
-    }
-
-    private fun getRateDisplay(value: Float): String {
-        return Coin.format(currency, value, true)
-    }
-
-    private fun getAvailableDisplay(balance: Long): String {
-        return Coin.format(
-            currency = selectedToken,
-            value = balance
-        )
-    }
-
-    private suspend fun initWallet() = withContext(Dispatchers.IO) {
-        val data = getWalletData()
-        val tonInCurrency = getTonInCurrency(data.accountId, uiState.value.value)
-
-        updateUiState { currentState ->
-            currentState.copy(
-                available = getAvailableDisplay(data.account.balance),
-                rate = getRateDisplay(tonInCurrency),
-                canContinue = false
-            )
-        }
-    }
-
-    private suspend fun getWalletData(
-    ): WalletData = withContext(Dispatchers.IO) {
-        if (walletData == null) {
-            val wallet = App.walletManager.getWalletInfo()!!
-            val address = wallet.address
-
-            val accountDeferred = async { accountRepository.get(wallet.accountId) }
-            val jettonsDeferred = async { jettonRepository.get(wallet.accountId) }
-
-            val account = accountDeferred.await()
-            val jettons = jettonsDeferred.await()
-
-            walletData = WalletData(
-                accountId = address,
-                account = account,
-                jettons = jettons,
-            )
-        }
-
-        return@withContext walletData!!
     }
 
     override fun onCleared() {
         super.onCleared()
         queueScope.cancel()
     }
-
-    private data class WalletData(
-        val accountId: String,
-        val account: Account,
-        val jettons: List<JettonBalance>
-    )
 }

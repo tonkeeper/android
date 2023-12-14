@@ -11,6 +11,8 @@ import com.tonkeeper.core.fiat.Fiat
 import com.tonkeeper.event.ChangeWalletNameEvent
 import com.tonkeeper.event.WalletRemovedEvent
 import core.EventBus
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.libsodium.jni.NaCl
 import ton.wallet.WalletManager
 
@@ -42,14 +44,18 @@ class App: Application(), CameraXConfig.Provider {
     }
 
     fun setWalletName(address: String, name: String) {
-        walletManager.setWalletName(address, name)
-        EventBus.post(ChangeWalletNameEvent(address, name))
+        GlobalScope.launch {
+            walletManager.setWalletName(address, name)
+            EventBus.post(ChangeWalletNameEvent(address, name))
+        }
     }
 
     fun deleteWallet(address: String?) {
-        walletManager.logout(address)
-        address?.let {
-            EventBus.post(WalletRemovedEvent(address))
+        GlobalScope.launch {
+            walletManager.logout(address)
+            address?.let {
+                EventBus.post(WalletRemovedEvent(address))
+            }
         }
     }
 

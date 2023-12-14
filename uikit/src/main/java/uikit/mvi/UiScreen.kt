@@ -1,12 +1,11 @@
 package uikit.mvi
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import kotlinx.coroutines.launch
 
 abstract class UiScreen<S: UiState, E: UiEffect, F: UiFeature<S, E>>(

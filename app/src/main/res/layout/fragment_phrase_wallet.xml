@@ -3,8 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:fitsSystemWindows="true"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:fitsSystemWindows="true">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/ic_chevron_left_16"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -39,8 +44,9 @@
 
             <uikit.widget.PhraseWords
                 android:id="@+id/words"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:layout_marginTop="@dimen/offsetMedium"
                 android:layout_marginHorizontal="@dimen/offsetMedium"
                 android:orientation="horizontal"/>

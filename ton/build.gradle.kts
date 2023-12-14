@@ -24,7 +24,6 @@ android {
 dependencies {
     implementation(Libs.ton)
     implementation(Libs.AndroidX.security)
-    implementation(Libs.Squareup.okhttp)
 
     implementation(project(Libs.Module.core))
     implementation(project(Libs.Module.tonApi))

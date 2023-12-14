@@ -6,7 +6,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.R
 import com.tonkeeper.fragment.currency.list.CurrencyAdapter
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.list.LinearLayoutManager
 import uikit.mvi.UiScreen
 import uikit.widget.BackHeaderView

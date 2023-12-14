@@ -53,7 +53,7 @@ class SwipeBackLayout @JvmOverloads constructor(
 
         bgView = findViewById(R.id.bg)
         shadowView = findViewById(R.id.shadow)
-        contentContainer = findViewById(R.id.content)
+        contentContainer = findViewById(R.id.swipe_content)
 
         drawCallback = object : ViewDragHelper.Callback() {
             override fun tryCaptureView(child: View, pointerId: Int): Boolean {

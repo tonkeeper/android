@@ -1,9 +1,12 @@
 package uikit.widget
 
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
+import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
+import uikit.extensions.dp
 
 class PhraseWords @JvmOverloads constructor(
     context: Context,
@@ -17,6 +20,7 @@ class PhraseWords @JvmOverloads constructor(
 
     fun setWords(words: List<String>) {
         removeAllViews()
+
         val layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -24,6 +28,9 @@ class PhraseWords @JvmOverloads constructor(
         )
 
         var row = insertWordRow()
+
+        addView(View(context), LayoutParams(16.dp, LayoutParams.MATCH_PARENT))
+
         for ((index, word) in words.withIndex()) {
             if (index == words.size / 2) {
                 row = insertWordRow()

@@ -5,9 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -16,8 +14,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.ContentLoadingProgressBar
 import com.tonkeeper.R
-import uikit.base.fragment.BaseFragment
-import uikit.navigation.Navigation.Companion.nav
+import uikit.base.BaseFragment
 
 class WebFragment: BaseFragment(R.layout.fragment_web) {
 
@@ -47,7 +44,7 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         backView = view.findViewById(R.id.back)
-        backView.setOnClickListener { back() }
+        backView.setOnClickListener { onBackPressed() }
 
         titleView = view.findViewById(R.id.title)
 
@@ -105,21 +102,13 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
         }
     }
 
-    private fun back() {
-        if (webView.canGoBack()) {
+    override fun onBackPressed(): Boolean {
+        return if (webView.canGoBack()) {
             webView.goBack()
+            false
         } else {
-            finish()
+            true
         }
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        onBackPressedDispatcher?.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                back()
-            }
-        })
     }
 
 }

@@ -2,7 +2,7 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/close"
+        android:id="@+id/header_close"
         android:layout_width="@dimen/actionSize"
         android:layout_height="@dimen/actionSize"
         android:layout_gravity="center"
@@ -13,7 +13,7 @@
         android:alpha="0"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/text"
+        android:id="@+id/header_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="@dimen/offsetMedium"
@@ -21,7 +21,7 @@
         android:orientation="vertical"
         android:layout_weight="1">
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/title"
+            android:id="@+id/header_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -40,17 +40,18 @@
             android:orientation="horizontal">
             
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/subtitle"
+                android:id="@+id/header_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:singleLine="true"
+                android:gravity="center"
                 android:textColor="@color/textSecondary"
                 android:textSize="14sp"
                 android:fontFamily="@font/montserrat_medium"/>
             
             <uikit.widget.LoaderView
-                android:id="@+id/loader"
+                android:id="@+id/header_loader"
                 android:layout_width="12dp"
                 android:layout_height="12dp"
                 android:layout_marginStart="@dimen/offsetExtraSmall"
@@ -60,7 +61,7 @@
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/action"
+        android:id="@+id/header_action"
         android:scaleType="centerInside"
         android:layout_width="@dimen/actionSize"
         android:layout_height="@dimen/actionSize"

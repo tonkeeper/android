@@ -2,13 +2,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:minHeight="180dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <uikit.widget.LoaderView
         android:id="@+id/loader"
         android:layout_width="42dp"
         android:layout_height="42dp"
-        android:layout_marginVertical="@dimen/offsetMedium"
         android:layout_gravity="center"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -78,13 +78,14 @@
                 android:textAppearance="@style/TextAppearance.Label1"
                 android:text="@string/connect_wallet"/>
 
-            <uikit.widget.LoaderView
-                android:id="@+id/connect_loader"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
+            <uikit.widget.ProcessTaskView
+                android:id="@+id/connect_process"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:visibility="gone"
-                />
+                app:successLabel="@string/done"
+                app:errorLabel="@string/error"/>
+
         </FrameLayout>
 
         <androidx.appcompat.widget.AppCompatTextView

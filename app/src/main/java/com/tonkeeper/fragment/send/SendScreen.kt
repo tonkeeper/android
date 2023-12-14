@@ -1,21 +1,16 @@
 package com.tonkeeper.fragment.send
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.tonkeeper.R
-import com.tonkeeper.core.PaymentURL
-import com.tonkeeper.fragment.camera.CameraFragment
-import com.tonkeeper.fragment.send.amount.AmountScreen
-import com.tonkeeper.fragment.send.confirm.ConfirmScreen
+import com.tonkeeper.extensions.openCamera
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonkeeper.fragment.send.pager.SendScreenAdapter
-import com.tonkeeper.fragment.send.recipient.RecipientScreen
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.mvi.UiScreen
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>(R.layout.fragment_send), BaseFragment.BottomSheet {
@@ -41,10 +36,12 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         }
     }
 
-
     private val startAddress: String by lazy { arguments?.getString(ADDRESS_KEY) ?: "" }
     private val startComment: String by lazy { arguments?.getString(COMMENT_KEY) ?: "" }
     private val startAmount: Float by lazy { arguments?.getFloat(AMOUNT_KEY) ?: 0f }
+
+    private val hasStartValues: Boolean
+        get() = startAddress.isNotEmpty() || startComment.isNotEmpty() || startAmount > 0f
 
     override val feature: SendScreenFeature by viewModels()
 
@@ -53,6 +50,7 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
     private val pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
             super.onPageSelected(position)
+            feature.setCurrentPage(position)
             if (position == 0) {
                 headerView.setDefault()
                 headerView.setIcon(0)
@@ -77,14 +75,27 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
+        headerView.contentMatchParent()
         headerView.doOnActionClick = { finish() }
-        headerView.doOnCloseClick = { prev() }
+        headerView.doOnCloseClick = { feature.prevPage() }
 
         pagerView = view.findViewById(R.id.pager)
         pagerView.offscreenPageLimit = 3
         pagerView.isUserInputEnabled = false
         pagerView.adapter = pageAdapter
         pagerView.registerOnPageChangeCallback(pageChangeCallback)
+
+        if (hasStartValues) {
+            view.postDelayed({
+                forceSet()
+            }, 1000)
+        }
+    }
+
+    private fun forceSet() {
+        forceSetAddress(startAddress)
+        forceSetComment(startComment)
+        forceSetAmount(startAmount)
     }
 
     override fun onDestroyView() {
@@ -92,68 +103,36 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         pagerView.unregisterOnPageChangeCallback(pageChangeCallback)
     }
 
-    fun openCamera() {
-        nav()?.add(CameraFragment.newInstance())
-    }
-
-    fun setSubtitle(subtitle: String) {
-        headerView.showSubtitle(subtitle)
-    }
-
-    fun hideText() {
-        headerView.hideText()
-    }
-
-    fun showText() {
-        headerView.showText()
-    }
-
-    fun prev() {
-        val prevItem = pagerView.currentItem - 1
-        if (prevItem >= 0) {
-            pagerView.currentItem = prevItem
+    override fun newUiState(state: SendScreenState) {
+        pagerView.currentItem = state.currentPage
+        headerView.title = state.headerTitle
+        headerView.setSubtitle(state.headerSubtitle)
+        if (state.headerVisible) {
+            headerView.showText()
         } else {
+            headerView.hideText()
+        }
+    }
+
+    override fun newUiEffect(effect: SendScreenEffect) {
+        super.newUiEffect(effect)
+
+        if (effect is SendScreenEffect.OpenCamera) {
+            navigation?.openCamera()
+        } else if (effect is SendScreenEffect.Finish) {
             finish()
         }
     }
 
-    fun next() {
-        pagerView.currentItem = pagerView.currentItem + 1
+    fun forceSetAddress(address: String?) {
+        pageAdapter.recipientScreen?.setAddress(address)
     }
 
-    override fun newUiState(state: SendScreenState) {
-
+    fun forceSetComment(text: String?) {
+        pageAdapter.recipientScreen?.setComment(text)
     }
 
-    override fun onResume() {
-        super.onResume()
-        var page = 0
-        if (startAddress.isNotEmpty()) {
-            feature.recipient = SendScreenFeature.Recipient(
-                address = startAddress,
-                comment = startComment,
-                name = null
-            )
-            page++
-        }
-        /*if (startAmount > 0) {
-            feature.amount = SendScreenFeature.Amount(
-                amount = startAmount,
-            )
-            page++
-        }*/
-        pagerView.currentItem = page
-    }
-
-    fun setAddress(address: String?) {
-
-    }
-
-    fun setText(text: String?) {
-
-    }
-
-    fun setAmount(amount: Float) {
-
+    fun forceSetAmount(amount: Float) {
+        pageAdapter.amountScreen?.forceSetAmount(amount)
     }
 }

@@ -49,6 +49,10 @@ internal class Wallets(
         keyValue.putByteArray(key, publicKey.key.toByteArray())
     }
 
+    fun hasWallet(): Boolean {
+        return keyValue.contains(WALLET_IDS_KEY)
+    }
+
     suspend fun delete(id: Long) {
         keyValue.remove(key(WALLET_NAME, id))
         keyValue.remove(key(WALLET_PUBLIC_KEY, id))

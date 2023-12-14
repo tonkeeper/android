@@ -7,9 +7,9 @@ import com.tonkeeper.fragment.settings.list.item.SettingsIconItem
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
 import com.tonkeeper.fragment.settings.list.item.SettingsItem
 import com.tonkeeper.fragment.settings.list.item.SettingsTitleItem
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.list.ListCell
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class LegalFragment: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBack {
@@ -59,12 +59,12 @@ class LegalFragment: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBa
 
         termsView = view.findViewById(R.id.terms)
         termsView.setOnClickListener {
-            nav()?.openURL("https://tonkeeper.com/terms/")
+            navigation?.openURL("https://tonkeeper.com/terms/")
         }
 
         privacyView = view.findViewById(R.id.privacy)
         privacyView.setOnClickListener {
-            nav()?.openURL("https://tonkeeper.com/privacy/")
+            navigation?.openURL("https://tonkeeper.com/privacy/")
         }
         licensesFontView = view.findViewById(R.id.licenses_font)
     }

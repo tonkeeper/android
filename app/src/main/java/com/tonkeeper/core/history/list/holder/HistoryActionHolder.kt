@@ -1,6 +1,5 @@
 package com.tonkeeper.core.history.list.holder
 
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
@@ -10,12 +9,14 @@ import com.tonkeeper.R
 import com.tonkeeper.core.history.list.item.HistoryActionItem
 import uikit.list.ListCell
 import uikit.list.ListCell.Companion.drawable
+import uikit.widget.LoaderView
 
 class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryActionItem>(parent, R.layout.view_history_action) {
 
     private val amountColorReceived = context.getColor(uikit.R.color.accentGreen)
     private val amountColorDefault = context.getColor(uikit.R.color.textPrimary)
 
+    private val loaderView = findViewById<LoaderView>(R.id.loader)
     private val iconView = findViewById<SimpleDraweeView>(R.id.icon)
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
     private val subtitleView = findViewById<AppCompatTextView>(R.id.subtitle)
@@ -30,7 +31,7 @@ class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryActionItem>(p
     private val nftCollectionView = findViewById<AppCompatTextView>(R.id.nft_collection)
 
     override fun onBind(item: HistoryActionItem) {
-        itemView.background = ListCell.Position.SINGLE.drawable(context)
+        itemView.background = item.position.drawable(context)
         titleView.setText(getTitle(item.action))
         subtitleView.text = item.subtitle
         dateView.text = item.date
@@ -41,9 +42,18 @@ class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryActionItem>(p
             iconView.setImageURI(item.iconURL)
         }
 
+        bindPending(item.pending)
         bindComment(item.comment)
         bindNft(item)
         bindAmount(item)
+    }
+
+    private fun bindPending(pending: Boolean) {
+        loaderView.visibility = if (pending) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 
     private fun bindAmount(item: HistoryActionItem) {
@@ -66,7 +76,7 @@ class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryActionItem>(p
             }
         }
 
-        if (item.value.isEmpty()) {
+        if (item.value2.isEmpty()) {
             amount2View.visibility = View.GONE
         } else {
             amount2View.visibility = View.VISIBLE

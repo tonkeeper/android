@@ -6,10 +6,10 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.R
 import com.tonkeeper.fragment.country.list.CountryAdapter
-import uikit.base.fragment.BaseFragment
+import uikit.base.BaseFragment
 import uikit.list.LinearLayoutManager
 import uikit.mvi.UiScreen
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.SearchInput
 
@@ -66,6 +66,6 @@ class CountryScreen: UiScreen<CountryScreenState, CountryScreenEffect, CountrySc
 
     override fun onDestroyView() {
         super.onDestroyView()
-        nav()?.setFragmentResult(request)
+        navigation?.setFragmentResult(request)
     }
 }

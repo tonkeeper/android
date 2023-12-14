@@ -1,9 +1,7 @@
 package com.tonkeeper.fragment.settings.accounts.list.item
 
 import com.tonkeeper.api.shortAddress
-import com.tonkeeper.api.userLikeAddress
 import ton.wallet.Wallet
-import ton.wallet.WalletInfo
 import uikit.list.ListCell
 
 data class AccountsWalletItem(
@@ -25,7 +23,7 @@ data class AccountsWalletItem(
     constructor(wallet: Wallet, position: ListCell.Position) : this(
         createDate = wallet.id,
         name = wallet.name ?: "",
-        address = wallet.address.userLikeAddress,
+        address = wallet.address,
         position = position
     )
 }

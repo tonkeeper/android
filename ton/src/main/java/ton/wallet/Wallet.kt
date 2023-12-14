@@ -1,14 +1,12 @@
 package ton.wallet
 
-import android.os.Parcel
-import android.os.Parcelable
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.api.tonnode.Workchain
 import org.ton.block.AddrStd
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.contract.wallet.WalletContract
 import ton.contract.WalletV4R2Contract
+import ton.extensions.toUserFriendly
 
 data class Wallet(
     val id: Long,
@@ -36,7 +34,7 @@ data class Wallet(
     }
 
     val address: String by lazy {
-        AddrStd(accountId).toString(userFriendly = true)
+        AddrStd(accountId).toUserFriendly()
     }
 
     constructor(legacy: WalletInfo) : this(
@@ -46,6 +44,6 @@ data class Wallet(
     )
 
     fun isMyAddress(a: String): Boolean {
-        return address == a || a == accountId
+        return address.equals(a, ignoreCase = true) || accountId.equals(a, ignoreCase = true)
     }
 }

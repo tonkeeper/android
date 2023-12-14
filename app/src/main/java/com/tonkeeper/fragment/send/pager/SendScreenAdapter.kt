@@ -21,6 +21,15 @@ class SendScreenAdapter(
         private val POSITION_CONFIRM = COUNT++
     }
 
+    val recipientScreen: RecipientScreen?
+        get() = findFragmentByPosition(POSITION_RECIPIENT) as? RecipientScreen
+
+    val amountScreen: AmountScreen?
+        get() = findFragmentByPosition(POSITION_AMOUNT) as? AmountScreen
+
+    val confirmScreen: ConfirmScreen?
+        get() = findFragmentByPosition(POSITION_CONFIRM) as? ConfirmScreen
+
     override fun getItemCount(): Int {
         return COUNT
     }

@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.R
 import com.tonkeeper.dialog.LogoutDialog
 import com.tonkeeper.fragment.currency.CurrencyScreen
+import com.tonkeeper.fragment.main.MainTabScreen
 import com.tonkeeper.fragment.settings.accounts.AccountsScreen
 import com.tonkeeper.fragment.settings.legal.LegalFragment
 import com.tonkeeper.fragment.settings.list.SettingsAdapter
@@ -15,9 +16,9 @@ import com.tonkeeper.fragment.settings.security.SecurityFragment
 import uikit.decoration.ListCellDecoration
 import uikit.list.LinearLayoutManager
 import uikit.mvi.UiScreen
-import uikit.navigation.Navigation.Companion.nav
+import uikit.navigation.Navigation.Companion.navigation
 
-class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(R.layout.fragment_settings) {
+class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(R.layout.fragment_settings) {
 
     companion object {
         fun newInstance() = SettingsScreen()
@@ -52,7 +53,7 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
     override fun newUiEffect(effect: SettingsScreenEffect) {
         super.newUiEffect(effect)
         if (effect is SettingsScreenEffect.Logout) {
-            nav()?.init(true)
+            navigation?.initRoot(true)
         }
     }
 
@@ -63,7 +64,7 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
     }
 
     private fun onCellClick(item: SettingsIdItem) {
-        val nav = nav() ?: return
+        val nav = navigation ?: return
 
         when (item.id) {
             SettingsIdItem.MANAGE_WALLETS_ID -> {
@@ -91,5 +92,9 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
                 nav.openURL(feature.directSupportUrl, true)
             }
         }
+    }
+
+    override fun onUpScroll() {
+        listView.scrollToPosition(0)
     }
 }

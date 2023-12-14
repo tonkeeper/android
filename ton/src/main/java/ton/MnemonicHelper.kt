@@ -13,6 +13,10 @@ object MnemonicHelper {
     }
 
     fun search(text: String, max: Int = 3): List<String> {
+        if (text.isEmpty()) {
+            return emptyList()
+        }
+
         val words = Mnemonic.mnemonicWords()
         val result = mutableListOf<String>()
         for (word in words) {

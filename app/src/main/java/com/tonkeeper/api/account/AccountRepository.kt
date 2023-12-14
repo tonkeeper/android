@@ -33,7 +33,7 @@ class AccountRepository(
         return account
     }
 
-    private suspend fun fromCloud(accountId: String): Account {
+    suspend fun fromCloud(accountId: String): Account {
         val account = fetch(accountId)
         dao.insert(accountId, account)
         memory[accountId] = account

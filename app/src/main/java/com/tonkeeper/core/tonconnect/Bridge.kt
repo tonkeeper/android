@@ -8,7 +8,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import org.ton.crypto.base64
 import org.ton.crypto.hex
-import ton.console.Network
+import core.network.Network
 
 internal class Bridge {
 

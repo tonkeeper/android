@@ -2,14 +2,12 @@ package com.tonkeeper.core.tonconnect
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.tonkeeper.core.tonconnect.models.TCEvent
 import okhttp3.Request
-import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
-import ton.console.Network
+import core.network.Network
 
 internal class Realtime(
     context: Context,
@@ -38,14 +36,7 @@ internal class Realtime(
             uri = uri.buildUpon().appendQueryParameter("last_event_id", lastEventId).build()
         }
 
-        val builder = Request.Builder()
-            .url(uri.toString())
-            .header("Accept", "text/event-stream")
-
-        val request = builder.build()
-
-        val factory = EventSources.createFactory(Network.okHttpClient)
-        eventSource = factory.newEventSource(request, this)
+        eventSource = Network.newEventSource(uri.toString(), this)
     }
 
     override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {

@@ -1,21 +1,19 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.view.get
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
-import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.dialog.fiat.FiatDialog
 import com.tonkeeper.dialog.IntroWalletDialog
+import com.tonkeeper.extensions.copyToClipboard
 import com.tonkeeper.fragment.camera.CameraFragment
+import com.tonkeeper.fragment.main.MainTabScreen
 import com.tonkeeper.fragment.receive.ReceiveScreen
 import com.tonkeeper.fragment.send.SendScreen
 import com.tonkeeper.fragment.wallet.main.pager.WalletScreenAdapter
@@ -26,16 +24,12 @@ import com.tonkeeper.fragment.wallet.main.popup.WalletPickerPopup
 import com.tonkeeper.fragment.wallet.main.view.WalletHeaderView
 import kotlinx.coroutines.launch
 import uikit.extensions.findViewHolderForAdapterPosition
-import uikit.extensions.layoutManager
-import uikit.extensions.recyclerView
-import uikit.extensions.withAnimation
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
-import uikit.navigation.Navigation.Companion.nav
-import uikit.widget.HeaderView
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.TabLayoutEx
 
-class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreenFeature>(R.layout.fragment_wallet) {
+class WalletScreen: MainTabScreen<WalletScreenState, WalletScreenEffect, WalletScreenFeature>(R.layout.fragment_wallet) {
 
     companion object {
         fun newInstance() = WalletScreen()
@@ -77,9 +71,7 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val nav = nav() ?: return
-
-        nav.setFragmentResultListener(FiatDialog.FIAT_DIALOG_REQUEST) { _, _ ->
+        navigation?.setFragmentResultListener(FiatDialog.FIAT_DIALOG_REQUEST) { _, _ ->
             fiatDialog.show()
         }
     }
@@ -94,14 +86,15 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
 
         amountView = view.findViewById(R.id.amount)
         addressView = view.findViewById(R.id.address)
+        addressView.setOnClickListener { feature.copyAddress() }
 
         sendButton = view.findViewById(R.id.send)
         sendButton.setOnClickListener {
-            nav()?.add(SendScreen.newInstance())
+            navigation?.add(SendScreen.newInstance())
         }
         receiveButton = view.findViewById(R.id.receive)
         receiveButton.setOnClickListener {
-            nav()?.add(ReceiveScreen.newInstance())
+            navigation?.add(ReceiveScreen.newInstance())
         }
 
         buyButton = view.findViewById(R.id.buy)
@@ -122,7 +115,7 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
     }
 
     private fun openCamera() {
-        nav()?.add(CameraFragment.newInstance())
+        navigation?.add(CameraFragment.newInstance())
     }
 
     private fun selectWallet(view: View) {
@@ -184,8 +177,26 @@ class WalletScreen: UiScreen<WalletScreenState, WalletScreenEffect, WalletScreen
         }
     }
 
+    override fun newUiEffect(effect: WalletScreenEffect) {
+        super.newUiEffect(effect)
+        if (effect is WalletScreenEffect.CopyAddress) {
+            copyAddress(effect.address)
+        }
+    }
+
+    private fun copyAddress(address: String) {
+        navigation?.toast(getString(R.string.copied))
+        context?.copyToClipboard(address)
+    }
+
     private fun setAsyncState(asyncState: AsyncState) {
         headerView.updating = asyncState == AsyncState.Loading
         shimmerHeaderView.updating = asyncState == AsyncState.Loading
+    }
+
+    override fun onUpScroll() {
+        val index = pagerView.currentItem
+        val holder = pagerView.findViewHolderForAdapterPosition(index) as? WalletScreenHolder ?: return
+        holder.scrollUp()
     }
 }

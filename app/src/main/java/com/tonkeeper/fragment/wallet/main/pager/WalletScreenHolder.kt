@@ -45,4 +45,8 @@ class WalletScreenHolder(
     override fun onBind(item: WalletScreenItem) {
         adapter.submitList(item.items)
     }
+
+    fun scrollUp() {
+        listView.smoothScrollToPosition(0)
+    }
 }

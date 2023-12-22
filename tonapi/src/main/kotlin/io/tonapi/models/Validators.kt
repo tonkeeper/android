@@ -23,11 +23,27 @@ import com.squareup.moshi.JsonClass
 /**
  * 
  *
+ * @param electAt 
+ * @param electClose 
+ * @param minStake 
+ * @param totalStake 
  * @param validators 
  */
 
 
 data class Validators (
+
+    @Json(name = "elect_at")
+    val electAt: kotlin.Long,
+
+    @Json(name = "elect_close")
+    val electClose: kotlin.Long,
+
+    @Json(name = "min_stake")
+    val minStake: kotlin.Long,
+
+    @Json(name = "total_stake")
+    val totalStake: kotlin.Long,
 
     @Json(name = "validators")
     val validators: kotlin.collections.List<Validator>

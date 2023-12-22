@@ -136,6 +136,7 @@ class LiteServerApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
      * 
      * Get raw account state
      * @param accountId account ID
+     * @param targetBlock target block: (workchain,shard,seqno,root_hash,file_hash) (optional)
      * @return GetRawAccountState200Response
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -145,8 +146,8 @@ class LiteServerApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getRawAccountState(accountId: kotlin.String) : GetRawAccountState200Response {
-        val localVarResponse = getRawAccountStateWithHttpInfo(accountId = accountId)
+    fun getRawAccountState(accountId: kotlin.String, targetBlock: kotlin.String? = null) : GetRawAccountState200Response {
+        val localVarResponse = getRawAccountStateWithHttpInfo(accountId = accountId, targetBlock = targetBlock)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GetRawAccountState200Response
@@ -167,14 +168,15 @@ class LiteServerApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
      * 
      * Get raw account state
      * @param accountId account ID
+     * @param targetBlock target block: (workchain,shard,seqno,root_hash,file_hash) (optional)
      * @return ApiResponse<GetRawAccountState200Response?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getRawAccountStateWithHttpInfo(accountId: kotlin.String) : ApiResponse<GetRawAccountState200Response?> {
-        val localVariableConfig = getRawAccountStateRequestConfig(accountId = accountId)
+    fun getRawAccountStateWithHttpInfo(accountId: kotlin.String, targetBlock: kotlin.String?) : ApiResponse<GetRawAccountState200Response?> {
+        val localVariableConfig = getRawAccountStateRequestConfig(accountId = accountId, targetBlock = targetBlock)
 
         return request<Unit, GetRawAccountState200Response>(
             localVariableConfig
@@ -185,11 +187,17 @@ class LiteServerApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
      * To obtain the request config of the operation getRawAccountState
      *
      * @param accountId account ID
+     * @param targetBlock target block: (workchain,shard,seqno,root_hash,file_hash) (optional)
      * @return RequestConfig
      */
-    fun getRawAccountStateRequestConfig(accountId: kotlin.String) : RequestConfig<Unit> {
+    fun getRawAccountStateRequestConfig(accountId: kotlin.String, targetBlock: kotlin.String?) : RequestConfig<Unit> {
         val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (targetBlock != null) {
+                    put("target_block", listOf(targetBlock.toString()))
+                }
+            }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         localVariableHeaders["Accept"] = "application/json"
 

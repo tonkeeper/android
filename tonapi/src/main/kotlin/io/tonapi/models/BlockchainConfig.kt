@@ -15,7 +15,34 @@
 
 package io.tonapi.models
 
+import io.tonapi.models.BlockchainConfig10
+import io.tonapi.models.BlockchainConfig11
+import io.tonapi.models.BlockchainConfig12
+import io.tonapi.models.BlockchainConfig13
+import io.tonapi.models.BlockchainConfig14
+import io.tonapi.models.BlockchainConfig15
+import io.tonapi.models.BlockchainConfig16
+import io.tonapi.models.BlockchainConfig17
+import io.tonapi.models.BlockchainConfig18
+import io.tonapi.models.BlockchainConfig20
+import io.tonapi.models.BlockchainConfig21
+import io.tonapi.models.BlockchainConfig22
+import io.tonapi.models.BlockchainConfig23
+import io.tonapi.models.BlockchainConfig24
+import io.tonapi.models.BlockchainConfig25
+import io.tonapi.models.BlockchainConfig28
+import io.tonapi.models.BlockchainConfig29
+import io.tonapi.models.BlockchainConfig31
+import io.tonapi.models.BlockchainConfig40
+import io.tonapi.models.BlockchainConfig43
 import io.tonapi.models.BlockchainConfig44
+import io.tonapi.models.BlockchainConfig5
+import io.tonapi.models.BlockchainConfig6
+import io.tonapi.models.BlockchainConfig7
+import io.tonapi.models.BlockchainConfig71
+import io.tonapi.models.BlockchainConfig79
+import io.tonapi.models.BlockchainConfig8
+import io.tonapi.models.BlockchainConfig9
 import io.tonapi.models.ValidatorsSet
 
 import com.squareup.moshi.Json
@@ -30,12 +57,44 @@ import com.squareup.moshi.JsonClass
  * @param _2 minter address
  * @param _4 dns root address
  * @param _44 
+ * @param _3 The address of the transaction fee collector.
+ * @param _5 
+ * @param _6 
+ * @param _7 
+ * @param _8 
+ * @param _9 
+ * @param _10 
+ * @param _11 
+ * @param _12 
+ * @param _13 
+ * @param _14 
+ * @param _15 
+ * @param _16 
+ * @param _17 
+ * @param _18 
+ * @param _20 
+ * @param _21 
+ * @param _22 
+ * @param _23 
+ * @param _24 
+ * @param _25 
+ * @param _28 
+ * @param _29 
+ * @param _31 
  * @param _32 
  * @param _33 
  * @param _34 
  * @param _35 
  * @param _36 
  * @param _37 
+ * @param _40 
+ * @param _43 
+ * @param _71 
+ * @param _72 
+ * @param _73 
+ * @param _79 
+ * @param _81 
+ * @param _82 
  */
 
 
@@ -64,6 +123,79 @@ data class BlockchainConfig (
     @Json(name = "44")
     val _44: BlockchainConfig44,
 
+    /* The address of the transaction fee collector. */
+    @Json(name = "3")
+    val _3: kotlin.String? = null,
+
+    @Json(name = "5")
+    val _5: BlockchainConfig5? = null,
+
+    @Json(name = "6")
+    val _6: BlockchainConfig6? = null,
+
+    @Json(name = "7")
+    val _7: BlockchainConfig7? = null,
+
+    @Json(name = "8")
+    val _8: BlockchainConfig8? = null,
+
+    @Json(name = "9")
+    val _9: BlockchainConfig9? = null,
+
+    @Json(name = "10")
+    val _10: BlockchainConfig10? = null,
+
+    @Json(name = "11")
+    val _11: BlockchainConfig11? = null,
+
+    @Json(name = "12")
+    val _12: BlockchainConfig12? = null,
+
+    @Json(name = "13")
+    val _13: BlockchainConfig13? = null,
+
+    @Json(name = "14")
+    val _14: BlockchainConfig14? = null,
+
+    @Json(name = "15")
+    val _15: BlockchainConfig15? = null,
+
+    @Json(name = "16")
+    val _16: BlockchainConfig16? = null,
+
+    @Json(name = "17")
+    val _17: BlockchainConfig17? = null,
+
+    @Json(name = "18")
+    val _18: BlockchainConfig18? = null,
+
+    @Json(name = "20")
+    val _20: BlockchainConfig20? = null,
+
+    @Json(name = "21")
+    val _21: BlockchainConfig21? = null,
+
+    @Json(name = "22")
+    val _22: BlockchainConfig22? = null,
+
+    @Json(name = "23")
+    val _23: BlockchainConfig23? = null,
+
+    @Json(name = "24")
+    val _24: BlockchainConfig24? = null,
+
+    @Json(name = "25")
+    val _25: BlockchainConfig25? = null,
+
+    @Json(name = "28")
+    val _28: BlockchainConfig28? = null,
+
+    @Json(name = "29")
+    val _29: BlockchainConfig29? = null,
+
+    @Json(name = "31")
+    val _31: BlockchainConfig31? = null,
+
     @Json(name = "32")
     val _32: ValidatorsSet? = null,
 
@@ -80,7 +212,31 @@ data class BlockchainConfig (
     val _36: ValidatorsSet? = null,
 
     @Json(name = "37")
-    val _37: ValidatorsSet? = null
+    val _37: ValidatorsSet? = null,
+
+    @Json(name = "40")
+    val _40: BlockchainConfig40? = null,
+
+    @Json(name = "43")
+    val _43: BlockchainConfig43? = null,
+
+    @Json(name = "71")
+    val _71: BlockchainConfig71? = null,
+
+    @Json(name = "72")
+    val _72: BlockchainConfig71? = null,
+
+    @Json(name = "73")
+    val _73: BlockchainConfig71? = null,
+
+    @Json(name = "79")
+    val _79: BlockchainConfig79? = null,
+
+    @Json(name = "81")
+    val _81: BlockchainConfig79? = null,
+
+    @Json(name = "82")
+    val _82: BlockchainConfig79? = null
 
 )
 

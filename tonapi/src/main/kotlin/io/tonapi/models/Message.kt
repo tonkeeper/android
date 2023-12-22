@@ -24,6 +24,7 @@ import com.squareup.moshi.JsonClass
 /**
  * 
  *
+ * @param msgType 
  * @param createdLt 
  * @param ihrDisabled 
  * @param bounce 
@@ -44,6 +45,9 @@ import com.squareup.moshi.JsonClass
 
 
 data class Message (
+
+    @Json(name = "msg_type")
+    val msgType: Message.MsgType,
 
     @Json(name = "created_lt")
     val createdLt: kotlin.Long,
@@ -94,5 +98,18 @@ data class Message (
     @Json(name = "decoded_body")
     val decodedBody: kotlin.Any? = null
 
-)
+) {
+
+    /**
+     * 
+     *
+     * Values: intMsg,extInMsg,extOutMsg
+     */
+    @JsonClass(generateAdapter = false)
+    enum class MsgType(val value: kotlin.String) {
+        @Json(name = "int_msg") intMsg("int_msg"),
+        @Json(name = "ext_in_msg") extInMsg("ext_in_msg"),
+        @Json(name = "ext_out_msg") extOutMsg("ext_out_msg");
+    }
+}
 

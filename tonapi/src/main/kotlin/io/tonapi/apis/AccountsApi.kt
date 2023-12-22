@@ -23,6 +23,7 @@ import io.tonapi.models.Account
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import io.tonapi.models.Accounts
+import io.tonapi.models.AddressParse200Response
 import io.tonapi.models.DnsExpiring
 import io.tonapi.models.DomainNames
 import io.tonapi.models.FoundAccounts
@@ -123,6 +124,77 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/accounts/{account_id}/dns/backresolve".replace("{"+"account_id"+"}", encodeURIComponent(accountId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
+     * parse address and display in all formats
+     * @param accountId account ID
+     * @return AddressParse200Response
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun addressParse(accountId: kotlin.String) : AddressParse200Response {
+        val localVarResponse = addressParseWithHttpInfo(accountId = accountId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as AddressParse200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * parse address and display in all formats
+     * @param accountId account ID
+     * @return ApiResponse<AddressParse200Response?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun addressParseWithHttpInfo(accountId: kotlin.String) : ApiResponse<AddressParse200Response?> {
+        val localVariableConfig = addressParseRequestConfig(accountId = accountId)
+
+        return request<Unit, AddressParse200Response>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation addressParse
+     *
+     * @param accountId account ID
+     * @return RequestConfig
+     */
+    fun addressParseRequestConfig(accountId: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/address/{account_id}/parse".replace("{"+"account_id"+"}", encodeURIComponent(accountId.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
@@ -664,6 +736,7 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      * 
      * Get all Jettons balances by owner address
      * @param accountId account ID
+     * @param currencies accept ton and all possible fiat currencies, separated by commas (optional)
      * @return JettonsBalances
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -673,8 +746,8 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAccountJettonsBalances(accountId: kotlin.String) : JettonsBalances {
-        val localVarResponse = getAccountJettonsBalancesWithHttpInfo(accountId = accountId)
+    fun getAccountJettonsBalances(accountId: kotlin.String, currencies: kotlin.String? = null) : JettonsBalances {
+        val localVarResponse = getAccountJettonsBalancesWithHttpInfo(accountId = accountId, currencies = currencies)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as JettonsBalances
@@ -695,14 +768,15 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      * 
      * Get all Jettons balances by owner address
      * @param accountId account ID
+     * @param currencies accept ton and all possible fiat currencies, separated by commas (optional)
      * @return ApiResponse<JettonsBalances?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getAccountJettonsBalancesWithHttpInfo(accountId: kotlin.String) : ApiResponse<JettonsBalances?> {
-        val localVariableConfig = getAccountJettonsBalancesRequestConfig(accountId = accountId)
+    fun getAccountJettonsBalancesWithHttpInfo(accountId: kotlin.String, currencies: kotlin.String?) : ApiResponse<JettonsBalances?> {
+        val localVariableConfig = getAccountJettonsBalancesRequestConfig(accountId = accountId, currencies = currencies)
 
         return request<Unit, JettonsBalances>(
             localVariableConfig
@@ -713,11 +787,17 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      * To obtain the request config of the operation getAccountJettonsBalances
      *
      * @param accountId account ID
+     * @param currencies accept ton and all possible fiat currencies, separated by commas (optional)
      * @return RequestConfig
      */
-    fun getAccountJettonsBalancesRequestConfig(accountId: kotlin.String) : RequestConfig<Unit> {
+    fun getAccountJettonsBalancesRequestConfig(accountId: kotlin.String, currencies: kotlin.String?) : RequestConfig<Unit> {
         val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (currencies != null) {
+                    put("currencies", listOf(currencies.toString()))
+                }
+            }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         localVariableHeaders["Accept"] = "application/json"
 

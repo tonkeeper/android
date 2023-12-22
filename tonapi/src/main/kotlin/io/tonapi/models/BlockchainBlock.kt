@@ -15,6 +15,7 @@
 
 package io.tonapi.models
 
+import io.tonapi.models.BlockValueFlow
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -22,6 +23,8 @@ import com.squareup.moshi.JsonClass
 /**
  * 
  *
+ * @param txQuantity 
+ * @param valueFlow 
  * @param workchainId 
  * @param shard 
  * @param seqno 
@@ -54,6 +57,12 @@ import com.squareup.moshi.JsonClass
 
 
 data class BlockchainBlock (
+
+    @Json(name = "tx_quantity")
+    val txQuantity: kotlin.Int,
+
+    @Json(name = "value_flow")
+    val valueFlow: BlockValueFlow,
 
     @Json(name = "workchain_id")
     val workchainId: kotlin.Int,

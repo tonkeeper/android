@@ -27,6 +27,7 @@ import com.squareup.moshi.JsonClass
  * @param address 
  * @param nextItemIndex 
  * @param rawCollectionContent 
+ * @param approvedBy 
  * @param owner 
  * @param metadata 
  * @param previews 
@@ -44,6 +45,9 @@ data class NftCollection (
     @Json(name = "raw_collection_content")
     val rawCollectionContent: kotlin.String,
 
+    @Json(name = "approved_by")
+    val approvedBy: kotlin.collections.List<NftCollection.ApprovedBy>,
+
     @Json(name = "owner")
     val owner: AccountAddress? = null,
 
@@ -53,5 +57,18 @@ data class NftCollection (
     @Json(name = "previews")
     val previews: kotlin.collections.List<ImagePreview>? = null
 
-)
+) {
+
+    /**
+     * 
+     *
+     * Values: getgems,tonkeeper,tonPeriodDiamonds
+     */
+    @JsonClass(generateAdapter = false)
+    enum class ApprovedBy(val value: kotlin.String) {
+        @Json(name = "getgems") getgems("getgems"),
+        @Json(name = "tonkeeper") tonkeeper("tonkeeper"),
+        @Json(name = "ton.diamonds") tonPeriodDiamonds("ton.diamonds");
+    }
+}
 

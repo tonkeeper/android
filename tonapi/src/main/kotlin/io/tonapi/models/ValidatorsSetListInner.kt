@@ -23,13 +23,21 @@ import com.squareup.moshi.JsonClass
  * 
  *
  * @param publicKey 
+ * @param weight 
+ * @param adnlAddr 
  */
 
 
 data class ValidatorsSetListInner (
 
     @Json(name = "public_key")
-    val publicKey: kotlin.String
+    val publicKey: kotlin.String,
+
+    @Json(name = "weight")
+    val weight: kotlin.Long,
+
+    @Json(name = "adnl_addr")
+    val adnlAddr: kotlin.String? = null
 
 )
 

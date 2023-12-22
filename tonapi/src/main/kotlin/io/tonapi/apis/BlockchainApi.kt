@@ -21,10 +21,13 @@ import okhttp3.HttpUrl
 
 import io.tonapi.models.BlockchainAccountInspect
 import io.tonapi.models.BlockchainBlock
+import io.tonapi.models.BlockchainBlockShards
+import io.tonapi.models.BlockchainBlocks
 import io.tonapi.models.BlockchainConfig
 import io.tonapi.models.BlockchainRawAccount
 import io.tonapi.models.GetBlockchainBlockDefaultResponse
 import io.tonapi.models.MethodExecutionResult
+import io.tonapi.models.RawBlockchainConfig
 import io.tonapi.models.SendBlockchainMessageRequest
 import io.tonapi.models.Transaction
 import io.tonapi.models.Transactions
@@ -510,6 +513,148 @@ class BlockchainApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
 
     /**
      * 
+     * Get blockchain config from a specific block, if present.
+     * @param masterchainSeqno masterchain block seqno
+     * @return BlockchainConfig
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getBlockchainConfigFromBlock(masterchainSeqno: kotlin.Int) : BlockchainConfig {
+        val localVarResponse = getBlockchainConfigFromBlockWithHttpInfo(masterchainSeqno = masterchainSeqno)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as BlockchainConfig
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * Get blockchain config from a specific block, if present.
+     * @param masterchainSeqno masterchain block seqno
+     * @return ApiResponse<BlockchainConfig?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getBlockchainConfigFromBlockWithHttpInfo(masterchainSeqno: kotlin.Int) : ApiResponse<BlockchainConfig?> {
+        val localVariableConfig = getBlockchainConfigFromBlockRequestConfig(masterchainSeqno = masterchainSeqno)
+
+        return request<Unit, BlockchainConfig>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getBlockchainConfigFromBlock
+     *
+     * @param masterchainSeqno masterchain block seqno
+     * @return RequestConfig
+     */
+    fun getBlockchainConfigFromBlockRequestConfig(masterchainSeqno: kotlin.Int) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/blockchain/masterchain/{masterchain_seqno}/config".replace("{"+"masterchain_seqno"+"}", encodeURIComponent(masterchainSeqno.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
+     * Get all blocks in all shards and workchains between target and previous masterchain block according to shards last blocks snapshot in masterchain.  We don&#39;t recommend to build your app around this method because it has problem with scalability and will work very slow in the future.
+     * @param masterchainSeqno masterchain block seqno
+     * @return BlockchainBlocks
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getBlockchainMasterchainBlocks(masterchainSeqno: kotlin.Int) : BlockchainBlocks {
+        val localVarResponse = getBlockchainMasterchainBlocksWithHttpInfo(masterchainSeqno = masterchainSeqno)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as BlockchainBlocks
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * Get all blocks in all shards and workchains between target and previous masterchain block according to shards last blocks snapshot in masterchain.  We don&#39;t recommend to build your app around this method because it has problem with scalability and will work very slow in the future.
+     * @param masterchainSeqno masterchain block seqno
+     * @return ApiResponse<BlockchainBlocks?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getBlockchainMasterchainBlocksWithHttpInfo(masterchainSeqno: kotlin.Int) : ApiResponse<BlockchainBlocks?> {
+        val localVariableConfig = getBlockchainMasterchainBlocksRequestConfig(masterchainSeqno = masterchainSeqno)
+
+        return request<Unit, BlockchainBlocks>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getBlockchainMasterchainBlocks
+     *
+     * @param masterchainSeqno masterchain block seqno
+     * @return RequestConfig
+     */
+    fun getBlockchainMasterchainBlocksRequestConfig(masterchainSeqno: kotlin.Int) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/blockchain/masterchain/{masterchain_seqno}/blocks".replace("{"+"masterchain_seqno"+"}", encodeURIComponent(masterchainSeqno.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
      * Get last known masterchain block
      * @return BlockchainBlock
      * @throws IllegalStateException If the request is not correctly configured
@@ -569,6 +714,148 @@ class BlockchainApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/blockchain/masterchain-head",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
+     * Get blockchain block shards
+     * @param masterchainSeqno masterchain block seqno
+     * @return BlockchainBlockShards
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getBlockchainMasterchainShards(masterchainSeqno: kotlin.Int) : BlockchainBlockShards {
+        val localVarResponse = getBlockchainMasterchainShardsWithHttpInfo(masterchainSeqno = masterchainSeqno)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as BlockchainBlockShards
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * Get blockchain block shards
+     * @param masterchainSeqno masterchain block seqno
+     * @return ApiResponse<BlockchainBlockShards?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getBlockchainMasterchainShardsWithHttpInfo(masterchainSeqno: kotlin.Int) : ApiResponse<BlockchainBlockShards?> {
+        val localVariableConfig = getBlockchainMasterchainShardsRequestConfig(masterchainSeqno = masterchainSeqno)
+
+        return request<Unit, BlockchainBlockShards>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getBlockchainMasterchainShards
+     *
+     * @param masterchainSeqno masterchain block seqno
+     * @return RequestConfig
+     */
+    fun getBlockchainMasterchainShardsRequestConfig(masterchainSeqno: kotlin.Int) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/blockchain/masterchain/{masterchain_seqno}/shards".replace("{"+"masterchain_seqno"+"}", encodeURIComponent(masterchainSeqno.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
+     * Get all transactions in all shards and workchains between target and previous masterchain block according to shards last blocks snapshot in masterchain. We don&#39;t recommend to build your app around this method because it has problem with scalability and will work very slow in the future.
+     * @param masterchainSeqno masterchain block seqno
+     * @return Transactions
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getBlockchainMasterchainTransactions(masterchainSeqno: kotlin.Int) : Transactions {
+        val localVarResponse = getBlockchainMasterchainTransactionsWithHttpInfo(masterchainSeqno = masterchainSeqno)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Transactions
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * Get all transactions in all shards and workchains between target and previous masterchain block according to shards last blocks snapshot in masterchain. We don&#39;t recommend to build your app around this method because it has problem with scalability and will work very slow in the future.
+     * @param masterchainSeqno masterchain block seqno
+     * @return ApiResponse<Transactions?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getBlockchainMasterchainTransactionsWithHttpInfo(masterchainSeqno: kotlin.Int) : ApiResponse<Transactions?> {
+        val localVariableConfig = getBlockchainMasterchainTransactionsRequestConfig(masterchainSeqno = masterchainSeqno)
+
+        return request<Unit, Transactions>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getBlockchainMasterchainTransactions
+     *
+     * @param masterchainSeqno masterchain block seqno
+     * @return RequestConfig
+     */
+    fun getBlockchainMasterchainTransactionsRequestConfig(masterchainSeqno: kotlin.Int) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/blockchain/masterchain/{masterchain_seqno}/transactions".replace("{"+"masterchain_seqno"+"}", encodeURIComponent(masterchainSeqno.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
@@ -850,6 +1137,145 @@ class BlockchainApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/blockchain/validators",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
+     * Get raw blockchain config
+     * @return RawBlockchainConfig
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getRawBlockchainConfig() : RawBlockchainConfig {
+        val localVarResponse = getRawBlockchainConfigWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as RawBlockchainConfig
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * Get raw blockchain config
+     * @return ApiResponse<RawBlockchainConfig?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getRawBlockchainConfigWithHttpInfo() : ApiResponse<RawBlockchainConfig?> {
+        val localVariableConfig = getRawBlockchainConfigRequestConfig()
+
+        return request<Unit, RawBlockchainConfig>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getRawBlockchainConfig
+     *
+     * @return RequestConfig
+     */
+    fun getRawBlockchainConfigRequestConfig() : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/blockchain/config/raw",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
+     * Get raw blockchain config from a specific block, if present.
+     * @param masterchainSeqno masterchain block seqno
+     * @return RawBlockchainConfig
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getRawBlockchainConfigFromBlock(masterchainSeqno: kotlin.Int) : RawBlockchainConfig {
+        val localVarResponse = getRawBlockchainConfigFromBlockWithHttpInfo(masterchainSeqno = masterchainSeqno)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as RawBlockchainConfig
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * Get raw blockchain config from a specific block, if present.
+     * @param masterchainSeqno masterchain block seqno
+     * @return ApiResponse<RawBlockchainConfig?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getRawBlockchainConfigFromBlockWithHttpInfo(masterchainSeqno: kotlin.Int) : ApiResponse<RawBlockchainConfig?> {
+        val localVariableConfig = getRawBlockchainConfigFromBlockRequestConfig(masterchainSeqno = masterchainSeqno)
+
+        return request<Unit, RawBlockchainConfig>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getRawBlockchainConfigFromBlock
+     *
+     * @param masterchainSeqno masterchain block seqno
+     * @return RequestConfig
+     */
+    fun getRawBlockchainConfigFromBlockRequestConfig(masterchainSeqno: kotlin.Int) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/blockchain/masterchain/{masterchain_seqno}/config/raw".replace("{"+"masterchain_seqno"+"}", encodeURIComponent(masterchainSeqno.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

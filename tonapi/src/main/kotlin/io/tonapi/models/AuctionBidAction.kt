@@ -55,14 +55,15 @@ data class AuctionBidAction (
     /**
      * 
      *
-     * Values: dNSPeriodTon,dNSPeriodTg,nUMBERPeriodTg,getgems
+     * Values: dNSPeriodTon,dNSPeriodTg,nUMBERPeriodTg,getgems,empty
      */
     @JsonClass(generateAdapter = false)
     enum class AuctionType(val value: kotlin.String) {
         @Json(name = "DNS.ton") dNSPeriodTon("DNS.ton"),
         @Json(name = "DNS.tg") dNSPeriodTg("DNS.tg"),
         @Json(name = "NUMBER.tg") nUMBERPeriodTg("NUMBER.tg"),
-        @Json(name = "getgems") getgems("getgems");
+        @Json(name = "getgems") getgems("getgems"),
+        @Json(name = "") empty("");
     }
 }
 

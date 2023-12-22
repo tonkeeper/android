@@ -20,7 +20,9 @@ import okhttp3.OkHttpClient
 import okhttp3.HttpUrl
 
 import io.tonapi.models.AccountEvent
-import io.tonapi.models.EmulateMessageToEventRequest
+import io.tonapi.models.DecodeMessageRequest
+import io.tonapi.models.DecodedMessage
+import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.Event
 import io.tonapi.models.GetBlockchainBlockDefaultResponse
 import io.tonapi.models.MessageConsequences
@@ -52,9 +54,81 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
 
     /**
      * 
+     * Decode a given message. Only external incoming messages can be decoded currently.
+     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @return DecodedMessage
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun decodeMessage(decodeMessageRequest: DecodeMessageRequest) : DecodedMessage {
+        val localVarResponse = decodeMessageWithHttpInfo(decodeMessageRequest = decodeMessageRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DecodedMessage
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * 
+     * Decode a given message. Only external incoming messages can be decoded currently.
+     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @return ApiResponse<DecodedMessage?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun decodeMessageWithHttpInfo(decodeMessageRequest: DecodeMessageRequest) : ApiResponse<DecodedMessage?> {
+        val localVariableConfig = decodeMessageRequestConfig(decodeMessageRequest = decodeMessageRequest)
+
+        return request<DecodeMessageRequest, DecodedMessage>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation decodeMessage
+     *
+     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @return RequestConfig
+     */
+    fun decodeMessageRequestConfig(decodeMessageRequest: DecodeMessageRequest) : RequestConfig<DecodeMessageRequest> {
+        val localVariableBody = decodeMessageRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/v2/message/decode",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * 
      * Emulate sending message to blockchain
      * @param accountId account ID
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
      * @param acceptLanguage  (optional, default to "en")
      * @return AccountEvent
      * @throws IllegalStateException If the request is not correctly configured
@@ -65,8 +139,8 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToAccountEvent(accountId: kotlin.String, emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String? = "en") : AccountEvent {
-        val localVarResponse = emulateMessageToAccountEventWithHttpInfo(accountId = accountId, emulateMessageToEventRequest = emulateMessageToEventRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToAccountEvent(accountId: kotlin.String, decodeMessageRequest: DecodeMessageRequest, acceptLanguage: kotlin.String? = "en") : AccountEvent {
+        val localVarResponse = emulateMessageToAccountEventWithHttpInfo(accountId = accountId, decodeMessageRequest = decodeMessageRequest, acceptLanguage = acceptLanguage)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as AccountEvent
@@ -87,7 +161,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      * 
      * Emulate sending message to blockchain
      * @param accountId account ID
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
      * @param acceptLanguage  (optional, default to "en")
      * @return ApiResponse<AccountEvent?>
      * @throws IllegalStateException If the request is not correctly configured
@@ -95,10 +169,10 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToAccountEventWithHttpInfo(accountId: kotlin.String, emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String?) : ApiResponse<AccountEvent?> {
-        val localVariableConfig = emulateMessageToAccountEventRequestConfig(accountId = accountId, emulateMessageToEventRequest = emulateMessageToEventRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToAccountEventWithHttpInfo(accountId: kotlin.String, decodeMessageRequest: DecodeMessageRequest, acceptLanguage: kotlin.String?) : ApiResponse<AccountEvent?> {
+        val localVariableConfig = emulateMessageToAccountEventRequestConfig(accountId = accountId, decodeMessageRequest = decodeMessageRequest, acceptLanguage = acceptLanguage)
 
-        return request<EmulateMessageToEventRequest, AccountEvent>(
+        return request<DecodeMessageRequest, AccountEvent>(
             localVariableConfig
         )
     }
@@ -107,12 +181,12 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      * To obtain the request config of the operation emulateMessageToAccountEvent
      *
      * @param accountId account ID
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
      * @param acceptLanguage  (optional, default to "en")
      * @return RequestConfig
      */
-    fun emulateMessageToAccountEventRequestConfig(accountId: kotlin.String, emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String?) : RequestConfig<EmulateMessageToEventRequest> {
-        val localVariableBody = emulateMessageToEventRequest
+    fun emulateMessageToAccountEventRequestConfig(accountId: kotlin.String, decodeMessageRequest: DecodeMessageRequest, acceptLanguage: kotlin.String?) : RequestConfig<DecodeMessageRequest> {
+        val localVariableBody = decodeMessageRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
@@ -132,8 +206,9 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
      * @param acceptLanguage  (optional, default to "en")
+     * @param ignoreSignatureCheck  (optional)
      * @return Event
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -143,8 +218,8 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToEvent(emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String? = "en") : Event {
-        val localVarResponse = emulateMessageToEventWithHttpInfo(emulateMessageToEventRequest = emulateMessageToEventRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToEvent(decodeMessageRequest: DecodeMessageRequest, acceptLanguage: kotlin.String? = "en", ignoreSignatureCheck: kotlin.Boolean? = null) : Event {
+        val localVarResponse = emulateMessageToEventWithHttpInfo(decodeMessageRequest = decodeMessageRequest, acceptLanguage = acceptLanguage, ignoreSignatureCheck = ignoreSignatureCheck)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Event
@@ -164,18 +239,19 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
      * @param acceptLanguage  (optional, default to "en")
+     * @param ignoreSignatureCheck  (optional)
      * @return ApiResponse<Event?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToEventWithHttpInfo(emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String?) : ApiResponse<Event?> {
-        val localVariableConfig = emulateMessageToEventRequestConfig(emulateMessageToEventRequest = emulateMessageToEventRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToEventWithHttpInfo(decodeMessageRequest: DecodeMessageRequest, acceptLanguage: kotlin.String?, ignoreSignatureCheck: kotlin.Boolean?) : ApiResponse<Event?> {
+        val localVariableConfig = emulateMessageToEventRequestConfig(decodeMessageRequest = decodeMessageRequest, acceptLanguage = acceptLanguage, ignoreSignatureCheck = ignoreSignatureCheck)
 
-        return request<EmulateMessageToEventRequest, Event>(
+        return request<DecodeMessageRequest, Event>(
             localVariableConfig
         )
     }
@@ -183,13 +259,19 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * To obtain the request config of the operation emulateMessageToEvent
      *
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
      * @param acceptLanguage  (optional, default to "en")
+     * @param ignoreSignatureCheck  (optional)
      * @return RequestConfig
      */
-    fun emulateMessageToEventRequestConfig(emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String?) : RequestConfig<EmulateMessageToEventRequest> {
-        val localVariableBody = emulateMessageToEventRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
+    fun emulateMessageToEventRequestConfig(decodeMessageRequest: DecodeMessageRequest, acceptLanguage: kotlin.String?, ignoreSignatureCheck: kotlin.Boolean?) : RequestConfig<DecodeMessageRequest> {
+        val localVariableBody = decodeMessageRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ignoreSignatureCheck != null) {
+                    put("ignore_signature_check", listOf(ignoreSignatureCheck.toString()))
+                }
+            }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
@@ -208,7 +290,8 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param ignoreSignatureCheck  (optional)
      * @return Trace
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -218,8 +301,8 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToTrace(emulateMessageToEventRequest: EmulateMessageToEventRequest) : Trace {
-        val localVarResponse = emulateMessageToTraceWithHttpInfo(emulateMessageToEventRequest = emulateMessageToEventRequest)
+    fun emulateMessageToTrace(decodeMessageRequest: DecodeMessageRequest, ignoreSignatureCheck: kotlin.Boolean? = null) : Trace {
+        val localVarResponse = emulateMessageToTraceWithHttpInfo(decodeMessageRequest = decodeMessageRequest, ignoreSignatureCheck = ignoreSignatureCheck)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Trace
@@ -239,17 +322,18 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param ignoreSignatureCheck  (optional)
      * @return ApiResponse<Trace?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToTraceWithHttpInfo(emulateMessageToEventRequest: EmulateMessageToEventRequest) : ApiResponse<Trace?> {
-        val localVariableConfig = emulateMessageToTraceRequestConfig(emulateMessageToEventRequest = emulateMessageToEventRequest)
+    fun emulateMessageToTraceWithHttpInfo(decodeMessageRequest: DecodeMessageRequest, ignoreSignatureCheck: kotlin.Boolean?) : ApiResponse<Trace?> {
+        val localVariableConfig = emulateMessageToTraceRequestConfig(decodeMessageRequest = decodeMessageRequest, ignoreSignatureCheck = ignoreSignatureCheck)
 
-        return request<EmulateMessageToEventRequest, Trace>(
+        return request<DecodeMessageRequest, Trace>(
             localVariableConfig
         )
     }
@@ -257,12 +341,18 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * To obtain the request config of the operation emulateMessageToTrace
      *
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param ignoreSignatureCheck  (optional)
      * @return RequestConfig
      */
-    fun emulateMessageToTraceRequestConfig(emulateMessageToEventRequest: EmulateMessageToEventRequest) : RequestConfig<EmulateMessageToEventRequest> {
-        val localVariableBody = emulateMessageToEventRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
+    fun emulateMessageToTraceRequestConfig(decodeMessageRequest: DecodeMessageRequest, ignoreSignatureCheck: kotlin.Boolean?) : RequestConfig<DecodeMessageRequest> {
+        val localVariableBody = decodeMessageRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ignoreSignatureCheck != null) {
+                    put("ignore_signature_check", listOf(ignoreSignatureCheck.toString()))
+                }
+            }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
@@ -280,7 +370,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64 and additional parameters to configure emulation
      * @param acceptLanguage  (optional, default to "en")
      * @return MessageConsequences
      * @throws IllegalStateException If the request is not correctly configured
@@ -291,8 +381,8 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToWallet(emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String? = "en") : MessageConsequences {
-        val localVarResponse = emulateMessageToWalletWithHttpInfo(emulateMessageToEventRequest = emulateMessageToEventRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToWallet(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: kotlin.String? = "en") : MessageConsequences {
+        val localVarResponse = emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as MessageConsequences
@@ -312,7 +402,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64 and additional parameters to configure emulation
      * @param acceptLanguage  (optional, default to "en")
      * @return ApiResponse<MessageConsequences?>
      * @throws IllegalStateException If the request is not correctly configured
@@ -320,10 +410,10 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToWalletWithHttpInfo(emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String?) : ApiResponse<MessageConsequences?> {
-        val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToEventRequest = emulateMessageToEventRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: kotlin.String?) : ApiResponse<MessageConsequences?> {
+        val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage)
 
-        return request<EmulateMessageToEventRequest, MessageConsequences>(
+        return request<EmulateMessageToWalletRequest, MessageConsequences>(
             localVariableConfig
         )
     }
@@ -331,12 +421,12 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * To obtain the request config of the operation emulateMessageToWallet
      *
-     * @param emulateMessageToEventRequest bag-of-cells serialized to base64
+     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64 and additional parameters to configure emulation
      * @param acceptLanguage  (optional, default to "en")
      * @return RequestConfig
      */
-    fun emulateMessageToWalletRequestConfig(emulateMessageToEventRequest: EmulateMessageToEventRequest, acceptLanguage: kotlin.String?) : RequestConfig<EmulateMessageToEventRequest> {
-        val localVariableBody = emulateMessageToEventRequest
+    fun emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: kotlin.String?) : RequestConfig<EmulateMessageToWalletRequest> {
+        val localVariableBody = emulateMessageToWalletRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }

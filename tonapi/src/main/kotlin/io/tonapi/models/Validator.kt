@@ -23,13 +23,25 @@ import com.squareup.moshi.JsonClass
  * 
  *
  * @param address 
+ * @param adnlAddress 
+ * @param stake 
+ * @param maxFactor 
  */
 
 
 data class Validator (
 
     @Json(name = "address")
-    val address: kotlin.String
+    val address: kotlin.String,
+
+    @Json(name = "adnl_address")
+    val adnlAddress: kotlin.String,
+
+    @Json(name = "stake")
+    val stake: kotlin.Long,
+
+    @Json(name = "max_factor")
+    val maxFactor: kotlin.Long
 
 )
 

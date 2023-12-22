@@ -15,6 +15,7 @@
 
 package io.tonapi.models
 
+import io.tonapi.models.TokenRates
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -29,7 +30,7 @@ import com.squareup.moshi.JsonClass
 data class GetRates200Response (
 
     @Json(name = "rates")
-    val rates: kotlin.collections.Map<kotlin.String, kotlin.Any>
+    val rates: kotlin.collections.Map<kotlin.String, TokenRates>
 
 )
 

@@ -19,6 +19,7 @@ import io.tonapi.models.ActionSimplePreview
 import io.tonapi.models.AuctionBidAction
 import io.tonapi.models.ContractDeployAction
 import io.tonapi.models.DepositStakeAction
+import io.tonapi.models.DomainRenewAction
 import io.tonapi.models.ElectionsDepositStakeAction
 import io.tonapi.models.ElectionsRecoverStakeAction
 import io.tonapi.models.JettonBurnAction
@@ -60,6 +61,7 @@ import com.squareup.moshi.JsonClass
  * @param electionsRecoverStake 
  * @param jettonSwap 
  * @param smartContractExec 
+ * @param domainRenew 
  */
 
 
@@ -123,14 +125,17 @@ data class Action (
     val jettonSwap: JettonSwapAction? = null,
 
     @Json(name = "SmartContractExec")
-    val smartContractExec: SmartContractAction? = null
+    val smartContractExec: SmartContractAction? = null,
+
+    @Json(name = "DomainRenew")
+    val domainRenew: DomainRenewAction? = null
 
 ) {
 
     /**
      * 
      *
-     * Values: tonTransfer,jettonTransfer,jettonBurn,jettonMint,nftItemTransfer,contractDeploy,subscribe,unSubscribe,auctionBid,nftPurchase,depositStake,withdrawStake,withdrawStakeRequest,jettonSwap,smartContractExec,electionsRecoverStake,electionsDepositStake,unknown
+     * Values: tonTransfer,jettonTransfer,jettonBurn,jettonMint,nftItemTransfer,contractDeploy,subscribe,unSubscribe,auctionBid,nftPurchase,depositStake,withdrawStake,withdrawStakeRequest,jettonSwap,smartContractExec,electionsRecoverStake,electionsDepositStake,domainRenew,unknown
      */
     @JsonClass(generateAdapter = false)
     enum class Type(val value: kotlin.String) {
@@ -151,6 +156,7 @@ data class Action (
         @Json(name = "SmartContractExec") smartContractExec("SmartContractExec"),
         @Json(name = "ElectionsRecoverStake") electionsRecoverStake("ElectionsRecoverStake"),
         @Json(name = "ElectionsDepositStake") electionsDepositStake("ElectionsDepositStake"),
+        @Json(name = "DomainRenew") domainRenew("DomainRenew"),
         @Json(name = "Unknown") unknown("Unknown");
     }
     /**

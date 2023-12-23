@@ -12,6 +12,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.graphics.alpha
 import androidx.transition.TransitionManager
 import uikit.R
+import uikit.drawable.HeaderDrawable
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
@@ -24,10 +25,15 @@ open class HeaderView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : LinearLayoutCompat(context, attrs, defStyle) {
 
+    private companion object {
+        private const val ANIMATION_DURATION = 180L
+    }
+
     val closeView: AppCompatImageView
     val actionView: AppCompatImageView
     val titleView: AppCompatTextView
 
+    private val drawable = HeaderDrawable(context)
     private val subtitleContainerView: View
     private val subtitleView: AppCompatTextView
     private val loaderView: LoaderView
@@ -52,9 +58,15 @@ open class HeaderView @JvmOverloads constructor(
             titleView.text = value
         }
 
+    var divider: Boolean
+        get() = drawable.divider
+        set(value) {
+            drawable.divider = value
+        }
+
     init {
         orientation = HORIZONTAL
-        super.setBackgroundResource(R.color.backgroundPage)
+        super.setBackground(drawable)
         setPaddingHorizontal(context.getDimensionPixelSize(R.dimen.offsetMedium))
 
         inflate(context, R.layout.view_header, this)
@@ -113,7 +125,7 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     fun setDefault() {
-        withAnimation {
+        withAnimation(duration = ANIMATION_DURATION) {
             subtitleContainerView.visibility = View.GONE
             loaderView.stopAnimation()
         }
@@ -124,7 +136,7 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     fun setSubtitle(text: CharSequence?) {
-        withAnimation {
+        withAnimation(duration = ANIMATION_DURATION) {
             subtitleContainerView.visibility = if (text.isNullOrEmpty()) {
                 View.GONE
             } else {
@@ -135,13 +147,13 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     fun hideText() {
-        withAnimation {
+        withAnimation(duration = ANIMATION_DURATION) {
             textView.alpha = 0f
         }
     }
 
     fun showText() {
-        withAnimation {
+        withAnimation(duration = ANIMATION_DURATION) {
             textView.alpha = 1f
         }
     }

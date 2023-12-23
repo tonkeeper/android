@@ -8,6 +8,7 @@
     <style name="TextAppearance.H1" parent="@android:style/TextAppearance">
         <item name="android:textSize">32sp</item>
         <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="android:textFontWeight">700</item>
     </style>
 
     <style name="TextAppearance.NUM2" parent="@android:style/TextAppearance">
@@ -19,11 +20,13 @@
         <item name="android:textSize">24sp</item>
         <item name="android:lineHeight">32sp</item>
         <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="android:textFontWeight">700</item>
     </style>
 
     <style name="TextAppearance.H3" parent="@android:style/TextAppearance">
         <item name="android:textSize">20sp</item>
         <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="android:textFontWeight">700</item>
     </style>
 
     <style name="TextAppearance.Label1" parent="@android:style/TextAppearance">

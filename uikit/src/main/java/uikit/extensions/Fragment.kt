@@ -1,4 +1,7 @@
 package uikit.extensions
 
-class Fragment {
+import androidx.fragment.app.Fragment
+
+fun Fragment.withAnimation(duration: Long = 120, block: () -> Unit) {
+    view?.withAnimation(duration, block)
 }

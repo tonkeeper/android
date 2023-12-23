@@ -1,8 +1,12 @@
 package com.tonkeeper.core.history
 
-data class TransactionPreview(
+data class TransactionDetails(
     val iconUrl: String? = null,
-    val token: String,
-    val amount: Float,
-) {
-}
+    val isOut: Boolean = false,
+    val title: String,
+    val date: String,
+    val accountName: String? = null,
+    val accountAddress: String? = null,
+    val fee: Float,
+    val comment: String? = null,
+)

@@ -23,12 +23,20 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.widget.NestedScrollView
+import androidx.core.widget.NestedScrollView.OnScrollChangeListener
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.AutoTransition
 import androidx.transition.Transition
 import androidx.transition.TransitionListenerAdapter
 import androidx.transition.TransitionManager
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.appbar.AppBarLayout
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlin.math.sin
 
 var View.scale: Float
@@ -262,3 +270,29 @@ fun View.startSnakeAnimation(
     animator.duration = duration
     animator.start()
 }
+
+val NestedScrollView.verticalOffset: Flow<Int>
+    get() = callbackFlow {
+        val listener = object : OnScrollChangeListener {
+
+            var verticalOffset = 0
+
+            override fun onScrollChange(
+                v: NestedScrollView,
+                scrollX: Int,
+                scrollY: Int,
+                oldScrollX: Int,
+                oldScrollY: Int
+            ) {
+                verticalOffset = scrollY
+                trySend(verticalOffset)
+            }
+        }
+        setOnScrollChangeListener(listener)
+        awaitClose()
+    }
+
+val NestedScrollView.verticalScrolled: Flow<Boolean>
+    get() = verticalOffset.map {
+        it > 0
+    }.distinctUntilChanged()

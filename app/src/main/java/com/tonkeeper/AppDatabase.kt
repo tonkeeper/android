@@ -8,8 +8,8 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.tonkeeper.api.account.db.AccountDao
 import com.tonkeeper.api.account.db.AccountEntity
-import com.tonkeeper.api.event.db.EventDao
-import com.tonkeeper.api.event.db.EventEntity
+import com.tonkeeper.api.history.db.HistoryDao
+import com.tonkeeper.api.history.db.HistoryEntity
 import com.tonkeeper.api.jetton.db.JettonDao
 import com.tonkeeper.api.jetton.db.JettonEntity
 import com.tonkeeper.api.collectibles.db.CollectiblesDao
@@ -23,13 +23,13 @@ import com.tonkeeper.core.tonconnect.db.ManifestEntity
 
 @Database(entities = [
     JettonEntity::class,
-    EventEntity::class,
+    HistoryEntity::class,
     CollectiblesEntity::class,
     AccountEntity::class,
     NftEntity::class,
     ManifestEntity::class,
     AppEntity::class
-], version = 20, exportSchema = false)
+], version = 22, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     companion object {
@@ -70,7 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun jettonDao(): JettonDao
 
-    abstract fun eventDao(): EventDao
+    abstract fun historyDao(): HistoryDao
 
     abstract fun collectiblesDao(): CollectiblesDao
 

@@ -54,8 +54,8 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
         val accountDeferred = async { accountRepository.get(accountId) }
         val jettonsDeferred = async { jettonRepository.get(accountId) }
 
-        val account = accountDeferred.await()
-        val jettons = jettonsDeferred.await()
+        val account = accountDeferred.await()?.data ?: return@withContext
+        val jettons = jettonsDeferred.await()?.data ?: return@withContext
         val tonAsJetton = account.asJettonBalance()
 
         updateUiState {

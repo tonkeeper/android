@@ -61,19 +61,26 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             colorRes = uikit.R.color.accentBlue,
         ))
 
-        items.add(SettingsIconItem(
-            id = SettingsIdItem.SECURITY_ID,
-            titleRes = R.string.security,
-            iconRes = R.drawable.ic_key_28,
-            position = ListCell.Position.SINGLE,
-            colorRes = uikit.R.color.accentBlue,
-        ))
-
         items.add(SettingsTextItem(
             id = SettingsIdItem.CURRENCY_ID,
             titleRes = R.string.currency,
             data = App.settings.currency.code,
             position = ListCell.Position.SINGLE
+        ))
+
+        items.add(SettingsIconItem(
+            id = SettingsIdItem.SECURITY_ID,
+            titleRes = R.string.security,
+            iconRes = R.drawable.ic_lock_28,
+            position = ListCell.Position.FIRST,
+            colorRes = uikit.R.color.accentBlue,
+        ))
+        items.add(SettingsIconItem(
+            id = SettingsIdItem.WIDGET_ID,
+            titleRes = R.string.widget,
+            iconRes = R.drawable.ic_widget_28,
+            position = ListCell.Position.LAST,
+            colorRes = uikit.R.color.accentBlue,
         ))
 
 

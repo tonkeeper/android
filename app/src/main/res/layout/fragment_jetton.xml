@@ -2,7 +2,6 @@
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fitsSystemWindows="true"
     android:orientation="vertical">
 
@@ -12,107 +11,24 @@
         android:layout_height="wrap_content"
         android:icon="@drawable/ic_chevron_left_16"/>
 
-    <com.facebook.shimmer.ShimmerFrameLayout
-        android:id="@+id/shimmer"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <include layout="@layout/shimmer_jetton"/>
-    </com.facebook.shimmer.ShimmerFrameLayout>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/body"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer"
             android:layout_width="match_parent"
-            android:layout_height="130dp"
-            android:padding="@dimen/offsetMedium">
-
-            <com.facebook.drawee.view.SimpleDraweeView
-                android:id="@+id/icon"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_oval"
-                android:backgroundTint="@color/backgroundContent"
-                app:roundAsCircle="true"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/balance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:singleLine="true"
-                android:textAppearance="@style/TextAppearance.H2"
-                android:textColor="@color/textPrimary"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/currency_balance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:singleLine="true"
-                android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="@color/textSecondary"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/balance" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/rate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:singleLine="true"
-                android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="@color/textSecondary"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <uikit.widget.DividerView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:paddingHorizontal="@dimen/offsetMedium"
-            android:paddingVertical="24dp"
-            android:orientation="horizontal">
-
-            <uikit.widget.IconButtonView
-                android:id="@+id/send"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:icon="@drawable/ic_arrow_up_28"
-                android:title="@string/send"/>
-
-            <uikit.widget.IconButtonView
-                android:id="@+id/receive"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:icon="@drawable/ic_arrow_down_28"
-                android:title="@string/receive"/>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <uikit.widget.DividerView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent">
+            <include layout="@layout/shimmer_jetton"/>
+        </com.facebook.shimmer.ShimmerFrameLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="@dimen/offsetMedium"
+            android:orientation="vertical"
             android:clipToPadding="false"/>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </FrameLayout>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

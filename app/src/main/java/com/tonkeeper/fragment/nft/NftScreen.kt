@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.viewModels
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonkeeper.R
@@ -13,8 +14,11 @@ import com.tonkeeper.api.ownerAddress
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.api.title
 import com.tonkeeper.core.ExternalUrl
+import com.tonkeeper.extensions.launch
 import io.tonapi.models.NftItem
+import ton.extensions.toUserFriendly
 import uikit.base.BaseFragment
+import uikit.extensions.verticalScrolled
 import uikit.list.ListCell
 import uikit.list.ListCell.Companion.drawable
 import uikit.mvi.AsyncState
@@ -44,7 +48,7 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
     }
 
     private lateinit var loaderView: LoaderView
-    private lateinit var contentView: View
+    private lateinit var contentView: NestedScrollView
     private lateinit var headerView: HeaderView
     private lateinit var imageView: SimpleDraweeView
     private lateinit var nameView: AppCompatTextView
@@ -61,10 +65,14 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         loaderView = view.findViewById(R.id.loader)
-        contentView = view.findViewById(R.id.content)
 
         headerView = view.findViewById(R.id.header)
         headerView.doOnCloseClick = { finish() }
+
+        contentView = view.findViewById(R.id.content)
+        contentView.verticalScrolled.launch(this) {
+            headerView.divider = it
+        }
 
         imageView = view.findViewById(R.id.image)
 
@@ -109,7 +117,7 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         collectionNameView.text = nftItem.collection?.name
         collectionDescriptionView.text = nftItem.collection?.description
         ownerView.text = nftItem.ownerAddress?.shortAddress
-        addressView.text = nftAddress.shortAddress
+        addressView.text = nftAddress.toUserFriendly(false).shortAddress
         setNftDescription(nftItem.description)
     }
 

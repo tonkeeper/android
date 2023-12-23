@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-  
-</selector>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/buttonSecondaryBackgroundDisabled">
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/buttonSecondaryBackgroundDisabled"/>
+            <corners android:radius="18dp"/>
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/buttonSecondaryBackground"/>
+            <corners android:radius="18dp"/>
+        </shape>
+    </item>
+</ripple>

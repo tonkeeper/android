@@ -21,7 +21,7 @@ object Coin {
     const val MIN_DECIMALS = 2
     const val MAX_DECIMALS = 9
 
-    private const val BASE = 1000000000L
+    const val BASE = 1000000000L
     private const val SMALL_SPACE = " "
 
     private val symbols = arrayMapOf<String, String>().apply {
@@ -110,13 +110,17 @@ object Coin {
             val customSymbol = getSymbols(currency, useCurrencyCode)
             if (customSymbol != null) {
                 simpleFormat.maximumFractionDigits = decimals
+                simpleFormat.minimumFractionDigits = decimals
                 format = customFormat(customSymbol, value)
             } else {
+                currencyFormat.maximumFractionDigits = decimals
+                simpleFormat.minimumFractionDigits = decimals
                 currencyFormat.currency = Currency.getInstance(currency)
                 format = currencyFormat.format(value)
             }
         } else {
             simpleFormat.maximumFractionDigits = decimals
+            simpleFormat.minimumFractionDigits = decimals
             format = simpleFormat.format(value)
         }
         return format

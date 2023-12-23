@@ -57,7 +57,7 @@ class BottomSheetLayout @JvmOverloads constructor(
     init {
         inflate(context, R.layout.view_bottom_sheet, this)
         fitsSystemWindows = true
-        contentContainer = findViewById(R.id.content)
+        contentContainer = findViewById(R.id.sheet_content)
 
         drawCallback = object : ViewDragHelper.Callback() {
             override fun tryCaptureView(child: View, pointerId: Int): Boolean {

@@ -1,6 +1,14 @@
 package uikit.extensions
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.view.View
 import android.view.animation.Animation
+import android.view.animation.AnimationSet
+import androidx.core.animation.doOnEnd
+import androidx.transition.Fade
+import androidx.transition.TransitionManager
+import androidx.transition.TransitionSet
 
 inline fun Animation.doOnEnd(
     crossinline action: (animation: Animation) -> Unit
@@ -38,4 +46,28 @@ inline fun Animation.setListener(
 
     setAnimationListener(listener)
     return listener
+}
+
+fun toggleVisibilityAnimation(
+    fromView: View,
+    toView: View,
+    duration: Long = 180L,
+) {
+    if (toView.visibility == View.VISIBLE && fromView.visibility == View.GONE) {
+        return
+    }
+
+    toView.visibility = View.VISIBLE
+    toView.alpha = 0f
+
+    val fadeOutAnimator = ObjectAnimator.ofFloat(fromView, View.ALPHA, 1f, 0f)
+    val fadeInAnimator = ObjectAnimator.ofFloat(toView, View.ALPHA, 0f, 1f)
+
+    val animationSet = AnimatorSet()
+    animationSet.duration = duration
+    animationSet.playTogether(fadeOutAnimator, fadeInAnimator)
+    animationSet.doOnEnd {
+        fromView.visibility = View.GONE
+    }
+    animationSet.start()
 }

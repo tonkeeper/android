@@ -71,14 +71,14 @@ class Fiat(
 
     suspend fun getData(
         countryCode: String
-    ): FiatData = withContext(Dispatchers.IO) {
+    ): FiatData? = withContext(Dispatchers.IO) {
         fiatMethodsRepository.get(countryCode)
     }
 
     suspend fun getMethods(
         countryCode: String
     ): List<FiatItem> {
-        val data = getData(countryCode)
+        val data = getData(countryCode) ?: return emptyList()
         val layout = data.layoutByCountry(countryCode)
         return data.getBuyItemsByMethods(layout.methods)
     }

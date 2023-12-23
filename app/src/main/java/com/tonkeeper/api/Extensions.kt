@@ -1,44 +1,53 @@
 package com.tonkeeper.api
 
 import com.squareup.moshi.adapter
+import com.tonkeeper.Global
 import com.tonkeeper.R
 import com.tonkeeper.core.Coin
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
+import io.tonapi.models.AccountEvent
 import io.tonapi.models.ImagePreview
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.JettonPreview
 import io.tonapi.models.JettonSwapAction
 import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.NftItem
+import io.tonapi.models.TokenRates
 import kotlinx.coroutines.delay
 import ton.SupportedTokens
 import ton.extensions.toUserFriendly
+import kotlin.math.abs
 
 private val nftItemPreviewSizes = arrayOf(
     "250x250", "500x500", "100x100"
 )
 
+fun TokenRates.to(toCurrency: String, value: Float): Float {
+    val price = prices?.get(toCurrency) ?: return 0f
+    return price.toFloat() * value
+}
+
 suspend fun <R> withRetry(
     times: Int = 5,
     delay: Long = 1000,
     block: () -> R
-): R {
-    var lastError: Throwable? = null
+): R? {
     for (i in 0 until times) {
         try {
             return block()
-        } catch (e: Throwable) {
-            lastError = e
-        }
+        } catch (ignored: Throwable) {}
         delay(delay)
     }
-    throw lastError!!
+    return null
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T> toJSON(obj: T): String {
+inline fun <reified T> toJSON(obj: T?): String {
+    if (obj == null) {
+        return ""
+    }
     return Serializer.moshi.adapter<T>().toJson(obj)
 }
 
@@ -46,6 +55,22 @@ inline fun <reified T> toJSON(obj: T): String {
 inline fun <reified T> fromJSON(json: String): T {
     return Serializer.moshi.adapter<T>().fromJson(json)!!
 }
+
+val AccountEvent.fee: Long
+    get() {
+        if (0 > extra) {
+            return abs(extra)
+        }
+        return 0
+    }
+
+val AccountEvent.refund: Long
+    get() {
+        if (0 < extra) {
+            return extra
+        }
+        return 0
+    }
 
 val JettonPreview.isTon: Boolean
     get() {
@@ -58,7 +83,7 @@ val JettonBalance.isTon: Boolean
     }
 
 fun Account.asJettonBalance(): JettonBalance {
-    val icon = "drawable:///${R.drawable.ic_toncoin}"
+    val icon = Global.tonCoinUrl
     return JettonBalance(
         balance = balance.toString(),
         walletAddress = AccountAddress(
@@ -115,7 +140,7 @@ val String.shortAddress: String
     }
 
 val JettonBalance.address: String
-    get() = jetton.address
+    get() = jetton.address.toUserFriendly(wallet = false)
 
 val JettonBalance.symbol: String
     get() = jetton.symbol

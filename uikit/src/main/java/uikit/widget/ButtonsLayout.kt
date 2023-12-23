@@ -4,9 +4,10 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.ViewGroup
+import uikit.drawable.ButtonsLayoutDrawable
 import uikit.extensions.dp
 
-class IconButtonLayout @JvmOverloads constructor(
+class ButtonsLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
@@ -22,6 +23,12 @@ class IconButtonLayout @JvmOverloads constructor(
 
     private val rowCount: Int
         get() = (childCount + columnCount - 1) / columnCount
+
+    private val drawable = ButtonsLayoutDrawable(context)
+
+    init {
+        background = drawable
+    }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (childCount == 0) {
@@ -41,6 +48,9 @@ class IconButtonLayout @JvmOverloads constructor(
         for (i in 0 until childCount) {
             getChildAt(i).measure(childWidthMeasureSpec, childHeightMeasureSpec)
         }
+
+        drawable.rowCount = rowCount
+        drawable.columnCount = columnCount
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {

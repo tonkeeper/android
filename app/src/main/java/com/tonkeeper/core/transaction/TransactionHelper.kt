@@ -8,6 +8,7 @@ import com.tonkeeper.api.toJSON
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.history.HistoryHelper
 import io.tonapi.models.EmulateMessageToEventRequest
+import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.SendBlockchainMessageRequest
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +48,7 @@ object TransactionHelper {
         try {
             val cell = createTon(wallet, to, value, comment, max)
             val boc = base64(BagOfCells(cell).toByteArray())
-            val request = EmulateMessageToEventRequest(boc)
+            val request = EmulateMessageToWalletRequest(boc)
             val response = emulationApi.emulateMessageToWallet(request)
 
             TransactionEmulate(
@@ -69,7 +70,7 @@ object TransactionHelper {
         try {
             val cell = createJetton(wallet, jetton, to, value, comment)
             val boc = base64(BagOfCells(cell).toByteArray())
-            val request = EmulateMessageToEventRequest(boc)
+            val request = EmulateMessageToWalletRequest(boc)
             val response = emulationApi.emulateMessageToWallet(request)
 
             TransactionEmulate(

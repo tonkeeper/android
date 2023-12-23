@@ -3,6 +3,8 @@ package com.tonkeeper.fragment.wallet.main.view
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
+import android.util.Log
+import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.tonkeeper.R
 import uikit.extensions.dp
 import uikit.extensions.getColor
@@ -15,6 +17,9 @@ class WalletHeaderView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
 ) : HeaderView(context, attrs, defStyle) {
+
+    private val collapsingParams: CollapsingToolbarLayout.LayoutParams?
+        get() = layoutParams as? CollapsingToolbarLayout.LayoutParams
 
     var updating: Boolean = false
         set(value) {
@@ -41,5 +46,13 @@ class WalletHeaderView @JvmOverloads constructor(
         titleView.setOnClickListener { doOnTitleClick?.invoke() }
     }
 
-
+    fun setOffsetEnable(enabled: Boolean) {
+        val params = collapsingParams ?: return
+        if (enabled) {
+            params.collapseMode = CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_PIN
+        } else {
+            params.collapseMode = CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_OFF
+        }
+        layoutParams = params
+    }
 }

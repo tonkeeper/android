@@ -21,7 +21,8 @@ class DividerView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawPaint(paint)
+        val bottom = measuredHeight.toFloat()
+        canvas.drawLine(0f, bottom, measuredWidth.toFloat(), bottom, paint)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

@@ -10,10 +10,8 @@ import com.tonkeeper.api.shortAddress
 import com.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonkeeper.fragment.send.SendScreenEffect
 import com.tonkeeper.fragment.send.pager.PagerScreen
-import com.tonkeeper.fragment.send.view.ItemView
-import com.tonkeeper.fragment.settings.security.SecurityFragment
+import com.tonkeeper.view.TransactionDetailView
 import com.tonkeeper.fragment.wallet.history.HistoryScreen
-import com.tonkeeper.fragment.wallet.phrase.PhraseWalletFragment
 import uikit.list.ListCell
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -31,11 +29,11 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
 
     private lateinit var iconView: FrescoView
     private lateinit var titleView: AppCompatTextView
-    private lateinit var recipientView: ItemView
-    private lateinit var recipientAddressView: ItemView
-    private lateinit var amountView: ItemView
-    private lateinit var feeView: ItemView
-    private lateinit var commentView: ItemView
+    private lateinit var recipientView: TransactionDetailView
+    private lateinit var recipientAddressView: TransactionDetailView
+    private lateinit var amountView: TransactionDetailView
+    private lateinit var feeView: TransactionDetailView
+    private lateinit var commentView: TransactionDetailView
     private lateinit var sendButton: Button
     private lateinit var processView: ProcessTaskView
 

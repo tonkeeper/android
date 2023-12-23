@@ -132,6 +132,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="end"
+            android:maxLength="12"
             android:textAppearance="@style/TextAppearance.Label1"
             android:textColor="@color/textPrimary"
             android:singleLine="true"/>
@@ -143,6 +144,7 @@
             android:visibility="gone"
             android:layout_marginTop="2dp"
             android:gravity="end"
+            android:maxLength="12"
             android:textAppearance="@style/TextAppearance.Label1"
             android:textColor="@color/textPrimary"
             android:singleLine="true" />

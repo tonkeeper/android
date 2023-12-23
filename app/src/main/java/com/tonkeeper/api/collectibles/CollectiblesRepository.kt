@@ -20,7 +20,7 @@ class CollectiblesRepository(
         return fromJSON(data)
     }
 
-    override suspend fun fromCache(
+    override suspend fun onCacheRequest(
         accountId: String
     ): List<NftItem> {
         return dao.get(accountId)
@@ -35,17 +35,13 @@ class CollectiblesRepository(
         }
     }
 
-    override fun fromCloud(
+    override fun onFetchRequest(
         accountId: String
     ): List<NftItem> {
         return api.getAccountNftItems(
             accountId = accountId,
             limit = 100,
         ).nftItems
-    }
-
-    override suspend fun clearCache(accountId: String) {
-        dao.delete(accountId)
     }
 
     override suspend fun insertCache(

@@ -1,4 +1,14 @@
 package com.tonkeeper.fragment.jetton.list.holder
 
-class JettonDividerHolder {
+import android.view.ViewGroup
+import com.tonkeeper.R
+import com.tonkeeper.fragment.jetton.list.JettonItem
+
+class JettonDividerHolder(
+    parent: ViewGroup
+): JettonHolder<JettonItem.Divider>(parent, R.layout.view_divider) {
+    override fun onBind(item: JettonItem.Divider) {
+
+    }
+
 }

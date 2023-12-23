@@ -1,13 +1,17 @@
 package com.tonkeeper.fragment.send
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.tonkeeper.R
+import com.tonkeeper.api.fromJSON
+import com.tonkeeper.api.toJSON
 import com.tonkeeper.extensions.openCamera
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonkeeper.fragment.send.pager.SendScreenAdapter
+import io.tonapi.models.JettonBalance
 import uikit.base.BaseFragment
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.navigation
@@ -20,17 +24,20 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         private const val ADDRESS_KEY = "address"
         private const val COMMENT_KEY = "text"
         private const val AMOUNT_KEY = "amount"
+        private const val JETTON_KEY = "jetton"
 
         fun newInstance(
             address: String? = null,
             comment: String? = null,
-            amount: Float = 0f
+            amount: Float = 0f,
+            jetton: JettonBalance? = null
         ): SendScreen {
             val fragment = SendScreen()
             fragment.arguments = Bundle().apply {
                 putString(ADDRESS_KEY, address)
                 putString(COMMENT_KEY, comment)
                 putFloat(AMOUNT_KEY, amount)
+                putString(JETTON_KEY, toJSON(jetton))
             }
             return fragment
         }
@@ -39,9 +46,17 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
     private val startAddress: String by lazy { arguments?.getString(ADDRESS_KEY) ?: "" }
     private val startComment: String by lazy { arguments?.getString(COMMENT_KEY) ?: "" }
     private val startAmount: Float by lazy { arguments?.getFloat(AMOUNT_KEY) ?: 0f }
+    private val startJetton: JettonBalance? by lazy {
+        val value = arguments?.getString(JETTON_KEY)
+        if (value.isNullOrBlank()) {
+            null
+        } else {
+            fromJSON(value)
+        }
+    }
 
     private val hasStartValues: Boolean
-        get() = startAddress.isNotEmpty() || startComment.isNotEmpty() || startAmount > 0f
+        get() = startAddress.isNotEmpty() || startComment.isNotEmpty() || startAmount > 0f || startJetton != null
 
     override val feature: SendScreenFeature by viewModels()
 
@@ -96,6 +111,7 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         forceSetAddress(startAddress)
         forceSetComment(startComment)
         forceSetAmount(startAmount)
+        forceSetJetton(startJetton)
     }
 
     override fun onDestroyView() {
@@ -134,5 +150,9 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
 
     fun forceSetAmount(amount: Float) {
         pageAdapter.amountScreen?.forceSetAmount(amount)
+    }
+
+    fun forceSetJetton(jettonBalance: JettonBalance?) {
+        pageAdapter.amountScreen?.forceSetJetton(jettonBalance)
     }
 }

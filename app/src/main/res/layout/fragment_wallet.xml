@@ -1,94 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<androidx.appcompat.widget.LinearLayoutCompat
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/body"
-        android:visibility="gone"
+    <com.tonkeeper.fragment.wallet.main.view.WalletHeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="@string/wallet"
+        android:action="@drawable/ic_qr_viewfinder_28"
+        />
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/appBarLayout"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@null"
-            android:stateListAnimator="@null"
-            app:elevation="0dp">
-            <com.google.android.material.appbar.CollapsingToolbarLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_scrollFlags="scroll|exitUntilCollapsed">
-
-                <androidx.appcompat.widget.LinearLayoutCompat
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/barHeight"
-                    android:orientation="vertical">
-                    <include layout="@layout/view_wallet_balance"/>
-                    <include layout="@layout/view_wallet_actions"/>
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
-                <com.tonkeeper.fragment.wallet.main.view.WalletHeaderView
-                    android:id="@+id/header"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="@string/wallet"
-                    android:action="@drawable/ic_qr_viewfinder_28"
-                    app:layout_collapseMode="pin"/>
-
-            </com.google.android.material.appbar.CollapsingToolbarLayout>
-
-            <FrameLayout
-                android:id="@+id/tabs_container"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/barHeight">
-
-                <uikit.widget.TabLayoutEx
-                    style="@style/Widget.App.Tabs"
-                    android:id="@+id/tabs"
-                    android:layout_width="match_parent"
-                    android:layout_height="38dp"
-                    android:clipToPadding="false"
-                    android:layout_gravity="center"/>
-
-            </FrameLayout>
-
-        </com.google.android.material.appbar.AppBarLayout>
-
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/pager"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
-
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/shimmer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <com.tonkeeper.fragment.wallet.main.view.WalletHeaderView
-            android:id="@+id/shimmer_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:title="@string/wallet"
-            android:action="@drawable/ic_qr_viewfinder_28"/>
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:paddingBottom="@dimen/offsetMedium"
+            android:clipToPadding="false"/>
 
         <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <include layout="@layout/shimmer_wallet"/>
         </com.facebook.shimmer.ShimmerFrameLayout>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </FrameLayout>
 
-</FrameLayout>
+</androidx.appcompat.widget.LinearLayoutCompat>

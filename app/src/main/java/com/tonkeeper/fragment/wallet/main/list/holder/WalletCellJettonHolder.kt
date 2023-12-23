@@ -5,6 +5,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.ColorInt
@@ -40,9 +41,22 @@ class WalletCellJettonHolder(
         }
         loadIcon(item.iconURI)
         titleView.text = item.code
-        rateView.text = createRate(item.rate, item.rateDiff24h)
+
+        if (item.rate.isNullOrBlank()) {
+            rateView.visibility = View.GONE
+        } else {
+            rateView.visibility = View.VISIBLE
+            rateView.text = createRate(item.rate, item.rateDiff24h!!)
+        }
+
         balanceView.text = item.balance
-        balanceCurrencyView.text = item.balanceCurrency
+
+        if (item.balanceCurrency.isNullOrBlank()) {
+            balanceCurrencyView.visibility = View.GONE
+        } else {
+            balanceCurrencyView.visibility = View.VISIBLE
+            balanceCurrencyView.text = item.balanceCurrency
+        }
     }
 
     private fun loadIcon(uri: Uri) {

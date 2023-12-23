@@ -1,48 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/data"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_height="132dp">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/amount"
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:layout_marginTop="@dimen/offsetLarge"
-        android:textColor="@color/textPrimary"
-        android:textAppearance="@style/TextAppearance.NUM2"
-        android:gravity="center"/>
+        android:layout_gravity="center"
+        android:orientation="vertical">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/address"
-        android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:textColor="@color/textSecondary"
-        android:textAppearance="@style/TextAppearance.Body2"
-        android:gravity="center"/>
-
-    <include layout="@layout/view_wallet_actions"/>
-
-    <View
-        android:id="@+id/space_for_tabs"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/offsetLarge"
-        android:visibility="gone"/>
-
-    <FrameLayout
-        android:id="@+id/tabs_container"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/barHeight">
-
-        <uikit.widget.TabLayoutEx
-            style="@style/Widget.App.Tabs"
-            android:id="@+id/tabs"
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/amount"
             android:layout_width="match_parent"
-            android:layout_height="38dp"
-            android:clipToPadding="false"
-            android:layout_gravity="center"/>
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textColor="@color/textPrimary"
+            android:textSize="44sp"
+            android:fontFamily="@font/montserrat_semi_bold"
+            android:gravity="center"/>
 
-    </FrameLayout>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textSecondary"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:singleLine="true"
+            android:gravity="center"/>
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+</FrameLayout>

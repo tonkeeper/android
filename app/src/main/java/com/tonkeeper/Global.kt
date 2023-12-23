@@ -1,4 +1,5 @@
 package com.tonkeeper
 
-class Global {
+object Global {
+    val tonCoinUrl = "drawable:///${R.drawable.ic_toncoin}"
 }

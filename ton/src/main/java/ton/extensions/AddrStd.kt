@@ -2,12 +2,19 @@ package ton.extensions
 
 import org.ton.block.AddrStd
 
-fun String.toUserFriendly(): String {
+fun String.toUserFriendly(
+    wallet: Boolean = true
+): String {
     if (startsWith("UQ")) {
         return this
     }
     return try {
-        AddrStd(this).toUserFriendly()
+        val addr = AddrStd(this)
+        if (wallet) {
+            addr.toUserFriendly()
+        } else {
+            addr.toString(userFriendly = true)
+        }
     } catch (e: Exception) {
         this
     }

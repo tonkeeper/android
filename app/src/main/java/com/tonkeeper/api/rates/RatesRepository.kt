@@ -28,11 +28,11 @@ class RatesRepository(
         accountId: String,
         jettons: List<String>
     ): GetRates200Response {
-        val tokens = jettons + SupportedTokens.values().map {
+        val tokens = jettons + SupportedTokens.entries.map {
             it.code
         }
 
-        val currency = SupportedCurrency.values().map {
+        val currency = SupportedCurrency.entries.map {
             it.code
         }
 
@@ -73,7 +73,7 @@ class RatesRepository(
         tokens: String,
         currency: String
     ): GetRates200Response = withContext(Dispatchers.IO) {
-        api.getRates(
+       api.getRates(
             tokens = tokens,
             currencies = currency
         )

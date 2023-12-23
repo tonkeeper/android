@@ -42,7 +42,11 @@ class WidgetBalanceProvider: Widget() {
                 return@launch
             }
 
-            val account = accountRepository.get(wallet.accountId)
+            var response = accountRepository.getFromCloud(wallet.accountId)
+            if (response == null) {
+                response = accountRepository.get(wallet.accountId)
+            }
+            val account = response?.data ?: return@launch
 
             val tonInCurrency = from(SupportedTokens.TON, wallet.accountId)
                 .value(account.balance)

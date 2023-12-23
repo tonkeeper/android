@@ -3,6 +3,7 @@ package com.tonkeeper.api.internal.repositories
 import android.content.Context
 import com.tonkeeper.api.internal.Tonkeeper
 import com.tonkeeper.api.base.BaseBlobRepository
+import com.tonkeeper.api.withRetry
 import com.tonkeeper.core.fiat.models.FiatData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,7 +12,7 @@ class FiatMethodsRepository(context: Context): BaseBlobRepository<FiatData>("fia
 
     suspend fun get(
         countryCode: String
-    ): FiatData {
+    ): FiatData? {
         val cache = fromCache(accountId = countryCode)
         if (cache != null) {
             return cache
@@ -21,8 +22,11 @@ class FiatMethodsRepository(context: Context): BaseBlobRepository<FiatData>("fia
 
     private suspend fun fromCloud(
         countryCode: String
-    ): FiatData = withContext(Dispatchers.IO) {
-        val json = Tonkeeper.get("fiat/methods").getJSONObject("data")
+    ): FiatData? = withContext(Dispatchers.IO) {
+        val response = withRetry {
+            Tonkeeper.get("fiat/methods")
+        } ?: return@withContext null
+        val json = response.getJSONObject("data")
         saveCache(
             accountId = countryCode,
             blob = json.toString()

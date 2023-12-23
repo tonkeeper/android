@@ -1,4 +1,3 @@
 package com.tonkeeper.fragment.wallet.main.list.item
 
-class WalletActionItem {
-}
+object WalletActionItem: WalletItem(TYPE_ACTIONS)

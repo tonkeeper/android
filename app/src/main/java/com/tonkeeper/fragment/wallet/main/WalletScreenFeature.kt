@@ -1,17 +1,14 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.address
-import com.tonkeeper.api.imageURL
 import com.tonkeeper.api.jetton.JettonRepository
-import com.tonkeeper.api.collectibles.CollectiblesRepository
-import com.tonkeeper.api.collectionName
 import com.tonkeeper.api.parsedBalance
-import com.tonkeeper.api.title
+import com.tonkeeper.api.shortAddress
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
@@ -19,18 +16,18 @@ import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.event.ChangeWalletNameEvent
 import com.tonkeeper.event.WalletStateUpdateEvent
 import com.tonkeeper.event.UpdateCurrencyRateEvent
+import com.tonkeeper.fragment.wallet.main.list.item.WalletActionItem
+import com.tonkeeper.fragment.wallet.main.list.item.WalletDataItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletJettonCellItem
-import com.tonkeeper.fragment.wallet.main.list.item.WalletNftItem
+import com.tonkeeper.fragment.wallet.main.list.item.WalletSpaceItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletTonCellItem
-import com.tonkeeper.fragment.wallet.main.pager.WalletScreenItem
 import ton.SupportedCurrency
 import ton.SupportedTokens
 import core.EventBus
 import core.QueueScope
 import io.tonapi.models.Account
 import io.tonapi.models.JettonBalance
-import io.tonapi.models.NftItem
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
@@ -51,18 +48,14 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     }
 
     private val newTransactionItem = fun(_: WalletStateUpdateEvent) {
-        queueScope.submit { syncWallet() }
+        queueScope.submit { updateWalletState(true) }
     }
 
     private val updateWalletNameAction = fun (event: ChangeWalletNameEvent) {
         updateUiState { currentState ->
-            if (currentState.address == event.address) {
-                currentState.copy(
-                    title = event.name
-                )
-            } else {
-                currentState
-            }
+            currentState.copy(
+                title = event.name
+            )
         }
     }
 
@@ -70,47 +63,16 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         get() = App.settings.currency
 
     private val currencyManager = CurrencyManager.getInstance()
-    private val queueScope = QueueScope(Dispatchers.IO)
+    private val queueScope = QueueScope(viewModelScope.coroutineContext)
     private val accountRepository = AccountRepository()
     private val jettonRepository = JettonRepository()
-    private val collectiblesRepository = CollectiblesRepository()
 
     init {
         requestWalletState()
-        syncWallet()
         EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
         EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.subscribe(ChangeWalletNameEvent::class.java, updateWalletNameAction)
         EventBus.subscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
-    }
-
-    fun copyAddress() {
-        viewModelScope.launch {
-            val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            sendEffect(WalletScreenEffect.CopyAddress(wallet.address))
-        }
-    }
-
-    private fun syncWallet() {
-        queueScope.submit {
-            updateUiState { currentState ->
-                currentState.copy(
-                    asyncState = AsyncState.Loading
-                )
-            }
-
-            val wallet = App.walletManager.getWalletInfo() ?: return@submit
-
-            val accountId = wallet.accountId
-
-            accountRepository.clear(accountId)
-            jettonRepository.clear(accountId)
-            collectiblesRepository.clear(accountId)
-
-            currencyManager.sync()
-
-            updateWalletState(true)
-        }
     }
 
     private fun requestWalletState() {
@@ -122,46 +84,29 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             }
 
             updateWalletState(false)
+            updateWalletState(true)
         }
     }
 
-    private suspend fun updateWalletState(pushAsyncState: Boolean) {
+    private suspend fun updateWalletState(
+        sync: Boolean,
+    ) {
         val wallet = App.walletManager.getWalletInfo() ?: return
 
-        val data = getWalletData(wallet.accountId)
+        val data = getWalletData(wallet.accountId, sync) ?: return
 
         val tonInCurrency = from(SupportedTokens.TON, data.accountId)
             .value(data.account.balance)
             .to(currency)
 
         val tokens = buildTokensList(
-            wallet.address,
             wallet.accountId,
             data.account.balance,
             tonInCurrency,
-            data.jettons
+            data.jettons.sortedByDescending {
+                it.parsedBalance
+            }
         )
-
-        val nfts = buildNftList(data.collectibles)
-
-        val pages = mutableListOf<WalletScreenItem>()
-
-        if ((tokens.size + nfts.size) > 10) {
-            pages.add(WalletScreenItem(
-                titleRes = R.string.tokens,
-                items = tokens
-            ))
-
-            pages.add(WalletScreenItem(
-                titleRes = R.string.collectibles,
-                items = nfts
-            ))
-        } else {
-            pages.add(WalletScreenItem(
-                titleRes = R.string.tokens,
-                items = tokens + nfts
-            ))
-        }
 
         var allInCurrency = tonInCurrency
 
@@ -173,21 +118,26 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             allInCurrency += jettonInCurrency
         }
 
-        val asyncState = if (pushAsyncState) {
+        val asyncState = if (sync) {
             AsyncState.Default
         } else {
             uiState.value.asyncState
         }
 
+        val items = mutableListOf<WalletItem>()
+        items.add(WalletDataItem(
+            amount = Coin.format(currency, allInCurrency),
+            address = data.accountId.toUserFriendly()
+        ))
+        items.add(WalletActionItem)
+        items.add(WalletSpaceItem)
+        items.addAll(tokens)
+
         updateUiState { currentState ->
             currentState.copy(
                 asyncState = asyncState,
                 title = wallet.name,
-                currency = currency,
-                address = data.accountId.toUserFriendly(),
-                tonBalance = data.account.balance,
-                displayBalance = Coin.format(currency, allInCurrency),
-                pages = pages
+                items = items
             )
         }
     }
@@ -215,7 +165,6 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     }
 
     private suspend fun buildTokensList(
-        address: String,
         accountId: String,
         balance: Long,
         tonInCurrency: Float,
@@ -233,20 +182,26 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             SupportedTokens.TON.code,
         )
 
+        val size = jettons.size + 1
+
         val tonItem = WalletTonCellItem(
             balance = Coin.format(value = balance),
             balanceCurrency = Coin.format(currency, tonInCurrency),
             rate = Coin.format(currency, rate),
             rateDiff24h = rate24h,
+            position = ListCell.getPosition(size, 0)
         )
         items.add(tonItem)
 
         for ((index, jetton) in jettons.withIndex()) {
-            val cellPosition = ListCell.getPosition(jettons.size, index)
+            val cellPosition = ListCell.getPosition(size, index + 1)
+
             val tokenBalance = jetton.parsedBalance
             val tokenBalanceCurrency = from(jetton.address, accountId)
                 .value(tokenBalance)
                 .to(currency)
+
+            val hasRate = tokenBalanceCurrency > 0f
 
             val tokenRate = getRate(
                 accountId,
@@ -264,6 +219,14 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 jetton.jetton.decimals
             }
 
+            val balanceCurrency = if (hasRate) {
+                Coin.format(currency, tokenBalanceCurrency)
+            } else ""
+
+            val tokenRateFormat = if (hasRate) {
+                Coin.format(currency, tokenRate)
+            } else ""
+
             val item = WalletJettonCellItem(
                 address = jetton.address,
                 name = jetton.jetton.name,
@@ -271,28 +234,13 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 iconURI = Uri.parse(jetton.jetton.image),
                 code = jetton.jetton.symbol,
                 balance = Coin.format(value = tokenBalance, decimals = decimals),
-                balanceCurrency = Coin.format(currency, tokenBalanceCurrency),
-                rate = Coin.format(currency, tokenRate),
+                balanceCurrency = balanceCurrency,
+                rate = tokenRateFormat,
                 rateDiff24h = tokenRate24h,
             )
             items.add(item)
         }
 
-        return items
-    }
-
-    private fun buildNftList(collectibles: List<NftItem>): List<WalletItem> {
-        val items = mutableListOf<WalletItem>()
-        for (collectible in collectibles) {
-            val item = WalletNftItem(
-                nftAddress = collectible.address,
-                imageURI = Uri.parse(collectible.imageURL),
-                title = collectible.title,
-                collectionName = collectible.collectionName,
-                mark = false
-            )
-            items.add(item)
-        }
         return items
     }
 
@@ -307,27 +255,35 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
     private suspend fun getWalletData(
         accountId: String,
-    ): WalletData = withContext(Dispatchers.IO) {
+        forceCloud: Boolean
+    ): WalletData? = withContext(Dispatchers.IO) {
         val accountDeferred = async {
-            accountRepository.get(accountId)
+            if (forceCloud) {
+                accountRepository.getFromCloud(accountId)
+            } else {
+                accountRepository.get(accountId)
+            }
         }
         val jettonsDeferred = async {
-            jettonRepository.get(accountId)
-        }
-        val collectiblesDeferred = async {
-            collectiblesRepository.get(accountId)
+            if (forceCloud) {
+                jettonRepository.getFromCloud(accountId)
+            } else {
+                jettonRepository.get(accountId)
+            }
         }
 
-        val account = accountDeferred.await()
-        val jettons = jettonsDeferred.await()
-        val collectibles = collectiblesDeferred.await()
+        val account = accountDeferred.await() ?: return@withContext null
+        val jettons = jettonsDeferred.await() ?: return@withContext null
 
+        if (forceCloud) {
+            currencyManager.sync(accountId)
+        }
 
         return@withContext WalletData(
             accountId = accountId,
-            account = account,
-            jettons = jettons,
-            collectibles = collectibles
+            account = account.data,
+            jettons = jettons.data,
+            needSync = false
         )
     }
 
@@ -335,6 +291,6 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         val accountId: String,
         val account: Account,
         val jettons: List<JettonBalance>,
-        val collectibles: List<NftItem>
+        val needSync: Boolean
     )
 }

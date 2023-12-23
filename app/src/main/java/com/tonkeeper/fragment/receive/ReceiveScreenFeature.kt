@@ -5,7 +5,9 @@ import android.graphics.Color
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
+import com.tonkeeper.api.address
 import com.tonkeeper.helper.QRBuilder
+import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,10 +30,10 @@ class ReceiveScreenFeature: UiFeature<ReceiveScreenState, ReceiveScreenEffect>(R
         }
     }
 
-    fun requestQRCode(size: Int) {
+    fun requestQRCode(size: Int, jetton: JettonBalance?) {
         viewModelScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            val bitmap = createBitmap(wallet, size)
+            val bitmap = createBitmap(wallet, size, jetton)
             updateUiState {
                 it.copy(
                     qrCode = bitmap,
@@ -43,9 +45,13 @@ class ReceiveScreenFeature: UiFeature<ReceiveScreenState, ReceiveScreenEffect>(R
 
     private suspend fun createBitmap(
         wallet: Wallet,
-        size: Int
+        size: Int,
+        jetton: JettonBalance?
     ): Bitmap = withContext(Dispatchers.IO) {
-        val content = "ton://transfer/${wallet.address}"
+        var content = "ton://transfer/${wallet.address}"
+        if (jetton != null) {
+            content += "?jetton=${jetton.address}"
+        }
         val bitmap = QRBuilder(content, size, size)
             .setWithCutout(true)
             .build()

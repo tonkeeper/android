@@ -2,6 +2,7 @@
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <uikit.widget.HeaderView
@@ -17,21 +18,22 @@
         android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/receive_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:textAppearance="@style/TextAppearance.H3"
-            android:textColor="@color/textPrimary"
-            android:text="@string/receive_toncoin"/>
+            android:textColor="@color/textPrimary"/>
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/receive_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetExtraSmall"
             android:gravity="center"
             android:textAppearance="@style/TextAppearance.Body1"
             android:textColor="@color/textSecondary"
-            android:text="@string/receive_toncoin_description"/>
+            android:text="@string/receive_coin_description"/>
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/content"
@@ -50,11 +52,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
-                <androidx.appcompat.widget.AppCompatImageView
+                <uikit.widget.FrescoView
+                    android:id="@+id/icon"
                     android:layout_width="46dp"
                     android:layout_height="46dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_toncoin"/>
+                    app:roundAsCircle="true"
+                    android:layout_gravity="center"/>
 
             </FrameLayout>
 

@@ -5,6 +5,7 @@ plugins {
     id("com.google.firebase.crashlytics")
     id("kotlinx-serialization")
     id("kotlin-kapt")
+    id("androidx.baselineprofile")
 }
 
 android {
@@ -15,8 +16,8 @@ android {
         applicationId = "com.tonkeeper"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 8
-        versionName = "0.0.8-beta"
+        versionCode = 9
+        versionName = "0.0.9-beta"
     }
 
     buildFeatures {
@@ -54,6 +55,8 @@ android {
 }
 
 dependencies {
+    "baselineProfile"(project(":baselineprofile"))
+
     implementation(Libs.AndroidX.core)
     implementation(Libs.AndroidX.appCompat)
     implementation(Libs.AndroidX.activity)
@@ -108,4 +111,5 @@ dependencies {
     implementation(project(Libs.Module.ton))
     implementation(project(Libs.Module.tonApi))
     implementation(project(Libs.Module.shimmer))
+    // implementation(project(Libs.Module.localization))
 }

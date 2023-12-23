@@ -22,13 +22,6 @@
             android:icon="@drawable/ic_arrow_down_28"
             android:title="@string/receive"/>
 
-        <uikit.widget.IconButtonView
-            android:id="@+id/buy_or_sell"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:icon="@drawable/ic_usd_28"
-            android:title="@string/buy_or_sell"/>
-
     </uikit.widget.ButtonsLayout>
 
 </FrameLayout>

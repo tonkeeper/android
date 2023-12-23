@@ -65,7 +65,7 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
     ): Account? = withContext(Dispatchers.IO) {
         try {
             if (!TonAddress.isValid(value)) {
-                return@withContext resolveDomain(value.lowercase())
+                return@withContext resolveDomain(value.lowercase().trim())
             }
             return@withContext accounts.getAccount(value)
         } catch (ignored: Throwable) {}

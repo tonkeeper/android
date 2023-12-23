@@ -1,8 +1,10 @@
 package com.tonkeeper.fragment.wallet.history
 
 import com.tonkeeper.App
-import com.tonkeeper.api.event.EventRepository
+import com.tonkeeper.api.history.HistoryRepository
 import com.tonkeeper.core.history.HistoryHelper
+import com.tonkeeper.event.ChangeCurrencyEvent
+import com.tonkeeper.event.UpdateCurrencyRateEvent
 import com.tonkeeper.event.WalletStateUpdateEvent
 import core.EventBus
 import core.QueueScope
@@ -14,44 +16,62 @@ import ton.wallet.Wallet
 
 class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(HistoryScreenState()) {
 
+    private val changeCurrencyAction = fun(_: ChangeCurrencyEvent) {
+        queueScope.submit { updateEventsState(false) }
+    }
+
     private val newTransactionItem = fun(_: WalletStateUpdateEvent) {
-        syncEvents()
+        queueScope.submit { updateEventsState(true) }
+    }
+
+    private val updateCurrencyRateAction = fun(_: UpdateCurrencyRateEvent) {
+        queueScope.submit { updateEventsState(false) }
     }
 
     private val queueScope = QueueScope(Dispatchers.IO)
-    private val eventRepository = EventRepository()
+    private val historyRepository = HistoryRepository()
 
     init {
         requestEventsState()
-        syncEvents()
 
+        EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
+        EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.subscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
     }
 
-    private fun syncEvents() {
+    private fun requestEventsState() {
+        updateUiState { currentState ->
+            currentState.copy(
+                asyncState = AsyncState.Loading
+            )
+        }
+
         queueScope.submit {
-            updateUiState { currentState ->
-                currentState.copy(
-                    asyncState = AsyncState.Loading
-                )
-            }
-
-            val wallet = getWallet() ?: return@submit
-
-            eventRepository.clear(wallet.accountId)
-
-            updateEventsState()
+            updateEventsState(false)
+            updateEventsState(true)
         }
     }
 
-    private suspend fun updateEventsState() {
-        val wallet = getWallet() ?: return
-        val events = eventRepository.get(wallet.accountId)
+    private suspend fun updateEventsState(sync: Boolean) {
+        val wallet = App.walletManager.getWalletInfo() ?: return
+        val accountId = wallet.accountId
+        val response = if (sync) {
+            historyRepository.getFromCloud(accountId)
+        } else {
+            historyRepository.get(accountId)
+        }
+        val events = response?.data ?: return
         val items = HistoryHelper.mapping(wallet, events)
+
+        val asyncState = if (sync) {
+            AsyncState.Default
+        } else {
+            uiState.value.asyncState
+        }
 
         updateUiState { currentState ->
             currentState.copy(
-                asyncState = AsyncState.Default,
+                asyncState = asyncState,
                 items = items
             )
         }
@@ -61,26 +81,12 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
         sendEffect(HistoryScreenEffect.UpScroll)
     }
 
-    private fun requestEventsState() {
-        queueScope.submit {
-            updateUiState { currentState ->
-                currentState.copy(
-                    asyncState = AsyncState.Loading
-                )
-            }
-
-            updateEventsState()
-        }
-    }
-
-    private suspend fun getWallet(): Wallet? {
-        return App.walletManager.getWalletInfo()
-    }
-
     override fun onCleared() {
         super.onCleared()
         queueScope.cancel()
 
+        EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
+        EventBus.unsubscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.unsubscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
     }
 

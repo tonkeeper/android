@@ -4,48 +4,63 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <View
-        android:layout_width="220dp"
-        android:layout_height="34dp"
-        android:layout_marginTop="2dp"
-        android:layout_gravity="center"
-        android:background="@drawable/bg_content"/>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="132dp">
 
-    <View
-        android:layout_width="98dp"
-        android:layout_height="21dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_content"/>
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+            <View
+                android:layout_width="220dp"
+                android:layout_height="34dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_content"/>
+
+            <View
+                android:layout_width="98dp"
+                android:layout_height="21dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_content"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </FrameLayout>
+
+    <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="24dp"
         android:paddingHorizontal="@dimen/offsetMedium"
-        android:paddingVertical="14dp"
         android:orientation="horizontal">
 
-        <uikit.widget.shimmer.ShimmerIconButtonView
+        <uikit.widget.ButtonsLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
-        <uikit.widget.shimmer.ShimmerIconButtonView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
-        <uikit.widget.shimmer.ShimmerIconButtonView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </uikit.widget.ButtonsLayout>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </FrameLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="76dp"
+        android:layout_marginTop="@dimen/offsetMedium"
         android:layout_marginHorizontal="@dimen/offsetMedium"
         android:background="@drawable/bg_content"/>
-
 
 </androidx.appcompat.widget.LinearLayoutCompat>

@@ -55,6 +55,7 @@
             android:layout_gravity="end"
             android:gravity="end"
             android:singleLine="true"
+            android:maxLength="12"
             android:textAppearance="@style/TextAppearance.Label1"
             android:textColor="@color/textPrimary"/>
 

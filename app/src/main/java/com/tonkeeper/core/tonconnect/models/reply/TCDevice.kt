@@ -6,7 +6,7 @@ import org.json.JSONObject
 
 data class TCDevice(
     val platform: String = "android",
-    val appName: String = "Tonkeeper X",
+    val appName: String = "tonkeeper",
     val appVersion: String = BuildConfig.VERSION_NAME,
     val maxProtocolVersion: Int = 2,
     // val features: List<Any> = emptyList()

@@ -1,5 +1,6 @@
 package com.tonkeeper.fragment.send
 
+import com.tonkeeper.Global
 import com.tonkeeper.R
 import io.tonapi.models.JettonBalance
 import ton.SupportedTokens
@@ -14,7 +15,7 @@ data class TransactionData(
 ) {
 
     val icon: String
-        get() = jetton?.jetton?.image ?: "drawable:///${R.drawable.ic_toncoin}"
+        get() = jetton?.jetton?.image ?: Global.tonCoinUrl
 
     val tokenName: String
         get() = jetton?.jetton?.name ?: SupportedTokens.TON.code

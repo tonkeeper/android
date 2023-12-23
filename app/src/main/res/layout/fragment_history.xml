@@ -1,108 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/body"
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:layout_height="wrap_content"
+        android:title="@string/history"/>
 
-        <uikit.widget.HeaderView
-            android:id="@+id/header"
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"/>
+
+        <uikit.widget.EmptyLayout
+            android:id="@+id/empty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:title="@string/history"/>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingHorizontal="@dimen/offsetMedium"/>
-
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:id="@+id/empty"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:paddingHorizontal="@dimen/offsetLarge"
-                android:visibility="gone"
-                android:orientation="vertical">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/empty_history_title"
-                    android:textAppearance="@style/TextAppearance.H2"
-                    android:textColor="@color/textPrimary"
-                    android:gravity="center"/>
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/offsetExtraSmall"
-                    android:text="@string/empty_history_subtitle"
-                    android:textAppearance="@style/TextAppearance.Body1"
-                    android:textColor="@color/textSecondary"
-                    android:gravity="center"/>
-
-                <androidx.appcompat.widget.LinearLayoutCompat
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/offsetMedium"
-                    android:layout_gravity="center"
-                    android:orientation="horizontal">
-
-                    <Button
-                        style="@style/Widget.App.Button.Secondary"
-                        android:id="@+id/buy"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextAppearance.Label1"
-                        android:text="@string/buy_toncoin"/>
-
-                    <Button
-                        style="@style/Widget.App.Button.Secondary"
-                        android:id="@+id/receive"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/offsetMedium"
-                        android:textAppearance="@style/TextAppearance.Label1"
-                        android:text="@string/receive"/>
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
-            </androidx.appcompat.widget.LinearLayoutCompat>
-        </FrameLayout>
-
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/shimmer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <uikit.widget.HeaderView
-            android:id="@+id/shimmer_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:title="@string/history"/>
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:title="@string/empty_history_title"
+            android:description="@string/empty_history_subtitle"
+            android:positiveButtonText="@string/buy_toncoin"
+            android:negativeButtonText="@string/receive"/>
 
         <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <include layout="@layout/shimmer_history"/>
         </com.facebook.shimmer.ShimmerFrameLayout>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </FrameLayout>
 
-</FrameLayout>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -6,11 +6,14 @@ import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.address
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
+import com.tonkeeper.api.withRetry
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.history.list.item.HistoryItem
+import io.tonapi.models.AccountEvent
+import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,7 +60,13 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
         jettonAddress: String
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val accountId = wallet.accountId
-        val events = accountsApi.getAccountJettonHistoryByID(accountId = accountId, jettonId = jettonAddress, limit = 100)
+        val events = getAccountEvent(accountId, jettonAddress) ?: return@withContext emptyList()
         HistoryHelper.mapping(wallet, events)
+    }
+
+    private suspend fun getAccountEvent(accountId: String, jettonAddress: String): AccountEvents? {
+        return withRetry {
+            accountsApi.getAccountJettonHistoryByID(accountId = accountId, jettonId = jettonAddress, limit = 30)
+        }
     }
 }

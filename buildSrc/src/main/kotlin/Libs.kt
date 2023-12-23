@@ -20,7 +20,7 @@ object Libs {
     object AndroidX {
         const val core = "androidx.core:core-ktx:1.12.0"
         const val appCompat = "androidx.appcompat:appcompat:1.6.1"
-        const val activity = "androidx.activity:activity-ktx:1.8.1"
+        const val activity = "androidx.activity:activity-ktx:1.8.2"
         const val fragment = "androidx.fragment:fragment-ktx:1.6.2"
         const val recyclerView = "androidx.recyclerview:recyclerview:1.3.2"
         const val viewPager2 = "androidx.viewpager2:viewpager2:1.0.0"
@@ -69,5 +69,6 @@ object Libs {
         const val ton = ":ton"
         const val tonApi = ":tonapi"
         const val shimmer = ":shimmer"
+        const val localization = ":localization"
     }
 }

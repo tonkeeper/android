@@ -1,4 +1,14 @@
 package com.tonkeeper.fragment.chart.list.holder
 
-class ChartDividerHolder {
+import android.view.ViewGroup
+import com.tonkeeper.R
+import com.tonkeeper.fragment.chart.list.ChartItem
+
+class ChartDividerHolder(
+    parent: ViewGroup
+): ChartHolder<ChartItem.Divider>(parent, R.layout.view_divider) {
+    override fun onBind(item: ChartItem.Divider) {
+
+    }
+
 }

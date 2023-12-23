@@ -1,4 +1,4 @@
-package com.tonkeeper.fragment.send.view
+package com.tonkeeper.view
 
 import android.content.Context
 import android.util.AttributeSet
@@ -7,12 +7,11 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import com.tonkeeper.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
-import uikit.extensions.withAnimation
 import uikit.list.ListCell
 import uikit.list.ListCell.Companion.drawable
 import uikit.widget.LoaderView
 
-class ItemView @JvmOverloads constructor(
+class TransactionDetailView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,

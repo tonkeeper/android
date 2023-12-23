@@ -50,23 +50,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:paddingHorizontal="@dimen/offsetMedium"
-        android:paddingVertical="24dp"
         android:orientation="horizontal">
 
-        <uikit.widget.shimmer.ShimmerIconButtonView
+        <uikit.widget.ButtonsLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
 
-        <uikit.widget.shimmer.ShimmerIconButtonView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </uikit.widget.ButtonsLayout>
+
+    </FrameLayout>
 
     <uikit.widget.DividerView
         android:layout_width="match_parent"

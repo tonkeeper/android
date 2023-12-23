@@ -6,6 +6,7 @@ import android.widget.FrameLayout
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import uikit.R
 
@@ -50,9 +51,20 @@ open class BaseSheetDialog(
         }, delay)
     }
 
+    fun getString(@StringRes resId: Int): String {
+        return context.getString(resId)
+    }
+
     override fun setContentView(layoutResID: Int) {
         contentView.removeAllViews()
         layoutInflater.inflate(layoutResID, contentView, true)
     }
 
+    fun fixPeekHeight() {
+        view.requestLayout()
+        view.post {
+            behavior.peekHeight = view.measuredHeight
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+    }
 }

@@ -6,8 +6,9 @@ import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
 import com.tonkeeper.R
 import com.tonkeeper.core.currency.CurrencyUpdateWorker
-import com.tonkeeper.core.history.HistoryMonitor
+import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.widget.Widget
+import com.tonkeeper.fragment.wallet.collectibles.CollectiblesScreen
 import com.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonkeeper.fragment.settings.main.SettingsScreen
 import com.tonkeeper.fragment.wallet.main.WalletScreen
@@ -25,7 +26,8 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         mapOf(
             R.id.wallet to WalletScreen.newInstance(),
             R.id.activity to HistoryScreen.newInstance(),
-            R.id.settings to SettingsScreen.newInstance()
+            R.id.settings to SettingsScreen.newInstance(),
+            R.id.collectibles to CollectiblesScreen.newInstance()
         )
     }
 
@@ -48,7 +50,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            HistoryMonitor(lifecycleScope, wallet.accountId)
+            HistoryHelper.subscribe(lifecycleScope, wallet.accountId)
         }
     }
 

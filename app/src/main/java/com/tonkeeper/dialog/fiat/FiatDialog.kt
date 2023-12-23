@@ -10,9 +10,11 @@ import com.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import com.tonkeeper.dialog.fiat.list.MethodAdapter
 import com.tonkeeper.fragment.country.CountryScreen
 import com.tonkeeper.fragment.fiat.FiatWebFragment
+import com.tonkeeper.fragment.root.RootActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import uikit.base.BaseSheetDialog
+import uikit.extensions.activity
 import uikit.list.LinearLayoutManager
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
@@ -24,6 +26,11 @@ class FiatDialog(
 
     companion object {
         const val FIAT_DIALOG_REQUEST = "fiat_dialog_request"
+
+        fun open(context: Context) {
+            val rootActivity = context.activity as? RootActivity ?: return
+            rootActivity.fiatDialog.show()
+        }
     }
 
     private val confirmationDialog: ConfirmationDialog by lazy {

@@ -48,7 +48,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         try {
             val walletManager = App.walletManager
             val wallet = walletManager.getWalletInfo()!!
-            val account = accountRepository.fromCloud(wallet.accountId)
+            val account = accountRepository.getFromCloud(wallet.accountId)?.data ?: throw Exception("failed to get account")
             val balance = Coin.toCoins(account.balance)
 
             if (tx.isTon) {

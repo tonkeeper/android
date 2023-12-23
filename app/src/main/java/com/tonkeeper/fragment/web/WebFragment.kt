@@ -1,6 +1,5 @@
 package com.tonkeeper.fragment.web
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
@@ -10,7 +9,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.ContentLoadingProgressBar
 import com.tonkeeper.R
@@ -36,6 +34,7 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
     }
 
     private lateinit var backView: View
+    private lateinit var closeView: View
     private lateinit var titleView: AppCompatTextView
     private lateinit var subtitleView: AppCompatTextView
     private lateinit var progressBar: ContentLoadingProgressBar
@@ -45,6 +44,9 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
         super.onViewCreated(view, savedInstanceState)
         backView = view.findViewById(R.id.back)
         backView.setOnClickListener { onBackPressed() }
+
+        closeView = view.findViewById(R.id.close)
+        closeView.setOnClickListener { finish() }
 
         titleView = view.findViewById(R.id.title)
 

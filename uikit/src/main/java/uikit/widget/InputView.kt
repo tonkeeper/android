@@ -10,6 +10,8 @@ import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.LinearLayoutCompat
+import com.google.android.material.textfield.TextInputLayout
 import uikit.R
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
@@ -18,7 +20,9 @@ import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
 import uikit.extensions.range
 import uikit.extensions.scale
+import uikit.extensions.setPaddingBottom
 import uikit.extensions.useAttributes
+import uikit.extensions.withAnimation
 
 class InputView @JvmOverloads constructor(
     context: Context,
@@ -32,14 +36,20 @@ class InputView @JvmOverloads constructor(
     private val reduceHintConfig = HintConfig(
         hintScale = .75f,
         hintTranslationY = (-4f).dp,
-        editTextTranslationY = 8f.dp,
+        editTextTranslationY = 12f.dp,
     )
 
     private val expandHintConfig = HintConfig(
         hintScale = 1f,
         hintTranslationY = 0f,
-        editTextTranslationY = 0f,
+        editTextTranslationY = 6f.dp,
     )
+
+    private var visibleClearView: Boolean = false
+        set(value) {
+            field = value
+            clearView.visibility = if (value && isEnabled) View.VISIBLE else View.GONE
+        }
 
     private var hintReduced = false
         set(value) {
@@ -48,11 +58,11 @@ class InputView @JvmOverloads constructor(
                 if (value) {
                     hintAnimation.start()
                     optionsView.visibility = View.GONE
-                    clearView.visibility = View.VISIBLE
+                    visibleClearView = true
                 } else {
                     hintAnimation.reverse()
                     optionsView.visibility = View.VISIBLE
-                    clearView.visibility = View.GONE
+                    visibleClearView = false
                     loaderView.visibility = View.GONE
                     loaderView.stopAnimation()
                 }
@@ -84,12 +94,12 @@ class InputView @JvmOverloads constructor(
             if (field != value) {
                 field = value
                 if (value && hintReduced) {
-                    clearView.visibility = View.GONE
+                    visibleClearView = false
                     loaderView.visibility = View.VISIBLE
                     loaderView.resetAnimation()
                 } else {
                     if (hintReduced) {
-                        clearView.visibility = View.VISIBLE
+                        visibleClearView = true
                     }
                     loaderView.visibility = View.GONE
                     loaderView.stopAnimation()
@@ -164,11 +174,16 @@ class InputView @JvmOverloads constructor(
             actionValue = it.getString(R.styleable.InputView_android_button)
             isEnabled = it.getBoolean(R.styleable.InputView_android_enabled, true)
         }
+
+        setOnClickListener {
+            editText.focusWidthKeyboard()
+        }
     }
 
     override fun setEnabled(enabled: Boolean) {
         super.setEnabled(enabled)
         editText.isEnabled = enabled
+        visibleClearView = visibleClearView
     }
 
     fun focus() {

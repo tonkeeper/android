@@ -43,7 +43,7 @@ class CurrencyScreenFeature: UiFeature<CurrencyScreenState, CurrencyScreenEffect
 
     private fun buildItems(): List<CurrencyItem> {
         val items = mutableListOf<CurrencyItem>()
-        val codes = SupportedCurrency.values()
+        val codes = SupportedCurrency.entries.toTypedArray()
         for ((index, currency) in codes.withIndex()) {
             items.add(
                 CurrencyItem(

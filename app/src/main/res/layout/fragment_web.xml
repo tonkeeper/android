@@ -5,10 +5,11 @@
     android:orientation="vertical"
     android:fitsSystemWindows="true">
 
-    <FrameLayout
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="@dimen/barHeight"
-        android:paddingHorizontal="@dimen/offsetMedium">
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:orientation="horizontal">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/back"
@@ -25,6 +26,7 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:paddingHorizontal="@dimen/barHeight"
             android:layout_gravity="center"
             android:orientation="vertical">
@@ -51,7 +53,18 @@
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 
-    </FrameLayout>
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:layout_gravity="center_vertical|start"
+            android:tint="@color/buttonSecondaryForeground"
+            android:backgroundTint="@color/buttonSecondaryBackground"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.core.widget.ContentLoadingProgressBar
         android:id="@+id/progress_bar"

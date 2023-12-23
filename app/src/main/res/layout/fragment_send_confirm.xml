@@ -39,28 +39,28 @@
                 android:textAppearance="@style/TextAppearance.H3"
                 android:textColor="@color/textPrimary"/>
 
-            <com.tonkeeper.fragment.send.view.ItemView
+            <com.tonkeeper.view.TransactionDetailView
                 android:id="@+id/recipient"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"/>
 
-            <com.tonkeeper.fragment.send.view.ItemView
+            <com.tonkeeper.view.TransactionDetailView
                 android:id="@+id/recipient_address"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
-            <com.tonkeeper.fragment.send.view.ItemView
+            <com.tonkeeper.view.TransactionDetailView
                 android:id="@+id/amount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
-            <com.tonkeeper.fragment.send.view.ItemView
+            <com.tonkeeper.view.TransactionDetailView
                 android:id="@+id/fee"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
-            <com.tonkeeper.fragment.send.view.ItemView
+            <com.tonkeeper.view.TransactionDetailView
                 android:id="@+id/comment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>

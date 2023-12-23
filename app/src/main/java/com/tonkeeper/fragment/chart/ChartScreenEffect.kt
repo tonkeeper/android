@@ -1,4 +1,5 @@
 package com.tonkeeper.fragment.chart
 
-class ChartScreenEffect {
-}
+import uikit.mvi.UiEffect
+
+class ChartScreenEffect : UiEffect()

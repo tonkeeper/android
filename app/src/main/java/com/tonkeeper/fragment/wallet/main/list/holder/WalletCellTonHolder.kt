@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import com.tonkeeper.R
+import com.tonkeeper.fragment.chart.ChartScreen
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletTonCellItem
 
@@ -17,6 +18,10 @@ class WalletCellTonHolder(
     private val rateView = findViewById<TextView>(R.id.rate)
     private val balanceView = findViewById<TextView>(R.id.balance)
     private val balanceCurrencyView = findViewById<TextView>(R.id.balance_currency)
+
+    init {
+        itemView.setOnClickListener { nav?.add(ChartScreen.newInstance()) }
+    }
 
     override fun onBind(item: WalletTonCellItem) {
         rateView.text = createRate(item.rate, item.rateDiff24h)

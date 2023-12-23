@@ -1,16 +1,11 @@
 package com.tonkeeper.fragment.root
 
-import android.app.PendingIntent
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.activity.addCallback
-import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
@@ -19,6 +14,7 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import com.tonkeeper.App
+import com.tonkeeper.PasscodeManager
 import com.tonkeeper.R
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.PaymentURL
@@ -30,17 +26,14 @@ import uikit.navigation.Navigation
 import com.tonkeeper.fragment.main.MainFragment
 import com.tonkeeper.fragment.web.WebFragment
 import com.tonkeeper.core.tonconnect.TonConnect
-import com.tonkeeper.core.widget.WidgetBalanceProvider
+import com.tonkeeper.dialog.TransactionDialog
+import com.tonkeeper.dialog.fiat.FiatDialog
+import com.tonkeeper.extensions.sendCoin
 import com.tonkeeper.fragment.passcode.lock.LockScreen
-import com.tonkeeper.fragment.send.SendScreen
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import uikit.extensions.doOnEnd
-import uikit.extensions.findFragment
 import uikit.extensions.hapticConfirm
 import uikit.extensions.startAnimation
-import uikit.navigation.Navigation.Companion.navigation
 
 class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
 
@@ -48,9 +41,15 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         val hostFragmentId = R.id.nav_host_fragment
     }
 
-    val viewModel: RootViewModel by viewModels()
-
     private val deepLink = DeepLink(this)
+
+    val fiatDialog: FiatDialog by lazy {
+        FiatDialog(this, lifecycleScope)
+    }
+
+    val transactionDialog: TransactionDialog by lazy {
+        TransactionDialog(this, lifecycleScope)
+    }
 
     private lateinit var contentView: View
     private lateinit var toastView: AppCompatTextView
@@ -104,14 +103,7 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         val paymentURL = PaymentURL(uri)
         if (paymentURL.action == PaymentURL.ACTION_TRANSFER) {
             val amount = Coin.toCoins(paymentURL.amount)
-            val currentFragment = supportFragmentManager.findFragment<SendScreen>()
-            if (currentFragment is SendScreen) {
-                currentFragment.forceSetAddress(paymentURL.address)
-                currentFragment.forceSetComment(paymentURL.text)
-                currentFragment.forceSetAmount(amount)
-            } else {
-                navigation?.add(SendScreen.newInstance(paymentURL.address, paymentURL.text, amount))
-            }
+            sendCoin(paymentURL.address, paymentURL.text, amount)
         }
     }
 
@@ -139,7 +131,7 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         supportFragmentManager.commit {
             replace(hostFragmentId, mainFragment, mainFragment.javaClass.name)
             setPrimaryNavigationFragment(mainFragment)
-            if (App.settings.lockScreen && !skipPasscode) {
+            if (App.settings.lockScreen && App.passcode.hasPinCode && !skipPasscode) {
                 add(hostFragmentId, LockScreen.newInstance())
             }
             runOnCommit {

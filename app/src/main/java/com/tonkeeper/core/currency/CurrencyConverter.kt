@@ -1,6 +1,7 @@
 package com.tonkeeper.core.currency
 
 import com.tonkeeper.App
+import com.tonkeeper.api.to
 import com.tonkeeper.core.Coin
 import ton.SupportedCurrency
 import ton.SupportedTokens
@@ -42,6 +43,10 @@ class CurrencyConverter(
         if (fromCurrency == to) {
             return value
         }
+        if (0f >= value) {
+            return 0f
+        }
+
         val rates = CurrencyManager.getInstance().get(accountId)
         val token = rates[fromCurrency] ?: return 0f
         return token.to(to, value)

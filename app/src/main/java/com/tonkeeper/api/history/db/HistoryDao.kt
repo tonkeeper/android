@@ -1,25 +1,23 @@
-package com.tonkeeper.api.event.db
+package com.tonkeeper.api.history.db
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.tonkeeper.api.fromJSON
-import com.tonkeeper.api.jetton.db.JettonEntity
 import io.tonapi.models.AccountEvent
-import io.tonapi.models.JettonBalance
 
 @Dao
-interface EventDao {
+interface HistoryDao {
 
     @Query("DELETE FROM event WHERE accountId = :accountId")
     suspend fun delete(accountId: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(events: List<EventEntity>)
+    suspend fun insert(events: List<HistoryEntity>)
 
     suspend fun insert(accountId: String, events: List<AccountEvent>) {
-        insert(EventEntity.map(accountId, events))
+        insert(HistoryEntity.map(accountId, events))
     }
 
     @Query("SELECT data FROM event WHERE accountId = :accountId ORDER BY timestamp DESC")

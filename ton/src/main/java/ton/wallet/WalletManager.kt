@@ -2,6 +2,7 @@ package ton.wallet
 
 import android.app.Application
 import android.util.Log
+import io.ktor.util.hex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
+import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic
 import ton.wallet.storage.WalletStorage
 
@@ -94,15 +96,30 @@ class WalletManager(
     }
 
     suspend fun getWalletInfo(): Wallet? = withContext(Dispatchers.IO) {
+        /*
+        return@withContext Wallet(
+            id = 999,
+            name = "Debug Wallet",
+            publicKey = PublicKeyEd25519(hex("db642e022c80911fe61f19eb4f22d7fb95c1ea0b589c0f74ecf0cbf6db746c13"))
+        )
+         */
+
         if (cacheWallet != null) {
             return@withContext cacheWallet
         }
 
-        val activeWallet = getActiveWallet()
-        cacheWallet = cacheWallets.find { it.id == activeWallet }
-        if (cacheWallet == null) {
-            cacheWallet = storage.getWallet(activeWallet)
+        val wallets = getWallets()
+        if (wallets.isEmpty()) {
+            return@withContext null
         }
+
+        val activeWallet = getActiveWallet()
+
+        cacheWallet = wallets.find { it.id == activeWallet }
+        if (cacheWallet == null) {
+            cacheWallet = wallets.first()
+        }
+
         cacheWallet
     }
 

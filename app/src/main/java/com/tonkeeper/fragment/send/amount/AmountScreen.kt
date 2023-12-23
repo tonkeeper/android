@@ -14,6 +14,7 @@ import com.tonkeeper.core.transaction.TransactionHelper
 import com.tonkeeper.fragment.send.SendScreenFeature
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonkeeper.fragment.send.popup.SelectTokenPopup
+import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.launch
 import ton.SupportedTokens
 import uikit.extensions.focusWidthKeyboard
@@ -66,6 +67,12 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         continueButton.setOnClickListener { next() }
 
         feature.setValue(0f)
+    }
+
+    fun forceSetJetton(jettonBalance: JettonBalance?) {
+        jettonBalance?.let {
+            feature.selectJetton(it)
+        }
     }
 
     fun forceSetAmount(amount: Float) {

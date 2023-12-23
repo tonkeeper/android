@@ -1,38 +1,22 @@
-package com.tonkeeper.api.event
+package com.tonkeeper.api.history
 
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.base.BaseAccountRepository
-import com.tonkeeper.api.event.db.EventDao
+import com.tonkeeper.api.history.db.HistoryDao
 import com.tonkeeper.api.fromJSON
-import com.tonkeeper.api.withRetry
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.AccountEvent
-import io.tonapi.models.AccountEvents
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-class EventRepository(
+class HistoryRepository(
     private val api: AccountsApi = Tonapi.accounts,
-    private val dao: EventDao = App.db.eventDao()
+    private val dao: HistoryDao = App.db.historyDao()
 ): BaseAccountRepository<AccountEvent>() {
 
-    override suspend fun fromCache(
+    override suspend fun onCacheRequest(
         accountId: String
     ): List<AccountEvent> {
         return dao.get(accountId)
-    }
-
-    suspend fun getByEventId(
-        accountId: String,
-        eventId: String
-    ): AccountEvent? {
-        val data = dao.getByEventId(accountId, eventId)
-        return if (data != null) {
-            fromJSON(data)
-        } else {
-            getSingle(accountId, eventId)
-        }
     }
 
     override fun find(
@@ -44,7 +28,7 @@ class EventRepository(
         }
     }
 
-    override fun fromCloud(
+    override fun onFetchRequest(
         accountId: String
     ): List<AccountEvent> {
         return api.getAccountEvents(
@@ -54,6 +38,7 @@ class EventRepository(
     }
 
     override suspend fun insertCache(accountId: String, items: List<AccountEvent>) {
+        dao.delete(accountId)
         dao.insert(accountId, items)
     }
 }

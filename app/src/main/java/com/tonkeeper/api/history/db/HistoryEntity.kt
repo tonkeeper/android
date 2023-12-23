@@ -1,4 +1,4 @@
-package com.tonkeeper.api.event.db
+package com.tonkeeper.api.history.db
 
 import androidx.room.Entity
 import androidx.room.Index
@@ -12,7 +12,7 @@ import io.tonapi.models.AccountEvent
         Index(value = ["accountId"]),
     ]
 )
-data class EventEntity(
+data class HistoryEntity(
     @PrimaryKey val eventId: String,
     val accountId: String,
     val data: String,
@@ -21,8 +21,8 @@ data class EventEntity(
 
     companion object {
 
-        fun map(accountId: String, list: List<AccountEvent>): List<EventEntity> {
-            return list.map { EventEntity(
+        fun map(accountId: String, list: List<AccountEvent>): List<HistoryEntity> {
+            return list.map { HistoryEntity(
                 accountId = accountId,
                 event = it
             ) }

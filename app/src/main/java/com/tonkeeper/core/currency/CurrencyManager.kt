@@ -1,5 +1,6 @@
 package com.tonkeeper.core.currency
 
+import android.util.Log
 import com.tonkeeper.App
 import com.tonkeeper.core.widget.WidgetBalanceProvider
 import com.tonkeeper.api.address
@@ -9,6 +10,7 @@ import com.tonkeeper.core.widget.Widget
 import com.tonkeeper.core.widget.WidgetRateProvider
 import com.tonkeeper.event.UpdateCurrencyRateEvent
 import core.EventBus
+import io.tonapi.models.TokenRates
 import ton.SupportedCurrency
 import ton.SupportedTokens
 
@@ -35,15 +37,19 @@ class CurrencyManager {
         val wallet = App.walletManager.getWalletInfo() ?: return
         val accountId = wallet.accountId
 
-        val jettons = jettonRepository.get(accountId).map {
-            it.address
-        }
-
-        repository.sync(accountId, jettons)
+        sync(accountId)
 
         EventBus.post(UpdateCurrencyRateEvent)
 
         Widget.updateAll()
+    }
+
+    suspend fun sync(accountId: String) {
+        val jettons = jettonRepository.get(accountId)?.data?.map {
+            it.address
+        } ?: return
+
+        repository.sync(accountId, jettons)
     }
 
     suspend fun get(accountId: String): Rates {
@@ -64,7 +70,7 @@ class CurrencyManager {
         currency: String
     ): String {
         val rates = get(accountId)[token] ?: return ""
-        return rates.diff24h[currency] ?: ""
+        return rates.diff24h?.get(currency) ?: ""
     }
 
     suspend fun getRate7d(
@@ -81,7 +87,7 @@ class CurrencyManager {
         currency: String
     ): String {
         val rates = get(accountId)[token] ?: return ""
-        return rates.diff7d[currency] ?: ""
+        return rates.diff7d?.get(currency) ?: ""
     }
 
     suspend fun getRate(
@@ -98,44 +104,20 @@ class CurrencyManager {
         currency: String
     ): Float {
         val rates = get(accountId)[token] ?: return 0f
-        return rates.prices[currency]?.toFloat() ?: 0f
+        return rates.prices?.get(currency)?.toFloat() ?: 0f
     }
 
     class Rates(
         private val map: Map<String, Any>
     ) {
 
-        operator fun get(token: String): Token? {
-            val value = map[token] as? Map<String, Any> ?: return null
-            return Token(value)
-        }
-    }
-
-    class Token(
-        private val map: Map<String, Any>
-    ) {
-
-        val prices: Map<String, Double> by lazy {
-            map["prices"] as? Map<String, Double> ?: emptyMap()
+        operator fun get(token: String): TokenRates? {
+            return map[token] as? TokenRates
         }
 
-        val diff24h: Map<String, String> by lazy {
-            map["diff_24h"] as? Map<String, String> ?: emptyMap()
+        override fun toString(): String {
+            return map.toString()
         }
-
-        val diff7d: Map<String, String> by lazy {
-            map["diff_7d"] as? Map<String, String> ?: emptyMap()
-        }
-
-        val diff30d: Map<String, String> by lazy {
-            map["diff_30d"] as? Map<String, String> ?: emptyMap()
-        }
-
-        fun to(toCurrency: String, value: Float): Float {
-            val price = prices[toCurrency] ?: return 0f
-            return price.toFloat() * value
-        }
-
     }
 
 

@@ -21,8 +21,10 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/baselineprofile" />
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/localization" />
             <option value="$PROJECT_DIR$/shimmer" />
             <option value="$PROJECT_DIR$/ton" />
             <option value="$PROJECT_DIR$/tonapi" />

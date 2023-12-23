@@ -1,9 +1,9 @@
 package com.tonkeeper.api.account
 
-import androidx.collection.ArrayMap
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.account.db.AccountDao
+import com.tonkeeper.api.base.RepositoryResponse
 import com.tonkeeper.api.withRetry
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.Account
@@ -18,11 +18,6 @@ class AccountRepository(
 
     private val memory = ConcurrentHashMap<String, Account>()
 
-    suspend fun clear(accountId: String) {
-        memory.clear()
-        dao.delete(accountId)
-    }
-
     private fun fromMemory(accountId: String): Account? {
         return memory[accountId]
     }
@@ -33,26 +28,36 @@ class AccountRepository(
         return account
     }
 
-    suspend fun fromCloud(accountId: String): Account {
-        val account = fetch(accountId)
+    private suspend fun fromCloud(accountId: String): Account? {
+        val account = fetch(accountId) ?: return null
         dao.insert(accountId, account)
         memory[accountId] = account
         return account
     }
 
-    private suspend fun fetch(accountId: String): Account {
-        return withRetry { api.getAccount(accountId) }
+    private suspend fun fetch(
+        accountId: String
+    ): Account? = withContext(Dispatchers.IO) {
+        withRetry { api.getAccount(accountId) }
     }
 
-    suspend fun get(accountId: String): Account = withContext(Dispatchers.IO) {
+    suspend fun getFromCloud(accountId: String): RepositoryResponse<Account>? {
+        val account = fromCloud(accountId) ?: return null
+        return RepositoryResponse.cloud(account)
+    }
+
+    suspend fun get(accountId: String): RepositoryResponse<Account>? = withContext(Dispatchers.IO) {
         val memory = fromMemory(accountId)
         if (memory != null) {
-            return@withContext memory
+            return@withContext RepositoryResponse.memory(memory)
         }
         val cache = fromCache(accountId)
         if (cache != null) {
-            return@withContext cache
+            return@withContext RepositoryResponse.cache(cache)
         }
-        return@withContext fromCloud(accountId)
+
+        val cloud = fromCloud(accountId) ?: return@withContext null
+
+        return@withContext RepositoryResponse.cloud(cloud)
     }
 }

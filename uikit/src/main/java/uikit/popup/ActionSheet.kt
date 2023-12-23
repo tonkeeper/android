@@ -13,8 +13,11 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import com.facebook.drawee.view.SimpleDraweeView
 import uikit.R
 import uikit.extensions.dp
+import uikit.extensions.getDimension
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getDrawable
 import uikit.extensions.inflate
+import uikit.extensions.round
 import uikit.list.ListCell
 import uikit.list.ListCell.Companion.drawable
 
@@ -25,6 +28,7 @@ open class ActionSheet(
     private companion object {
         private val singleLineItemHeight = 48.dp
         private val subtitleLineItemHeight = 68.dp
+        private val maxHeight = 220.dp
     }
 
     data class Item(
@@ -42,6 +46,7 @@ open class ActionSheet(
 
     init {
         contentView = context.inflate(R.layout.action_sheet_base)
+        contentView.round(context.getDimensionPixelSize(R.dimen.cornerMedium))
         container = contentView.findViewById(R.id.action_sheet_content)
         width = 196.dp
         isOutsideTouchable = true
@@ -84,9 +89,9 @@ open class ActionSheet(
 
     private fun buildView() {
         container.removeAllViews()
-        height = 0
 
         val backgroundColor = context.getColor(R.color.backgroundContentTint)
+        var popupHeight = 0
 
         for ((index, item) in items.withIndex()) {
             val position = ListCell.getPosition(items.size, index)
@@ -102,8 +107,14 @@ open class ActionSheet(
                 subtitleLineItemHeight
             }
             container.addView(itemView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, itemHeight))
-            height += itemHeight
+            popupHeight += itemHeight
         }
+
+        if (popupHeight > maxHeight) {
+            popupHeight = maxHeight
+        }
+
+        height = popupHeight
     }
 
     private fun createItemView(item: Item): View {

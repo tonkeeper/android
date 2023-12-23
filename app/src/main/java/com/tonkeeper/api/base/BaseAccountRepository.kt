@@ -1,6 +1,5 @@
 package com.tonkeeper.api.base
 
-import android.util.Log
 import com.tonkeeper.api.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -10,44 +9,41 @@ abstract class BaseAccountRepository<Item> {
 
     private val memory = ConcurrentHashMap<String, List<Item>>(100, 1.0f, 2)
 
-    suspend fun clear(accountId: String) {
-        memory.remove(accountId)
-        clearCache(accountId)
+    suspend fun getFromCloud(accountId: String): RepositoryResponse<List<Item>>? {
+        val account = fromCloud(accountId) ?: return null
+        return RepositoryResponse.cloud(account)
     }
 
-    suspend fun getSingle(accountId: String, value: String): Item? {
-        val items = get(accountId)
-        return find(value, items)
-    }
-
-    suspend fun get(
+    open suspend fun get(
         accountId: String
-    ): List<Item> = withContext(Dispatchers.IO) {
+    ): RepositoryResponse<List<Item>>? = withContext(Dispatchers.IO) {
         try {
-            val memory = getFromMemory(accountId)
+            val memory = fromMemory(accountId)
             if (memory != null) {
-                return@withContext memory
+                return@withContext RepositoryResponse.memory(memory)
             }
-            val cache = getFromCache(accountId)
+            val cache = fromCache(accountId)
 
             if (cache != null) {
-                return@withContext cache
+                return@withContext RepositoryResponse.cache(cache)
             }
 
-            return@withContext getFromNetwork(accountId)
+            val cloud = fromCloud(accountId) ?: return@withContext null
+
+            return@withContext RepositoryResponse.cloud(cloud)
         } catch (e: Throwable) {
-            return@withContext emptyList<Item>()
+            return@withContext null
         }
     }
 
-    private fun getFromMemory(accountId: String): List<Item>? {
+    private fun fromMemory(accountId: String): List<Item>? {
         return memory[accountId]
     }
 
-    private suspend fun getFromCache(
+    private suspend fun fromCache(
         accountId: String
     ): List<Item>? {
-        val items = fromCache(accountId)
+        val items = onCacheRequest(accountId)
         if (items.isEmpty()) {
             return null
         }
@@ -55,10 +51,10 @@ abstract class BaseAccountRepository<Item> {
         return items
     }
 
-    private suspend fun getFromNetwork(
+    private suspend fun fromCloud(
         accountId: String
-    ): List<Item> {
-        val items = fetch(accountId)
+    ): List<Item>? {
+        val items = fetch(accountId) ?: return null
         insertCache(accountId, items)
         insertMemory(accountId, items)
         return items
@@ -70,20 +66,18 @@ abstract class BaseAccountRepository<Item> {
 
     private suspend fun fetch(
         accountId: String
-    ): List<Item> {
-        return withRetry {
-            fromCloud(accountId)
+    ): List<Item>? = withContext(Dispatchers.IO) {
+        withRetry {
+            onFetchRequest(accountId)
         }
     }
 
     abstract suspend fun insertCache(accountId: String, items: List<Item>)
 
-    abstract suspend fun fromCache(accountId: String): List<Item>
+    abstract suspend fun onCacheRequest(accountId: String): List<Item>
 
     abstract fun find(value: String, items: List<Item>): Item?
 
-    abstract fun fromCloud(accountId: String): List<Item>
-
-    abstract suspend fun clearCache(accountId: String)
+    abstract fun onFetchRequest(accountId: String): List<Item>
 
 }

@@ -12,11 +12,10 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.content.res.ResourcesCompat
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.extensions.dp
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.sp
-
 
 class TonConnectCryptoView @JvmOverloads constructor(
     context: Context,

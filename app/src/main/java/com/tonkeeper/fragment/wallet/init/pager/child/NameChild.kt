@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.fragment.app.viewModels
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.extensions.launch
 import com.tonkeeper.fragment.wallet.init.InitModel
 import uikit.base.BaseFragment

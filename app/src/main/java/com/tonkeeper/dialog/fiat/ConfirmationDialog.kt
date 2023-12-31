@@ -7,7 +7,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.facebook.drawee.view.SimpleDraweeView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.fiat.models.FiatButton
 import com.tonkeeper.core.fiat.models.FiatItem
 import uikit.base.BaseSheetDialog

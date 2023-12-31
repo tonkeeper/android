@@ -2,7 +2,7 @@ package com.tonkeeper.fragment.chart.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.extensions.colorForChange
 import com.tonkeeper.fragment.chart.list.ChartItem
 

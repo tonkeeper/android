@@ -3,18 +3,19 @@ package com.tonkeeper.core.widget
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.widget.RemoteViews
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.from
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ton.SupportedCurrency
 import ton.SupportedTokens
-import ton.extensions.toUserFriendly
 
 
 class WidgetBalanceProvider: Widget() {
@@ -52,9 +53,11 @@ class WidgetBalanceProvider: Widget() {
                 .value(account.balance)
                 .to(currency)
 
+            val amount = Coin.toCoins(account.balance)
+
             val balance = Balance(
-                tonBalance = Coin.format(value = account.balance),
-                currencyBalance = Coin.format(currency, tonInCurrency),
+                tonBalance = CurrencyFormatter.format(SupportedCurrency.TON.code, amount),
+                currencyBalance = CurrencyFormatter.formatFiat(tonInCurrency),
                 walletAddress = wallet.address.shortAddress
             )
 
@@ -81,7 +84,7 @@ class WidgetBalanceProvider: Widget() {
     ) = withContext(Dispatchers.Main) {
         val removeView = RemoteViews(context.packageName, R.layout.widget_balance)
         removeView.setOnClickPendingIntent(R.id.content, defaultPendingIntent)
-        removeView.setTextViewText(R.id.token, balance.tonBalance + " TON")
+        removeView.setTextViewText(R.id.token, balance.tonBalance)
         removeView.setTextViewText(R.id.currency, balance.currencyBalance)
         removeView.setTextViewText(R.id.address, balance.walletAddress)
         manager.updateAppWidget(id, removeView)

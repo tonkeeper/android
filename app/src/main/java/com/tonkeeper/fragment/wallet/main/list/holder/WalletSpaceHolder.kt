@@ -1,7 +1,7 @@
 package com.tonkeeper.fragment.wallet.main.list.holder
 
 import android.view.ViewGroup
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.wallet.main.list.item.WalletSpaceItem
 
 class WalletSpaceHolder(

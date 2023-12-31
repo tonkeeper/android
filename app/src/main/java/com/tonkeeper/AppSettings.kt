@@ -3,6 +3,8 @@ package com.tonkeeper
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import com.tonkeeper.core.language.AppLanguage
+import com.tonkeeper.core.language.LANGUAGE_DEFAULT
 import com.tonkeeper.extensions.getEnum
 import com.tonkeeper.extensions.putEnum
 import kotlinx.coroutines.Dispatchers
@@ -12,12 +14,14 @@ import uikit.extensions.locale
 
 class AppSettings(context: Context) {
 
-    private companion object {
+    companion object {
+
         private const val NAME = "settings"
         private const val CURRENCY_KEY = "currency"
         private const val LOCK_SCREEN_KEY = "lock_screen"
         private const val BIOMETRIC_KEY = "biometric"
         private const val COUNTRY_KEY = "country"
+        private const val LANGUAGE_KEY = "language"
     }
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -27,6 +31,16 @@ class AppSettings(context: Context) {
             if (field != value) {
                 prefs.edit().putEnum(CURRENCY_KEY, value).apply()
                 field = value
+            }
+        }
+
+    var language: AppLanguage = prefs.getString(LANGUAGE_KEY, LANGUAGE_DEFAULT)!!
+        set(value) {
+            if (value != field) {
+                field = value.ifEmpty {
+                    LANGUAGE_DEFAULT
+                }
+                prefs.edit().putString(LANGUAGE_KEY, field).apply()
             }
         }
 
@@ -54,3 +68,4 @@ class AppSettings(context: Context) {
             }
         }
 }
+

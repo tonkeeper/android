@@ -2,13 +2,9 @@ package com.tonkeeper.fragment.send.popup
 
 import android.content.Context
 import android.net.Uri
-import com.tonkeeper.R
 import com.tonkeeper.api.parsedBalance
-import com.tonkeeper.api.shortAddress
-import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import io.tonapi.models.JettonBalance
-import io.tonapi.models.JettonPreview
-import ton.SupportedTokens
 import uikit.extensions.textWithLabel
 import uikit.popup.ActionSheet
 
@@ -43,7 +39,7 @@ class SelectTokenPopup(context: Context): ActionSheet(context) {
         clearItems()
         for ((index, jetton) in jettons.withIndex()) {
             val info = jetton.jetton
-            val format = Coin.format(value = jetton.parsedBalance, decimals = Coin.MAX_DECIMALS)
+            val format = CurrencyFormatter.format(value = jetton.parsedBalance)
             val title = context.textWithLabel(info.symbol, format)
             val selected = jetton == selectedJetton
             addItem(

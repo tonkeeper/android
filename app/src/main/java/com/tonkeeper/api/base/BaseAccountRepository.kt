@@ -55,8 +55,9 @@ abstract class BaseAccountRepository<Item> {
         accountId: String
     ): List<Item>? {
         val items = fetch(accountId) ?: return null
-        insertCache(accountId, items)
         insertMemory(accountId, items)
+        deleteCache(accountId)
+        insertCache(accountId, items)
         return items
     }
 
@@ -73,6 +74,8 @@ abstract class BaseAccountRepository<Item> {
     }
 
     abstract suspend fun insertCache(accountId: String, items: List<Item>)
+
+    abstract suspend fun deleteCache(accountId: String)
 
     abstract suspend fun onCacheRequest(accountId: String): List<Item>
 

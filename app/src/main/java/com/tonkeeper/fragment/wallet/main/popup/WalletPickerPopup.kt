@@ -2,14 +2,15 @@ package com.tonkeeper.fragment.wallet.main.popup
 
 import android.content.Context
 import android.view.View
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.fragment.settings.accounts.AccountsScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ton.wallet.Wallet
 import ton.wallet.WalletManager
+import uikit.extensions.dp
 import uikit.extensions.getDrawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.popup.ActionSheet
@@ -26,7 +27,10 @@ class WalletPickerPopup(
     private val walletManager: WalletManager
         get() = App.walletManager
 
+    override val maxHeight: Int = 400.dp
+
     init {
+
         doOnItemClick = {
             if (it.id == SET_UP_WALLET_ID) {
                 navigation?.add(AccountsScreen.newInstance())
@@ -42,9 +46,9 @@ class WalletPickerPopup(
             return
         }
 
-        for ((index, wallet) in wallets.withIndex()) {
+        for (wallet in wallets) {
             val title = if (wallet.name.isNullOrEmpty()) {
-                "Wallet ${index + 1}"
+                "Wallet ${wallet.address.shortAddress}"
             } else {
                 wallet.name!!
             }

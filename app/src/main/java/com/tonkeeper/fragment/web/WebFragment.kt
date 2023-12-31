@@ -11,7 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.ContentLoadingProgressBar
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
 
 class WebFragment: BaseFragment(R.layout.fragment_web) {
@@ -55,6 +55,8 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
         progressBar = view.findViewById(R.id.progress_bar)
 
         webView = view.findViewById(R.id.web_view)
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        webView.settings.domStorageEnabled = true
         webView.settings.javaScriptEnabled = true
         webView.settings.loadWithOverviewMode = true
         webView.settings.useWideViewPort = true

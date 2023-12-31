@@ -1,6 +1,7 @@
 package com.tonkeeper.dialog.fiat.list
 
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.core.fiat.models.FiatItem
 import uikit.list.BaseListHolder
 import uikit.list.BaseListItem
@@ -24,5 +25,10 @@ class MethodAdapter(
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return MethodHolder(parent, onClick)
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerView.setHasFixedSize(false)
     }
 }

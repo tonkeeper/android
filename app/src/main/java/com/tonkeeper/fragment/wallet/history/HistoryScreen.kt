@@ -3,15 +3,13 @@ package com.tonkeeper.fragment.wallet.history
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.history.list.HistoryAdapter
 import com.tonkeeper.dialog.fiat.FiatDialog
 import com.tonkeeper.extensions.launch
 import com.tonkeeper.extensions.receive
 import com.tonkeeper.fragment.main.MainTabScreen
-import com.tonkeeper.fragment.receive.ReceiveScreen
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
@@ -68,6 +66,7 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
             toggleVisibilityAnimation(shimmerView, emptyView)
         } else if (state.items.isNotEmpty()) {
             adapter.submitList(state.items) {
+                emptyView.visibility = View.GONE
                 toggleVisibilityAnimation(shimmerView, listView)
             }
         }
@@ -76,7 +75,7 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
     override fun newUiEffect(effect: HistoryScreenEffect) {
         super.newUiEffect(effect)
         if (effect == HistoryScreenEffect.UpScroll) {
-            onUpScroll()
+            upScroll()
         }
     }
 

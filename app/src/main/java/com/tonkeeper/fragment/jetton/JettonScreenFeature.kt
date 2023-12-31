@@ -7,12 +7,11 @@ import com.tonkeeper.api.address
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.withRetry
-import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.history.list.item.HistoryItem
-import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,8 +45,8 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
                 it.copy(
                     asyncState = AsyncState.Default,
                     jetton = jetton,
-                    currencyBalance = Coin.format(currency, currencyBalance),
-                    rateFormat = Coin.format(currency, rate),
+                    currencyBalance = CurrencyFormatter.formatFiat(currencyBalance),
+                    rateFormat = CurrencyFormatter.formatRate(currency.code, rate),
                     rate24h = rate24h,
                     historyItems = historyItems
                 )

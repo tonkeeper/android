@@ -4,12 +4,12 @@ import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.account.AccountRepository
-import com.tonkeeper.api.address
 import com.tonkeeper.api.chart.ChartHelper
 import com.tonkeeper.api.chart.ChartPeriod
-import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.withRetry
+import com.tonkeeper.api.withTON
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.history.HistoryHelper
@@ -17,7 +17,6 @@ import com.tonkeeper.core.history.list.item.HistoryItem
 import core.QueueScope
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
 import ton.SupportedTokens
@@ -40,21 +39,21 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
             val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val accountId = wallet.accountId
             val account = accountRepository.get(accountId)?.data ?: return@submit
-            val balance = account.balance
+            val balance = Coin.toCoins(account.balance)
             val currencyBalance = from(SupportedTokens.TON, accountId).value(balance).to(currency)
 
             val rate = currencyManager.getRate(accountId, SupportedTokens.TON, currency)
             val rate24h = currencyManager.getRate24h(accountId, SupportedTokens.TON, currency)
 
-            val chart = ChartHelper.getEntity(ChartPeriod.week)
+            val chart = ChartHelper.getEntity(uiState.value.chartPeriod)
             val historyItems = getEvents(wallet)
 
             updateUiState {
                 it.copy(
                     asyncState = AsyncState.Default,
-                    balance = Coin.format(value = balance, decimals = 12),
-                    currencyBalance = Coin.format(currency, currencyBalance),
-                    rateFormat = Coin.format(currency, rate),
+                    balance = CurrencyFormatter.format(SupportedCurrency.TON.code, balance),
+                    currencyBalance = CurrencyFormatter.formatFiat(currencyBalance),
+                    rateFormat = CurrencyFormatter.formatRate(currency.code, rate),
                     rate24h = rate24h,
                     historyItems = historyItems,
                     chart = chart
@@ -69,7 +68,8 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
 
             updateUiState {
                 it.copy(
-                    chart = chart
+                    chart = chart,
+                    chartPeriod = period
                 )
             }
         }
@@ -79,8 +79,10 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
         wallet: Wallet
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val accountId = wallet.accountId
-        val events = getAccountEvent(accountId) ?: return@withContext emptyList()
-        HistoryHelper.mapping(wallet, events)
+        val events = getAccountEvent(accountId)?.events ?: return@withContext emptyList()
+        HistoryHelper.mapping(wallet, events.filter {
+            it.withTON
+        })
     }
 
     private suspend fun getAccountEvent(accountId: String): AccountEvents? {

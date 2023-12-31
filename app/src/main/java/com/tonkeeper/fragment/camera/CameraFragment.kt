@@ -12,8 +12,8 @@ import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.root.RootActivity
-import com.tonkeeper.R
 import org.ton.block.AddrStd
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView

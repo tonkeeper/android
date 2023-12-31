@@ -16,7 +16,7 @@ class BaselineProfileGenerator {
 
     @Test
     fun generate() {
-        rule.collect("com.tonkeeper") {
+        rule.collect("com.tonapps.tonkeeperx") {
             pressHome()
             startActivityAndWait()
         }

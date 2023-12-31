@@ -2,8 +2,8 @@ package com.tonkeeper.fragment.settings.accounts.popup
 
 import android.content.Context
 import android.view.View
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.dialog.LogoutDialog
 import com.tonkeeper.dialog.WalletRenameDialog
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsWalletItem

@@ -10,6 +10,7 @@ import com.tonkeeper.api.base.BaseBlobRepository
 import com.tonkeeper.api.fromJSON
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.toJSON
+import com.tonkeeper.api.withRetry
 import io.tonapi.apis.RatesApi
 import io.tonapi.models.GetRates200Response
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,7 @@ class RatesRepository(
     suspend fun sync(
         accountId: String,
         jettons: List<String>
-    ): GetRates200Response {
+    ): GetRates200Response? {
         val tokens = jettons + SupportedTokens.entries.map {
             it.code
         }
@@ -39,7 +40,8 @@ class RatesRepository(
         val response = fromCloud(
             tokens = tokens,
             currency = currency
-        )
+        ) ?: return null
+
 
         setMemory(accountId, response)
 
@@ -51,7 +53,7 @@ class RatesRepository(
         return response
     }
 
-    suspend fun get(accountId: String): GetRates200Response {
+    suspend fun get(accountId: String): GetRates200Response? {
         val cache = fromCache(accountId)
         if (cache != null) {
             return cache
@@ -62,7 +64,7 @@ class RatesRepository(
     private suspend fun fromCloud(
         tokens: List<String>,
         currency: List<String>
-    ): GetRates200Response {
+    ): GetRates200Response? {
         return fromCloud(
             tokens = tokens.joinToString(","),
             currency = currency.joinToString(",")
@@ -72,11 +74,13 @@ class RatesRepository(
     private suspend fun fromCloud(
         tokens: String,
         currency: String
-    ): GetRates200Response = withContext(Dispatchers.IO) {
-       api.getRates(
-            tokens = tokens,
-            currencies = currency
-        )
+    ): GetRates200Response? = withContext(Dispatchers.IO) {
+       withRetry {
+           api.getRates(
+               tokens = tokens,
+               currencies = currency
+           )
+       }
     }
 
     override fun onParse(

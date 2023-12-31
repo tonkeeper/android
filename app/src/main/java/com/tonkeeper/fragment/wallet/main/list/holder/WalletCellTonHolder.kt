@@ -6,9 +6,8 @@ import android.text.style.ForegroundColorSpan
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.ColorInt
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.chart.ChartScreen
-import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletTonCellItem
 
 class WalletCellTonHolder(

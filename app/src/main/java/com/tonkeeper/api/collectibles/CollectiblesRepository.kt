@@ -20,6 +20,10 @@ class CollectiblesRepository(
         return fromJSON(data)
     }
 
+    override suspend fun deleteCache(accountId: String) {
+        dao.delete(accountId)
+    }
+
     override suspend fun onCacheRequest(
         accountId: String
     ): List<NftItem> {
@@ -41,6 +45,7 @@ class CollectiblesRepository(
         return api.getAccountNftItems(
             accountId = accountId,
             limit = 100,
+            indirectOwnership = true,
         ).nftItems
     }
 

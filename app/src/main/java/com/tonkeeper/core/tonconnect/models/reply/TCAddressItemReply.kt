@@ -14,8 +14,8 @@ class TCAddressItemReply(
         json.put("name", name)
         json.put("address", address)
         json.put("network", network)
-        json.put("wallet_state_init", walletStateInit)
-        json.put("public_key", publicKey)
+        json.put("walletStateInit", walletStateInit)
+        json.put("publicKey", publicKey)
         return json
     }
 

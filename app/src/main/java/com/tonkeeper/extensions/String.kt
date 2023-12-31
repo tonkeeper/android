@@ -18,3 +18,17 @@ val String.colorForChange: Int
             else -> uikit.R.color.textSecondary
         }
     }
+
+val String.capitalized: String
+    get() {
+        return if (isNotEmpty()) {
+            val first = this[0].uppercase()
+            if (length > 1) {
+                first + substring(1)
+            } else {
+                first
+            }
+        } else {
+            ""
+        }
+    }

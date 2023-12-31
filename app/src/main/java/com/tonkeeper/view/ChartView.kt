@@ -20,14 +20,17 @@ class ChartView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : View(context, attrs, defStyle) {
 
-    var data = listOf(ChartEntity(0, 0f))
-        set(value) {
-            field = value
-            doOnLayout {
-                buildPath()
-                invalidate()
-            }
+    private var data = listOf(ChartEntity(0, 0f))
+    private var square = false
+
+    fun setData(data: List<ChartEntity>, square: Boolean) {
+        this.data = data
+        this.square = square
+        doOnLayout {
+            buildPath()
+            invalidate()
         }
+    }
 
     private val accentColor = context.getColor(uikit.R.color.accentBlue)
 
@@ -42,10 +45,6 @@ class ChartView @JvmOverloads constructor(
     private val gradientPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = accentColor
         style = Paint.Style.FILL
-    }
-
-    init {
-        buildPath()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -81,9 +80,13 @@ class ChartView @JvmOverloads constructor(
 
         for (i in 0 until scaledData.size - 1) {
             val currentPoint = scaledData[i]
-            val nextPoint = scaledData[i + 1]
-            path.lineTo(nextPoint.first, currentPoint.second)
-            path.lineTo(nextPoint.first, nextPoint.second)
+            if (square) {
+                val nextPoint = scaledData[i + 1]
+                path.lineTo(nextPoint.first, currentPoint.second)
+                path.lineTo(nextPoint.first, nextPoint.second)
+            } else {
+                path.lineTo(currentPoint.first, currentPoint.second)
+            }
         }
 
         path.lineTo(scaledData.last().first, viewHeight)

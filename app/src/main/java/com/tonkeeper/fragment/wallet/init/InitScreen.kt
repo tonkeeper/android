@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.extensions.launch
 import com.tonkeeper.fragment.wallet.init.pager.PagerAdapter
 import kotlinx.coroutines.flow.filter

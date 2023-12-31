@@ -11,6 +11,7 @@ enum class SupportedCurrency(
     EUR("EUR"),
     RUB("RUB"),
     AED("AED"),
+    KZT("KZT"),
     UAH("UAH"),
     UZS("UZS"),
     GBP("GBP"),
@@ -21,5 +22,4 @@ enum class SupportedCurrency(
     INR("INR"),
     JPY("JPY"),
     TON("TON"),
-    // BTC("BTC");
 }

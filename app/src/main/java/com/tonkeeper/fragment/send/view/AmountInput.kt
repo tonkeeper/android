@@ -2,6 +2,7 @@ package com.tonkeeper.fragment.send.view
 
 import android.content.Context
 import android.text.Editable
+import android.text.InputFilter
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -51,4 +52,7 @@ class AmountInput @JvmOverloads constructor(
         }
     }
 
+    fun setMaxLength(maxLength: Int) {
+        filters = arrayOf(InputFilter.LengthFilter(maxLength))
+    }
 }

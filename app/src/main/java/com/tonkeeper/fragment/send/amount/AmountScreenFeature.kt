@@ -9,6 +9,7 @@ import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.symbol
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.from
 import core.QueueScope
 import io.tonapi.models.JettonBalance
@@ -72,6 +73,7 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
         updateUiState {
             it.copy(
                 selectedJetton = jettonBalance,
+                decimals = jettonBalance.jetton.decimals,
                 canContinue = false,
             )
         }
@@ -92,25 +94,18 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
         val insufficientBalance = newValue > currentBalance
         var remaining = ""
         if (newValue > 0) {
-            remaining = Coin.format(
-                currency = currentTokenCode,
-                value = currentBalance - newValue,
-                useCurrencyCode = true,
-            )
+            val value = currentBalance - newValue
+            remaining = CurrencyFormatter.format(currentTokenCode, value)
         }
 
         updateUiState { currentState ->
             currentState.copy(
-                rate = Coin.format(currency, balanceInCurrency, true),
+                rate = CurrencyFormatter.formatFiat(balanceInCurrency),
                 insufficientBalance = insufficientBalance,
                 remaining = remaining,
                 canContinue = !insufficientBalance && currentBalance > 0 && newValue > 0,
                 maxActive = currentBalance == newValue,
-                available = Coin.format(
-                    currency = currentTokenCode,
-                    value = currentBalance,
-                    useCurrencyCode = true,
-                )
+                available = CurrencyFormatter.format(currentTokenCode, currentBalance)
             )
         }
     }

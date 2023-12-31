@@ -1,8 +1,8 @@
 package com.tonkeeper.core.deeplink
 
 import android.net.Uri
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.root.RootActivity
-import com.tonkeeper.R
 import com.tonkeeper.fragment.main.MainFragment
 import uikit.extensions.findFragment
 

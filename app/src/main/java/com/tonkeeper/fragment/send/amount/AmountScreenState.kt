@@ -18,7 +18,8 @@ data class AmountScreenState(
     val canContinue: Boolean = false,
     val maxActive: Boolean = false,
     val jettons: List<JettonBalance> = emptyList(),
-    val selectedJetton: JettonBalance? = null
+    val selectedJetton: JettonBalance? = null,
+    val decimals: Int = 9
 ): UiState() {
 
     val selectedToken: String

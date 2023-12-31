@@ -26,6 +26,11 @@ class NftScreenFeature: UiFeature<NftScreenState, NftScreenEffect>(NftScreenStat
         viewModelScope.launch {
             val nftItem = getNft(nftAddress)
 
+            if (nftItem == null) {
+                sendEffect(NftScreenEffect.FailedLoad)
+                return@launch
+            }
+
             updateUiState { currentState ->
                 currentState.copy(
                     asyncState = AsyncState.Default,
@@ -37,7 +42,7 @@ class NftScreenFeature: UiFeature<NftScreenState, NftScreenEffect>(NftScreenStat
 
     private suspend fun getNft(
         address: String
-    ): NftItem = withContext(Dispatchers.IO) {
+    ): NftItem? = withContext(Dispatchers.IO) {
         val nftItem = collectiblesRepository.getNftItemCache(address)
         nftItem ?: nftRepository.getItem(address)
     }

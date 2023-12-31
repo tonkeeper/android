@@ -2,7 +2,7 @@ package com.tonkeeper.fragment.settings.legal
 
 import android.os.Bundle
 import android.view.View
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.settings.list.item.SettingsIconItem
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
 import com.tonkeeper.fragment.settings.list.item.SettingsItem

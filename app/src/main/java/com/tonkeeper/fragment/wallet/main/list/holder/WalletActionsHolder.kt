@@ -2,14 +2,11 @@ package com.tonkeeper.fragment.wallet.main.list.holder
 
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.findViewTreeViewModelStoreOwner
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.dialog.fiat.FiatDialog
-import com.tonkeeper.extensions.openCamera
 import com.tonkeeper.extensions.receive
 import com.tonkeeper.extensions.sendCoin
 import com.tonkeeper.fragment.wallet.main.list.item.WalletActionItem
-import uikit.navigation.Navigation.Companion.navigation
 
 class WalletActionsHolder(
     parent: ViewGroup

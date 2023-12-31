@@ -1,11 +1,13 @@
 package com.tonkeeper.fragment.settings.main
 
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeperx.BuildConfig
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.BuildConfig
-import com.tonkeeper.R
+import com.tonkeeper.PasscodeManager
 import com.tonkeeper.api.internal.repositories.KeysRepository
 import com.tonkeeper.core.currency.CurrencyUpdateWorker
+import com.tonkeeper.core.language.name
 import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.fragment.settings.list.item.SettingsIconItem
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
@@ -14,9 +16,7 @@ import com.tonkeeper.fragment.settings.list.item.SettingsLogoItem
 import com.tonkeeper.fragment.settings.list.item.SettingsTextItem
 import core.EventBus
 import uikit.mvi.UiFeature
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import uikit.list.ListCell
 
 class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect>(SettingsScreenState()) {
@@ -45,6 +45,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
     fun logout() {
         viewModelScope.launch {
             App.walletManager.logout()
+            App.passcode.clearPinCode()
             CurrencyUpdateWorker.disable()
             sendEffect(SettingsScreenEffect.Logout)
         }
@@ -65,7 +66,13 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             id = SettingsIdItem.CURRENCY_ID,
             titleRes = R.string.currency,
             data = App.settings.currency.code,
-            position = ListCell.Position.SINGLE
+            position = ListCell.Position.FIRST
+        ))
+        items.add(SettingsTextItem(
+            id = SettingsIdItem.LANGUAGE_ID,
+            titleRes = R.string.language,
+            data = App.settings.language.name,
+            position = ListCell.Position.LAST
         ))
 
         items.add(SettingsIconItem(

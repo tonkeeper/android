@@ -28,6 +28,7 @@ import uikit.extensions.getSpannable
 import uikit.extensions.statusBarHeight
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomSheetLayout
+import uikit.widget.ModalView
 import uikit.widget.SwipeBackLayout
 import java.util.concurrent.Executor
 
@@ -48,6 +49,10 @@ open class BaseFragment(
         fun onEndShowingAnimation() {
 
         }
+    }
+
+    interface Modal {
+
     }
 
     val window: Window?
@@ -86,6 +91,9 @@ open class BaseFragment(
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = super.onCreateView(inflater, container, savedInstanceState)!!
+        if (this is Modal) {
+            return onCreateModal(inflater.context, view)
+        }
         view.setBackgroundResource(R.color.backgroundPage)
         if (this is SwipeBack) {
             return onCreateSwipeBack(inflater.context, view)
@@ -93,6 +101,13 @@ open class BaseFragment(
             return onCreateBottomSheet(inflater.context, view)
         }
         return view
+    }
+
+    private fun onCreateModal(context: Context, view: View): ModalView {
+        val modalView = ModalView(context)
+        modalView.setContentView(view)
+        modalView.doOnHide = { finishInternal() }
+        return modalView
     }
 
     private fun onCreateSwipeBack(context: Context, view: View): SwipeBackLayout {
@@ -146,6 +161,9 @@ open class BaseFragment(
                     finishInternal()
                 }
             }
+            is ModalView -> {
+                view.hide()
+            }
             else -> finishInternal()
         }
     }
@@ -159,6 +177,7 @@ open class BaseFragment(
         if (secure) {
             window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
+        (view as? ModalView)?.show()
     }
 
     override fun onPause() {

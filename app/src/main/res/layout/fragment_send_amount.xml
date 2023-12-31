@@ -44,7 +44,6 @@
                     android:singleLine="true"
                     android:inputType="numberDecimal"
                     android:fontFamily="@font/montserrat_semi_bold"
-                    android:maxLength="6"
                     android:textColor="@color/textPrimary"
                     android:textCursorDrawable="@drawable/cursor"
                     android:gravity="center_vertical"

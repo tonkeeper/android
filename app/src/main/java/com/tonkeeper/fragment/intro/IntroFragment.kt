@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.intro
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.wallet.init.InitScreen
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation

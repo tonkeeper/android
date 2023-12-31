@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.passcode.create.pager
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.extensions.inflate
 import uikit.widget.PinInputView
 

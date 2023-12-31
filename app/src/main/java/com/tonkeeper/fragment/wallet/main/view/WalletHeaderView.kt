@@ -3,9 +3,8 @@ package com.tonkeeper.fragment.wallet.main.view
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import android.util.Log
 import com.google.android.material.appbar.CollapsingToolbarLayout
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.extensions.dp
 import uikit.extensions.getColor
 import uikit.extensions.getDrawable

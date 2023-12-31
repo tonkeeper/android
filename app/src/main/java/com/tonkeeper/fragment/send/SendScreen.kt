@@ -1,11 +1,10 @@
 package com.tonkeeper.fragment.send
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.fromJSON
 import com.tonkeeper.api.toJSON
 import com.tonkeeper.extensions.openCamera

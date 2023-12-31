@@ -1,11 +1,10 @@
 package com.tonkeeper.fragment.settings.accounts
 
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsActionItem
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsItem
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsWalletItem
 import ton.wallet.Wallet
-import ton.wallet.WalletInfo
 import uikit.list.ListCell
 import uikit.mvi.UiState
 

@@ -4,16 +4,16 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.passcode.create.pager.InputAdapter
 import com.tonkeeper.fragment.passcode.create.pager.InputHolder
 import com.tonkeeper.fragment.passcode.create.pager.InputType
 import uikit.widget.NumPadView
 import uikit.extensions.findViewHolderForAdapterPosition
 import uikit.mvi.UiScreen
-import uikit.widget.HeaderView
 
-open class PasscodeCreateScreen: UiScreen<PasscodeCreateScreenState, PasscodeCreateScreenEffect, PasscodeCreateScreenFeature>(R.layout.fragment_passcode_create) {
+open class PasscodeCreateScreen: UiScreen<PasscodeCreateScreenState, PasscodeCreateScreenEffect, PasscodeCreateScreenFeature>(
+    R.layout.fragment_passcode_create) {
 
     companion object {
         fun newInstance() = PasscodeCreateScreen()

@@ -9,39 +9,34 @@ plugins {
 }
 
 android {
-    namespace = "com.tonkeeper"
+    namespace = "com.tonapps.tonkeeperx"
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        applicationId = "com.tonkeeper"
+        applicationId = "com.tonapps.tonkeeperx"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 9
-        versionName = "0.0.9-beta"
+        versionCode = 15
+        versionName = "0.0.15"
     }
 
     buildFeatures {
         buildConfig = true
     }
 
-    /*signingConfigs {
-        getByName("release") {
-            storeFile = file("release.keystore")
-            storePassword = "KonG6429Z1SF"
-            keyAlias = "tonkeeper"
-            keyPassword = "KonG6429Z1SF"
-        }
-    }*/
-
     buildTypes {
         release {
-            // signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
     }
 

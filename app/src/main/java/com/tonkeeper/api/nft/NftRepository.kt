@@ -5,6 +5,7 @@ import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.fromJSON
 import com.tonkeeper.api.nft.db.NftDao
 import com.tonkeeper.api.nft.db.NftEntity
+import com.tonkeeper.api.withRetry
 import io.tonapi.apis.NFTApi
 import io.tonapi.models.NftItem
 import kotlinx.coroutines.Dispatchers
@@ -17,12 +18,12 @@ class NftRepository(
 
     suspend fun getItem(
         address: String
-    ): NftItem = withContext(Dispatchers.IO) {
+    ): NftItem? = withContext(Dispatchers.IO) {
         val cached = fromCache(address)
         if (cached != null) {
             return@withContext cached
         }
-        val cloud = fromCloud(address)
+        val cloud = fromCloud(address) ?: return@withContext null
         dao.insert(NftEntity(cloud))
         cloud
     }
@@ -35,7 +36,9 @@ class NftRepository(
 
     private suspend fun fromCloud(
         address: String
-    ): NftItem = withContext(Dispatchers.IO) {
-        api.getNftItemByAddress(address)
+    ): NftItem? = withContext(Dispatchers.IO) {
+        withRetry {
+            api.getNftItemByAddress(address)
+        }
     }
 }

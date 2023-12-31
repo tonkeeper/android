@@ -3,13 +3,13 @@ package com.tonkeeper.fragment.passcode.lock
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.commitNow
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
 import com.tonkeeper.PasscodeManager
-import com.tonkeeper.R
 import kotlinx.coroutines.delay
 import uikit.widget.NumPadView
 import kotlinx.coroutines.launch
@@ -138,6 +138,7 @@ class LockScreen: BaseFragment(R.layout.fragment_passcode) {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.app_name))
             .setNegativeButtonText(getString(R.string.cancel))
+            .setConfirmationRequired(false)
             .build()
 
         biometricPrompt.authenticate(promptInfo)

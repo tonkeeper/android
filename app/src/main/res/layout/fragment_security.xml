@@ -59,6 +59,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetMedium"
+                android:visibility="gone"
                 app:position="first"
                 android:text="@string/change_passcode"
                 android:icon="@drawable/ic_lock_28"/>
@@ -67,6 +68,7 @@
                 android:id="@+id/reset_passcode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 app:position="last"
                 android:text="@string/reset_passcode"
                 android:icon="@drawable/ic_arrow_2_circlepath_28"/>

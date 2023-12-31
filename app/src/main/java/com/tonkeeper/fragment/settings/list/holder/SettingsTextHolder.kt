@@ -4,6 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.fragment.settings.list.item.SettingsItem
 import com.tonkeeper.fragment.settings.list.item.SettingsTextItem
+import uikit.list.ListCell.Companion.drawable
 import uikit.widget.item.ItemTextView
 
 class SettingsTextHolder(
@@ -21,6 +22,7 @@ class SettingsTextHolder(
     }
 
     override fun onBind(item: SettingsTextItem) {
+        itemView.background = item.position.drawable(context)
         view.setOnClickListener { onClick?.invoke(item) }
         view.text = getString(item.titleRes)
         view.data = item.data

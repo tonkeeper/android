@@ -2,7 +2,6 @@ package com.tonkeeper.fragment.receive
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
@@ -10,8 +9,8 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.viewModels
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.Global
-import com.tonkeeper.R
 import com.tonkeeper.api.fromJSON
 import com.tonkeeper.api.toJSON
 import com.tonkeeper.extensions.copyToClipboard

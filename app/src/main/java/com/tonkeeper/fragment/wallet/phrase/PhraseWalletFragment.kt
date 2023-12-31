@@ -4,8 +4,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import uikit.widget.PhraseWords
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment

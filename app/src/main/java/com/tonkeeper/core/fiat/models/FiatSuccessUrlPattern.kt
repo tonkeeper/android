@@ -3,7 +3,7 @@ package com.tonkeeper.core.fiat.models
 import org.json.JSONObject
 
 data class FiatSuccessUrlPattern(
-    val pattern: String,
+    val pattern: String?,
     val purchaseIdIndex: Int
 ): BaseFiat() {
 
@@ -12,7 +12,7 @@ data class FiatSuccessUrlPattern(
     )
 
     constructor(json: JSONObject) : this(
-        pattern = json.getString("pattern"),
+        pattern = json.optString("pattern", null),
         purchaseIdIndex = json.optInt("purchaseIdIndex", 0)
     )
 

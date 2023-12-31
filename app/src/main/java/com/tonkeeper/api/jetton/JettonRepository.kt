@@ -35,6 +35,10 @@ class JettonRepository(
         )
     }
 
+    override suspend fun deleteCache(accountId: String) {
+        dao.delete(accountId)
+    }
+
     suspend fun getByAddress(
         accountId: String,
         address: String

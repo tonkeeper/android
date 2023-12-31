@@ -46,11 +46,8 @@ class BackHeaderView @JvmOverloads constructor(
         }
     }
 
-    fun bindContentPadding(view: View) {
-        view.setPaddingTop(measuredHeight)
-        doOnNextLayout {
-            view.setPaddingTop(measuredHeight)
-        }
+    fun setTitle(title: String) {
+        titleView.text = title
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

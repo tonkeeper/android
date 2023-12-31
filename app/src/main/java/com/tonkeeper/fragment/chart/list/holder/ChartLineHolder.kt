@@ -1,7 +1,8 @@
 package com.tonkeeper.fragment.chart.list.holder
 
 import android.view.ViewGroup
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
+import com.tonkeeper.api.chart.ChartPeriod
 import com.tonkeeper.fragment.chart.list.ChartItem
 import com.tonkeeper.view.ChartView
 
@@ -12,7 +13,7 @@ class ChartLineHolder(
     private val chartView = findViewById<ChartView>(R.id.chart)
 
     override fun onBind(item: ChartItem.Chart) {
-        chartView.data = item.data
+        chartView.setData(item.data, item.period == ChartPeriod.hour)
     }
 
 }

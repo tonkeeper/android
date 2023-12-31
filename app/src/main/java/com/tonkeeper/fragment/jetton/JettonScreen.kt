@@ -2,28 +2,20 @@ package com.tonkeeper.fragment.jetton
 
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.facebook.drawee.view.SimpleDraweeView
-import com.tonkeeper.R
-import com.tonkeeper.api.parsedBalance
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.history.list.HistoryAdapter
 import com.tonkeeper.extensions.launch
-import com.tonkeeper.extensions.rateSpannable
-import com.tonkeeper.extensions.sendCoin
 import com.tonkeeper.fragment.jetton.list.JettonAdapter
 import com.tonkeeper.fragment.jetton.list.JettonItemDecoration
-import com.tonkeeper.fragment.receive.ReceiveScreen
-import io.tonapi.models.JettonBalance
 import uikit.base.BaseFragment
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScreenFeature>(R.layout.fragment_jetton), BaseFragment.SwipeBack {

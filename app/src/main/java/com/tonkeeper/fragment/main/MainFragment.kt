@@ -2,18 +2,23 @@ package com.tonkeeper.fragment.main
 
 import android.os.Bundle
 import android.view.View
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.core.currency.CurrencyUpdateWorker
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.widget.Widget
+import com.tonkeeper.event.RequestActionEvent
+import com.tonkeeper.fragment.action.ConfirmActionFragment
 import com.tonkeeper.fragment.wallet.collectibles.CollectiblesScreen
 import com.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonkeeper.fragment.settings.main.SettingsScreen
 import com.tonkeeper.fragment.wallet.main.WalletScreen
+import core.EventBus
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomTabsView
 
 class MainFragment: BaseFragment(R.layout.fragment_main) {
@@ -31,6 +36,13 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         )
     }
 
+    private val requestActionEvent = fun (event: RequestActionEvent) {
+        post {
+            val fragment = ConfirmActionFragment.newInstance(event.transaction)
+            navigation?.add(fragment)
+        }
+    }
+
     private var currentFragment: BaseFragment? = null
 
     private lateinit var bottomTabsView: BottomTabsView
@@ -44,14 +56,21 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         super.onViewCreated(view, savedInstanceState)
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
         bottomTabsView.doOnClick = { itemId ->
-            setFragment(itemId)
+            setFragment(itemId, false)
         }
-        setFragment(R.id.wallet)
+        setFragment(R.id.wallet, false)
 
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
             HistoryHelper.subscribe(lifecycleScope, wallet.accountId)
         }
+
+        EventBus.subscribe(RequestActionEvent::class.java, requestActionEvent)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        EventBus.unsubscribe(RequestActionEvent::class.java, requestActionEvent)
     }
 
     private fun fragmentByItemId(itemId: Int): BaseFragment {
@@ -60,10 +79,10 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
     fun forceSelectTab(itemId: Int) {
         bottomTabsView.setItemChecked(itemId)
-        setFragment(itemId)
+        setFragment(itemId, true)
     }
 
-    private fun setFragment(itemId: Int) {
+    private fun setFragment(itemId: Int, scrollUp: Boolean) {
         val tag = itemId.toString()
         val isAlreadyFragment = childFragmentManager.findFragmentByTag(tag) != null
 
@@ -71,7 +90,9 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         val transaction = childFragmentManager.beginTransaction()
         currentFragment?.let { transaction.hide(it) }
         if (isAlreadyFragment) {
-            (newFragment as? MainTabScreen<*, *, *>)?.onUpScroll()
+            if (scrollUp) {
+                (newFragment as? MainTabScreen<*, *, *>)?.upScroll()
+            }
             transaction.show(newFragment)
         } else {
             transaction.add(R.id.child_fragment, newFragment, tag)

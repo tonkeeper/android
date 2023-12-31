@@ -1,6 +1,7 @@
 package com.tonkeeper.fragment.chart.list
 
 import com.tonkeeper.api.chart.ChartEntity
+import com.tonkeeper.api.chart.ChartPeriod
 import uikit.list.BaseListItem
 
 sealed class ChartItem(
@@ -26,6 +27,7 @@ sealed class ChartItem(
     data object Period: ChartItem(TYPE_PERIOD)
 
     data class Chart(
+        val period: ChartPeriod,
         val data: List<ChartEntity>
     ): ChartItem(TYPE_CHART)
 

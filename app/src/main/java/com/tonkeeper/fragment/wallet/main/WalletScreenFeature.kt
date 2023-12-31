@@ -8,8 +8,8 @@ import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.address
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
-import com.tonkeeper.api.shortAddress
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.event.ChangeCurrencyEvent
@@ -32,8 +32,8 @@ import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.ton.block.Coins
 import ton.extensions.toUserFriendly
 import uikit.list.ListCell
 
@@ -57,6 +57,11 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 title = event.name
             )
         }
+    }
+
+    // dirty hack to remove trailing zeros
+    private val amountModifier = { value: String ->
+        value.removeSuffix(CurrencyFormatter.monetaryDecimalSeparator + "00")
     }
 
     private val currency: SupportedCurrency
@@ -101,7 +106,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
         val tokens = buildTokensList(
             wallet.accountId,
-            data.account.balance,
+            Coin.toCoins(data.account.balance),
             tonInCurrency,
             data.jettons.sortedByDescending {
                 it.parsedBalance
@@ -126,7 +131,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
         val items = mutableListOf<WalletItem>()
         items.add(WalletDataItem(
-            amount = Coin.format(currency, allInCurrency),
+            amount = CurrencyFormatter.formatFiat(allInCurrency),
             address = data.accountId.toUserFriendly()
         ))
         items.add(WalletActionItem)
@@ -166,7 +171,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
     private suspend fun buildTokensList(
         accountId: String,
-        balance: Long,
+        balance: Float,
         tonInCurrency: Float,
         jettons: List<JettonBalance>
     ): List<WalletItem> {
@@ -185,9 +190,9 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         val size = jettons.size + 1
 
         val tonItem = WalletTonCellItem(
-            balance = Coin.format(value = balance),
-            balanceCurrency = Coin.format(currency, tonInCurrency),
-            rate = Coin.format(currency, rate),
+            balance = CurrencyFormatter.format(value = balance, modifier = amountModifier),
+            balanceCurrency = CurrencyFormatter.formatFiat(tonInCurrency),
+            rate = CurrencyFormatter.formatRate(currency.code, rate),
             rateDiff24h = rate24h,
             position = ListCell.getPosition(size, 0)
         )
@@ -213,18 +218,12 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 jetton.address,
             )
 
-            val decimals = if (tokenBalance > 1f) {
-                2
-            } else {
-                jetton.jetton.decimals
-            }
-
             val balanceCurrency = if (hasRate) {
-                Coin.format(currency, tokenBalanceCurrency)
+                CurrencyFormatter.formatFiat(tokenBalanceCurrency)
             } else ""
 
             val tokenRateFormat = if (hasRate) {
-                Coin.format(currency, tokenRate)
+                CurrencyFormatter.formatRate(currency.code, tokenRate)
             } else ""
 
             val item = WalletJettonCellItem(
@@ -233,7 +232,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 position = cellPosition,
                 iconURI = Uri.parse(jetton.jetton.image),
                 code = jetton.jetton.symbol,
-                balance = Coin.format(value = tokenBalance, decimals = decimals),
+                balance = CurrencyFormatter.format(value = tokenBalance, modifier = amountModifier),
                 balanceCurrency = balanceCurrency,
                 rate = tokenRateFormat,
                 rateDiff24h = tokenRate24h,

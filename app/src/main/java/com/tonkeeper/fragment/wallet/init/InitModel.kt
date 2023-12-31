@@ -34,9 +34,9 @@ internal class InitModel(
             add(ChildPageType.Passcode)
         }
 
-        if (!App.instance.hasPushPermission()) {
+        /*if (!App.instance.hasPushPermission()) {
             add(ChildPageType.Push)
-        }
+        }*/
 
         if (App.walletManager.hasWallet()) {
             add(ChildPageType.Name)

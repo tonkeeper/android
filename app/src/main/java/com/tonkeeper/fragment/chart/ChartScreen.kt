@@ -5,7 +5,7 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.history.list.HistoryAdapter
 import com.tonkeeper.extensions.launch
 import com.tonkeeper.fragment.chart.list.ChartAdapter
@@ -13,7 +13,6 @@ import com.tonkeeper.fragment.chart.list.ChartItemDecoration
 import uikit.base.BaseFragment
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.verticalScrolled
-import uikit.extensions.withAnimation
 import uikit.list.LinearLayoutManager
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen

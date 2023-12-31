@@ -5,7 +5,7 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.viewModels
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonkeeper.fragment.send.SendScreenEffect
@@ -79,10 +79,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
             setRecipient(transaction.address!!, transaction.name)
             setComment(transaction.comment)
 
-            if (transaction.amount > 0) {
-                feature.setAmount(transaction.amount, transaction.tokenAddress, transaction.tokenSymbol)
-            }
-
+            feature.setAmount(transaction.amount, transaction.tokenAddress, transaction.tokenSymbol)
             iconView.setImageURI(transaction.icon)
 
             if (transaction.isTon) {

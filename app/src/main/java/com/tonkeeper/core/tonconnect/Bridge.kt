@@ -1,5 +1,7 @@
 package com.tonkeeper.core.tonconnect
 
+import android.util.Log
+import com.tonkeeper.api.withRetry
 import com.tonkeeper.core.tonconnect.models.TCApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,7 +36,7 @@ internal class Bridge {
             .post(base64(encoded).toRequestBody(mimeType))
             .build()
 
-        val response = Network.request(request)
+        val response = withRetry { Network.request(request) } ?: throw Exception("Error sending event: null response")
         if (!response.isSuccessful) {
             throw Exception("Error sending event: ${response.code}")
         }

@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.settings.accounts.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsWalletItem
 import com.tonkeeper.fragment.settings.accounts.popup.WalletActionsPopup

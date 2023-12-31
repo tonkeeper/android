@@ -26,10 +26,10 @@ class CurrencyUpdateWorker(
 
             val constraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiredNetworkType(NetworkType.NOT_ROAMING)
                 .build()
 
-            val hourlyWork = PeriodicWorkRequestBuilder<CurrencyUpdateWorker>(1, TimeUnit.HOURS)
+            val hourlyWork = PeriodicWorkRequestBuilder<CurrencyUpdateWorker>(30, TimeUnit.MINUTES)
                 .setConstraints(constraints)
                 .addTag(WORKER_NAME)
                 .build()

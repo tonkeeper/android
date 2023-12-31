@@ -1,17 +1,15 @@
 package com.tonkeeper.dialog
 
 import android.content.Context
-import android.util.Log
 import android.view.View
-import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.shortAddress
-import com.tonkeeper.core.Coin
+import com.tonkeeper.api.shortHash
+import com.tonkeeper.core.history.ActionType
 import com.tonkeeper.core.history.list.item.HistoryItem
+import com.tonkeeper.core.history.nameRes
 import com.tonkeeper.extensions.copyWithToast
 import com.tonkeeper.fragment.root.RootActivity
 import com.tonkeeper.view.TransactionDetailView
@@ -20,7 +18,6 @@ import uikit.base.BaseSheetDialog
 import uikit.extensions.activity
 import uikit.list.ListCell
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.widget.BottomSheetLayout
 import uikit.widget.FrescoView
 
 class TransactionDialog(
@@ -30,7 +27,7 @@ class TransactionDialog(
 
     companion object {
 
-        fun open(context: Context, action: HistoryItem.Action) {
+        fun open(context: Context, action: HistoryItem.Event) {
             val rootActivity = context.activity as? RootActivity ?: return
             rootActivity.transactionDialog.show(action)
         }
@@ -73,9 +70,9 @@ class TransactionDialog(
         explorerButton = findViewById(R.id.open_explorer)!!
     }
 
-    fun show(action: HistoryItem.Action) {
+    fun show(action: HistoryItem.Event) {
         super.show()
-        amountView.text = action.getAmountString()
+        amountView.text = action.value
 
         applyIcon(action.coinIconUrl)
         applyComment(action.comment)
@@ -84,7 +81,7 @@ class TransactionDialog(
         applyDate(action.action, action.date)
 
         feeView.setData(action.fee!!, action.feeInCurrency!!)
-        txView.setData(action.txId.shortAddress, "")
+        txView.setData(action.txId.shortHash, "")
         txView.setOnClickListener {
             context.copyWithToast(action.txId)
         }
@@ -99,18 +96,9 @@ class TransactionDialog(
         updateDataView()
     }
 
-    private fun applyDate(actionType: HistoryItem.Action.Type, date: String) {
-        val prefix = when(actionType) {
-            HistoryItem.Action.Type.Received -> getString(R.string.receive)
-            HistoryItem.Action.Type.Send -> getString(R.string.send)
-            HistoryItem.Action.Type.Swap -> getString(R.string.swap)
-            else -> ""
-        }
-        if (prefix.isBlank()) {
-            dateView.text = date
-        } else {
-            dateView.text = "$prefix $date"
-        }
+    private fun applyDate(actionType: ActionType, date: String) {
+        val prefix = getString(actionType.nameRes)
+        dateView.text = "$prefix $date"
     }
 
     private fun applyCurrency(currency: String?) {

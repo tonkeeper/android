@@ -1,11 +1,9 @@
 package com.tonkeeper.fragment.currency
 
 import androidx.annotation.StringRes
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.core.widget.Widget
-import com.tonkeeper.core.widget.WidgetBalanceProvider
-import com.tonkeeper.core.widget.WidgetRateProvider
 import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.fragment.currency.list.CurrencyItem
 import ton.SupportedCurrency
@@ -74,7 +72,7 @@ class CurrencyScreenFeature: UiFeature<CurrencyScreenState, CurrencyScreenEffect
             SupportedCurrency.INR -> R.string.currency_inr_name
             SupportedCurrency.JPY -> R.string.currency_jpy_name
             SupportedCurrency.TON -> R.string.toncoin
-            // SupportedCurrency.BTC -> R.string.bitcoin
+            SupportedCurrency.KZT -> R.string.currency_kzt_name
             else -> throw IllegalArgumentException("Unsupported currency: $currency")
         }
 

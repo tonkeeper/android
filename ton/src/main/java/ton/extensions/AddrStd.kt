@@ -26,3 +26,11 @@ fun AddrStd.toUserFriendly(): String {
         bounceable = false
     )
 }
+
+fun String.toRawAddress(): String {
+    return try {
+        AddrStd(this).toString(userFriendly = false).lowercase()
+    } catch (e: Exception) {
+        this
+    }
+}

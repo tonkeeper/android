@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.jetton.list.holder
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.view.SimpleDraweeView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.extensions.rateSpannable
 import com.tonkeeper.fragment.jetton.list.JettonItem
 

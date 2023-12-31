@@ -7,7 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.viewModels
 import com.facebook.drawee.view.SimpleDraweeView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.description
 import com.tonkeeper.api.imageURL
 import com.tonkeeper.api.ownerAddress
@@ -83,7 +83,7 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
 
         openMarkerButton = view.findViewById(R.id.open_marker)
         openMarkerButton.setOnClickListener {
-            val url = ExternalUrl.nftMarketView(nftAddress)
+            val url = ExternalUrl.nftMarketView(nftAddress.toUserFriendly(false))
             navigation?.openURL(url)
         }
 
@@ -103,6 +103,13 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         addressView = view.findViewById(R.id.address)
 
         feature.load(nftAddress)
+    }
+
+    override fun newUiEffect(effect: NftScreenEffect) {
+        super.newUiEffect(effect)
+        if (effect is NftScreenEffect.FailedLoad) {
+            finish()
+        }
     }
 
     override fun newUiState(state: NftScreenState) {

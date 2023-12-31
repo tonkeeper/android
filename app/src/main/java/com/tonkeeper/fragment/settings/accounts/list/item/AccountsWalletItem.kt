@@ -13,10 +13,8 @@ data class AccountsWalletItem(
 
     val nameOrDefault: String
         get() {
-            return if (name.isEmpty()) {
-                "Wallet " + address.shortAddress
-            } else {
-                name
+            return name.ifEmpty {
+                "Wallet ${address.shortAddress.shortAddress}"
             }
         }
 

@@ -3,7 +3,7 @@ package com.tonkeeper.dialog
 import android.content.Context
 import android.view.View
 import android.widget.Button
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.base.BaseSheetDialog
 import uikit.widget.CheckBoxView
 

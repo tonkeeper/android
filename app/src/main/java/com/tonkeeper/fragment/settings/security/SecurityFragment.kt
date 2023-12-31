@@ -1,10 +1,9 @@
 package com.tonkeeper.fragment.settings.security
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonkeeper.fragment.wallet.phrase.PhraseWalletFragment
 import uikit.base.BaseFragment

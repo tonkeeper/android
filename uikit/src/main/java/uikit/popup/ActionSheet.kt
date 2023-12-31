@@ -28,7 +28,6 @@ open class ActionSheet(
     private companion object {
         private val singleLineItemHeight = 48.dp
         private val subtitleLineItemHeight = 68.dp
-        private val maxHeight = 220.dp
     }
 
     data class Item(
@@ -43,6 +42,8 @@ open class ActionSheet(
     private val items = mutableListOf<Item>()
 
     var doOnItemClick: ((Item) -> Unit)? = null
+
+    open val maxHeight = 220.dp
 
     init {
         contentView = context.inflate(R.layout.action_sheet_base)

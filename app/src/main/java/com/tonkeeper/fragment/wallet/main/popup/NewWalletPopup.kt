@@ -1,7 +1,7 @@
 package com.tonkeeper.fragment.wallet.main.popup
 
 import android.content.Context
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.popup.ActionSheet
 
 class NewWalletPopup(context: Context): ActionSheet(context) {

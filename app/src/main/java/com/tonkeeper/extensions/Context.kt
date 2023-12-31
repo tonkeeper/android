@@ -8,12 +8,12 @@ import android.os.Build
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
-import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
+import java.util.Locale
 
 fun Context.copyWithToast(text: String) {
     navigation?.toast(getString(R.string.copied))
@@ -58,3 +58,8 @@ fun Context.rateSpannable(rate: String, diff24h: String): SpannableString {
 private fun Context.getRateColor(diff: String): Int {
     return getColor(diff.colorForChange).withAlpha(.64f)
 }
+
+val Context.currentLocale: Locale
+    get() {
+        return resources.configuration.locales[0]
+    }

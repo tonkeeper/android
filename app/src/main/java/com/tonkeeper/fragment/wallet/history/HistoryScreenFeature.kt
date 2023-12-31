@@ -1,5 +1,6 @@
 package com.tonkeeper.fragment.wallet.history
 
+import android.util.Log
 import com.tonkeeper.App
 import com.tonkeeper.api.history.HistoryRepository
 import com.tonkeeper.core.history.HistoryHelper
@@ -60,6 +61,7 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
         } else {
             historyRepository.get(accountId)
         }
+
         val events = response?.data ?: return
         val items = HistoryHelper.mapping(wallet, events)
 

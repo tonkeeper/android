@@ -56,8 +56,8 @@
                     android:id="@+id/icon"
                     android:layout_width="46dp"
                     android:layout_height="46dp"
-                    app:roundAsCircle="true"
-                    android:layout_gravity="center"/>
+                    android:layout_gravity="center"
+                    app:roundAsCircle="true" />
 
             </FrameLayout>
 

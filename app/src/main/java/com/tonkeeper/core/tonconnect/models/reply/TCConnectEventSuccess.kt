@@ -10,7 +10,7 @@ data class TCConnectEventSuccess(
 
     data class Payload(
         val items: List<TCReply> = mutableListOf(),
-        val device: TCDevice = TCDevice(),
+        val device: TCResultDevice = TCResultDevice(),
     ): TCBase() {
         override fun toJSON(): JSONObject {
             val json = JSONObject()

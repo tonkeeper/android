@@ -25,6 +25,10 @@ class PasscodeManager(context: Context) {
         keyValue.putString(CODE_KEY, code)
     }
 
+    suspend fun clearPinCode() {
+        keyValue.remove(CODE_KEY)
+    }
+
     suspend fun compare(code: String): Boolean = withContext(Dispatchers.IO){
         val savedCode = keyValue.getString(CODE_KEY)
         savedCode == code

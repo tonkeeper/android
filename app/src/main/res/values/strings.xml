@@ -2,6 +2,7 @@
     <string name="app_name" translatable="false">Tonkeeper X</string>
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
+    <string name="bitcoin" translatable="false">Bitcoin</string>
 
     <string name="settings">Settings</string>
     <string name="wallet">Wallet</string>
@@ -10,6 +11,17 @@
     <string name="price">Price</string>
     <string name="scan">Scan</string>
     <string name="stake">Stake</string>
+    <string name="wallet_initialized">Wallet Initialized</string>
+    <string name="bid">Bid</string>
+    <string name="unstake_request">Unstake Request</string>
+    <string name="domain_renew">Domain Renew</string>
+    <string name="unstake">Unstake</string>
+    <string name="unknown">Unknown</string>
+    <string name="nft_purchase">NFT Purchase</string>
+    <string name="burned">Burned</string>
+    <string name="unsubscribed">Unsubscribed</string>
+    <string name="subscribed">Subscribed</string>
+    <string name="received">Received</string>
 
     <string name="continue_action">Continue</string>
     <string name="get_started">Get started</string>
@@ -134,6 +146,7 @@
     <string name="currency_idr_name">Indonesian Rupiah</string>
     <string name="currency_inr_name">Indian Rupee</string>
     <string name="currency_jpy_name">Japanese Yen</string>
+    <string name="currency_kzt_name">Kazakhstani Tenge</string>
 
     <string name="done">Done</string>
     <string name="error">Error</string>
@@ -160,7 +173,6 @@
     <string name="max">Max</string>
     <string name="confirm_and_send">Confirm and send</string>
     <string name="confirm_action">Confirm action</string>
-    <string name="bitcoin">Bitcoin</string>
     <string name="ton_connect_title">Connect to %1$s?</string>
     <string name="ton_connect_description">%1$s is requesting access to your wallet address %2$s %3$s</string>
     <string name="connect_wallet">Connect wallet</string>
@@ -176,4 +188,10 @@
     <string name="support">Support</string>
     <string name="tonkeeper_news">Tonkeeper news</string>
     <string name="contact_us">Contact us</string>
+    <string name="language">Language</string>
+    <string name="sent">Sent</string>
+    <string name="system">System</string>
+    <string name="network_fee">Network fee</string>
+    <string name="confirm">Confirm</string>
+    <string name="send_request_comment">You must include the note from the exchange for transfer. Without it your funds will be lost.</string>
 </resources>

@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.widget.WidgetBalanceProvider
 import com.tonkeeper.dialog.LogoutDialog
 import com.tonkeeper.extensions.launch
@@ -16,6 +16,7 @@ import com.tonkeeper.fragment.currency.CurrencyScreen
 import com.tonkeeper.fragment.main.MainTabScreen
 import com.tonkeeper.fragment.root.RootActivity
 import com.tonkeeper.fragment.settings.accounts.AccountsScreen
+import com.tonkeeper.fragment.settings.language.LanguageFragment
 import com.tonkeeper.fragment.settings.legal.LegalFragment
 import com.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
@@ -23,11 +24,11 @@ import com.tonkeeper.fragment.settings.security.SecurityFragment
 import uikit.decoration.ListCellDecoration
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
-import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(R.layout.fragment_settings) {
+class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(
+    R.layout.fragment_settings) {
 
     companion object {
         fun newInstance() = SettingsScreen()
@@ -109,6 +110,7 @@ class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, S
             SettingsIdItem.WIDGET_ID -> {
                 installWidget()
             }
+            SettingsIdItem.LANGUAGE_ID -> { nav.add(LanguageFragment.newInstance()) }
         }
     }
 

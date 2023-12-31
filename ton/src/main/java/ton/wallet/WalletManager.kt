@@ -45,7 +45,7 @@ class WalletManager(
     suspend fun setWalletName(address: String, name: String) {
         val createDate = getIdAddress(address)
         storage.setWalletName(createDate, name)
-        cacheWallets.clear()
+        cacheWallets = mutableListOf()
     }
 
     private suspend fun getIdAddress(
@@ -96,13 +96,15 @@ class WalletManager(
     }
 
     suspend fun getWalletInfo(): Wallet? = withContext(Dispatchers.IO) {
-        /*
-        return@withContext Wallet(
-            id = 999,
-            name = "Debug Wallet",
-            publicKey = PublicKeyEd25519(hex("db642e022c80911fe61f19eb4f22d7fb95c1ea0b589c0f74ecf0cbf6db746c13"))
-        )
-         */
+
+        /*if (true) {
+            return@withContext Wallet(
+                id = 999,
+                name = "Debug Wallet",
+                publicKey = PublicKeyEd25519(hex("db642e022c80911fe61f19eb4f22d7fb95c1ea0b589c0f74ecf0cbf6db746c13"))
+            )
+        }*/
+
 
         if (cacheWallet != null) {
             return@withContext cacheWallet

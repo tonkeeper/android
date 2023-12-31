@@ -1,8 +1,11 @@
 package com.tonkeeper.core.currency
 
+import android.util.Log
 import com.tonkeeper.App
 import com.tonkeeper.api.to
 import com.tonkeeper.core.Coin
+import io.tonapi.models.TokenRates
+import org.ton.block.AddrStd
 import ton.SupportedCurrency
 import ton.SupportedTokens
 
@@ -47,8 +50,13 @@ class CurrencyConverter(
             return 0f
         }
 
-        val rates = CurrencyManager.getInstance().get(accountId)
-        val token = rates[fromCurrency] ?: return 0f
-        return token.to(to, value)
+        return try {
+            val rates = CurrencyManager.getInstance().get(accountId) ?: throw Exception("No rates for account $accountId")
+            val token = rates[fromCurrency] ?: throw Exception("No rates for $fromCurrency")
+            token.to(to, value)
+        } catch (e: Throwable) {
+            Log.d("CurrencyConverterLog", "Error converting currenc", e)
+            0f
+        }
     }
 }

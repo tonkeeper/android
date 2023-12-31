@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.country.list
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.list.BaseListHolder
 import uikit.list.ListCell.Companion.drawable
 
@@ -22,7 +22,7 @@ class CountryHolder(
         emojiView.text = item.emoji
         titleView.text = item.title
         if (item.selected) {
-            checkView.setImageResource(R.drawable.ic_donemark_thin_28)
+            checkView.setImageResource(uikit.R.drawable.ic_donemark_thin_28)
         } else {
             checkView.setImageResource(0)
         }

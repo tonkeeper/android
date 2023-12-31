@@ -3,23 +3,16 @@ package com.tonkeeper.fragment.send.amount
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import com.tonkeeper.App
-import com.tonkeeper.R
-import com.tonkeeper.core.transaction.TransactionHelper
-import com.tonkeeper.fragment.send.SendScreenFeature
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonkeeper.fragment.send.popup.SelectTokenPopup
+import com.tonkeeper.fragment.send.view.AmountInput
 import io.tonapi.models.JettonBalance
-import kotlinx.coroutines.launch
-import ton.SupportedTokens
 import uikit.extensions.focusWidthKeyboard
 import uikit.extensions.hideKeyboard
-import uikit.widget.LoaderView
 
 class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScreenFeature>(R.layout.fragment_send_amount) {
 
@@ -33,12 +26,13 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         val popup = SelectTokenPopup(requireContext())
         popup.doOnSelectJetton = { jetton ->
             feature.selectJetton(jetton)
+            forceSetAmount(0f)
         }
         popup
     }
 
     private lateinit var tokenView: AppCompatTextView
-    private lateinit var valueView: AppCompatEditText
+    private lateinit var valueView: AmountInput
     private lateinit var valueCurrencyView: AppCompatTextView
     private lateinit var rateView: AppCompatTextView
     private lateinit var availableView: AppCompatTextView
@@ -54,6 +48,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         valueView.doOnTextChanged { _, _, _, _ ->
             feature.setValue(getValue())
         }
+        valueView.setMaxLength(9)
 
         valueCurrencyView = view.findViewById(R.id.value_currency)
 
@@ -76,7 +71,13 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     fun forceSetAmount(amount: Float) {
-        valueView.setText(amount.toString())
+        val text = if (0f >= amount) {
+            ""
+        } else {
+            amount.toString()
+        }
+        val editable = valueView.text ?: return
+        editable.replace(0, editable.length, text)
     }
 
     private fun getValue(): Float {
@@ -84,7 +85,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     private fun next() {
-        sendFeature.setAmount(getValue())
+        sendFeature.setAmount(valueView.text.toString())
         sendFeature.nextPage()
     }
 

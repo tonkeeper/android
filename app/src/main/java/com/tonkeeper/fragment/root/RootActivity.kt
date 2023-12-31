@@ -13,9 +13,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.PasscodeManager
-import com.tonkeeper.R
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.PaymentURL
 import com.tonkeeper.core.deeplink.DeepLink
@@ -51,13 +50,15 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         TransactionDialog(this, lifecycleScope)
     }
 
+    lateinit var tonConnect: TonConnect
+
     private lateinit var contentView: View
     private lateinit var toastView: AppCompatTextView
-    private lateinit var tonConnect: TonConnect
     private var initialized = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -68,7 +69,6 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
 
         handleIntent(intent)
         tonConnect = TonConnect(this)
-        tonConnect.onCreate()
 
         initRoot(false)
 
@@ -136,6 +136,7 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
             }
             runOnCommit {
                 clearBackStack()
+                tonConnect.onCreate()
                 initialized = true
             }
         }

@@ -2,12 +2,14 @@ package com.tonkeeper.core.tonconnect
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.tonkeeper.core.tonconnect.models.TCEvent
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import core.network.Network
+import okhttp3.Response
 
 internal class Realtime(
     context: Context,
@@ -45,7 +47,24 @@ internal class Realtime(
 
         try {
             onEvent(TCEvent(data))
-        } catch (ignored: Throwable) { }
+        } catch (e: Throwable) {
+            Log.e("TonConnectLog", "onEvent error", e)
+        }
+    }
+
+    override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
+        super.onFailure(eventSource, t, response)
+        Log.e("TonConnectLog", "onFailure", t)
+    }
+
+    override fun onOpen(eventSource: EventSource, response: Response) {
+        super.onOpen(eventSource, response)
+        Log.d("TonConnectLog", "onOpen")
+    }
+
+    override fun onClosed(eventSource: EventSource) {
+        super.onClosed(eventSource)
+        Log.d("TonConnectLog", "onClosed")
     }
 
     fun release() {

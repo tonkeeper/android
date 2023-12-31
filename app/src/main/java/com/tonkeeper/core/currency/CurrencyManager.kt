@@ -2,21 +2,23 @@ package com.tonkeeper.core.currency
 
 import android.util.Log
 import com.tonkeeper.App
-import com.tonkeeper.core.widget.WidgetBalanceProvider
 import com.tonkeeper.api.address
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.rates.RatesRepository
 import com.tonkeeper.core.widget.Widget
-import com.tonkeeper.core.widget.WidgetRateProvider
 import com.tonkeeper.event.UpdateCurrencyRateEvent
 import core.EventBus
 import io.tonapi.models.TokenRates
+import org.ton.block.AddrStd
 import ton.SupportedCurrency
 import ton.SupportedTokens
+import ton.extensions.toRawAddress
 
 class CurrencyManager {
 
     companion object {
+
+        const val EMPTY_DIFF_RATE = "-"
 
         @Volatile
         private var INSTANCE: CurrencyManager? = null
@@ -46,14 +48,15 @@ class CurrencyManager {
 
     suspend fun sync(accountId: String) {
         val jettons = jettonRepository.get(accountId)?.data?.map {
-            it.address
+            it.address.toRawAddress()
         } ?: return
 
         repository.sync(accountId, jettons)
     }
 
-    suspend fun get(accountId: String): Rates {
-        return Rates(repository.get(accountId).rates)
+    suspend fun get(accountId: String): Rates? {
+        val rates = repository.get(accountId)?.rates ?: return null
+        return Rates(rates)
     }
 
     suspend fun getRate24h(
@@ -69,8 +72,9 @@ class CurrencyManager {
         token: String,
         currency: String
     ): String {
-        val rates = get(accountId)[token] ?: return ""
-        return rates.diff24h?.get(currency) ?: ""
+        val rates = get(accountId) ?: return EMPTY_DIFF_RATE
+        val tokenRates = rates[token] ?: return EMPTY_DIFF_RATE
+        return tokenRates.diff24h?.get(currency) ?: EMPTY_DIFF_RATE
     }
 
     suspend fun getRate7d(
@@ -86,8 +90,9 @@ class CurrencyManager {
         token: String,
         currency: String
     ): String {
-        val rates = get(accountId)[token] ?: return ""
-        return rates.diff7d?.get(currency) ?: ""
+        val rates = get(accountId) ?: return EMPTY_DIFF_RATE
+        val tokenRates = rates[token] ?: return EMPTY_DIFF_RATE
+        return tokenRates.diff7d?.get(currency) ?: EMPTY_DIFF_RATE
     }
 
     suspend fun getRate(
@@ -103,8 +108,10 @@ class CurrencyManager {
         token: String,
         currency: String
     ): Float {
-        val rates = get(accountId)[token] ?: return 0f
-        return rates.prices?.get(currency)?.toFloat() ?: 0f
+        val rates = get(accountId) ?: return 0f
+        val tokenRates = rates[token] ?: return 0f
+        val prices = tokenRates.prices ?: return 0f
+        return prices[currency]?.toFloat() ?: 0f
     }
 
     class Rates(
@@ -112,7 +119,12 @@ class CurrencyManager {
     ) {
 
         operator fun get(token: String): TokenRates? {
-            return map[token] as? TokenRates
+            val rates = map[token] as? TokenRates
+            if (rates != null) {
+                return rates
+            }
+            val fixedToken = token.toRawAddress()
+            return map[fixedToken] as? TokenRates
         }
 
         override fun toString(): String {

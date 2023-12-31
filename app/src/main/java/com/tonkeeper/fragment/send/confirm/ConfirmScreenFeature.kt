@@ -1,10 +1,12 @@
 package com.tonkeeper.fragment.send.confirm
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.address
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.transaction.TransactionHelper
 import com.tonkeeper.event.WalletStateUpdateEvent
@@ -15,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.ton.block.Coins
 import ton.SupportedCurrency
 import ton.SupportedTokens
 import ton.wallet.Wallet
@@ -50,15 +53,16 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
             val wallet = walletManager.getWalletInfo()!!
             val account = accountRepository.getFromCloud(wallet.accountId)?.data ?: throw Exception("failed to get account")
             val balance = Coin.toCoins(account.balance)
+            val amount = tx.amount
 
             if (tx.isTon) {
-                val full = tx.amount + fee
+                /*val full = amount.amount.value.toFloat() + fee
                 if (full > balance) {
                     throw Exception("Not enough funds")
-                }
-                TransactionHelper.sendTon(wallet, tx.address!!, tx.amount, tx.comment, tx.max)
+                }*/
+                TransactionHelper.sendTon(wallet, tx.address!!, amount, tx.comment, tx.max)
             } else {
-                TransactionHelper.sendJetton(wallet, tx.jetton!!, tx.address!!, tx.amount, tx.comment)
+                TransactionHelper.sendJetton(wallet, tx.jetton!!, tx.address!!, amount, tx.comment)
             }
 
             updateUiState {
@@ -81,28 +85,24 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
                 )
             }
 
-            delay(1000)
+            delay(5000)
             sendEffect(ConfirmScreenEffect.CloseScreen(false))
         }
     }
 
-    fun setAmount(amount: Float, tokenAddress: String, tokenSymbol: String) {
+    fun setAmount(amount: Coins, tokenAddress: String, tokenSymbol: String) {
         viewModelScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
             val accountId = wallet.accountId
 
-            val amountFormat = Coin.format(
-                currency = tokenSymbol,
-                value = amount,
-                decimals = Coin.MAX_DECIMALS,
-                useCurrencyCode = true
-            )
-            val inCurrency = from(tokenAddress, accountId).value(amount).to(currency)
+            val value = Coin.toCoins(amount.amount.value.toLong())
+            val amountFormat = CurrencyFormatter.format(tokenSymbol, value)
+            val inCurrency = from(tokenAddress, accountId).value(value).to(currency)
 
             updateUiState {
                 it.copy(
                     amount = amountFormat,
-                    amountInCurrency = "≈ " + Coin.format(currency = currency, value = inCurrency, decimals = 9)
+                    amountInCurrency = "≈ " + CurrencyFormatter.formatFiat(inCurrency)
                 )
             }
         }
@@ -131,7 +131,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         wallet: Wallet,
         jetton: JettonBalance,
         to: String,
-        value: Float,
+        value: Coins,
         comment: String? = null,
     ) = withContext(Dispatchers.IO) {
         val emulate = TransactionHelper.emulateJetton(wallet, jetton, to, value, comment)
@@ -148,11 +148,12 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
                 .value(emulate.fee)
                 .to(currency)
 
+            val amount = Coin.toCoins(emulate.fee)
             updateUiState {
                 it.copy(
                     feeValue = emulate.fee,
-                    fee = "≈ " + Coin.format(value = emulate.fee, decimals = 9),
-                    feeInCurrency = "≈ " + Coin.format(currency, feeInCurrency, decimals = 9),
+                    fee = "≈ " + CurrencyFormatter.format(SupportedCurrency.TON.code, amount),
+                    feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(feeInCurrency),
                     buttonEnabled = true,
                     emulatedEventItems = emulate.actions
                 )
@@ -163,7 +164,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
     private suspend fun calculateFeeTon(
         wallet: Wallet,
         to: String,
-        value: Float,
+        value: Coins,
         comment: String? = null,
         max: Boolean = false
     ) = withContext(Dispatchers.IO) {
@@ -181,11 +182,12 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
                 .value(emulate.fee)
                 .to(currency)
 
+            val amount = Coin.toCoins(emulate.fee)
             updateUiState {
                 it.copy(
                     feeValue = emulate.fee,
-                    fee = "≈ " + Coin.format(currency = SupportedCurrency.TON, value = emulate.fee, decimals = 9),
-                    feeInCurrency = "≈ " + Coin.format(currency, feeInCurrency, decimals = 9),
+                    fee = "≈ " + CurrencyFormatter.format(SupportedCurrency.TON.code, amount),
+                    feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(feeInCurrency),
                     buttonEnabled = true,
                     emulatedEventItems = emulate.actions
                 )

@@ -2,14 +2,14 @@ package com.tonkeeper.fragment.fiat
 
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.webkit.WebView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import kotlinx.coroutines.launch
-import ton.extensions.toUserFriendly
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
@@ -37,9 +37,11 @@ class FiatWebFragment: BaseFragment(R.layout.fragment_web_fiat) {
     private val url: String by lazy { arguments?.getString(URL) ?: "" }
 
     private val successUrlPattern: FiatSuccessUrlPattern? by lazy {
-        arguments?.getString(SUCCESS_URL_PATTERN)?.let {
-            FiatSuccessUrlPattern(it)
+        val value = arguments?.getString(SUCCESS_URL_PATTERN)
+        if (value.isNullOrBlank() || value == "null") {
+            return@lazy null
         }
+        FiatSuccessUrlPattern(value)
     }
 
     private lateinit var headerView: HeaderView
@@ -72,8 +74,8 @@ class FiatWebFragment: BaseFragment(R.layout.fragment_web_fiat) {
                     return
                 }
 
-                val successUrlPattern = successUrlPattern ?: return
-                val regexp = Regex(successUrlPattern.pattern, RegexOption.IGNORE_CASE)
+                val successUrlPattern = successUrlPattern?.pattern ?: return
+                val regexp = Regex(successUrlPattern, RegexOption.IGNORE_CASE)
 
                 regexp.find(url ?: "")?.groupValues ?: return
                 finish()

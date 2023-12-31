@@ -1,6 +1,7 @@
 package com.tonkeeper.core.history.list.item
 
 import android.content.Context
+import com.tonkeeper.core.history.ActionType
 import com.tonkeeper.core.history.TransactionDetails
 import com.tonkeeper.helper.DateFormat
 import uikit.list.BaseListItem
@@ -33,10 +34,10 @@ sealed class HistoryItem(
         )
     }
 
-    data class Action(
+    data class Event(
         val txId: String,
         val iconURL: String? = null,
-        val action: Type,
+        val action: ActionType,
         val title: String,
         val subtitle: String,
         val timestamp: Long = 0L,
@@ -47,6 +48,7 @@ sealed class HistoryItem(
         val nftImageURL: String? = null,
         val nftTitle: String? = null,
         val nftCollection: String? = null,
+        val nftAddress: String? = null,
         val tokenCode: String? = null,
         val date: String = "",
         val pending: Boolean = false,
@@ -59,20 +61,7 @@ sealed class HistoryItem(
         val addressName: String? = null,
     ): HistoryItem(TYPE_ACTION) {
 
-        enum class Type {
-            Received, Send, CallContract, NftReceived, NftSend, Swap
-        }
-
         val hasNft: Boolean
             get() = nftImageURL != null && nftTitle != null && nftCollection != null
-
-
-        fun getAmountString(): String {
-            return when (action) {
-                Type.Received -> "+ %s %s".format(value, tokenCode).trim()
-                Type.Send -> "- %s %s".format(value, tokenCode).trim()
-                else -> title
-            }
-        }
     }
 }

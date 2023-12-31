@@ -1,9 +1,7 @@
 package com.tonkeeper.fragment.send.recipient
 
 import androidx.lifecycle.viewModelScope
-import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
-import com.tonkeeper.api.shortAddress
 import io.tonapi.models.Account
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,42 +18,47 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
 
     private var checkAddressJob: Job? = null
 
-    val displayAddress: String
-        get() {
-            val state = uiState.value
-            return state.name ?: state.address.shortAddress
-        }
+    val isRequireComment: Boolean
+        get() = uiState.value.requireComment
+
+    val isValidateAddress: Boolean
+        get() = uiState.value.addressState == RecipientScreenState.AddressState.VALID
 
     fun requestAddressCheck(value: String) {
         updateUiState { it.copy(address = value) }
 
         if (value.isEmpty()) {
-            updateUiState { it.copy(addressState = RecipientScreenState.AddressState.EMPTY) }
+            updateUiState { it.copy(
+                addressState = RecipientScreenState.AddressState.EMPTY,
+                requireComment = false
+            ) }
             return
         }
 
-        updateUiState { it.copy(addressState = RecipientScreenState.AddressState.LOADING) }
+        updateUiState { it.copy(
+            addressState = RecipientScreenState.AddressState.LOADING,
+            requireComment = false
+        ) }
 
         checkAddressJob?.cancel()
-        checkAddressJob = viewModelScope.launch {
+        checkAddressJob = viewModelScope.launch(Dispatchers.IO) {
             delay(300)
 
             val account = resolveAccount(value)
             if (account == null) {
-                updateUiState { it.copy(addressState = RecipientScreenState.AddressState.INVALID) }
+                updateUiState { it.copy(
+                    addressState = RecipientScreenState.AddressState.INVALID,
+                    requireComment = false
+                ) }
                 return@launch
             }
 
-            val wallet = App.walletManager.getWalletInfo()
-            if (wallet?.isMyAddress(account.address) == true) {
-                updateUiState { it.copy(addressState = RecipientScreenState.AddressState.INVALID) }
-                return@launch
-            }
 
             updateUiState { it.copy(
                 addressState = RecipientScreenState.AddressState.VALID,
                 address = account.address.toUserFriendly(),
                 name = account.name,
+                requireComment = account.memoRequired == true
             ) }
         }
     }
@@ -93,5 +96,4 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
         }
         return account
     }
-
 }

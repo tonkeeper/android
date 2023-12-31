@@ -1,12 +1,9 @@
 package com.tonkeeper.fragment.send
 
 import android.content.Context
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.shortAddress
 import io.tonapi.models.JettonBalance
 import uikit.extensions.textWithLabel
@@ -29,8 +26,8 @@ class SendScreenFeature: UiFeature<SendScreenState, SendScreenEffect>(SendScreen
         _transaction.value = _transaction.value?.copy(comment = comment)
     }
 
-    fun setAmount(amount: Float) {
-        _transaction.value = _transaction.value?.copy(amount = amount)
+    fun setAmount(amount: String) {
+        _transaction.value = _transaction.value?.copy(amountRaw = amount)
     }
 
     fun setJetton(jetton: JettonBalance?) {

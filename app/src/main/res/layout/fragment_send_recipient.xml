@@ -26,6 +26,14 @@
             android:hint="@string/comment"
             android:layout_marginHorizontal="@dimen/offsetMedium"/>
 
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/offsetMedium"
+            android:textColor="@color/accentOrange"
+            android:textAppearance="@style/TextAppearance.Body2"/>
+
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <Button

@@ -8,9 +8,9 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.widget.RemoteViews
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
-import com.tonkeeper.core.Coin
+import com.tonkeeper.core.formatter.CurrencyFormatter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +43,7 @@ class WidgetRateProvider: Widget() {
             val diff7d = currencyManager.getRate7d(accountId, SupportedTokens.TON, currency)
             val price = currencyManager.getRate(accountId, SupportedTokens.TON, currency)
             val date = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Calendar.getInstance().time)
-            val rate = Rate(diff24h, diff7d, Coin.format(currency, price), date)
+            val rate = Rate(diff24h, diff7d, CurrencyFormatter.formatRate(currency.code, price), date)
 
             displayData(context, manager, id, rate)
         }

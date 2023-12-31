@@ -1,4 +1,22 @@
 package com.tonkeeper.core.history
 
-class ActionType {
+enum class ActionType {
+    Received,
+    Send,
+    CallContract,
+    NftReceived,
+    NftSend,
+    Swap,
+    DeployContract,
+    DepositStake,
+    JettonMint,
+    AuctionBid,
+    WithdrawStakeRequest,
+    WithdrawStake,
+    DomainRenewal,
+    Unknown,
+    NftPurchase,
+    JettonBurn,
+    UnSubscribe,
+    Subscribe,
 }

@@ -5,7 +5,7 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.view.SimpleDraweeView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.tonconnect.models.TCData
 import ton.extensions.toUserFriendly
 import uikit.base.BaseSheetDialog

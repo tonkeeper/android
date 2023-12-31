@@ -1,7 +1,7 @@
 package com.tonkeeper.core.history.list.holder
 
 import android.view.ViewGroup
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.history.list.item.HistoryItem
 import uikit.extensions.setPaddingVertical
 import uikit.widget.TitleView

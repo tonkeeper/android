@@ -17,6 +17,7 @@ import org.ton.contract.wallet.WalletContract
 import org.ton.contract.wallet.WalletContract.Companion.DEFAULT_WALLET_ID
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.crypto.base64
+import org.ton.hashmap.HmeEmpty
 import org.ton.lite.api.LiteApi
 import org.ton.lite.api.liteserver.LiteServerAccountId
 import org.ton.lite.client.LiteClient
@@ -89,7 +90,7 @@ class WalletV4R2Contract private constructor(
             address = address,
             stateInit = if (state !is AccountActive) createStateInit(privateKey.publicKey(), walletId) else null,
             privateKey = privateKey,
-            validUntil = validUntil.epochSeconds.toInt(),
+            validUntil = validUntil.epochSeconds,
             walletId = walletId,
             seqno = seqno,
             transfers = transfers
@@ -125,7 +126,7 @@ class WalletV4R2Contract private constructor(
             stateInit: StateInit?,
             privateKey: PrivateKeyEd25519,
             walletId: Int,
-            validUntil: Int,
+            validUntil: Long = (Clock.System.now() + 60.seconds).epochSeconds,
             seqno: Int,
             vararg transfers: WalletTransfer
         ): Message<Cell> {
@@ -157,20 +158,20 @@ class WalletV4R2Contract private constructor(
             walletId: Int,
         ): StateInit {
             val data = CellBuilder.createCell {
-                storeUInt(0, 32) // seqno
+                storeUInt(0, 32)
                 storeUInt(walletId, 32)
                 storeBits(publicKey.key)
-                storeBit(false) // plugins
+                storeBit(false)
             }
             return StateInit(
                 code = CODE,
-                data = data
+                data = data,
             )
         }
 
         fun createJettonBody(
             queryId: Long = System.currentTimeMillis(),
-            jettonAmount: Long,
+            jettonCoins: Coins,
             toAddress: MsgAddressInt,
             responseAddress: MsgAddressInt,
             forwardAmount: Long,
@@ -179,7 +180,7 @@ class WalletV4R2Contract private constructor(
             return CellBuilder.createCell {
                 storeUInt(OP_JETTON, 32)
                 storeUInt(queryId, 64)
-                storeTlb(Coins, Coins.ofNano(jettonAmount))
+                storeTlb(Coins, jettonCoins)
                 storeTlb(MsgAddressInt, toAddress)
                 storeTlb(MsgAddressInt, responseAddress)
                 storeBit(false)
@@ -194,7 +195,7 @@ class WalletV4R2Contract private constructor(
         private fun createTransferMessageBody(
             privateKey: PrivateKeyEd25519,
             walletId: Int,
-            validUntil: Int,
+            validUntil: Long,
             seqno: Int,
             vararg gifts: WalletTransfer
         ): Cell {

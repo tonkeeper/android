@@ -1,13 +1,9 @@
 package com.tonkeeper.core.transaction
 
-import android.util.Log
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
-import com.tonkeeper.api.address
-import com.tonkeeper.api.toJSON
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.history.HistoryHelper
-import io.tonapi.models.EmulateMessageToEventRequest
 import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.SendBlockchainMessageRequest
@@ -41,12 +37,12 @@ object TransactionHelper {
     suspend fun emulateTon(
         wallet: Wallet,
         to: String,
-        value: Float,
+        coins: Coins,
         comment: String? = null,
         max: Boolean = false
     ): TransactionEmulate? = withContext(Dispatchers.IO) {
         try {
-            val cell = createTon(wallet, to, value, comment, max)
+            val cell = createTon(wallet, to, coins, comment, max)
             val boc = base64(BagOfCells(cell).toByteArray())
             val request = EmulateMessageToWalletRequest(boc)
             val response = emulationApi.emulateMessageToWallet(request)
@@ -64,11 +60,11 @@ object TransactionHelper {
         wallet: Wallet,
         jetton: JettonBalance,
         to: String,
-        value: Float,
+        coins: Coins,
         comment: String? = null,
     ): TransactionEmulate? = withContext(Dispatchers.IO) {
         try {
-            val cell = createJetton(wallet, jetton, to, value, comment)
+            val cell = createJetton(wallet, jetton, to, coins, comment)
             val boc = base64(BagOfCells(cell).toByteArray())
             val request = EmulateMessageToWalletRequest(boc)
             val response = emulationApi.emulateMessageToWallet(request)
@@ -85,11 +81,11 @@ object TransactionHelper {
     suspend fun sendTon(
         wallet: Wallet,
         to: String,
-        value: Float,
+        coins: Coins,
         comment: String? = null,
         max: Boolean = false
     ) = withContext(Dispatchers.IO) {
-        val cell = createTon(wallet, to, value, comment, max)
+        val cell = createTon(wallet, to, coins, comment, max)
         val boc = base64(BagOfCells(cell).toByteArray())
         val request = SendBlockchainMessageRequest(boc)
         blockchainApi.sendBlockchainMessage(request)
@@ -99,10 +95,10 @@ object TransactionHelper {
         wallet: Wallet,
         jetton: JettonBalance,
         to: String,
-        value: Float,
+        coins: Coins,
         comment: String? = null,
     ) = withContext(Dispatchers.IO) {
-        val cell = createJetton(wallet, jetton, to, value, comment)
+        val cell = createJetton(wallet, jetton, to, coins, comment)
         val boc = base64(BagOfCells(cell).toByteArray())
         val request = SendBlockchainMessageRequest(boc)
         blockchainApi.sendBlockchainMessage(request)
@@ -112,14 +108,14 @@ object TransactionHelper {
         wallet: Wallet,
         jetton: JettonBalance,
         to: String,
-        value: Float,
+        coins: Coins,
         comment: String? = null,
     ): Cell {
         val transfer = buildJetton(
             wallet = wallet,
             jetton = jetton,
             destination = to,
-            jettonValue = Coin.toNano(value),
+            jettonCoins = coins,
             comment = comment
         )
 
@@ -132,7 +128,7 @@ object TransactionHelper {
             address = wallet.contract.address,
             stateInit = if (seqno == 0) wallet.stateInit else null,
             privateKey = privateKey,
-            validUntil = (Clock.System.now() + 60.seconds).epochSeconds.toInt(),
+            validUntil = (Clock.System.now() + 60.seconds).epochSeconds,
             walletId = walletId,
             seqno = seqno,
             transfers = arrayOf(transfer)
@@ -147,13 +143,13 @@ object TransactionHelper {
     suspend fun createTon(
         wallet: Wallet,
         to: String,
-        value: Float,
+        coins: Coins,
         comment: String? = null,
         max: Boolean = false
     ): Cell {
         val transfer = buildTon(
             destination = to,
-            value = value,
+            coins = coins,
             comment = comment,
             max = max,
         )
@@ -168,7 +164,7 @@ object TransactionHelper {
             address = contract.address,
             stateInit = if (seqno == 0) wallet.stateInit else null,
             privateKey = privateKey,
-            validUntil = (Clock.System.now() + 60.seconds).epochSeconds.toInt(),
+            validUntil = (Clock.System.now() + 60.seconds).epochSeconds,
             walletId = walletId,
             seqno = seqno,
             transfers = arrayOf(transfer)
@@ -180,7 +176,7 @@ object TransactionHelper {
         return cell
     }
 
-    private suspend fun getSeqno(
+    suspend fun getSeqno(
         accountId: String
     ): Int = withContext(Dispatchers.IO) {
         try {
@@ -194,11 +190,11 @@ object TransactionHelper {
         wallet: Wallet,
         jetton: JettonBalance,
         destination: String,
-        jettonValue: Long,
+        jettonCoins: Coins,
         comment: String?
     ): WalletTransfer {
         val body = WalletV4R2Contract.createJettonBody(
-            jettonAmount = jettonValue,
+            jettonCoins = jettonCoins,
             toAddress = MsgAddressInt.parse(destination),
             responseAddress = wallet.contract.address,
             forwardAmount = 1,
@@ -216,19 +212,19 @@ object TransactionHelper {
 
     private fun buildTon(
         destination: String,
-        value: Float,
+        coins: Coins,
         comment: String? = null,
         max: Boolean = false
     ): WalletTransfer {
         val body = buildCommentBody(comment)
-        return build(destination, Coin.toNano(value), max, body)
+        return build(destination, coins, max, body)
     }
 
     private fun build(
         address: String,
-        value: Long,
+        coins: Coins,
         max: Boolean = false,
-        body: Cell?
+        body: Cell?,
     ): WalletTransfer {
         val builder = WalletTransferBuilder()
         builder.sendMode = if (max) {
@@ -237,7 +233,7 @@ object TransactionHelper {
             SendMode.PAY_GAS_SEPARATELY.value + SendMode.IGNORE_ERRORS.value
         }
         builder.destination = AddrStd.parse(address)
-        builder.coins = Coins.ofNano(value)
+        builder.coins = coins
         builder.body = body
         return builder.build()
     }

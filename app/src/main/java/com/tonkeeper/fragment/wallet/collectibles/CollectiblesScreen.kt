@@ -1,12 +1,11 @@
 package com.tonkeeper.fragment.wallet.collectibles
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.extensions.launch
 import com.tonkeeper.extensions.receive
 import com.tonkeeper.fragment.main.MainTabScreen

@@ -8,7 +8,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.generic.RoundingParams
 import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.request.ImageRequestBuilder
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.nft.NftScreen
 import uikit.extensions.getDimension
 import uikit.extensions.round

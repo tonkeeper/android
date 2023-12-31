@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.currency.list
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.list.BaseListHolder
 import uikit.list.ListCell.Companion.drawable
 

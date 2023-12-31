@@ -2,13 +2,11 @@ package com.tonkeeper.fragment.chart.list.holder
 
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.AppCompatTextView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.dialog.fiat.FiatDialog
 import com.tonkeeper.extensions.receive
 import com.tonkeeper.extensions.sendCoin
 import com.tonkeeper.fragment.chart.list.ChartItem
-import com.tonkeeper.fragment.receive.ReceiveScreen
 
 class ChartActionsHolder(
     parent: ViewGroup

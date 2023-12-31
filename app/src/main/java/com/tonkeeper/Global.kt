@@ -1,5 +1,7 @@
 package com.tonkeeper
 
+import com.tonapps.tonkeeperx.R
+
 object Global {
-    val tonCoinUrl = "drawable:///${R.drawable.ic_toncoin}"
+    val tonCoinUrl = "res:/${R.drawable.ic_toncoin}"
 }

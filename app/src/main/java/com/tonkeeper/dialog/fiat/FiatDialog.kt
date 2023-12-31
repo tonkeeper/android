@@ -3,8 +3,8 @@ package com.tonkeeper.dialog.fiat
 import android.content.Context
 import android.graphics.Color
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import com.tonkeeper.core.fiat.models.FiatItem
 import com.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import com.tonkeeper.dialog.fiat.list.MethodAdapter
@@ -67,7 +67,9 @@ class FiatDialog(
 
     private  fun showWithData(items: List<FiatItem>) {
         super.show()
-        adapter.submitList(MethodAdapter.buildMethodItems(items))
+        adapter.submitList(MethodAdapter.buildMethodItems(items)) {
+            fixPeekHeight()
+        }
     }
 
     private fun openItem(item: FiatItem) {

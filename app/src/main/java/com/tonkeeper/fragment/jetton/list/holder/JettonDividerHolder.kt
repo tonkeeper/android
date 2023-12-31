@@ -1,7 +1,7 @@
 package com.tonkeeper.fragment.jetton.list.holder
 
 import android.view.ViewGroup
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.jetton.list.JettonItem
 
 class JettonDividerHolder(

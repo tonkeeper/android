@@ -2,8 +2,8 @@ package com.tonkeeper.dialog
 
 import android.content.Context
 import android.widget.Button
+import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.R
 import uikit.base.BaseSheetDialog
 import uikit.widget.InputView
 
@@ -35,5 +35,7 @@ class WalletRenameDialog(context: Context): BaseSheetDialog(context) {
             }
             dismiss()
         }
+
+        fixPeekHeight()
     }
 }

@@ -3,7 +3,7 @@ package com.tonkeeper.dialog.fiat.list
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.view.SimpleDraweeView
-import com.tonkeeper.R
+import com.tonapps.tonkeeperx.R
 import uikit.list.BaseListHolder
 import uikit.list.ListCell.Companion.drawable
 

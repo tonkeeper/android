@@ -1,4 +1,4 @@
-package com.tonkeeper.core
+package com.tonkeeper.core.formatter
 
 import android.icu.text.DecimalFormat
 import android.icu.text.NumberFormat
@@ -10,11 +10,12 @@ object CurrencyFormatter {
 
     private const val CURRENCY_SIGN = "¤"
     private const val SMALL_SPACE = " "
+    private const val APOSTROPHE = "'"
+
     private val symbols = arrayMapOf<String, String>().apply {
         put("USD", "$")
         put("EUR", "€")
         put("RUB", "₽")
-        put("AED", "AED")
         put("UAH", "₴")
         put("UZS", "лв")
         put("GBP", "£")
@@ -26,29 +27,59 @@ object CurrencyFormatter {
         put("INR", "₹")
         put("TRY", "₺")
         put("THB", "฿")
-        put("BTC", "₿")
-        put("TON", "TON")
+        put("KZT", "₸")
+        put("AED", "د.إ")
     }
 
     private val format = NumberFormat.getCurrencyInstance() as DecimalFormat
-    private val pattern = format.toPattern()
+    private val pattern = format.toPattern().replace(CURRENCY_SIGN, "").trim()
     private val cache = ConcurrentHashMap<String, DecimalFormat>(symbols.size, 1.0f, 2)
+
+    val monetarySymbolFirstPosition = format.toPattern().startsWith(CURRENCY_SIGN)
+    val monetaryDecimalSeparator = format.decimalFormatSymbols.monetaryDecimalSeparatorString
+    var emptyAmount = "0${monetaryDecimalSeparator}00"
 
     fun format(
         currency: String = "",
         value: Float,
-        decimals: Int
+        decimals: Int,
+        modifier: ((String) -> String) = { it }
     ): String {
-        val format = getFormat(currency, decimals)
-        return format.format(value).removeSuffix(".00")
+        val amount = modifier(getFormat(decimals).format(value))
+        if (amount == emptyAmount) {
+            return format(currency, value, 9, modifier)
+        }
+
+        val symbol = symbols[currency]
+        val stringBuilder = StringBuilder()
+        if (symbol != null) {
+            if (monetarySymbolFirstPosition) {
+                stringBuilder.append(symbol)
+                stringBuilder.append(SMALL_SPACE)
+                stringBuilder.append(amount)
+            } else {
+                stringBuilder.append(amount)
+                stringBuilder.append(SMALL_SPACE)
+                stringBuilder.append(symbol)
+            }
+            return stringBuilder.toString()
+        } else if (currency == "") {
+            return amount
+        } else {
+            stringBuilder.append(amount)
+            stringBuilder.append(SMALL_SPACE)
+            stringBuilder.append(currency)
+            return stringBuilder.toString()
+        }
     }
 
     fun format(
         currency: String = "",
         value: Float,
+        modifier: ((String) -> String) = { it }
     ): String {
         val decimals = decimalCount(value)
-        return format(currency, value, decimals)
+        return format(currency, value, decimals, modifier)
     }
 
     fun formatRate(
@@ -73,42 +104,38 @@ object CurrencyFormatter {
     }
 
     private fun decimalCount(value: Float): Int {
-        if (0.00009 >= value) {
-            return 9
-        }
-        if (0.009 >= value) {
-            return 4
-        }
-        if (value % 1.0f == 0.0f) {
+        if (0f >= value || value % 1.0f == 0.0f) {
             return 0
+        }
+        if (0.0001f > value) {
+            return 8
+        }
+        if (0.01f > value) {
+            return 4
         }
         return 2
     }
 
-    private fun getSymbols(currency: String): String {
-        return symbols[currency] ?: currency
-    }
-
-    private fun getFormat(currency: String, decimals: Int): DecimalFormat {
-        val key = cacheKey(currency, decimals)
+    private fun getFormat(decimals: Int): DecimalFormat {
+        val key = cacheKey(decimals)
         var format = cache[key]
         if (format == null) {
-            format = createFormat(currency, decimals)
+            format = createFormat(decimals)
             cache[key] = format
         }
         return format
     }
 
-    private fun cacheKey(currency: String, decimals: Int): String {
-        return "$currency:$decimals"
+    private fun cacheKey(decimals: Int): String {
+        return decimals.toString()
     }
 
-    private fun createFormat(currency: String, decimals: Int): DecimalFormat {
-        val symbol = SMALL_SPACE + getSymbols(currency) + SMALL_SPACE
-        val pattern = pattern.replace(CURRENCY_SIGN, symbol).trim()
+    private fun createFormat(decimals: Int): DecimalFormat {
         val decimalFormat = DecimalFormat(pattern)
         decimalFormat.maximumFractionDigits = decimals
         decimalFormat.minimumFractionDigits = decimals
+        decimalFormat.groupingSize = 3
+        decimalFormat.isGroupingUsed = true
         return decimalFormat
     }
 }

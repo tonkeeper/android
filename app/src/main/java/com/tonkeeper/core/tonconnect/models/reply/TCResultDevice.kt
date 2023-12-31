@@ -1,13 +1,13 @@
 package com.tonkeeper.core.tonconnect.models.reply
 
-import com.tonkeeper.BuildConfig
+import com.tonapps.tonkeeperx.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class TCDevice(
+data class TCResultDevice(
     val platform: String = "android",
-    val appName: String = "tonkeeper",
-    val appVersion: String = BuildConfig.VERSION_NAME,
+    val appName: String = "Tonkeeper",
+    val appVersion: String = "3.5.431", // BuildConfig.VERSION_NAME,
     val maxProtocolVersion: Int = 2,
     // val features: List<Any> = emptyList()
 ): TCBase() {

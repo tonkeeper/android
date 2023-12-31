@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <queries>
+        <package android:name="com.ton_keeper" />
+    </queries>
+
     <meta-data
         android:name="com.google.mlkit.vision.DEPENDENCIES"
         android:value="barcode"/>
@@ -15,7 +19,6 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
-
     <!--android:manageSpaceActivity=".fragment.space.SpaceActivity"-->
     <application
         android:allowBackup="true"
@@ -28,11 +31,12 @@
         android:theme="@style/Theme.App.Starting"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
-        android:name=".App"
+        android:name="com.tonkeeper.App"
         tools:targetApi="31"
-        tools:replace="android:allowBackup">
+        tools:replace="android:allowBackup"
+        android:localeConfig="@xml/locales_config">
         <activity
-            android:name=".fragment.root.RootActivity"
+            android:name="com.tonkeeper.fragment.root.RootActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"
@@ -52,13 +56,14 @@
                 <data android:scheme="tonkeeper"/>
                 <data android:scheme="tc"/>
             </intent-filter>
-            <intent-filter android:autoVerify="false">
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https"/>
                 <data android:host="app.tonkeeper.com"/>
+                <data android:host="ton.app"/>
             </intent-filter>
         </activity>
         <!--activity
@@ -72,7 +77,7 @@
             </intent-filter>
         </activity-->
         <receiver
-            android:name=".core.widget.WidgetBalanceProvider"
+            android:name="com.tonkeeper.core.widget.WidgetBalanceProvider"
             android:exported="true"
             android:label="@string/wallet_balance">
             <intent-filter>
@@ -82,7 +87,7 @@
                 android:resource="@xml/widget_balance" />
         </receiver>
         <receiver
-            android:name=".core.widget.WidgetRateProvider"
+            android:name="com.tonkeeper.core.widget.WidgetRateProvider"
             android:exported="true"
             android:label="@string/rate">
             <intent-filter>
@@ -91,6 +96,14 @@
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/widget_rate" />
         </receiver>
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
     </application>
 
 </manifest>

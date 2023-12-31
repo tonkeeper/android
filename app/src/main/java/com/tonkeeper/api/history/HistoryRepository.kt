@@ -4,6 +4,7 @@ import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.base.BaseAccountRepository
 import com.tonkeeper.api.history.db.HistoryDao
+import com.tonkeeper.api.withRetry
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.AccountEvent
 
@@ -38,6 +39,19 @@ class HistoryRepository(
             accountId = accountId,
             limit = 30,
         ).events
+    }
+
+    suspend fun getWithOffset(
+        accountId: String,
+        beforeLt: Long
+    ): List<AccountEvent>? {
+        return withRetry {
+            api.getAccountEvents(
+                accountId = accountId,
+                limit = 30,
+                beforeLt = beforeLt
+            ).events
+        }
     }
 
     override suspend fun insertCache(accountId: String, items: List<AccountEvent>) {

@@ -1,8 +1,6 @@
 package com.tonkeeper.core.history.list.item
 
-import android.content.Context
 import com.tonkeeper.core.history.ActionType
-import com.tonkeeper.core.history.TransactionDetails
 import com.tonkeeper.helper.DateFormat
 import uikit.list.BaseListItem
 import uikit.list.ListCell
@@ -15,9 +13,12 @@ sealed class HistoryItem(
         const val TYPE_ACTION = 1
         const val TYPE_HEADER = 2
         const val TYPE_SPACE = 3
+        const val TYPE_LOADER = 4
     }
 
     data object Space: HistoryItem(TYPE_SPACE)
+
+    data object Loader: HistoryItem(TYPE_LOADER)
 
     data class Header(
         val title: String,
@@ -59,6 +60,7 @@ sealed class HistoryItem(
         val isOut: Boolean,
         val address: String? = null,
         val addressName: String? = null,
+        val lt: Long = 0L,
     ): HistoryItem(TYPE_ACTION) {
 
         val hasNft: Boolean

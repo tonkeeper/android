@@ -14,6 +14,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
+import uikit.list.ListPaginationListener
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
 import uikit.widget.HeaderView
@@ -34,6 +35,12 @@ class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeat
         feature.loadChart(it)
     }
 
+    private val scrollListener = object : ListPaginationListener() {
+        override fun onLoadMore() {
+            feature.loadMore()
+        }
+    }
+
     private lateinit var headerView: HeaderView
     private lateinit var shimmerView: View
     private lateinit var listView: RecyclerView
@@ -49,6 +56,7 @@ class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeat
         listView.layoutManager = LinearLayoutManager(view.context)
         listView.adapter = ConcatAdapter(chartAdapter, historyAdapter)
         listView.addItemDecoration(ChartItemDecoration(view.context))
+        listView.addOnScrollListener(scrollListener)
 
         listView.verticalScrolled.launch(this) {
             headerView.divider = it

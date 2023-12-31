@@ -46,7 +46,7 @@ object CurrencyFormatter {
         modifier: ((String) -> String) = { it }
     ): String {
         val amount = modifier(getFormat(decimals).format(value))
-        if (amount == emptyAmount) {
+        if (amount == emptyAmount && value > 0f) {
             return format(currency, value, 9, modifier)
         }
 

@@ -57,12 +57,34 @@ object HistoryHelper {
     // dirty hack to remove trailing zeros
     private val amountModifier = { value: String ->
         val decimalSeparator = CurrencyFormatter.monetaryDecimalSeparator
-        val r = value.removeSuffix(decimalSeparator + "00").removeSuffix("0")
+        val r = value.removeSuffix(decimalSeparator + "00")
         if (r == "") {
             "0${decimalSeparator}01"
         } else {
             r
         }
+    }
+
+
+    fun withLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
+        val last = items.lastOrNull()
+        if (last is HistoryItem.Loader) {
+            return items
+        }
+
+        val newItems = items.toMutableList()
+        newItems.add(HistoryItem.Loader)
+        return newItems
+    }
+
+    fun removeLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
+        val last = items.lastOrNull()
+        if (last is HistoryItem.Loader) {
+            val newItems = items.toMutableList()
+            newItems.removeAt(newItems.size - 1)
+            return newItems
+        }
+        return items
     }
 
     fun subscribe(scope: CoroutineScope, accountId: String) {
@@ -114,6 +136,7 @@ object HistoryHelper {
         val items = mutableListOf<HistoryItem>()
 
         for ((index, event) in events.withIndex()) {
+
             val pending = event.inProgress
             val prevEvent = events.getOrNull(index - 1)
 
@@ -157,6 +180,7 @@ object HistoryHelper {
                     position = ListCell.getPosition(actions.size, actionIndex),
                     fee = CurrencyFormatter.format(SupportedCurrency.TON.code, feeAmount),
                     feeInCurrency = CurrencyFormatter.formatFiat(feeInCurrency),
+                    lt = event.lt,
                 ))
             }
 

@@ -17,6 +17,7 @@ import com.tonkeeper.core.history.list.item.HistoryItem
 import core.QueueScope
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
 import ton.SupportedTokens
@@ -33,6 +34,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
     private val accountRepository = AccountRepository()
     private val accountsApi = Tonapi.accounts
     private val queueScope = QueueScope(viewModelScope.coroutineContext)
+    private var lastLt: Long? = null
 
     fun load() {
         queueScope.submit {
@@ -62,6 +64,33 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
         }
     }
 
+    fun loadMore() {
+        queueScope.submit {
+            val lt = lastLt ?: return@submit
+            if (lt == 0L) {
+                return@submit
+            }
+
+            delay(1000)
+
+            updateUiState {
+                it.copy(
+                    historyItems = HistoryHelper.withLoadingItem(it.historyItems)
+                )
+            }
+
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
+            val historyItems = getEvents(wallet, lt)
+            val items = HistoryHelper.removeLoadingItem(uiState.value.historyItems) + historyItems
+
+            updateUiState {
+                it.copy(
+                    historyItems = items
+                )
+            }
+        }
+    }
+
     fun loadChart(period: ChartPeriod) {
         queueScope.submit {
             val chart = ChartHelper.getEntity(period)
@@ -76,18 +105,23 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
     }
 
     private suspend fun getEvents(
-        wallet: Wallet
+        wallet: Wallet,
+        beforeLt: Long? = null
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val accountId = wallet.accountId
-        val events = getAccountEvent(accountId)?.events ?: return@withContext emptyList()
+        val events = getAccountEvent(accountId, beforeLt)?.events ?: return@withContext emptyList()
+        lastLt = events.lastOrNull()?.lt
         HistoryHelper.mapping(wallet, events.filter {
             it.withTON
         })
     }
 
-    private suspend fun getAccountEvent(accountId: String): AccountEvents? {
+    private suspend fun getAccountEvent(
+        accountId: String,
+        beforeLt: Long?
+    ): AccountEvents? {
         return withRetry {
-            accountsApi.getAccountEvents(accountId = accountId, limit = 30, subjectOnly = true)
+            accountsApi.getAccountEvents(accountId = accountId, limit = 30, subjectOnly = true, beforeLt = beforeLt)
         }
     }
 

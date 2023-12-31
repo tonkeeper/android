@@ -1,6 +1,7 @@
 package com.tonkeeper.fragment.wallet.history
 
 import android.util.Log
+import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.history.HistoryRepository
 import com.tonkeeper.core.history.HistoryHelper
@@ -13,6 +14,7 @@ import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ton.wallet.Wallet
 
 class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(HistoryScreenState()) {
@@ -50,6 +52,28 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
         queueScope.submit {
             updateEventsState(false)
             updateEventsState(true)
+        }
+    }
+
+    fun loadMore(lt: Long) {
+        queueScope.submit(Dispatchers.IO) {
+            delay(1000)
+
+            updateUiState { currentState ->
+                currentState.copy(
+                    items = HistoryHelper.withLoadingItem(currentState.items)
+                )
+            }
+
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
+            val events = historyRepository.getWithOffset(wallet.accountId, lt) ?: emptyList()
+            val items = HistoryHelper.removeLoadingItem(uiState.value.items) + HistoryHelper.mapping(wallet, events)
+
+            updateUiState { currentState ->
+                currentState.copy(
+                    items = items
+                )
+            }
         }
     }
 

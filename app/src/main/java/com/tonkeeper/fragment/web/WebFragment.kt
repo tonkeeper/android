@@ -13,6 +13,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.ContentLoadingProgressBar
 import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
+import uikit.widget.WebViewFixed
 
 class WebFragment: BaseFragment(R.layout.fragment_web) {
 
@@ -38,7 +39,7 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
     private lateinit var titleView: AppCompatTextView
     private lateinit var subtitleView: AppCompatTextView
     private lateinit var progressBar: ContentLoadingProgressBar
-    private lateinit var webView: WebView
+    private lateinit var webView: WebViewFixed
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -198,7 +198,7 @@ object TransactionHelper {
             toAddress = MsgAddressInt.parse(destination),
             responseAddress = wallet.contract.address,
             forwardAmount = 1,
-            forwardPayload = null,
+            forwardPayload = comment,
         )
 
         val builder = WalletTransferBuilder()
@@ -216,7 +216,7 @@ object TransactionHelper {
         comment: String? = null,
         max: Boolean = false
     ): WalletTransfer {
-        val body = buildCommentBody(comment)
+        val body = WalletV4R2Contract.buildCommentBody(comment)
         return build(destination, coins, max, body)
     }
 
@@ -236,16 +236,6 @@ object TransactionHelper {
         builder.coins = coins
         builder.body = body
         return builder.build()
-    }
-
-    private fun buildCommentBody(text: String?): Cell? {
-        if (text.isNullOrEmpty()) {
-            return null
-        }
-        return buildCell {
-            storeUInt(0, 32)
-            storeBytes(text.toByteArray())
-        }
     }
 
 }

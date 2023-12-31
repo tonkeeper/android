@@ -13,6 +13,7 @@ import com.tonkeeper.fragment.main.MainTabScreen
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
+import uikit.list.ListPaginationListener
 import uikit.mvi.AsyncState
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.EmptyLayout
@@ -27,9 +28,16 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
         fun newInstance() = HistoryScreen()
     }
 
-    override val feature: HistoryScreenFeature by viewModels()
-
     private val adapter = HistoryAdapter()
+
+    private val scrollListener = object : ListPaginationListener() {
+        override fun onLoadMore() {
+            val latLt = adapter.getLastLt() ?: return
+            feature.loadMore(latLt)
+        }
+    }
+
+    override val feature: HistoryScreenFeature by viewModels()
 
     private lateinit var headerView: HeaderView
     private lateinit var listView: RecyclerView
@@ -47,6 +55,7 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
         listView.verticalScrolled.launch(this) {
             headerView.divider = it
         }
+        listView.addOnScrollListener(scrollListener)
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
@@ -63,13 +72,17 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
     override fun newUiState(state: HistoryScreenState) {
         setAsyncState(state.asyncState)
         if (state.items.isEmpty() && state.asyncState == AsyncState.Default) {
-            toggleVisibilityAnimation(shimmerView, emptyView)
+            setEmptyState()
         } else if (state.items.isNotEmpty()) {
             adapter.submitList(state.items) {
                 emptyView.visibility = View.GONE
                 toggleVisibilityAnimation(shimmerView, listView)
             }
         }
+    }
+
+    private fun setEmptyState() {
+        toggleVisibilityAnimation(shimmerView, emptyView)
     }
 
     override fun newUiEffect(effect: HistoryScreenEffect) {

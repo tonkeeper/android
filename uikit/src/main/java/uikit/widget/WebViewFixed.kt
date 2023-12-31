@@ -3,7 +3,9 @@ package uikit.widget
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
+import android.webkit.WebSettings
 import android.webkit.WebView
+import java.io.File
 
 class WebViewFixed @JvmOverloads constructor(
     context: Context,
@@ -13,11 +15,18 @@ class WebViewFixed @JvmOverloads constructor(
 
     init {
         setLayerType(LAYER_TYPE_SOFTWARE, null)
+
         settings.allowContentAccess = true
         settings.allowFileAccess = true
-        settings.cacheMode = android.webkit.WebSettings.LOAD_CACHE_ELSE_NETWORK
-        settings.domStorageEnabled = true
+        settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+
         settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.databaseEnabled = true
+        settings.setSupportMultipleWindows(true)
+
         setBackgroundColor(Color.TRANSPARENT)
     }
 }
+
+

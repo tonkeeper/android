@@ -12,6 +12,7 @@ import org.ton.block.*
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
+import org.ton.cell.buildCell
 import org.ton.contract.SmartContract
 import org.ton.contract.wallet.WalletContract
 import org.ton.contract.wallet.WalletContract.Companion.DEFAULT_WALLET_ID
@@ -175,8 +176,10 @@ class WalletV4R2Contract private constructor(
             toAddress: MsgAddressInt,
             responseAddress: MsgAddressInt,
             forwardAmount: Long,
-            forwardPayload: Cell?
+            forwardPayload: Any?
         ): Cell {
+            val payload = prepareForwardPayload(forwardPayload)
+
             return CellBuilder.createCell {
                 storeUInt(OP_JETTON, 32)
                 storeUInt(queryId, 64)
@@ -185,10 +188,33 @@ class WalletV4R2Contract private constructor(
                 storeTlb(MsgAddressInt, responseAddress)
                 storeBit(false)
                 storeTlb(Coins, Coins.ofNano(forwardAmount))
-                storeBit(false)
-                if (forwardPayload != null) {
-                    storeRef(AnyTlbConstructor, CellRef(forwardPayload))
+                storeBit(payload != null)
+                if (payload != null) {
+                    storeRef(AnyTlbConstructor, CellRef(payload))
                 }
+            }
+        }
+
+        private fun prepareForwardPayload(forwardPayload: Any?): Cell? {
+            if (forwardPayload == null) {
+                return null
+            }
+            return when (forwardPayload) {
+                is String -> {
+                    return buildCommentBody(forwardPayload)
+                }
+                is Cell -> forwardPayload
+                else -> null
+            }
+        }
+
+        fun buildCommentBody(text: String?): Cell? {
+            if (text.isNullOrEmpty()) {
+                return null
+            }
+            return buildCell {
+                storeUInt(0, 32)
+                storeBytes(text.toByteArray())
             }
         }
 

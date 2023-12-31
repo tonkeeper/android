@@ -14,6 +14,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
+import uikit.list.ListPaginationListener
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
 import uikit.widget.HeaderView
@@ -34,6 +35,9 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
         }
     }
 
+    private val jettonAdapter = JettonAdapter()
+    private val historyAdapter = HistoryAdapter()
+
     private val jettonAddress: String by lazy {
         arguments?.getString(JETTON_ADDRESS_KEY)!!
     }
@@ -42,12 +46,16 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
         arguments?.getString(JETTON_NAME_KEY) ?: ""
     }
 
+    private val scrollListener = object : ListPaginationListener() {
+        override fun onLoadMore() {
+            val latLt = historyAdapter.getLastLt() ?: return
+            feature.loadMore(jettonAddress, latLt)
+        }
+    }
+
     override val feature: JettonScreenFeature by viewModels()
     override var doOnDragging: ((Boolean) -> Unit)? = null
     override var doOnDraggingProgress: ((Float) -> Unit)? = null
-
-    private val jettonAdapter = JettonAdapter()
-    private val historyAdapter = HistoryAdapter()
 
     private lateinit var headerView: HeaderView
     private lateinit var shimmerView: View
@@ -73,6 +81,7 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
     override fun onEndShowingAnimation() {
         super.onEndShowingAnimation()
         feature.load(jettonAddress)
+        listView.addOnScrollListener(scrollListener)
     }
 
     override fun newUiState(state: JettonScreenState) {

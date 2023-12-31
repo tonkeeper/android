@@ -12,8 +12,11 @@ import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.history.list.item.HistoryItem
+import core.QueueScope
+import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
@@ -26,15 +29,39 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
     private val jettonRepository = JettonRepository()
     private val currencyManager = CurrencyManager.getInstance()
     private val accountsApi = Tonapi.accounts
+    private val queueScope = QueueScope(viewModelScope.coroutineContext)
 
     private val currency: SupportedCurrency
         get() = App.settings.currency
 
+    fun loadMore(address: String, lt: Long) {
+        queueScope.submit(Dispatchers.IO) {
+            delay(1000)
+
+            updateUiState { currentState ->
+                currentState.copy(
+                    historyItems = HistoryHelper.withLoadingItem(currentState.historyItems)
+                )
+            }
+
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
+            val events = getEvents(wallet, address, lt)
+
+            val items = HistoryHelper.removeLoadingItem(uiState.value.historyItems) + events
+
+            updateUiState { currentState ->
+                currentState.copy(
+                    historyItems = items
+                )
+            }
+        }
+    }
+
     fun load(address: String) {
-        viewModelScope.launch {
-            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+        queueScope.submit(Dispatchers.IO) {
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val accountId = wallet.accountId
-            val jetton = jettonRepository.getByAddress(accountId, address) ?: return@launch
+            val jetton = jettonRepository.getByAddress(accountId, address) ?: return@submit
             val balance = jetton.parsedBalance
             val currencyBalance = from(jetton.address, accountId).value(balance).to(currency)
             val rate = currencyManager.getRate(accountId, address, currency.code)
@@ -54,18 +81,28 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
         }
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        queueScope.cancel()
+    }
+
     private suspend fun getEvents(
         wallet: Wallet,
-        jettonAddress: String
+        jettonAddress: String,
+        beforeLt: Long? = null
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val accountId = wallet.accountId
-        val events = getAccountEvent(accountId, jettonAddress) ?: return@withContext emptyList()
+        val events = getAccountEvent(accountId, jettonAddress, beforeLt) ?: return@withContext emptyList()
         HistoryHelper.mapping(wallet, events)
     }
 
-    private suspend fun getAccountEvent(accountId: String, jettonAddress: String): AccountEvents? {
+    private suspend fun getAccountEvent(
+        accountId: String,
+        jettonAddress: String,
+        beforeLt: Long? = null
+    ): AccountEvents? {
         return withRetry {
-            accountsApi.getAccountJettonHistoryByID(accountId = accountId, jettonId = jettonAddress, limit = 30)
+            accountsApi.getAccountJettonHistoryByID(accountId = accountId, jettonId = jettonAddress, beforeLt = beforeLt, limit = 30)
         }
     }
 }

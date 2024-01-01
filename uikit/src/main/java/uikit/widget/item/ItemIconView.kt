@@ -6,6 +6,8 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import uikit.R
+import uikit.drawable.DotDrawable
+import uikit.extensions.setEndDrawable
 import uikit.extensions.useAttributes
 import uikit.list.ListCell
 
@@ -27,6 +29,18 @@ class ItemIconView @JvmOverloads constructor(
     var iconRes: Int = 0
         set(value) {
             iconView.setImageResource(value)
+        }
+
+    var dot: Boolean = false
+        set(value) {
+            if (field != value) {
+                field = value
+                if (value) {
+                    textView.setEndDrawable(DotDrawable(context))
+                } else {
+                    textView.setEndDrawable(null)
+                }
+            }
         }
 
     init {

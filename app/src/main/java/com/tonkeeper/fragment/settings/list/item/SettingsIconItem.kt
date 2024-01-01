@@ -10,5 +10,6 @@ data class SettingsIconItem(
     val titleRes: Int,
     @DrawableRes val iconRes: Int = R.drawable.ic_chevron_right_16,
     @ColorRes val colorRes: Int = 0,
-    override val position: ListCell.Position
+    override val position: ListCell.Position,
+    val dot: Boolean = false
 ): SettingsIdItem(ICON_TYPE, id), ListCell

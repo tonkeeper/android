@@ -5,6 +5,7 @@ import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.base.BaseAccountRepository
 import com.tonkeeper.api.history.db.HistoryDao
 import com.tonkeeper.api.withRetry
+import com.tonkeeper.core.history.HistoryHelper
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.AccountEvent
 
@@ -37,7 +38,7 @@ class HistoryRepository(
     ): List<AccountEvent> {
         return api.getAccountEvents(
             accountId = accountId,
-            limit = 30,
+            limit = HistoryHelper.EVENT_LIMIT,
         ).events
     }
 
@@ -48,7 +49,7 @@ class HistoryRepository(
         return withRetry {
             api.getAccountEvents(
                 accountId = accountId,
-                limit = 30,
+                limit = HistoryHelper.EVENT_LIMIT,
                 beforeLt = beforeLt
             ).events
         }

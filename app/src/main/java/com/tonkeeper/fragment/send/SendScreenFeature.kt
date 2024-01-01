@@ -14,6 +14,10 @@ class SendScreenFeature: UiFeature<SendScreenState, SendScreenEffect>(SendScreen
     private val _transaction = MutableLiveData(TransactionData())
     val transaction: LiveData<TransactionData> = _transaction
 
+    fun setBounce(bounce: Boolean) {
+        _transaction.value = _transaction.value?.copy(bounce = bounce)
+    }
+
     fun setAddress(address: String) {
         _transaction.value = _transaction.value?.copy(address = address)
     }

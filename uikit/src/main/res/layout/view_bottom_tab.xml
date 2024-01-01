@@ -27,4 +27,13 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
+    <uikit.widget.DotView
+        android:id="@+id/dot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top"
+        android:layout_marginStart="@dimen/offsetMedium"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"/>
+
 </FrameLayout>

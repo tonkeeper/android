@@ -29,6 +29,7 @@ class SettingsIconHolder(
         }
         view.iconRes = item.iconRes
         view.text = getString(item.titleRes)
+        view.dot = item.dot
     }
 
 }

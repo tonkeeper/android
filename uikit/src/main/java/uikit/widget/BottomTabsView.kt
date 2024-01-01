@@ -6,6 +6,7 @@ import android.content.res.ColorStateList
 import android.util.AttributeSet
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.view.menu.MenuBuilder
@@ -40,6 +41,16 @@ class BottomTabsView @JvmOverloads constructor(
         context.useAttributes(attrs, R.styleable.BottomTabsView) {
             if (it.hasValue(R.styleable.BottomTabsView_menu)) {
                 inflateMenu(it.getResourceId(R.styleable.BottomTabsView_menu, 0))
+            }
+        }
+    }
+
+    fun enableDot(itemId: Int, enable: Boolean) {
+        for (i in 0 until childCount) {
+            val view = getChildAt(i)
+            if (view.tag == itemId) {
+                val dotView = view.findViewById<View>(R.id.dot)
+                dotView.visibility = if (enable) View.VISIBLE else View.GONE
             }
         }
     }

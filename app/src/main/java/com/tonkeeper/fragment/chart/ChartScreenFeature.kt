@@ -17,6 +17,7 @@ import com.tonkeeper.core.history.list.item.HistoryItem
 import core.QueueScope
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
@@ -40,15 +41,20 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
         queueScope.submit {
             val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val accountId = wallet.accountId
-            val account = accountRepository.get(accountId)?.data ?: return@submit
+
+            val accountDeferred = async { accountRepository.get(accountId)?.data }
+            val chartDeferred = async { ChartHelper.getEntity(uiState.value.chartPeriod) }
+            val historyItemsDeferred = async { getEvents(wallet) }
+
+            val account = accountDeferred.await() ?: return@submit
+            val chart = chartDeferred.await()
+            val historyItems = historyItemsDeferred.await()
+
             val balance = Coin.toCoins(account.balance)
             val currencyBalance = from(SupportedTokens.TON, accountId).value(balance).to(currency)
 
             val rate = currencyManager.getRate(accountId, SupportedTokens.TON, currency)
             val rate24h = currencyManager.getRate24h(accountId, SupportedTokens.TON, currency)
-
-            val chart = ChartHelper.getEntity(uiState.value.chartPeriod)
-            val historyItems = getEvents(wallet)
 
             updateUiState {
                 it.copy(
@@ -71,8 +77,6 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
                 return@submit
             }
 
-            delay(1000)
-
             updateUiState {
                 it.copy(
                     historyItems = HistoryHelper.withLoadingItem(it.historyItems)
@@ -85,7 +89,8 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
 
             updateUiState {
                 it.copy(
-                    historyItems = items
+                    historyItems = items,
+                    loadedAll = historyItems.isEmpty()
                 )
             }
         }
@@ -121,7 +126,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
         beforeLt: Long?
     ): AccountEvents? {
         return withRetry {
-            accountsApi.getAccountEvents(accountId = accountId, limit = 30, subjectOnly = true, beforeLt = beforeLt)
+            accountsApi.getAccountEvents(accountId = accountId, limit = 100, subjectOnly = true, beforeLt = beforeLt)
         }
     }
 

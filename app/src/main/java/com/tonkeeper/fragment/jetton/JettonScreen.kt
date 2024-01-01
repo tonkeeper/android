@@ -81,7 +81,6 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
     override fun onEndShowingAnimation() {
         super.onEndShowingAnimation()
         feature.load(jettonAddress)
-        listView.addOnScrollListener(scrollListener)
     }
 
     override fun newUiState(state: JettonScreenState) {
@@ -90,6 +89,11 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
             historyAdapter.submitList(state.historyItems) {
                 toggleVisibilityAnimation(shimmerView, listView)
             }
+        }
+
+        listView.clearOnScrollListeners()
+        if (!state.loadedAll) {
+            listView.addOnScrollListener(scrollListener)
         }
     }
 

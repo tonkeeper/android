@@ -51,7 +51,8 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
 
             updateUiState { currentState ->
                 currentState.copy(
-                    historyItems = items
+                    historyItems = items,
+                    loadedAll = events.isEmpty()
                 )
             }
         }
@@ -102,7 +103,12 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
         beforeLt: Long? = null
     ): AccountEvents? {
         return withRetry {
-            accountsApi.getAccountJettonHistoryByID(accountId = accountId, jettonId = jettonAddress, beforeLt = beforeLt, limit = 30)
+            accountsApi.getAccountJettonHistoryByID(
+                accountId = accountId,
+                jettonId = jettonAddress,
+                beforeLt = beforeLt,
+                limit = HistoryHelper.EVENT_LIMIT
+            )
         }
     }
 }

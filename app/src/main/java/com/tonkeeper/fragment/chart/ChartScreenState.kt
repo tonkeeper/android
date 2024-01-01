@@ -15,7 +15,8 @@ data class ChartScreenState(
     val currencyBalance: String = "",
     val rateFormat: String = "",
     val rate24h: String = "",
-    val historyItems: List<HistoryItem> = emptyList()
+    val historyItems: List<HistoryItem> = emptyList(),
+    val loadedAll: Boolean = false,
 ): UiState() {
 
 

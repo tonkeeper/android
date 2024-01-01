@@ -2,13 +2,20 @@ package com.tonkeeper.fragment.settings.security
 
 import android.os.Bundle
 import android.view.View
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
+import com.tonkeeper.event.ChangeCurrencyEvent
+import com.tonkeeper.event.WalletSettingsEvent
+import com.tonkeeper.extensions.isRecoveryPhraseBackup
 import com.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonkeeper.fragment.wallet.phrase.PhraseWalletFragment
+import core.EventBus
+import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
+import uikit.widget.item.ItemIconView
 import uikit.widget.item.ItemSwitchView
 
 class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.SwipeBack {
@@ -19,13 +26,17 @@ class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.
         fun newInstance() = SecurityFragment()
     }
 
+    private val walletSettingsUpdate = fun(_: WalletSettingsEvent) {
+        requestWallet()
+    }
+
     override var doOnDragging: ((Boolean) -> Unit)? = null
     override var doOnDraggingProgress: ((Float) -> Unit)? = null
 
     private lateinit var headerView: HeaderView
     private lateinit var biometricView: ItemSwitchView
     private lateinit var lockScreenView: ItemSwitchView
-    private lateinit var recoveryPhraseView: View
+    private lateinit var recoveryPhraseView: ItemIconView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,9 +62,25 @@ class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.
         recoveryPhraseView.setOnClickListener {
             openRecoveryPhrase()
         }
+
+        requestWallet()
+
+        EventBus.subscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        EventBus.unsubscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
     }
 
     private fun openRecoveryPhrase() {
         navigation?.add(LockScreen.newInstance(RECORD_PHRASE_REQUEST))
+    }
+
+    private fun requestWallet() {
+        lifecycleScope.launch {
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            recoveryPhraseView.dot = !wallet.isRecoveryPhraseBackup()
+        }
     }
 }

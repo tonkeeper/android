@@ -55,7 +55,6 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
         listView.verticalScrolled.launch(this) {
             headerView.divider = it
         }
-        listView.addOnScrollListener(scrollListener)
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
@@ -78,6 +77,11 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
                 emptyView.visibility = View.GONE
                 toggleVisibilityAnimation(shimmerView, listView)
             }
+        }
+
+        listView.clearOnScrollListeners()
+        if (!state.loadedAll) {
+            listView.addOnScrollListener(scrollListener)
         }
     }
 

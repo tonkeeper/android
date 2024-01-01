@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.PasscodeManager
 import com.tonkeeper.extensions.hasPushPermission
+import com.tonkeeper.extensions.setRecoveryPhraseBackup
 import com.tonkeeper.fragment.wallet.init.pager.ChildPageType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,7 +123,15 @@ internal class InitModel(
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             savePasscode()
-            App.walletManager.addWallet(words, name)
+
+            if (words.isEmpty()) {
+                words = Mnemonic.generate()
+            }
+
+            val wallet = App.walletManager.addWallet(words, name)
+            if (!newWallet) {
+                wallet.setRecoveryPhraseBackup(true)
+            }
             _ready.value = true
         }
     }

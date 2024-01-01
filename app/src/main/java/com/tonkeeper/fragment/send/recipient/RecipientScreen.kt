@@ -28,7 +28,7 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         super.onViewCreated(view, savedInstanceState)
 
         addressInput = view.findViewById(R.id.address)
-        addressInput.doOnTextChange = { feature.requestAddressCheck(it) }
+        addressInput.doOnTextChange = { feature.requestAddressCheck(it.trim()) }
         addressInput.doOnIconClick = {
             addressInput.hideKeyboard()
             sendFeature.sendEffect(SendScreenEffect.OpenCamera)
@@ -62,6 +62,7 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
 
         sendFeature.setAddress(state.address)
         sendFeature.setName(state.name)
+        sendFeature.setBounce(state.bounce)
     }
 
     private fun checkRequireComment() {

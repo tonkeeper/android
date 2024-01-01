@@ -2,7 +2,6 @@ package com.tonkeeper.fragment.main
 
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
@@ -10,6 +9,8 @@ import com.tonkeeper.core.currency.CurrencyUpdateWorker
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.widget.Widget
 import com.tonkeeper.event.RequestActionEvent
+import com.tonkeeper.event.WalletSettingsEvent
+import com.tonkeeper.extensions.isRecoveryPhraseBackup
 import com.tonkeeper.fragment.action.ConfirmActionFragment
 import com.tonkeeper.fragment.wallet.collectibles.CollectiblesScreen
 import com.tonkeeper.fragment.wallet.history.HistoryScreen
@@ -17,6 +18,7 @@ import com.tonkeeper.fragment.settings.main.SettingsScreen
 import com.tonkeeper.fragment.wallet.main.WalletScreen
 import core.EventBus
 import kotlinx.coroutines.launch
+import ton.wallet.Wallet
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomTabsView
@@ -43,6 +45,10 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         }
     }
 
+    private val walletSettingsUpdate = fun(_: WalletSettingsEvent) {
+        requestWalletState()
+    }
+
     private var currentFragment: BaseFragment? = null
 
     private lateinit var bottomTabsView: BottomTabsView
@@ -63,14 +69,28 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
             HistoryHelper.subscribe(lifecycleScope, wallet.accountId)
+            updateWalletState(wallet)
         }
 
         EventBus.subscribe(RequestActionEvent::class.java, requestActionEvent)
+        EventBus.subscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
+    }
+
+    private fun requestWalletState() {
+        lifecycleScope.launch {
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            updateWalletState(wallet)
+        }
+    }
+
+    private fun updateWalletState(wallet: Wallet) {
+        bottomTabsView.enableDot(R.id.settings, !wallet.isRecoveryPhraseBackup())
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         EventBus.unsubscribe(RequestActionEvent::class.java, requestActionEvent)
+        EventBus.unsubscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
     }
 
     private fun fragmentByItemId(itemId: Int): BaseFragment {

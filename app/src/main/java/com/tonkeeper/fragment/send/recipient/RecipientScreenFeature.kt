@@ -30,14 +30,20 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
         if (value.isEmpty()) {
             updateUiState { it.copy(
                 addressState = RecipientScreenState.AddressState.EMPTY,
-                requireComment = false
+                requireComment = false,
+                name = null,
+                address = "",
+                bounce = false,
             ) }
             return
         }
 
         updateUiState { it.copy(
             addressState = RecipientScreenState.AddressState.LOADING,
-            requireComment = false
+            requireComment = false,
+            name = null,
+            address = "",
+            bounce = false,
         ) }
 
         checkAddressJob?.cancel()
@@ -48,17 +54,31 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
             if (account == null) {
                 updateUiState { it.copy(
                     addressState = RecipientScreenState.AddressState.INVALID,
-                    requireComment = false
+                    requireComment = false,
+                    name = null,
+                    address = "",
+                    bounce = false,
                 ) }
                 return@launch
             }
 
+            var address = value
+            if (!account.name.isNullOrBlank()) {
+                address = account.address.toUserFriendly()
+            }
+
+            var bounce = value.startsWith("EQ") || !value.startsWith("UQ")
+
+            if (!TonAddress.isValid(value)) {
+                bounce = !account.isWallet
+            }
 
             updateUiState { it.copy(
                 addressState = RecipientScreenState.AddressState.VALID,
-                address = account.address.toUserFriendly(),
+                address = address,
                 name = account.name,
-                requireComment = account.memoRequired == true
+                requireComment = account.memoRequired == true,
+                bounce = bounce,
             ) }
         }
     }

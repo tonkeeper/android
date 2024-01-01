@@ -6,7 +6,8 @@ data class RecipientScreenState(
     val addressState: AddressState = AddressState.EMPTY,
     val address: String = "",
     val name: String? = null,
-    val requireComment: Boolean = false
+    val requireComment: Boolean = false,
+    val bounce: Boolean = false
 ): UiState() {
 
     enum class AddressState {

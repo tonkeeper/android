@@ -13,6 +13,7 @@ data class TransactionData(
     val amountRaw: String = "0",
     val max: Boolean = false,
     val jetton: JettonBalance? = null,
+    val bounce: Boolean = false,
 ) {
 
     val icon: String

@@ -6,5 +6,6 @@ import uikit.mvi.UiState
 
 data class HistoryScreenState(
     val asyncState: AsyncState = AsyncState.Loading,
-    val items: List<HistoryItem> = emptyList()
+    val items: List<HistoryItem> = emptyList(),
+    val loadedAll: Boolean = false,
 ): UiState()

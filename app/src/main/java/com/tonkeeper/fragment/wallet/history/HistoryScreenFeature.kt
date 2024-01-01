@@ -57,8 +57,6 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
 
     fun loadMore(lt: Long) {
         queueScope.submit(Dispatchers.IO) {
-            delay(1000)
-
             updateUiState { currentState ->
                 currentState.copy(
                     items = HistoryHelper.withLoadingItem(currentState.items)
@@ -71,7 +69,8 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
 
             updateUiState { currentState ->
                 currentState.copy(
-                    items = items
+                    items = items,
+                    loadedAll = HistoryHelper.EVENT_LIMIT > events.size
                 )
             }
         }
@@ -98,7 +97,8 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
         updateUiState { currentState ->
             currentState.copy(
                 asyncState = asyncState,
-                items = items
+                items = items,
+                loadedAll = HistoryHelper.EVENT_LIMIT > events.size
             )
         }
 

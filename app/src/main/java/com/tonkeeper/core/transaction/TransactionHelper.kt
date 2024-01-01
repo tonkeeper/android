@@ -39,10 +39,11 @@ object TransactionHelper {
         to: String,
         coins: Coins,
         comment: String? = null,
-        max: Boolean = false
+        max: Boolean = false,
+        bounce: Boolean,
     ): TransactionEmulate? = withContext(Dispatchers.IO) {
         try {
-            val cell = createTon(wallet, to, coins, comment, max)
+            val cell = createTon(wallet, to, coins, comment, max, bounce)
             val boc = base64(BagOfCells(cell).toByteArray())
             val request = EmulateMessageToWalletRequest(boc)
             val response = emulationApi.emulateMessageToWallet(request)
@@ -62,9 +63,10 @@ object TransactionHelper {
         to: String,
         coins: Coins,
         comment: String? = null,
+        bounce: Boolean,
     ): TransactionEmulate? = withContext(Dispatchers.IO) {
         try {
-            val cell = createJetton(wallet, jetton, to, coins, comment)
+            val cell = createJetton(wallet, jetton, to, coins, comment, bounce)
             val boc = base64(BagOfCells(cell).toByteArray())
             val request = EmulateMessageToWalletRequest(boc)
             val response = emulationApi.emulateMessageToWallet(request)
@@ -83,9 +85,10 @@ object TransactionHelper {
         to: String,
         coins: Coins,
         comment: String? = null,
-        max: Boolean = false
+        max: Boolean = false,
+        bounce: Boolean,
     ) = withContext(Dispatchers.IO) {
-        val cell = createTon(wallet, to, coins, comment, max)
+        val cell = createTon(wallet, to, coins, comment, max, bounce)
         val boc = base64(BagOfCells(cell).toByteArray())
         val request = SendBlockchainMessageRequest(boc)
         blockchainApi.sendBlockchainMessage(request)
@@ -97,8 +100,9 @@ object TransactionHelper {
         to: String,
         coins: Coins,
         comment: String? = null,
+        bounce: Boolean,
     ) = withContext(Dispatchers.IO) {
-        val cell = createJetton(wallet, jetton, to, coins, comment)
+        val cell = createJetton(wallet, jetton, to, coins, comment, bounce)
         val boc = base64(BagOfCells(cell).toByteArray())
         val request = SendBlockchainMessageRequest(boc)
         blockchainApi.sendBlockchainMessage(request)
@@ -110,13 +114,15 @@ object TransactionHelper {
         to: String,
         coins: Coins,
         comment: String? = null,
+        bounce: Boolean,
     ): Cell {
         val transfer = buildJetton(
             wallet = wallet,
             jetton = jetton,
             destination = to,
             jettonCoins = coins,
-            comment = comment
+            comment = comment,
+            bounce = bounce,
         )
 
         val seqno = getSeqno(wallet.accountId)
@@ -145,13 +151,15 @@ object TransactionHelper {
         to: String,
         coins: Coins,
         comment: String? = null,
-        max: Boolean = false
+        max: Boolean = false,
+        bounce: Boolean,
     ): Cell {
         val transfer = buildTon(
             destination = to,
             coins = coins,
             comment = comment,
             max = max,
+            bounce = bounce,
         )
 
         val seqno = getSeqno(wallet.accountId)
@@ -191,7 +199,8 @@ object TransactionHelper {
         jetton: JettonBalance,
         destination: String,
         jettonCoins: Coins,
-        comment: String?
+        comment: String?,
+        bounce: Boolean,
     ): WalletTransfer {
         val body = WalletV4R2Contract.createJettonBody(
             jettonCoins = jettonCoins,
@@ -203,7 +212,7 @@ object TransactionHelper {
 
         val builder = WalletTransferBuilder()
         builder.sendMode = SendMode.PAY_GAS_SEPARATELY.value + SendMode.IGNORE_ERRORS.value
-        builder.bounceable = true
+        builder.bounceable = bounce
         builder.destination = AddrStd.parse(jetton.walletAddress.address)
         builder.coins = Coins.ofNano(Coin.toNano(0.64f))
         builder.body = body
@@ -214,10 +223,11 @@ object TransactionHelper {
         destination: String,
         coins: Coins,
         comment: String? = null,
-        max: Boolean = false
+        max: Boolean = false,
+        bounce: Boolean,
     ): WalletTransfer {
         val body = WalletV4R2Contract.buildCommentBody(comment)
-        return build(destination, coins, max, body)
+        return build(destination, coins, max, body, bounce)
     }
 
     private fun build(
@@ -225,6 +235,7 @@ object TransactionHelper {
         coins: Coins,
         max: Boolean = false,
         body: Cell?,
+        bounce: Boolean,
     ): WalletTransfer {
         val builder = WalletTransferBuilder()
         builder.sendMode = if (max) {
@@ -232,6 +243,7 @@ object TransactionHelper {
         } else {
             SendMode.PAY_GAS_SEPARATELY.value + SendMode.IGNORE_ERRORS.value
         }
+        builder.bounceable = bounce
         builder.destination = AddrStd.parse(address)
         builder.coins = coins
         builder.body = body

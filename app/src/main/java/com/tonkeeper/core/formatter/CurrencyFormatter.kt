@@ -47,7 +47,7 @@ object CurrencyFormatter {
     ): String {
         val amount = modifier(getFormat(decimals).format(value))
         if (amount == emptyAmount && value > 0f) {
-            return format(currency, value, 9, modifier)
+            return format(currency, value, decimalCount(value), modifier)
         }
 
         val symbol = symbols[currency]

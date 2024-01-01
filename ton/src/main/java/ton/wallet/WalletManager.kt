@@ -141,7 +141,7 @@ class WalletManager(
         cacheWallet = null
     }
 
-    suspend fun addWallet(mnemonic: List<String>, name: String? = null) = withContext(Dispatchers.IO) {
+    suspend fun addWallet(mnemonic: List<String>, name: String? = null): Wallet = withContext(Dispatchers.IO) {
         val seed = Mnemonic.toSeed(mnemonic)
         val privateKey = PrivateKeyEd25519(seed)
         val publicKey = privateKey.publicKey()
@@ -159,6 +159,8 @@ class WalletManager(
 
         cacheWallet = null
         cacheWallets.clear()
+
+        wallet
     }
 
 }

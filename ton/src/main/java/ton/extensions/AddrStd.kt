@@ -5,7 +5,7 @@ import org.ton.block.AddrStd
 fun String.toUserFriendly(
     wallet: Boolean = true
 ): String {
-    if (startsWith("UQ")) {
+    if (wallet && startsWith("UQ")) {
         return this
     }
     return try {

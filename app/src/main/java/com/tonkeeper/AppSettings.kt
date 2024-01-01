@@ -25,6 +25,15 @@ class AppSettings(context: Context) {
     }
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+    private val walletSettings = WalletSettings(context)
+
+    fun isRecoveryPhraseBackup(accountId: String): Boolean {
+        return walletSettings.isRecoveryPhraseBackup(accountId)
+    }
+
+    fun setRecoveryPhraseBackup(accountId: String, isBackup: Boolean) {
+        walletSettings.setRecoveryPhraseBackup(accountId, isBackup)
+    }
 
     var currency: SupportedCurrency = prefs.getEnum(CURRENCY_KEY, SupportedCurrency.USD)
         set(value) {

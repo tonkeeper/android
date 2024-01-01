@@ -161,7 +161,7 @@ val AccountAddress.nameOrAddress: String
         if (!name.isNullOrBlank()) {
             return name!!
         }
-        return address.toUserFriendly().shortAddress
+        return address.toUserFriendly(isWallet).shortAddress
     }
 
 val AccountAddress.iconURL: String?

@@ -60,9 +60,9 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
                 if (full > balance) {
                     throw Exception("Not enough funds")
                 }*/
-                TransactionHelper.sendTon(wallet, tx.address!!, amount, tx.comment, tx.max)
+                TransactionHelper.sendTon(wallet, tx.address!!, amount, tx.comment, tx.max, tx.bounce)
             } else {
-                TransactionHelper.sendJetton(wallet, tx.jetton!!, tx.address!!, amount, tx.comment)
+                TransactionHelper.sendJetton(wallet, tx.jetton!!, tx.address!!, amount, tx.comment, tx.bounce)
             }
 
             updateUiState {
@@ -120,9 +120,9 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         viewModelScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
             if (transaction.isTon) {
-                calculateFeeTon(wallet, transaction.address!!, transaction.amount, transaction.comment, transaction.max)
+                calculateFeeTon(wallet, transaction.address!!, transaction.amount, transaction.comment, transaction.max, transaction.bounce)
             } else {
-                calculateFeeJetton(wallet, transaction.jetton!!, transaction.address!!, transaction.amount, transaction.comment)
+                calculateFeeJetton(wallet, transaction.jetton!!, transaction.address!!, transaction.amount, transaction.comment, transaction.bounce)
             }
         }
     }
@@ -133,8 +133,9 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         to: String,
         value: Coins,
         comment: String? = null,
+        bounce: Boolean,
     ) = withContext(Dispatchers.IO) {
-        val emulate = TransactionHelper.emulateJetton(wallet, jetton, to, value, comment)
+        val emulate = TransactionHelper.emulateJetton(wallet, jetton, to, value, comment, bounce)
         if (emulate == null) {
             updateUiState {
                 it.copy(
@@ -166,9 +167,10 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         to: String,
         value: Coins,
         comment: String? = null,
-        max: Boolean = false
+        max: Boolean = false,
+        bounce: Boolean,
     ) = withContext(Dispatchers.IO) {
-        val emulate = TransactionHelper.emulateTon(wallet, to, value, comment, max)
+        val emulate = TransactionHelper.emulateTon(wallet, to, value, comment, max, bounce)
         if (emulate == null) {
             updateUiState {
                 it.copy(

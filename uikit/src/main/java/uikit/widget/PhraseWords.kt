@@ -29,7 +29,7 @@ class PhraseWords @JvmOverloads constructor(
 
         var row = insertWordRow()
 
-        addView(View(context), LayoutParams(16.dp, LayoutParams.MATCH_PARENT))
+        addView(View(context), LayoutParams(24.dp, LayoutParams.MATCH_PARENT))
 
         for ((index, word) in words.withIndex()) {
             if (index == words.size / 2) {

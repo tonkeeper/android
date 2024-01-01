@@ -56,12 +56,7 @@ internal class WalletStorage(context: Context) {
     suspend fun getWallet(
         id: Long = 0,
     ): Wallet? {
-        var wallet = wallets.get(id)
-        if (wallet == null) {
-            wallet = getLegacyWallet(id) ?: return null
-            wallets.add(wallet)
-        }
-        return wallet
+        return wallets.get(id)
     }
 
     suspend fun getWallets(): List<Wallet> {
@@ -82,22 +77,4 @@ internal class WalletStorage(context: Context) {
     suspend fun getMnemonic(id: Long): List<String> {
         return mnemonicStorage.get(id)
     }
-
-    // TODO remove after 2 releases
-    private suspend fun getLegacyWallet(
-        walletCreateDate: Long
-    ): Wallet? {
-        val words = getMnemonic(walletCreateDate)
-        if (words.isEmpty()) {
-            return null
-        }
-        val legacyWallet = WalletInfo(
-            createDate = walletCreateDate,
-            name = "Wallet",
-            words = words
-        )
-        return Wallet(legacyWallet)
-    }
-
-
 }

@@ -1,6 +1,7 @@
 package ton.wallet.storage
 
 import android.content.Context
+import android.util.Log
 import core.keyvalue.EncryptedKeyValue
 
 internal class MnemonicStorage(context: Context) {

@@ -1,11 +1,15 @@
 package com.tonkeeper.fragment.wallet.phrase
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
+import com.tonkeeper.event.WalletSettingsEvent
+import com.tonkeeper.extensions.setRecoveryPhraseBackup
+import core.EventBus
 import uikit.widget.PhraseWords
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
@@ -22,6 +26,10 @@ class PhraseWalletFragment: BaseFragment(R.layout.fragment_phrase_wallet), BaseF
     override var doOnDraggingProgress: ((Float) -> Unit)? = null
 
     private var words = listOf<String>()
+        set(value) {
+            field = value
+            wordsView.setWords(value)
+        }
 
     private lateinit var headerView: HeaderView
     private lateinit var contentView: View
@@ -50,16 +58,13 @@ class PhraseWalletFragment: BaseFragment(R.layout.fragment_phrase_wallet), BaseF
 
     override fun onEndShowingAnimation() {
         super.onEndShowingAnimation()
-        if (words.isEmpty()) {
-            loadWords()
-        } else {
-            wordsView.setWords(words)
-        }
+        EventBus.post(WalletSettingsEvent)
     }
 
     private fun loadWords() {
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            wallet.setRecoveryPhraseBackup(true)
             words = App.walletManager.getMnemonic(wallet.id)
         }
     }

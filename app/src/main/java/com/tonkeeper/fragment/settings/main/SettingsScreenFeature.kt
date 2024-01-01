@@ -9,6 +9,8 @@ import com.tonkeeper.api.internal.repositories.KeysRepository
 import com.tonkeeper.core.currency.CurrencyUpdateWorker
 import com.tonkeeper.core.language.name
 import com.tonkeeper.event.ChangeCurrencyEvent
+import com.tonkeeper.event.WalletSettingsEvent
+import com.tonkeeper.extensions.isRecoveryPhraseBackup
 import com.tonkeeper.fragment.settings.list.item.SettingsIconItem
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
 import com.tonkeeper.fragment.settings.list.item.SettingsItem
@@ -22,7 +24,11 @@ import uikit.list.ListCell
 class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect>(SettingsScreenState()) {
 
     private val changeCurrencyAction = fun(_: ChangeCurrencyEvent) {
-        buildItems()
+        requestUpdateItems()
+    }
+
+    private val walletSettingsUpdate = fun(_: WalletSettingsEvent) {
+        requestUpdateItems()
     }
 
     private val keysRepository = KeysRepository(App.instance)
@@ -32,8 +38,15 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
     var directSupportUrl = ""
 
     init {
-        buildItems()
+        requestUpdateItems()
         EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
+        EventBus.subscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
+    }
+
+    private fun requestUpdateItems() {
+        viewModelScope.launch {
+            buildItems()
+        }
     }
 
     private suspend fun loadConfig() {
@@ -51,7 +64,9 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
         }
     }
 
-    private fun buildItems() {
+    private suspend fun buildItems() {
+        val wallet = App.walletManager.getWalletInfo() ?: return
+
         val items = mutableListOf<SettingsItem>()
 
         items.add(SettingsIconItem(
@@ -81,6 +96,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             iconRes = R.drawable.ic_lock_28,
             position = ListCell.Position.FIRST,
             colorRes = uikit.R.color.accentBlue,
+            dot = !wallet.isRecoveryPhraseBackup()
         ))
         items.add(SettingsIconItem(
             id = SettingsIdItem.WIDGET_ID,
@@ -89,7 +105,6 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             position = ListCell.Position.LAST,
             colorRes = uikit.R.color.accentBlue,
         ))
-
 
         items.add(SettingsIconItem(
             id = SettingsIdItem.SUPPORT_ID,
@@ -148,5 +163,6 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
     override fun onCleared() {
         super.onCleared()
         EventBus.unsubscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
+        EventBus.unsubscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
     }
 }

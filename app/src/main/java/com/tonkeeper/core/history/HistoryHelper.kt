@@ -45,6 +45,8 @@ import java.util.Date
 
 object HistoryHelper {
 
+    const val EVENT_LIMIT = 20
+
     const val MINUS_SYMBOL = "-"
     const val PLUS_SYMBOL = "+"
 

@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.tonkeeper.api.fromJSON
+import com.tonkeeper.core.history.HistoryHelper
 import io.tonapi.models.AccountEvent
 
 @Dao
@@ -20,7 +21,7 @@ interface HistoryDao {
         insert(HistoryEntity.map(accountId, events))
     }
 
-    @Query("SELECT data FROM event WHERE accountId = :accountId ORDER BY timestamp DESC")
+    @Query("SELECT data FROM event WHERE accountId = :accountId ORDER BY timestamp DESC LIMIT ${HistoryHelper.EVENT_LIMIT}")
     suspend fun getByAccountId(accountId: String): List<String>
 
     @Query("SELECT data FROM event WHERE accountId = :accountId AND eventId = :eventId LIMIT 1")

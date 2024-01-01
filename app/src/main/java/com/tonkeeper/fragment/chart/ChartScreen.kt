@@ -56,7 +56,6 @@ class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeat
         listView.layoutManager = LinearLayoutManager(view.context)
         listView.adapter = ConcatAdapter(chartAdapter, historyAdapter)
         listView.addItemDecoration(ChartItemDecoration(view.context))
-        listView.addOnScrollListener(scrollListener)
 
         listView.verticalScrolled.launch(this) {
             headerView.divider = it
@@ -69,6 +68,11 @@ class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeat
             historyAdapter.submitList(state.historyItems) {
                 toggleVisibilityAnimation(shimmerView, listView)
             }
+        }
+
+        listView.clearOnScrollListeners()
+        if (!state.loadedAll) {
+            listView.addOnScrollListener(scrollListener)
         }
     }
 

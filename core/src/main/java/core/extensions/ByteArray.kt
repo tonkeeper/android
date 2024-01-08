@@ -1,24 +1,12 @@
 package core.extensions
 
-import android.util.Base64
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-/*fun ByteArray.toBase64(): String {
-    return Base64.encodeToString(this, Base64.NO_WRAP)
+fun Long.toByteArray(): ByteArray {
+    return ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(this).array()
 }
 
-fun String.toByteArrayFromBase64(): ByteArray {
-    return Base64.decode(this, Base64.NO_WRAP)
+fun Int.toByteArray(): ByteArray {
+    return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(this).array()
 }
-
-fun ByteArray.toHex(): String {
-    return joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-}
-
-fun String.hexToByteArray(): ByteArray {
-    val length = this.length
-    val data = ByteArray(length / 2)
-    for (i in 0 until length step 2) {
-        data[i / 2] = ((this[i].digitToInt(16) shl 4) + this[i + 1].digitToInt(16)).toByte()
-    }
-    return data
-}*/

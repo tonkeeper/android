@@ -1,9 +1,7 @@
 package com.tonkeeper.fragment.country
 
 import com.tonkeeper.App
-import com.tonkeeper.extensions.flagEmoji
 import com.tonkeeper.fragment.country.list.CountryItem
-import uikit.extensions.locale
 import uikit.list.ListCell
 import uikit.mvi.UiState
 

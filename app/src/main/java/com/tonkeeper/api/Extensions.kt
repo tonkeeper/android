@@ -1,5 +1,6 @@
 package com.tonkeeper.api
 
+import android.util.Log
 import com.squareup.moshi.adapter
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.Global
@@ -71,7 +72,9 @@ suspend fun <R> withRetry(
     for (i in 0 until times) {
         try {
             return block()
-        } catch (ignored: Throwable) {}
+        } catch (e: Throwable) {
+            Log.e("RetryErrorLog", "error", e)
+        }
         delay(delay)
     }
     return null

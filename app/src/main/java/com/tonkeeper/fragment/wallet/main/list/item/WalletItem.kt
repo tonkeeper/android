@@ -2,7 +2,7 @@ package com.tonkeeper.fragment.wallet.main.list.item
 
 import uikit.list.BaseListItem
 
-open class WalletItem(
+abstract class WalletItem(
     type: Int
 ): BaseListItem(type) {
 
@@ -12,5 +12,6 @@ open class WalletItem(
         const val TYPE_DATA = 2
         const val TYPE_ACTIONS = 3
         const val TYPE_SPACE = 4
+        const val TYPE_BANNER = 5
     }
 }

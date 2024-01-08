@@ -75,7 +75,7 @@ object HistoryHelper {
         }
 
         val newItems = items.toMutableList()
-        newItems.add(HistoryItem.Loader)
+        newItems.add(HistoryItem.Loader(newItems.size))
         return newItems
     }
 
@@ -188,7 +188,7 @@ object HistoryHelper {
 
             if (chunkItems.size > 0) {
                 items.addAll(chunkItems)
-                items.add(HistoryItem.Space)
+                items.add(HistoryItem.Space(index))
             }
         }
 

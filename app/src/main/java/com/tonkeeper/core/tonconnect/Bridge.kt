@@ -1,6 +1,5 @@
 package com.tonkeeper.core.tonconnect
 
-import android.util.Log
 import com.tonkeeper.api.withRetry
 import com.tonkeeper.core.tonconnect.models.TCApp
 import kotlinx.coroutines.Dispatchers

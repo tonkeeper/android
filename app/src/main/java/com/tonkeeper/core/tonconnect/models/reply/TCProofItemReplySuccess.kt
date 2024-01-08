@@ -8,7 +8,7 @@ data class TCProofItemReplySuccess(
 ): TCReply() {
 
     data class Domain(
-        val lengthBytes: Long,
+        val lengthBytes: Int,
         val value: String
     ): TCBase() {
         override fun toJSON(): JSONObject {
@@ -20,16 +20,18 @@ data class TCProofItemReplySuccess(
     }
 
     data class Proof(
-        val timestamp: Int,
+        val timestamp: Long,
         val domain: Domain,
-        val payload: String,
+        val payload: String?,
         val signature: String
     ): TCBase() {
         override fun toJSON(): JSONObject {
             val json = JSONObject()
             json.put("timestamp", timestamp)
             json.put("domain", domain.toJSON())
-            json.put("payload", payload)
+            payload?.let {
+                json.put("payload", it)
+            }
             json.put("signature", signature)
             return json
         }

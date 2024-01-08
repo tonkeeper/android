@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+    id("kotlin-parcelize")
     id("kotlinx-serialization")
     id("kotlin-kapt")
     id("androidx.baselineprofile")
@@ -16,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 16
-        versionName = "0.0.16"
+        versionCode = 19
+        versionName = "0.0.18"
     }
 
     buildFeatures {
@@ -61,6 +62,7 @@ dependencies {
     implementation(Libs.AndroidX.security)
     implementation(Libs.AndroidX.workManager)
     implementation(Libs.AndroidX.biometric)
+    implementation(Libs.AndroidX.swiperefreshlayout)
 
     implementation(Libs.AndroidX.Camera.base)
     implementation(Libs.AndroidX.Camera.core)
@@ -106,5 +108,6 @@ dependencies {
     implementation(project(Libs.Module.ton))
     implementation(project(Libs.Module.tonApi))
     implementation(project(Libs.Module.shimmer))
+    implementation(project(Libs.Module.blur))
     // implementation(project(Libs.Module.localization))
 }

@@ -17,7 +17,10 @@ import uikit.list.ListCell.Companion.drawable
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 
-class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
+class HistoryActionHolder(
+    parent: ViewGroup,
+    private val disableOpenAction: Boolean
+): HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
 
     private val amountColorReceived = context.getColor(uikit.R.color.accentGreen)
     private val amountColorDefault = context.getColor(uikit.R.color.textPrimary)
@@ -38,7 +41,10 @@ class HistoryActionHolder(parent: ViewGroup): HistoryHolder<HistoryItem.Event>(p
     private val nftCollectionView = findViewById<AppCompatTextView>(R.id.nft_collection)
 
     override fun onBind(item: HistoryItem.Event) {
-        itemView.setOnClickListener { TransactionDialog.open(context, item) }
+        if (!disableOpenAction) {
+            itemView.setOnClickListener { TransactionDialog.open(context, item) }
+        }
+
         itemView.background = item.position.drawable(context)
         titleView.setText(item.action.nameRes)
         subtitleView.text = item.subtitle

@@ -3,10 +3,8 @@ package com.tonkeeper.view
 import android.content.Context
 import android.graphics.drawable.ShapeDrawable
 import android.graphics.drawable.shapes.OvalShape
-import android.os.Build
 import android.util.AttributeSet
 import android.view.Gravity
-import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R

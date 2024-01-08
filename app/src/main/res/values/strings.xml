@@ -194,4 +194,6 @@
     <string name="network_fee">Network fee</string>
     <string name="confirm">Confirm</string>
     <string name="send_request_comment">You must include the note from the exchange for transfer. Without it your funds will be lost.</string>
+    <string name="banner_top">You currently using an experimental version of Tonkeeper.</string>
+    <string name="banner_top_button">Install stable version</string>
 </resources>

@@ -18,7 +18,6 @@ import core.QueueScope
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
 import ton.SupportedTokens

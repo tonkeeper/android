@@ -5,7 +5,6 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.event.WalletSettingsEvent
 import com.tonkeeper.extensions.isRecoveryPhraseBackup
 import com.tonkeeper.fragment.passcode.lock.LockScreen

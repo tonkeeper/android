@@ -1,12 +1,15 @@
 package com.tonkeeper.core.tonconnect.models
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject
 
+@Parcelize
 data class TCItem(
     val name: String,
     val payload: String?
-) {
+) : Parcelable {
     companion object {
         const val TON_ADDR = "ton_addr"
         const val TON_PROOF = "ton_proof"

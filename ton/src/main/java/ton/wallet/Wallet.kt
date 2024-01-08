@@ -31,7 +31,7 @@ data class Wallet(
         MsgAddressInt.toString(
             contract.address,
             userFriendly = false
-        )
+        ).lowercase()
     }
 
     val address: String by lazy {

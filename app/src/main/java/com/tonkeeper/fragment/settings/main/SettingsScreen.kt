@@ -27,8 +27,7 @@ import uikit.list.LinearLayoutManager
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(
-    R.layout.fragment_settings) {
+class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(R.layout.fragment_settings) {
 
     companion object {
         fun newInstance() = SettingsScreen()

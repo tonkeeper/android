@@ -14,15 +14,30 @@ sealed class HistoryItem(
         const val TYPE_HEADER = 2
         const val TYPE_SPACE = 3
         const val TYPE_LOADER = 4
+
+        private fun getId(item: HistoryItem): Long {
+            val hashCode = if (item is Event) {
+                item.txId.hashCode()
+            } else {
+                item.toString().hashCode()
+            }
+            return hashCode.toLong()
+        }
     }
 
-    data object Space: HistoryItem(TYPE_SPACE)
+    val id: Long by lazy { getId(this) }
 
-    data object Loader: HistoryItem(TYPE_LOADER)
+    data class Space(
+        val index: Int
+    ): HistoryItem(TYPE_SPACE)
+
+    data class Loader(
+        val index: Int
+    ): HistoryItem(TYPE_LOADER)
 
     data class Header(
         val title: String,
-        val titleResId: Int? = null
+        val titleResId: Int? = null,
     ): HistoryItem(TYPE_HEADER) {
 
         constructor(timestamp: Long) : this(
@@ -31,7 +46,7 @@ sealed class HistoryItem(
 
         constructor(titleResId: Int) : this(
             title = "",
-            titleResId = titleResId
+            titleResId = titleResId,
         )
     }
 

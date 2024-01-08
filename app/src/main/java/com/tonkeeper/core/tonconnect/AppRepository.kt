@@ -1,5 +1,6 @@
 package com.tonkeeper.core.tonconnect
 
+import android.content.Context
 import com.tonkeeper.App
 import com.tonkeeper.core.tonconnect.db.AppEntity
 import com.tonkeeper.core.tonconnect.models.TCApp
@@ -8,16 +9,16 @@ import io.ktor.util.hex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.libsodium.jni.Sodium
-import org.ton.api.pk.PrivateKeyEd25519
 
 internal class AppRepository(
-    private val storage: EncryptedKeyValue
+    context: Context = App.instance
 ) {
 
     private companion object {
         private const val APP_PRIVATE_KEY = "app_private_key"
     }
 
+    private val storage = EncryptedKeyValue(context, "ton-connect")
     private val appDao = App.db.tonConnectAppDao()
 
     suspend fun createApp(

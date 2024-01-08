@@ -1,6 +1,5 @@
 package com.tonkeeper.fragment.send.confirm
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository

@@ -7,7 +7,6 @@ import com.tonkeeper.fragment.send.SendScreen
 import io.tonapi.models.JettonBalance
 import uikit.extensions.findFragment
 import uikit.navigation.Navigation
-import uikit.navigation.Navigation.Companion.navigation
 
 fun Navigation.openCamera() {
     add(CameraFragment.newInstance())

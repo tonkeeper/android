@@ -22,10 +22,10 @@ data class TCApp(
         }
     }
 
-    val host: String
-        get() {
-            return Uri.parse(url).host ?: throw Exception("Invalid url: $url")
-        }
+    val domain: TCDomain by lazy {
+        val host = Uri.parse(url).host!!
+        TCDomain(host)
+    }
 
     fun encrypt(body: String): ByteArray {
         return encrypt(body.toByteArray())

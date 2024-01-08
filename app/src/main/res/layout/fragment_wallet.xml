@@ -17,12 +17,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <androidx.recyclerview.widget.RecyclerView
+        <com.tonkeeper.fragment.main.MainRecyclerView
             android:id="@+id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingHorizontal="@dimen/offsetMedium"
-            android:paddingBottom="@dimen/offsetMedium"
             android:clipToPadding="false"/>
 
         <com.facebook.shimmer.ShimmerFrameLayout

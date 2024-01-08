@@ -23,6 +23,10 @@ class MethodAdapter(
         }
     }
 
+    fun submit(items: List<FiatItem>, commitCallback: Runnable? = null) {
+        submitList(buildMethodItems(items), commitCallback)
+    }
+
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return MethodHolder(parent, onClick)
     }

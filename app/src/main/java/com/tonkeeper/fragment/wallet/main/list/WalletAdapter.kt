@@ -1,8 +1,8 @@
 package com.tonkeeper.fragment.wallet.main.list
 
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.fragment.wallet.main.list.holder.WalletActionsHolder
+import com.tonkeeper.fragment.wallet.main.list.holder.WalletBannerHolder
 import com.tonkeeper.fragment.wallet.main.list.holder.WalletCellJettonHolder
 import com.tonkeeper.fragment.wallet.main.list.holder.WalletCellTonHolder
 import com.tonkeeper.fragment.wallet.main.list.holder.WalletDataHolder
@@ -21,6 +21,7 @@ class WalletAdapter: BaseListAdapter() {
             WalletItem.TYPE_DATA -> WalletDataHolder(parent)
             WalletItem.TYPE_ACTIONS -> WalletActionsHolder(parent)
             WalletItem.TYPE_SPACE -> WalletSpaceHolder(parent)
+            WalletItem.TYPE_BANNER -> WalletBannerHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

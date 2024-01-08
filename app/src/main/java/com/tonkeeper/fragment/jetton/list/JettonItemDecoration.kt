@@ -5,7 +5,6 @@ import android.graphics.Rect
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.core.history.list.holder.HistoryHolder
-import com.tonkeeper.fragment.jetton.list.holder.JettonHeaderHolder
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.horizontal

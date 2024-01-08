@@ -1,108 +1,67 @@
 package com.tonkeeper.core.tonconnect
 
-import com.tonkeeper.core.tonconnect.models.TCKeyPair
-import com.tonkeeper.core.tonconnect.models.TCProofPayload
+import com.tonkeeper.core.tonconnect.models.TCDomain
 import com.tonkeeper.core.tonconnect.models.reply.TCProofItemReplySuccess
+import core.extensions.toByteArray
+import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.crypto.base64
 import org.ton.crypto.digest.sha256
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.security.MessageDigest
+import org.ton.crypto.hex
 
 internal class Proof {
 
     companion object {
         const val tonProofPrefix = "ton-proof-item-v2/"
         const val tonConnectPrefix = "ton-connect"
+
+        private val prefixMessage = hex("ffff") + tonConnectPrefix.toByteArray()
+
+        private val prefixItem = tonProofPrefix.toByteArray()
     }
 
     fun createProofItemReplySuccess(
-        payload: String,
-        host: String,
-        accountId: String,
-        keyPair: TCKeyPair
+        payload: String?,
+        domain: TCDomain,
+        address: AddrStd,
+        privateWalletKey: PrivateKeyEd25519
     ): TCProofItemReplySuccess {
-        val proof = createProofPayload(payload, host, accountId)
+        val timestamp = System.currentTimeMillis() / 1000L
+        val message = createMessage(timestamp, payload?.toByteArray() ?: byteArrayOf(), domain, address)
+        val signatureMessage = sha256(message)
 
-        val bufferDigest = sha256(proof.bufferToSign)
-
-        val signature = keyPair.sing(bufferDigest)
+        val body = sha256(prefixMessage + signatureMessage)
+        val signature = privateWalletKey.sign(body)
 
         return TCProofItemReplySuccess(
             proof = TCProofItemReplySuccess.Proof(
-                timestamp = proof.timestamp,
+                timestamp = timestamp,
                 domain = TCProofItemReplySuccess.Domain(
-                    lengthBytes = proof.domainBuffer.size.toLong(),
-                    value = proof.domainBuffer.toString(Charsets.UTF_8)
+                    lengthBytes = domain.size,
+                    value = domain.domain,
                 ),
-                payload = proof.payload,
+                payload = payload,
                 signature = base64(signature),
             )
         )
     }
 
-    private fun createProofPayload(
-        payload: String,
-        host: String,
-        accountId: String
-    ): TCProofPayload {
-        val timestamp = (System.currentTimeMillis() / 1000L).toInt()
-        val timestampBuffer = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).apply {
-            putLong(timestamp.toLong())
-        }
+    private fun createMessage(
+        timestamp: Long,
+        payload: ByteArray,
+        domain: TCDomain,
+        address: AddrStd
+    ): ByteArray {
+        val prefix = prefixItem
 
-        val domainBuffer = host.toByteArray(Charsets.UTF_8)
-        val domainLengthBuffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).apply {
-            putInt(domainBuffer.size)
-        }
+        val addressWorkchainBuffer = address.workchainId.toByteArray()
+        val addressHashBuffer = address.address.toByteArray()
 
+        val domainLengthBuffer = domain.size.toByteArray()
+        val domainBuffer = domain.domain.toByteArray()
 
-        val address = AddrStd.parse(accountId)
-        val addressWorkchainBuffer = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).apply {
-            putInt(address.workchainId)
-        }
+        val timestampBuffer = timestamp.toByteArray()
 
-        val addressBuffer = ByteBuffer.allocate(addressWorkchainBuffer.capacity() + address.address.size)
-        addressBuffer.put(addressWorkchainBuffer.array())
-        addressBuffer.put(address.address.toByteArray())
-
-        val tonProofPrefix = Proof.tonProofPrefix.toByteArray(Charsets.UTF_8)
-        val payloadBuffer = payload.toByteArray(Charsets.UTF_8)
-        val messageBuffer = ByteBuffer.allocate(
-            tonProofPrefix.size +
-                    addressBuffer.array().size +
-                    domainLengthBuffer.array().size +
-                    domainBuffer.size +
-                    timestampBuffer.array().size +
-                    payloadBuffer.size
-        )
-
-        messageBuffer.put(tonProofPrefix)
-        messageBuffer.put(addressBuffer.array())
-        messageBuffer.put(domainLengthBuffer.array())
-        messageBuffer.put(domainBuffer)
-        messageBuffer.put(timestampBuffer.array())
-        messageBuffer.put(payloadBuffer)
-
-
-        val messageDigest = sha256(messageBuffer.array())
-
-        val tonConnectPrefix = Proof.tonConnectPrefix.toByteArray(Charsets.UTF_8)
-
-        val bufferToSign = ByteBuffer.allocate(2 + tonConnectPrefix.size + messageDigest.size).apply {
-            put(0xff.toByte())
-            put(0xff.toByte())
-            put(tonConnectPrefix)
-            put(messageDigest)
-        }
-
-        return TCProofPayload(
-            timestamp = timestamp,
-            bufferToSign = bufferToSign.array(),
-            domainBuffer = domainBuffer,
-            payload = payload,
-            origin = Proof.tonConnectPrefix
-        )
+        return prefix + addressWorkchainBuffer + addressHashBuffer + domainLengthBuffer + domainBuffer + timestampBuffer + payload
     }
 }

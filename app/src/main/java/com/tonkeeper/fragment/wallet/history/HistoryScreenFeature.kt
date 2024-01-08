@@ -1,7 +1,5 @@
 package com.tonkeeper.fragment.wallet.history
 
-import android.util.Log
-import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.history.HistoryRepository
 import com.tonkeeper.core.history.HistoryHelper
@@ -14,8 +12,6 @@ import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import ton.wallet.Wallet
 
 class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(HistoryScreenState()) {
 

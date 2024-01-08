@@ -3,7 +3,6 @@ package com.tonkeeper.fragment.camera
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.mlkit.vision.MlKitAnalyzer
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
@@ -106,7 +105,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         val url = getUrlFromBarcode(barcode) ?: return
         readyUrl = true
 
-        activity.handleUri(Uri.parse(url))
+        activity.openUri(Uri.parse(url))
 
         finish()
     }

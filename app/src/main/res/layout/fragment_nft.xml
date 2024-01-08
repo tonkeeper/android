@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <uikit.widget.LoaderView
         android:id="@+id/loader"
@@ -14,6 +14,7 @@
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
         android:icon="@drawable/ic_chevron_down_16"/>
 
     <androidx.core.widget.NestedScrollView
@@ -40,13 +41,13 @@
                     android:id="@+id/image"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    fresco:actualImageScaleType="centerCrop"
-                    fresco:roundedCornerRadius="@dimen/offsetMedium"
-                    fresco:roundTopLeft="true"
-                    fresco:roundTopRight="true"
-                    fresco:roundBottomLeft="false"
-                    fresco:roundBottomRight="false"
-                    fresco:viewAspectRatio="1"/>
+                    app:actualImageScaleType="centerCrop"
+                    app:roundedCornerRadius="@dimen/offsetMedium"
+                    app:roundTopLeft="true"
+                    app:roundTopRight="true"
+                    app:roundBottomLeft="false"
+                    app:roundBottomRight="false"
+                    app:viewAspectRatio="1"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/name"

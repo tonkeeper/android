@@ -6,6 +6,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonkeeper.dialog.fiat.FiatDialog
 import com.tonkeeper.extensions.receive
 import com.tonkeeper.extensions.sendCoin
+import com.tonkeeper.fragment.fiat.modal.FiatModalFragment
 import com.tonkeeper.fragment.wallet.main.list.item.WalletActionItem
 
 class WalletActionsHolder(
@@ -19,7 +20,10 @@ class WalletActionsHolder(
     init {
         sendView.setOnClickListener { nav?.sendCoin() }
         receiveView.setOnClickListener { nav?.receive() }
-        buyOrSellView.setOnClickListener { FiatDialog.open(context) }
+        buyOrSellView.setOnClickListener {
+            // nav?.add(FiatModalFragment.newInstance())
+            FiatDialog.open(context)
+        }
     }
 
     override fun onBind(item: WalletActionItem) {

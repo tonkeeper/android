@@ -1,7 +1,6 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository
@@ -17,6 +16,7 @@ import com.tonkeeper.event.ChangeWalletNameEvent
 import com.tonkeeper.event.WalletStateUpdateEvent
 import com.tonkeeper.event.UpdateCurrencyRateEvent
 import com.tonkeeper.fragment.wallet.main.list.item.WalletActionItem
+import com.tonkeeper.fragment.wallet.main.list.item.WalletBannerItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletDataItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
 import com.tonkeeper.fragment.wallet.main.list.item.WalletJettonCellItem
@@ -33,7 +33,6 @@ import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
-import org.ton.block.Coins
 import ton.extensions.toUserFriendly
 import uikit.list.ListCell
 
@@ -136,6 +135,12 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         ))
         items.add(WalletActionItem)
         items.add(WalletSpaceItem)
+
+        if (!App.instance.isOriginalAppInstalled()) {
+            items.add(WalletBannerItem)
+            items.add(WalletSpaceItem)
+        }
+
         items.addAll(tokens)
 
         updateUiState { currentState ->

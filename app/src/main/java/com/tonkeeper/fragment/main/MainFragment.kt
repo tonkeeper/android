@@ -2,6 +2,7 @@ package com.tonkeeper.fragment.main
 
 import android.os.Bundle
 import android.view.View
+import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
@@ -11,7 +12,7 @@ import com.tonkeeper.core.widget.Widget
 import com.tonkeeper.event.RequestActionEvent
 import com.tonkeeper.event.WalletSettingsEvent
 import com.tonkeeper.extensions.isRecoveryPhraseBackup
-import com.tonkeeper.fragment.action.ConfirmActionFragment
+import com.tonkeeper.fragment.tonconnect.action.ConfirmActionFragment
 import com.tonkeeper.fragment.wallet.collectibles.CollectiblesScreen
 import com.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonkeeper.fragment.settings.main.SettingsScreen
@@ -51,6 +52,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
     private var currentFragment: BaseFragment? = null
 
+    private lateinit var fragmentContainer: FragmentContainerView
     private lateinit var bottomTabsView: BottomTabsView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,10 +62,17 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        fragmentContainer = view.findViewById(R.id.child_fragment)
+
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
         bottomTabsView.doOnClick = { itemId ->
             setFragment(itemId, false)
         }
+
+        if (!App.settings.experimental.bottomBgOver) {
+            bottomTabsView.background = null
+        }
+
         setFragment(R.id.wallet, false)
 
         lifecycleScope.launch {

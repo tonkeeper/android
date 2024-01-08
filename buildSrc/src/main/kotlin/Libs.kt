@@ -30,6 +30,7 @@ object Libs {
         const val annotation = "androidx.annotation:annotation:1.7.0"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.0"
         const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
+        const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
         object Camera {
             private const val version = "1.4.0-alpha02"
@@ -65,10 +66,13 @@ object Libs {
 
     object Module {
         const val core = ":core"
-        const val uiKit = ":uikit"
         const val ton = ":ton"
         const val tonApi = ":tonapi"
-        const val shimmer = ":shimmer"
+
         const val localization = ":localization"
+
+        const val uiKit = ":ui:uikit"
+        const val shimmer = ":ui:shimmer"
+        const val blur = ":ui:blur"
     }
 }

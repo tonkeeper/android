@@ -3,7 +3,6 @@ package com.tonkeeper.fragment.passcode.lock
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
-import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
@@ -23,7 +22,7 @@ class LockScreen: BaseFragment(R.layout.fragment_passcode) {
 
     companion object {
 
-        private const val REQUEST_KEY = "request"
+        private const val REQUEST_KEY = "request_key"
 
         fun newInstance(requestKey: String? = null): LockScreen {
             val screen = LockScreen()
@@ -111,11 +110,17 @@ class LockScreen: BaseFragment(R.layout.fragment_passcode) {
     }
 
     private fun success() {
-        requestKey?.let {
-            navigation?.setFragmentResult(it)
+        if (requestKey == null) {
+            navigation?.remove(this)
+        } else {
+            successWithResult(requestKey!!)
         }
-        activity?.supportFragmentManager?.commitNow {
-            remove(this@LockScreen)
+    }
+
+    private fun successWithResult(key: String) {
+        navigation?.let {
+            it.setFragmentResult(key)
+            it.remove(this)
         }
     }
 

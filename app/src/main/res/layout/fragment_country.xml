@@ -10,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:title="@string/country_title"
+        app:ignoreSystemOffset="true"
         android:action="@drawable/ic_close_16"/>
 
     <uikit.widget.SearchInput

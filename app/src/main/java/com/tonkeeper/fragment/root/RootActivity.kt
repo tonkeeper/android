@@ -3,6 +3,8 @@ package com.tonkeeper.fragment.root
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.activity.addCallback
@@ -10,8 +12,11 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
+import androidx.lifecycle.ReportFragment
+import androidx.lifecycle.ReportFragment.Companion.reportFragment
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
@@ -29,8 +34,10 @@ import com.tonkeeper.dialog.TransactionDialog
 import com.tonkeeper.dialog.fiat.FiatDialog
 import com.tonkeeper.extensions.sendCoin
 import com.tonkeeper.fragment.passcode.lock.LockScreen
+import com.tonkeeper.fragment.send.SendScreen
 import kotlinx.coroutines.launch
 import uikit.extensions.doOnEnd
+import uikit.extensions.findFragment
 import uikit.extensions.hapticConfirm
 import uikit.extensions.startAnimation
 
@@ -52,9 +59,11 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
 
     lateinit var tonConnect: TonConnect
 
+    private lateinit var uiHandler: Handler
     private lateinit var contentView: View
     private lateinit var toastView: AppCompatTextView
     private var initialized = false
+    private var lastIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,15 +71,15 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         setContentView(R.layout.activity_main)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        uiHandler = Handler(mainLooper)
         contentView = findViewById(android.R.id.content)
         contentView.viewTreeObserver.addOnPreDrawListener(this)
 
         toastView = findViewById(R.id.toast)
 
-        handleIntent(intent)
         tonConnect = TonConnect(this)
 
-        initRoot(false)
+        initRoot(false, intent)
 
         onBackPressedDispatcher.addCallback(this) {
             onBackPress()
@@ -84,32 +93,61 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         }
     }
 
-    private fun handleIntent(intent: Intent) {
-        val data = intent.data ?: return
+    fun openUri(uri: Uri) {
+        val fragment = resolveScreen(uri) ?: return
+        add(fragment)
+    }
+
+    private fun resolveIntent(intent: Intent?): BaseFragment? {
+        val data = intent?.data ?: return null
         if (!deepLink.handle(data)) {
-            handleUri(data)
+            return resolveScreen(data)
         }
+        return null
     }
 
-    fun handleUri(uri: Uri) {
+    private fun resolveScreen(uri: Uri): BaseFragment? {
         if (tonConnect.isSupportUri(uri)) {
-            tonConnect.processUri(uri)
+            return tonConnect.resolveScreen(uri)
         } else if (uri.scheme == "ton" || uri.host == "app.tonkeeper.com") {
-            handleTON(uri)
+            return resolveSendScreen(uri)
         }
+        return null
     }
 
-    private fun handleTON(uri: Uri) {
+    private fun resolveSendScreen(uri: Uri): BaseFragment? {
         val paymentURL = PaymentURL(uri)
         if (paymentURL.action == PaymentURL.ACTION_TRANSFER) {
             val amount = Coin.toCoins(paymentURL.amount)
-            sendCoin(paymentURL.address, paymentURL.text, amount)
+            return SendScreen.newInstance(paymentURL.address, paymentURL.text, amount, null)
+        }
+        return null
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!initialized) {
+            return
+        }
+
+        val intentScreen = resolveIntent(lastIntent)
+        lastIntent = null
+
+        lifecycleScope.launch {
+            App.walletManager.getWalletInfo() ?: return@launch
+
+            supportFragmentManager.commit {
+                intentScreen?.let {
+                    add(hostFragmentId, it)
+                }
+                insertLockScreenIfNeed(this)
+            }
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleIntent(intent)
+        lastIntent = intent
     }
 
     private fun setIntroFragment() {
@@ -125,20 +163,34 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         }
     }
 
-    private fun setMainFragment(skipPasscode: Boolean) {
+    private fun setMainFragment(skipPasscode: Boolean, intent: Intent?) {
         val mainFragment = MainFragment.newInstance()
-
+        val intentScreen = resolveIntent(intent)
+        lastIntent = null
         supportFragmentManager.commit {
             replace(hostFragmentId, mainFragment, mainFragment.javaClass.name)
             setPrimaryNavigationFragment(mainFragment)
-            if (App.settings.lockScreen && App.passcode.hasPinCode && !skipPasscode) {
-                add(hostFragmentId, LockScreen.newInstance())
+            intentScreen?.let {
+                add(hostFragmentId, it)
+            }
+            if (!skipPasscode) {
+                insertLockScreenIfNeed(this)
             }
             runOnCommit {
                 clearBackStack()
                 tonConnect.onCreate()
                 initialized = true
             }
+        }
+    }
+
+    private fun insertLockScreenIfNeed(transaction: FragmentTransaction) {
+        if (!App.settings.lockScreen || !App.passcode.hasPinCode) {
+            return
+        }
+        val currentLockScreen = supportFragmentManager.findFragment<LockScreen>()
+        if (currentLockScreen == null) {
+            transaction.add(hostFragmentId, LockScreen.newInstance())
         }
     }
 
@@ -159,13 +211,13 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         supportFragmentManager.setFragmentResultListener(requestKey, this, listener)
     }
 
-    override fun initRoot(skipPasscode: Boolean) {
+    override fun initRoot(skipPasscode: Boolean, intent: Intent?) {
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo()
             if (wallet == null) {
                 setIntroFragment()
             } else {
-                setMainFragment(skipPasscode)
+                setMainFragment(skipPasscode, intent)
             }
         }
     }

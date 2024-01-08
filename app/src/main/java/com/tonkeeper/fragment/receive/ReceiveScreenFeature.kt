@@ -1,8 +1,6 @@
 package com.tonkeeper.fragment.receive
 
 import android.graphics.Bitmap
-import android.graphics.Color
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.address

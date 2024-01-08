@@ -13,11 +13,9 @@ import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.history.list.item.HistoryItem
 import core.QueueScope
-import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
 import ton.wallet.Wallet

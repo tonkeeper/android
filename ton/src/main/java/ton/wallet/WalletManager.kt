@@ -96,7 +96,6 @@ class WalletManager(
     }
 
     suspend fun getWalletInfo(): Wallet? = withContext(Dispatchers.IO) {
-
         /*if (true) {
             return@withContext Wallet(
                 id = 999,

@@ -193,4 +193,6 @@
     <string name="network_fee">Комиссия сети</string>
     <string name="confirm">Подтвердить</string>
     <string name="send_request_comment">Обязательно укажите memo или тег при отправке на биржу.</string>
+    <string name="banner_top">Сейчас вы используете экспериментальную версию Tonkeeper.</string>
+    <string name="banner_top_button">Установить стабильную</string>
 </resources>

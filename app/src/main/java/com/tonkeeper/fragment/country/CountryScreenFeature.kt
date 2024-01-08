@@ -4,12 +4,10 @@ import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.event.ChangeCountryEvent
 import com.tonkeeper.extensions.flagEmoji
-import com.tonkeeper.fragment.country.list.CountryItem
 import core.EventBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import uikit.list.ListCell
 import uikit.mvi.UiFeature
 import java.util.Locale
 

@@ -1,15 +1,16 @@
 package com.tonkeeper
 
 import android.app.Application
-import android.os.SystemClock
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.tonkeeper.core.fiat.Fiat
 import com.tonkeeper.event.ChangeWalletNameEvent
 import com.tonkeeper.event.WalletRemovedEvent
+import com.tonkeeper.settings.AppSettings
 import core.EventBus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -30,7 +31,6 @@ class App: Application(), CameraXConfig.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         NaCl.sodium()
 
         instance = this
@@ -40,6 +40,11 @@ class App: Application(), CameraXConfig.Provider {
         settings = AppSettings(this)
         passcode = PasscodeManager(this)
 
+        if (settings.experimental.lightTheme) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        }
         initFresco()
     }
 
@@ -60,12 +65,26 @@ class App: Application(), CameraXConfig.Provider {
     }
 
     private fun initFresco() {
-        Fresco.initialize(this)
+        val configBuilder = ImagePipelineConfig.newBuilder(this)
+        configBuilder.experiment().setNativeCodeDisabled(true)
+        configBuilder.setDownsampleEnabled(true)
+
+        Fresco.initialize(this, configBuilder.build())
     }
 
     override fun getCameraXConfig(): CameraXConfig {
         return CameraXConfig.Builder
             .fromConfig(Camera2Config.defaultConfig())
             .setMinimumLoggingLevel(Log.ERROR).build()
+    }
+
+    fun isOriginalAppInstalled(): Boolean {
+        val pm = packageManager
+        return try {
+            pm.getPackageInfo("com.ton_keeper", 0)
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }

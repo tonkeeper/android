@@ -15,10 +15,12 @@ dependencyResolutionManagement {
 
 rootProject.name = "Tonkeeper R"
 include(":app")
-include(":uikit")
 include(":ton")
 include(":core")
 include(":tonapi")
-include(":shimmer")
 include(":localization")
 include(":baselineprofile")
+
+include(":ui:uikit")
+include(":ui:shimmer")
+include(":ui:blur")

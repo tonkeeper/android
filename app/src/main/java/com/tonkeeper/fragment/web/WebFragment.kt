@@ -11,6 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.ContentLoadingProgressBar
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
 import uikit.widget.WebViewFixed
@@ -39,6 +40,7 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
     private lateinit var titleView: AppCompatTextView
     private lateinit var subtitleView: AppCompatTextView
     private lateinit var progressBar: ContentLoadingProgressBar
+    private lateinit var refreshView: SwipeRefreshLayout
     private lateinit var webView: WebViewFixed
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -55,12 +57,10 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
 
         progressBar = view.findViewById(R.id.progress_bar)
 
+        refreshView = view.findViewById(R.id.refresh)
+        refreshView.setColorSchemeColors(getColor(uikit.R.color.tabBarActiveIcon))
+
         webView = view.findViewById(R.id.web_view)
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        webView.settings.domStorageEnabled = true
-        webView.settings.javaScriptEnabled = true
-        webView.settings.loadWithOverviewMode = true
-        webView.settings.useWideViewPort = true
         webView.webViewClient = object : WebViewClient() {
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -74,9 +74,16 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                refreshView.isRefreshing = true
                 subtitleView.text = Uri.parse(url).host
                 checkBack()
             }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                refreshView.isRefreshing = false
+            }
+
         }
         webView.webChromeClient = object : WebChromeClient() {
             override fun onReceivedTitle(view: WebView?, title: String?) {
@@ -89,6 +96,10 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
             }
         }
         webView.loadUrl(startUrl)
+
+        refreshView.setOnRefreshListener {
+            webView.reload()
+        }
     }
 
     private fun openExternal(uri: Uri) {
@@ -116,4 +127,18 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        webView.onPause()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        webView.destroy()
+    }
 }

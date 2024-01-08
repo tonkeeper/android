@@ -9,6 +9,8 @@
     <meta-data
         android:name="com.google.mlkit.vision.DEPENDENCIES"
         android:value="barcode"/>
+    <meta-data android:name="android.webkit.WebView.MetricsOptOut"
+        android:value="true" />
 
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
@@ -49,7 +51,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
-            <intent-filter>
+            <intent-filter android:priority="1">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
@@ -57,14 +59,13 @@
                 <data android:scheme="tonkeeper"/>
                 <data android:scheme="tc"/>
             </intent-filter>
-            <intent-filter android:autoVerify="true">
+            <intent-filter android:autoVerify="true" android:priority="1">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https"/>
                 <data android:host="app.tonkeeper.com"/>
-                <data android:host="ton.app"/>
             </intent-filter>
         </activity>
         <!--activity

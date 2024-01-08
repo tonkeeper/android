@@ -11,10 +11,10 @@
         android:layout_height="wrap_content"
         android:title="@string/settings"/>
 
-    <androidx.recyclerview.widget.RecyclerView
+    <com.tonkeeper.fragment.main.MainRecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingHorizontal="@dimen/offsetMedium"
-        android:layout_weight="1"/>
+        android:clipToPadding="false"/>
 </androidx.appcompat.widget.LinearLayoutCompat>

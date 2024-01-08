@@ -1,7 +1,6 @@
 package com.tonkeeper.fragment.wallet.main
 
 import com.tonkeeper.fragment.wallet.main.list.item.WalletItem
-import ton.SupportedCurrency
 import uikit.mvi.AsyncState
 import uikit.mvi.UiState
 

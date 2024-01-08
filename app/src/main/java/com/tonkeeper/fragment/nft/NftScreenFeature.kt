@@ -1,6 +1,5 @@
 package com.tonkeeper.fragment.nft
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.api.collectibles.CollectiblesRepository
 import com.tonkeeper.api.nft.NftRepository

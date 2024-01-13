@@ -34,7 +34,5 @@ android {
 }
 
 dependencies {
-    api(Libs.fresco)
-    implementation(project(Libs.Module.core))
     implementation(Libs.AndroidX.annotation)
 }

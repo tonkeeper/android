@@ -4,13 +4,11 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RectF
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import blur.node.api31.BlurNode
 import blur.node.api31.ContentNode
 import blur.node.legacy.BlurNodeLegacy
 import blur.node.legacy.ContentNodeLegacy
-import kotlin.system.measureTimeMillis
 
 class BlurCompat(
     context: Context,

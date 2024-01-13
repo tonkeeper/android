@@ -8,6 +8,12 @@
       <entry key="app">
         <State />
       </entry>
+      <entry key="apps.singer">
+        <State />
+      </entry>
+      <entry key="apps.x">
+        <State />
+      </entry>
     </value>
   </component>
 </project>

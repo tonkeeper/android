@@ -86,4 +86,10 @@
         <attr name="android:positiveButtonText" format="string|reference"/>
         <attr name="android:negativeButtonText" format="string|reference"/>
     </declare-styleable>
+
+    <declare-styleable name="ActionCellView">
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:subtitle" format="string|reference"/>
+    </declare-styleable>
 </resources>

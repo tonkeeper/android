@@ -3,6 +3,7 @@ package ton.wallet.storage
 import core.keyvalue.KeyValue
 import org.ton.api.pub.PublicKeyEd25519
 import ton.wallet.Wallet
+import ton.wallet.WalletType
 
 internal class Wallets(
     private val keyValue: KeyValue
@@ -12,6 +13,7 @@ internal class Wallets(
         private const val WALLET_IDS_KEY = "wallets"
         private const val WALLET_NAME = "name"
         private const val WALLET_PUBLIC_KEY = "public_key"
+        private const val WALLET_TYPE = "type"
     }
 
     suspend fun get(id: Long): Wallet? {
@@ -20,23 +22,39 @@ internal class Wallets(
         return Wallet(
             id = id,
             name = name,
-            publicKey = publicKey
+            publicKey = publicKey,
+            type = getType(id)
         )
     }
 
     suspend fun add(wallet: Wallet) {
         setPublicKey(wallet.id, wallet.publicKey)
         setName(wallet.id, wallet.name)
+        setType(wallet.id, wallet.type)
 
         addId(wallet.id)
     }
 
     suspend fun setName(id: Long, name: String?) {
-        keyValue.putString(key(WALLET_NAME, id), name)
+        val key = key(WALLET_NAME, id)
+        if (name.isNullOrBlank()) {
+            keyValue.remove(key)
+        } else {
+            keyValue.putString(key, name)
+        }
+    }
+
+    private suspend fun setType(id: Long, type: WalletType) {
+        keyValue.putString(key(WALLET_TYPE, id), type.name)
     }
 
     private suspend fun getName(id: Long): String? {
         return keyValue.getString(key(WALLET_NAME, id))
+    }
+
+    private suspend fun getType(id: Long): WalletType {
+        val type = keyValue.getString(key(WALLET_TYPE, id))?.let { WalletType.valueOf(it) }
+        return type ?: WalletType.Default
     }
 
     private suspend fun getPublicKey(id: Long): PublicKeyEd25519? {
@@ -56,6 +74,7 @@ internal class Wallets(
     suspend fun delete(id: Long) {
         keyValue.remove(key(WALLET_NAME, id))
         keyValue.remove(key(WALLET_PUBLIC_KEY, id))
+        keyValue.remove(key(WALLET_TYPE, id))
 
         deleteId(id)
     }

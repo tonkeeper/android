@@ -7,16 +7,17 @@ import org.ton.block.StateInit
 import org.ton.contract.wallet.WalletContract
 import ton.contract.WalletV4R2Contract
 import ton.extensions.toUserFriendly
+import ton.extensions.toWalletAddress
 
 data class Wallet(
     val id: Long,
     val name: String?,
     val publicKey: PublicKeyEd25519,
+    val type: WalletType,
 ) {
 
     companion object {
         const val WORKCHAIN = 0
-
     }
 
     val contract: WalletV4R2Contract by lazy {
@@ -35,14 +36,14 @@ data class Wallet(
     }
 
     val address: String by lazy {
-        AddrStd(accountId).toUserFriendly()
+        AddrStd(accountId).toWalletAddress()
     }
 
-    constructor(legacy: WalletInfo) : this(
-        id = legacy.createDate,
-        name = legacy.name,
-        publicKey = legacy.publicKey
-    )
+    val hasPrivateKey: Boolean
+        get() = type == WalletType.Default || type == WalletType.Testnet
+
+    val testnet: Boolean
+        get() = type == WalletType.Testnet
 
     fun isMyAddress(a: String): Boolean {
         return address.equals(a, ignoreCase = true) || accountId.equals(a, ignoreCase = true)

@@ -5,13 +5,10 @@ import org.ton.block.AddrStd
 fun String.toUserFriendly(
     wallet: Boolean = true
 ): String {
-    if (wallet && startsWith("UQ")) {
-        return this
-    }
     return try {
         val addr = AddrStd(this)
         if (wallet) {
-            addr.toUserFriendly()
+            addr.toWalletAddress()
         } else {
             addr.toString(userFriendly = true)
         }
@@ -20,7 +17,7 @@ fun String.toUserFriendly(
     }
 }
 
-fun AddrStd.toUserFriendly(): String {
+fun AddrStd.toWalletAddress(): String {
     return toString(
         userFriendly = true,
         bounceable = false

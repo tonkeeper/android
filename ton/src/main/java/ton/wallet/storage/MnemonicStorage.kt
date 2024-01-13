@@ -14,7 +14,9 @@ internal class MnemonicStorage(context: Context) {
 
     suspend fun add(id: Long, mnemonic: List<String>) {
         val key = key(id)
-        encryptedKeyValue.putString(key, mnemonic.joinToString(","))
+        if (mnemonic.isNotEmpty()) {
+            encryptedKeyValue.putString(key, mnemonic.joinToString(","))
+        }
     }
 
     suspend fun get(id: Long): List<String> {

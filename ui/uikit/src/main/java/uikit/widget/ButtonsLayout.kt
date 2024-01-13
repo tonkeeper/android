@@ -2,6 +2,7 @@ package uikit.widget
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.view.ViewGroup
 import uikit.drawable.ButtonsLayoutDrawable
 import uikit.extensions.dp
@@ -17,11 +18,14 @@ class ButtonsLayout @JvmOverloads constructor(
         private val ROW_HEIGHT = 80.dp
     }
 
+    private val childVisibleCount: Int
+        get() = getVisibleChildViews().size
+
     private val columnCount: Int
-        get() = childCount.coerceAtMost(MAX_COLUMN_COUNT)
+        get() = childVisibleCount.coerceAtMost(MAX_COLUMN_COUNT)
 
     private val rowCount: Int
-        get() = (childCount + columnCount - 1) / columnCount
+        get() = (childVisibleCount + columnCount - 1) / columnCount
 
     private val drawable = ButtonsLayoutDrawable(context)
 
@@ -30,7 +34,8 @@ class ButtonsLayout @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (childCount == 0) {
+        val views = getVisibleChildViews()
+        if (views.isEmpty()) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             return
         }
@@ -44,8 +49,8 @@ class ButtonsLayout @JvmOverloads constructor(
         val childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY)
         val childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(ROW_HEIGHT, MeasureSpec.EXACTLY)
 
-        for (i in 0 until childCount) {
-            getChildAt(i).measure(childWidthMeasureSpec, childHeightMeasureSpec)
+        for (child in views) {
+            child.measure(childWidthMeasureSpec, childHeightMeasureSpec)
         }
 
         drawable.rowCount = rowCount
@@ -55,9 +60,9 @@ class ButtonsLayout @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         val childWidth = (r - l) / columnCount
         val childHeight = ROW_HEIGHT
+        val views = getVisibleChildViews()
 
-        for (i in 0 until childCount) {
-            val child = getChildAt(i)
+        for ((i, child) in views.withIndex()) {
             val row = i / columnCount
             val column = i % columnCount
             val left = column * childWidth
@@ -68,4 +73,7 @@ class ButtonsLayout @JvmOverloads constructor(
         }
     }
 
+    private fun getVisibleChildViews(): List<View> {
+        return (0 until childCount).map { getChildAt(it) }.filter { it.visibility != View.GONE }
+    }
 }

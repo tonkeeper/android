@@ -7,6 +7,7 @@ object Libs {
     const val zxing = "com.google.zxing:core:3.5.2"
     const val mlKitBarcode = "com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0"
     const val sodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.1"
+    const val argon2kt = ":argon2kt"
 
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1"
@@ -15,6 +16,10 @@ object Libs {
 
     object UI {
         const val material = "com.google.android.material:material:1.10.0"
+    }
+
+    object Koin {
+        const val core = "io.insert-koin:koin-android:3.5.3"
     }
 
     object AndroidX {
@@ -62,6 +67,7 @@ object Libs {
         const val bom = "com.google.firebase:firebase-bom:32.4.0"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
+        const val messaging = "com.google.firebase:firebase-messaging-ktx"
     }
 
     object Module {

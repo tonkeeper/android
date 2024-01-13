@@ -140,26 +140,49 @@ class WalletManager(
         cacheWallet = null
     }
 
-    suspend fun addWallet(mnemonic: List<String>, name: String? = null): Wallet = withContext(Dispatchers.IO) {
+    suspend fun addWatchWallet(
+        publicKey: PublicKeyEd25519,
+        name: String? = null,
+        singer: Boolean
+    ): Wallet = withContext(Dispatchers.IO) {
+        val wallet = Wallet(
+            id = System.currentTimeMillis(),
+            name = name,
+            publicKey = publicKey,
+            type = WalletType.Watch
+        )
+
+        insertWallet(wallet, emptyList())
+
+        wallet
+    }
+
+    suspend fun addWallet(
+        mnemonic: List<String>,
+        name: String? = null,
+        testnet: Boolean
+    ): Wallet = withContext(Dispatchers.IO) {
         val seed = Mnemonic.toSeed(mnemonic)
         val privateKey = PrivateKeyEd25519(seed)
         val publicKey = privateKey.publicKey()
 
         val wallet = Wallet(
             id = System.currentTimeMillis(),
-            name = null,
-            publicKey = publicKey
+            name = name,
+            publicKey = publicKey,
+            type = if (testnet) WalletType.Testnet else WalletType.Default
         )
 
+        insertWallet(wallet, mnemonic)
+
+        wallet
+    }
+
+    private suspend fun insertWallet(wallet: Wallet, mnemonic: List<String>) {
         storage.addWallet(wallet, mnemonic)
-        name?.let {
-            storage.setWalletName(wallet.id, it)
-        }
 
         cacheWallet = null
         cacheWallets.clear()
-
-        wallet
     }
 
 }

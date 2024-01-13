@@ -1,11 +1,8 @@
 package ton.wallet.storage
 
 import android.content.Context
-import android.util.Log
-import core.keyvalue.EncryptedKeyValue
 import core.keyvalue.KeyValue
 import ton.wallet.Wallet
-import ton.wallet.WalletInfo
 
 internal class WalletStorage(context: Context) {
 
@@ -30,7 +27,7 @@ internal class WalletStorage(context: Context) {
         return wallets.hasWallet()
     }
 
-    suspend fun setWalletName(createDate: Long, name: String) {
+    suspend fun setWalletName(createDate: Long, name: String?) {
         wallets.setName(createDate, name)
     }
 

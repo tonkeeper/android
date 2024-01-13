@@ -1,0 +1,90 @@
+[
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-xxhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.tonapps.singer-merged_res-42:/layout_fragment_create_name.xml.flat",
+        "source": "com.tonapps.singer-main-44:/layout/fragment_create_name.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-hdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-xxxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-mdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/layout_fragment_create_name.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/layout/fragment_create_name.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/layout_activity_root.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/layout/activity_root.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-xhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-hdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/layout_fragment_main.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/layout/fragment_main.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/layout_fragment_create.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/layout/fragment_create.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/xml_data_extraction_rules.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-xxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-xhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/layout_fragment_intro.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/layout/fragment_intro.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-mdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/drawable_bg_intro.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/drawable/bg_intro.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/layout_fragment_password.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/layout/fragment_password.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-merged_res-42:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "/Users/polstianka/.gradle/daemon/8.2/com.tonapps.singer-main-44:/mipmap-xxxhdpi/ic_launcher_round.webp"
+    }
+]

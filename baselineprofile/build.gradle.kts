@@ -22,7 +22,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    targetProjectPath = ":app"
+    targetProjectPath = ":apps:x"
 }
 
 dependencies {

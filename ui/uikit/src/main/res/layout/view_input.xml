@@ -4,7 +4,7 @@
     android:layout_height="wrap_content">
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/hint"
+        android:id="@+id/input_hint"
         android:layout_width="match_parent"
         android:layout_height="@dimen/barHeight"
         android:layout_marginStart="@dimen/offsetMedium"
@@ -22,7 +22,7 @@
         android:orientation="horizontal">
 
         <androidx.appcompat.widget.AppCompatEditText
-            android:id="@+id/input"
+            android:id="@+id/input_field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -40,7 +40,7 @@
             android:background="@null"/>
 
         <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/clear"
+            android:id="@+id/input_clear"
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:layout_marginHorizontal="@dimen/offsetExtraSmall"
@@ -49,7 +49,7 @@
             android:src="@drawable/ic_xmark_circle_16"/>
 
         <uikit.widget.LoaderView
-            android:id="@+id/loader"
+            android:id="@+id/input_loader"
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:layout_marginHorizontal="@dimen/offsetExtraSmall"
@@ -63,26 +63,28 @@
         android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.LinearLayoutCompat
-            android:id="@+id/options"
+            android:id="@+id/input_options"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/barHeight"
             android:layout_gravity="end"
             android:orientation="horizontal">
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/action"
+                android:id="@+id/input_action"
                 android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:layout_marginEnd="14dp"
                 android:gravity="center_vertical"
                 android:textColor="@color/textAccent"
                 android:textAppearance="@style/TextAppearance.Label1" />
 
             <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginEnd="14dp"
                 android:layout_gravity="center_vertical"
-                android:id="@+id/icon"
+                android:id="@+id/input_icon"
                 android:visibility="gone"
                 android:scaleType="centerInside"
                 android:tint="@color/textAccent" />

@@ -21,6 +21,7 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getSpannable
@@ -36,9 +37,6 @@ open class BaseFragment(
 ): Fragment(layoutId) {
 
     interface SwipeBack {
-        var doOnDragging: ((Boolean) -> Unit)?
-        var doOnDraggingProgress: ((Float) -> Unit)?
-
         fun onEndShowingAnimation() {
 
         }
@@ -92,22 +90,22 @@ open class BaseFragment(
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val view = super.onCreateView(inflater, container, savedInstanceState)!!
-        if (this is Modal) {
-            return onCreateModal(inflater.context, view)
+        val contentView = super.onCreateView(inflater, container, savedInstanceState)!!
+        val view = if (this is Modal) {
+            wrapInModal(inflater.context, contentView)
+        } else {
+            contentView.setBackgroundResource(R.color.backgroundPage)
+            when (this) {
+                is SwipeBack -> wrapInSwipeBack(inflater.context, contentView)
+                is BottomSheet -> wrapInBottomSheet(inflater.context, contentView)
+                else -> contentView
+            }
         }
-
-        view.setBackgroundResource(R.color.backgroundPage)
-
-        if (this is SwipeBack) {
-            return onCreateSwipeBack(inflater.context, view)
-        } else if (this is BottomSheet) {
-            return onCreateBottomSheet(inflater.context, view)
-        }
+        view.setOnClickListener {  }
         return view
     }
 
-    private fun onCreateModal(context: Context, view: View): ModalView {
+    private fun wrapInModal(context: Context, view: View): ModalView {
         val modalView = ModalView(context)
         modalView.setContentView(view)
         modalView.doOnHide = { finishInternal() }
@@ -115,24 +113,23 @@ open class BaseFragment(
         return modalView
     }
 
-    private fun onCreateSwipeBack(context: Context, view: View): SwipeBackLayout {
+    private fun wrapInSwipeBack(context: Context, view: View): SwipeBackLayout {
         this as SwipeBack
 
         val swipeBackLayout = SwipeBackLayout(context)
         swipeBackLayout.doOnCloseScreen = {
             finishInternal()
         }
-        swipeBackLayout.doOnDragging = doOnDragging
-        swipeBackLayout.doOnDraggingProgress = doOnDraggingProgress
         swipeBackLayout.doOnEndShowingAnimation = {
             onEndShowingAnimation()
         }
+        swipeBackLayout.fragment = this
         swipeBackLayout.setContentView(view)
         swipeBackLayout.startShowAnimation()
         return swipeBackLayout
     }
 
-    private fun onCreateBottomSheet(context: Context, view: View): BottomSheetLayout {
+    private fun wrapInBottomSheet(context: Context, view: View): BottomSheetLayout {
         this as BottomSheet
 
         val bottomSheetLayout = BottomSheetLayout(context)

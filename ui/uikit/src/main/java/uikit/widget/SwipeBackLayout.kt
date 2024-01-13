@@ -13,6 +13,7 @@ import androidx.core.math.MathUtils.clamp
 import androidx.core.view.doOnLayout
 import androidx.customview.widget.ViewDragHelper
 import uikit.R
+import uikit.base.BaseFragment
 import uikit.extensions.dp
 import uikit.extensions.setView
 import kotlin.math.abs
@@ -37,6 +38,12 @@ class SwipeBackLayout @JvmOverloads constructor(
         doOnEnd { setLayerType(LAYER_TYPE_NONE, null) }
     }
 
+    var fragment: BaseFragment? = null
+
+    private val parentFragment: BaseFragment? by lazy {
+        fragment?.parent as? BaseFragment
+    }
+
     private val bgView: View
     private val shadowView: View
     private val contentContainer: FrameLayout
@@ -44,8 +51,6 @@ class SwipeBackLayout @JvmOverloads constructor(
     private val drawCallback: ViewDragHelper.Callback
 
     var doOnCloseScreen: (() -> Unit)? = null
-    var doOnDragging: ((Boolean) -> Unit)? = null
-    var doOnDraggingProgress: ((Float) -> Unit)? = null
     var doOnEndShowingAnimation: (() -> Unit)? = null
 
     init {
@@ -73,7 +78,7 @@ class SwipeBackLayout @JvmOverloads constructor(
                 val percent = 1f - (left.toFloat() / measuredWidth)
                 bgView.alpha = percent
                 shadowView.x = left - shadowView.width.toFloat()
-                doOnDraggingProgress?.invoke(percent)
+                onAnimationUpdateParent(percent)
             }
 
             override fun onViewDragStateChanged(state: Int) {
@@ -82,12 +87,7 @@ class SwipeBackLayout @JvmOverloads constructor(
                     ViewDragHelper.STATE_IDLE -> {
                         if (bgView.alpha == 0.0f) {
                             doOnCloseScreen?.invoke()
-                        } else {
-                            doOnDragging?.invoke(false)
                         }
-                    }
-                    ViewDragHelper.STATE_DRAGGING -> {
-                        doOnDragging?.invoke(true)
                     }
                 }
             }
@@ -179,9 +179,16 @@ class SwipeBackLayout @JvmOverloads constructor(
 
     override fun onAnimationUpdate(animation: ValueAnimator) {
         val progress = animation.animatedValue as Float
+        onAnimationUpdateParent(progress)
         alpha = progress
         contentContainer.translationX = animationOffsetX * (1f - progress)
         shadowView.translationX = animationOffsetX * (1f - progress)
+    }
+
+    private fun onAnimationUpdateParent(progress: Float) {
+        val parentView = parentFragment?.view ?: return
+
+        parentView.translationX = -animationOffsetX * progress
     }
 
     override fun hasOverlappingRendering() = false

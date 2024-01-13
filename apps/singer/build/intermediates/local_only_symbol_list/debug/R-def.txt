@@ -1,0 +1,36 @@
+R_DEF: Internal format may change without notice
+local
+color ic_launcher_background
+drawable bg_intro
+drawable ic_launcher_foreground
+id done
+id header
+id import_key
+id loader
+id name
+id nav_host_fragment
+id new_key
+id pager
+id password
+id title
+id toast
+layout activity_root
+layout fragment_create
+layout fragment_create_name
+layout fragment_intro
+layout fragment_main
+layout fragment_password
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string continue_text
+string create_password
+string done
+string import_key
+string intro_subtitle
+string name
+string name_your_key
+string name_your_key_subtitle
+string new_key
+string re_enter_password
+xml data_extraction_rules

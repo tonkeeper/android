@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.tonapps.singer-mergeDebugResources-40:/values-v18/values-v18.xml",
+            "map": [
+                {
+                    "source": "/Users/polstianka/.gradle/caches/transforms-3/e345f684163018f0713fbc0a236b0fd4/transformed/appcompat-1.6.1/res/values-v18/values-v18.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "48",
+                        "endOffsets": "99"
+                    }
+                }
+            ]
+        }
+    ]
+}

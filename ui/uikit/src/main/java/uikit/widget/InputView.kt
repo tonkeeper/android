@@ -147,16 +147,16 @@ class InputView @JvmOverloads constructor(
 
         inflate(context, R.layout.view_input, this)
 
-        hintView = findViewById(R.id.hint)
-        editText = findViewById(R.id.input)
+        hintView = findViewById(R.id.input_hint)
+        editText = findViewById(R.id.input_field)
         editText.onFocusChangeListener = this
         editText.addTextChangedListener(this)
 
-        optionsView = findViewById(R.id.options)
-        actionView = findViewById(R.id.action)
-        iconView = findViewById(R.id.icon)
-        clearView = findViewById(R.id.clear)
-        loaderView = findViewById(R.id.loader)
+        optionsView = findViewById(R.id.input_options)
+        actionView = findViewById(R.id.input_action)
+        iconView = findViewById(R.id.input_icon)
+        clearView = findViewById(R.id.input_clear)
+        loaderView = findViewById(R.id.input_loader)
 
         clearView.setOnClickListener {
             if (isEnabled) {

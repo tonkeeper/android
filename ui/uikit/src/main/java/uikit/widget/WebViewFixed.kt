@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.webkit.WebSettings
 import android.webkit.WebView
 
-
 class WebViewFixed @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -17,24 +16,13 @@ class WebViewFixed @JvmOverloads constructor(
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
         isNestedScrollingEnabled = true
-
-        settings.allowContentAccess = true
-        settings.allowFileAccess = true
-        settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+        overScrollMode = OVER_SCROLL_NEVER
 
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
-        settings.databaseEnabled = true
-        settings.loadWithOverviewMode = true
-        settings.useWideViewPort = true
         settings.javaScriptCanOpenWindowsAutomatically = true
-        settings.allowFileAccess = false
-        settings.setSupportMultipleWindows(true)
-        settings.builtInZoomControls = false
-        settings.setSupportZoom(false)
-        settings.displayZoomControls = false
-        settings.loadsImagesAutomatically = true
-
+        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        settings.allowFileAccess = true
 
         setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
         setBackgroundColor(Color.TRANSPARENT)

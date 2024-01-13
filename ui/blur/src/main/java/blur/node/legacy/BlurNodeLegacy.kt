@@ -36,7 +36,7 @@ internal class BlurNodeLegacy(
     fun setSnapshot(bitmap: Bitmap) {
         checkBlurBitmap(bitmap.width, bitmap.height)
 
-        Toolkit.blur(bitmap, blurBitmap, 4)
+        Toolkit.blur(bitmap, blurBitmap, 2)
 
         drawBitmap.eraseColor(Color.TRANSPARENT)
         drawBitmapCanvas.drawBitmap(blurBitmap, null, drawBitmapRect, null)

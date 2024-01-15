@@ -1,5 +1,6 @@
 package com.tonkeeper.fragment.settings.list.holder
 
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonkeeper.fragment.settings.list.item.SettingsIconItem
@@ -9,7 +10,7 @@ import uikit.widget.item.ItemIconView
 
 class SettingsIconHolder(
     parent: ViewGroup,
-    onClick: ((SettingsItem) -> Unit)?
+    onClick: ((SettingsItem, View) -> Unit)?
 ): SettingsHolder<SettingsIconItem>(ItemIconView(parent.context), onClick) {
 
     private val view = itemView as ItemIconView
@@ -23,7 +24,7 @@ class SettingsIconHolder(
 
     override fun onBind(item: SettingsIconItem) {
         view.background = item.position.drawable(context)
-        view.setOnClickListener { onClick?.invoke(item) }
+        view.setOnClickListener { onClick?.invoke(item, it) }
         if (item.colorRes != 0) {
             view.setIconTintColor(context.getColor(item.colorRes))
         }

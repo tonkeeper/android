@@ -5,8 +5,11 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import androidx.collection.ArrayMap
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.widget.WidgetBalanceProvider
@@ -20,11 +23,15 @@ import com.tonkeeper.fragment.settings.language.LanguageFragment
 import com.tonkeeper.fragment.settings.legal.LegalFragment
 import com.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
+import com.tonkeeper.fragment.settings.main.popup.WalletVersionPopup
 import com.tonkeeper.fragment.settings.security.SecurityFragment
+import kotlinx.coroutines.launch
+import ton.contract.WalletVersion
 import uikit.decoration.ListCellDecoration
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.popup.ActionSheet
 import uikit.widget.HeaderView
 
 class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(R.layout.fragment_settings) {
@@ -39,9 +46,9 @@ class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, S
         LogoutDialog(requireContext())
     }
 
-    private val adapter = SettingsAdapter { item ->
+    private val adapter = SettingsAdapter { item, view ->
         if (item is SettingsIdItem) {
-            onCellClick(item)
+            onCellClick(item, view)
         }
     }
 
@@ -67,8 +74,16 @@ class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, S
 
     override fun newUiEffect(effect: SettingsScreenEffect) {
         super.newUiEffect(effect)
-        if (effect is SettingsScreenEffect.Logout) {
-            navigation?.initRoot(true)
+        when (effect) {
+            is SettingsScreenEffect.Logout -> {
+                navigation?.initRoot(true)
+            }
+            is SettingsScreenEffect.SelectWalletVersion -> {
+                pickWalletVersion(effect.view, effect.current, effect.wallets)
+            }
+            is SettingsScreenEffect.ReloadWallet -> {
+                navigation?.initRoot(true)
+            }
         }
     }
 
@@ -78,7 +93,7 @@ class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, S
         }
     }
 
-    private fun onCellClick(item: SettingsIdItem) {
+    private fun onCellClick(item: SettingsIdItem, view: View) {
         val nav = navigation ?: return
 
         when (item.id) {
@@ -109,8 +124,24 @@ class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, S
             SettingsIdItem.WIDGET_ID -> {
                 installWidget()
             }
+            SettingsIdItem.CONTRACT_VERSION -> {
+                feature.selectWalletVersion(view)
+            }
             SettingsIdItem.LANGUAGE_ID -> { nav.add(LanguageFragment.newInstance()) }
         }
+    }
+
+    private fun pickWalletVersion(
+        view: View,
+        current: WalletVersion,
+        wallets: ArrayMap<WalletVersion, String>
+    ) {
+        val actions = WalletVersionPopup(requireContext(), current, wallets)
+        actions.doOnItemClick = { item ->
+            val version = WalletVersion.valueOf(item.title.toString())
+            feature.setWalletVersion(version)
+        }
+        actions.show(view)
     }
 
     override fun onUpScroll() {

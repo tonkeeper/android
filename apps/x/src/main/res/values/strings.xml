@@ -90,6 +90,7 @@
     <string name="testnet_wallet_subtitle">Import wallet with a 24 secret recovery words to Testnet</string>
     <string name="signer_wallet">Pair Signer</string>
     <string name="signer_wallet_subtitle">A higher level of control and security</string>
+    <string name="active_address">Active address</string>
     <string name="cancel">Cancel</string>
     <string name="fee">Fee</string>
     <string name="period_24h">24h</string>

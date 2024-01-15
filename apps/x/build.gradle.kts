@@ -17,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 21
-        versionName = "0.0.20"
+        versionCode = 22
+        versionName = "0.0.21"
     }
 
     buildFeatures {

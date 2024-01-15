@@ -59,6 +59,7 @@ internal class BlurNodeLegacy(
         blurBitmap.recycle()
 
         blurBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        blurBitmap.prepareToDraw()
     }
 
     private fun newDrawBitmap(width: Int, height: Int) {
@@ -73,6 +74,7 @@ internal class BlurNodeLegacy(
         drawBitmap.recycle()
 
         drawBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
         drawBitmapCanvas = Canvas(drawBitmap)
         drawBitmapRect.right = width.toFloat()
         drawBitmapRect.bottom = height.toFloat()

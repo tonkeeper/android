@@ -14,7 +14,7 @@ class ItemTextView @JvmOverloads constructor(
 ) : BaseItemView(context, attrs, defStyle) {
 
     private val textView: AppCompatTextView
-    private val dataView: AppCompatTextView
+    val dataView: AppCompatTextView
 
     var text: String?
         get() = textView.text.toString()

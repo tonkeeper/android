@@ -1,5 +1,6 @@
 package com.tonkeeper.fragment.settings.list
 
+import android.view.View
 import android.view.ViewGroup
 import com.tonkeeper.fragment.settings.list.holder.SettingsIconHolder
 import com.tonkeeper.fragment.settings.list.holder.SettingsLogoHolder
@@ -11,7 +12,7 @@ import uikit.list.BaseListItem
 import uikit.list.BaseListAdapter
 
 class SettingsAdapter(
-    private val onClick: (SettingsItem) -> Unit
+    private val onClick: (SettingsItem, View) -> Unit
 ): BaseListAdapter() {
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {

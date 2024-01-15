@@ -195,4 +195,15 @@
     <string name="send_request_comment">Обязательно укажите memo или тег при отправке на биржу.</string>
     <string name="banner_top">Сейчас вы используете экспериментальную версию Tonkeeper.</string>
     <string name="banner_top_button">Установить стабильную</string>
+
+    <string name="import_wallet">Импортировать кошелек</string>
+    <string name="import_wallet_subtitle">Выберите один из вариантов ниже.</string>
+    <string name="import_wallet_words">Импортируйте кошелек с 24 секретными словами восстановления.</string>
+    <string name="watch_wallet">Наблюдать за аккаунтом</string>
+    <string name="watch_wallet_subtitle">Для мониторинга активности кошелька без фразы восстановления</string>
+    <string name="testnet_wallet">Testnet аккаунт</string>
+    <string name="testnet_wallet_subtitle">Импортируйте кошелек с 24 секретными словами восстановления в Testnet.</string>
+    <string name="signer_wallet">Пара для Signer</string>
+    <string name="signer_wallet_subtitle">Более высокий уровень контроля и безопасности</string>
+    <string name="active_address">Активный адрес</string>
 </resources>

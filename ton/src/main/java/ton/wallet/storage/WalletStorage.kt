@@ -2,6 +2,7 @@ package ton.wallet.storage
 
 import android.content.Context
 import core.keyvalue.KeyValue
+import ton.contract.WalletVersion
 import ton.wallet.Wallet
 
 internal class WalletStorage(context: Context) {
@@ -29,6 +30,10 @@ internal class WalletStorage(context: Context) {
 
     suspend fun setWalletName(createDate: Long, name: String?) {
         wallets.setName(createDate, name)
+    }
+
+    suspend fun setWalletVersion(createDate: Long, version: WalletVersion) {
+        wallets.setVersion(createDate, version)
     }
 
     suspend fun clearAll() {

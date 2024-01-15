@@ -17,14 +17,13 @@ import org.ton.block.MsgAddressInt
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.buildCell
-import org.ton.contract.wallet.WalletContract
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
 import org.ton.crypto.base64
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeTlb
 import ton.SendMode
-import ton.contract.WalletV4R2Contract
+import ton.contract.BaseWalletContract
 import ton.wallet.Wallet
 import kotlin.time.Duration.Companion.seconds
 
@@ -131,16 +130,13 @@ object TransactionHelper {
         )
 
         val seqno = getSeqno(wallet.accountId, wallet.testnet)
-        val walletId = WalletContract.DEFAULT_WALLET_ID
 
         val privateKey = App.walletManager.getPrivateKey(wallet.id)
 
-        val message = WalletV4R2Contract.createTransferMessage(
+        val message = wallet.contract.createTransferMessage(
             address = wallet.contract.address,
-            stateInit = if (seqno == 0) wallet.stateInit else null,
             privateKey = privateKey,
             validUntil = (Clock.System.now() + 60.seconds).epochSeconds,
-            walletId = walletId,
             seqno = seqno,
             transfers = arrayOf(transfer)
         )
@@ -168,17 +164,14 @@ object TransactionHelper {
         )
 
         val seqno = getSeqno(wallet.accountId, wallet.testnet)
-        val walletId = WalletContract.DEFAULT_WALLET_ID
 
         val contract = wallet.contract
         val privateKey = App.walletManager.getPrivateKey(wallet.id)
 
-        val message = WalletV4R2Contract.createTransferMessage(
+        val message = wallet.contract.createTransferMessage(
             address = contract.address,
-            stateInit = if (seqno == 0) wallet.stateInit else null,
             privateKey = privateKey,
             validUntil = (Clock.System.now() + 60.seconds).epochSeconds,
-            walletId = walletId,
             seqno = seqno,
             transfers = arrayOf(transfer)
         )
@@ -208,7 +201,7 @@ object TransactionHelper {
         comment: String?,
         bounce: Boolean,
     ): WalletTransfer {
-        val body = WalletV4R2Contract.createJettonBody(
+        val body = BaseWalletContract.createJettonBody(
             jettonCoins = jettonCoins,
             toAddress = MsgAddressInt.parse(destination),
             responseAddress = wallet.contract.address,
@@ -232,7 +225,7 @@ object TransactionHelper {
         max: Boolean = false,
         bounce: Boolean,
     ): WalletTransfer {
-        val body = WalletV4R2Contract.buildCommentBody(comment)
+        val body = BaseWalletContract.buildCommentBody(comment)
         return build(destination, coins, max, body, bounce)
     }
 

@@ -2,6 +2,7 @@ package ton.wallet.storage
 
 import core.keyvalue.KeyValue
 import org.ton.api.pub.PublicKeyEd25519
+import ton.contract.WalletVersion
 import ton.wallet.Wallet
 import ton.wallet.WalletType
 
@@ -14,6 +15,7 @@ internal class Wallets(
         private const val WALLET_NAME = "name"
         private const val WALLET_PUBLIC_KEY = "public_key"
         private const val WALLET_TYPE = "type"
+        private const val WALLET_VERSION = "version"
     }
 
     suspend fun get(id: Long): Wallet? {
@@ -23,7 +25,8 @@ internal class Wallets(
             id = id,
             name = name,
             publicKey = publicKey,
-            type = getType(id)
+            type = getType(id),
+            version = getVersion(id)
         )
     }
 
@@ -42,6 +45,16 @@ internal class Wallets(
         } else {
             keyValue.putString(key, name)
         }
+    }
+
+    suspend fun setVersion(id: Long, version: WalletVersion) {
+        val key = key(WALLET_VERSION, id)
+        keyValue.putString(key, version.name)
+    }
+
+    private suspend fun getVersion(id: Long): WalletVersion {
+        val type = keyValue.getString(key(WALLET_VERSION, id))?.let { WalletVersion.valueOf(it) }
+        return type ?: WalletVersion.V4R2
     }
 
     private suspend fun setType(id: Long, type: WalletType) {

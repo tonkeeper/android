@@ -1,10 +1,13 @@
 package com.tonkeeper.fragment.settings.main
 
+import android.view.View
+import androidx.collection.ArrayMap
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
 import com.tonkeeper.api.internal.repositories.KeysRepository
+import com.tonkeeper.api.shortAddress
 import com.tonkeeper.core.currency.CurrencyUpdateWorker
 import com.tonkeeper.core.language.name
 import com.tonkeeper.event.ChangeCurrencyEvent
@@ -18,6 +21,7 @@ import com.tonkeeper.fragment.settings.list.item.SettingsTextItem
 import core.EventBus
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.launch
+import ton.contract.WalletVersion
 import uikit.list.ListCell
 
 class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect>(SettingsScreenState()) {
@@ -44,6 +48,34 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
         requestUpdateItems()
         EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.subscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
+    }
+
+    fun selectWalletVersion(view: View) {
+        viewModelScope.launch {
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            val wallets = ArrayMap<WalletVersion, String>()
+            for (v in WalletVersion.entries.sorted()) {
+                wallets[v] = wallet.asVersion(v).address.shortAddress
+            }
+
+            val effect = SettingsScreenEffect.SelectWalletVersion(
+                view = view,
+                current = wallet.version,
+                wallets = wallets
+            )
+
+            sendEffect(effect)
+        }
+    }
+
+    fun setWalletVersion(version: WalletVersion) {
+        viewModelScope.launch {
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            if (wallet.version != version) {
+                App.walletManager.setWalletVersion(wallet.id, version)
+                sendEffect(SettingsScreenEffect.ReloadWallet)
+            }
+        }
     }
 
     private fun requestUpdateItems() {
@@ -85,6 +117,12 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             titleRes = R.string.currency,
             data = App.settings.currency.code,
             position = ListCell.Position.FIRST
+        ))
+        items.add(SettingsTextItem(
+            id = SettingsIdItem.CONTRACT_VERSION,
+            titleRes = R.string.active_address,
+            data = wallet.version.toString(),
+            position = ListCell.Position.MIDDLE
         ))
         items.add(SettingsTextItem(
             id = SettingsIdItem.LANGUAGE_ID,

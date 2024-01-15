@@ -9,13 +9,13 @@ import uikit.list.BaseListHolder
 
 abstract class SettingsHolder<I: SettingsItem>(
     view: View,
-    val onClick: ((SettingsItem) -> Unit)? = null
+    val onClick: ((SettingsItem, View) -> Unit)? = null
 ): BaseListHolder<I>(view) {
 
     constructor(
         parent: ViewGroup,
         @LayoutRes resId: Int,
-        onClick: ((SettingsItem) -> Unit)? = null
+        onClick: ((SettingsItem, View) -> Unit)? = null
     ) : this(
         parent.inflate(resId),
         onClick

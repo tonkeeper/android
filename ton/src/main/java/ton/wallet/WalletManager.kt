@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic
+import ton.contract.WalletVersion
 import ton.wallet.storage.WalletStorage
 
 class WalletManager(
@@ -46,6 +47,13 @@ class WalletManager(
         val createDate = getIdAddress(address)
         storage.setWalletName(createDate, name)
         cacheWallets = mutableListOf()
+        cacheWallet = null
+    }
+
+    suspend fun setWalletVersion(id: Long, version: WalletVersion) {
+        storage.setWalletVersion(id, version)
+        cacheWallets = mutableListOf()
+        cacheWallet = null
     }
 
     private suspend fun getIdAddress(

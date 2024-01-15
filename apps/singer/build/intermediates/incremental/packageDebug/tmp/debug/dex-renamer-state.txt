@@ -1,4 +1,4 @@
-#Sat Jan 13 05:28:02 EST 2024
+#Mon Jan 15 08:27:16 EST 2024
 base.0=/Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
 base.1=/Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/dex/debug/mergeLibDexDebug/1/classes.dex
 base.10=/Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/dex/debug/mergeLibDexDebug/6/classes.dex

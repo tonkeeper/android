@@ -20,5 +20,6 @@ open class SettingsIdItem(
         const val MANAGE_WALLETS_ID = 12
         const val WIDGET_ID = 13
         const val LANGUAGE_ID = 14
+        const val CONTRACT_VERSION = 15
     }
 }

@@ -3,6 +3,7 @@ package blur.node.legacy
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import blur.SimpleCanvas
 
 class SnapshotCanvas(
     val width: Int,
@@ -10,7 +11,7 @@ class SnapshotCanvas(
 ) {
 
     private val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    private val canvas = Canvas(bitmap)
+    private val canvas = SimpleCanvas(bitmap)
 
     private var translateX = 0f
     private var translateY = 0f

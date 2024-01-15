@@ -7,9 +7,7 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.block.Message
 import org.ton.cell.Cell
-import org.ton.contract.wallet.WalletContract
 import org.ton.contract.wallet.WalletTransfer
-import ton.contract.WalletV4R2Contract
 import ton.wallet.Wallet
 
 object TCHelper {
@@ -20,11 +18,9 @@ object TCHelper {
         privateKey: PrivateKeyEd25519,
         vararg transfers: WalletTransfer
     ): Message<Cell> {
-        return WalletV4R2Contract.createTransferMessage(
+        return wallet.contract.createTransferMessage(
             address = AddrStd(wallet.accountId),
-            stateInit = if (seqno == 0) wallet.stateInit else null,
             privateKey = privateKey,
-            walletId = WalletContract.DEFAULT_WALLET_ID,
             seqno = seqno,
             transfers = transfers
         )

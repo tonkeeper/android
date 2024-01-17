@@ -4,16 +4,39 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="testRunner" value="GRADLE" />
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/buildSrc" name="buildSrc">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildSrc" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleJvm" value="jbr-17" />
+        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/apps" />
+            <option value="$PROJECT_DIR$/apps/singer" />
+            <option value="$PROJECT_DIR$/apps/x" />
+            <option value="$PROJECT_DIR$/argon2kt" />
+            <option value="$PROJECT_DIR$/baselineprofile" />
+            <option value="$PROJECT_DIR$/buildSrc" />
+            <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/localization" />
+            <option value="$PROJECT_DIR$/ton" />
+            <option value="$PROJECT_DIR$/tonapi" />
+            <option value="$PROJECT_DIR$/ui" />
+            <option value="$PROJECT_DIR$/ui/blur" />
+            <option value="$PROJECT_DIR$/ui/shimmer" />
+            <option value="$PROJECT_DIR$/ui/uikit" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="false" />
       </GradleProjectSettings>
     </option>
   </component>

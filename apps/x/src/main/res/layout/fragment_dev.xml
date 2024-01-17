@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/ic_chevron_left_16"
+        android:title="Dev"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:fitsSystemWindows="true">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/offsetMedium"
+            android:orientation="vertical">
+
+            <uikit.widget.item.ItemSwitchView
+                android:id="@+id/blur_31"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Blur (Android 12)"/>
+
+            <uikit.widget.item.ItemSwitchView
+                android:id="@+id/blur_all"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Blur (Android all version)"/>
+
+            <uikit.widget.item.ItemSwitchView
+                android:id="@+id/bottom_bg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bottom BG over"/>
+
+            <uikit.widget.item.ItemSwitchView
+                android:id="@+id/light_theme"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Light theme"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </ScrollView>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

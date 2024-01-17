@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="@string/buy_or_sell"
+        app:ignoreSystemOffset="true"
+        android:icon="@drawable/ic_globe_16"
+        android:action="@drawable/ic_close_16"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/offsetMedium"
+        android:paddingHorizontal="@dimen/offsetMedium"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

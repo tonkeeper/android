@@ -1,0 +1,92 @@
+package com.tonkeeper.fragment.wallet.main.list.holder
+
+import android.net.Uri
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.util.Log
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.annotation.ColorInt
+import androidx.appcompat.widget.AppCompatTextView
+import com.facebook.drawee.drawable.ScalingUtils
+import com.facebook.drawee.view.SimpleDraweeView
+import com.facebook.imagepipeline.common.ResizeOptions
+import com.facebook.imagepipeline.request.ImageRequestBuilder
+import com.tonapps.tonkeeperx.R
+import com.tonkeeper.fragment.jetton.JettonScreen
+import com.tonkeeper.fragment.wallet.main.list.item.WalletJettonCellItem
+import uikit.extensions.dp
+import uikit.widget.FrescoView
+
+class WalletCellJettonHolder(
+    parent: ViewGroup
+): WalletCellHolder<WalletJettonCellItem>(parent, R.layout.view_cell_jetton) {
+
+    private companion object {
+        private val iconSize = 44.dp
+    }
+
+    private val titleView = findViewById<AppCompatTextView>(R.id.title)
+    private val iconView = findViewById<FrescoView>(R.id.icon)
+    private val rateView = findViewById<TextView>(R.id.rate)
+    private val balanceView = findViewById<TextView>(R.id.balance)
+    private val balanceCurrencyView = findViewById<TextView>(R.id.balance_currency)
+
+    init {
+        iconView.hierarchy.actualImageScaleType = ScalingUtils.ScaleType.CENTER_CROP
+    }
+
+    override fun onBind(item: WalletJettonCellItem) {
+
+        itemView.setOnClickListener {
+            nav?.add(JettonScreen.newInstance(item.address, item.name))
+        }
+        loadIcon(item.iconURI)
+        titleView.text = item.code
+
+        if (item.rate.isNullOrBlank()) {
+            rateView.visibility = View.GONE
+        } else {
+            rateView.visibility = View.VISIBLE
+            rateView.text = createRate(item.rate, item.rateDiff24h!!)
+        }
+
+        balanceView.text = item.balance
+
+        if (item.balanceCurrency.isNullOrBlank()) {
+            balanceCurrencyView.visibility = View.GONE
+        } else {
+            balanceCurrencyView.visibility = View.VISIBLE
+            balanceCurrencyView.text = item.balanceCurrency
+        }
+    }
+
+    private fun loadIcon(uri: Uri) {
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forDimensions(iconSize, iconSize)
+        iconView.setImageRequest(builder.build())
+    }
+
+    private fun createRate(rate: String, diff24h: String): SpannableString {
+        val span = SpannableString("$rate $diff24h")
+        span.setSpan(
+            ForegroundColorSpan(getDiffColor(diff24h)),
+            rate.length,
+            rate.length + diff24h.length + 1,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        return span
+    }
+
+    @ColorInt
+    private fun getDiffColor(diff: String): Int {
+        val resId = when {
+            diff.startsWith("-") -> uikit.R.color.accentRed
+            diff.startsWith("+") -> uikit.R.color.accentGreen
+            else -> uikit.R.color.textSecondary
+        }
+        return context.getColor(resId)
+    }
+}

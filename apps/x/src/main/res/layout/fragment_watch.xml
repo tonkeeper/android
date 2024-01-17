@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:orientation="vertical">
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="@string/watch_wallet"
+            android:description="@string/watch_wallet_subtitle"/>
+
+        <uikit.widget.InputView
+            android:id="@+id/watch_address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:hint="@string/address"
+            android:button="@string/paste"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge">
+
+            <Button
+                style="@style/Widget.App.Button"
+                android:id="@+id/watch_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:enabled="false"
+                android:text="@string/continue_action"/>
+
+            <uikit.widget.LoaderView
+                android:id="@+id/watch_loading"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:color="@color/buttonPrimaryForeground"/>
+
+        </FrameLayout>
+
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</FrameLayout>

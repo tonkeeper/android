@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_widget"
+    android:padding="@dimen/offsetMedium">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#8994A3"
+        android:textSize="13sp"
+        android:fontFamily="@font/montserrat_medium"
+        android:text="TON"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/diff"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:text="0% 0%"
+            android:fontFamily="@font/montserrat_medium"
+            android:singleLine="true"/>
+
+        <TextView
+            android:id="@+id/price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="32sp"
+            android:text="$ 0"
+            android:textColor="#FFFFFF"
+            android:fontFamily="@font/montserrat_medium"
+            android:singleLine="true"/>
+
+        <TextView
+            android:id="@+id/update_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="13sp"
+            android:text="@string/loading"
+            android:textColor="#556170"
+            android:fontFamily="@font/montserrat_medium"/>
+    </LinearLayout>
+
+</FrameLayout>

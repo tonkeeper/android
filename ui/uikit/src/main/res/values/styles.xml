@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Widget.BottomSheet" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.BottomSheet.Modal</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize|stateVisible</item>
+    </style>
+
+    <style name="Widget.BottomSheet.Modal" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@drawable/bg_modal</item>
+        <item name="android:maxWidth">640dp</item>
+    </style>
+
+    <style name="Base.Widget.App.Button" parent="android:Widget.Material.Button">
+        <item name="backgroundTint">@null</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="minHeight">@dimen/itemHeight</item>
+    </style>
+
+    <style name="Widget.App.Button" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_button_primary</item>
+        <item name="android:textColor">@color/button_primary_foreground_selector</item>
+    </style>
+
+    <style name="Widget.App.Button.Secondary" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_button_secondary</item>
+        <item name="android:textColor">@color/buttonSecondaryForeground</item>
+    </style>
+
+    <style name="Widget.App.Button.Small.Secondary" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_small_button_secondary</item>
+        <item name="android:textColor">@color/buttonSecondaryForeground</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.Label2</item>
+        <item name="minHeight">0dp</item>
+    </style>
+
+    <style name="Widget.App.Tabs" parent="Widget.Design.TabLayout">
+        <item name="tabTextAppearance">@style/Widget.App.Tabs.TextAppearance</item>
+    </style>
+
+    <style name="Widget.App.Tabs.TextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+</resources>

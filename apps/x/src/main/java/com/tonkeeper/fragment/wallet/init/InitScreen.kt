@@ -17,23 +17,40 @@ class InitScreen: BaseFragment(R.layout.fragment_pager), BaseFragment.SwipeBack 
     companion object {
 
         private const val ACTION_KEY = "action"
+        private const val NAME_KEY = "name"
+        private const val PK_BASE64_KEY = "pk"
 
-        fun newInstance(action: InitAction): InitScreen {
+        fun newInstance(
+            action: InitAction,
+            name: String? = null,
+            pkBase64: String? = null,
+        ): InitScreen {
             val fragment = InitScreen()
             fragment.arguments = Bundle().apply {
                 putInt(ACTION_KEY, action.ordinal)
+                putString(NAME_KEY, name)
+                putString(PK_BASE64_KEY, pkBase64)
             }
             return fragment
         }
+
     }
 
-    private val action: InitAction by lazy {
+    private val argsAction: InitAction by lazy {
         val value = arguments?.getInt(ACTION_KEY) ?: 0
         InitAction.entries[value]
     }
 
+    private val argsName: String? by lazy {
+        arguments?.getString(NAME_KEY)
+    }
+
+    private val argsPkBase64: String? by lazy {
+        arguments?.getString(PK_BASE64_KEY)
+    }
+
     private val viewModel: InitModel by viewModels(
-        factoryProducer = { InitModel.Factory(action) },
+        factoryProducer = { InitModel.Factory(argsAction, argsName, argsPkBase64) },
     )
 
     private lateinit var headerView: HeaderView
@@ -46,7 +63,7 @@ class InitScreen: BaseFragment(R.layout.fragment_pager), BaseFragment.SwipeBack 
 
         pagerView = view.findViewById(R.id.pager)
         pagerView.isUserInputEnabled = false
-        pagerView.adapter = PagerAdapter(this, viewModel.pages)
+        pagerView.adapter = PagerAdapter(this, viewModel.pages, argsName)
 
         viewModel.currentPage.launch(this) {
             pagerView.setCurrentItem(it, true)

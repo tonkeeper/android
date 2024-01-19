@@ -41,8 +41,7 @@ class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
             doneButton.isEnabled = it.isNotBlank()
         }
 
-
-        createViewModel.currentPage.filter { it == PageType.Name }.onEach {
+        createViewModel.page(PageType.Name).onEach {
             nameInput.focus()
         }.launchIn(lifecycleScope)
     }

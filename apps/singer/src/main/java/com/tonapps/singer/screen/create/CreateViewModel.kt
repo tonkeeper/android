@@ -1,26 +1,42 @@
 package com.tonapps.singer.screen.create
 
-import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.singer.core.account.AccountRepository
 import com.tonapps.singer.screen.create.pager.PageType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import org.ton.mnemonic.Mnemonic
 import ton.MnemonicHelper
 
 class CreateViewModel(
-    private val accountRepository: AccountRepository
+    private val import: Boolean,
+    private val accountRepository: AccountRepository,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
+
+    private companion object {
+        private const val NAME_KEY = "name"
+        private const val PASSWORD_KEY = "password"
+        private const val MNEMONIC_KEY = "mnemonic"
+    }
 
     private val requestPasswordCreate: Boolean
         get() = !accountRepository.hasPassword()
 
     val pages = mutableListOf<PageType>().apply {
+        if (import) {
+            add(PageType.Phrase)
+        }
         if (requestPasswordCreate) {
             add(PageType.Password)
             add(PageType.RepeatPassword)
@@ -28,36 +44,47 @@ class CreateViewModel(
         add(PageType.Name)
     }
 
+    private val _onReady = Channel<Unit>(Channel.BUFFERED)
+    val onReady: Flow<Unit> = _onReady.receiveAsFlow()
+
     private val _currentPage = MutableStateFlow(pages.first())
     val currentPage = _currentPage.asStateFlow()
 
-    private val _indexPage = MutableStateFlow(0)
-    val indexPage = _indexPage.asStateFlow()
+    private val name: String
+        get() = savedStateHandle[NAME_KEY] ?: ""
 
-    private val _password = MutableStateFlow("")
-    val password = _password.asStateFlow()
+    private val password: String
+        get() = savedStateHandle[PASSWORD_KEY] ?: ""
 
-    private val _name = MutableStateFlow("")
-    val name = _name.asStateFlow()
+    private val mnemonic: List<String>
+        get() = savedStateHandle[MNEMONIC_KEY] ?: emptyList()
 
-    init {
-        currentPage.onEach {
-            _indexPage.value = pageIndex(it)
-        }.launchIn(viewModelScope)
+    fun pageIndex() = currentPage.map { pageIndex(it) }
+
+    fun page(pageType: PageType) = currentPage.filter { it == pageType }
+
+    fun setMnemonic(mnemonic: List<String>) {
+        savedStateHandle[MNEMONIC_KEY] = mnemonic
+
+        if (requestPasswordCreate) {
+            _currentPage.value = PageType.Password
+        } else {
+            _currentPage.value = PageType.Name
+        }
     }
 
     fun setName(name: String) {
-        _name.value = name
+        savedStateHandle[NAME_KEY] = name
         addKey()
     }
 
     fun setPassword(password: String) {
-        _password.value = password
+        savedStateHandle[PASSWORD_KEY] = password
         _currentPage.value = PageType.RepeatPassword
     }
 
     fun checkPassword(value: String): Boolean {
-        if (value != password.value) {
+        if (value != password) {
             return false
         }
         _currentPage.value = PageType.Name
@@ -65,16 +92,27 @@ class CreateViewModel(
     }
 
     private fun addKey() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             if (requestPasswordCreate) {
-                accountRepository.setPassword(password.value)
+                accountRepository.setPassword(password)
             }
-            createNewKey(name.value)
+
+            if (import) {
+                addNewKey(name, mnemonic)
+            } else {
+                createNewKey(name)
+            }
+
+            _onReady.trySend(Unit)
         }
     }
 
     private suspend fun createNewKey(name: String) {
         val mnemonic = MnemonicHelper.generate()
+        addNewKey(name, mnemonic)
+    }
+
+    private suspend fun addNewKey(name: String, mnemonic: List<String>) {
         accountRepository.addKey(name, mnemonic)
     }
 

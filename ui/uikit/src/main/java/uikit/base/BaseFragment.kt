@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import android.widget.FrameLayout
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,12 +21,10 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getSpannable
-import uikit.extensions.statusBarHeight
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomSheetLayout
 import uikit.widget.ModalView
@@ -49,10 +48,23 @@ open class BaseFragment(
     }
 
     interface Modal {
+
+        private val fragment: BaseFragment
+            get() = this as BaseFragment
+
+        private val view: ModalView
+            get() = fragment.view as ModalView
+
+        val behavior: BottomSheetBehavior<FrameLayout>
+            get() = view.behavior
+
         fun onEndShowingAnimation() {
 
         }
 
+        fun fixPeekHeight() {
+            view.fixPeekHeight()
+        }
     }
 
     val window: Window?
@@ -75,10 +87,6 @@ open class BaseFragment(
 
     private val topRadius: Int by lazy {
         requireContext().getDimensionPixelSize(R.dimen.cornerSmall)
-    }
-
-    private val statusBarHeight: Int by lazy {
-        requireContext().statusBarHeight
     }
 
     fun getSpannable(@StringRes id: Int): SpannableString {
@@ -106,6 +114,8 @@ open class BaseFragment(
     }
 
     private fun wrapInModal(context: Context, view: View): ModalView {
+        this as Modal
+
         val modalView = ModalView(context)
         modalView.setContentView(view)
         modalView.doOnHide = { finishInternal() }
@@ -153,15 +163,9 @@ open class BaseFragment(
     fun finish() {
         val view = view ?: return
         when (view) {
-            is SwipeBackLayout -> {
-                view.startHideAnimation()
-            }
-            is BottomSheetLayout -> {
-                view.startHideAnimation()
-            }
-            is ModalView -> {
-                view.hide()
-            }
+            is SwipeBackLayout -> view.startHideAnimation()
+            is BottomSheetLayout -> view.startHideAnimation()
+            is ModalView -> view.hide(true)
             else -> finishInternal()
         }
     }

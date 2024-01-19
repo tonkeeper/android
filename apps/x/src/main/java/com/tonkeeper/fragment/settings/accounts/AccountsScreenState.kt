@@ -9,6 +9,7 @@ import uikit.list.ListCell
 import uikit.mvi.UiState
 
 data class AccountsScreenState(
+    val emptyWallets: Boolean = false,
     val wallets: List<Wallet> = emptyList()
 ): UiState() {
 

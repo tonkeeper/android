@@ -48,7 +48,7 @@
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-                <view class="com.tonkeeper.fragment.receive.ReceiveScreen$SquareImageView"
+                <uikit.widget.SquareImageView
                     android:id="@+id/qr_code"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />

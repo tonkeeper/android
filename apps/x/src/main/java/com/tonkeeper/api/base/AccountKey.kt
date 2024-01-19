@@ -2,7 +2,7 @@ package com.tonkeeper.api.base
 
 class AccountKey(
     private val accountId: String,
-    private val testnet: Boolean
+    val testnet: Boolean
 ) {
 
     override fun toString(): String {

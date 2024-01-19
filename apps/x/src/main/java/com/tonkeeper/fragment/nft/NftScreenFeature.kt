@@ -34,6 +34,7 @@ class NftScreenFeature: UiFeature<NftScreenState, NftScreenEffect>(NftScreenStat
 
             updateUiState { currentState ->
                 currentState.copy(
+                    testnet = wallet.testnet,
                     asyncState = AsyncState.Default,
                     nftItem = nftItem
                 )

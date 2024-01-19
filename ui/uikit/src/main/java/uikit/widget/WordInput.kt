@@ -15,6 +15,7 @@ import uikit.R
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
 import uikit.extensions.focusWidthKeyboard
+import uikit.extensions.hideKeyboard
 
 class WordInput @JvmOverloads constructor(
     context: Context,
@@ -77,6 +78,10 @@ class WordInput @JvmOverloads constructor(
         postDelayed({
             inputEditText.focusWidthKeyboard()
         }, 16)
+    }
+
+    fun hideKeyboard() {
+        inputEditText.hideKeyboard()
     }
 
     fun setIndex(index: Int) {

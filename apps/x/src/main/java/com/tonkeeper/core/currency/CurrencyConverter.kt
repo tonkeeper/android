@@ -8,6 +8,15 @@ import io.tonapi.models.TokenRates
 import org.ton.block.AddrStd
 import ton.SupportedCurrency
 import ton.SupportedTokens
+import ton.wallet.Wallet
+
+fun Wallet.currency(fromCurrency: String) = from(fromCurrency, accountId, testnet)
+
+fun Wallet.currency(fromCurrency: SupportedTokens) = from(fromCurrency, accountId, testnet)
+
+fun Wallet.ton(value: Float) = currency(SupportedTokens.TON).value(value)
+
+fun Wallet.ton(value: Long) = currency(SupportedTokens.TON).value(value)
 
 fun from(
     fromCurrency: String,

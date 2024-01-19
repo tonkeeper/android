@@ -10,6 +10,7 @@ import uikit.base.BaseFragment
 import uikit.decoration.ListCellDecoration
 import uikit.list.LinearLayoutManager
 import uikit.mvi.UiScreen
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class AccountsScreen: UiScreen<AccountsScreenState, AccountsScreenEffect, AccountsScreenFeature>(R.layout.fragment_accounts), BaseFragment.SwipeBack {
@@ -41,6 +42,9 @@ class AccountsScreen: UiScreen<AccountsScreenState, AccountsScreenEffect, Accoun
 
     override fun newUiState(state: AccountsScreenState) {
         adapter.submitList(state.getItems())
+        if (state.emptyWallets) {
+            navigation?.initRoot(true)
+        }
     }
 
 }

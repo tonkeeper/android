@@ -1,15 +1,13 @@
 package com.tonkeeper.core.currency
 
-import android.util.Log
 import com.tonkeeper.App
-import com.tonkeeper.api.address
+import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.rates.RatesRepository
 import com.tonkeeper.core.widget.Widget
 import com.tonkeeper.event.UpdateCurrencyRateEvent
 import core.EventBus
 import io.tonapi.models.TokenRates
-import org.ton.block.AddrStd
 import ton.SupportedCurrency
 import ton.SupportedTokens
 import ton.extensions.toRawAddress
@@ -48,7 +46,7 @@ class CurrencyManager {
 
     suspend fun sync(accountId: String, testnet: Boolean) {
         val jettons = jettonRepository.get(accountId, testnet)?.data?.map {
-            it.address.toRawAddress()
+            it.getAddress(testnet).toRawAddress()
         } ?: return
 
         repository.sync(accountId, testnet, jettons)

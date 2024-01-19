@@ -2,9 +2,12 @@ package com.tonkeeper.core.deeplink
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.root.RootActivity
 import com.tonkeeper.fragment.main.MainFragment
+import com.tonkeeper.fragment.wallet.init.InitAction
+import com.tonkeeper.fragment.wallet.init.InitScreen
 import uikit.extensions.activity
 import uikit.extensions.findFragment
 
@@ -57,26 +60,34 @@ class DeepLink(private val activity: RootActivity) {
             val processor = context.activity as? Processor ?: return false
             return processor.openUri(uri)
         }
+
+        fun getTonkeeperUriFirstPath(uri: Uri): String {
+            val pathSegments = uri.pathSegments.toMutableList()
+            if (uri.scheme == TONKEEPER_SCHEME) {
+                pathSegments.add(0, uri.host!!)
+            }
+            if (pathSegments.isEmpty()) {
+                return ""
+            }
+            return pathSegments.first()
+        }
+
+        fun isTonkeeperUri(uri: Uri): Boolean {
+            return uri.host == TONKEEPER_HOST || uri.scheme == TONKEEPER_SCHEME
+        }
     }
 
     private val fragmentManager = activity.supportFragmentManager
 
     fun handle(uri: Uri): Boolean {
-        if (uri.host == TONKEEPER_HOST || uri.scheme == TONKEEPER_SCHEME) {
+        if (isTonkeeperUri(uri)) {
             return handleAppLink(uri)
         }
         return false
     }
 
     private fun handleAppLink(uri: Uri): Boolean {
-        val pathSegments = uri.pathSegments.toMutableList()
-        if (uri.scheme == TONKEEPER_SCHEME) {
-            pathSegments.add(0, uri.host!!)
-        }
-        if (pathSegments.isEmpty()) {
-            return false
-        }
-        val firstPath = pathSegments.first()
+        val firstPath = getTonkeeperUriFirstPath(uri)
         if (firstPath in internalPathsMain) {
             return handleAppTab(firstPath)
         }

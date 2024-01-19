@@ -1,8 +1,11 @@
 package com.tonkeeper.fragment.wallet.init
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.tonkeeper.App
 import com.tonkeeper.PasscodeManager
 import com.tonkeeper.api.Tonapi
@@ -15,20 +18,37 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.crypto.base64
 import org.ton.crypto.hex
 import org.ton.mnemonic.Mnemonic
 import ton.MnemonicHelper
+import ton.contract.WalletVersion
 import ton.wallet.Wallet
 
 // TODO refactor this class
 internal class InitModel(
-    private val action: InitAction
+    private val action: InitAction,
+    private val argsName: String?,
+    private val argsPkBase64: String?,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
-    class Factory(val action: InitAction): ViewModelProvider.Factory {
+    private companion object {
+        private const val WORDS_KEY = "words"
+        private const val NAME_KEY = "name"
+        private const val PASSCODE_KEY = "passcode"
+        private const val WATCH_ACCOUNT_ID_KEY = "watch_account_id"
+        private const val PK_BASE64_KEY = "pk_base64"
+    }
 
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return InitModel(action) as T
+    class Factory(
+        val action: InitAction,
+        val name: String?,
+        val pkBase64: String?
+    ): ViewModelProvider.Factory {
+
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            return InitModel(action, name, pkBase64, extras.createSavedStateHandle()) as T
         }
     }
 
@@ -69,10 +89,24 @@ internal class InitModel(
     private val _validWords = MutableStateFlow(false)
     val validWords = _validWords.asStateFlow()
 
-    private var words: List<String> = emptyList()
-    private var name: String = ""
-    private var passcode: String = ""
-    private var watchAccountId: String = ""
+    private val words: List<String>
+        get() = savedStateHandle[WORDS_KEY] ?: emptyList()
+
+    private val name: String?
+        get() = savedStateHandle[NAME_KEY] ?: argsName
+
+    private val passcode: String
+        get() = savedStateHandle[PASSCODE_KEY] ?: ""
+
+    private val watchAccountId: String
+        get() = savedStateHandle[WATCH_ACCOUNT_ID_KEY] ?: ""
+
+    private val pkBase64: String?
+        get() = savedStateHandle[PK_BASE64_KEY] ?: argsPkBase64
+
+    init {
+        savedStateHandle[PK_BASE64_KEY] = pkBase64
+    }
 
     fun requestCheckValidWords(words: List<String>) {
         _validWords.value = false
@@ -95,22 +129,22 @@ internal class InitModel(
     }
 
     fun setWatchAccountId(accountId: String) {
-        watchAccountId = accountId
+        savedStateHandle[WATCH_ACCOUNT_ID_KEY] = accountId
         next()
     }
 
     fun setWords(words: List<String>) {
-        this.words = words
+        savedStateHandle[WORDS_KEY] = words
         next()
     }
 
     fun setName(name: String) {
-        this.name = name
+        savedStateHandle[NAME_KEY] = name
         next()
     }
 
     fun setPasscode(passcode: String) {
-        this.passcode = passcode
+        savedStateHandle[PASSCODE_KEY] = passcode
         next()
     }
 
@@ -133,11 +167,11 @@ internal class InitModel(
             savePasscode()
 
             val wallet = when(action) {
-                InitAction.Watch -> watchWallet(false)
+                InitAction.Watch -> watchWallet()
                 InitAction.Create -> createWallet()
                 InitAction.Import -> importWallet(false)
                 InitAction.Testnet -> importWallet(true)
-                InitAction.Signer -> watchWallet(true)
+                InitAction.Signer -> signerWallet()
             }
 
             if (action == InitAction.Create) {
@@ -148,13 +182,25 @@ internal class InitModel(
         }
     }
 
-    private suspend fun watchWallet(singer: Boolean): Wallet {
+    private suspend fun signerWallet(): Wallet {
+        val pkBase64 = pkBase64 ?: throw IllegalStateException("Pk base64 is empty")
+        val publicKey = PublicKeyEd25519(base64(pkBase64))
+
+        var name = name ?: ""
+        if (!name.endsWith("(Signer)")) {
+            name += " (Signer)"
+        }
+
+        return App.walletManager.addWatchWallet(publicKey, name, true)
+    }
+
+    private suspend fun watchWallet(): Wallet {
         if (watchAccountId.isEmpty()) {
             throw IllegalStateException("Watch account id is empty")
         }
 
         val publicKey = resolvePublicKey(watchAccountId)
-        return App.walletManager.addWatchWallet(publicKey, name, singer)
+        return App.walletManager.addWatchWallet(publicKey, name, false)
     }
 
     private suspend fun createWallet(): Wallet {
@@ -167,7 +213,18 @@ internal class InitModel(
             throw IllegalStateException("Words is empty")
         }
 
-        return App.walletManager.addWallet(words, name, testnet)
+        val wallet = App.walletManager.addWallet(words, name, testnet)
+        for (v in WalletVersion.entries) {
+            val w = wallet.asVersion(v)
+            val address = w.address
+            val account = Tonapi.resolveAccount(address, testnet) ?: continue
+            if (account.balance > 0) {
+                App.walletManager.setWalletVersion(wallet.id, v)
+            }
+            return w
+        }
+
+        return wallet
     }
 
     private suspend fun savePasscode() {

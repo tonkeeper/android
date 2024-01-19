@@ -1,11 +1,7 @@
 package ton
 
-import java.util.Currency
-
 enum class SupportedCurrency(
     val code: String,
-    val currency: Currency = Currency.getInstance(code),
-    val symbol: String = currency.symbol
 ) {
     USD("USD"),
     EUR("EUR"),

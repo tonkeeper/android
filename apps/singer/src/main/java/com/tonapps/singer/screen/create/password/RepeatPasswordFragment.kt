@@ -26,7 +26,7 @@ class RepeatPasswordFragment: PasswordFragment() {
         super.onViewCreated(view, savedInstanceState)
         title = getString(R.string.re_enter_password)
 
-        createViewModel.currentPage.filter { it == PageType.RepeatPassword }.onEach {
+        createViewModel.page(PageType.RepeatPassword).onEach {
             focus()
         }.launchIn(lifecycleScope)
     }

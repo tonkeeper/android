@@ -1,11 +1,8 @@
 package com.tonkeeper.fragment.receive
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.AttributeSet
 import android.view.View
-import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.viewModels
@@ -20,6 +17,7 @@ import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
+import uikit.widget.SquareImageView
 
 class ReceiveScreen: UiScreen<ReceiveScreenState, ReceiveScreenEffect, ReceiveScreenFeature>(R.layout.fragment_receive), BaseFragment.BottomSheet {
 
@@ -116,21 +114,6 @@ class ReceiveScreen: UiScreen<ReceiveScreenState, ReceiveScreenEffect, ReceiveSc
             shareAddress(effect.address)
         } else if (effect is ReceiveScreenEffect.Copy) {
             copyAddress(effect.address)
-        }
-    }
-
-    class SquareImageView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyle: Int = 0,
-    ) : AppCompatImageView(context, attrs, defStyle) {
-
-        init {
-            scaleType = ScaleType.CENTER_CROP
-        }
-
-        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-            super.onMeasure(widthMeasureSpec, widthMeasureSpec)
         }
     }
 }

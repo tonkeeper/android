@@ -15,8 +15,19 @@ import uikit.widget.LoaderView
 class NameChild: BaseFragment(R.layout.fragment_name) {
 
     companion object {
-        fun newInstance() = NameChild()
+
+        private const val VALUE_KEY = "value"
+
+        fun newInstance(name: String?): NameChild {
+            val fragment = NameChild()
+            fragment.arguments = Bundle().apply {
+                putString(VALUE_KEY, name)
+            }
+            return fragment
+        }
     }
+
+    private val nameValue: String? by lazy { arguments?.getString(VALUE_KEY) }
 
     private val parentFeature: InitModel by viewModels({ requireParentFragment() })
 
@@ -34,6 +45,7 @@ class NameChild: BaseFragment(R.layout.fragment_name) {
         nameInput.doOnTextChange = {
             saveButton.isEnabled = it.isNotBlank()
         }
+        nameInput.text = nameValue ?: ""
 
         loaderView = view.findViewById(R.id.name_loading)
 

@@ -2,12 +2,12 @@ package com.tonkeeper.api.jetton
 
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
-import com.tonkeeper.api.address
 import com.tonkeeper.api.base.AccountKey
 import com.tonkeeper.api.base.BaseAccountRepository
 import com.tonkeeper.api.base.RepositoryResponse
 import com.tonkeeper.api.base.SourceAPI
 import com.tonkeeper.api.fromJSON
+import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.jetton.db.JettonDao
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.symbol
@@ -52,7 +52,7 @@ class JettonRepository(
         var jetton: JettonBalance? = dao.getByAddress(accountId, address)?.let { fromJSON(it) }
         if (jetton == null) {
             jetton = getFromCloud(accountId, testnet)?.data?.find {
-                it.address == address
+                it.getAddress(testnet) == address
             }
         }
         return jetton
@@ -62,7 +62,7 @@ class JettonRepository(
         accountKey: AccountKey,
         items: List<JettonBalance>
     ) {
-        dao.insert(accountKey.toString(), items)
+        dao.insert(accountKey.toString(), accountKey.testnet, items)
     }
 
     override suspend fun onCacheRequest(

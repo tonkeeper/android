@@ -20,9 +20,13 @@ class IntroFragment: BaseFragment(R.layout.fragment_intro) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         newKeyButton = view.findViewById(R.id.new_key)
-        newKeyButton.setOnClickListener { navigation?.add(CreateFragment.newInstance()) }
+        newKeyButton.setOnClickListener { openCreateFragment(false) }
 
         importKeyButton = view.findViewById(R.id.import_key)
-        importKeyButton.setOnClickListener { navigation?.add(CreateFragment.newInstance()) }
+        importKeyButton.setOnClickListener { openCreateFragment(true) }
+    }
+
+    private fun openCreateFragment(import: Boolean) {
+        navigation?.add(CreateFragment.newInstance(import))
     }
 }

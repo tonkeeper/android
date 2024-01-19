@@ -94,6 +94,8 @@ class WalletScreen: MainTabScreen<WalletScreenState, WalletScreenEffect, WalletS
             headerView.title = state.title
         }
 
+        headerView.actionView.alpha = if (state.actionEnabled) 1f else 0f
+
         if (state.items.isNotEmpty()) {
             adapter.submitList(state.items) {
                 toggleVisibilityAnimation(shimmerView, listView)

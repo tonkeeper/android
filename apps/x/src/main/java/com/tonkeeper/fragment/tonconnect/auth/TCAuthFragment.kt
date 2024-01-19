@@ -8,6 +8,7 @@ import androidx.fragment.app.viewModels
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.tonkeeperx.R
+import com.tonkeeper.App
 import com.tonkeeper.core.tonconnect.TonConnect
 import com.tonkeeper.core.tonconnect.models.TCData
 import com.tonkeeper.core.tonconnect.models.TCRequest
@@ -15,6 +16,7 @@ import com.tonkeeper.dialog.tc.TonConnectCryptoView
 import com.tonkeeper.extensions.launch
 import com.tonkeeper.fragment.passcode.lock.LockScreen
 import ton.extensions.toUserFriendly
+import ton.wallet.Wallet
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -90,7 +92,8 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
         viewModel.dataState.launch(this) {
             val data = it ?: return@launch
-            setData(data)
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
+            setData(data, wallet)
         }
 
         viewModel.connectState.launch(this) {
@@ -104,8 +107,8 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         viewModel.requestData(request)
     }
 
-    private fun setData(data: TCData) {
-        cryptoView.setKey(data.accountId.toUserFriendly())
+    private fun setData(data: TCData, wallet: Wallet) {
+        cryptoView.setKey(data.accountId.toUserFriendly(testnet = wallet.testnet))
         siteIconView.setImageURI(data.manifest.iconUrl)
         nameView.text = getString(R.string.ton_connect_title, data.manifest.name)
         descriptionView.text = getString(R.string.ton_connect_description, data.host, data.shortAddress, "V")

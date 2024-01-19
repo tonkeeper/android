@@ -1,11 +1,13 @@
 package uikit.widget
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.webkit.WebSettings
 import android.webkit.WebView
+
 
 class WebViewFixed @JvmOverloads constructor(
     context: Context,
@@ -26,6 +28,10 @@ class WebViewFixed @JvmOverloads constructor(
 
         setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
         setBackgroundColor(Color.TRANSPARENT)
+
+        if (0 != context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) {
+            setWebContentsDebuggingEnabled(true)
+        }
     }
 
     override fun hasOverlappingRendering(): Boolean {

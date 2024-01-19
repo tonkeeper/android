@@ -16,6 +16,7 @@ import androidx.core.view.doOnLayout
 import androidx.customview.widget.ViewDragHelper
 import uikit.R
 import uikit.base.BaseFragment
+import uikit.extensions.activity
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.range
@@ -40,8 +41,9 @@ class BottomSheetLayout @JvmOverloads constructor(
 
     var fragment: BaseFragment? = null
 
-    private val parentFragment: BaseFragment? by lazy {
-        fragment?.parent as? BaseFragment
+    private val parentRootView: View? by lazy {
+        val v = context.activity?.findViewById<View>(R.id.root_container)
+        v
     }
 
     private val contentContainer: FrameLayout
@@ -117,7 +119,7 @@ class BottomSheetLayout @JvmOverloads constructor(
                 super.onViewDragStateChanged(state)
                 when(state) {
                     ViewDragHelper.STATE_IDLE -> {
-                        val parentView = parentFragment?.view ?: return
+                        val parentView = parentRootView ?: return
                         if (parentView.alpha == 1f) {
                             doOnCloseScreen?.invoke()
                         }
@@ -191,7 +193,7 @@ class BottomSheetLayout @JvmOverloads constructor(
     }
 
     private fun onAnimationUpdateParent(progress: Float) {
-        val parentView = parentFragment?.view ?: return
+        val parentView = parentRootView ?: return
         val radius = context.getDimensionPixelSize(R.dimen.cornerMedium)
         parentView.roundTop(progress.range(0, radius))
         parentView.scale = progress.range(1f, parentScale)

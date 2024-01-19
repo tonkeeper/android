@@ -30,33 +30,23 @@ open class WalletV3R1Contract(
         return CODE
     }
 
-    override fun createTransferMessageBody(
-        privateKey: PrivateKeyEd25519,
+    override fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
         vararg gifts: WalletTransfer
-    ): Cell {
-        val unsignedBody = CellBuilder.createCell {
-            storeUInt(walletId, 32)
-            storeUInt(validUntil, 32)
-            storeUInt(seqno, 32)
-            for (gift in gifts) {
-                var sendMode = 3
-                if (gift.sendMode > -1) {
-                    sendMode = gift.sendMode
-                }
-                val intMsg = CellRef(createIntMsg(gift))
-
-                storeUInt(sendMode, 8)
-                storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)
+    ) = CellBuilder.createCell {
+        storeUInt(walletId, 32)
+        storeUInt(validUntil, 32)
+        storeUInt(seqno, 32)
+        for (gift in gifts) {
+            var sendMode = 3
+            if (gift.sendMode > -1) {
+                sendMode = gift.sendMode
             }
-        }
-        val signature = BitString(privateKey.sign(unsignedBody.hash()))
+            val intMsg = CellRef(createIntMsg(gift))
 
-        return CellBuilder.createCell {
-            storeBits(signature)
-            storeBits(unsignedBody.bits)
-            storeRefs(unsignedBody.refs)
+            storeUInt(sendMode, 8)
+            storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)
         }
     }
 

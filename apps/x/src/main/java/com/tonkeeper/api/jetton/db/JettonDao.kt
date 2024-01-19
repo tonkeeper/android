@@ -16,8 +16,8 @@ interface JettonDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(jettons: List<JettonEntity>)
 
-    suspend fun insert(accountId: String, jettons: List<JettonBalance>) {
-        insert(JettonEntity.map(accountId, jettons))
+    suspend fun insert(accountId: String, testnet: Boolean, jettons: List<JettonBalance>) {
+        insert(JettonEntity.map(accountId, testnet, jettons))
     }
 
     @Query("SELECT data FROM jetton WHERE accountId = :accountId")

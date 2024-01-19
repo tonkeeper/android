@@ -34,7 +34,7 @@ class WalletActionsHolder(
             View.VISIBLE
         }
 
-        buyOrSellView.visibility = if (item.walletType == WalletType.Testnet) {
+        buyOrSellView.visibility = if (item.walletType == WalletType.Testnet || item.walletType == WalletType.Watch) {
             View.GONE
         } else {
             View.VISIBLE

@@ -65,7 +65,10 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
 
             var address = value
             if (!account.name.isNullOrBlank()) {
-                address = account.address.toUserFriendly()
+                address = account.address.toUserFriendly(
+                    wallet = account.isWallet,
+                    testnet = wallet.testnet
+                )
             }
 
             var bounce = value.startsWith("EQ") || !value.startsWith("UQ")

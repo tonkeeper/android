@@ -3,8 +3,8 @@ package com.tonkeeper.fragment.receive
 import android.graphics.Bitmap
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
-import com.tonkeeper.api.address
-import com.tonkeeper.helper.QRBuilder
+import com.tonkeeper.api.getAddress
+import core.QRBuilder
 import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -48,7 +48,7 @@ class ReceiveScreenFeature: UiFeature<ReceiveScreenState, ReceiveScreenEffect>(R
     ): Bitmap = withContext(Dispatchers.IO) {
         var content = "ton://transfer/${wallet.address}"
         if (jetton != null) {
-            content += "?jetton=${jetton.address}"
+            content += "?jetton=${jetton.getAddress(wallet.testnet)}"
         }
         val bitmap = QRBuilder(content, size, size)
             .setWithCutout(true)

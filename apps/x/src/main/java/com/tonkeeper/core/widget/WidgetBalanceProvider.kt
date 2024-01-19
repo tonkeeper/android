@@ -8,8 +8,8 @@ import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.currency.ton
 import com.tonkeeper.core.formatter.CurrencyFormatter
-import com.tonkeeper.core.currency.from
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,8 +49,7 @@ class WidgetBalanceProvider: Widget() {
             }
             val account = response?.data ?: return@launch
 
-            val tonInCurrency = from(SupportedTokens.TON, wallet.accountId, wallet.testnet)
-                .value(account.balance)
+            val tonInCurrency = wallet.ton(account.balance)
                 .to(currency)
 
             val amount = Coin.toCoins(account.balance)

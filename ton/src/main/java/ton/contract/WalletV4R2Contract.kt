@@ -1,8 +1,6 @@
 package ton.contract
 
-import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.bitstring.BitString
 import org.ton.block.*
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
@@ -32,34 +30,24 @@ class WalletV4R2Contract(
         return CODE
     }
 
-    override fun createTransferMessageBody(
-        privateKey: PrivateKeyEd25519,
+    override fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
         vararg gifts: WalletTransfer
-    ): Cell {
-        val unsignedBody = CellBuilder.createCell {
-            storeUInt(walletId, 32)
-            storeUInt(validUntil, 32)
-            storeUInt(seqno, 32)
-            storeUInt(0, 8)
-            for (gift in gifts) {
-                var sendMode = 3
-                if (gift.sendMode > -1) {
-                    sendMode = gift.sendMode
-                }
-                val intMsg = CellRef(createIntMsg(gift))
-
-                storeUInt(sendMode, 8)
-                storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)
+    ) = CellBuilder.createCell {
+        storeUInt(walletId, 32)
+        storeUInt(validUntil, 32)
+        storeUInt(seqno, 32)
+        storeUInt(0, 8)
+        for (gift in gifts) {
+            var sendMode = 3
+            if (gift.sendMode > -1) {
+                sendMode = gift.sendMode
             }
-        }
-        val signature = BitString(privateKey.sign(unsignedBody.hash()))
+            val intMsg = CellRef(createIntMsg(gift))
 
-        return CellBuilder.createCell {
-            storeBits(signature)
-            storeBits(unsignedBody.bits)
-            storeRefs(unsignedBody.refs)
+            storeUInt(sendMode, 8)
+            storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)
         }
     }
 

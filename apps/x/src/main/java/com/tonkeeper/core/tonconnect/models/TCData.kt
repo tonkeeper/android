@@ -10,12 +10,13 @@ import ton.extensions.toUserFriendly
 data class TCData(
     val manifest: TCManifest,
     val accountId: String,
+    val testnet: Boolean,
     val clientId: String,
     val items: List<TCItem>
 ): Parcelable {
 
     val shortAddress: String
-        get() = accountId.toUserFriendly().shortAddress
+        get() = accountId.toUserFriendly(testnet = testnet).shortAddress
 
     val url: String
         get() = manifest.url

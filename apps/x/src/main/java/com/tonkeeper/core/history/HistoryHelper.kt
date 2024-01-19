@@ -7,18 +7,19 @@ import com.tonkeeper.Global
 import com.tonkeeper.api.amount
 import com.tonkeeper.api.description
 import com.tonkeeper.api.fee
+import com.tonkeeper.api.getNameOrAddress
 import com.tonkeeper.api.iconURL
 import com.tonkeeper.api.imageURL
 import com.tonkeeper.api.jettonPreview
-import com.tonkeeper.api.nameOrAddress
 import com.tonkeeper.api.nft.NftRepository
 import com.tonkeeper.api.parsedAmount
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.api.title
 import com.tonkeeper.api.ton
 import com.tonkeeper.core.Coin
+import com.tonkeeper.core.currency.currency
+import com.tonkeeper.core.currency.ton
 import com.tonkeeper.core.formatter.CurrencyFormatter
-import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.history.list.item.HistoryItem
 import com.tonkeeper.event.WalletStateUpdateEvent
 import com.tonkeeper.helper.DateFormat
@@ -167,8 +168,7 @@ object HistoryHelper {
             val fee = event.fee
             val currency = App.settings.currency
 
-            val feeInCurrency = from(SupportedTokens.TON, wallet.accountId, wallet.testnet)
-                .value(fee)
+            val feeInCurrency = wallet.ton(fee)
                 .to(currency)
 
 
@@ -228,7 +228,7 @@ object HistoryHelper {
                 value2 = CurrencyFormatter.format(SupportedCurrency.TON.code, tonFromJetton, amountModifier)
             }
 
-            val inCurrency = from(jettonSwap.jettonPreview!!.address, wallet.accountId, wallet.testnet)
+            val inCurrency = wallet.currency(jettonSwap.jettonPreview!!.address)
                 .value(jettonSwap.amount.toFloat())
                 .to(currency)
 
@@ -237,7 +237,7 @@ object HistoryHelper {
                 iconURL = "",
                 action = ActionType.Swap,
                 title = simplePreview.name,
-                subtitle = jettonSwap.router.nameOrAddress,
+                subtitle = jettonSwap.router.getNameOrAddress(wallet.testnet),
                 comment = "",
                 value = withPlusPrefix(value),
                 value2 = withMinusPrefix(value2),
@@ -269,7 +269,7 @@ object HistoryHelper {
                 value = withPlusPrefix(value)
             }
 
-            val inCurrency = from(jettonTransfer.jetton.address, wallet.accountId, wallet.testnet)
+            val inCurrency = wallet.currency(jettonTransfer.jetton.address)
                 .value(amount)
                 .to(currency)
 
@@ -279,7 +279,7 @@ object HistoryHelper {
                 iconURL = accountAddress?.iconURL ?: "",
                 action = itemAction,
                 title = simplePreview.name,
-                subtitle = accountAddress?.nameOrAddress ?: "",
+                subtitle = accountAddress?.getNameOrAddress(wallet.testnet) ?: "",
                 comment = jettonTransfer.comment,
                 value = value,
                 tokenCode = "",
@@ -287,7 +287,10 @@ object HistoryHelper {
                 timestamp = timestamp,
                 date = date,
                 isOut = isOut,
-                address = accountAddress?.address?.toUserFriendly(),
+                address = accountAddress?.address?.toUserFriendly(
+                    wallet = accountAddress.isWallet,
+                    testnet = wallet.testnet
+                ),
                 addressName = accountAddress?.name,
                 currency = CurrencyFormatter.format(currency.code, inCurrency),
             )
@@ -312,8 +315,7 @@ object HistoryHelper {
                 value = withPlusPrefix(value)
             }
 
-            val inCurrency = from(SupportedTokens.TON, wallet.accountId, wallet.testnet)
-                .value(tonTransfer.amount)
+            val inCurrency = wallet.ton(tonTransfer.amount)
                 .to(currency)
 
             return HistoryItem.Event(
@@ -321,7 +323,7 @@ object HistoryHelper {
                 iconURL = accountAddress.iconURL,
                 action = itemAction,
                 title = simplePreview.name,
-                subtitle = accountAddress.nameOrAddress,
+                subtitle = accountAddress.getNameOrAddress(wallet.testnet),
                 comment = tonTransfer.comment,
                 value = value,
                 tokenCode = SupportedTokens.TON.code,
@@ -329,7 +331,10 @@ object HistoryHelper {
                 timestamp = timestamp,
                 date = date,
                 isOut = isOut,
-                address = accountAddress.address.toUserFriendly(),
+                address = accountAddress.address.toUserFriendly(
+                    wallet = accountAddress.isWallet,
+                    testnet = wallet.testnet
+                ),
                 addressName = accountAddress.name,
                 currency = CurrencyFormatter.formatFiat(inCurrency),
             )
@@ -345,7 +350,7 @@ object HistoryHelper {
                 iconURL = executor.iconURL,
                 action = ActionType.CallContract,
                 title = simplePreview.name,
-                subtitle = executor.nameOrAddress,
+                subtitle = executor.getNameOrAddress(wallet.testnet),
                 value = withMinusPrefix(value),
                 tokenCode = SupportedTokens.TON.code,
                 timestamp = timestamp,
@@ -363,11 +368,11 @@ object HistoryHelper {
             if (isOut) {
                 itemAction = ActionType.NftSend
                 iconURL = nftItemTransfer.recipient?.iconURL
-                subtitle = nftItemTransfer.recipient?.nameOrAddress ?: ""
+                subtitle = nftItemTransfer.recipient?.getNameOrAddress(wallet.testnet) ?: ""
             } else {
                 itemAction = ActionType.NftReceived
                 iconURL = nftItemTransfer.sender?.iconURL
-                subtitle = nftItemTransfer.sender?.nameOrAddress ?: ""
+                subtitle = nftItemTransfer.sender?.getNameOrAddress(wallet.testnet) ?: ""
             }
 
             val nftItem = nftRepository.getItem(nftItemTransfer.nft, wallet.testnet)
@@ -412,7 +417,7 @@ object HistoryHelper {
                 txId = txId,
                 action = ActionType.DepositStake,
                 title = simplePreview.name,
-                subtitle = depositStake.pool.nameOrAddress,
+                subtitle = depositStake.pool.getNameOrAddress(wallet.testnet),
                 value = withMinusPrefix(value),
                 tokenCode = SupportedTokens.TON.code,
                 timestamp = timestamp,
@@ -450,7 +455,7 @@ object HistoryHelper {
                 txId = txId,
                 action = ActionType.WithdrawStakeRequest,
                 title = simplePreview.name,
-                subtitle = withdrawStakeRequest.pool.nameOrAddress,
+                subtitle = withdrawStakeRequest.pool.getNameOrAddress(wallet.testnet),
                 value = value,
                 tokenCode = SupportedTokens.TON.code,
                 timestamp = timestamp,
@@ -474,7 +479,7 @@ object HistoryHelper {
             )
         } else if (action.auctionBid != null) {
             val auctionBid = action.auctionBid!!
-            val subtitle = auctionBid.nft?.title ?: auctionBid.bidder.nameOrAddress
+            val subtitle = auctionBid.nft?.title ?: auctionBid.bidder.getNameOrAddress(wallet.testnet)
 
             val amount = Coin.toCoins(auctionBid.amount.value.toLong())
             val tokenCode = auctionBid.amount.tokenName
@@ -505,7 +510,7 @@ object HistoryHelper {
                 iconURL = withdrawStake.implementation.iconURL,
                 action = ActionType.WithdrawStake,
                 title = simplePreview.name,
-                subtitle = withdrawStake.pool.nameOrAddress,
+                subtitle = withdrawStake.pool.getNameOrAddress(wallet.testnet),
                 value = withPlusPrefix(value),
                 tokenCode = SupportedTokens.TON.code,
                 timestamp = timestamp,
@@ -524,7 +529,7 @@ object HistoryHelper {
                 txId = txId,
                 action = ActionType.NftPurchase,
                 title = simplePreview.name,
-                subtitle = nftPurchase.buyer.nameOrAddress,
+                subtitle = nftPurchase.buyer.getNameOrAddress(wallet.testnet),
                 value = withMinusPrefix(value),
                 tokenCode = SupportedTokens.TON.code,
                 timestamp = timestamp,
@@ -545,7 +550,7 @@ object HistoryHelper {
                 txId = txId,
                 action = ActionType.JettonBurn,
                 title = simplePreview.name,
-                subtitle = jettonBurn.sender.nameOrAddress,
+                subtitle = jettonBurn.sender.getNameOrAddress(wallet.testnet),
                 value = withMinusPrefix(value),
                 tokenCode = jettonBurn.jetton.symbol,
                 timestamp = timestamp,
@@ -560,7 +565,7 @@ object HistoryHelper {
                 txId = txId,
                 action = ActionType.UnSubscribe,
                 title = simplePreview.name,
-                subtitle = unsubscribe.beneficiary.nameOrAddress,
+                subtitle = unsubscribe.beneficiary.getNameOrAddress(wallet.testnet),
                 value = MINUS_SYMBOL,
                 tokenCode = SupportedTokens.TON.code,
                 timestamp = timestamp,
@@ -578,7 +583,7 @@ object HistoryHelper {
                 txId = txId,
                 action = ActionType.Subscribe,
                 title = simplePreview.name,
-                subtitle = subscribe.beneficiary.nameOrAddress,
+                subtitle = subscribe.beneficiary.getNameOrAddress(wallet.testnet),
                 value = withMinusPrefix(value),
                 tokenCode = SupportedTokens.TON.code,
                 timestamp = timestamp,

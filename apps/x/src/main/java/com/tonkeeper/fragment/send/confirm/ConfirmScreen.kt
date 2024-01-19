@@ -1,15 +1,19 @@
 package com.tonkeeper.fragment.send.confirm
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.security.ConfirmationCallback
 import android.security.ConfirmationPrompt
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.viewModels
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.shortAddress
+import com.tonkeeper.core.singer.SingerResultContract
 import com.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonkeeper.fragment.send.SendScreenEffect
 import com.tonkeeper.fragment.send.pager.PagerScreen
@@ -39,6 +43,14 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
     private lateinit var commentView: TransactionDetailView
     private lateinit var sendButton: Button
     private lateinit var processView: ProcessTaskView
+
+    private val signerLauncher = registerForActivityResult(SingerResultContract()) {
+        if (it == null) {
+            feature.setFailedResult()
+        } else {
+            feature.sendSignedBoc(it)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,7 +86,6 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         commentView.position = ListCell.Position.LAST
 
         sendButton = view.findViewById(R.id.send)
-        sendButton.setOnClickListener { send() }
 
         processView = view.findViewById(R.id.process)
 
@@ -95,6 +106,10 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
 
     private fun send() {
         navigation?.add(LockScreen.newInstance(SEND_REQUEST))
+    }
+
+    private fun sign() {
+        feature.sign(sendFeature.transaction.value!!)
     }
 
     private fun setComment(comment: String?) {
@@ -144,6 +159,14 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         } else {
             feeView.setData(state.fee, state.feeInCurrency)
         }
+
+        sendButton.setOnClickListener {
+            if (state.signer) {
+                sign()
+            } else {
+                send()
+            }
+        }
     }
 
     override fun newUiEffect(effect: ConfirmScreenEffect) {
@@ -154,7 +177,16 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
             }
 
             sendFeature.sendEffect(SendScreenEffect.Finish)
+        } else if (effect is ConfirmScreenEffect.OpenSignerApp) {
+            signerLauncher.launch(effect.boc)
         }
+    }
+
+    private fun openSignerApp(uri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+
     }
 
     override fun onVisibleChange(visible: Boolean) {

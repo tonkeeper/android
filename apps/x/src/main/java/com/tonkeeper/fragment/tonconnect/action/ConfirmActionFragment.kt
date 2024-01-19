@@ -99,13 +99,11 @@ class ConfirmActionFragment: BaseFragment(R.layout.dialog_confirm_action), BaseF
     private suspend fun confirm()  {
         val transaction = transaction ?: return
         val tonConnect = TonConnect.from(requireContext()) ?: return
-        val wallet = App.walletManager.getWalletInfo() ?: return
-
         buttonsView.visibility = View.GONE
         processView.visibility = View.VISIBLE
 
         try {
-            tonConnect.signTransaction(transaction.id, wallet.testnet, transaction.clientId, transaction.transfers)
+            tonConnect.signTransaction(transaction.id, transaction.clientId, transaction.transfers)
             processView.state = ProcessTaskView.State.SUCCESS
 
             isConfirmed = true

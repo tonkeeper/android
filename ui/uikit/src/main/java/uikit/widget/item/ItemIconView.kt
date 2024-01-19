@@ -53,6 +53,11 @@ class ItemIconView @JvmOverloads constructor(
             text = it.getString(R.styleable.ItemIconView_android_text)
             iconRes = it.getResourceId(R.styleable.ItemIconView_android_icon, R.drawable.ic_chevron_right_16)
             position = ListCell.from(it.getString(R.styleable.ItemIconView_position))
+
+            val tint = it.getColor(R.styleable.ItemIconView_android_tint, 0)
+            if (tint != 0) {
+                setIconTintColor(tint)
+            }
         }
     }
 

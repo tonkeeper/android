@@ -35,17 +35,16 @@ import com.tonkeeper.dialog.fiat.FiatDialog
 import com.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonkeeper.fragment.send.SendScreen
 import com.tonkeeper.fragment.settings.accounts.AccountsScreen
+import com.tonkeeper.fragment.wallet.init.InitAction
+import com.tonkeeper.fragment.wallet.init.InitScreen
 import kotlinx.coroutines.launch
 import uikit.extensions.doOnEnd
 import uikit.extensions.findFragment
 import uikit.extensions.hapticConfirm
 import uikit.extensions.startAnimation
+import uikit.navigation.NavigationActivity
 
-class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener, DeepLink.Processor {
-
-    companion object {
-        val hostFragmentId = R.id.nav_host_fragment
-    }
+class RootActivity: NavigationActivity(), DeepLink.Processor {
 
     private val deepLink = DeepLink(this)
 
@@ -60,36 +59,15 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
     lateinit var tonConnect: TonConnect
 
     private lateinit var uiHandler: Handler
-    private lateinit var contentView: View
-    private lateinit var toastView: AppCompatTextView
     private var initialized = false
     private var lastIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
         uiHandler = Handler(mainLooper)
-        contentView = findViewById(android.R.id.content)
-        contentView.viewTreeObserver.addOnPreDrawListener(this)
-
-        toastView = findViewById(R.id.toast)
-
         tonConnect = TonConnect(this)
 
         initRoot(false, intent)
-
-        onBackPressedDispatcher.addCallback(this) {
-            onBackPress()
-        }
-    }
-
-    private fun onBackPress() {
-        val fragment = supportFragmentManager.fragments.lastOrNull() as? BaseFragment ?: return
-        if (fragment.onBackPressed()) {
-            remove(fragment)
-        }
     }
 
     override fun openUri(uri: Uri): Boolean {
@@ -113,8 +91,24 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
             return resolveSendScreen(uri)
         } else if (uri.toString() == AccountsScreen.DeepLink && !hasFragment<AccountsScreen>()) {
             return AccountsScreen.newInstance()
+        } else if (DeepLink.isTonkeeperUri(uri)) {
+            return resolveTonkeeperScreen(uri)
         }
         return null
+    }
+
+    private fun resolveTonkeeperScreen(uri: Uri): BaseFragment? {
+        val firstPath = DeepLink.getTonkeeperUriFirstPath(uri)
+        if (firstPath == "signer") {
+            return resolveSinger(uri)
+        }
+        return null
+    }
+
+    private fun resolveSinger(uri: Uri): BaseFragment? {
+        val pkBase64 = uri.getQueryParameter("k") ?: return null
+        val name = uri.getQueryParameter("n")
+        return InitScreen.newInstance(InitAction.Signer, name, pkBase64)
     }
 
     private inline fun <reified F> hasFragment(): Boolean {
@@ -168,7 +162,7 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         lastIntent = intent
     }
 
-    private fun setIntroFragment() {
+    private fun setIntroFragment(intent: Intent?) {
         val introFragment = IntroFragment.newInstance()
 
         supportFragmentManager.commit {
@@ -218,40 +212,13 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         }
     }
 
-    override fun setFragmentResult(requestKey: String, result: Bundle) {
-        supportFragmentManager.setFragmentResult(requestKey, result)
-    }
-
-    override fun setFragmentResultListener(
-        requestKey: String,
-        listener: (requestKey: String, bundle: Bundle) -> Unit
-    ) {
-        supportFragmentManager.setFragmentResultListener(requestKey, this, listener)
-    }
-
     override fun initRoot(skipPasscode: Boolean, intent: Intent?) {
         lifecycleScope.launch {
             val wallet = App.walletManager.getWalletInfo()
             if (wallet == null) {
-                setIntroFragment()
+                setIntroFragment(intent)
             } else {
                 setMainFragment(skipPasscode, intent)
-            }
-        }
-    }
-
-    override fun add(fragment: BaseFragment) {
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.add(hostFragmentId, fragment)
-        transaction.commitAllowingStateLoss()
-    }
-
-    override fun remove(fragment: Fragment) {
-        if (supportFragmentManager.primaryNavigationFragment == fragment) {
-            finish()
-        } else {
-            supportFragmentManager.commitNow {
-                remove(fragment)
             }
         }
     }
@@ -279,31 +246,10 @@ class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListen
         }
     }
 
-    override fun toast(message: String) {
-        contentView.hapticConfirm()
-        toastView.text = message
-
-        if (toastView.visibility == View.VISIBLE) {
-            return
-        }
-
-        toastView.visibility = View.VISIBLE
-        toastView.startAnimation(uikit.R.anim.toast).doOnEnd {
-            toastView.visibility = View.GONE
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         tonConnect.onDestroy()
     }
 
-    override fun onPreDraw(): Boolean {
-        if (!initialized) {
-            return false
-        }
-        contentView.viewTreeObserver.removeOnPreDrawListener(this)
-        return true
-    }
-
+    override fun isInitialized() = initialized
 }

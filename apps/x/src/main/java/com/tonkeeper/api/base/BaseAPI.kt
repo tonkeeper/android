@@ -110,20 +110,21 @@ class BaseAPI(
         domain: String,
         suffixList: Array<String> = arrayOf(".ton", ".t.me")
     ): Account? {
+        val accountId = domain.lowercase()
         var account: Account? = null
         try {
-            account = getAccount(domain)
+            account = getAccount(accountId)
         } catch (ignored: Throwable) {}
 
         for (suffix in suffixList) {
-            if (account == null && !domain.endsWith(suffix)) {
+            if (account == null && !accountId.endsWith(suffix)) {
                 try {
-                    account = getAccount("$domain$suffix")
+                    account = getAccount("$accountId$suffix")
                 } catch (ignored: Throwable) {}
             }
         }
         if (account?.name == null) {
-            account = account?.copy(name = domain)
+            account = account?.copy(name = accountId)
         }
         return account
     }

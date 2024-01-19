@@ -1,17 +1,17 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository
-import com.tonkeeper.api.address
+import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
-import com.tonkeeper.core.currency.from
+import com.tonkeeper.core.currency.currency
+import com.tonkeeper.core.currency.ton
 import com.tonkeeper.event.ChangeCurrencyEvent
 import com.tonkeeper.event.ChangeWalletNameEvent
 import com.tonkeeper.event.WalletStateUpdateEvent
@@ -35,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import ton.extensions.toUserFriendly
+import ton.wallet.Wallet
 import uikit.list.ListCell
 
 class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(WalletScreenState()) {
@@ -100,13 +101,11 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
         val data = getWalletData(wallet.accountId, wallet.testnet, sync) ?: return
 
-        val tonInCurrency = from(SupportedTokens.TON, data.accountId, wallet.testnet)
-            .value(data.account.balance)
+        val tonInCurrency = wallet.ton(data.account.balance)
             .to(currency)
 
         val tokens = buildTokensList(
-            wallet.accountId,
-            wallet.testnet,
+            wallet,
             Coin.toCoins(data.account.balance),
             tonInCurrency,
             data.jettons.sortedByDescending {
@@ -117,7 +116,8 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         var allInCurrency = tonInCurrency
 
         for (jetton in data.jettons) {
-            val jettonInCurrency = from(jetton.address, data.accountId, wallet.testnet)
+            val jettonAddress = jetton.getAddress(testnet = wallet.testnet)
+            val jettonInCurrency = wallet.currency(jettonAddress)
                 .value(jetton.parsedBalance)
                 .to(currency)
 
@@ -133,7 +133,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         val items = mutableListOf<WalletItem>()
         items.add(WalletDataItem(
             amount = CurrencyFormatter.formatFiat(allInCurrency),
-            address = data.accountId.toUserFriendly()
+            address = data.accountId.toUserFriendly(testnet = wallet.testnet)
         ))
         items.add(WalletActionItem(wallet.type))
         items.add(WalletSpaceItem)
@@ -147,6 +147,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
         updateUiState { currentState ->
             currentState.copy(
+                walletType = wallet.type,
                 asyncState = asyncState,
                 title = wallet.name,
                 items = items
@@ -155,10 +156,11 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     }
 
     private suspend fun getRate(
-        accountId: String,
-        testnet: Boolean,
+        wallet: Wallet,
         token: String
     ): Float {
+        val accountId = wallet.accountId
+        val testnet = wallet.testnet
         return currencyManager.getRate(
             accountId,
             testnet,
@@ -168,10 +170,11 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     }
 
     private suspend fun getRate24h(
-        accountId: String,
-        testnet: Boolean,
+        wallet: Wallet,
         token: String
     ): String {
+        val accountId = wallet.accountId
+        val testnet = wallet.testnet
         return currencyManager.getRate24h(
             accountId,
             testnet,
@@ -181,25 +184,16 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     }
 
     private suspend fun buildTokensList(
-        accountId: String,
-        testnet: Boolean,
+        wallet: Wallet,
         balance: Float,
         tonInCurrency: Float,
         jettons: List<JettonBalance>
     ): List<WalletItem> {
         val items = mutableListOf<WalletItem>()
 
-        val rate = getRate(
-            accountId,
-            testnet,
-            SupportedTokens.TON.code,
-        )
+        val rate = getRate(wallet, SupportedTokens.TON.code)
 
-        val rate24h = getRate24h(
-            accountId,
-            testnet,
-            SupportedTokens.TON.code,
-        )
+        val rate24h = getRate24h(wallet, SupportedTokens.TON.code)
 
         val size = jettons.size + 1
 
@@ -216,23 +210,16 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             val cellPosition = ListCell.getPosition(size, index + 1)
 
             val tokenBalance = jetton.parsedBalance
-            val tokenBalanceCurrency = from(jetton.address, accountId, testnet)
+            val jettonAddress = jetton.getAddress(wallet.testnet)
+            val tokenBalanceCurrency = wallet.currency(jettonAddress)
                 .value(tokenBalance)
                 .to(currency)
 
             val hasRate = tokenBalanceCurrency > 0f
 
-            val tokenRate = getRate(
-                accountId,
-                testnet,
-                jetton.address,
-            )
+            val tokenRate = getRate(wallet, jettonAddress)
 
-            val tokenRate24h = getRate24h(
-                accountId,
-                testnet,
-                jetton.address,
-            )
+            val tokenRate24h = getRate24h(wallet, jettonAddress)
 
             val balanceCurrency = if (hasRate) {
                 CurrencyFormatter.formatFiat(tokenBalanceCurrency)
@@ -243,7 +230,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             } else ""
 
             val item = WalletJettonCellItem(
-                address = jetton.address,
+                address = jettonAddress,
                 name = jetton.jetton.name,
                 position = cellPosition,
                 iconURI = Uri.parse(jetton.jetton.image),

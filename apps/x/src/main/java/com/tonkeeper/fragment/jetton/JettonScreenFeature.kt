@@ -3,13 +3,13 @@ package com.tonkeeper.fragment.jetton
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
-import com.tonkeeper.api.address
+import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.withRetry
 import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
-import com.tonkeeper.core.currency.from
+import com.tonkeeper.core.currency.currency
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.history.list.item.HistoryItem
 import core.QueueScope
@@ -63,10 +63,11 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
             val accountId = wallet.accountId
             val jetton = jettonRepository.getByAddress(accountId, address, wallet.testnet) ?: return@submit
             val balance = jetton.parsedBalance
-            val currencyBalance = from(jetton.address, accountId, wallet.testnet).value(balance).to(currency)
+            val jettonAddress = jetton.getAddress(wallet.testnet)
+            val currencyBalance = wallet.currency(jettonAddress).value(balance).to(currency)
             val rate = currencyManager.getRate(accountId, wallet.testnet, address, currency.code)
             val rate24h = currencyManager.getRate24h(accountId, wallet.testnet, address, currency.code)
-            val historyItems = getEvents(wallet, jetton.address)
+            val historyItems = getEvents(wallet, jettonAddress)
 
             updateUiState {
                 it.copy(

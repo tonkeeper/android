@@ -71,7 +71,8 @@ class AccountDataSource(
     }
 
     private suspend fun getIds(): LongArray {
-        return keyValue.getLongArray(IDS_KEY)
+        val ids = keyValue.getLongArray(IDS_KEY).filter { it > 0 }
+        return ids.toLongArray()
     }
 
     private suspend fun getName(id: Long): String? {

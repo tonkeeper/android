@@ -53,13 +53,21 @@ open class HeaderView @JvmOverloads constructor(
     var doOnCloseClick: (() -> Unit)? = null
         set(value) {
             field = value
-            closeView.setOnClickListener { value?.invoke() }
+            closeView.setOnClickListener {
+                if (it.alpha != 0f) {
+                    value?.invoke()
+                }
+            }
         }
 
     var doOnActionClick: (() -> Unit)? = null
         set(value) {
             field = value
-            actionView.setOnClickListener { value?.invoke() }
+            actionView.setOnClickListener {
+                if (it.alpha != 0f) {
+                    value?.invoke()
+                }
+            }
         }
 
 

@@ -30,17 +30,30 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"/>
 
-            <Button
-                style="@style/Widget.App.Button"
-                android:id="@+id/next"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.Label1"
-                android:enabled="false"
-                android:text="@string/continue_action"/>
+                android:layout_height="wrap_content">
+
+                <Button
+                    style="@style/Widget.App.Button"
+                    android:id="@+id/wallet_next"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:enabled="false"
+                    android:text="@string/continue_action"/>
+
+                <uikit.widget.LoaderView
+                    android:id="@+id/wallet_loading"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    android:color="@color/buttonPrimaryForeground"/>
+
+            </FrameLayout>
         </androidx.appcompat.widget.LinearLayoutCompat>
     </ScrollView>
-
 
     <uikit.widget.WordHintView
         android:id="@+id/word_hint"

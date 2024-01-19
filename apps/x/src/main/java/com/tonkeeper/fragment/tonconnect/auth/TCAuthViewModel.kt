@@ -53,7 +53,8 @@ class TCAuthViewModel: ViewModel() {
                 manifest = manifest,
                 accountId = wallet.accountId.lowercase(),
                 clientId = request.id,
-                items = request.payload.items
+                items = request.payload.items,
+                testnet = wallet.testnet,
             )
 
             _dataState.tryEmit(data)

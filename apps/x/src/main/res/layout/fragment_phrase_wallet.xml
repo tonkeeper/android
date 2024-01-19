@@ -48,8 +48,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="@dimen/offsetMedium"
-                android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:orientation="horizontal"/>
+                android:layout_marginHorizontal="@dimen/offsetMedium"/>
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 

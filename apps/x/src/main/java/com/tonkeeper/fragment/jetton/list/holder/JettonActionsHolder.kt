@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.jetton.list.holder
 import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeperx.R
-import com.tonkeeper.api.address
+import com.tonkeeper.api.getAddress
 import com.tonkeeper.extensions.receive
 import com.tonkeeper.extensions.sendCoin
 import com.tonkeeper.fragment.jetton.list.JettonItem
@@ -18,7 +18,7 @@ class JettonActionsHolder(
 
     override fun onBind(item: JettonItem.Actions) {
         sendView.setOnClickListener { nav?.sendCoin(
-            jettonAddress = item.jetton.address,
+            jettonAddress = item.jetton.getAddress(item.walletType == WalletType.Testnet),
         ) }
 
         sendView.visibility = if (item.walletType == WalletType.Watch) {

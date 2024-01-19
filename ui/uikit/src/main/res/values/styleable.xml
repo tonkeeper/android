@@ -60,6 +60,7 @@
     <declare-styleable name="ItemIconView">
         <attr name="android:text" format="string|reference"/>
         <attr name="android:icon" format="reference"/>
+        <attr name="android:tint" format="color|reference"/>
         <attr name="position"/>
     </declare-styleable>
 
@@ -89,7 +90,13 @@
 
     <declare-styleable name="ActionCellView">
         <attr name="android:icon" format="reference"/>
+        <attr name="android:action" format="reference"/>
         <attr name="android:title" format="string|reference"/>
         <attr name="android:subtitle" format="string|reference"/>
+        <attr name="android:singleLine" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="SlideActionView">
+        <attr name="android:text" format="string|reference"/>
     </declare-styleable>
 </resources>

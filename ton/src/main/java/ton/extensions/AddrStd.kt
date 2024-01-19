@@ -3,12 +3,13 @@ package ton.extensions
 import org.ton.block.AddrStd
 
 fun String.toUserFriendly(
-    wallet: Boolean = true
+    wallet: Boolean = true,
+    testnet: Boolean
 ): String {
     return try {
         val addr = AddrStd(this)
         if (wallet) {
-            addr.toWalletAddress()
+            addr.toWalletAddress(testnet)
         } else {
             addr.toString(userFriendly = true)
         }
@@ -17,10 +18,11 @@ fun String.toUserFriendly(
     }
 }
 
-fun AddrStd.toWalletAddress(): String {
+fun AddrStd.toWalletAddress(testnet: Boolean): String {
     return toString(
         userFriendly = true,
-        bounceable = false
+        bounceable = false,
+        testOnly = testnet,
     )
 }
 

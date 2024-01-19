@@ -6,5 +6,6 @@ import uikit.mvi.UiState
 
 data class NftScreenState(
     val asyncState: AsyncState = AsyncState.Default,
+    val testnet: Boolean = false,
     val nftItem: NftItem? = null
 ): UiState()

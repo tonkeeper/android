@@ -1,6 +1,7 @@
 package uikit.extensions
 
 import android.animation.ValueAnimator
+import android.graphics.Insets
 import android.graphics.Outline
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.Window
+import android.view.WindowInsets
 import android.view.animation.Animation
 import android.widget.EditText
 import android.widget.ScrollView
@@ -293,3 +295,11 @@ val NestedScrollView.verticalScrolled: Flow<Boolean>
     get() = verticalOffset.map {
         it > 0
     }.distinctUntilChanged()
+
+
+fun View.doOnOnApplyWindowInsets(block: (WindowInsetsCompat) -> WindowInsetsCompat) {
+    setOnApplyWindowInsetsListener { v, insets ->
+        val insetsCompat = WindowInsetsCompat.toWindowInsetsCompat(insets, v)
+        block(insetsCompat).toWindowInsets() ?: insets
+    }
+}

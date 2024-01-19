@@ -107,7 +107,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
         items.add(SettingsIconItem(
             id = SettingsIdItem.MANAGE_WALLETS_ID,
             titleRes = R.string.manage_wallets,
-            iconRes = R.drawable.ic_gear_28,
+            iconRes = uikit.R.drawable.ic_gear_28,
             position = ListCell.Position.SINGLE,
             colorRes = uikit.R.color.accentBlue,
         ))
@@ -150,7 +150,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
         items.add(SettingsIconItem(
             id = SettingsIdItem.SUPPORT_ID,
             titleRes = R.string.support,
-            iconRes = R.drawable.ic_message_bubble_28,
+            iconRes = uikit.R.drawable.ic_message_bubble_28,
             position = ListCell.Position.FIRST,
             colorRes = uikit.R.color.accentBlue,
         ))

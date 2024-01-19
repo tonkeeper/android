@@ -3,8 +3,8 @@ package com.tonkeeper.fragment.send.amount
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository
-import com.tonkeeper.api.address
 import com.tonkeeper.api.asJettonBalance
+import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.symbol
@@ -29,9 +29,6 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
     private val currentJetton: JettonBalance?
         get() = uiState.value.selectedJetton
 
-    private val currentTokenAddress: String
-        get() = currentJetton?.address ?: SupportedTokens.TON.code
-
     private val currentTokenCode: String
         get() = currentJetton?.symbol ?: SupportedTokens.TON.code
 
@@ -46,6 +43,11 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
         viewModelScope.launch {
             loadData()
         }
+    }
+
+    private fun getCurrentTokenAddress(testnet: Boolean): String {
+        val jetton = currentJetton ?: return SupportedTokens.TON.code
+        return jetton.getAddress(testnet)
     }
 
     private suspend fun loadData() = withContext(Dispatchers.IO) {
@@ -101,6 +103,7 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
     private suspend fun updateValue(newValue: Float) {
         val wallet = App.walletManager.getWalletInfo() ?: return
         val accountId = wallet.accountId
+        val currentTokenAddress = getCurrentTokenAddress(wallet.testnet)
 
         val balanceInCurrency = from(currentTokenAddress, accountId, wallet.testnet)
             .value(currentBalance)

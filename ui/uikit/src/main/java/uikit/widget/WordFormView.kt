@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.hideKeyboard
 
 class WordFormView @JvmOverloads constructor(
     context: Context,
@@ -82,6 +83,10 @@ class WordFormView @JvmOverloads constructor(
     fun focus(input: WordInput = getInput(0)) {
         input.focus()
         doOnFocusInput?.invoke(input, indexOfChild(input))
+    }
+
+    fun hideKeyboard() {
+        getFocusedInput()?.hideKeyboard()
     }
 
     private fun getInput(index: Int): WordInput {

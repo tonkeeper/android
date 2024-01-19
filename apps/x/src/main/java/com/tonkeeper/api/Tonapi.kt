@@ -2,27 +2,14 @@ package com.tonkeeper.api
 
 import com.tonkeeper.api.base.BaseAPI
 import com.tonkeeper.api.base.SourceAPI
-import io.tonapi.apis.AccountsApi
-import io.tonapi.apis.BlockchainApi
-import io.tonapi.apis.ConnectApi
-import io.tonapi.apis.DNSApi
-import io.tonapi.apis.EmulationApi
-import io.tonapi.apis.EventsApi
-import io.tonapi.apis.JettonsApi
-import io.tonapi.apis.LiteServerApi
-import io.tonapi.apis.NFTApi
-import io.tonapi.apis.RatesApi
-import io.tonapi.apis.StakingApi
-import io.tonapi.apis.StorageApi
-import io.tonapi.apis.TracesApi
-import io.tonapi.apis.WalletApi
-import core.network.Network
 import io.tonapi.models.Account
+import io.tonapi.models.EmulateMessageToWalletRequest
+import io.tonapi.models.MessageConsequences
+import io.tonapi.models.SendBlockchainMessageRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.ton.api.pub.PublicKeyEd25519
-import org.ton.crypto.hex
-import ton.TonAddress
+import org.ton.cell.Cell
+import ton.extensions.base64
 
 object Tonapi {
     private val main = BaseAPI("https://keeper.tonapi.io")
@@ -65,4 +52,55 @@ object Tonapi {
         }
         return main.resolveAccount(value)
     }
+
+    suspend fun getAccountSeqno(
+        accountId: String,
+        testnet: Boolean,
+    ): Int = withContext(Dispatchers.IO) {
+        wallet.get(testnet).getAccountSeqno(accountId).seqno
+    }
+
+    suspend fun getAccountSeqnoOrZero(
+        accountId: String,
+        testnet: Boolean,
+    ): Int {
+        return try {
+            getAccountSeqno(accountId, testnet)
+        } catch (e: Throwable) {
+            0
+        }
+    }
+
+    suspend fun emulate(
+        boc: String,
+        testnet: Boolean
+    ): MessageConsequences = withContext(Dispatchers.IO) {
+        val request = EmulateMessageToWalletRequest(boc)
+        emulation.get(testnet).emulateMessageToWallet(request)
+    }
+
+    suspend fun emulate(
+        cell: Cell,
+        testnet: Boolean
+    ): MessageConsequences {
+        return emulate(cell.base64(), testnet)
+    }
+
+    suspend fun sendToBlockchain(
+        boc: String,
+        testnet: Boolean
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val request = SendBlockchainMessageRequest(boc)
+            blockchain.get(testnet).sendBlockchainMessage(request)
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    suspend fun sendToBlockchain(
+        cell: Cell,
+        testnet: Boolean
+    ) = sendToBlockchain(cell.base64(), testnet)
 }

@@ -8,10 +8,10 @@ import com.tonapps.tonkeeperx.R
 val ActionType.iconRes: Int
     get() = when (this) {
         ActionType.Received, ActionType.NftReceived, ActionType.JettonMint -> R.drawable.ic_tray_arrow_down_28
-        ActionType.Send, ActionType.NftSend, ActionType.AuctionBid -> R.drawable.ic_tray_arrow_up_28
-        ActionType.CallContract, ActionType.DepositStake, ActionType.Unknown -> R.drawable.ic_gear_28
+        ActionType.Send, ActionType.NftSend, ActionType.AuctionBid -> uikit.R.drawable.ic_tray_arrow_up_28
+        ActionType.CallContract, ActionType.DepositStake, ActionType.Unknown -> uikit.R.drawable.ic_gear_28
         ActionType.Swap -> R.drawable.ic_swap_horizontal_alternative_28
-        ActionType.DeployContract, ActionType.WithdrawStakeRequest, ActionType.WithdrawStake -> R.drawable.ic_donemark_28
+        ActionType.DeployContract, ActionType.WithdrawStakeRequest, ActionType.WithdrawStake -> uikit.R.drawable.ic_donemark_28
         ActionType.DomainRenewal -> R.drawable.ic_return_28
         ActionType.NftPurchase -> R.drawable.ic_shopping_bag_28
         ActionType.JettonBurn -> R.drawable.ic_fire_28

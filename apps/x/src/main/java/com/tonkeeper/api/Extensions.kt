@@ -17,6 +17,7 @@ import io.tonapi.models.JettonMintAction
 import io.tonapi.models.JettonPreview
 import io.tonapi.models.JettonSwapAction
 import io.tonapi.models.JettonVerificationType
+import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.PoolImplementationType
 import io.tonapi.models.TokenRates
@@ -33,6 +34,9 @@ fun TokenRates.to(toCurrency: String, value: Float): Float {
     val price = prices?.get(toCurrency) ?: return 0f
     return price.toFloat() * value
 }
+
+val MessageConsequences.totalFees: Long
+    get() = trace.transaction.totalFees
 
 val AccountEvent.withTON: Boolean
     get() {
@@ -159,13 +163,15 @@ val JettonSwapAction.ton: Long
         return tonIn ?: tonOut ?: 0
     }
 
-val AccountAddress.nameOrAddress: String
-    get() {
-        if (!name.isNullOrBlank()) {
-            return name!!
-        }
-        return address.toUserFriendly(isWallet).shortAddress
+fun AccountAddress.getNameOrAddress(testnet: Boolean): String {
+    if (!name.isNullOrBlank()) {
+        return name!!
     }
+    return address.toUserFriendly(
+        wallet = isWallet,
+        testnet = testnet
+    ).shortAddress
+}
 
 val AccountAddress.iconURL: String?
     get() = icon
@@ -182,8 +188,12 @@ val String.shortHash: String
         return substring(0, 8) + "…" + substring(length - 8, length)
     }
 
-val JettonBalance.address: String
-    get() = jetton.address.toUserFriendly(wallet = false)
+fun JettonBalance.getAddress(testnet: Boolean): String {
+    return jetton.address.toUserFriendly(
+        wallet = false,
+        testnet = testnet
+    )
+}
 
 val JettonBalance.symbol: String
     get() = jetton.symbol
@@ -243,7 +253,9 @@ val NftItem.collectionDescription: String?
         return collection?.description
     }
 
-val NftItem.ownerAddress: String?
-    get() {
-        return owner?.address?.toUserFriendly()
-    }
+fun NftItem.getOwnerAddress(testnet: Boolean): String? {
+    return owner?.address?.toUserFriendly(
+        wallet = true,
+        testnet = testnet
+    )
+}

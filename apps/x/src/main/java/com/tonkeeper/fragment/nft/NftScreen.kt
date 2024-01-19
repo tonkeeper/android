@@ -9,8 +9,8 @@ import androidx.fragment.app.viewModels
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.api.description
+import com.tonkeeper.api.getOwnerAddress
 import com.tonkeeper.api.imageURL
-import com.tonkeeper.api.ownerAddress
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.api.title
 import com.tonkeeper.core.ExternalUrl
@@ -82,10 +82,6 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         collectionDescriptionView = view.findViewById(R.id.collection_description)
 
         openMarkerButton = view.findViewById(R.id.open_marker)
-        openMarkerButton.setOnClickListener {
-            val url = ExternalUrl.nftMarketView(nftAddress.toUserFriendly(false))
-            navigation?.openURL(url)
-        }
 
         openExplorerView = view.findViewById(R.id.open_explorer)
         openExplorerView.setOnClickListener {
@@ -114,18 +110,25 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
 
     override fun newUiState(state: NftScreenState) {
         setAsyncState(state.asyncState)
-        state.nftItem?.let { setNftItem(it) }
+        state.nftItem?.let { setNftItem(it, state.testnet) }
     }
 
-    private fun setNftItem(nftItem: NftItem) {
+    private fun setNftItem(nftItem: NftItem, testnet: Boolean) {
         headerView.title = nftItem.title
         imageView.setImageURI(nftItem.imageURL)
         nameView.text = nftItem.title
         collectionNameView.text = nftItem.collection?.name
         collectionDescriptionView.text = nftItem.collection?.description
-        ownerView.text = nftItem.ownerAddress?.shortAddress
-        addressView.text = nftAddress.toUserFriendly(false).shortAddress
+        ownerView.text = nftItem.getOwnerAddress(testnet)?.shortAddress
+        addressView.text = nftAddress.toUserFriendly(false, testnet).shortAddress
         setNftDescription(nftItem.description)
+
+        val address = nftAddress.toUserFriendly(false, testnet)
+        val url = ExternalUrl.nftMarketView(address)
+
+        openMarkerButton.setOnClickListener {
+            navigation?.openURL(url)
+        }
     }
 
     private fun setNftDescription(description: String?) {

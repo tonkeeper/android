@@ -2925,6 +2925,7 @@ dimen splashscreen_icon_mask_stroke_with_background
 dimen splashscreen_icon_size
 dimen splashscreen_icon_size_no_background
 dimen splashscreen_icon_size_with_background
+dimen tertiaryHeight
 dimen tooltip_corner_radius
 dimen tooltip_horizontal_padding
 dimen tooltip_margin
@@ -3054,6 +3055,7 @@ drawable design_password_eye
 drawable design_snackbar_background
 drawable ic_arrow_back_black_24
 drawable ic_arrow_down_outline_28
+drawable ic_arrow_right_outline_28
 drawable ic_arrow_up_outline_28
 drawable ic_call_answer
 drawable ic_call_answer_low
@@ -3068,12 +3070,18 @@ drawable ic_chevron_right_16
 drawable ic_clear_black_24
 drawable ic_clock_black_24dp
 drawable ic_close_16
+drawable ic_copy_28
 drawable ic_delete_36
 drawable ic_done_16
 drawable ic_done_bold_16
+drawable ic_donemark_28
+drawable ic_donemark_otline_28
 drawable ic_donemark_thin_28
 drawable ic_exclamationmark_circle_32
 drawable ic_gear_16
+drawable ic_gear_28
+drawable ic_gear_outline_28
+drawable ic_key_28
 drawable ic_keyboard_black_24dp
 drawable ic_launcher_foreground
 drawable ic_logo_128
@@ -3082,16 +3090,21 @@ drawable ic_m3_chip_check
 drawable ic_m3_chip_checked_circle
 drawable ic_m3_chip_close
 drawable ic_magnifying_glass_16
+drawable ic_message_bubble_28
 drawable ic_mtrl_checked_circle
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
 drawable ic_notification_128
+drawable ic_pencil_28
 drawable ic_plus_alternate_16
+drawable ic_plus_outline_28
 drawable ic_qr_viewfinder_thin_28
 drawable ic_search_black_24
 drawable ic_staking_outline_28
 drawable ic_swap_horizontal_outline_28
+drawable ic_trash_bin_28
+drawable ic_tray_arrow_up_28
 drawable ic_usd_28
 drawable ic_xmark_circle_16
 drawable icon_background
@@ -3235,7 +3248,9 @@ id action_bar_root
 id action_bar_spinner
 id action_bar_subtitle
 id action_bar_title
+id action_cell_chevron
 id action_cell_icon
+id action_cell_right
 id action_cell_subtitle
 id action_cell_title
 id action_container
@@ -3256,11 +3271,14 @@ id alertTitle
 id aligned
 id all
 id always
+id amount
+id amount2
 id animateToEnd
 id animateToStart
 id arc
 id asConfigured
 id async
+id audit
 id auto
 id autoComplete
 id autoCompleteToEnd
@@ -3273,9 +3291,12 @@ id beginOnFirstDraw
 id beginning
 id bg
 id blocking
+id boc_raw
+id body
 id bottom
 id bottom_to_top
 id bounce
+id button
 id buttonPanel
 id cancel_button
 id center
@@ -3296,6 +3317,7 @@ id clip_vertical
 id clockwise
 id close
 id collapseActionView
+id comment
 id compress
 id confirm_button
 id container
@@ -3303,18 +3325,22 @@ id content
 id contentPanel
 id contiguous
 id coordinator
+id copy
 id cos
 id counterclockwise
 id cradle
+id create
 id custom
 id customPanel
 id cut
 id data
+id date
 id date_picker_actions
 id decelerate
 id decelerateAndComplete
 id decor_content_parent
 id default_activity_button
+id delete_key
 id deltaRelative
 id description
 id design_bottom_sheet
@@ -3354,6 +3380,7 @@ id empty_placeholder_button_first
 id empty_placeholder_button_second
 id empty_placeholder_subtitle
 id empty_placeholder_title
+id emulate
 id enabled
 id end
 id endToStart
@@ -3362,6 +3389,8 @@ id enterAlwaysCollapsed
 id exitUntilCollapsed
 id expand_activities_button
 id expanded_menu
+id export_local
+id export_qr
 id fade
 id failed
 id failed_label
@@ -3399,6 +3428,7 @@ id header_loader
 id header_subtitle
 id header_text
 id header_title
+id hex
 id hide_ime_id
 id hideable
 id home
@@ -3411,6 +3441,7 @@ id ignore
 id ignoreRequest
 id image
 id import_key
+id imprt
 id indeterminate
 id index
 id info
@@ -3429,6 +3460,7 @@ id italic
 id item_touch_helper_previous_elevation
 id jumpToEnd
 id jumpToStart
+id label
 id labeled
 id last
 id layout
@@ -3439,6 +3471,7 @@ id legacy
 id line1
 id line3
 id linear
+id list
 id listMode
 id list_item
 id loader
@@ -3507,7 +3540,6 @@ id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
 id multiply
 id name
-id nav_host_fragment
 id navigation_bar_item_active_indicator_view
 id navigation_bar_item_icon_container
 id navigation_bar_item_icon_view
@@ -3517,6 +3549,7 @@ id navigation_bar_item_small_label_view
 id navigation_header_container
 id never
 id new_key
+id next
 id noScroll
 id none
 id normal
@@ -3524,6 +3557,7 @@ id notification_background
 id notification_main_column
 id notification_main_column_container
 id off
+id ok
 id on
 id open_search_bar_text_view
 id open_search_view_background
@@ -3554,16 +3588,22 @@ id path
 id pathRelative
 id peekHeight
 id percent
+id phrase
+id phrase_words
 id pin
 id pooling_container_listener_holder_tag
 id position
 id postLayout
 id pressed
+id process
+id process_loader
 id progress_circular
 id progress_horizontal
+id qr
 id radial
 id radio
 id ratio
+id raw
 id rectangles
 id report_drawn
 id restart
@@ -3574,12 +3614,15 @@ id rightToLeft
 id right_icon
 id right_side
 id right_to_left
+id root_container
 id rounded
 id row_index_key
+id save
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
 id scale
+id scan
 id screen
 id scroll
 id scrollIndicatorDown
@@ -3599,12 +3642,15 @@ id search_voice_btn
 id select_dialog_listview
 id selected
 id selection_type
+id settings
 id shadow
+id sheet_container
 id sheet_content
 id shortcut
 id showCustom
 id showHome
 id showTitle
+id show_audit
 id sin
 id single
 id skipCollapsed
@@ -3640,6 +3686,7 @@ id subtitle
 id subtitle_container
 id success
 id success_label
+id support
 id swipe_content
 id tabMode
 id tag_accessibility_actions
@@ -3694,6 +3741,7 @@ id uniform
 id unlabeled
 id up
 id useLogo
+id version
 id view_offset_helper
 id view_tree_lifecycle_owner
 id view_tree_on_back_pressed_dispatcher_owner
@@ -3704,6 +3752,7 @@ id visible_removing_fragment_view_tag
 id withText
 id with_icon
 id withinBounds
+id word_form
 id wrap
 id wrap_content
 integer abc_config_activityDefaultDur
@@ -3822,7 +3871,7 @@ layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
 layout action_sheet_base
-layout activity_root
+layout activity_navigation
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog
@@ -3839,12 +3888,22 @@ layout design_navigation_menu
 layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
+layout dialog_add_key
 layout dialog_base
+layout fragment_camera
 layout fragment_create
 layout fragment_create_name
+layout fragment_create_phrase
 layout fragment_intro
+layout fragment_key
+layout fragment_lock
 layout fragment_main
+layout fragment_name
 layout fragment_password
+layout fragment_phrase
+layout fragment_qr
+layout fragment_settings
+layout fragment_sign
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout m3_alert_dialog
@@ -3926,11 +3985,17 @@ layout view_item_icon
 layout view_item_loader
 layout view_item_switch
 layout view_item_text
+layout view_key_export_qr
+layout view_main_account
+layout view_main_actions
+layout view_message_action
 layout view_modal
 layout view_numpad_button
 layout view_numpad_delete
 layout view_process_task
 layout view_search_input
+layout view_slide_action
+layout view_space
 layout view_swipe_back
 layout view_text_header
 layout view_word_input
@@ -3965,9 +4030,12 @@ string abc_searchview_description_voice
 string abc_shareactionprovider_share_with
 string abc_shareactionprovider_share_with_application
 string abc_toolbar_collapse_description
+string add_key
+string add_key_subtitle
 string androidx_startup
 string app_name
 string appbar_scrolling_view_behavior
+string audit_transaction
 string bottom_sheet_behavior
 string bottomsheet_action_collapse
 string bottomsheet_action_expand
@@ -3986,18 +4054,30 @@ string character_counter_overflowed_content_description
 string character_counter_pattern
 string clear_text_end_icon_content_description
 string continue_text
+string copied
+string copy
 string create_password
+string delete_key
 string done
+string emulate
+string enter_password
+string enter_recovery_phrase
+string enter_recovery_phrase_subtitle
 string error_a11y_label
 string error_icon_content_description
 string exposed_dropdown_menu_content_description
 string fab_transformation_scrim_behavior
 string fab_transformation_sheet_behavior
+string hex_address
 string hide_bottom_view_on_scroll_behavior
 string icon_content_description
 string import_key
 string intro_subtitle
 string item_view_role_description
+string key_export_local_subtitle
+string key_export_local_title
+string key_export_qr_subtitle
+string key_export_qr_title
 string m3_exceed_max_badge_text_suffix
 string m3_ref_typeface_brand_medium
 string m3_ref_typeface_brand_regular
@@ -4107,15 +4187,30 @@ string path_password_eye
 string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
+string qr_sign_subtitle
+string qr_sign_title
 string re_enter_password
+string recover_phrase
+string recovery_phrase
+string recovery_phrase_subtitle
+string save
+string scan
 string search_menu_title
 string searchbar_scrolling_view_behavior
 string searchview_clear_text_content_description
 string searchview_navigation_content_description
+string select_key
+string settings
 string side_sheet_accessibility_pane_title
 string side_sheet_behavior
+string sign_transaction
+string signed_transaction
+string slide_to_sign
 string status_bar_notification_info_overflow
+string support
 string tonconsole_token
+string unknown
+string version
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
 style Animation_AppCompat_Dialog
@@ -4884,6 +4979,7 @@ style ThemeOverlay_MaterialComponents_Toolbar_Surface
 style Widget_App_Button
 style Widget_App_Button_Secondary
 style Widget_App_Button_Small_Secondary
+style Widget_App_Button_Tertiary
 style Widget_App_Tabs
 style Widget_App_Tabs_TextAppearance
 style Widget_AppCompat_ActionBar
@@ -5266,7 +5362,7 @@ style Widget_MaterialComponents_Tooltip
 style Widget_Support_CoordinatorLayout
 styleable ActionBar background backgroundSplit backgroundStacked contentInsetEnd contentInsetEndWithActions contentInsetLeft contentInsetRight contentInsetStart contentInsetStartWithNavigation customNavigationLayout displayOptions divider elevation height hideOnContentScroll homeAsUpIndicator homeLayout icon indeterminateProgressStyle itemPadding logo navigationMode popupTheme progressBarPadding progressBarStyle subtitle subtitleTextStyle title titleTextStyle
 styleable ActionBarLayout android_layout_gravity
-styleable ActionCellView android_icon android_title android_subtitle
+styleable ActionCellView android_icon android_action android_singleLine android_title android_subtitle
 styleable ActionMenuItemView android_minWidth
 styleable ActionMenuView
 styleable ActionMode background backgroundSplit closeItemLayout height subtitleTextStyle titleTextStyle
@@ -5333,7 +5429,7 @@ styleable ImageFilterView altSrc brightness contrast crossfade overlay round rou
 styleable InputView android_icon android_enabled android_button android_hint
 styleable Insets marginLeftSystemWindowInsets marginRightSystemWindowInsets marginTopSystemWindowInsets paddingBottomSystemWindowInsets paddingLeftSystemWindowInsets paddingRightSystemWindowInsets paddingStartSystemWindowInsets paddingTopSystemWindowInsets
 styleable IntroBlockView android_icon android_description android_title
-styleable ItemIconView android_icon android_text position
+styleable ItemIconView android_icon android_tint android_text position
 styleable ItemSwitchView android_checked android_text position
 styleable ItemTextView android_data android_text position
 styleable KeyAttribute android_alpha android_transformPivotX android_transformPivotY android_translationX android_translationY android_scaleX android_scaleY android_rotation android_rotationX android_rotationY android_translationZ android_elevation curveFit framePosition motionProgress motionTarget transitionEasing transitionPathRotate
@@ -5402,6 +5498,7 @@ styleable ShapeableImageView contentPadding contentPaddingBottom contentPaddingE
 styleable ShimmerFrameLayout shimmer_auto_start shimmer_base_alpha shimmer_base_color shimmer_clip_to_children shimmer_colored shimmer_direction shimmer_dropoff shimmer_duration shimmer_fixed_height shimmer_fixed_width shimmer_height_ratio shimmer_highlight_alpha shimmer_highlight_color shimmer_intensity shimmer_repeat_count shimmer_repeat_delay shimmer_repeat_mode shimmer_shape shimmer_start_delay shimmer_tilt shimmer_width_ratio
 styleable SideSheetBehavior_Layout android_maxWidth android_maxHeight android_elevation backgroundTint behavior_draggable coplanarSiblingViewId shapeAppearance shapeAppearanceOverlay
 styleable SimpleDraweeView actualImageResource actualImageUri backgroundImage fadeDuration failureImage failureImageScaleType overlayImage placeholderImage placeholderImageScaleType pressedStateOverlayImage progressBarAutoRotateInterval progressBarImage progressBarImageScaleType retryImage retryImageScaleType roundAsCircle roundBottomEnd roundBottomLeft roundBottomRight roundBottomStart roundTopEnd roundTopLeft roundTopRight roundTopStart roundWithOverlayColor roundedCornerRadius roundingBorderColor roundingBorderPadding roundingBorderWidth viewAspectRatio
+styleable SlideActionView android_text
 styleable Slider android_enabled android_value android_stepSize android_valueFrom android_valueTo haloColor haloRadius labelBehavior labelStyle minTouchTargetSize thumbColor thumbElevation thumbRadius thumbStrokeColor thumbStrokeWidth tickColor tickColorActive tickColorInactive tickRadiusActive tickRadiusInactive tickVisible trackColor trackColorActive trackColorInactive trackHeight
 styleable Snackbar snackbarButtonStyle snackbarStyle snackbarTextViewStyle
 styleable SnackbarLayout android_maxWidth actionTextColorAlpha animationMode backgroundOverlayColorAlpha backgroundTint backgroundTintMode elevation maxActionInlineWidth shapeAppearance shapeAppearanceOverlay

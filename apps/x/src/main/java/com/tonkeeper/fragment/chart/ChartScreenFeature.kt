@@ -11,7 +11,7 @@ import com.tonkeeper.api.withTON
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
-import com.tonkeeper.core.currency.from
+import com.tonkeeper.core.currency.ton
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.history.list.item.HistoryItem
 import core.QueueScope
@@ -50,7 +50,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
             val historyItems = historyItemsDeferred.await()
 
             val balance = Coin.toCoins(account.balance)
-            val currencyBalance = from(SupportedTokens.TON, accountId, wallet.testnet).value(balance).to(currency)
+            val currencyBalance = wallet.ton(balance).to(currency)
 
             val rate = currencyManager.getRate(accountId, wallet.testnet, SupportedTokens.TON, currency)
             val rate24h = currencyManager.getRate24h(accountId, wallet.testnet, SupportedTokens.TON, currency)

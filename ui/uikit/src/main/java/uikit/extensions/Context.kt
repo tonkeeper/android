@@ -83,19 +83,6 @@ fun Context.useAttributes(
     }
 }
 
-val Context.statusBarHeight: Int
-    get() {
-        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
-        return resourceId.takeIf { it > 0 }?.let { resources.getDimensionPixelSize(it) } ?: 24.dp
-    }
-
-
-val Context.navigationBarHeight: Int
-    get() {
-        val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
-        return resourceId.takeIf { it > 0 }?.let { resources.getDimensionPixelSize(it) } ?: 48.dp
-    }
-
 val Context.locale: Locale
     get() {
         return resources.configuration.locales.get(0)

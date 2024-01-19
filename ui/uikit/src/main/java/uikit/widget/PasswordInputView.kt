@@ -29,6 +29,9 @@ class PasswordInputView @JvmOverloads constructor(
             inputDrawable.error = value
         }
 
+    val isEmpty: Boolean
+        get() = text.isNullOrBlank()
+
     init {
         background = inputDrawable
         super.setOnFocusChangeListener(this)

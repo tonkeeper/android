@@ -42,7 +42,7 @@ class ModalView @JvmOverloads constructor(
         }
     }
 
-    private val behavior: BottomSheetBehavior<FrameLayout>
+    val behavior: BottomSheetBehavior<FrameLayout>
     private val bgView: View
     private val containerView: FrameLayout
     private val coordinatorView: CoordinatorLayout
@@ -70,7 +70,7 @@ class ModalView @JvmOverloads constructor(
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         findViewById<View>(R.id.modal_touch_outside).setOnClickListener {
-            hide()
+            hide(false)
         }
     }
 
@@ -98,7 +98,10 @@ class ModalView @JvmOverloads constructor(
         }
     }
 
-    fun hide() {
+    fun hide(force: Boolean) {
+        if (force) {
+            behavior.isHideable = true
+        }
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
@@ -107,6 +110,14 @@ class ModalView @JvmOverloads constructor(
         val height = measuredHeight
         bottomSheetView.translationY = height * (1 - value)
         bgView.alpha = value
+    }
+
+    fun fixPeekHeight() {
+        bottomSheetView.requestLayout()
+        bottomSheetView.post {
+            behavior.peekHeight = bottomSheetView.measuredHeight
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
     }
 
     override fun hasOverlappingRendering() = false

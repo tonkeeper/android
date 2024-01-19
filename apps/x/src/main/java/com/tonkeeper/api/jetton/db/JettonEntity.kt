@@ -3,7 +3,7 @@ package com.tonkeeper.api.jetton.db
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tonkeeper.api.address
+import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.symbol
 import com.tonkeeper.api.toJSON
 import io.tonapi.models.JettonBalance
@@ -28,8 +28,9 @@ data class JettonEntity(
             return "$accountId-$symbol"
         }
 
-        fun map(accountId: String, list: List<JettonBalance>): List<JettonEntity> {
+        fun map(accountId: String, testnet: Boolean,list: List<JettonBalance>): List<JettonEntity> {
             return list.map { JettonEntity(
+                testnet = testnet,
                 accountId = accountId,
                 jetton = it
             ) }
@@ -38,11 +39,12 @@ data class JettonEntity(
 
     constructor(
         accountId: String,
+        testnet: Boolean,
         jetton: JettonBalance
     ) : this(
         id = createId(accountId, jetton.symbol),
         accountId = accountId,
-        jettonAddress = jetton.address,
+        jettonAddress = jetton.getAddress(testnet),
         data = toJSON(jetton)
     )
 }

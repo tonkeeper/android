@@ -1,16 +1,11 @@
 package com.tonkeeper.api.rates
 
 import android.content.Context
-import android.util.Log
-import androidx.collection.ArrayMap
 import com.tonkeeper.App
 import com.tonkeeper.api.Tonapi
-import com.tonkeeper.api.address
-import com.tonkeeper.api.base.AccountKey
 import com.tonkeeper.api.base.BaseBlobRepository
 import com.tonkeeper.api.base.SourceAPI
 import com.tonkeeper.api.fromJSON
-import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.toJSON
 import com.tonkeeper.api.withRetry
 import io.tonapi.apis.RatesApi
@@ -19,8 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
 import ton.SupportedTokens
-import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 class RatesRepository(
     private val context: Context = App.instance,

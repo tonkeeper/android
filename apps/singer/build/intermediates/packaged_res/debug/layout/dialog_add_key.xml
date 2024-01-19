@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="@dimen/offsetLarge"
+    android:paddingBottom="@dimen/offsetLarge"
+    android:orientation="vertical">
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="@string/add_key"
+        android:description="@string/add_key_subtitle"/>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/create"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/new_key"/>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/imprt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/import_key"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

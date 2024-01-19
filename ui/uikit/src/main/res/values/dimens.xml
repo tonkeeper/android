@@ -4,6 +4,7 @@
     <dimen name="itemHeight">56dp</dimen>
     <dimen name="barHeight">64dp</dimen>
     <dimen name="shadowSize">3dp</dimen>
+    <dimen name="tertiaryHeight">36dp</dimen>
 
     <dimen name="gap">12dp</dimen>
 

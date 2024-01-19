@@ -19,14 +19,20 @@ class AccountsScreenFeature: UiFeature<AccountsScreenState, AccountsScreenEffect
                     it
                 }
             }
-            state.copy(wallets = wallets)
+            state.copy(
+                emptyWallets = wallets.isEmpty(),
+                wallets = wallets
+            )
         }
     }
 
     private val removeWalletAction = fun (event: WalletRemovedEvent) {
         updateUiState { state ->
             val wallets = state.wallets.filter { it.address != event.address }
-            state.copy(wallets = wallets)
+            state.copy(
+                emptyWallets = wallets.isEmpty(),
+                wallets = wallets
+            )
         }
     }
 
@@ -34,7 +40,10 @@ class AccountsScreenFeature: UiFeature<AccountsScreenState, AccountsScreenEffect
         viewModelScope.launch {
             val wallets = App.walletManager.getWallets()
             updateUiState {
-                it.copy(wallets = wallets)
+                it.copy(
+                    emptyWallets = wallets.isEmpty(),
+                    wallets = wallets
+                )
             }
         }
 

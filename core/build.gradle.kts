@@ -28,6 +28,7 @@ dependencies {
 
     implementation(Libs.Squareup.okhttp)
     implementation(Libs.Squareup.sse)
+    implementation(Libs.zxing)
 
     api(Libs.ton)
 }

@@ -1,5 +1,5 @@
 package com.tonapps.singer.screen.create.pager
 
 enum class PageType {
-    Password, RepeatPassword, Name
+    Password, RepeatPassword, Name, Phrase
 }

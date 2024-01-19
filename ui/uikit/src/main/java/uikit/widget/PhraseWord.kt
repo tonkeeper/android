@@ -17,11 +17,13 @@ class PhraseWord @JvmOverloads constructor(
     private val indexView = AppCompatTextView(context).apply {
         setTextAppearance(R.style.TextAppearance_Body1)
         setTextColor(context.getColor(R.color.textSecondary))
+        setSingleLine()
     }
 
     private val wordView = AppCompatTextView(context).apply {
         setTextAppearance(R.style.TextAppearance_Body1)
         setTextColor(context.getColor(R.color.textPrimary))
+        setSingleLine()
     }
 
     init {

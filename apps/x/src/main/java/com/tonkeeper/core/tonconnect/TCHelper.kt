@@ -12,20 +12,6 @@ import ton.wallet.Wallet
 
 object TCHelper {
 
-    fun signMessage(
-        wallet: Wallet,
-        seqno: Int,
-        privateKey: PrivateKeyEd25519,
-        vararg transfers: WalletTransfer
-    ): Message<Cell> {
-        return wallet.contract.createTransferMessage(
-            address = AddrStd(wallet.accountId),
-            privateKey = privateKey,
-            seqno = seqno,
-            transfers = transfers
-        )
-    }
-
     fun createWalletTransfers(array: JSONArray): List<WalletTransfer> {
         val params = parseParams(array)
         if (params.isEmpty()) {

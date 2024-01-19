@@ -1,8 +1,10 @@
 package com.tonapps.singer.screen.root
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.appcompat.widget.AppCompatTextView
@@ -11,8 +13,13 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.singer.R
+import com.tonapps.singer.core.TonkeeperApp
 import com.tonapps.singer.screen.intro.IntroFragment
+import com.tonapps.singer.screen.key.KeyFragment
 import com.tonapps.singer.screen.main.MainFragment
+import com.tonapps.singer.screen.root.action.RootAction
+import com.tonapps.singer.screen.sign.SignFragment
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -22,112 +29,81 @@ import uikit.extensions.doOnEnd
 import uikit.extensions.hapticConfirm
 import uikit.extensions.startAnimation
 import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
+import uikit.navigation.NavigationActivity
 
-class RootActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
-
-    companion object {
-        val hostFragmentId = R.id.nav_host_fragment
-    }
+class RootActivity: NavigationActivity() {
 
     private val rootViewModel: RootViewModel by viewModel()
 
-    private lateinit var contentView: View
-    private lateinit var toastView: AppCompatTextView
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_root)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        contentView = findViewById(android.R.id.content)
-        contentView.viewTreeObserver.addOnPreDrawListener(this)
-
-        toastView = findViewById(R.id.toast)
-
-        rootViewModel.hasKeys.onEach {
-            val hasKeys = it ?: return@onEach
-            if (hasKeys) {
-                setMainFragment()
-            } else {
-                setIntroFragment()
-            }
-        }.launchIn(lifecycleScope)
+        rootViewModel.hasKeys.onEach(::init).launchIn(lifecycleScope)
+        rootViewModel.action.onEach(::onAction).launchIn(lifecycleScope)
+        handleIntent(intent)
     }
 
-    override fun onPreDraw(): Boolean {
-        if (rootViewModel.initialized) {
-            contentView.viewTreeObserver.removeOnPreDrawListener(this)
-            return true
+    private fun onAction(action: RootAction) {
+        if (action is RootAction.KeyDetails) {
+            add(KeyFragment.newInstance(action.id))
+        } else if (action is RootAction.RequestBodySign) {
+            add(SignFragment.newInstance(action.id, action.body, action.qr))
+        } else if (action is RootAction.ResponseBoc) {
+            responseBoc(action.boc)
         }
-        return false
     }
 
-    override fun setFragmentResult(requestKey: String, result: Bundle) {
-        supportFragmentManager.setFragmentResult(requestKey, result)
+    private fun responseBoc(boc: String) {
+        val intent = Intent()
+        intent.putExtra("boc", boc)
+        setResult(Activity.RESULT_OK, intent)
+        finish()
     }
 
-    override fun setFragmentResultListener(
-        requestKey: String,
-        listener: (requestKey: String, bundle: Bundle) -> Unit
-    ) {
-        supportFragmentManager.setFragmentResultListener(requestKey, this, listener)
+    private fun init(hasKeys: Boolean) {
+        if (hasKeys) {
+            setMainFragment()
+        } else {
+            setIntroFragment()
+        }
     }
+
+    private fun handleUri(uri: Uri, qr: Boolean) {
+        rootViewModel.processUri(uri, qr)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        val uri = intent.data ?: return
+
+        handleUri(uri, intent.action != Intent.ACTION_SEND)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    override fun isInitialized() = rootViewModel.initialized
 
     private fun setIntroFragment() {
         val introFragment = IntroFragment.newInstance()
 
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.replace(hostFragmentId, introFragment)
-        transaction.setPrimaryNavigationFragment(introFragment)
-        transaction.commitAllowingStateLoss()
+        setPrimaryFragment(introFragment)
     }
 
     private fun setMainFragment() {
         val mainFragment = MainFragment.newInstance()
 
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.replace(hostFragmentId, mainFragment)
-        transaction.setPrimaryNavigationFragment(mainFragment)
-        transaction.commitAllowingStateLoss()
+        setPrimaryFragment(mainFragment)
     }
 
     override fun initRoot(skipPasscode: Boolean, intent: Intent?) {
 
     }
 
-    override fun add(fragment: BaseFragment) {
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.add(hostFragmentId, fragment)
-        transaction.commitAllowingStateLoss()
-    }
-
-    override fun remove(fragment: Fragment) {
-        if (supportFragmentManager.primaryNavigationFragment == fragment) {
-            finish()
-        } else {
-            supportFragmentManager.commitNow {
-                remove(fragment)
-            }
-        }
-    }
-
     override fun openURL(url: String, external: Boolean) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
-    }
-
-    override fun toast(message: String) {
-        contentView.hapticConfirm()
-        toastView.text = message
-
-        if (toastView.visibility == View.VISIBLE) {
-            return
-        }
-
-        toastView.visibility = View.VISIBLE
-        toastView.startAnimation(uikit.R.anim.toast).doOnEnd {
-            toastView.visibility = View.GONE
-        }
     }
 }

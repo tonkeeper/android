@@ -10,16 +10,28 @@ import com.tonapps.singer.screen.root.RootViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 
 class CreateFragment: BaseFragment(R.layout.fragment_create) {
 
     companion object {
-        fun newInstance() = CreateFragment()
+
+        private const val IMPORT_KEY = "new"
+
+        fun newInstance(import: Boolean): CreateFragment {
+            val fragment = CreateFragment()
+            fragment.arguments = Bundle().apply {
+                putBoolean(IMPORT_KEY, import)
+            }
+            return fragment
+        }
     }
 
-    private val createViewModel: CreateViewModel by viewModel()
+    private val import: Boolean by lazy { requireArguments().getBoolean(IMPORT_KEY) }
+
+    private val createViewModel: CreateViewModel by viewModel { parametersOf(import) }
 
     private lateinit var headerView: HeaderView
     private lateinit var adapter: PagerAdapter
@@ -41,8 +53,12 @@ class CreateFragment: BaseFragment(R.layout.fragment_create) {
         pagerView.offscreenPageLimit = adapter.itemCount
         pagerView.adapter = adapter
 
-        createViewModel.indexPage.onEach {
+        createViewModel.pageIndex().onEach {
             pagerView.currentItem = it
+        }.launchIn(lifecycleScope)
+
+        createViewModel.onReady.onEach {
+            finish()
         }.launchIn(lifecycleScope)
     }
 }

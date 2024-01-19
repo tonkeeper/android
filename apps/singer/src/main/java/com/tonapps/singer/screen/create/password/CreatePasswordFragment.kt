@@ -26,7 +26,7 @@ class CreatePasswordFragment: PasswordFragment() {
         super.onViewCreated(view, savedInstanceState)
         title = getString(R.string.create_password)
 
-        createViewModel.currentPage.filter { it == PageType.Password }.onEach {
+        createViewModel.page(PageType.Password).onEach {
             focus()
         }.launchIn(lifecycleScope)
     }

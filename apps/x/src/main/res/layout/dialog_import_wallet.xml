@@ -44,7 +44,7 @@
         android:id="@+id/testnet_wallet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="@dimen/offsetMedium"
+        android:layout_marginTop="@dimen/offsetMedium"
         android:icon="@drawable/ic_testnet_28"
         android:title="@string/testnet_wallet"
         android:subtitle="@string/testnet_wallet_subtitle"/>
@@ -53,7 +53,6 @@
         android:id="@+id/signer_wallet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         android:layout_marginVertical="@dimen/offsetMedium"
         android:icon="@drawable/ic_globe_28"
         android:title="@string/signer_wallet"

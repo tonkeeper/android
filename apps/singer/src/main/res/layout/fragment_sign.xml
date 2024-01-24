@@ -41,28 +41,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <FrameLayout
-        android:id="@+id/actions"
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:overScrollMode="never"
         android:paddingVertical="@dimen/offsetMedium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/subtitle" >
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"/>
-
-        <uikit.widget.LoaderView
-            android:id="@+id/loader"
-            android:layout_width="@dimen/actionSize"
-            android:layout_height="@dimen/actionSize"
-            android:layout_gravity="center"/>
-
-    </FrameLayout>
+        app:layout_constraintTop_toBottomOf="@+id/subtitle"/>
 
     <FrameLayout
         android:id="@+id/audit"
@@ -70,7 +57,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/actions">
+        app:layout_constraintTop_toBottomOf="@+id/list">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/show_audit"

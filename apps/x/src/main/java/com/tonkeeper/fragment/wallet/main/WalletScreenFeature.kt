@@ -1,6 +1,7 @@
 package com.tonkeeper.fragment.wallet.main
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.account.AccountRepository
@@ -8,7 +9,6 @@ import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.core.Coin
-import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.currency
 import com.tonkeeper.core.currency.ton
@@ -27,6 +27,7 @@ import ton.SupportedCurrency
 import ton.SupportedTokens
 import core.EventBus
 import core.QueueScope
+import core.formatter.CurrencyFormatter
 import io.tonapi.models.Account
 import io.tonapi.models.JettonBalance
 import uikit.mvi.AsyncState
@@ -132,7 +133,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
         val items = mutableListOf<WalletItem>()
         items.add(WalletDataItem(
-            amount = CurrencyFormatter.formatFiat(allInCurrency),
+            amount = CurrencyFormatter.formatFiat(currency.code, allInCurrency),
             address = data.accountId.toUserFriendly(testnet = wallet.testnet)
         ))
         items.add(WalletActionItem(wallet.type))
@@ -199,7 +200,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
         val tonItem = WalletTonCellItem(
             balance = CurrencyFormatter.format(value = balance, modifier = amountModifier),
-            balanceCurrency = CurrencyFormatter.formatFiat(tonInCurrency),
+            balanceCurrency = CurrencyFormatter.formatFiat(currency.code, tonInCurrency),
             rate = CurrencyFormatter.formatRate(currency.code, rate),
             rateDiff24h = rate24h,
             position = ListCell.getPosition(size, 0)
@@ -222,7 +223,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             val tokenRate24h = getRate24h(wallet, jettonAddress)
 
             val balanceCurrency = if (hasRate) {
-                CurrencyFormatter.formatFiat(tokenBalanceCurrency)
+                CurrencyFormatter.formatFiat(currency.code, tokenBalanceCurrency)
             } else ""
 
             val tokenRateFormat = if (hasRate) {

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -99,6 +100,7 @@ open class BaseFragment(
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val contentView = super.onCreateView(inflater, container, savedInstanceState)!!
+
         val view = if (this is Modal) {
             wrapInModal(inflater.context, contentView)
         } else {
@@ -162,6 +164,7 @@ open class BaseFragment(
 
     fun finish() {
         val view = view ?: return
+
         when (view) {
             is SwipeBackLayout -> view.startHideAnimation()
             is BottomSheetLayout -> view.startHideAnimation()

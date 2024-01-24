@@ -2,11 +2,9 @@ package com.tonapps.singer.screen.create.pager
 
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.tonapps.singer.screen.create.CreateNameFragment
-import com.tonapps.singer.screen.create.CreatePhraseFragment
-import com.tonapps.singer.screen.create.password.CreatePasswordFragment
-import com.tonapps.singer.screen.create.password.RepeatPasswordFragment
-import com.tonapps.singer.screen.password.PasswordFragment
+import com.tonapps.singer.screen.create.child.CreateNameFragment
+import com.tonapps.singer.screen.create.child.CreatePasswordFragment
+import com.tonapps.singer.screen.create.child.CreatePhraseFragment
 
 class PagerAdapter(
     fragment: Fragment,
@@ -19,8 +17,8 @@ class PagerAdapter(
 
     override fun createFragment(position: Int): Fragment {
         return when(pages[position]) {
-            PageType.Password -> CreatePasswordFragment.newInstance()
-            PageType.RepeatPassword -> RepeatPasswordFragment.newInstance()
+            PageType.Password -> CreatePasswordFragment.newInstance(false)
+            PageType.RepeatPassword -> CreatePasswordFragment.newInstance(true)
             PageType.Name -> CreateNameFragment.newInstance()
             PageType.Phrase -> CreatePhraseFragment.newInstance()
         }

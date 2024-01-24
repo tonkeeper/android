@@ -56,4 +56,28 @@
         <item name="android:textSize">16sp</item>
     </style>
 
+    <style name="Widget.AlertDialog" parent="@style/ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="android:windowTitleStyle">@style/Widget.AlertDialog.Title</item>
+        <item name="android:textAppearance">@style/TextAppearance.Label1</item>
+        <item name="android:textColor">@color/constantBlue</item>
+    </style>
+
+    <style name="Widget.AlertDialog.Title" parent="@style/RtlOverlay.DialogWindowTitle.AppCompat">
+        <item name="android:textAppearance">@style/TextAppearance.H3</item>
+        <item name="android:textColor">@color/textPrimary</item>
+    </style>
+
+    <style name="Widget.AlertDialog.Custom" parent="android:Theme.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize|stateVisible</item>
+    </style>
+
 </resources>

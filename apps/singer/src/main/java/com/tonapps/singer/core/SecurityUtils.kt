@@ -20,7 +20,7 @@ object SecurityUtils {
         return argon2Hash(password.toByteArray(Charsets.US_ASCII), salt)
     }
 
-    fun argon2Hash(password: ByteArray, salt: ByteArray): String {
+    private fun argon2Hash(password: ByteArray, salt: ByteArray): String {
         val hashResult: Argon2KtResult = argon2Kt.hash(
             mode = Argon2Mode.ARGON2_I,
             password = password,
@@ -33,7 +33,7 @@ object SecurityUtils {
         return argon2Verify(password.toByteArray(Charsets.US_ASCII), hash)
     }
 
-    fun argon2Verify(password: ByteArray, hash: String): Boolean {
+    private fun argon2Verify(password: ByteArray, hash: String): Boolean {
         return argon2Kt.verify(
             mode = Argon2Mode.ARGON2_I,
             encoded = hash,

@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
     <queries>
         <package android:name="com.ton_keeper" />
     </queries>
-
-    <meta-data
-        android:name="com.google.mlkit.vision.DEPENDENCIES"
-        android:value="barcode"/>
-    <meta-data android:name="android.webkit.WebView.MetricsOptOut"
-        android:value="true" />
 
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-feature android:name="android.hardware.camera.autofocus" />

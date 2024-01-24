@@ -7,6 +7,7 @@ import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
 
+// TODO refactor this view
 class WordFormView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -14,6 +15,7 @@ class WordFormView @JvmOverloads constructor(
 ) : LinearLayoutCompat(context, attrs, defStyle) {
 
     private val count = 24
+
     private val inputLayoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).also {
         it.bottomMargin = context.getDimensionPixelSize(R.dimen.offsetMedium)
     }
@@ -21,6 +23,9 @@ class WordFormView @JvmOverloads constructor(
     var doOnTextChanged: ((String) -> Unit)? = null
     var doOnFocusInput: ((WordInput, Int) -> Unit)? = null
     var doOnComplete: ((words: List<String>) -> Unit)? = null
+    var doOnChange: ((fillInputs: Int, emptyInputs: Int) -> Unit)? = null
+
+    private var fillInputs = 0
 
     init {
         orientation = VERTICAL
@@ -34,6 +39,7 @@ class WordFormView @JvmOverloads constructor(
                 }
                 checkIsFull()
                 doOnTextChanged?.invoke(text)
+                checkOnChanged()
             }
             view.setIndex(i + 1)
             addView(view, inputLayoutParams)
@@ -58,6 +64,7 @@ class WordFormView @JvmOverloads constructor(
             }
             nextFocus(i)
         }
+
         checkIsFull()
     }
 
@@ -83,6 +90,7 @@ class WordFormView @JvmOverloads constructor(
     fun focus(input: WordInput = getInput(0)) {
         input.focus()
         doOnFocusInput?.invoke(input, indexOfChild(input))
+        checkOnChanged()
     }
 
     fun hideKeyboard() {
@@ -133,5 +141,15 @@ class WordFormView @JvmOverloads constructor(
             words.add(text)
         }
         return words
+    }
+
+    private fun checkOnChanged() {
+        val words = getWords()
+        val newFillInputs = words.size
+        if (fillInputs == newFillInputs) {
+            return
+        }
+        fillInputs = newFillInputs
+        doOnChange?.invoke(newFillInputs, count - newFillInputs)
     }
 }

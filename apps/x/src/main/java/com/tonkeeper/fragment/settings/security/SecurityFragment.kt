@@ -37,7 +37,7 @@ class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(RECORD_PHRASE_REQUEST) { _, _ ->
+        navigation?.setFragmentResultListener(RECORD_PHRASE_REQUEST) { _ ->
             navigation?.add(PhraseWalletFragment.newInstance())
         }
     }

@@ -59,7 +59,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(TC_REQUEST) { _, _ ->
+        navigation?.setFragmentResultListener(TC_REQUEST) { _ ->
             viewModel.connect()
         }
     }

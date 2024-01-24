@@ -51,7 +51,7 @@ class WalletScreen: MainTabScreen<WalletScreenState, WalletScreenEffect, WalletS
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(FiatDialog.FIAT_DIALOG_REQUEST) { _, _ ->
+        navigation?.setFragmentResultListener(FiatDialog.FIAT_DIALOG_REQUEST) { _ ->
             FiatDialog.open(requireContext())
         }
     }

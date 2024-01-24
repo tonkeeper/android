@@ -68,10 +68,7 @@ dependencies {
     implementation(Libs.AndroidX.Camera.core)
     implementation(Libs.AndroidX.Camera.lifecycle)
     implementation(Libs.AndroidX.Camera.view)
-    implementation(Libs.AndroidX.Camera.vision)
-
-
-    implementation(Libs.mlKitBarcode)
+    implementation(Libs.ML.barcode)
 
     implementation(Libs.guava)
     implementation(Libs.sodium)

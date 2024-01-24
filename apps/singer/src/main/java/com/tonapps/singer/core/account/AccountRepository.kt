@@ -1,19 +1,27 @@
 package com.tonapps.singer.core.account
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.singer.core.KeyEntity
 import com.tonapps.singer.core.Scope
 import com.tonapps.singer.core.SecurityUtils
+import com.tonapps.singer.core.SimpleState
+import com.tonapps.singer.core.password.Password
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
+import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
@@ -24,13 +32,24 @@ class AccountRepository(context: Context) {
     private val dataSource = AccountDataSource(context)
     private val _keysEntityFlow = MutableStateFlow<List<KeyEntity>?>(null)
 
-    val keysEntityFlow = _keysEntityFlow.asStateFlow()
+    val keysEntityFlow = _keysEntityFlow.asStateFlow().filterNotNull()
 
     init {
         Scope.repositories.launch(Dispatchers.IO) {
             _keysEntityFlow.value = dataSource.getEntities()
         }
     }
+
+    suspend fun deleteKey(id: Long) = withContext(Dispatchers.IO) {
+        dataSource.delete(id)
+
+        _keysEntityFlow.value = _keysEntityFlow.value?.filter { it.id != id }
+    }
+
+    fun findIdByPublicKey(publicKey: PublicKeyEd25519): Flow<Long> = flow {
+        val id = dataSource.findIdByPublicKey(publicKey)
+        emit(id)
+    }.filterNotNull()
 
     suspend fun setName(id: Long, name: String) = withContext(Dispatchers.IO) {
         dataSource.setName(id, name)
@@ -46,7 +65,7 @@ class AccountRepository(context: Context) {
 
     fun getKey(id: Long): Flow<KeyEntity> {
         return keysEntityFlow.map { list ->
-            list?.firstOrNull { it.id == id }
+            list.firstOrNull { it.id == id }
         }.filterNotNull().distinctUntilChanged()
     }
 
@@ -101,9 +120,28 @@ class AccountRepository(context: Context) {
         dataSource.setPasswordData(salt, hash)
     }
 
-    suspend fun checkPassword(password: String): Boolean = withContext(Dispatchers.IO) {
-        val hash = dataSource.getPasswordHash() ?: return@withContext false
-        SecurityUtils.argon2Verify(password, hash)
+    suspend fun checkPassword(password: String): Password.Result = withContext(Dispatchers.IO) {
+        try {
+            if (password.isBlank()) {
+                return@withContext Password.Result.Error
+            }
+            val hash = dataSource.getPasswordHash() ?: return@withContext Password.Result.Error
+            if (SecurityUtils.argon2Verify(password, hash)) {
+                return@withContext Password.Result.Success
+            }
+            return@withContext Password.Result.Incorrect
+        } catch (e: Throwable) {
+            return@withContext Password.Result.Error
+        }
+    }
+
+    fun checkPasswordFlow(password: String): Flow<SimpleState> = flow {
+        emit(SimpleState.Loading)
+        if (checkPassword(password) == Password.Result.Success) {
+            emit(SimpleState.Success)
+        } else {
+            emit(SimpleState.Error)
+        }
     }
 
 }

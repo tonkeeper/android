@@ -10,10 +10,11 @@
         android:layout_height="wrap_content"
         android:title="@string/app_name"/>
 
-    <androidx.recyclerview.widget.RecyclerView
+    <uikit.widget.SimpleRecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingVertical="@dimen/offsetMedium"/>
+        android:paddingBottom="@dimen/offsetMedium"
+        android:clipToPadding="false"/>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

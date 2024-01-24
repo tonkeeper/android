@@ -17,9 +17,6 @@ class WalletHeaderView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : HeaderView(context, attrs, defStyle) {
 
-    private val collapsingParams: CollapsingToolbarLayout.LayoutParams?
-        get() = layoutParams as? CollapsingToolbarLayout.LayoutParams
-
     var updating: Boolean = false
         set(value) {
             if (value != field) {
@@ -38,20 +35,10 @@ class WalletHeaderView @JvmOverloads constructor(
         actionView.background = null
         actionView.imageTintList = ColorStateList.valueOf(getColor(uikit.R.color.accentBlue))
 
-        val downDrawable = getDrawable(R.drawable.ic_chevron_down_16)
+        val downDrawable = getDrawable(uikit.R.drawable.ic_chevron_down_16)
         downDrawable.setTint(getColor(uikit.R.color.iconSecondary))
         titleView.compoundDrawablePadding = 6.dp
         titleView.setEndDrawable(downDrawable)
         titleView.setOnClickListener { doOnTitleClick?.invoke() }
-    }
-
-    fun setOffsetEnable(enabled: Boolean) {
-        val params = collapsingParams ?: return
-        if (enabled) {
-            params.collapseMode = CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_PIN
-        } else {
-            params.collapseMode = CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_OFF
-        }
-        layoutParams = params
     }
 }

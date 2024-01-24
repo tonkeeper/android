@@ -3,13 +3,26 @@ package com.tonapps.singer.core
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import org.ton.api.pub.PublicKeyEd25519
+import ton.extensions.base64
 
 object TonkeeperApp {
 
     private const val STORE_LINK = "https://play.google.com/store/apps/details?id=com.tonapps.tonkeeperx"
 
-    private const val deepLinkScheme = "tonkeeper"
-    private const val deepLinkAuthority = "signer"
+    private fun uriBuilder(): Uri.Builder {
+        val builder = Uri.Builder()
+        builder.scheme("tonkeeper")
+        builder.authority("signer")
+        return builder
+    }
+
+    fun buildExportUri(publicKey: PublicKeyEd25519, name: String): Uri {
+        val builder = uriBuilder()
+        builder.appendQueryParameter("pk", publicKey.base64())
+        builder.appendQueryParameter("name", name)
+        return builder.build()
+    }
 
     fun openOrInstall(context: Context, uri: Uri) {
         try {

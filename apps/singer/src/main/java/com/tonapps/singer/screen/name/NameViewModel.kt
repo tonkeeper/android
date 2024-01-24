@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
@@ -17,13 +18,8 @@ class NameViewModel(
     private val accountRepository: AccountRepository
 ): ViewModel() {
 
-    private val _name = MutableStateFlow<String?>(null)
-    val name = _name.asStateFlow().filterNotNull()
-
-    init {
-        accountRepository.getKey(id).onEach {
-            _name.value = it.name
-        }.launchIn(viewModelScope)
+    val nameFlow = accountRepository.getKey(id).map {
+        it.name
     }
 
     fun save(name: String) {

@@ -5,7 +5,6 @@ object Libs {
     const val fresco = "com.facebook.fresco:fresco:3.1.2"
     const val guava = "com.google.guava:guava:31.0.1-android"
     const val zxing = "com.google.zxing:core:3.5.2"
-    const val mlKitBarcode = "com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0"
     const val sodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.1"
     const val argon2kt = ":argon2kt"
 
@@ -20,6 +19,10 @@ object Libs {
 
     object Koin {
         const val core = "io.insert-koin:koin-android:3.5.3"
+    }
+
+    object ML {
+        const val barcode = "com.google.mlkit:barcode-scanning:17.2.0"
     }
 
     object AndroidX {
@@ -44,7 +47,6 @@ object Libs {
             const val core = "androidx.camera:camera-core:$version"
             const val lifecycle = "androidx.camera:camera-lifecycle:$version"
             const val view = "androidx.camera:camera-view:$version"
-            const val vision = "androidx.camera:camera-mlkit-vision:$version"
         }
 
         object Room {

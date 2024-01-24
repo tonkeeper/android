@@ -12,5 +12,9 @@ class DeepLink {
             }
             return !uri.getQueryParameter("body").isNullOrBlank()
         }
+
+        fun isSupported(url: String): Boolean {
+            return isSupported(Uri.parse(url))
+        }
     }
 }

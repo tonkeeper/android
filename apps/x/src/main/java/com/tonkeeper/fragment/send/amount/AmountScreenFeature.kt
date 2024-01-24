@@ -9,9 +9,9 @@ import com.tonkeeper.api.jetton.JettonRepository
 import com.tonkeeper.api.parsedBalance
 import com.tonkeeper.api.symbol
 import com.tonkeeper.core.Coin
-import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.from
 import core.QueueScope
+import core.formatter.CurrencyFormatter
 import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -118,7 +118,7 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
 
         updateUiState { currentState ->
             currentState.copy(
-                rate = CurrencyFormatter.formatFiat(balanceInCurrency),
+                rate = CurrencyFormatter.formatFiat(currency.code, balanceInCurrency),
                 insufficientBalance = insufficientBalance,
                 remaining = remaining,
                 canContinue = !insufficientBalance && currentBalance > 0 && newValue > 0,

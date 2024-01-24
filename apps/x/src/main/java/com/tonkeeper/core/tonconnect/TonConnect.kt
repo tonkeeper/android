@@ -3,12 +3,9 @@ package com.tonkeeper.core.tonconnect
 import android.content.Context
 import android.net.Uri
 import com.tonkeeper.App
-import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.totalFees
 import com.tonkeeper.core.Coin
-import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.currency.ton
-import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.tonconnect.models.TCApp
 import com.tonkeeper.core.tonconnect.models.TCEvent
@@ -23,8 +20,7 @@ import com.tonkeeper.extensions.sendToBlockchain
 import com.tonkeeper.fragment.root.RootActivity
 import com.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import core.EventBus
-import io.tonapi.models.EmulateMessageToWalletRequest
-import io.tonapi.models.SendBlockchainMessageRequest
+import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,16 +28,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.block.AddrStd
-import org.ton.block.Message
-import org.ton.boc.BagOfCells
-import org.ton.cell.buildCell
-import org.ton.contract.wallet.WalletContract
 import org.ton.contract.wallet.WalletTransfer
-import org.ton.crypto.base64
-import org.ton.tlb.constructor.AnyTlbConstructor
-import org.ton.tlb.storeTlb
 import ton.SupportedTokens
 import ton.extensions.base64
 import uikit.extensions.activity
@@ -133,7 +120,7 @@ class TonConnect(private val context: Context) {
                 val feeInCurrency = wallet.ton(fee)
                     .to(currency)
 
-                val feeFormat = "≈ " + CurrencyFormatter.format(SupportedTokens.TON.code, fee) + " · " + CurrencyFormatter.formatFiat(feeInCurrency)
+                val feeFormat = "≈ " + CurrencyFormatter.format(SupportedTokens.TON.code, fee) + " · " + CurrencyFormatter.formatFiat(currency.code, feeInCurrency)
 
                 val transaction = TCTransaction(
                     clientId = app.clientId,

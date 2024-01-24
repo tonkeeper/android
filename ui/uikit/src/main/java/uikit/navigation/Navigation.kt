@@ -43,7 +43,7 @@ interface Navigation {
 
     fun setFragmentResultListener(
         requestKey: String,
-        listener: ((requestKey: String, bundle: Bundle) -> Unit)
+        listener: ((bundle: Bundle) -> Unit)
     )
 
     fun initRoot(skipPasscode: Boolean, intent: Intent? = null)

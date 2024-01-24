@@ -10,7 +10,7 @@ import android.text.style.ForegroundColorSpan
 import android.widget.RemoteViews
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.App
-import com.tonkeeper.core.formatter.CurrencyFormatter
+import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

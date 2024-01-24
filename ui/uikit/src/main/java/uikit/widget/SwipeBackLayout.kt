@@ -173,6 +173,10 @@ class SwipeBackLayout @JvmOverloads constructor(
     }
 
     fun startHideAnimation() {
+        if (animation.isRunning) {
+            return
+        }
+
         animation.doOnEnd { doOnCloseScreen?.invoke() }
         animation.reverse()
     }

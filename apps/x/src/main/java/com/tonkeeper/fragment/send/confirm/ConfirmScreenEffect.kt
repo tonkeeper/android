@@ -1,6 +1,8 @@
 package com.tonkeeper.fragment.send.confirm
 
 import android.net.Uri
+import org.ton.api.pub.PublicKeyEd25519
+import org.ton.cell.Cell
 import uikit.mvi.UiEffect
 
 sealed class ConfirmScreenEffect: UiEffect() {
@@ -9,6 +11,7 @@ sealed class ConfirmScreenEffect: UiEffect() {
     ): ConfirmScreenEffect()
 
     data class OpenSignerApp(
-        val boc: String
+        val body: Cell,
+        val publicKey: PublicKeyEd25519,
     ): ConfirmScreenEffect()
 }

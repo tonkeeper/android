@@ -5,9 +5,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.widget.NestedScrollView
 import com.tonapps.singer.BuildConfig
 import com.tonapps.singer.R
+import com.tonapps.singer.screen.change.ChangeFragment
 import uikit.base.BaseFragment
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class SettingsFragment: BaseFragment(R.layout.fragment_settings), BaseFragment.SwipeBack {
@@ -17,13 +20,23 @@ class SettingsFragment: BaseFragment(R.layout.fragment_settings), BaseFragment.S
     }
 
     private lateinit var headerView: HeaderView
+    private lateinit var scrollView: NestedScrollView
+    private lateinit var changeView: View
     private lateinit var supportView: View
     private lateinit var versionView: AppCompatTextView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
-        headerView.doOnActionClick = { finish() }
+        headerView.doOnCloseClick = { finish() }
+
+        scrollView = view.findViewById(R.id.scroll)
+        scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            headerView.divider = scrollY > 0
+        }
+
+        changeView = view.findViewById(R.id.change)
+        changeView.setOnClickListener { navigation?.add(ChangeFragment.newInstance()) }
 
         supportView = view.findViewById(R.id.support)
         supportView.setOnClickListener { openSupport() }

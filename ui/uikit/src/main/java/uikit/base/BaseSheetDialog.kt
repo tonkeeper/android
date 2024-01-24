@@ -10,6 +10,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import uikit.R
 
+@Deprecated("Use BaseFragment with BottomSheet interface instead")
 open class BaseSheetDialog(
     context: Context
 ): BottomSheetDialog(context) {

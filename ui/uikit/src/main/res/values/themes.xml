@@ -9,7 +9,7 @@
         <item name="postSplashScreenTheme">@style/Theme.App</item>
     </style>
 
-    <style name="Theme.App.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.App" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_window</item>
         <item name="android:colorBackground">@color/backgroundPage</item>
 
@@ -22,9 +22,10 @@
         <item name="android:windowLightNavigationBar">@bool/use_light_system_bars</item>
 
         <item name="colorAccent">@color/textAccent</item>
-    </style>
 
-    <style name="Theme.App" parent="Theme.App.Base">
+        <item name="alertDialogTheme">@style/Widget.AlertDialog</item>
+
         <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
+
     </style>
 </resources>

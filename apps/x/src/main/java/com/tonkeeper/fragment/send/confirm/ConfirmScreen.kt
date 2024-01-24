@@ -54,7 +54,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(SEND_REQUEST) { _, _ ->
+        navigation?.setFragmentResultListener(SEND_REQUEST) { _ ->
             feature.send(sendFeature.transaction.value!!)
         }
     }
@@ -178,7 +178,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
 
             sendFeature.sendEffect(SendScreenEffect.Finish)
         } else if (effect is ConfirmScreenEffect.OpenSignerApp) {
-            signerLauncher.launch(effect.boc)
+            signerLauncher.launch(SingerResultContract.Input(effect.body, effect.publicKey))
         }
     }
 

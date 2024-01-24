@@ -10,8 +10,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonkeeper.fragment.send.popup.SelectTokenPopup
 import com.tonkeeper.fragment.send.view.AmountInput
-import io.tonapi.models.JettonBalance
-import uikit.extensions.focusWidthKeyboard
+import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 
 class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScreenFeature>(R.layout.fragment_send_amount) {
@@ -135,7 +134,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         super.onVisibleChange(visible)
         if (visible) {
             sendFeature.setAmountHeader(requireContext())
-            valueView.focusWidthKeyboard()
+            valueView.focusWithKeyboard()
         } else {
             valueView.hideKeyboard()
         }

@@ -11,8 +11,7 @@ import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
 import ton.SendMode
 import ton.SupportedTokens
-import ton.transfer.BodyTransfer
-import ton.wallet.Wallet
+import ton.transfer.Transfer
 
 data class TransactionData(
     val address: String? = null,
@@ -93,9 +92,9 @@ data class TransactionData(
         responseAddress: MsgAddressInt,
     ): Cell? {
         if (isTon) {
-            return BodyTransfer.text(comment)
+            return Transfer.text(comment)
         }
-        return BodyTransfer.jetton(
+        return Transfer.jetton(
             coins = amount,
             toAddress = MsgAddressInt.parse(address!!),
             responseAddress = responseAddress,

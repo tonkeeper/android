@@ -2,13 +2,10 @@ package com.tonkeeper.fragment.send.confirm
 
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
-import com.tonkeeper.api.Tonapi
 import com.tonkeeper.api.getAddress
 import com.tonkeeper.api.totalFees
 import com.tonkeeper.core.Coin
-import com.tonkeeper.core.singer.SignerApp
 import com.tonkeeper.core.currency.currency
-import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.from
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.event.WalletStateUpdateEvent
@@ -17,13 +14,12 @@ import com.tonkeeper.extensions.getSeqno
 import com.tonkeeper.extensions.sendToBlockchain
 import com.tonkeeper.fragment.send.TransactionData
 import core.EventBus
+import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.ton.block.AddrNone
 import org.ton.block.Coins
-import org.ton.block.ExtInMsgInfo
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.crypto.base64
@@ -98,7 +94,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
             val seqno = getSeqno(wallet)
             val cell = buildUnsignedBody(wallet, seqno, tx)
 
-            sendEffect(ConfirmScreenEffect.OpenSignerApp(cell.base64()))
+            sendEffect(ConfirmScreenEffect.OpenSignerApp(cell, wallet.publicKey))
         }
     }
 
@@ -174,7 +170,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
             updateUiState {
                 it.copy(
                     amount = amountFormat,
-                    amountInCurrency = "≈ " + CurrencyFormatter.formatFiat(inCurrency)
+                    amountInCurrency = "≈ " + CurrencyFormatter.formatFiat(currency.code, inCurrency)
                 )
             }
         }
@@ -207,7 +203,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
                     it.copy(
                         feeValue = fee,
                         fee = "≈ " + CurrencyFormatter.format(SupportedCurrency.TON.code, amount),
-                        feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(feeInCurrency),
+                        feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
                         buttonEnabled = true,
                         emulatedEventItems = actions
                     )

@@ -21,6 +21,8 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.animation.doOnEnd
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.NestedScrollView
@@ -82,7 +84,7 @@ fun View.getInsetsControllerCompat(): WindowInsetsControllerCompat? {
     return WindowInsetsControllerCompat(window, this)
 }
 
-fun EditText.focusWidthKeyboard() {
+fun EditText.focusWithKeyboard() {
     requestFocus()
     selectionAll()
     post {
@@ -301,5 +303,26 @@ fun View.doOnOnApplyWindowInsets(block: (WindowInsetsCompat) -> WindowInsetsComp
     setOnApplyWindowInsetsListener { v, insets ->
         val insetsCompat = WindowInsetsCompat.toWindowInsetsCompat(insets, v)
         block(insetsCompat).toWindowInsets() ?: insets
+    }
+}
+
+inline fun View.doOnBottomInsetsChanged(crossinline block: (Int) -> Unit) {
+    val callback = object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_STOP) {
+
+        override fun onProgress(insets: WindowInsetsCompat, runningAnimations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat {
+            val keyboardInsets = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            val barInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+            val bottomOffset = keyboardInsets.coerceAtLeast(barInsets)
+            block(bottomOffset)
+            return insets
+        }
+    }
+
+    ViewCompat.setWindowInsetsAnimationCallback(this, callback)
+}
+
+fun View.pinToBottomInsets() {
+    doOnBottomInsetsChanged {
+        translationY = -it.toFloat()
     }
 }

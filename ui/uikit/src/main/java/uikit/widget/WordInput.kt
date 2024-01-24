@@ -11,10 +11,11 @@ import android.widget.TextView
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.view.doOnLayout
 import uikit.R
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
-import uikit.extensions.focusWidthKeyboard
+import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 
 class WordInput @JvmOverloads constructor(
@@ -75,9 +76,9 @@ class WordInput @JvmOverloads constructor(
     }
 
     fun focus() {
-        postDelayed({
-            inputEditText.focusWidthKeyboard()
-        }, 16)
+        doOnLayout {
+            inputEditText.focusWithKeyboard()
+        }
     }
 
     fun hideKeyboard() {

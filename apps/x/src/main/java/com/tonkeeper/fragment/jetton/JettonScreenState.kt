@@ -1,9 +1,9 @@
 package com.tonkeeper.fragment.jetton
 
 import com.tonkeeper.api.parsedBalance
-import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.history.list.item.HistoryItem
 import com.tonkeeper.fragment.jetton.list.JettonItem
+import core.formatter.CurrencyFormatter
 import io.tonapi.models.JettonBalance
 import ton.wallet.WalletType
 import uikit.mvi.AsyncState

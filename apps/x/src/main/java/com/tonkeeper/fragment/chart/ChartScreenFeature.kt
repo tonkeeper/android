@@ -9,12 +9,12 @@ import com.tonkeeper.api.chart.ChartPeriod
 import com.tonkeeper.api.withRetry
 import com.tonkeeper.api.withTON
 import com.tonkeeper.core.Coin
-import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.currency.CurrencyManager
 import com.tonkeeper.core.currency.ton
 import com.tonkeeper.core.history.HistoryHelper
 import com.tonkeeper.core.history.list.item.HistoryItem
 import core.QueueScope
+import core.formatter.CurrencyFormatter
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -60,7 +60,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
                     walletType = wallet.type,
                     asyncState = AsyncState.Default,
                     balance = CurrencyFormatter.format(SupportedCurrency.TON.code, balance),
-                    currencyBalance = CurrencyFormatter.formatFiat(currencyBalance),
+                    currencyBalance = CurrencyFormatter.formatFiat(currency.code, currencyBalance),
                     rateFormat = CurrencyFormatter.formatRate(currency.code, rate),
                     rate24h = rate24h,
                     historyItems = historyItems,

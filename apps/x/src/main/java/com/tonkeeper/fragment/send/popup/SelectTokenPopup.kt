@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.send.popup
 import android.content.Context
 import android.net.Uri
 import com.tonkeeper.api.parsedBalance
-import com.tonkeeper.core.formatter.CurrencyFormatter
+import core.formatter.CurrencyFormatter
 import io.tonapi.models.JettonBalance
 import uikit.extensions.textWithLabel
 import uikit.popup.ActionSheet

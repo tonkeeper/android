@@ -42,6 +42,9 @@ class AppSettings(context: Context) {
             }
         }
 
+    val currencyCode: String
+        get() = currency.code
+
     var language: AppLanguage = prefs.getString(LANGUAGE_KEY, LANGUAGE_DEFAULT)!!
         set(value) {
             if (value != field) {

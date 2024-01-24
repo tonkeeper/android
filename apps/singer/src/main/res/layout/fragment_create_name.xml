@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:layout_height="match_parent">
 
     <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/offsetLarge"
@@ -35,23 +35,29 @@
             android:layout_marginTop="@dimen/offsetLarge"/>
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <Button
-        style="@style/Widget.App.Button"
-        android:id="@+id/done"
+    <FrameLayout
+        android:id="@+id/action"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_margin="@dimen/offsetLarge"
-        android:enabled="false"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:text="@string/continue_text"/>
+        android:layout_margin="@dimen/offsetLarge">
 
-    <uikit.widget.LoaderView
-        android:id="@+id/loader"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:visibility="gone"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_margin="@dimen/offsetLarge"/>
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/done"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/continue_text"/>
+
+        <uikit.widget.LoaderView
+            android:id="@+id/loader"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
+
+    </FrameLayout>
 
 </FrameLayout>

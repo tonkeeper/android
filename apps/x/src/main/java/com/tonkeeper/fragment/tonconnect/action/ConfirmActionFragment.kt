@@ -56,7 +56,7 @@ class ConfirmActionFragment: BaseFragment(R.layout.dialog_confirm_action), BaseF
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(SIGN_REQUEST_KEY) { _, _ ->
+        navigation?.setFragmentResultListener(SIGN_REQUEST_KEY) { _ ->
             lifecycleScope.launch { confirm() }
         }
     }

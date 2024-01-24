@@ -7,19 +7,16 @@ import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Shader
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
-import android.widget.ViewAnimator
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.math.MathUtils
 import androidx.customview.widget.ViewDragHelper
-import uikit.ArgbEvaluator
 import uikit.R
-import uikit.VibrationUtils
+import uikit.HapticHelper
 import uikit.extensions.dp
 import uikit.extensions.getColor
 import uikit.extensions.getDimension
@@ -107,7 +104,7 @@ class SlideActionView @JvmOverloads constructor(
     }
 
     private fun done() {
-        VibrationUtils.confirm(context)
+        HapticHelper.impactLight(context)
         buttonView.setImageResource(checkIcon)
         doOnDone?.invoke()
         isDone = true

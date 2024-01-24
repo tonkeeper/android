@@ -250,6 +250,4 @@ class RootActivity: NavigationActivity(), DeepLink.Processor {
         super.onDestroy()
         tonConnect.onDestroy()
     }
-
-    override fun isInitialized() = initialized
 }

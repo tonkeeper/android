@@ -11,8 +11,8 @@ android {
         applicationId = "com.tonapps.singer"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.0.1"
+        versionCode = 2
+        versionName = "0.0.2"
     }
 
     buildFeatures {
@@ -54,7 +54,11 @@ dependencies {
     implementation(Libs.AndroidX.swiperefreshlayout)
 
     implementation(Libs.UI.material)
-    implementation(Libs.zxing)
+    implementation(Libs.AndroidX.Camera.base)
+    implementation(Libs.AndroidX.Camera.core)
+    implementation(Libs.AndroidX.Camera.lifecycle)
+    implementation(Libs.AndroidX.Camera.view)
+    implementation(Libs.ML.barcode)
 
     implementation(Libs.ton)
 

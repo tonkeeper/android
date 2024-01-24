@@ -1,25 +1,26 @@
 package com.tonapps.singer.screen.key
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.doOnLayout
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.singer.R
+import com.tonapps.singer.core.KeyEntity
 import com.tonapps.singer.core.TonkeeperApp
+import com.tonapps.singer.core.password.Password
 import com.tonapps.singer.extensions.copyToClipboard
 import com.tonapps.singer.screen.name.NameFragment
-import com.tonapps.singer.screen.password.lock.LockFragment
+import com.tonapps.singer.core.password.PasswordPrompt
 import com.tonapps.singer.screen.phrase.PhraseFragment
-import com.tonapps.singer.short4
 import com.tonapps.singer.short8
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import org.ton.api.pub.PublicKeyEd25519
 import uikit.base.BaseFragment
+import uikit.dialog.alert.AlertDialog
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.round
 import uikit.list.ListCell
@@ -32,8 +33,6 @@ import uikit.widget.SquareImageView
 class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
     companion object {
-
-        private const val REQUEST_PHRASE = "request_phrase"
 
         private const val KEY_ID = "key_id"
 
@@ -49,19 +48,31 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
     private val id: Long by lazy { requireArguments().getLong(KEY_ID) }
     private val keyViewModel: KeyViewModel by viewModel { parametersOf(id) }
 
+    private val authenticationCallback = object : PasswordPrompt.AuthenticationCallback() {
+
+        override fun onAuthenticationResult(result: Password.Result) {
+            if (result is Password.Result.Success) {
+                keyViewModel.delete()
+                finish()
+            }
+        }
+    }
+
+    private lateinit var passwordPrompt: PasswordPrompt
+
     private lateinit var headerView: HeaderView
+    private lateinit var scrollView: NestedScrollView
     private lateinit var exportQrView: View
     private lateinit var qrView: SquareImageView
     private lateinit var exportLocalView: View
     private lateinit var nameView: ActionCellView
     private lateinit var hexAddressView: ActionCellView
     private lateinit var phraseView: View
+    private lateinit var deleteView: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(REQUEST_PHRASE) { _, _ ->
-            navigation?.add(PhraseFragment.newInstance(id))
-        }
+        passwordPrompt = PasswordPrompt(this, authenticationCallback)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -88,11 +99,15 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
         phraseView.background = ListCell.Position.LAST.drawable(requireContext())
         phraseView.setOnClickListener { openRecoveryPhrase() }
 
-        keyViewModel.keyEntity.filterNotNull().onEach {
-            setName(it.name)
-            setHex(it.hex)
-            setExportUri(it.exportUri)
-        }.launchIn(lifecycleScope)
+        deleteView = view.findViewById(R.id.delete_key)
+        deleteView.setOnClickListener { deleteKey() }
+
+        scrollView = view.findViewById(R.id.scroll)
+        scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            headerView.divider = scrollY > 0
+        }
+
+        keyViewModel.keyEntity.onEach(::applyEntity).launchIn(lifecycleScope)
     }
 
     override fun onEndShowingAnimation() {
@@ -102,8 +117,14 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
         }
     }
 
+    private fun applyEntity(key: KeyEntity) {
+        setName(key.name)
+        setHex(key.hex)
+        setExportByUri(key.publicKey, key.name)
+    }
+
     private fun openRecoveryPhrase() {
-        navigation?.add(LockFragment.newInstance(REQUEST_PHRASE))
+        navigation?.add(PhraseFragment.newInstance(id))
     }
 
     private fun requestBitmap(width: Int, height: Int) {
@@ -124,10 +145,23 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
         }
     }
 
-    private fun setExportUri(uri: Uri) {
+    private fun setExportByUri(publicKey: PublicKeyEd25519, name: String) {
+        val uri = TonkeeperApp.buildExportUri(publicKey, name)
         exportLocalView.setOnClickListener {
             TonkeeperApp.openOrInstall(requireContext(), uri)
         }
+    }
+
+    private fun deleteKey() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setColoredButtons()
+        builder.setTitle(R.string.delete_key_question)
+        builder.setMessage(R.string.delete_key_question_subtitle)
+        builder.setNegativeButton(R.string.delete_key) { _ ->
+            passwordPrompt.authenticate()
+        }
+        builder.setPositiveButton(R.string.cancel)
+        builder.show()
     }
 
 }

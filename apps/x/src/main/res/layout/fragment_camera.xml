@@ -9,9 +9,21 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.tonkeeper.fragment.camera.OverlayView
+    <uikit.widget.CameraOverlayView
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+    
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/flash"
+        android:layout_width="@dimen/itemHeight"
+        android:layout_height="@dimen/itemHeight"
+        android:layout_marginBottom="108dp"
+        android:background="@drawable/bg_oval"
+        android:backgroundTint="#14ffffff"
+        android:layout_gravity="bottom|center_horizontal"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_flash"
+        android:visibility="gone"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
@@ -32,7 +44,6 @@
             android:textColor="@color/textPrimary"
             android:textAppearance="@style/TextAppearance.H2"
             android:text="@string/scan_qr_code"/>
-
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

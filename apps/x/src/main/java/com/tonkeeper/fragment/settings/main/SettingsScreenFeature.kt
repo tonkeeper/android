@@ -134,7 +134,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
         items.add(SettingsIconItem(
             id = SettingsIdItem.SECURITY_ID,
             titleRes = R.string.security,
-            iconRes = R.drawable.ic_lock_28,
+            iconRes = uikit.R.drawable.ic_lock_28,
             position = ListCell.Position.FIRST,
             colorRes = uikit.R.color.accentBlue,
             dot = !wallet.isRecoveryPhraseBackup()

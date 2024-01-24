@@ -8,9 +8,12 @@ import com.tonapps.singer.screen.create.pager.PageType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -48,7 +51,10 @@ class CreateViewModel(
     val onReady: Flow<Unit> = _onReady.receiveAsFlow()
 
     private val _currentPage = MutableStateFlow(pages.first())
-    val currentPage = _currentPage.asStateFlow()
+    val currentPage = _currentPage.asSharedFlow()
+
+    private val _uiTopOffset = MutableStateFlow(0)
+    val uiTopOffset = _uiTopOffset.asStateFlow()
 
     private val name: String
         get() = savedStateHandle[NAME_KEY] ?: ""
@@ -63,13 +69,17 @@ class CreateViewModel(
 
     fun page(pageType: PageType) = currentPage.filter { it == pageType }
 
+    fun setUiTopOffset(offset: Int) {
+        _uiTopOffset.value = offset
+    }
+
     fun setMnemonic(mnemonic: List<String>) {
         savedStateHandle[MNEMONIC_KEY] = mnemonic
 
         if (requestPasswordCreate) {
-            _currentPage.value = PageType.Password
+            _currentPage.tryEmit(PageType.Password)
         } else {
-            _currentPage.value = PageType.Name
+            _currentPage.tryEmit(PageType.Name)
         }
     }
 
@@ -80,14 +90,14 @@ class CreateViewModel(
 
     fun setPassword(password: String) {
         savedStateHandle[PASSWORD_KEY] = password
-        _currentPage.value = PageType.RepeatPassword
+        _currentPage.tryEmit(PageType.RepeatPassword)
     }
 
     fun checkPassword(value: String): Boolean {
         if (value != password) {
             return false
         }
-        _currentPage.value = PageType.Name
+        _currentPage.tryEmit(PageType.Name)
         return true
     }
 
@@ -117,12 +127,12 @@ class CreateViewModel(
     }
 
     fun prev(): Boolean {
-        val currentPage = currentPage.value
+        val currentPage = currentPage.replayCache.last()
         val index = pageIndex(currentPage)
         if (index == 0) {
             return false
         }
-        _currentPage.value = pages[index - 1]
+        _currentPage.tryEmit(pages[index - 1])
         return true
     }
 

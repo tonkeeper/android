@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.singer.R
 import com.tonapps.singer.extensions.copyToClipboard
 import com.tonapps.singer.screen.key.KeyFragment
+import com.tonapps.singer.screen.password.SecurityFragment
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -18,7 +19,7 @@ import uikit.extensions.doOnOnApplyWindowInsets
 import uikit.widget.HeaderView
 import uikit.widget.PhraseWords
 
-class PhraseFragment: BaseFragment(R.layout.fragment_phrase), BaseFragment.SwipeBack {
+class PhraseFragment: SecurityFragment(R.layout.fragment_phrase), BaseFragment.SwipeBack {
 
     companion object {
 
@@ -49,15 +50,7 @@ class PhraseFragment: BaseFragment(R.layout.fragment_phrase), BaseFragment.Swipe
 
         copyButton = view.findViewById(R.id.copy)
 
-        view.doOnOnApplyWindowInsets {
-            val insetsNav = it.getInsets(WindowInsetsCompat.Type.navigationBars())
-            copyButton.translationY = -insetsNav.bottom.toFloat()
-            it
-        }
-
-        phraseViewModel.mnemonic.onEach {
-            setWords(it)
-        }.launchIn(lifecycleScope)
+        phraseViewModel.mnemonic.onEach(::setWords).launchIn(lifecycleScope)
     }
 
     private fun setWords(list: List<String>) {

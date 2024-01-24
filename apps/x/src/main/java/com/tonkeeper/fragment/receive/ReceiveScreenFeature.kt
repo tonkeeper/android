@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.viewModelScope
 import com.tonkeeper.App
 import com.tonkeeper.api.getAddress
-import core.QRBuilder
+import core.qr.QRBuilder
 import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

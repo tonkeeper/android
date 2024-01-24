@@ -1,21 +1,23 @@
 package com.tonkeeper.fragment.camera
 
-import android.net.Uri
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import androidx.camera.mlkit.vision.MlKitAnalyzer
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.camera.core.TorchState
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
+import androidx.lifecycle.lifecycleScope
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.deeplink.DeepLink
-import com.tonkeeper.fragment.root.RootActivity
+import core.qr.QRImageAnalyzer
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.ton.block.AddrStd
+import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
@@ -36,57 +38,71 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         }
     }
 
-    private var readyUrl = false
+    private val qrAnalyzer = QRImageAnalyzer()
 
-    private lateinit var cameraView: PreviewView
+    private var readyUrl = false
+    private var isFlashAvailable = false
+
     private lateinit var headerView: HeaderView
+    private lateinit var flashView: AppCompatImageView
+    private lateinit var cameraView: PreviewView
+
     private lateinit var cameraExecutor: ExecutorService
-    private lateinit var barcodeScanner: BarcodeScanner
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        cameraView = view.findViewById(R.id.camera)
-
         headerView = view.findViewById(R.id.header)
         headerView.background = null
         headerView.doOnCloseClick = { finish() }
 
+        flashView = view.findViewById(R.id.flash)
+
+        cameraView = view.findViewById(R.id.camera)
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        barcodeScanner = BarcodeScanning.getClient(
-            BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build()
-        )
+        qrAnalyzer.flow.onEach(::handleBarcode).launchIn(lifecycleScope)
     }
 
     private fun startCamera() {
         val context = requireContext()
         val cameraController = LifecycleCameraController(context)
-        cameraController.setImageAnalysisAnalyzer(
-            mainExecutor,
-            MlKitAnalyzer(
-                listOf(barcodeScanner),
-                CameraController.COORDINATE_SYSTEM_VIEW_REFERENCED,
-                mainExecutor
-            ) { result: MlKitAnalyzer.Result? ->
-                val barcodeResults = result?.getValue(barcodeScanner)
-                if ((barcodeResults == null) ||
-                    (barcodeResults.size == 0) ||
-                    (barcodeResults.first() == null)
-                ) {
-                    cameraView.overlay.clear()
-                    cameraView.setOnTouchListener { _, _ -> false }
-                    return@MlKitAnalyzer
-                }
-
-                handleBarcode(barcodeResults[0])
-                cameraView.overlay.clear()
-            }
-        )
-
+        cameraController.setImageAnalysisAnalyzer(mainExecutor, qrAnalyzer)
         cameraController.bindToLifecycle(this)
         cameraView.controller = cameraController
+        applyFlash(cameraController)
+    }
+
+    private fun applyFlash(cameraController: CameraController) {
+        cameraController.torchState.observe(viewLifecycleOwner) { state ->
+            if (!isFlashAvailable) {
+                isFlashAvailable = true
+                flashView.visibility = View.VISIBLE
+                return@observe
+            }
+            if (state == TorchState.ON) {
+                flashEnabled()
+            } else {
+                flashDisabled()
+            }
+
+            HapticHelper.impactLight(requireContext())
+        }
+
+        flashView.setOnClickListener {
+            val flashMode = cameraController.torchState.value == TorchState.ON
+            cameraController.enableTorch(!flashMode)
+        }
+    }
+
+    private fun flashEnabled() {
+        flashView.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
+        flashView.imageTintList = ColorStateList.valueOf(Color.BLACK)
+    }
+
+    private fun flashDisabled() {
+        flashView.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#14ffffff"))
+        flashView.imageTintList = ColorStateList.valueOf(Color.WHITE)
     }
 
     private fun checkAndStartCamera() {
@@ -141,6 +157,10 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
     override fun onDestroyView() {
         super.onDestroyView()
         cameraExecutor.shutdown()
-        barcodeScanner.close()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        qrAnalyzer.release()
     }
 }

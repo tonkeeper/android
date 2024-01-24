@@ -2,9 +2,20 @@
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="@dimen/offsetLarge"
-    android:paddingBottom="@dimen/offsetLarge"
+    android:paddingVertical="@dimen/offsetLarge"
+    android:paddingHorizontal="@dimen/offsetMedium"
     android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/close"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="end"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_close_16"
+        android:tint="@color/buttonSecondaryForeground"
+        android:backgroundTint="@color/buttonSecondaryBackground"
+        android:background="@drawable/bg_oval_button_secondary"/>
 
     <uikit.widget.TextHeaderView
         android:layout_width="match_parent"

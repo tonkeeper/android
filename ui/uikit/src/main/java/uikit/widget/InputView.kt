@@ -13,7 +13,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import uikit.R
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
-import uikit.extensions.focusWidthKeyboard
+import uikit.extensions.focusWithKeyboard
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
 import uikit.extensions.range
@@ -176,7 +176,7 @@ class InputView @JvmOverloads constructor(
         }
 
         setOnClickListener {
-            editText.focusWidthKeyboard()
+            editText.focusWithKeyboard()
         }
     }
 
@@ -188,7 +188,7 @@ class InputView @JvmOverloads constructor(
 
     fun focus() {
         postDelayed({
-            editText.focusWidthKeyboard()
+            editText.focusWithKeyboard()
         }, 16)
     }
 

@@ -9,14 +9,12 @@ import com.tonkeeper.api.account.AccountRepository
 import com.tonkeeper.api.shortAddress
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.ton
-import com.tonkeeper.core.formatter.CurrencyFormatter
+import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ton.SupportedCurrency
-import ton.SupportedTokens
-
 
 class WidgetBalanceProvider: Widget() {
 
@@ -56,7 +54,7 @@ class WidgetBalanceProvider: Widget() {
 
             val balance = Balance(
                 tonBalance = CurrencyFormatter.format(SupportedCurrency.TON.code, amount),
-                currencyBalance = CurrencyFormatter.formatFiat(tonInCurrency),
+                currencyBalance = CurrencyFormatter.formatFiat(currency.code, tonInCurrency),
                 walletAddress = wallet.address.shortAddress
             )
 

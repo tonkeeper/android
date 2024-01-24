@@ -4,32 +4,16 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
-import android.view.View
-import android.view.ViewTreeObserver
-import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.view.WindowCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.commitNow
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.singer.R
-import com.tonapps.singer.core.TonkeeperApp
 import com.tonapps.singer.screen.intro.IntroFragment
 import com.tonapps.singer.screen.key.KeyFragment
 import com.tonapps.singer.screen.main.MainFragment
 import com.tonapps.singer.screen.root.action.RootAction
 import com.tonapps.singer.screen.sign.SignFragment
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import uikit.base.BaseActivity
-import uikit.base.BaseFragment
-import uikit.extensions.doOnEnd
-import uikit.extensions.hapticConfirm
-import uikit.extensions.startAnimation
-import uikit.navigation.Navigation
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.navigation.NavigationActivity
 
 class RootActivity: NavigationActivity() {
@@ -39,17 +23,14 @@ class RootActivity: NavigationActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         rootViewModel.hasKeys.onEach(::init).launchIn(lifecycleScope)
-        rootViewModel.action.onEach(::onAction).launchIn(lifecycleScope)
+        rootViewModel.action.flowWithLifecycle(lifecycle).onEach(::onAction).launchIn(lifecycleScope)
         handleIntent(intent)
     }
 
     private fun onAction(action: RootAction) {
-        if (action is RootAction.KeyDetails) {
-            add(KeyFragment.newInstance(action.id))
-        } else if (action is RootAction.RequestBodySign) {
-            add(SignFragment.newInstance(action.id, action.body, action.qr))
-        } else if (action is RootAction.ResponseBoc) {
-            responseBoc(action.boc)
+        when (action) {
+            is RootAction.RequestBodySign -> add(SignFragment.newInstance(action.id, action.body, action.qr))
+            is RootAction.ResponseBoc -> responseBoc(action.boc)
         }
     }
 
@@ -82,8 +63,6 @@ class RootActivity: NavigationActivity() {
         super.onNewIntent(intent)
         handleIntent(intent)
     }
-
-    override fun isInitialized() = rootViewModel.initialized
 
     private fun setIntroFragment() {
         val introFragment = IntroFragment.newInstance()

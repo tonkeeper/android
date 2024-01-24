@@ -121,7 +121,7 @@ class BottomSheetLayout @JvmOverloads constructor(
                     ViewDragHelper.STATE_IDLE -> {
                         val parentView = parentRootView ?: return
                         if (parentView.alpha == 1f) {
-                            doOnCloseScreen?.invoke()
+                            releaseScreen()
                         }
                     }
                 }
@@ -181,8 +181,17 @@ class BottomSheetLayout @JvmOverloads constructor(
     }
 
     fun startHideAnimation() {
-        animation.doOnEnd { doOnCloseScreen?.invoke() }
+        if (animation.isRunning) {
+            return
+        }
+
+        animation.doOnEnd { releaseScreen() }
         animation.reverse()
+    }
+
+    private fun releaseScreen() {
+        doOnCloseScreen?.invoke()
+        onAnimationUpdateParent(0f)
     }
 
     override fun onAnimationUpdate(animation: ValueAnimator) {

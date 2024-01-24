@@ -9,7 +9,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.widget.doOnTextChanged
 import uikit.R
 import uikit.extensions.dp
-import uikit.extensions.focusWidthKeyboard
+import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 import uikit.extensions.useAttributes
 
@@ -57,7 +57,7 @@ class SearchInput @JvmOverloads constructor(
     }
 
     fun focus() {
-        fieldView.focusWidthKeyboard()
+        fieldView.focusWithKeyboard()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

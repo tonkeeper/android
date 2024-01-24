@@ -1,6 +1,7 @@
 package com.tonapps.singer.core.account
 
 import android.content.Context
+import android.util.Log
 import com.lambdapioneer.argon2kt.Argon2Kt
 import com.tonapps.singer.core.KeyEntity
 import com.tonapps.singer.core.SecurityUtils
@@ -38,6 +39,12 @@ class AccountDataSource(
         return secureKeyValue.getString(PASSWORD_HASH_KEY)
     }
 
+    suspend fun findIdByPublicKey(publicKey: PublicKeyEd25519): Long? = withContext(Dispatchers.IO) {
+        getIds().firstOrNull { id ->
+            getPublicKey(id)?.key == publicKey.key
+        }
+    }
+
     suspend fun getEntities(): List<KeyEntity> {
         return getIds().map {
             getEntity(it)
@@ -64,6 +71,20 @@ class AccountDataSource(
         val ids = getIds().toMutableList()
         ids.add(id)
         setIds(ids.toLongArray())
+    }
+
+    private suspend fun removeId(id: Long) {
+        val ids = getIds().toMutableList()
+        ids.remove(id)
+        setIds(ids.toLongArray())
+    }
+
+    suspend fun delete(id: Long) {
+        removeId(id)
+
+        keyValue.remove(keyName(id))
+        keyValue.remove(keyPublicKey(id))
+        secureKeyValue.remove(keyMnemonic(id))
     }
 
     private suspend fun setIds(ids: LongArray) {

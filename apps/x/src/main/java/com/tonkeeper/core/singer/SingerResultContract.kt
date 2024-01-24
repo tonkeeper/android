@@ -5,11 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
+import org.ton.api.pub.PublicKeyEd25519
+import org.ton.cell.Cell
 
-class SingerResultContract : ActivityResultContract<String, String?>() {
+class SingerResultContract : ActivityResultContract<SingerResultContract.Input, String?>() {
 
-    override fun createIntent(context: Context, input: String): Intent {
-        val uri = SignerApp.createSignUri(input)
+    data class Input(val body: Cell, val publicKey: PublicKeyEd25519)
+
+    override fun createIntent(context: Context, input: Input): Intent {
+        val uri = SignerApp.createSignUri(input.body, input.publicKey)
         return Intent(Intent.ACTION_SEND, uri)
     }
 

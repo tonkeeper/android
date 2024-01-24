@@ -19,11 +19,11 @@ import com.tonkeeper.api.ton
 import com.tonkeeper.core.Coin
 import com.tonkeeper.core.currency.currency
 import com.tonkeeper.core.currency.ton
-import com.tonkeeper.core.formatter.CurrencyFormatter
 import com.tonkeeper.core.history.list.item.HistoryItem
 import com.tonkeeper.event.WalletStateUpdateEvent
 import com.tonkeeper.helper.DateFormat
 import core.EventBus
+import core.formatter.CurrencyFormatter
 import core.network.Network
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
@@ -181,7 +181,7 @@ object HistoryHelper {
                     pending = pending,
                     position = ListCell.getPosition(actions.size, actionIndex),
                     fee = CurrencyFormatter.format(SupportedCurrency.TON.code, feeAmount),
-                    feeInCurrency = CurrencyFormatter.formatFiat(feeInCurrency),
+                    feeInCurrency = CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
                     lt = event.lt,
                 ))
             }
@@ -246,7 +246,7 @@ object HistoryHelper {
                 timestamp = timestamp,
                 date = date,
                 isOut = isOut,
-                currency = CurrencyFormatter.formatFiat(inCurrency),
+                currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
             )
         } else if (action.jettonTransfer != null) {
             val jettonTransfer = action.jettonTransfer!!
@@ -336,7 +336,7 @@ object HistoryHelper {
                     testnet = wallet.testnet
                 ),
                 addressName = accountAddress.name,
-                currency = CurrencyFormatter.formatFiat(inCurrency),
+                currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
             )
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!

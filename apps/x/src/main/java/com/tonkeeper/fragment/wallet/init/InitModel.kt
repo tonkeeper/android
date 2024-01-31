@@ -59,6 +59,8 @@ internal class InitModel(
             add(ChildPageType.ImportTestnet)
         } else if (action == InitAction.Watch) {
             add(ChildPageType.Watch)
+        } else if (action == InitAction.Signer && pkBase64 == null) {
+            add(ChildPageType.Signer)
         }
 
         if (!App.passcode.hasPinCode) {
@@ -106,6 +108,10 @@ internal class InitModel(
 
     init {
         savedStateHandle[PK_BASE64_KEY] = pkBase64
+
+        if (pages.isEmpty()) {
+            initWallet()
+        }
     }
 
     fun requestCheckValidWords(words: List<String>) {

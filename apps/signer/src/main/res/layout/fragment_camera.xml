@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/camera"
+        android:background="@color/constantBlack"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:implementationMode="compatible"/>
+
+    <uikit.widget.CameraOverlayView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:icon="@drawable/ic_chevron_down_16"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:orientation="vertical">
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="@string/scan_qr_code"
+            android:description="@string/scan_qr_code_subtitle"/>
+
+        <uikit.widget.SquareImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/offsetLarge"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/flash"
+            android:layout_width="@dimen/itemHeight"
+            android:layout_height="@dimen/itemHeight"
+            android:background="@drawable/bg_oval"
+            android:backgroundTint="#14ffffff"
+            android:layout_gravity="center"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_flash"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</FrameLayout>

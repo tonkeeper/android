@@ -1,6 +1,5 @@
 package com.tonkeeper.api.base
 
-import core.network.Network
 import io.tonapi.apis.AccountsApi
 import io.tonapi.apis.BlockchainApi
 import io.tonapi.apis.ConnectApi
@@ -18,6 +17,7 @@ import io.tonapi.apis.WalletApi
 import io.tonapi.models.Account
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import network.Network
 import ton.TonAddress
 
 class BaseAPI(

@@ -17,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 24
-        versionName = "0.0.23"
+        versionCode = 25
+        versionName = "0.0.24"
     }
 
     buildFeatures {
@@ -106,5 +106,7 @@ dependencies {
     implementation(project(Libs.Module.tonApi))
     implementation(project(Libs.Module.shimmer))
     implementation(project(Libs.Module.blur))
+    implementation(project(Libs.Module.network))
+    implementation(project(Libs.Module.qr))
     // implementation(project(Libs.Module.localization))
 }

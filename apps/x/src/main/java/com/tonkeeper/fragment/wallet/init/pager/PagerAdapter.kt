@@ -6,6 +6,7 @@ import com.tonkeeper.fragment.wallet.init.pager.child.ImportChild
 import com.tonkeeper.fragment.wallet.init.pager.child.NameChild
 import com.tonkeeper.fragment.wallet.init.pager.child.PasscodeChild
 import com.tonkeeper.fragment.wallet.init.pager.child.PushChild
+import com.tonkeeper.fragment.wallet.init.pager.child.SignerChild
 import com.tonkeeper.fragment.wallet.init.pager.child.watch.WatchChild
 
 class PagerAdapter(
@@ -26,6 +27,7 @@ class PagerAdapter(
             ChildPageType.Import -> ImportChild.newInstance(false)
             ChildPageType.Watch -> WatchChild.newInstance()
             ChildPageType.ImportTestnet -> ImportChild.newInstance(true)
+            ChildPageType.Signer -> SignerChild.newInstance()
         }
     }
 }

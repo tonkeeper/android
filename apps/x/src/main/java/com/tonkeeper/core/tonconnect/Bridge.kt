@@ -4,12 +4,12 @@ import com.tonkeeper.api.withRetry
 import com.tonkeeper.core.tonconnect.models.TCApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import network.Network
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import org.ton.crypto.base64
 import org.ton.crypto.hex
-import core.network.Network
 
 internal class Bridge {
 

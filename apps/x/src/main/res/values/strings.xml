@@ -206,4 +206,6 @@
     <string name="send_request_comment">You must include the note from the exchange for transfer. Without it your funds will be lost.</string>
     <string name="banner_top">You currently using an experimental version of Tonkeeper.</string>
     <string name="banner_top_button">Install stable version</string>
+    <string name="signer_description">Open Signer » Select the required key » Scan QR code</string>
+    <string name="signer_open">Open Signer on this device</string>
 </resources>

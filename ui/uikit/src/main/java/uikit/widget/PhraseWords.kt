@@ -17,6 +17,10 @@ class PhraseWords @JvmOverloads constructor(
         orientation = HORIZONTAL
     }
 
+    fun setWords(words: Array<String>) {
+        setWords(words.toList())
+    }
+
     fun setWords(words: List<String>) {
         removeAllViews()
 

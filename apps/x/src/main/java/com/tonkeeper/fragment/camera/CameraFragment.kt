@@ -13,10 +13,10 @@ import androidx.lifecycle.lifecycleScope
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.deeplink.DeepLink
-import core.qr.QRImageAnalyzer
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.ton.block.AddrStd
+import qr.QRImageAnalyzer
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView

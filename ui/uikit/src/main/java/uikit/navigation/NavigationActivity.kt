@@ -15,6 +15,7 @@ import uikit.base.BaseActivity
 import uikit.base.BaseFragment
 import uikit.extensions.doOnEnd
 import uikit.extensions.hapticConfirm
+import uikit.extensions.primaryFragment
 import uikit.extensions.startAnimation
 
 abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
@@ -77,11 +78,16 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
-    fun setPrimaryFragment(fragment: BaseFragment) {
+    fun setPrimaryFragment(fragment: BaseFragment): Boolean {
+        if (primaryFragment?.javaClass == fragment.javaClass) {
+            return false
+        }
+
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(hostFragmentId, fragment)
         transaction.setPrimaryNavigationFragment(fragment)
         transaction.commitAllowingStateLoss()
+        return true
     }
 
     override fun add(fragment: BaseFragment) {

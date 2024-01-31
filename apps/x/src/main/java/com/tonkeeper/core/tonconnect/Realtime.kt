@@ -4,11 +4,9 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.tonkeeper.core.tonconnect.models.TCEvent
-import okhttp3.Request
+import network.Network
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
-import okhttp3.sse.EventSources
-import core.network.Network
 import okhttp3.Response
 
 internal class Realtime(

@@ -3,6 +3,7 @@ package com.tonkeeper.dialog
 import android.content.Context
 import android.view.View
 import com.tonapps.tonkeeperx.R
+import com.tonkeeper.fragment.signer.add.SignerAddFragment
 import com.tonkeeper.fragment.wallet.init.InitAction
 import com.tonkeeper.fragment.wallet.init.InitScreen
 import uikit.base.BaseSheetDialog
@@ -25,7 +26,10 @@ class ImportWalletDialog(context: Context): BaseSheetDialog(context), View.OnCli
         findViewById<View>(R.id.import_wallet)!!.setOnClickListener(this)
         findViewById<View>(R.id.watch_wallet)!!.setOnClickListener(this)
         findViewById<View>(R.id.testnet_wallet)!!.setOnClickListener(this)
-        findViewById<View>(R.id.signer_wallet)!!.setOnClickListener(this)
+        findViewById<View>(R.id.signer_wallet)!!.setOnClickListener {
+            navigation?.add(SignerAddFragment.newInstance())
+            dismiss()
+        }
     }
 
     override fun onClick(v: View) {

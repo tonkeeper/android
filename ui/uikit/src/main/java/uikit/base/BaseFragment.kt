@@ -21,8 +21,14 @@ import androidx.annotation.ColorRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getSpannable
@@ -37,6 +43,7 @@ open class BaseFragment(
 ): Fragment(layoutId) {
 
     interface SwipeBack {
+
         fun onEndShowingAnimation() {
 
         }
@@ -84,11 +91,9 @@ open class BaseFragment(
     val mainExecutor: Executor
         get() = ContextCompat.getMainExecutor(requireContext())
 
-    open val secure: Boolean = false
+    open val disableShowAnimation: Boolean = false
 
-    private val topRadius: Int by lazy {
-        requireContext().getDimensionPixelSize(R.dimen.cornerSmall)
-    }
+    open val secure: Boolean = false
 
     fun getSpannable(@StringRes id: Int): SpannableString {
         return requireContext().getSpannable(id)
@@ -102,12 +107,12 @@ open class BaseFragment(
         val contentView = super.onCreateView(inflater, container, savedInstanceState)!!
 
         val view = if (this is Modal) {
-            wrapInModal(inflater.context, contentView)
+            wrapInModal(inflater.context, contentView, savedInstanceState)
         } else {
             contentView.setBackgroundResource(R.color.backgroundPage)
             when (this) {
-                is SwipeBack -> wrapInSwipeBack(inflater.context, contentView)
-                is BottomSheet -> wrapInBottomSheet(inflater.context, contentView)
+                is SwipeBack -> wrapInSwipeBack(inflater.context, contentView, savedInstanceState)
+                is BottomSheet -> wrapInBottomSheet(inflater.context, contentView, savedInstanceState)
                 else -> contentView
             }
         }
@@ -115,17 +120,21 @@ open class BaseFragment(
         return view
     }
 
-    private fun wrapInModal(context: Context, view: View): ModalView {
+    private fun wrapInModal(context: Context, view: View, savedInstanceState: Bundle?): ModalView {
         this as Modal
 
         val modalView = ModalView(context)
         modalView.setContentView(view)
         modalView.doOnHide = { finishInternal() }
-        modalView.startShowAnimation()
+        if (savedInstanceState == null && !disableShowAnimation) {
+            modalView.startShowAnimation()
+        } else {
+            modalView.doOnLayout { onEndShowingAnimation() }
+        }
         return modalView
     }
 
-    private fun wrapInSwipeBack(context: Context, view: View): SwipeBackLayout {
+    private fun wrapInSwipeBack(context: Context, view: View, savedInstanceState: Bundle?): SwipeBackLayout {
         this as SwipeBack
 
         val swipeBackLayout = SwipeBackLayout(context)
@@ -137,11 +146,15 @@ open class BaseFragment(
         }
         swipeBackLayout.fragment = this
         swipeBackLayout.setContentView(view)
-        swipeBackLayout.startShowAnimation()
+        if (savedInstanceState == null && !disableShowAnimation) {
+            swipeBackLayout.startShowAnimation()
+        } else {
+            swipeBackLayout.doOnLayout { onEndShowingAnimation() }
+        }
         return swipeBackLayout
     }
 
-    private fun wrapInBottomSheet(context: Context, view: View): BottomSheetLayout {
+    private fun wrapInBottomSheet(context: Context, view: View, savedInstanceState: Bundle?): BottomSheetLayout {
         this as BottomSheet
 
         val bottomSheetLayout = BottomSheetLayout(context)
@@ -153,7 +166,11 @@ open class BaseFragment(
         }
         bottomSheetLayout.fragment = this
         bottomSheetLayout.setContentView(view)
-        bottomSheetLayout.startShowAnimation()
+        if (savedInstanceState == null && !disableShowAnimation) {
+            bottomSheetLayout.startShowAnimation()
+        } else {
+            bottomSheetLayout.doOnLayout { onEndShowingAnimation() }
+        }
         return bottomSheetLayout
     }
 

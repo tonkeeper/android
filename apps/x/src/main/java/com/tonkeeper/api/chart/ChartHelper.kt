@@ -2,9 +2,9 @@ package com.tonkeeper.api.chart
 
 import com.tonkeeper.api.internal.Tonkeeper
 import com.tonkeeper.api.withRetry
-import core.network.Network
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import network.Network
 import org.json.JSONObject
 
 object ChartHelper {

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="intro_subtitle">Место хранения ваших ключей для подписания транзакций в Tonkeeper.</string>
+    <string name="new_key">Создать Новый Ключ</string>
+    <string name="import_key">Импортировать Существующий Ключ</string>
+    <string name="create_password">Создать Пароль</string>
+    <string name="re_enter_password">Введите Пароль Еще Раз</string>
+    <string name="enter_password">Введите Пароль</string>
+    <string name="paste">Вставить</string>
+    <string name="done">Готово</string>
+    <string name="continue_text">Продолжить</string>
+    <string name="name_your_key">Назовите Ваш Ключ</string>
+    <string name="name_your_key_subtitle">Это упростит поиск необходимого ключа в списке ключей.</string>
+    <string name="name">Имя</string>
+    <string name="scan">Сканировать</string>
+    <string name="sign_out">Выйти</string>
+    <string name="sign_out_question">Выйти?</string>
+    <string name="sign_out_subtitle">Это приведет к удалению ключей кошелька. Убедитесь, что вы сохранили секретную фразу восстановления.</string>
+    <string name="authorization_required">Требуется авторизация</string>
+    <string name="change_password">Сменить пароль</string>
+    <string name="enter_current_password">Введите текущий пароль</string>
+    <string name="enter_new_password">Введите новый пароль</string>
+    <string name="password_changed">Пароль изменен</string>
+    <string name="add_key">Добавить ключ</string>
+    <string name="settings">Настройки</string>
+    <string name="key_export_qr_title">Экспорт на другое устройство</string>
+    <string name="key_export_qr_subtitle">Открыть Tonkeeper » Импортировать Существующий Кошелек » Подключить Signer</string>
+
+    <string name="add_key_subtitle">Создайте новый ключ или добавьте существующий.</string>
+
+    <string name="key_export_local_title">Экспорт в Tonkeeper на этом устройстве</string>
+    <string name="key_export_local_subtitle">Tonkeeper должен быть установлен</string>
+
+    <string name="hex_address">Hex адрес</string>
+    <string name="recover_phrase">Фраза восстановления</string>
+    <string name="delete_key">Удалить ключ</string>
+    <string name="copied">Скопировано</string>
+    <string name="copy">Копировать</string>
+    <string name="delete_key_question">Удалить ключ?</string>
+    <string name="delete_key_question_subtitle">Это приведет к удалению ключей кошелька. Убедитесь, что вы сохранили секретную фразу восстановления.</string>
+    <string name="sign_transaction">Подписать транзакцию</string>
+    <string name="audit_transaction">Проверить транзакцию</string>
+    <string name="slide_to_sign">Проведите, чтобы подписать</string>
+    <string name="unknown">Неизвестно</string>
+    <string name="emulate">Эмулировать в браузере</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="scan_qr_code">Сканировать QR-Код</string>
+    <string name="scan_qr_code_subtitle">Со страницы подтверждения действий в Tonkeeper</string>
+    <string name="qr_sign_title">Сканируйте QR-код с помощью Tonkeeper</string>
+    <string name="qr_sign_subtitle">После сканирования транзакция будет отправлена в сеть.</string>
+    <string name="recovery_phrase">Фраза Восстановления</string>
+    <string name="signed_transaction">Подписанная Транзакция</string>
+    <string name="support">Поддержка</string>
+    <string name="send">Отправить</string>
+    <string name="version">Версия %1$s</string>
+    <string name="recovery_phrase_subtitle">Храните вашу ключевую фразу в безопасном месте. Не вводите её в неизвестные приложения.</string>
+
+    <string name="enter_recovery_phrase">Введите Фразу Восстановления</string>
+    <string name="enter_recovery_phrase_subtitle">Когда вы создавали этот кошелек, вы получили 24-словную фразу восстановления. Введите её, чтобы восстановить доступ к вашему кошельку.</string>
+</resources>

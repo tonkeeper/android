@@ -106,8 +106,8 @@ class RootActivity: NavigationActivity(), DeepLink.Processor {
     }
 
     private fun resolveSinger(uri: Uri): BaseFragment? {
-        val pkBase64 = uri.getQueryParameter("k") ?: return null
-        val name = uri.getQueryParameter("n")
+        val pkBase64 = uri.getQueryParameter("pk") ?: return null
+        val name = uri.getQueryParameter("name")
         return InitScreen.newInstance(InitAction.Signer, name, pkBase64)
     }
 
@@ -145,6 +145,10 @@ class RootActivity: NavigationActivity(), DeepLink.Processor {
         val intentScreen = resolveIntent(lastIntent)
         lastIntent = null
 
+        if (intentScreen is InitScreen) {
+            add(intentScreen)
+        }
+
         lifecycleScope.launch {
             App.walletManager.getWalletInfo() ?: return@launch
 
@@ -164,10 +168,17 @@ class RootActivity: NavigationActivity(), DeepLink.Processor {
 
     private fun setIntroFragment(intent: Intent?) {
         val introFragment = IntroFragment.newInstance()
+        val intentScreen = resolveIntent(intent)
+        if (intentScreen is InitScreen) {
+            lastIntent = null
+        }
 
         supportFragmentManager.commit {
             replace(hostFragmentId, introFragment, introFragment.javaClass.name)
             setPrimaryNavigationFragment(introFragment)
+            if (intentScreen is InitScreen) {
+                add(hostFragmentId, intentScreen)
+            }
             runOnCommit {
                 clearBackStack()
                 initialized = true
@@ -197,6 +208,9 @@ class RootActivity: NavigationActivity(), DeepLink.Processor {
     }
 
     private fun insertLockScreenIfNeed(transaction: FragmentTransaction) {
+        if (true) {
+            return
+        }
         if (!App.settings.lockScreen || !App.passcode.hasPinCode) {
             return
         }

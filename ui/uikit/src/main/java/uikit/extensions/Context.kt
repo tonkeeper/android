@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.animation.AnimationUtils
+import androidx.activity.ComponentActivity
 import androidx.annotation.AnimRes
 import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
@@ -55,11 +56,11 @@ fun Context.getColorByIdentifier(name: String): Int {
     }
 }
 
-val Context.activity: Activity?
+val Context.activity: ComponentActivity?
     get() {
         var context = this
         while (context is ContextWrapper) {
-            if (context is Activity) {
+            if (context is ComponentActivity) {
                 return context
             }
             context = context.baseContext

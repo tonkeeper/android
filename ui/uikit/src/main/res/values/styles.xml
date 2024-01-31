@@ -42,7 +42,8 @@
         <item name="android:textColor">@color/buttonTertiaryForeground</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textAppearance">@style/TextAppearance.Label2</item>
-        <item name="android:paddingHorizontal">@dimen/offsetMedium</item>
+        <item name="android:paddingStart">@dimen/offsetMedium</item>
+        <item name="android:paddingEnd">@dimen/offsetMedium</item>
         <item name="android:gravity">center</item>
     </style>
 
@@ -56,19 +57,7 @@
         <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="Widget.AlertDialog" parent="@style/ThemeOverlay.MaterialComponents.Dialog.Alert">
-        <item name="android:windowBackground">@drawable/bg_dialog</item>
-        <item name="android:windowTitleStyle">@style/Widget.AlertDialog.Title</item>
-        <item name="android:textAppearance">@style/TextAppearance.Label1</item>
-        <item name="android:textColor">@color/constantBlue</item>
-    </style>
-
-    <style name="Widget.AlertDialog.Title" parent="@style/RtlOverlay.DialogWindowTitle.AppCompat">
-        <item name="android:textAppearance">@style/TextAppearance.H3</item>
-        <item name="android:textColor">@color/textPrimary</item>
-    </style>
-
-    <style name="Widget.AlertDialog.Custom" parent="android:Theme.Dialog">
+    <style name="Widget.Dialog" parent="android:Theme.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:background">@null</item>
         <item name="android:windowNoTitle">true</item>
@@ -77,7 +66,18 @@
         <item name="android:windowFrame">@null</item>
         <item name="android:backgroundDimEnabled">false</item>
         <item name="android:windowIsFloating">false</item>
-        <item name="android:windowSoftInputMode">adjustResize|stateVisible</item>
+        <!--item name="android:windowSoftInputMode">adjustResize|stateVisible</item-->
+        <item name="android:windowAnimationStyle">@style/Widget.Dialog.NoAnimation</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Widget.Dialog.NoAnimation">
+        <item name="android:windowEnterAnimation">@null</item>
+        <item name="android:windowExitAnimation">@null</item>
     </style>
 
 </resources>

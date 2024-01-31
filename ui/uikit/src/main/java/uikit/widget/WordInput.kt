@@ -17,12 +17,13 @@ import uikit.drawable.InputDrawable
 import uikit.extensions.dp
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
+import uikit.extensions.requestFocusWithSelection
 
 class WordInput @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : LinearLayoutCompat(context, attrs, defStyle),
+) : RowLayout(context, attrs, defStyle),
     View.OnFocusChangeListener,
     TextView.OnEditorActionListener, TextWatcher {
 
@@ -44,7 +45,6 @@ class WordInput @JvmOverloads constructor(
     private var ignorePressDelete = false
 
     init {
-        orientation = HORIZONTAL
         background = inputDrawable
 
         inflate(context, R.layout.view_word_input, this)
@@ -75,9 +75,11 @@ class WordInput @JvmOverloads constructor(
         return false
     }
 
-    fun focus() {
-        doOnLayout {
+    fun focus(keyboard: Boolean = true) {
+        if (keyboard) {
             inputEditText.focusWithKeyboard()
+        } else {
+            inputEditText.requestFocusWithSelection()
         }
     }
 
@@ -118,6 +120,10 @@ class WordInput @JvmOverloads constructor(
 
     override fun afterTextChanged(s: Editable?) {
         doOnTextChanged?.invoke(s.toString())
+
+        if (inputDrawable.error && s.isNullOrBlank()) {
+            inputDrawable.error = false
+        }
     }
 
     override fun isFocused(): Boolean {

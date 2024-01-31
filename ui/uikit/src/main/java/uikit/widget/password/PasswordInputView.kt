@@ -28,14 +28,8 @@ class PasswordInputView @JvmOverloads constructor(
         private const val errorAnimationDuration = 400L
     }
 
-    private val inputView: AppCompatEditText
+    private val inputView: PasswordEditText
     private val inputDrawable = InputDrawable(context)
-
-    var text: Editable?
-        get() = inputView.text
-        set(value) {
-            inputView.text = value
-        }
 
     var error: Boolean
         get() = inputDrawable.error
@@ -47,12 +41,15 @@ class PasswordInputView @JvmOverloads constructor(
         }
 
     val isEmpty: Boolean
-        get() = text.isNullOrBlank()
+        get() = inputView.text.isNullOrBlank()
+
+    val value: CharArray
+        get() = inputView.getPassword()
 
     init {
         background = inputDrawable
         inflate(context, R.layout.view_input_password, this)
-        inputView = findViewById(R.id.input)
+        inputView = findViewById(R.id.internal_input)
         inputView.onFocusChangeListener = this
         inputView.transformationMethod = PasswordTransformationMethod.getInstance()
         inputView.filters = arrayOf(PasswordInputFilter())
@@ -62,9 +59,11 @@ class PasswordInputView @JvmOverloads constructor(
         }
     }
 
-    fun doAfterTextChanged(
-        action: (text: Editable?) -> Unit
-    ): TextWatcher = inputView.doAfterTextChanged(action)
+    fun doAfterValueChanged(
+        action: (text: CharArray) -> Unit
+    ): TextWatcher = inputView.doAfterTextChanged {
+        action(value)
+    }
 
     fun focusWithKeyboard() {
         inputView.focusWithKeyboard()
@@ -78,7 +77,7 @@ class PasswordInputView @JvmOverloads constructor(
         error = true
         startSnakeAnimation(duration = errorAnimationDuration)
         postDelayed(errorAnimationDuration) {
-            text = null
+            clear()
         }
     }
 
@@ -89,6 +88,10 @@ class PasswordInputView @JvmOverloads constructor(
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {
         inputDrawable.active = hasFocus
+    }
+
+    fun clear() {
+        inputView.text?.clear()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

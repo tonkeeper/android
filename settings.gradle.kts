@@ -13,18 +13,21 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Tonkeeper R"
+rootProject.name = "TON Apps"
 
 include(":apps:x")
-include(":apps:singer")
+include(":apps:signer")
 
+include(":network")
+include(":qr")
 include(":ton")
 include(":core")
 include(":tonapi")
 include(":localization")
 include(":baselineprofile")
-include(":argon2kt")
 
 include(":ui:uikit")
 include(":ui:shimmer")
 include(":ui:blur")
+
+include(":lib:security")

@@ -23,8 +23,6 @@
 
         <item name="colorAccent">@color/textAccent</item>
 
-        <item name="alertDialogTheme">@style/Widget.AlertDialog</item>
-
         <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
 
     </style>

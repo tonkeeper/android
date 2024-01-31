@@ -6,7 +6,6 @@ object Libs {
     const val guava = "com.google.guava:guava:31.0.1-android"
     const val zxing = "com.google.zxing:core:3.5.2"
     const val sodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.1"
-    const val argon2kt = ":argon2kt"
 
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1"
@@ -76,11 +75,15 @@ object Libs {
         const val core = ":core"
         const val ton = ":ton"
         const val tonApi = ":tonapi"
+        const val network = ":network"
+        const val qr = ":qr"
 
         const val localization = ":localization"
 
         const val uiKit = ":ui:uikit"
         const val shimmer = ":ui:shimmer"
         const val blur = ":ui:blur"
+
+        const val security = ":lib:security"
     }
 }

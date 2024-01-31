@@ -1,5 +1,6 @@
 package com.tonkeeper.fragment.wallet.init
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
@@ -34,6 +35,11 @@ class InitScreen: BaseFragment(R.layout.fragment_pager), BaseFragment.SwipeBack 
             return fragment
         }
 
+        fun singer(uri: Uri): InitScreen? {
+            val pkBase64 = uri.getQueryParameter("pk") ?: return null
+            val name = uri.getQueryParameter("name")
+            return newInstance(InitAction.Signer, name, pkBase64)
+        }
     }
 
     private val argsAction: InitAction by lazy {

@@ -206,4 +206,6 @@
     <string name="signer_wallet">Пара для Signer</string>
     <string name="signer_wallet_subtitle">Более высокий уровень контроля и безопасности</string>
     <string name="active_address">Активный адрес</string>
+    <string name="signer_description">Открой Signer » Выбери нужный ключ » Отсканируй QR-код</string>
+    <string name="signer_open">Открыть Signer на этом устройстве</string>
 </resources>

@@ -1,7 +1,7 @@
 package com.tonkeeper.api.internal
 
+import network.Network
 import org.json.JSONObject
-import core.network.Network
 
 object Tonkeeper {
 

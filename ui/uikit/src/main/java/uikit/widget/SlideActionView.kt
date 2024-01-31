@@ -9,6 +9,7 @@ import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
@@ -35,6 +36,14 @@ class SlideActionView @JvmOverloads constructor(
     }
 
     var doOnDone: (() -> Unit)? = null
+
+    private var icon: Int = arrowIcon
+        set(value) {
+            if (field != value) {
+                field = value
+                buttonView.setImageResource(value)
+            }
+        }
 
     private var isDone = false
 
@@ -69,6 +78,11 @@ class SlideActionView @JvmOverloads constructor(
         override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             textView.alpha = 1f - left / horizontalDragRange.toFloat()
+            icon = if (left >= horizontalDragRange) {
+                checkIcon
+            } else {
+                arrowIcon
+            }
         }
 
         override fun onViewDragStateChanged(state: Int) {
@@ -103,9 +117,16 @@ class SlideActionView @JvmOverloads constructor(
         }
     }
 
+    fun reset() {
+        isDone = false
+        icon = arrowIcon
+        dragHelper.smoothSlideViewTo(buttonView, 0, 0)
+        invalidate()
+    }
+
     private fun done() {
         HapticHelper.impactLight(context)
-        buttonView.setImageResource(checkIcon)
+        icon = checkIcon
         doOnDone?.invoke()
         isDone = true
     }

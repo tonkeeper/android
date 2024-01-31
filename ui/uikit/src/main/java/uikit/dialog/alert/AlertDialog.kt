@@ -15,6 +15,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import uikit.R
+import uikit.base.BaseDialog
 import uikit.extensions.dp
 import uikit.extensions.scale
 import uikit.extensions.setTextOrGone
@@ -22,7 +23,7 @@ import uikit.extensions.setTextOrGone
 class AlertDialog private constructor(
     context: Context,
     params: Params
-): Dialog(context, R.style.Widget_AlertDialog_Custom), ValueAnimator.AnimatorUpdateListener {
+): BaseDialog(context), ValueAnimator.AnimatorUpdateListener {
 
     private companion object {
         private const val initScale = 0.86f
@@ -72,17 +73,6 @@ class AlertDialog private constructor(
         if (params.coloredButtons) {
             setColoredButton()
         }
-
-        applyAttributes()
-    }
-
-    private fun applyAttributes() {
-        val attributes = window?.attributes ?: return
-        attributes.width = ViewGroup.LayoutParams.MATCH_PARENT
-        attributes.height = ViewGroup.LayoutParams.MATCH_PARENT
-        attributes.format = android.graphics.PixelFormat.TRANSLUCENT
-        attributes.windowAnimations = 0
-        window?.attributes = attributes
     }
 
     private fun setColoredButton() {
@@ -95,6 +85,7 @@ class AlertDialog private constructor(
         bodyView.scale = initScale + (1 - initScale) * progress
         bodyView.translationY = initTranslationY * (1 - progress)
         bodyView.alpha = progress
+
         outsideView.alpha = progress
     }
 

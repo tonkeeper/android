@@ -1,5 +1,5 @@
 package com.tonkeeper.fragment.wallet.init.pager
 
 enum class ChildPageType {
-    Passcode, Push, Name, Import, Watch, ImportTestnet
+    Passcode, Push, Name, Import, Watch, ImportTestnet, Signer
 }

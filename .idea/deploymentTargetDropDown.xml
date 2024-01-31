@@ -2,30 +2,11 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="Tonkeeper_X.app">
+      <entry key="TON_Apps.apps.signer">
         <State />
       </entry>
-      <entry key="app">
+      <entry key="TON_Apps.apps.x">
         <State />
-      </entry>
-      <entry key="apps.singer">
-        <State />
-      </entry>
-      <entry key="apps.x">
-        <State>
-          <runningDeviceTargetSelectedWithDropDown>
-            <Target>
-              <type value="RUNNING_DEVICE_TARGET" />
-              <deviceKey>
-                <Key>
-                  <type value="SERIAL_NUMBER" />
-                  <value value="R83WA0LPT5Z" />
-                </Key>
-              </deviceKey>
-            </Target>
-          </runningDeviceTargetSelectedWithDropDown>
-          <timeTargetWasSelectedWithDropDown value="2024-01-23T10:03:45.446665Z" />
-        </State>
       </entry>
     </value>
   </component>

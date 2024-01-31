@@ -6,13 +6,14 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
+import uikit.extensions.isWords
+import uikit.extensions.parseWords
 
-// TODO refactor this view
 class WordFormView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : LinearLayoutCompat(context, attrs, defStyle) {
+) : ColumnLayout(context, attrs, defStyle) {
 
     private val count = 24
 
@@ -20,59 +21,48 @@ class WordFormView @JvmOverloads constructor(
         it.bottomMargin = context.getDimensionPixelSize(R.dimen.offsetMedium)
     }
 
+    var isValidValue: ((String) -> Boolean)? = null
     var doOnTextChanged: ((String) -> Unit)? = null
     var doOnFocusInput: ((WordInput, Int) -> Unit)? = null
-    var doOnComplete: ((words: List<String>) -> Unit)? = null
     var doOnChange: ((fillInputs: Int, emptyInputs: Int) -> Unit)? = null
 
     private var fillInputs = 0
 
     init {
-        orientation = VERTICAL
         for (i in 0 until count) {
             val view = WordInput(context)
+            view.doOnFocus = { focused ->
+                if (view.text.isEmpty()) {
+                    view.setError(false)
+                } else if (!focused && !isValidValue(view.text)) {
+                    view.setError(true)
+                }
+            }
             view.doOnNext = { nextFocus(i) }
             view.doOnPrev = { prevFocus(i) }
             view.doOnTextChanged = { text ->
-                if (i == 0) {
-                    checkPaste(text)
+                if (i == 0 && text.isWords()) {
+                    checkWords(text)
+                } else {
+                    doOnTextChanged?.invoke(text)
+                    checkOnChanged()
                 }
-                checkIsFull()
-                doOnTextChanged?.invoke(text)
-                checkOnChanged()
             }
             view.setIndex(i + 1)
             addView(view, inputLayoutParams)
         }
     }
 
-    private fun checkPaste(text: String) {
-        val isFullPhrase = text.contains(",") || text.contains("\n") || text.contains(" ")
-        if (!isFullPhrase) {
-            return
+    private fun isValidValue(word: String): Boolean {
+        val value = word.trim()
+        if (value.isBlank()) {
+            return false
         }
-
-        val words = text.split(",", "\n", " ").map {
-            it.trim()
-        }.filter {
-            it.isNotEmpty()
-        }
-        for (i in 0 until count) {
-            val input = getInput(i)
-            if (i < words.size) {
-                input.text = words[i]
-            }
-            nextFocus(i)
-        }
-
-        checkIsFull()
+        return isValidValue?.invoke(value) ?: true
     }
 
-    private fun checkIsFull() {
-        val words = getWords()
-        if (words.size == count) {
-            doOnComplete?.invoke(words)
-        }
+    private fun checkWords(text: String) {
+        setWords(text.parseWords())
     }
 
     private fun nextFocus(index: Int) {
@@ -101,7 +91,7 @@ class WordFormView @JvmOverloads constructor(
         return getChildAt(index) as WordInput
     }
 
-    private fun getFocusedInput(): WordInput? {
+    fun getFocusedInput(): WordInput? {
         for (i in 0 until count) {
             val input = getInput(i)
             if (input.isFocused) {
@@ -111,7 +101,7 @@ class WordFormView @JvmOverloads constructor(
         return null
     }
 
-    private fun getLastEmptyInput(): WordInput? {
+    fun getLastEmptyInput(): WordInput? {
         for (i in count - 1 downTo 0) {
             val input = getInput(i)
             if (input.text.isEmpty()) {
@@ -131,25 +121,48 @@ class WordFormView @JvmOverloads constructor(
         nextFocus(indexOfChild(input))
     }
 
+    fun setWords(words: List<String>) {
+        if (words.isEmpty()) {
+            return
+        }
+
+        for (i in 0 until count) {
+            val input = getInput(i)
+            if (i < words.size) {
+                input.text = words[i]
+            }
+        }
+
+        if (checkOnChanged()) {
+            getInput(count - 1).focus(false)
+            return
+        }
+
+        val lastEmpty = getLastEmptyInput() ?: return
+        focus(lastEmpty)
+    }
+
     fun getWords(): List<String> {
         val words = mutableListOf<String>()
         for (i in 0 until count) {
-            val text = getInput(i).text.trim()
-            if (text.isEmpty()) {
-                break
+            val input = getInput(i)
+            val text = input.text.trim()
+            if (isValidValue(text)) {
+                words.add(text)
+                input.setError(false)
             }
-            words.add(text)
         }
-        return words
+        return words.toList()
     }
 
-    private fun checkOnChanged() {
+    private fun checkOnChanged(): Boolean {
         val words = getWords()
         val newFillInputs = words.size
         if (fillInputs == newFillInputs) {
-            return
+            return words.size == count
         }
         fillInputs = newFillInputs
         doOnChange?.invoke(newFillInputs, count - newFillInputs)
+        return words.size == count
     }
 }

@@ -1,7 +1,6 @@
 package uikit.extensions
 
 import android.animation.ValueAnimator
-import android.graphics.Insets
 import android.graphics.Outline
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -11,9 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.Window
-import android.view.WindowInsets
 import android.view.animation.Animation
-import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.annotation.AnimRes
@@ -82,28 +79,6 @@ fun ScrollView.scrollToTop() {
 fun View.getInsetsControllerCompat(): WindowInsetsControllerCompat? {
     val window = window ?: return null
     return WindowInsetsControllerCompat(window, this)
-}
-
-fun EditText.focusWithKeyboard() {
-    requestFocus()
-    selectionAll()
-    post {
-        requestFocus()
-        getInsetsControllerCompat()?.show(WindowInsetsCompat.Type.ime())
-    }
-}
-
-fun EditText.hideKeyboard() {
-    clearFocus()
-    getInsetsControllerCompat()?.hide(WindowInsetsCompat.Type.ime())
-}
-
-fun EditText.selectionAll() {
-    if (text.isNotEmpty()) {
-        try {
-            setSelection(text.length)
-        } catch (ignored: Throwable) { }
-    }
 }
 
 fun ViewGroup.inflate(
@@ -299,22 +274,42 @@ val NestedScrollView.verticalScrolled: Flow<Boolean>
     }.distinctUntilChanged()
 
 
-fun View.doOnOnApplyWindowInsets(block: (WindowInsetsCompat) -> WindowInsetsCompat) {
-    setOnApplyWindowInsetsListener { v, insets ->
-        val insetsCompat = WindowInsetsCompat.toWindowInsetsCompat(insets, v)
-        block(insetsCompat).toWindowInsets() ?: insets
-    }
-}
-
-inline fun View.doOnBottomInsetsChanged(crossinline block: (Int) -> Unit) {
+inline fun View.doOnBottomInsetsChanged(crossinline block: (offset: Int, fraction: Float) -> Unit) {
     val callback = object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_STOP) {
 
         override fun onProgress(insets: WindowInsetsCompat, runningAnimations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat {
-            val keyboardInsets = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-            val barInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
-            val bottomOffset = keyboardInsets.coerceAtLeast(barInsets)
-            block(bottomOffset)
+            val animation = findAnimation(runningAnimations) ?: return insets
+            updateInsets(insets, animation)
             return insets
+        }
+
+        private fun findAnimation(animations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsAnimationCompat? {
+            val animation = animations.find {
+                it.typeMask == WindowInsetsCompat.Type.ime() ||
+                it.typeMask == WindowInsetsCompat.Type.navigationBars() ||
+                it.typeMask == WindowInsetsCompat.Type.captionBar()
+            }
+            return animation ?: animations.firstOrNull()
+        }
+
+        override fun onEnd(animation: WindowInsetsAnimationCompat) {
+            super.onEnd(animation)
+            ViewCompat.getRootWindowInsets(this@doOnBottomInsetsChanged)?.let {
+                updateInsets(it, animation)
+            }
+        }
+
+        override fun onPrepare(animation: WindowInsetsAnimationCompat) {
+            super.onPrepare(animation)
+
+            ViewCompat.getRootWindowInsets(this@doOnBottomInsetsChanged)?.let {
+                updateInsets(it, animation)
+            }
+        }
+
+        private fun updateInsets(insets: WindowInsetsCompat, animation: WindowInsetsAnimationCompat) {
+            val bottom = insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.systemBars()).bottom
+            block(bottom, animation.interpolatedFraction)
         }
     }
 
@@ -322,7 +317,7 @@ inline fun View.doOnBottomInsetsChanged(crossinline block: (Int) -> Unit) {
 }
 
 fun View.pinToBottomInsets() {
-    doOnBottomInsetsChanged {
-        translationY = -it.toFloat()
+    doOnBottomInsetsChanged { offset, _ ->
+        translationY = -offset.toFloat()
     }
 }

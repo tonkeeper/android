@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
     <queries>
         <package android:name="com.ton_keeper" />
+        <package android:name="com.tonapps.signer" />
+        <package android:name="com.tonapps.signer.debug" />
     </queries>
 
     <uses-feature android:name="android.hardware.camera.any" />

@@ -4,15 +4,19 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ScrollView
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.viewModels
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.extensions.launch
 import com.tonkeeper.fragment.wallet.init.InitModel
+import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
 import uikit.extensions.hideKeyboard
+import uikit.extensions.scrollDown
 import uikit.extensions.scrollToBottom
 import uikit.extensions.scrollToTop
 import uikit.extensions.scrollToView
+import uikit.extensions.scrollView
 import uikit.widget.LoaderView
 import uikit.widget.WordFormView
 import uikit.widget.WordHintView
@@ -33,8 +37,9 @@ class ImportChild: BaseFragment(R.layout.fragment_import) {
     }
 
     private val parentFeature: InitModel by viewModels({ requireParentFragment() })
+    private val mnemonicWords = Mnemonic.mnemonicWords()
 
-    private lateinit var wordContent: ScrollView
+    private lateinit var wordContent: NestedScrollView
     private lateinit var wordFormView: WordFormView
     private lateinit var wordHintView: WordHintView
     private lateinit var nextButton: Button
@@ -45,22 +50,19 @@ class ImportChild: BaseFragment(R.layout.fragment_import) {
         wordContent = view.findViewById(R.id.word_content)
 
         wordFormView = view.findViewById(R.id.word_form)
+        wordFormView.isValidValue = mnemonicWords::contains
         wordFormView.doOnTextChanged = { text ->
             parentFeature.requestHint(text)
         }
-        wordFormView.doOnComplete = {
-            parentFeature.requestCheckValidWords(it)
+        wordFormView.doOnFocusInput = { input, _ ->
+            wordContent.scrollView(input)
         }
-        wordFormView.doOnFocusInput = { input, index ->
-            if (index == 0) {
-                wordContent.scrollToTop()
-            } else if (index > 22) {
-                wordContent.scrollToBottom()
-            } else {
-                wordContent.scrollToView(input)
+        wordFormView.doOnChange = { _, empty ->
+            nextButton.isEnabled = empty == 0
+            if (empty == 0) {
+                wordContent.scrollDown(true)
             }
         }
-
 
         wordHintView = view.findViewById(R.id.word_hint)
         wordHintView.doOnClickText = { word ->

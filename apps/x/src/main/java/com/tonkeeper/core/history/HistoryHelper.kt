@@ -24,7 +24,6 @@ import com.tonkeeper.event.WalletStateUpdateEvent
 import com.tonkeeper.helper.DateFormat
 import core.EventBus
 import core.formatter.CurrencyFormatter
-import core.network.Network
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
@@ -36,6 +35,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
+import network.Network
 import ton.SupportedCurrency
 import ton.SupportedTokens
 import ton.extensions.toUserFriendly

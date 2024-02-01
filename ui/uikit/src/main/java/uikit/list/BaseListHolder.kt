@@ -35,7 +35,7 @@ abstract class BaseListHolder<I: BaseListItem>(
     @CallSuper
     open fun bind(item: BaseListItem) {
         this.item = item as I
-        onBind(item as I)
+        onBind(item)
     }
 
     abstract fun onBind(item: I)

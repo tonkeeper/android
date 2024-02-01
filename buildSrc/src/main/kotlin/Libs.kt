@@ -38,6 +38,7 @@ object Libs {
         const val splashscreen = "androidx.core:core-splashscreen:1.0.0"
         const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
+        const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"
 
         object Camera {
             private const val version = "1.4.0-alpha02"

@@ -1,15 +1,13 @@
 package security.vault
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
-import android.util.Log
 import security.spec.SimpleSecretSpec
 import security.Security
 import security.clear
-import security.clearWithGC
 import security.getByteArray
-import security.hex
 import security.putByteArray
-import security.tryCallGC
+import security.safeDestroy
 import java.security.MessageDigest
 import javax.crypto.SecretKey
 
@@ -26,11 +24,13 @@ internal class PasswordKey(
 
         fun generateSalt() = Security.randomBytes(SALT_SIZE)
 
-        fun generateSecretKey(password: CharArray, salt: ByteArray): SecretKey {
-            val hash = Security.argon2Hash(password, salt) ?: throw IllegalStateException("failed password hashing")
-           val secret = SimpleSecretSpec(hash)
+        fun generateSecretKey(password: CharArray, salt: ByteArray): SecretKey? {
+            val hash = Security.argon2Hash(password, salt)
             password.clear()
-            return secret
+            if (hash == null) {
+                return null
+            }
+            return SimpleSecretSpec(hash)
         }
 
         fun calcVerification(input: ByteArray): ByteArray {
@@ -40,7 +40,7 @@ internal class PasswordKey(
         }
     }
 
-    fun isEmpty(): Boolean {
+    internal fun isEmpty(): Boolean {
         return !prefs.contains(SALT_KEY) || !prefs.contains(VERIFICATION_KEY)
     }
 
@@ -48,52 +48,59 @@ internal class PasswordKey(
      * Quickly check valid password without need to decrypt master key.
      * Only for UI and other non-sensitive operations.
      */
-    fun isValid(password: CharArray): Boolean {
+    internal fun isValid(password: CharArray): Boolean {
         var currentVerification: ByteArray? = null
         var secret: SecretKey? = null
         var verification: ByteArray? = null
+
         val valid = try {
-            currentVerification = getVerification() ?: throw IllegalStateException("verification is not saved")
-            secret = create(password)
+            currentVerification = prefs.getByteArray(VERIFICATION_KEY) ?: throw IllegalStateException("verification is null")
+            secret = create(password) ?: throw IllegalStateException("failed to create secret key")
             verification = calcVerification(secret.encoded)
             MessageDigest.isEqual(currentVerification, verification)
         } catch (e: Throwable) {
             false
         }
-        secret?.destroy()
-        clearWithGC(currentVerification, verification)
-        tryCallGC()
+
+        secret?.safeDestroy()
+        clear(currentVerification, verification)
+
         return valid
     }
 
-    fun create(password: CharArray): SecretKey {
-        val salt = getSalt() ?: throw IllegalStateException("salt is not saved")
+    internal fun create(password: CharArray): SecretKey? {
+        val salt = prefs.getByteArray(SALT_KEY)
+        if (salt == null) {
+            password.clear()
+            return null
+        }
+
         val secret = generateSecretKey(password, salt)
         salt.clear()
         return secret
     }
 
-    fun set(password: CharArray): SecretKey {
+    internal fun set(password: CharArray): SecretKey? {
         val salt = generateSalt()
         val secret = generateSecretKey(password, salt)
+
+        if (secret == null) {
+            salt.clear()
+            return null
+        }
+
         val verification = calcVerification(secret.encoded)
         setSaltAndVerification(salt, verification)
-        salt.clear()
         return secret
     }
 
-    private fun getSalt(): ByteArray? {
-        return prefs.getByteArray(SALT_KEY)
-    }
-
-    fun setSaltAndVerification(salt: ByteArray, verification: ByteArray) {
+    @SuppressLint("ApplySharedPref")
+    internal fun setSaltAndVerification(salt: ByteArray, verification: ByteArray) {
         prefs.edit()
             .putByteArray(SALT_KEY, salt)
             .putByteArray(VERIFICATION_KEY, verification)
-            .apply()
-    }
+            .commit()
 
-    private fun getVerification(): ByteArray? {
-        return prefs.getByteArray(VERIFICATION_KEY)
+        clear(salt, verification)
     }
 }

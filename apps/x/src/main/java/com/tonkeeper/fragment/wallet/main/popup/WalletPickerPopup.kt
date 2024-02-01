@@ -13,7 +13,7 @@ import ton.wallet.WalletManager
 import uikit.extensions.dp
 import uikit.extensions.getDrawable
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.popup.ActionSheet
+import com.tonkeeper.popup.ActionSheet
 
 class WalletPickerPopup(
     private val scope: CoroutineScope,

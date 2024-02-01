@@ -6,14 +6,9 @@ plugins {
 android {
     namespace = "uikit"
     compileSdk = Build.compileSdkVersion
-
     defaultConfig {
         minSdk = Build.minSdkVersion
         consumerProguardFiles("consumer-rules.pro")
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
         jvmTarget = "1.8"
@@ -28,5 +23,12 @@ dependencies {
     implementation(Libs.AndroidX.splashscreen)
     implementation(Libs.UI.material)
     implementation(Libs.lottie)
-    implementation(Libs.fresco)
+    implementation(Libs.fresco) {
+        exclude(group = "com.facebook.soloader", module = "soloader")
+        exclude(group = "com.facebook.fresco", module = "soloader")
+        exclude(group = "com.facebook.fresco", module = "nativeimagefilters")
+        exclude(group = "com.facebook.fresco", module = "nativeimagetranscoder")
+        exclude(group = "com.facebook.fresco", module = "memory-type-native")
+        exclude(group = "com.facebook.fresco", module = "imagepipeline-native")
+    }
 }

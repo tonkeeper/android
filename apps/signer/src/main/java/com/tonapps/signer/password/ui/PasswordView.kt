@@ -2,12 +2,15 @@ package com.tonapps.signer.password.ui
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import androidx.core.view.doOnLayout
 import com.tonapps.signer.R
 import com.tonapps.signer.password.Password
+import uikit.extensions.doOnBottomInsetsChanged
+import uikit.extensions.dp
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.LoaderView
 import uikit.widget.password.PasswordInputView
@@ -30,6 +33,7 @@ class PasswordView @JvmOverloads constructor(
         inflate(context, R.layout.view_password, this)
 
         passwordInput = findViewById(R.id.password_input)
+        passwordInput.doOnDone = { sendPassword() }
 
         actionView = findViewById(R.id.password_action)
         actionView.pinToBottomInsets()

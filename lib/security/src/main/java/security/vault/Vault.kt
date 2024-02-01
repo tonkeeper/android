@@ -1,9 +1,11 @@
 package security.vault
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.util.Log
 import security.clear
 import security.hex
+import security.safeDestroy
 import security.tryCallGC
 import javax.crypto.SecretKey
 
@@ -15,15 +17,20 @@ open class Vault(
     private val masterKey = MasterKey(prefs)
     private val storage = Storage(prefs)
 
+    @SuppressLint("ApplySharedPref")
     fun clear() {
-        prefs.edit().clear().apply()
+        prefs.edit().clear().commit()
     }
 
     fun hasPassword(): Boolean {
         return !passwordKey.isEmpty()
     }
 
-    fun isValidPassword(password: CharArray) = passwordKey.isValid(password)
+    fun isValidPassword(password: CharArray): Boolean {
+        val valid = passwordKey.isValid(password)
+        tryCallGC()
+        return valid
+    }
 
     fun get(secret: SecretKey, id: Long): ByteArray {
         return storage.get(id, secret)
@@ -38,26 +45,50 @@ open class Vault(
     }
 
     fun getMasterSecret(password: CharArray): SecretKey {
-        val passwordSecret = passwordKey.create(password)
-        return masterKey.getSecret(passwordSecret)
+        val passwordSecret = passwordKey.create(password) ?: throw IllegalStateException("Password secret is null")
+        val masterSecret = masterKey.getSecret(passwordSecret)
+        passwordSecret.safeDestroy()
+        tryCallGC()
+
+        return masterSecret ?: throw IllegalStateException("Master secret is null")
     }
 
     fun createMasterSecret(password: CharArray): SecretKey {
-        val passwordSecret = passwordKey.set(password)
-        return masterKey.newSecret(passwordSecret)
+        val passwordSecret = passwordKey.set(password) ?: throw IllegalStateException("Password secret is null")
+        val masterSecret = masterKey.newSecret(passwordSecret)
+        passwordSecret.safeDestroy()
+        tryCallGC()
+
+        return masterSecret ?: throw IllegalStateException("Master secret is null")
     }
 
-    fun changePassword(newPassword: CharArray, oldPassword: CharArray) {
+    fun changePassword(newPassword: CharArray, oldPassword: CharArray): Boolean {
         val oldPasswordSecret = passwordKey.create(oldPassword)
+        if (oldPasswordSecret == null) {
+            newPassword.clear()
+            return false
+        }
 
         val newPasswordSalt = PasswordKey.generateSalt()
         val newPasswordSecret = PasswordKey.generateSecretKey(newPassword, newPasswordSalt)
-        val newPasswordVerification = PasswordKey.calcVerification(newPasswordSecret.encoded)
 
-        masterKey.reEncryptSecret(oldPasswordSecret, newPasswordSecret)
-        passwordKey.setSaltAndVerification(newPasswordSalt, newPasswordVerification)
-        newPasswordSalt.clear()
+        if (newPasswordSecret == null) {
+            oldPasswordSecret.safeDestroy()
+            newPasswordSalt.clear()
+            return false
+        }
+
+        val newPasswordVerification = PasswordKey.calcVerification(newPasswordSecret.encoded)
+        val reEncrypted = masterKey.reEncryptSecret(oldPasswordSecret, newPasswordSecret)
+        if (reEncrypted) {
+            passwordKey.setSaltAndVerification(newPasswordSalt, newPasswordVerification)
+        }
+
+        oldPasswordSecret.safeDestroy()
+        newPasswordSecret.safeDestroy()
+        clear(newPasswordSalt, newPasswordVerification)
 
         tryCallGC()
+        return reEncrypted
     }
 }

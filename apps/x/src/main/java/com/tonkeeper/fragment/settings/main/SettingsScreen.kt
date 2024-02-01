@@ -5,11 +5,9 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.collection.ArrayMap
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonkeeper.core.widget.WidgetBalanceProvider
@@ -25,13 +23,11 @@ import com.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonkeeper.fragment.settings.list.item.SettingsIdItem
 import com.tonkeeper.fragment.settings.main.popup.WalletVersionPopup
 import com.tonkeeper.fragment.settings.security.SecurityFragment
-import kotlinx.coroutines.launch
 import ton.contract.WalletVersion
 import uikit.decoration.ListCellDecoration
 import uikit.extensions.verticalScrolled
 import uikit.list.LinearLayoutManager
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.popup.ActionSheet
 import uikit.widget.HeaderView
 
 class SettingsScreen: MainTabScreen<SettingsScreenState, SettingsScreenEffect, SettingsScreenFeature>(R.layout.fragment_settings) {

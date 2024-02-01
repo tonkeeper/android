@@ -1,14 +1,19 @@
 package com.tonapps.signer
 
 import android.app.Application
+import android.content.Intent
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraXConfig
+import com.tonapps.signer.screen.crash.CrashActivity
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
-import org.ton.crypto.hex
+import security.Security
+import java.io.PrintWriter
+import java.io.StringWriter
+
 
 class App: Application(), CameraXConfig.Provider {
 
@@ -19,6 +24,10 @@ class App: Application(), CameraXConfig.Provider {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        Thread.setDefaultUncaughtExceptionHandler { _, e ->
+            CrashActivity.open(e)
+        }
+
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         startKoin{
             androidContext(this@App)

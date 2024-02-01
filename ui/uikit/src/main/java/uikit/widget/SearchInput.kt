@@ -29,7 +29,7 @@ class SearchInput @JvmOverloads constructor(
         inflate(context, R.layout.view_search_input, this)
 
         fieldView = findViewById(R.id.field)
-        fieldView.setOnEditorActionListener { v, actionId, event ->
+        fieldView.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 cancel()
                 return@setOnEditorActionListener true

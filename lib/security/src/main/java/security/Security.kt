@@ -1,14 +1,18 @@
 package security
 
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.Build
-import android.security.KeyChain
+import android.provider.Settings
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.security.Security
-import java.security.cert.CertStore
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
+
 
 object Security {
 
@@ -51,4 +55,48 @@ object Security {
         }
     }
 
+    fun isAdbEnabled(context: Context): Boolean {
+        return isAdbEnabled1(context) || isAdbEnabled2(context)
+    }
+
+    private fun isAdbEnabled1(context: Context): Boolean {
+        return Settings.Secure.getInt(
+            context.contentResolver,
+            Settings.Global.ADB_ENABLED, 0
+        ) != 0
+    }
+
+    private fun isAdbEnabled2(context: Context): Boolean {
+        return Settings.Secure.getInt(
+            context.contentResolver,
+            "adb_port", 0
+        ) != 0
+    }
+
+    fun isDevelopmentEnabled(context: Context): Boolean {
+        return try {
+            Settings.Global.getInt(
+                context.contentResolver,
+                Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0
+            ) > 0
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun isSupportStrongBox(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+        } else {
+            false
+        }
+    }
+
+    fun isDeviceRooted(): Boolean {
+        return RootUtils.isDeviceRooted()
+    }
+
+    fun isDebuggable(context: Context): Boolean {
+        return context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+    }
 }

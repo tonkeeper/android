@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import uikit.base.BaseFragment
-import uikit.popup.ActionSheet
 
 interface Navigation {
 
@@ -33,9 +32,6 @@ interface Navigation {
             }
 
         val Dialog.navigation: Navigation?
-            get() = from(context)
-
-        val ActionSheet.navigation: Navigation?
             get() = from(context)
     }
 

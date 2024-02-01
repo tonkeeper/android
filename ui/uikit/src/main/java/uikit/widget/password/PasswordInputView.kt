@@ -6,6 +6,7 @@ import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.postDelayed
@@ -31,6 +32,8 @@ class PasswordInputView @JvmOverloads constructor(
     private val inputView: PasswordEditText
     private val inputDrawable = InputDrawable(context)
 
+    var doOnDone: (() -> Unit)? = null
+
     var error: Boolean
         get() = inputDrawable.error
         set(value) {
@@ -53,6 +56,15 @@ class PasswordInputView @JvmOverloads constructor(
         inputView.onFocusChangeListener = this
         inputView.transformationMethod = PasswordTransformationMethod.getInstance()
         inputView.filters = arrayOf(PasswordInputFilter())
+        inputView.onEditorAction(EditorInfo.IME_ACTION_DONE)
+        inputView.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                doOnDone?.invoke()
+                true
+            } else {
+                false
+            }
+        }
 
         setOnClickListener {
             inputView.focusWithKeyboard()

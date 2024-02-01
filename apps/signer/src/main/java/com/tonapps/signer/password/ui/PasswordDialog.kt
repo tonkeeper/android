@@ -1,8 +1,10 @@
 package com.tonapps.signer.password.ui
 
 import android.content.Context
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.BuildConfig
 import com.tonapps.signer.R
@@ -22,6 +24,7 @@ import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.java.KoinJavaComponent.inject
 import uikit.base.BaseDialog
+import uikit.extensions.doOnBottomInsetsChanged
 import uikit.widget.HeaderView
 import javax.crypto.SecretKey
 
@@ -42,6 +45,7 @@ class PasswordDialog(
         if (!BuildConfig.DEBUG) {
             window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
+        window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 
         setContentView(R.layout.dialog_password)
 
@@ -53,6 +57,11 @@ class PasswordDialog(
 
         passwordView = findViewById(R.id.password)
         passwordView.doOnPassword = ::getPrivateKey
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        rootView.visibility = if (hasFocus) View.VISIBLE else View.INVISIBLE
     }
 
     private fun getPrivateKey(password: CharArray) {

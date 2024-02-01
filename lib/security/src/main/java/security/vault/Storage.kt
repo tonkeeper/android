@@ -1,5 +1,6 @@
 package security.vault
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import security.Security
 import security.atomicRead
@@ -30,10 +31,14 @@ internal class Storage(
 
     fun get(id: Long, secret: SecretKey): ByteArray {
         val iv = getIv(id) ?: throw IllegalStateException("iv is empty")
-        val encrypted = getBody(id) ?: throw IllegalStateException("body is empty")
+        val encrypted = getBody(id)
+        if (encrypted == null) {
+            iv.clear()
+            throw IllegalStateException("encrypted is empty")
+        }
         val data = secret.decrypt(iv, encrypted)
-        encrypted.clear()
-        return data
+        clear(iv, encrypted)
+        return data ?: throw IllegalStateException("data is empty")
     }
 
     fun put(secret: SecretKey, id: Long, data: ByteArray) {
@@ -42,8 +47,12 @@ internal class Storage(
         } else {
             val iv = Security.randomBytes(IV_SIZE)
             val encrypted = secret.encrypt(iv, data)
-            setIvAndBody(id, iv, encrypted)
             data.clear()
+            if (encrypted == null) {
+                clear(iv)
+                throw IllegalStateException("encrypted is empty")
+            }
+            setIvAndBody(id, iv, encrypted)
         }
     }
 
@@ -55,17 +64,19 @@ internal class Storage(
         return prefs.getByteArray(wrapBodyKey(id))
     }
 
+    @SuppressLint("ApplySharedPref")
     private fun delete(id: Long) {
         prefs.edit()
             .remove(wrapIvKey(id))
             .remove(wrapBodyKey(id))
-            .apply()
+            .commit()
     }
 
+    @SuppressLint("ApplySharedPref")
     private fun setIvAndBody(id: Long, iv: ByteArray, body: ByteArray) {
         prefs.edit()
             .putByteArray(wrapIvKey(id), iv)
             .putByteArray(wrapBodyKey(id), body)
-            .apply()
+            .commit()
     }
 }

@@ -1,4 +1,4 @@
-package uikit.popup
+package com.tonkeeper.popup
 
 import android.content.Context
 import android.graphics.drawable.Drawable
@@ -11,7 +11,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.facebook.drawee.view.SimpleDraweeView
-import uikit.R
+import com.tonapps.tonkeeperx.R
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getDrawable
@@ -46,7 +46,7 @@ open class ActionSheet(
 
     init {
         contentView = context.inflate(R.layout.action_sheet_base)
-        contentView.round(context.getDimensionPixelSize(R.dimen.cornerMedium))
+        contentView.round(context.getDimensionPixelSize(uikit.R.dimen.cornerMedium))
         container = contentView.findViewById(R.id.action_sheet_content)
         width = 196.dp
         isOutsideTouchable = true
@@ -90,7 +90,7 @@ open class ActionSheet(
     private fun buildView() {
         container.removeAllViews()
 
-        val backgroundColor = context.getColor(R.color.backgroundContentTint)
+        val backgroundColor = context.getColor(uikit.R.color.backgroundContentTint)
         var popupHeight = 0
 
         for ((index, item) in items.withIndex()) {

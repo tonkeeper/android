@@ -51,7 +51,7 @@ android {
 }
 
 dependencies {
-    "baselineProfile"(project(":baselineprofile"))
+    "baselineProfile"(project(":baselineprofile:x"))
 
     implementation(Libs.AndroidX.core)
     implementation(Libs.AndroidX.appCompat)

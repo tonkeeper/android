@@ -7,6 +7,8 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.cell.Cell
 import org.ton.mnemonic.Mnemonic
 import security.clear
+import security.decrypt
+import security.safeDestroy
 import security.vault.Vault
 import security.vault.getString
 import security.vault.putString
@@ -21,10 +23,13 @@ class SignerVault(
 
     fun setMnemonic(secret: SecretKey, id: Long, mnemonic: List<String>) {
         putString(secret, id, mnemonic.joinToString(","))
+        secret.safeDestroy()
     }
 
     fun getMnemonic(secret: SecretKey, id: Long): List<String> {
-        return getString(secret, id).split(",")
+        val list = getString(secret, id).split(",")
+        secret.safeDestroy()
+        return list
     }
 
     fun getPrivateKey(secret: SecretKey, id: Long): PrivateKeyEd25519 {

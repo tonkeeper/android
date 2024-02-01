@@ -1,16 +1,15 @@
 package security.vault
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import security.Security
-import security.atomicWrite
 import security.clear
 import security.decrypt
 import security.encrypt
 import security.getByteArray
 import security.putByteArray
+import security.safeDestroy
 import security.spec.SimpleSecretSpec
-import security.tryCallGC
-import java.io.File
 import javax.crypto.SecretKey
 
 internal class MasterKey(
@@ -25,59 +24,77 @@ internal class MasterKey(
         private const val IV_KEY = "master_iv"
     }
 
-    fun getSecret(passwordSecret: SecretKey): SecretKey {
-        val iv = getIv() ?: throw IllegalStateException("IV is not set")
-        val encrypted = getBody()
-        val key = passwordSecret.decrypt(iv, encrypted)
-        passwordSecret.destroy()
-        val secret = SimpleSecretSpec(key)
-        iv.clear()
-        encrypted.clear()
-        return secret
-    }
+    internal fun getSecret(passwordSecret: SecretKey): SecretKey? {
+        val secretKey = runCatching {
+            val iv = prefs.getByteArray(IV_KEY) ?: throw Exception("No iv")
+            val encrypted = prefs.getByteArray(BODY_KEY)
+            if (encrypted == null) {
+                clear(iv)
+                throw Exception("No body")
+            }
 
-    fun newSecret(passwordSecret: SecretKey): SecretKey {
-        val secretKey = Security.generatePrivateKey(KEY_SIZE)
-        val iv = Security.randomBytes(IV_SIZE)
+            val key = passwordSecret.decrypt(iv, encrypted)
+            clear(iv, encrypted)
+            if (key == null) {
+                throw Exception("Failed to decrypt")
+            }
 
-        val encrypted = passwordSecret.encrypt(iv, secretKey.encoded)
-        passwordSecret.destroy()
-
-        put(iv, encrypted)
-
+            SimpleSecretSpec(key)
+        }.getOrNull()
+        passwordSecret.safeDestroy()
         return secretKey
     }
 
-    fun reEncryptSecret(oldPasswordSecret: SecretKey, newPasswordSecret: SecretKey) {
-        val masterSecret = getSecret(oldPasswordSecret)
+    internal fun newSecret(passwordSecret: SecretKey): SecretKey? {
+        val secretKey = Security.generatePrivateKey(KEY_SIZE)
+        val secretEncoded = secretKey.encoded
         val iv = Security.randomBytes(IV_SIZE)
 
-        val encrypted = newPasswordSecret.encrypt(iv, masterSecret.encoded)
-        newPasswordSecret.destroy()
+        val encrypted = passwordSecret.encrypt(iv, secretEncoded)
+        passwordSecret.safeDestroy()
+        secretEncoded.clear()
+
+        if (encrypted == null) {
+            secretKey.safeDestroy()
+            clear(iv)
+            return null
+        }
 
         put(iv, encrypted)
-
-        tryCallGC()
+        return secretKey
     }
 
+    internal fun reEncryptSecret(oldPasswordSecret: SecretKey, newPasswordSecret: SecretKey): Boolean {
+        val currentSecret = getSecret(oldPasswordSecret)
+        if (currentSecret == null) {
+            newPasswordSecret.safeDestroy()
+            return false
+        }
+
+        val currentSecretEncoded = currentSecret.encoded
+        val newIv = Security.randomBytes(IV_SIZE)
+
+        val encrypted = newPasswordSecret.encrypt(newIv, currentSecretEncoded)
+
+        newPasswordSecret.safeDestroy()
+        currentSecretEncoded.clear()
+
+        if (encrypted == null) {
+            newIv.clear()
+            return false
+        }
+
+        put(newIv, encrypted)
+        return true
+    }
+
+    @SuppressLint("ApplySharedPref")
     private fun put(iv: ByteArray, encrypted: ByteArray) {
-        putIv(iv)
-        saveBody(encrypted)
-    }
+        prefs.edit()
+            .putByteArray(IV_KEY, iv)
+            .putByteArray(BODY_KEY, encrypted)
+            .commit()
 
-    private fun getIv(): ByteArray? {
-        return prefs.getByteArray(IV_KEY)
-    }
-
-    private fun putIv(iv: ByteArray) {
-        prefs.edit().putByteArray(IV_KEY, iv).apply()
-    }
-
-    private fun getBody(): ByteArray {
-        return prefs.getByteArray(BODY_KEY) ?: throw IllegalStateException("Body is not set")
-    }
-
-    private fun saveBody(encrypted: ByteArray) {
-        prefs.edit().putByteArray(BODY_KEY, encrypted).apply()
+        clear(iv, encrypted)
     }
 }

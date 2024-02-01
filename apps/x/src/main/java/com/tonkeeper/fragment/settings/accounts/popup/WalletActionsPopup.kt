@@ -7,7 +7,7 @@ import com.tonkeeper.App
 import com.tonkeeper.dialog.LogoutDialog
 import com.tonkeeper.dialog.WalletRenameDialog
 import com.tonkeeper.fragment.settings.accounts.list.item.AccountsWalletItem
-import uikit.popup.ActionSheet
+import com.tonkeeper.popup.ActionSheet
 
 class WalletActionsPopup(context: Context): ActionSheet(context) {
 

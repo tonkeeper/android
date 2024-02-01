@@ -6,7 +6,7 @@ import com.tonkeeper.api.parsedBalance
 import core.formatter.CurrencyFormatter
 import io.tonapi.models.JettonBalance
 import uikit.extensions.textWithLabel
-import uikit.popup.ActionSheet
+import com.tonkeeper.popup.ActionSheet
 
 class SelectTokenPopup(context: Context): ActionSheet(context) {
 

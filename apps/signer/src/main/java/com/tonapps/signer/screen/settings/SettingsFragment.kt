@@ -9,6 +9,7 @@ import androidx.core.widget.NestedScrollView
 import com.tonapps.signer.BuildConfig
 import com.tonapps.signer.R
 import com.tonapps.signer.screen.change.ChangeFragment
+import com.tonapps.signer.screen.debug.DebugFragment
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
@@ -43,6 +44,9 @@ class SettingsFragment: BaseFragment(R.layout.fragment_settings), BaseFragment.S
 
         versionView = view.findViewById(R.id.version)
         versionView.text = getString(R.string.version, BuildConfig.VERSION_NAME)
+        versionView.setOnClickListener {
+            navigation?.add(DebugFragment.newInstance())
+        }
     }
 
     private fun openSupport() {

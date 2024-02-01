@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.tonkeeper.baselineprofile"
+    namespace = Build.namespacePrefix("x.baselineprofile")
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = Build.minSdkVersion
+        minSdk = 28
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

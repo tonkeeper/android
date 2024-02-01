@@ -18,13 +18,16 @@ rootProject.name = "TON Apps"
 include(":apps:x")
 include(":apps:signer")
 
+include(":baselineprofile:x")
+include(":baselineprofile:signer")
+
 include(":network")
 include(":qr")
 include(":ton")
 include(":core")
 include(":tonapi")
 include(":localization")
-include(":baselineprofile")
+
 
 include(":ui:uikit")
 include(":ui:shimmer")

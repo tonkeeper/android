@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
 import security.vault.safeArea
+import java.util.concurrent.atomic.AtomicLong
 import javax.crypto.SecretKey
 
 object Password {
@@ -21,21 +22,23 @@ object Password {
     private const val MIN_LENGTH = 4
     private const val UNLOCK_TIMEOUT = 60000L
 
-    private var unlockTime = -1L
+    private var unlockTime = AtomicLong(0)
 
     fun isValid(value: CharArray): Boolean {
         return value.size >= MIN_LENGTH
     }
 
     fun setUnlock() {
-        unlockTime = System.currentTimeMillis()
+        val time = System.currentTimeMillis()
+        unlockTime.set(time)
     }
 
     fun isUnlocked(): Boolean {
-        if (0 >= unlockTime) {
+        val time = unlockTime.get()
+        if (0 >= time) {
             return false
         }
-        return unlockTime + UNLOCK_TIMEOUT > System.currentTimeMillis()
+        return time + UNLOCK_TIMEOUT > System.currentTimeMillis()
     }
 
     fun authenticate(context: Context): Flow<SecretKey> = callbackFlow {

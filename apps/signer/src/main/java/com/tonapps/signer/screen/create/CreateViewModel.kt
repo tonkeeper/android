@@ -1,11 +1,13 @@
 package com.tonapps.signer.screen.create
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.password.Password
+import com.tonapps.signer.screen.crash.CrashActivity
 import com.tonapps.signer.screen.create.pager.PageType
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.mnemonic.Mnemonic
+import security.tryCallGC
 import javax.crypto.SecretKey
 
 class CreateViewModel(
@@ -100,6 +103,7 @@ class CreateViewModel(
             try {
                 val name = args.name ?: throw IllegalStateException("Name is null")
                 val secret = masterSecret(context).single()
+                Password.setUnlock()
 
                 if (import) {
                     val mnemonic = args.mnemonic ?: throw IllegalStateException("Mnemonic is null")
@@ -108,7 +112,6 @@ class CreateViewModel(
                     createNewKey(secret, name)
                 }
 
-                Password.setUnlock()
                 _onReady.trySend(Unit)
             } catch (e: Throwable) {
                 _currentPage.tryEmit(pages.first())
@@ -141,6 +144,7 @@ class CreateViewModel(
         val entity = keyRepository.addKey(name, publicKey)
 
         vault.setMnemonic(secret, entity.id, mnemonic)
+        tryCallGC()
     }
 
     fun prev(): Boolean {

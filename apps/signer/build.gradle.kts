@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("androidx.baselineprofile")
 }
 
 android {
@@ -15,6 +16,12 @@ android {
         versionName = "0.0.4"
     }
 
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
+
+    // experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
+
     buildFeatures {
         buildConfig = true
     }
@@ -23,15 +30,19 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = false
+            isJniDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "ENVIRONMENT", "\"\"")
         }
 
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            buildConfigField("String", "ENVIRONMENT", "\"dev\"")
         }
     }
 
@@ -43,9 +54,16 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    packaging {
+        resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
+    }
 }
 
 dependencies {
+    implementation(Libs.AndroidX.profileinstaller)
+    "baselineProfile"(project(":baselineprofile:signer"))
+
     implementation(Libs.AndroidX.core)
     implementation(Libs.AndroidX.appCompat)
     implementation(Libs.AndroidX.activity)
@@ -64,13 +82,11 @@ dependencies {
 
     implementation(project(Libs.Module.uiKit)) {
         exclude("com.airbnb.android", "lottie")
-        // exclude("com.facebook.fresco", "fresco")
+        exclude("com.facebook.fresco", "fresco")
     }
 
     implementation(project(Libs.Module.qr))
-
     implementation(project(Libs.Module.security))
-    
     implementation(Libs.Koin.core)
 }
 

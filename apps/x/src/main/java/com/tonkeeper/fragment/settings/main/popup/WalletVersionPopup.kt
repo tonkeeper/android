@@ -3,7 +3,7 @@ package com.tonkeeper.fragment.settings.main.popup
 import android.content.Context
 import androidx.collection.ArrayMap
 import ton.contract.WalletVersion
-import uikit.popup.ActionSheet
+import com.tonkeeper.popup.ActionSheet
 
 class WalletVersionPopup(
     context: Context,

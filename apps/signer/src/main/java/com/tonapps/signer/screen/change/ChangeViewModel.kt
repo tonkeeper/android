@@ -91,10 +91,9 @@ class ChangeViewModel(
                 return@launch
             }
 
-            try {
-                vault.changePassword(newPassword, password)
+            if (vault.changePassword(newPassword, password)) {
                 _onReady.trySend(Unit)
-            } catch (e: Throwable) {
+            } else {
                 _uiState.value = UiState.Task(SimpleState.Error, CURRENT_INDEX)
                 delay(500)
                 setCurrentPage(CURRENT_INDEX)

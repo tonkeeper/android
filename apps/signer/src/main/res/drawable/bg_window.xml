@@ -3,9 +3,4 @@
     <item>
         <color android:color="#10161F" />
     </item>
-    <item
-        android:width="128dp"
-        android:height="128dp"
-        android:gravity="center"
-        android:drawable="@mipmap/ic_launcher"/>
 </layer-list>

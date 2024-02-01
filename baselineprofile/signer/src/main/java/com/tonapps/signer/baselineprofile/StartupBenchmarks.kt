@@ -1,4 +1,4 @@
-package com.tonkeeper.baselineprofile
+package com.tonapps.signer.baselineprofile
 
 import androidx.benchmark.macro.BaselineProfileMode
 import androidx.benchmark.macro.CompilationMode
@@ -28,7 +28,7 @@ class StartupBenchmarks {
 
     private fun benchmark(compilationMode: CompilationMode) {
         rule.measureRepeated(
-            packageName = "com.tonapps.tonkeeperx",
+            packageName = "com.tonapps.signer",
             metrics = listOf(StartupTimingMetric()),
             compilationMode = compilationMode,
             startupMode = StartupMode.COLD,

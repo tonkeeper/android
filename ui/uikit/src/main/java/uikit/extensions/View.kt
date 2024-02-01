@@ -5,6 +5,7 @@ import android.graphics.Outline
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
@@ -277,6 +278,9 @@ val NestedScrollView.verticalScrolled: Flow<Boolean>
 inline fun View.doOnBottomInsetsChanged(crossinline block: (offset: Int, fraction: Float) -> Unit) {
     val callback = object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_STOP) {
 
+        private val isVisible: Boolean
+            get() = isAttachedToWindow && isShown && windowVisibility == View.VISIBLE
+
         override fun onProgress(insets: WindowInsetsCompat, runningAnimations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat {
             val animation = findAnimation(runningAnimations) ?: return insets
             updateInsets(insets, animation)
@@ -284,6 +288,8 @@ inline fun View.doOnBottomInsetsChanged(crossinline block: (offset: Int, fractio
         }
 
         private fun findAnimation(animations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsAnimationCompat? {
+            if (!isVisible) return null
+
             val animation = animations.find {
                 it.typeMask == WindowInsetsCompat.Type.ime() ||
                 it.typeMask == WindowInsetsCompat.Type.navigationBars() ||
@@ -301,15 +307,17 @@ inline fun View.doOnBottomInsetsChanged(crossinline block: (offset: Int, fractio
 
         override fun onPrepare(animation: WindowInsetsAnimationCompat) {
             super.onPrepare(animation)
-
             ViewCompat.getRootWindowInsets(this@doOnBottomInsetsChanged)?.let {
                 updateInsets(it, animation)
             }
         }
 
         private fun updateInsets(insets: WindowInsetsCompat, animation: WindowInsetsAnimationCompat) {
-            val bottom = insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.systemBars()).bottom
-            block(bottom, animation.interpolatedFraction)
+            if (isVisible) {
+                Log.d("PasswordDialogLog", "updateInsets: ${insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.systemBars())}")
+                val bottom = insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.systemBars()).bottom
+                block(bottom, animation.interpolatedFraction)
+            }
         }
     }
 

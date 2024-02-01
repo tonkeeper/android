@@ -1,4 +1,4 @@
-package com.tonkeeper.baselineprofile
+package com.tonapps.signer.baselineprofile
 
 import androidx.benchmark.macro.junit4.BaselineProfileRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,7 +16,7 @@ class BaselineProfileGenerator {
 
     @Test
     fun generate() {
-        rule.collect("com.tonapps.tonkeeperx") {
+        rule.collect("com.tonapps.signer") {
             pressHome()
             startActivityAndWait()
         }

@@ -3,16 +3,21 @@ package com.tonapps.signer.screen.camera
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Button
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.camera.core.TorchState
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.tonapps.signer.Key
 import com.tonapps.signer.R
-import com.tonapps.signer.deeplink.DeepLink
+import com.tonapps.signer.extensions.openAppSettings
+import com.tonapps.signer.extensions.uriOrNull
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.screen.root.RootViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -24,6 +29,8 @@ import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import qr.QRImageAnalyzer
+import uikit.extensions.applyBottomInsets
+import uikit.extensions.pinToBottomInsets
 
 class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
@@ -37,22 +44,29 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         if (isGranted) {
             startCamera()
         } else {
-            finish()
+            showPermissionContainer()
         }
     }
 
     private var isFlashAvailable = false
 
     private val qrAnalyzer = QRImageAnalyzer()
+    private val chunks = mutableListOf<String>()
 
+    private lateinit var cameraContainer: View
     private lateinit var headerView: HeaderView
     private lateinit var cameraView: PreviewView
     private lateinit var flashView: AppCompatImageView
+    private lateinit var buttonSettings: Button
+
+    private lateinit var permissionContainer: View
 
     private lateinit var cameraExecutor: ExecutorService
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        cameraContainer = view.findViewById(R.id.camera_container)
+
         headerView = view.findViewById(R.id.header)
         headerView.background = null
         headerView.doOnCloseClick = { finish() }
@@ -60,15 +74,39 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         cameraView = view.findViewById(R.id.camera)
         flashView = view.findViewById(R.id.flash)
 
+        buttonSettings = view.findViewById(R.id.button_settings)
+        buttonSettings.applyBottomInsets()
+        buttonSettings.setOnClickListener {
+            requireContext().openAppSettings()
+            finish()
+        }
+
+        permissionContainer = view.findViewById(R.id.permission_container)
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         qrAnalyzer.flow.onEach(::handleBarcode).launchIn(lifecycleScope)
     }
 
+    private fun showPermissionContainer() {
+        cameraContainer.visibility = View.GONE
+        permissionContainer.visibility = View.VISIBLE
+    }
+
     private fun handleBarcode(barcode: Barcode) {
         val data = barcode.rawValue ?: return
-        if (DeepLink.isSupported(data)) {
-            rootViewModel.processUri(data, true)
+
+        if (data.startsWith("${Key.SCHEME}://")) {
+            if (chunks.size > 0) {
+                chunks.clear()
+            }
+            chunks.add(data)
+        } else if (chunks.size > 0 && !data.startsWith("${Key.SCHEME}://")) {
+            chunks.add(data)
+        }
+
+        val uri = chunks.joinToString("").uriOrNull ?: return
+        if (rootViewModel.processDeepLink(uri, false)) {
             finish()
         }
     }
@@ -122,6 +160,8 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
     private fun checkAndStartCamera() {
         if (hasPermission(android.Manifest.permission.CAMERA)) {
             startCamera()
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), android.Manifest.permission.CAMERA)) {
+            showPermissionContainer()
         } else {
             Password.setUnlock()
             activityResultLauncher.launch(android.Manifest.permission.CAMERA)

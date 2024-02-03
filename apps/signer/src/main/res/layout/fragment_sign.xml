@@ -83,6 +83,8 @@
                 android:textSize="14sp"
                 android:fontFamily="@font/roboto_mono"
                 android:textColor="@color/textPrimary"
+                android:maxLines="6"
+                android:scrollbars="vertical"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

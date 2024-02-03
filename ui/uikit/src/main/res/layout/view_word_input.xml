@@ -18,7 +18,7 @@
         android:layout_gravity="center"
         android:layout_marginHorizontal="12dp"
         android:maxLines="1"
-        android:digits="abcdefghijklmnopqrstuvwxyz,. "
+        android:digits="abcdefghijklmnopqrstuvwxyz"
         android:singleLine="true"
         android:textCursorDrawable="@drawable/cursor"
         android:lines="1"

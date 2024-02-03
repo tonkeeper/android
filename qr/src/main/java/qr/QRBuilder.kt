@@ -17,9 +17,9 @@ class QRBuilder(
 
     private companion object {
         private const val fillColor = Color.BLACK
-        private const val backgroundColor = Color.WHITE
     }
 
+    private var backgroundColor = Color.WHITE
     private var withCutout = false
     private var cornerSquareSize = 0
     private var cutoutFirstBlock = 0
@@ -27,6 +27,11 @@ class QRBuilder(
 
     fun setWithCutout(withCutout: Boolean): QRBuilder {
         this.withCutout = withCutout
+        return this
+    }
+
+    fun setColor(backgroundColor: Int): QRBuilder {
+        this.backgroundColor = backgroundColor
         return this
     }
 

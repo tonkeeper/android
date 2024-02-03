@@ -41,8 +41,9 @@ class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
     }
 
     private lateinit var contentView: View
-    private lateinit var passwordInput: PasswordInputView
     private lateinit var titleView: AppCompatTextView
+    private lateinit var limitView: View
+    private lateinit var passwordInput: PasswordInputView
     private lateinit var doneButton: Button
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -56,6 +57,11 @@ class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
             titleView.setText(R.string.re_enter_password)
         } else {
             titleView.setText(R.string.create_password)
+        }
+
+        limitView = view.findViewById(R.id.limit)
+        if (isRepeat) {
+            limitView.visibility = View.GONE
         }
 
         doneButton = view.findViewById(R.id.done)

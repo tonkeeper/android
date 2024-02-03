@@ -32,12 +32,16 @@
         <qr.QRView
             android:id="@+id/qr"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:color="@color/constantPistachio"/>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
             android:textSize="14sp"
+            android:textAllCaps="true"
             android:fontFamily="@font/roboto_mono"
             android:textColor="@color/constantBlack"
             android:text="@string/signed_transaction"/>
@@ -46,9 +50,11 @@
             android:id="@+id/label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
             android:layout_marginTop="@dimen/offsetExtraSmall"
             android:singleLine="true"
             android:textSize="14sp"
+            android:textAllCaps="true"
             android:fontFamily="@font/roboto_mono"
             android:textColor="@color/constantBlack"/>
 

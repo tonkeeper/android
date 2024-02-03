@@ -2,6 +2,7 @@ package uikit.widget.password
 
 import android.content.Context
 import android.os.Build
+import android.text.Editable
 import android.util.AttributeSet
 import androidx.annotation.RequiresApi
 import androidx.appcompat.R
@@ -20,6 +21,10 @@ class PasswordEditText @JvmOverloads constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     override fun getAutofillType(): Int {
         return AUTOFILL_TYPE_NONE
+    }
+
+    fun clear() {
+        text = Editable.Factory.getInstance().newEditable("")
     }
 
     fun getPassword(): CharArray {

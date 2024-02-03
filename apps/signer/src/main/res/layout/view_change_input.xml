@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:paddingStart="@dimen/offsetLarge"
+    android:paddingEnd="@dimen/offsetLarge">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
         android:textAppearance="@style/TextAppearance.H2"
         android:textColor="@color/textPrimary"
         android:gravity="center"/>
@@ -16,7 +17,16 @@
         android:id="@+id/password"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
         android:layout_marginTop="@dimen/offsetLarge"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/limit"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:visibility="gone"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="@color/textSecondary"
+        android:text="@string/password_limit"/>
 
 </uikit.widget.ColumnLayout>

@@ -1,4 +1,4 @@
-package ton.contract
+package com.tonapps.signer.ton.contract
 
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.MessageRelaxed
@@ -12,7 +12,7 @@ import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
 
 open class WalletV3R1Contract(
-    workchain: Int,
+    workchain: Int = DEFAULT_WORKCHAIN,
     publicKey: PublicKeyEd25519,
 ) : BaseWalletContract(workchain, publicKey) {
 

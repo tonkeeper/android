@@ -3,15 +3,19 @@ package com.tonapps.signer.extensions
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Build
 import android.os.PersistableBundle
-import androidx.security.crypto.EncryptedFile
+import android.provider.Settings
+import androidx.core.content.ContextCompat
 import androidx.security.crypto.EncryptedSharedPreferences
 import com.tonapps.signer.R
 import security.KeyHelper
 import uikit.HapticHelper
 import uikit.navigation.Navigation.Companion.navigation
+
 
 fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
@@ -51,4 +55,11 @@ fun Context.securePrefs(name: String): SharedPreferences {
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
+}
+
+fun Context.openAppSettings() {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+    intent.setData(Uri.fromParts("package", packageName, null))
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    startActivity(intent)
 }

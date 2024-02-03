@@ -23,13 +23,18 @@
     <string name="password_changed">Пароль изменен</string>
     <string name="add_key">Добавить ключ</string>
     <string name="settings">Настройки</string>
-    <string name="key_export_qr_title">Экспорт на другое устройство</string>
+    <string name="wrong_url">Неверный URL</string>
+    <string name="unknown_error">Неизвестная ошибка</string>
+    <string name="key_export_qr_title">Экспортировать на другое устройство</string>
     <string name="key_export_qr_subtitle">Открыть Tonkeeper » Импортировать Существующий Кошелек » Подключить Signer</string>
+    <string name="key_export_tonkeeper">Экспорт в Тонкипер</string>
+    <string name="key_export_tonkeeper_web">Экспорт в Tonkeeper Web</string>
+    <string name="open_settings">Открыть Настройки</string>
+    <string name="camera_permission">Включите доступ к камере, чтобы можно было сканировать QR-коды.</string>
 
     <string name="add_key_subtitle">Создайте новый ключ или добавьте существующий.</string>
 
-    <string name="key_export_local_title">Экспорт в Tonkeeper на этом устройстве</string>
-    <string name="key_export_local_subtitle">Tonkeeper должен быть установлен</string>
+    <string name="password_limit">Минимум 4 символа</string>
 
     <string name="hex_address">Hex адрес</string>
     <string name="recover_phrase">Фраза восстановления</string>

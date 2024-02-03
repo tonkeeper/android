@@ -24,6 +24,16 @@ object TonkeeperApp {
         return builder.build()
     }
 
+    fun buildExportUriWeb(publicKey: PublicKeyEd25519, name: String): Uri {
+        val builder = Uri.Builder()
+        builder.scheme("https://")
+        builder.authority("wallet.tonkeeper.com")
+        builder.path("/signer")
+        builder.appendQueryParameter("pk", publicKey.base64())
+        builder.appendQueryParameter("name", name)
+        return builder.build()
+    }
+
     fun openOrInstall(context: Context, uri: Uri) {
         try {
             openUri(context, uri)

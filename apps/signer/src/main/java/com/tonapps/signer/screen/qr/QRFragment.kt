@@ -1,10 +1,12 @@
 package com.tonapps.signer.screen.qr
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.core.entities.KeyEntity
 import com.tonapps.signer.core.repository.KeyRepository
@@ -22,21 +24,18 @@ class QRFragment: BaseFragment(R.layout.fragment_qr), BaseFragment.Modal {
 
     companion object {
 
-        private const val ID_KEY = "id"
-        private const val BODY_KEY = "body"
-
         fun newInstance(id: Long, body: String): QRFragment {
             val fragment = QRFragment()
             fragment.arguments = Bundle().apply {
-                putLong(ID_KEY, id)
-                putString(BODY_KEY, body)
+                putLong(Key.ID, id)
+                putString(Key.BODY, body)
             }
             return fragment
         }
     }
 
-    private val id: Long by lazy { requireArguments().getLong(ID_KEY) }
-    private val body: String by lazy { requireArguments().getString(BODY_KEY)!! }
+    private val id: Long by lazy { requireArguments().getLong(Key.ID) }
+    private val body: String by lazy { requireArguments().getString(Key.BODY)!! }
     private val keyRepository: KeyRepository by inject()
 
     private lateinit var headerView: HeaderView
@@ -57,7 +56,7 @@ class QRFragment: BaseFragment(R.layout.fragment_qr), BaseFragment.Modal {
         contentView.background = QRBackground(requireContext())
 
         qrView = view.findViewById(R.id.qr)
-        qrView.content = body
+        qrView.setContent(body)
 
         labelView = view.findViewById(R.id.label)
 

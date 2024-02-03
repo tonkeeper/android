@@ -4,51 +4,60 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/camera"
-        android:background="@color/constantBlack"
+    <FrameLayout
+        android:id="@+id/camera_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:implementationMode="compatible"/>
+        android:layout_height="match_parent">
 
-    <uikit.widget.CameraOverlayView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        <androidx.camera.view.PreviewView
+            android:id="@+id/camera"
+            android:background="@color/constantBlack"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:implementationMode="compatible"/>
 
-    <uikit.widget.HeaderView
-        android:id="@+id/header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:ignoreSystemOffset="true"
-        android:icon="@drawable/ic_chevron_down_16"/>
+        <uikit.widget.CameraOverlayView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
-        android:orientation="vertical">
-
-        <uikit.widget.TextHeaderView
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:title="@string/scan_qr_code"
-            android:description="@string/scan_qr_code_subtitle"/>
+            app:ignoreSystemOffset="true"
+            android:icon="@drawable/ic_chevron_down_16"/>
 
-        <uikit.widget.SquareImageView
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginVertical="@dimen/offsetLarge"/>
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/flash"
-            android:layout_width="@dimen/itemHeight"
-            android:layout_height="@dimen/itemHeight"
-            android:background="@drawable/bg_oval"
-            android:backgroundTint="#14ffffff"
             android:layout_gravity="center"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_flash"/>
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:orientation="vertical">
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+            <uikit.widget.TextHeaderView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/scan_qr_code"
+                android:description="@string/scan_qr_code_subtitle"/>
+
+            <uikit.widget.SquareImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/offsetLarge"/>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/flash"
+                android:layout_width="@dimen/itemHeight"
+                android:layout_height="@dimen/itemHeight"
+                android:background="@drawable/bg_oval"
+                android:backgroundTint="#14ffffff"
+                android:layout_gravity="center"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_flash"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </FrameLayout>
+
+    <include layout="@layout/fragment_camera_permission"/>
 </FrameLayout>

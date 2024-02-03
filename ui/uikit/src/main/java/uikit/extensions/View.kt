@@ -23,6 +23,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.marginBottom
 import androidx.core.widget.NestedScrollView
 import androidx.core.widget.NestedScrollView.OnScrollChangeListener
 import androidx.recyclerview.widget.RecyclerView
@@ -314,7 +315,6 @@ inline fun View.doOnBottomInsetsChanged(crossinline block: (offset: Int, fractio
 
         private fun updateInsets(insets: WindowInsetsCompat, animation: WindowInsetsAnimationCompat) {
             if (isVisible) {
-                Log.d("PasswordDialogLog", "updateInsets: ${insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.systemBars())}")
                 val bottom = insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.systemBars()).bottom
                 block(bottom, animation.interpolatedFraction)
             }
@@ -327,5 +327,13 @@ inline fun View.doOnBottomInsetsChanged(crossinline block: (offset: Int, fractio
 fun View.pinToBottomInsets() {
     doOnBottomInsetsChanged { offset, _ ->
         translationY = -offset.toFloat()
+    }
+}
+
+fun View.applyBottomInsets() {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
+        val bottom = insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.systemBars()).bottom
+        view.translationY = -bottom.toFloat()
+        insets
     }
 }

@@ -21,6 +21,6 @@ val koinModel = module {
     viewModel { parameters -> CreateViewModel(import = parameters.get(), get(), get(), get()) }
     viewModel { MainViewModel(get()) }
     viewModel { parameters -> KeyViewModel(id = parameters.get(), get(), get()) }
-    viewModel { parameters -> SignViewModel(id = parameters.get(), boc = parameters.get(), get(), get()) }
+    viewModel { parameters -> SignViewModel(id = parameters.get(), unsignedBody = parameters.get(), v = parameters.get(),get(), get()) }
     viewModel { ChangeViewModel(get(), get()) }
 }

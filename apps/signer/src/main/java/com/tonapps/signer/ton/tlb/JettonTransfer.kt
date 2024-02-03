@@ -1,4 +1,4 @@
-package com.tonapps.signer.tlb
+package com.tonapps.signer.ton.tlb
 
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt

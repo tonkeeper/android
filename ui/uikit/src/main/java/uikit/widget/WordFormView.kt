@@ -15,7 +15,9 @@ class WordFormView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : ColumnLayout(context, attrs, defStyle) {
 
-    private val count = 24
+    private companion object {
+        private const val count = 24
+    }
 
     private val inputLayoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).also {
         it.bottomMargin = context.getDimensionPixelSize(R.dimen.offsetMedium)
@@ -34,7 +36,7 @@ class WordFormView @JvmOverloads constructor(
             view.doOnFocus = { focused ->
                 if (view.text.isEmpty()) {
                     view.setError(false)
-                } else if (!focused && !isValidValue(view.text)) {
+                } else if (!focused && !isValidAndNotRepeat(i, view.text)) {
                     view.setError(true)
                 }
             }
@@ -54,11 +56,26 @@ class WordFormView @JvmOverloads constructor(
     }
 
     private fun isValidValue(word: String): Boolean {
-        val value = word.trim()
-        if (value.isBlank()) {
+        if (word.isBlank()) {
             return false
         }
-        return isValidValue?.invoke(value) ?: true
+        return isValidValue?.invoke(word) ?: true
+    }
+
+    private fun isValidAndNotRepeat(index: Int, word: String): Boolean {
+        if (!isValidValue(word)) {
+            return false
+        }
+        for (i in 0 until count) {
+            if (i == index) {
+                continue
+            }
+            val input = getInput(i)
+            if (input.text == word) {
+                return false
+            }
+        }
+        return true
     }
 
     private fun checkWords(text: String) {
@@ -102,7 +119,7 @@ class WordFormView @JvmOverloads constructor(
     }
 
     fun getLastEmptyInput(): WordInput? {
-        for (i in count - 1 downTo 0) {
+        for (i in 0 until count) {
             val input = getInput(i)
             if (input.text.isEmpty()) {
                 return input
@@ -146,7 +163,7 @@ class WordFormView @JvmOverloads constructor(
         val words = mutableListOf<String>()
         for (i in 0 until count) {
             val input = getInput(i)
-            val text = input.text.trim()
+            val text = input.text
             if (isValidValue(text)) {
                 words.add(text)
                 input.setError(false)

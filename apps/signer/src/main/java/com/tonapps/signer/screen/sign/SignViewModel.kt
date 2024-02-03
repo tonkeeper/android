@@ -1,34 +1,39 @@
 package com.tonapps.signer.screen.sign
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.extensions.base64
-import com.tonapps.signer.extensions.parseCellOrEmpty
+import com.tonapps.signer.extensions.hex
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.screen.sign.list.SignItem
-import com.tonapps.signer.tlb.JettonTransfer
-import com.tonapps.signer.tlb.NftTransfer
-import com.tonapps.signer.tlb.StringTlbConstructor
+import com.tonapps.signer.ton.contract.BaseWalletContract
+import com.tonapps.signer.ton.tlb.JettonTransfer
+import com.tonapps.signer.ton.tlb.NftTransfer
+import com.tonapps.signer.ton.tlb.StringTlbConstructor
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
+import org.ton.block.AddrNone
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.CommonMsgInfoRelaxed
@@ -39,7 +44,6 @@ import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellType
-import org.ton.contract.wallet.WalletTransferBuilder
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.loadTlb
@@ -48,17 +52,18 @@ import uikit.list.ListCell
 
 class SignViewModel(
     private val id: Long,
-    private val boc: String,
+    private val unsignedBody: Cell,
+    private val v: String,
     private val repository: KeyRepository,
     private val vault: SignerVault,
 ): ViewModel() {
 
-    val keyEntity = repository.getKey(id).filterNotNull()
+    val keyEntity = repository.getKey(id)
+        .filterNotNull()
+        .shareIn(viewModelScope, SharingStarted.Lazily, 1)
 
     private val _actionsFlow = MutableStateFlow<List<SignItem>?>(null)
     val actionsFlow = _actionsFlow.asStateFlow().filterNotNull()
-
-    private val unsignedBody: Cell = boc.parseCellOrEmpty()
 
     init {
         viewModelScope.launch {
@@ -71,6 +76,16 @@ class SignViewModel(
     }.map {
         sign(it).base64()
     }.flowOn(Dispatchers.IO).take(1)
+
+    fun openEmulate() = keyEntity.map {
+        val contract = BaseWalletContract.create(it.publicKey, v)
+        val cell = contract.createTransferMessageCell(contract.address, emptyPrivateKey(), 0, unsignedBody)
+        cell.hex()
+    }.flowOn(Dispatchers.IO).take(1)
+
+    private fun emptyPrivateKey(): PrivateKeyEd25519 {
+        return PrivateKeyEd25519(ByteArray(32))
+    }
 
     private fun sign(privateKey: PrivateKeyEd25519): Cell {
         val data = privateKey.sign(unsignedBody.hash())

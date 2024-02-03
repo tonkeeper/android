@@ -14,6 +14,7 @@ import uikit.extensions.dp
 import uikit.extensions.getDrawable
 import uikit.navigation.Navigation.Companion.navigation
 import com.tonkeeper.popup.ActionSheet
+import uikit.navigation.Navigation
 
 class WalletPickerPopup(
     private val scope: CoroutineScope,
@@ -33,7 +34,7 @@ class WalletPickerPopup(
 
         doOnItemClick = {
             if (it.id == SET_UP_WALLET_ID) {
-                navigation?.add(AccountsScreen.newInstance())
+                context.navigation?.add(AccountsScreen.newInstance())
             } else {
                 setActiveWallet(it.id)
             }
@@ -74,7 +75,7 @@ class WalletPickerPopup(
                 return@launch
             }
             walletManager.setActiveWallet(createDate)
-            navigation?.initRoot(true)
+            context.navigation?.initRoot(true)
         }
     }
 }

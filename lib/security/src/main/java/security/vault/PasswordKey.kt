@@ -2,10 +2,12 @@ package security.vault
 
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
+import android.util.Log
 import security.spec.SimpleSecretSpec
 import security.Security
 import security.clear
 import security.getByteArray
+import security.hex
 import security.putByteArray
 import security.safeDestroy
 import java.security.MessageDigest

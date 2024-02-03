@@ -4,30 +4,29 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.signer.deeplink.DeepLink
-import com.tonapps.signer.SimpleState
+import com.tonapps.signer.Key
 import com.tonapps.signer.core.repository.KeyRepository
+import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.deeplink.entities.SignRequestEntity
-import com.tonapps.signer.extensions.isValidCell
 import com.tonapps.signer.password.Password
+import com.tonapps.signer.screen.key.KeyFragment
 import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import org.ton.api.pub.PublicKeyEd25519
+import org.ton.cell.Cell
+import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
     private val vault: SignerVault,
@@ -60,27 +59,27 @@ class RootViewModel(
         _action.trySend(RootAction.ResponseBoc(boc))
     }
 
-    fun processUri(url: String, qr: Boolean) {
-        processUri(Uri.parse(url), qr)
+    fun processDeepLink(uri: Uri, fromApp: Boolean): Boolean {
+        if (uri.scheme != Key.SCHEME) {
+            return false
+        }
+
+        val returnResult = ReturnResultEntity(fromApp, uri.getQueryParameter("return"))
+
+        val signRequest = SignRequestEntity.safe(uri, returnResult) ?: return false
+
+        signRequest(signRequest)
+        return true
     }
 
-    fun processUri(uri: Uri, qr: Boolean) {
-        if (!DeepLink.isSupported(uri)) {
-            return
-        }
-
-        val signRequest = SignRequestEntity.safe(uri) ?: return
-        if (!signRequest.body.isValidCell) {
-            return
-        }
-
+    private fun signRequest(signRequest: SignRequestEntity) {
         keyRepository.findIdByPublicKey(signRequest.publicKey).onEach { id ->
-            sign(id, signRequest.body, qr)
+            sign(id, signRequest.body, signRequest.v, signRequest.returnResult)
         }.launchIn(viewModelScope)
     }
 
-    private fun sign(id: Long, body: String, qr: Boolean) {
-        _action.trySend(RootAction.RequestBodySign(id, body, qr))
+    private fun sign(id: Long, body: Cell, v: String, returnResult: ReturnResultEntity) {
+        _action.trySend(RootAction.RequestBodySign(id, body, v, returnResult))
     }
 
     override fun onCleared() {

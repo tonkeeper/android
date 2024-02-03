@@ -37,7 +37,7 @@ class WordInput @JvmOverloads constructor(
     var doOnTextChanged: ((String) -> Unit)? = null
 
     var text: String
-        get() = inputEditText.text.toString()
+        get() = inputEditText.text.toString().trim()
         set(value) {
             inputEditText.setText(value)
         }

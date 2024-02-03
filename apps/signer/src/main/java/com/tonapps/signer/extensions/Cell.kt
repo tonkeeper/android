@@ -1,32 +1,39 @@
 package com.tonapps.signer.extensions
 
+import io.ktor.util.encodeBase64
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellSlice
 import org.ton.crypto.base64
+import org.ton.crypto.hex
+
+fun String.toBoc(): BagOfCells {
+    return BagOfCells(base64())
+}
 
 fun String.parseCell(): Cell {
-    return BagOfCells(base64(this)).first()
+    return toBoc().first()
 }
 
 fun String.safeParseCell(): Cell? {
     return try {
         parseCell()
     } catch (e: Throwable) {
-        Cell.empty()
+        null
     }
 }
 
-val String.isValidCell: Boolean
-    get() = safeParseCell() != null
-
-fun String.parseCellOrEmpty(): Cell {
-    return safeParseCell() ?: Cell.empty()
+fun Cell.toByteArray(): ByteArray {
+    return BagOfCells(this).toByteArray()
 }
 
 fun Cell.base64(): String {
-    return base64(BagOfCells(this).toByteArray())
+    return toByteArray().encodeBase64()
+}
+
+fun Cell.hex(): String {
+    return hex(toByteArray())
 }
 
 fun CellSlice.loadRemainingBits(): BitString {

@@ -1,15 +1,19 @@
 package com.tonapps.signer.screen.sign
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
+import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.signer.Key
 import com.tonapps.signer.R
-import com.tonapps.signer.SimpleState
 import com.tonapps.signer.core.entities.KeyEntity
+import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.extensions.authorizationRequiredError
 import com.tonapps.signer.extensions.copyToClipboard
 import com.tonapps.signer.extensions.short4
@@ -22,6 +26,7 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import org.ton.cell.Cell
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
@@ -35,26 +40,18 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
     companion object {
 
-        private const val ID_KEY = "id"
-        private const val BODY_KEY = "body"
-        private const val QR_KEY = "qr"
-
-        fun newInstance(id: Long, body: String, qr: Boolean): SignFragment {
-            val fragment = SignFragment()
-            fragment.arguments = Bundle().apply {
-                putLong(ID_KEY, id)
-                putBoolean(QR_KEY, qr)
-                putString(BODY_KEY, body)
-            }
-            return fragment
+        fun newInstance(
+            id: Long,
+            body: Cell,
+            v: String,
+            returnResult: ReturnResultEntity
+        ) = SignFragment().apply {
+            arguments = SignArgs.bundle(id, body, v, returnResult)
         }
     }
 
-    private val id: Long by lazy { requireArguments().getLong(ID_KEY) }
-    private val body: String by lazy { requireArguments().getString(BODY_KEY)!! }
-    private val qr: Boolean by lazy { requireArguments().getBoolean(QR_KEY) }
-
-    private val signViewModel: SignViewModel by viewModel { parametersOf(id, body) }
+    private val args: SignArgs by lazy { SignArgs(requireArguments()) }
+    private val signViewModel: SignViewModel by viewModel { parametersOf(args.id, args.body, args.v) }
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private val adapter = SignAdapter()
@@ -91,8 +88,12 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         rawView = view.findViewById(R.id.raw)
 
         bocRawView = view.findViewById(R.id.boc_raw)
-        bocRawView.text = body
-        bocRawView.setOnClickListener { copyBody() }
+        bocRawView.text = args.bodyHex
+        bocRawView.movementMethod = ScrollingMovementMethod()
+        bocRawView.setOnLongClickListener {
+            copyBody()
+            true
+        }
 
         emulateButton = view.findViewById(R.id.emulate)
         emulateButton.setOnClickListener { emulateBody() }
@@ -115,23 +116,37 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
     }
 
     private fun copyBody() {
-        requireContext().copyToClipboard(body)
+        requireContext().copyToClipboard(args.bodyHex)
     }
 
     private fun emulateBody() {
+        signViewModel.openEmulate().catch {
+            navigation?.toast(getString(R.string.unknown_error))
+        }.onEach(::openEmulate).launchIn(lifecycleScope)
+    }
+
+    private fun openEmulate(body: String) {
         val uri = Uri.Builder().scheme("https")
             .authority("tonviewer.com")
-            .appendPath(body).build()
-
+            .appendPath("emulate")
+            .appendPath(body)
+            .build()
         navigation?.openURL(uri.toString(), true)
     }
 
     private fun sendSigned(boc: String) {
-        if (qr) {
-            navigation?.add(QRFragment.newInstance(id, boc))
+        val returnResult = args.returnResult
+        if (returnResult.toApp) {
+            rootViewModel.responseSignedBoc(boc)
+        } else if (returnResult.uri != null) {
+            val uriWithBoc = returnResult.uri.buildUpon().appendQueryParameter(Key.BOC, boc).build()
+            val intent = Intent(Intent.ACTION_VIEW, uriWithBoc)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
             finish()
         } else {
-            rootViewModel.responseSignedBoc(boc)
+            navigation?.add(QRFragment.newInstance(args.id, boc))
+            finish()
         }
     }
 

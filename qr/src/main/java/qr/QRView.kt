@@ -3,7 +3,9 @@ package qr
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +20,11 @@ class QRView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : View(context, attrs, defStyle) {
 
+    private companion object {
+        private const val CHUNK_SIZE = 256
+        private const val NEXT_DELAY = 1000L
+    }
+
     var withCutout: Boolean = false
         set(value) {
             if (field != value) {
@@ -26,7 +33,7 @@ class QRView @JvmOverloads constructor(
             }
         }
 
-    var content: String? = null
+    private var chunkIndex = -1
         set(value) {
             if (field != value) {
                 field = value
@@ -34,13 +41,58 @@ class QRView @JvmOverloads constructor(
             }
         }
 
+    private var chunks: List<String> = emptyList()
     private val scope = CoroutineScope(Job() + Dispatchers.Main)
+    private val nextRunnable = Runnable { next() }
 
     private var bitmap: Bitmap? = null
         set(value) {
             field?.recycle()
             field = value
         }
+
+    private val color: Int
+
+    init {
+        context.theme.obtainStyledAttributes(attrs, R.styleable.QRView, 0, 0).apply {
+            try {
+                color = getColor(R.styleable.QRView_android_color, Color.WHITE)
+            } finally {
+                recycle()
+            }
+        }
+    }
+
+    fun setContent(content: String) {
+        val diff = content.length - CHUNK_SIZE
+        chunks = if (diff > 20) {
+            content.chunked(CHUNK_SIZE)
+        } else {
+            listOf(content)
+        }
+
+        chunkIndex = -1
+        next()
+    }
+
+    private fun next() {
+        if (chunks.isEmpty()) {
+            return
+        }
+
+        chunkIndex = (chunkIndex + 1) % chunks.size
+        if (chunks.size == 1) {
+            return
+        }
+
+        startAnimation()
+    }
+
+    private fun startAnimation() {
+        if (isShown && isAttachedToWindow && chunks.size > 1) {
+            postDelayed(nextRunnable, NEXT_DELAY)
+        }
+    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -62,7 +114,8 @@ class QRView @JvmOverloads constructor(
 
     private fun requestUpdateBitmap() {
         if (width != 0) {
-            content?.let { updateBitmap(width - (paddingLeft + paddingRight), it) }
+            val content = chunks.getOrNull(chunkIndex) ?: return
+            updateBitmap(width - (paddingLeft + paddingRight), content)
         }
     }
 
@@ -78,12 +131,19 @@ class QRView @JvmOverloads constructor(
         content: String
     ): Bitmap = withContext(Dispatchers.IO) {
         val builder = QRBuilder(content, size)
+        builder.setColor(color)
         builder.setWithCutout(withCutout)
         builder.build()
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        startAnimation()
+    }
+
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        removeCallbacks(nextRunnable)
         scope.cancel()
         bitmap = null
     }

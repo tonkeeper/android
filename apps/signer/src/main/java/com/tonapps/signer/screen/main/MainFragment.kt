@@ -6,9 +6,11 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.R
 import com.tonapps.signer.screen.key.KeyFragment
 import com.tonapps.signer.screen.main.list.MainAdapter
+import com.tonapps.signer.screen.root.RootViewModel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
@@ -25,7 +27,9 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
     private val mainViewModel: MainViewModel by viewModel()
 
-    private val adapter = MainAdapter { navigation?.add(KeyFragment.newInstance(it)) }
+    private val adapter = MainAdapter {
+        navigation?.add(KeyFragment.newInstance(it))
+    }
 
     private lateinit var headerView: HeaderView
     private lateinit var listView: SimpleRecyclerView

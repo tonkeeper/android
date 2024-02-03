@@ -1,6 +1,7 @@
 package com.tonapps.signer.screen.change
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
@@ -35,6 +36,7 @@ class InputFragment: BaseFragment(R.layout.view_change_input) {
 
     private lateinit var titleView: AppCompatTextView
     private lateinit var passwordInput: PasswordInputView
+    private lateinit var limitView: View
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -49,9 +51,12 @@ class InputFragment: BaseFragment(R.layout.view_change_input) {
             }
         }
 
+        limitView = view.findViewById(R.id.limit)
+
         changeViewModel.uiPageIndex.filter { pageIndex == it }.onEach {
             passwordInput.focusWithKeyboard()
             passwordInput.error = false
+            applyVisibleLimit()
         }.launchIn(lifecycleScope)
 
         changeViewModel.uiState
@@ -92,5 +97,11 @@ class InputFragment: BaseFragment(R.layout.view_change_input) {
             else -> throw IllegalStateException("Unknown page index $pageIndex")
         }
         titleView.setText(titleRes)
+    }
+
+    private fun applyVisibleLimit() {
+        if (pageIndex == 1) {
+            limitView.visibility = View.VISIBLE
+        }
     }
 }

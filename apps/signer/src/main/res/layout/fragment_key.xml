@@ -25,14 +25,21 @@
 
             <include layout="@layout/view_key_export_qr"/>
 
+            <uikit.widget.item.ItemIconView
+                android:id="@+id/export_tonkeeper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:text="@string/key_export_tonkeeper"/>
+
             <uikit.widget.ActionCellView
-                android:id="@+id/export_local"
+                android:id="@+id/export_tonkeeper_web"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetMedium"
                 android:singleLine="true"
-                android:title="@string/key_export_local_title"
-                android:subtitle="@string/key_export_local_subtitle"/>
+                android:title="@string/key_export_tonkeeper_web"
+                android:subtitle="@string/web_wallet_host"/>
 
             <View
                 android:layout_width="match_parent"

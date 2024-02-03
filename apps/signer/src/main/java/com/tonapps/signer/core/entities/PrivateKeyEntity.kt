@@ -15,6 +15,8 @@ data class PrivateKeyEntity(
     val mnemonic: List<String>
 ) {
 
+    // using StringBuffer for mnemonic
+
     constructor() : this(
         0L,
         PrivateKeyEd25519(),

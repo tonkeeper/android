@@ -1,4 +1,4 @@
-package com.tonapps.signer.tlb
+package com.tonapps.signer.ton.tlb
 
 import com.tonapps.signer.extensions.loadRemainingBits
 import org.ton.cell.CellBuilder

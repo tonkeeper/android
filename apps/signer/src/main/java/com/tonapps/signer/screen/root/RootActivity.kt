@@ -10,16 +10,22 @@ import android.view.WindowManager
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.tonapps.signer.BuildConfig
+import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.SimpleState
+import com.tonapps.signer.deeplink.entities.ReturnResultEntity
+import com.tonapps.signer.extensions.base64
+import com.tonapps.signer.extensions.parseCell
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.password.ui.PasswordView
 import com.tonapps.signer.screen.intro.IntroFragment
 import com.tonapps.signer.screen.main.MainFragment
+import com.tonapps.signer.screen.qr.QRFragment
 import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.signer.screen.sign.SignFragment
 import kotlinx.coroutines.Job
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.ton.api.pub.PublicKeyEd25519
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.primaryFragment
@@ -134,14 +140,23 @@ class RootActivity: NavigationActivity() {
 
     private fun onAction(action: RootAction) {
         when (action) {
-            is RootAction.RequestBodySign -> add(SignFragment.newInstance(action.id, action.body, action.qr))
+            is RootAction.RequestBodySign -> add(SignFragment.newInstance(action.id, action.body, action.v, action.returnResult))
             is RootAction.ResponseBoc -> responseBoc(action.boc)
+            is RootAction.ResponseKey -> responseKey(action.publicKey, action.name)
         }
     }
 
     private fun responseBoc(boc: String) {
         val intent = Intent()
-        intent.putExtra("boc", boc)
+        intent.putExtra(Key.BOC, boc)
+        setResult(Activity.RESULT_OK, intent)
+        finish()
+    }
+
+    private fun responseKey(publicKey: PublicKeyEd25519, name: String) {
+        val intent = Intent()
+        intent.putExtra(Key.PK, publicKey.base64())
+        intent.putExtra(Key.NAME, name)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }
@@ -154,14 +169,16 @@ class RootActivity: NavigationActivity() {
         }
     }
 
-    private fun handleUri(uri: Uri, qr: Boolean) {
-        rootViewModel.processUri(uri, qr)
+    private fun handleUri(uri: Uri, fromApp: Boolean) {
+        if (!rootViewModel.processDeepLink(uri, fromApp)) {
+            toast(getString(R.string.wrong_url))
+        }
     }
 
     private fun handleIntent(intent: Intent) {
         val uri = intent.data ?: return
 
-        handleUri(uri, intent.action != Intent.ACTION_SEND)
+        handleUri(uri, intent.action == Intent.ACTION_SEND)
     }
 
     override fun onNewIntent(intent: Intent) {

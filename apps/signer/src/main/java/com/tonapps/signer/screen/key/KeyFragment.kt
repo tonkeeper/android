@@ -1,10 +1,10 @@
 package com.tonapps.signer.screen.key
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.core.entities.KeyEntity
 import com.tonapps.signer.TonkeeperApp
@@ -12,13 +12,9 @@ import com.tonapps.signer.extensions.authorizationRequiredError
 import com.tonapps.signer.extensions.copyToClipboard
 import com.tonapps.signer.screen.name.NameFragment
 import com.tonapps.signer.extensions.short8
-import com.tonapps.signer.password.Password
 import com.tonapps.signer.screen.phrase.PhraseFragment
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -39,25 +35,24 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
     companion object {
 
-        private const val KEY_ID = "key_id"
-
-        fun newInstance(id: Long): KeyFragment {
-            val fragment = KeyFragment()
-            fragment.arguments = Bundle().apply {
-                putLong(KEY_ID, id)
+        fun newInstance(
+            id: Long,
+        ) = KeyFragment().apply {
+            arguments = Bundle().apply {
+                putLong(Key.ID, id)
             }
-            return fragment
         }
     }
 
-    private val id: Long by lazy { requireArguments().getLong(KEY_ID) }
+    private val id: Long by lazy { requireArguments().getLong(Key.ID) }
     private val keyViewModel: KeyViewModel by viewModel { parametersOf(id) }
 
     private lateinit var headerView: HeaderView
     private lateinit var scrollView: NestedScrollView
     private lateinit var exportQrView: View
     private lateinit var qrView: QRView
-    private lateinit var exportLocalView: View
+    private lateinit var exportTonkeeperView: View
+    private lateinit var exportTonkeeperWebView: View
     private lateinit var nameView: ActionCellView
     private lateinit var hexAddressView: ActionCellView
     private lateinit var phraseView: View
@@ -74,11 +69,12 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
         qrView = view.findViewById(R.id.qr)
 
-        exportLocalView = view.findViewById(R.id.export_local)
+        exportTonkeeperView = view.findViewById(R.id.export_tonkeeper)
+        exportTonkeeperWebView = view.findViewById(R.id.export_tonkeeper_web)
 
         nameView = view.findViewById(R.id.name)
         nameView.background = ListCell.Position.FIRST.drawable(requireContext())
-        nameView.setOnClickListener { navigation?.add(NameFragment.newInstance(id)) }
+        nameView.setOnClickListener { openNameEditor() }
 
         hexAddressView = view.findViewById(R.id.hex)
         hexAddressView.background = ListCell.Position.MIDDLE.drawable(requireContext())
@@ -118,10 +114,19 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
     private fun setExportByUri(publicKey: PublicKeyEd25519, name: String) {
         val uri = TonkeeperApp.buildExportUri(publicKey, name)
-        qrView.content = uri.toString()
-        exportLocalView.setOnClickListener {
+        qrView.setContent(uri.toString())
+
+        exportTonkeeperView.setOnClickListener {
             TonkeeperApp.openOrInstall(requireContext(), uri)
         }
+
+        exportTonkeeperWebView.setOnClickListener {
+            navigation?.openURL(TonkeeperApp.buildExportUriWeb(publicKey, name).toString(), true)
+        }
+    }
+
+    private fun openNameEditor() {
+        navigation?.add(NameFragment.newInstance(id))
     }
 
     private fun openRecoveryPhrase() {

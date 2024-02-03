@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.core.repository.KeyRepository
 import kotlinx.coroutines.flow.filterNotNull
@@ -22,18 +23,17 @@ import uikit.widget.InputView
 class NameFragment: BaseFragment(R.layout.fragment_name), BaseFragment.BottomSheet {
 
     companion object {
-        private const val ID_KEY = "id"
 
         fun newInstance(id: Long): NameFragment {
             val fragment = NameFragment()
             fragment.arguments = Bundle().apply {
-                putLong(ID_KEY, id)
+                putLong(Key.ID, id)
             }
             return fragment
         }
     }
 
-    private val id: Long by lazy { requireArguments().getLong(ID_KEY) }
+    private val id: Long by lazy { requireArguments().getLong(Key.ID) }
     private val keyRepository: KeyRepository by inject()
 
     private lateinit var headerView: HeaderView

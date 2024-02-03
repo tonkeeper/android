@@ -2,20 +2,22 @@ package com.tonapps.signer.screen.qr
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.CornerPathEffect
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
+import com.tonapps.signer.R
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 import uikit.extensions.getDimension
 
 class QRBackground(context: Context): BaseDrawable() {
 
-    private val hookSize = 32f.dp
+    private val hookSize = 42f.dp
     private val radius = context.getDimension(uikit.R.dimen.cornerMedium)
-    private val color = context.getColor(uikit.R.color.constantWhite)
+    private val color = context.getColor(R.color.constantPistachio)
     private val path = Path()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 

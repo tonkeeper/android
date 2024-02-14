@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/modal_header_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:textAppearance="@style/TextAppearance.H3"
+        android:textColor="@color/textPrimary"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/modal_header_close"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:tint="@color/buttonSecondaryForeground"
+        android:src="@drawable/ic_close_16"
+        android:scaleType="centerInside"
+        android:backgroundTint="@color/buttonSecondaryBackground"
+        android:background="@drawable/bg_oval_button_secondary"/>
+
+</merge>

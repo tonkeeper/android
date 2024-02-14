@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minHeight="180dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.LoaderView
+        android:id="@+id/loader"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_gravity="center"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="end"
+            android:layout_marginVertical="@dimen/offsetMedium"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="@color/buttonSecondaryForeground"
+            android:backgroundTint="@color/buttonSecondaryBackground"
+            android:background="@drawable/bg_oval_button_secondary"/>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
+
+            <uikit.widget.FrescoView
+                android:id="@+id/app_icon"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:scaleType="centerCrop"
+                app:roundedCornerRadius="20dp"/>
+            
+            <com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
+                android:id="@+id/crypto"
+                android:layout_width="86dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"/>
+
+            <com.facebook.drawee.view.SimpleDraweeView
+                android:id="@+id/site_icon"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:scaleType="centerCrop"
+                app:roundedCornerRadius="20dp"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.H2"
+            android:textColor="@color/textPrimary"
+            android:gravity="center"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraExtraSmall"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:textColor="@color/textSecondary"
+            android:gravity="center"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/itemHeight"
+            android:layout_marginTop="@dimen/offsetMedium">
+
+            <Button
+                style="@style/Widget.App.Button"
+                android:id="@+id/connect_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:text="@string/connect_wallet"/>
+
+            <uikit.widget.ProcessTaskView
+                android:id="@+id/connect_process"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:successLabel="@string/done"
+                app:errorLabel="@string/error"/>
+
+        </FrameLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="@color/textTertiary"
+            android:gravity="center"
+            android:text="@string/ton_connect_subtitle"/>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</FrameLayout>

@@ -1,0 +1,26 @@
+package com.tonapps.tonkeeper.core.tonconnect.models
+
+import android.net.Uri
+import android.os.Parcelable
+import com.tonapps.tonkeeper.api.shortAddress
+import kotlinx.parcelize.Parcelize
+import ton.extensions.toUserFriendly
+
+@Parcelize
+data class TCData(
+    val manifest: TCManifest,
+    val accountId: String,
+    val testnet: Boolean,
+    val clientId: String,
+    val items: List<TCItem>
+): Parcelable {
+
+    val shortAddress: String
+        get() = accountId.toUserFriendly(testnet = testnet).shortAddress
+
+    val url: String
+        get() = manifest.url
+
+    val host: String
+        get() = Uri.parse(url).host!!
+}

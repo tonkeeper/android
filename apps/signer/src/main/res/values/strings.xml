@@ -27,10 +27,10 @@
     <string name="settings">Settings</string>
     <string name="wrong_url">Invalid URL</string>
 
-    <string name="key_export_qr_title">Export to another device</string>
+    <string name="key_export_qr_title">Link to another device</string>
     <string name="key_export_qr_subtitle">Open Tonkeeper » Import Existing Wallet » Pair Signer</string>
-    <string name="key_export_tonkeeper">Export to Tonkeeper</string>
-    <string name="key_export_tonkeeper_web">Export to Tonkeeper Web</string>
+    <string name="key_export_tonkeeper">Link to Tonkeeper</string>
+    <string name="key_export_tonkeeper_web">Link to Tonkeeper Web</string>
     <string name="open_settings">Open Settings</string>
     <string name="unknown_error">Unknown error</string>
     <string name="camera_permission">Enable access to your camera in order to can scan QR codes</string>

@@ -19,14 +19,14 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.api.pub.PublicKeyEd25519
-import qr.QRView
+import com.tonapps.qr.QRView
+import com.tonapps.uikit.list.ListCell
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
+import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.round
-import uikit.list.ListCell
-import uikit.list.ListCell.Companion.drawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ActionCellView
 import uikit.widget.HeaderView
@@ -87,9 +87,6 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
         deleteView.setOnClickListener { openDeleteDialog() }
 
         scrollView = view.findViewById(R.id.scroll)
-        scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
-            headerView.divider = scrollY > 0
-        }
 
         collectFlow(keyViewModel.keyEntity, ::applyEntity)
     }

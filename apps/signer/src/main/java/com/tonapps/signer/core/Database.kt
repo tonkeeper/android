@@ -4,7 +4,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import com.tonapps.signer.core.entities.KeyEntity
+import com.tonapps.signer.extensions.emptyRawQuery
 import com.tonapps.signer.extensions.withTransaction
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -18,6 +20,14 @@ class Database(
         private const val ID_COLUMN = "id"
         private const val NAME_COLUMN = "name"
         private const val PK_COLUMN = "pk"
+    }
+
+    override fun onConfigure(db: SQLiteDatabase) {
+        super.onConfigure(db)
+        db.enableWriteAheadLogging()
+        db.setMaxSqlCacheSize(SQLiteDatabase.MAX_SQL_CACHE_SIZE)
+        db.emptyRawQuery("PRAGMA temp_store = MEMORY")
+        db.emptyRawQuery("PRAGMA secure_delete = TRUE")
     }
 
     override fun onCreate(db: SQLiteDatabase) {

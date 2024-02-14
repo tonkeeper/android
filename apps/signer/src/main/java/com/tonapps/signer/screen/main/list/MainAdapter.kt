@@ -3,15 +3,12 @@ package com.tonapps.signer.screen.main.list
 import android.view.ViewGroup
 import com.tonapps.signer.screen.main.list.holder.MainAccountHolder
 import com.tonapps.signer.screen.main.list.holder.MainActionsHolder
-import uikit.list.BaseListAdapter
-import uikit.list.BaseListHolder
-import uikit.list.BaseListItem
 
 class MainAdapter(
     private val selectAccountCallback: (id: Long) -> Unit
-): BaseListAdapter() {
+): com.tonapps.uikit.list.BaseListAdapter() {
 
-    override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
+    override fun createHolder(parent: ViewGroup, viewType: Int): com.tonapps.uikit.list.BaseListHolder<out com.tonapps.uikit.list.BaseListItem> {
         return when (viewType) {
             MainItem.TYPE_ACTIONS -> MainActionsHolder(parent)
             MainItem.TYPE_ACCOUNT -> MainAccountHolder(parent, selectAccountCallback)

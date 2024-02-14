@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HeaderView">
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:action" format="reference"/>
+        <attr name="ignoreSystemOffset" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="IntroBlockView">
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:description" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="TextHeaderView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:description" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="BackHeaderView">
+        <attr name="android:title" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="BottomTabsView">
+        <attr name="menu" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="IconButtonView">
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:enabled" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="LoaderView">
+        <attr name="android:color" format="color|reference"/>
+        <attr name="android:trackTint" format="color|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="InputView">
+        <attr name="android:hint" format="string|reference"/>
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:button" format="string|reference"/>
+        <attr name="android:enabled" format="boolean"/>
+        <attr name="android:singleLine" format="boolean"/>
+        <attr name="disableClearButton" format="boolean"/>
+    </declare-styleable>
+
+    <attr name="position">
+        <enum name="first" value="0"/>
+        <enum name="middle" value="1"/>
+        <enum name="last" value="2"/>
+        <enum name="single" value="3"/>
+    </attr>
+
+    <declare-styleable name="ItemSwitchView">
+        <attr name="android:text" format="string|reference"/>
+        <attr name="android:checked" format="boolean"/>
+        <attr name="position"/>
+    </declare-styleable>
+
+    <declare-styleable name="ItemIconView">
+        <attr name="android:text" format="string|reference"/>
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:tint" format="color|reference"/>
+        <attr name="position"/>
+    </declare-styleable>
+
+    <declare-styleable name="ItemTextView">
+        <attr name="android:text" format="string|reference"/>
+        <attr name="android:data" format="string|reference"/>
+        <attr name="position"/>
+    </declare-styleable>
+
+    <declare-styleable name="SearchInput">
+        <attr name="android:text" format="string|reference"/>
+        <attr name="android:hint" format="string|reference"/>
+        <attr name="android:button" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ProcessTaskView">
+        <attr name="successLabel" format="string|reference"/>
+        <attr name="errorLabel" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="EmptyLayout">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:description" format="string|reference"/>
+        <attr name="android:positiveButtonText" format="string|reference"/>
+        <attr name="android:negativeButtonText" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ActionCellView">
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:action" format="reference"/>
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:subtitle" format="string|reference"/>
+        <attr name="android:singleLine" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="SlideActionView">
+        <attr name="android:text" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ModalHeader">
+        <attr name="android:text" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="SimpleRecyclerView">
+        <attr name="android:maxHeight" format="dimension|reference"/>
+    </declare-styleable>
+</resources>

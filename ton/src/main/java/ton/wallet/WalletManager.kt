@@ -1,6 +1,7 @@
 package ton.wallet
 
 import android.app.Application
+import android.graphics.Color
 import android.util.Log
 import io.ktor.util.hex
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ import org.ton.mnemonic.Mnemonic
 import ton.contract.WalletVersion
 import ton.wallet.storage.WalletStorage
 
+// TODO refactor WalletManager
 class WalletManager(
     application: Application
 ) {
@@ -46,6 +48,14 @@ class WalletManager(
     suspend fun setWalletName(address: String, name: String) {
         val createDate = getIdAddress(address)
         storage.setWalletName(createDate, name)
+        cacheWallets = mutableListOf()
+        cacheWallet = null
+    }
+
+    suspend fun edit(id: Long, name: String, emoji: CharSequence, color: Int) = withContext(Dispatchers.IO) {
+        storage.setWalletName(id, name)
+        storage.setWalletEmoji(id, emoji)
+        storage.setWalletColor(id, color)
         cacheWallets = mutableListOf()
         cacheWallet = null
     }
@@ -153,17 +163,21 @@ class WalletManager(
     suspend fun addWatchWallet(
         publicKey: PublicKeyEd25519,
         name: String? = null,
-        singer: Boolean
+        emoji: CharSequence,
+        color: Int,
+        singer: Boolean,
     ): Wallet = withContext(Dispatchers.IO) {
         val wallet = Wallet(
             id = System.currentTimeMillis(),
-            name = name,
+            name = name ?: "Wallet",
             publicKey = publicKey,
             type = if (singer) {
                 WalletType.Signer
             } else {
                 WalletType.Watch
-            }
+            },
+            emoji = emoji,
+            color = color
         )
 
         insertWallet(wallet, emptyList())
@@ -174,6 +188,8 @@ class WalletManager(
     suspend fun addWallet(
         mnemonic: List<String>,
         name: String? = null,
+        emoji: CharSequence,
+        color: Int,
         testnet: Boolean
     ): Wallet = withContext(Dispatchers.IO) {
         val seed = Mnemonic.toSeed(mnemonic)
@@ -182,9 +198,11 @@ class WalletManager(
 
         val wallet = Wallet(
             id = System.currentTimeMillis(),
-            name = name,
+            name = name ?: "Wallet",
             publicKey = publicKey,
-            type = if (testnet) WalletType.Testnet else WalletType.Default
+            type = if (testnet) WalletType.Testnet else WalletType.Default,
+            emoji = emoji,
+            color = color
         )
 
         insertWallet(wallet, mnemonic)

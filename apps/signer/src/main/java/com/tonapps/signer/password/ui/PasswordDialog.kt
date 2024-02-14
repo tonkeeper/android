@@ -1,30 +1,19 @@
 package com.tonapps.signer.password.ui
 
 import android.content.Context
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
-import androidx.core.view.ViewCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.BuildConfig
 import com.tonapps.signer.R
 import com.tonapps.signer.SimpleState
-import com.tonapps.signer.extensions.viewModel
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
-import org.koin.java.KoinJavaComponent.inject
 import uikit.base.BaseDialog
-import uikit.extensions.doOnBottomInsetsChanged
 import uikit.widget.HeaderView
 import javax.crypto.SecretKey
 

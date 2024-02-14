@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetMedium"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/offsetMedium"
+            android:orientation="vertical"
+            android:background="@drawable/bg_content">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/token"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_button_tertiary"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="@color/buttonTertiaryForeground"
+                android:gravity="center"
+                android:drawableEnd="@drawable/ic_chevron_down_16"
+                android:drawablePadding="6dp"/>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center">
+
+                <com.tonapps.tonkeeper.fragment.send.view.AmountInput
+                    android:id="@+id/value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48.76dp"
+                    android:layout_marginVertical="@dimen/offsetMedium"
+                    android:background="@null"
+                    android:singleLine="true"
+                    android:inputType="numberDecimal"
+                    android:fontFamily="@font/montserrat_semi_bold"
+                    android:textColor="@color/textPrimary"
+                    android:textCursorDrawable="@drawable/cursor"
+                    android:gravity="center_vertical"
+                    android:text="0"
+                    android:hint="0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/value_currency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:textAppearance="@style/TextAppearance.NUM2"
+                    android:textColor="@color/textSecondary"
+                    app:layout_constraintStart_toEndOf="@id/value"
+                    app:layout_constraintTop_toTopOf="@id/value"
+                    app:layout_constraintBottom_toBottomOf="@id/value"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingVertical="12dp"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:background="@drawable/bg_island_border"
+                android:textColor="@color/textSecondary"
+                android:textAppearance="@style/TextAppearance.Body1" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_marginVertical="@dimen/offsetMedium"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/max"
+                style="@style/Widget.App.Button.Small.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/max"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/available"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:gravity="end"
+                android:textColor="@color/textSecondary"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/continue_action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:layout_gravity="bottom"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="@color/textPrimary"
+        android:enabled="false"
+        android:text="@string/continue_action"/>
+
+</FrameLayout>

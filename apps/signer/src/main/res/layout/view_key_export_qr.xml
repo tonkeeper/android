@@ -26,7 +26,7 @@
         android:textAppearance="@style/TextAppearance.Body2"
         android:textColor="@color/textSecondary"/>
 
-    <qr.QRView
+    <com.tonapps.qr.QRView
         android:id="@+id/qr"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

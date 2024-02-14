@@ -3,7 +3,6 @@ package core.formatter
 import android.icu.text.DecimalFormat
 import android.icu.text.NumberFormat
 import android.util.ArrayMap
-import android.util.Log
 import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
 
@@ -30,6 +29,8 @@ object CurrencyFormatter {
         put("THB", "฿")
         put("KZT", "₸")
         put("AED", "د.إ")
+        put("TON", "TON")
+        put("BTC", "₿")
     }
 
     private val format = NumberFormat.getCurrencyInstance() as DecimalFormat

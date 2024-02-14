@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="emoji_by_category_raw_resources">
+        <item>@raw/emoji_category_emotions</item>
+        <item>@raw/emoji_category_people</item>
+        <item>@raw/emoji_category_animals_nature</item>
+        <item>@raw/emoji_category_food_drink</item>
+        <item>@raw/emoji_category_travel_places</item>
+        <item>@raw/emoji_category_activity</item>
+        <item>@raw/emoji_category_objects</item>
+        <item>@raw/emoji_category_symbols</item>
+        <item>@raw/emoji_category_flags</item>
+    </array>
+
+    <array name="emoji_by_category_raw_resources_gender_inclusive">
+        <item>@raw/emoji_category_emotions</item>
+        <item>@raw/emoji_category_people_gender_inclusive</item>
+        <item>@raw/emoji_category_animals_nature</item>
+        <item>@raw/emoji_category_food_drink</item>
+        <item>@raw/emoji_category_travel_places</item>
+        <item>@raw/emoji_category_activity</item>
+        <item>@raw/emoji_category_objects</item>
+        <item>@raw/emoji_category_symbols</item>
+        <item>@raw/emoji_category_flags</item>
+    </array>
+
+    <array name="preloaded_fonts" translatable="false">
+        <item>@font/emoji</item>
+    </array>
+</resources>

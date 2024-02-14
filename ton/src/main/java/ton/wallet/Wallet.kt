@@ -15,9 +15,11 @@ import ton.extensions.toWalletAddress
 
 data class Wallet(
     val id: Long,
-    val name: String?,
+    val name: String,
     val publicKey: PublicKeyEd25519,
     val type: WalletType,
+    val emoji: CharSequence,
+    val color: Int,
     val version: WalletVersion = WalletVersion.V4R2
 ) {
 

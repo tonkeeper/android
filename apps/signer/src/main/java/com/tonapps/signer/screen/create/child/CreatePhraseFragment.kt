@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
-import uikit.extensions.doOnBottomInsetsChanged
+import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.parseWords
 import uikit.extensions.pinToBottomInsets
 import uikit.extensions.scrollDown
@@ -44,14 +44,13 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         scrollView = view.findViewById(R.id.scroll)
-        scrollView.doOnBottomInsetsChanged { offset, _ ->
+        scrollView.doKeyboardAnimation { offset, _ ->
             scrollView.setPaddingBottom(offset)
             updateScroll(false)
         }
 
         wordFormView = view.findViewById(R.id.word_form)
         wordFormView.isValidValue = mnemonicWords::contains
-
         wordFormView.doOnFocusInput = { _, _ ->
             updateScroll(true)
         }

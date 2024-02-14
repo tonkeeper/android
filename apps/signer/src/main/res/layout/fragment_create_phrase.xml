@@ -9,11 +9,10 @@
         android:layout_height="match_parent"
         android:clipToPadding="false">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <uikit.widget.ColumnLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="@dimen/offsetLarge"
-            android:orientation="vertical">
+            android:padding="@dimen/offsetLarge">
 
             <uikit.widget.TextHeaderView
                 android:layout_width="match_parent"
@@ -36,7 +35,7 @@
                 android:enabled="false"
                 android:text="@string/continue_text"/>
 
-        </androidx.appcompat.widget.LinearLayoutCompat>
+        </uikit.widget.ColumnLayout>
 
     </androidx.core.widget.NestedScrollView>
 

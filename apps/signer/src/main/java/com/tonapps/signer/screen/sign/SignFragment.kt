@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
@@ -20,6 +19,7 @@ import com.tonapps.signer.extensions.short4
 import com.tonapps.signer.screen.qr.QRFragment
 import com.tonapps.signer.screen.root.RootViewModel
 import com.tonapps.signer.screen.sign.list.SignAdapter
+import com.tonapps.uikit.color.UIKitColor
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -45,8 +45,10 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
             body: Cell,
             v: String,
             returnResult: ReturnResultEntity
-        ) = SignFragment().apply {
-            arguments = SignArgs.bundle(id, body, v, returnResult)
+        ): SignFragment {
+            val fragment = SignFragment()
+            fragment.arguments = SignArgs.bundle(id, body, v, returnResult)
+            return fragment
         }
     }
 
@@ -108,6 +110,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
         collectFlow(signViewModel.actionsFlow, adapter::submitList)
         collectFlow(signViewModel.keyEntity, ::setKeyEntity)
+        collectFlow(signViewModel.openDetails) { showDetails() }
     }
 
     private fun showError() {
@@ -145,7 +148,10 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
             startActivity(intent)
             finish()
         } else {
-            navigation?.add(QRFragment.newInstance(args.id, boc))
+            val uri = Uri.parse("tonkeeper://signer").buildUpon()
+                .appendQueryParameter(Key.BOC, boc)
+                .build()
+            navigation?.add(QRFragment.newInstance(args.id, uri.toString()))
             finish()
         }
     }
@@ -181,8 +187,8 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
     private fun setSubtitle(label: String, hex: String) {
         val span = SpannableString("$label $hex")
-        span.setColor(getColor(uikit.R.color.textTertiary),0, label.length)
-        span.setColor(getColor(uikit.R.color.textSecondary), label.length, span.length)
+        span.setColor(getColor(UIKitColor.textTertiary),0, label.length)
+        span.setColor(getColor(UIKitColor.textSecondary), label.length, span.length)
         subtitleView.text = span
     }
 }

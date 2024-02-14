@@ -1,17 +1,14 @@
 package com.tonapps.signer.vault
 
 import android.content.Context
-import android.util.Log
 import com.tonapps.signer.extensions.securePrefs
 import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.cell.Cell
 import org.ton.mnemonic.Mnemonic
-import security.clear
-import security.decrypt
-import security.safeDestroy
-import security.vault.Vault
-import security.vault.getString
-import security.vault.putString
+import com.tonapps.security.clear
+import com.tonapps.security.safeDestroy
+import com.tonapps.security.vault.Vault
+import com.tonapps.security.vault.getString
+import com.tonapps.security.vault.putString
 import javax.crypto.SecretKey
 
 class SignerVault(

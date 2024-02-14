@@ -5,12 +5,13 @@ import android.view.ViewGroup
 import com.tonapps.signer.R
 import com.tonapps.signer.extensions.short4
 import com.tonapps.signer.screen.sign.list.SignItem
-import uikit.list.ListCell.Companion.drawable
+import com.tonapps.uikit.icon.UIKitIcon
+import uikit.extensions.drawable
 
 class SignSendHolder(parent: ViewGroup): SignHolder<SignItem.Send>(parent) {
 
     init {
-        iconView.setImageResource(uikit.R.drawable.ic_tray_arrow_up_28)
+        iconView.setImageResource(UIKitIcon.ic_tray_arrow_up_28)
         titleView.setText(R.string.send)
     }
 
@@ -22,7 +23,6 @@ class SignSendHolder(parent: ViewGroup): SignHolder<SignItem.Send>(parent) {
         setComment(item.comment)
         setAmount2(item.value2)
     }
-
 
     private fun setComment(comment: String?) {
         if (comment.isNullOrEmpty()) {
@@ -41,7 +41,7 @@ class SignSendHolder(parent: ViewGroup): SignHolder<SignItem.Send>(parent) {
         }
 
         amount2View.visibility = View.VISIBLE
-        amount2View.text = amount2
+        amount2View.text = amount2.short4
     }
 
 }

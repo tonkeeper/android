@@ -63,27 +63,13 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/offsetMedium"
         android:layout_marginTop="2dp"
+        android:singleLine="true"
         android:maxLength="18"
-        android:gravity="end"
-        android:singleLine="true"
-        android:visibility="gone"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/amount" />
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/offsetMedium"
-        android:layout_marginTop="2dp"
-        android:gravity="end"
-        android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body2"
         android:textColor="@color/textSecondary"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/amount2" />
+        app:layout_constraintTop_toBottomOf="@+id/amount" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/body"
@@ -96,7 +82,7 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/date">
+        app:layout_constraintTop_toBottomOf="@+id/amount2">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/comment"

@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.signer.R
-import security.Security
+import com.tonapps.security.Security
 import uikit.base.BaseFragment
 
 class DebugFragment: BaseFragment(R.layout.fragment_debug), BaseFragment.SwipeBack {

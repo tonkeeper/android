@@ -30,7 +30,7 @@ dependencies {
     implementation(Libs.Squareup.sse)
     implementation(Libs.zxing)
 
-    api(Libs.ML.barcode)
-    api(Libs.AndroidX.Camera.base)
-    api(Libs.ton)
+    implementation(Libs.ML.barcode)
+    implementation(Libs.AndroidX.Camera.base)
+    implementation(Libs.ton)
 }

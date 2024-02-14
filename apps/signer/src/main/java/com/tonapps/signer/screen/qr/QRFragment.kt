@@ -1,7 +1,6 @@
 package com.tonapps.signer.screen.qr
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
@@ -13,9 +12,7 @@ import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.extensions.short4
 import kotlinx.coroutines.flow.filterNotNull
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
-import qr.QRView
+import com.tonapps.qr.QRView
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.widget.HeaderView

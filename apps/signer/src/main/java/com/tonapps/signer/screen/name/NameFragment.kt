@@ -9,12 +9,9 @@ import com.tonapps.signer.R
 import com.tonapps.signer.core.repository.KeyRepository
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.HeaderView

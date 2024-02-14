@@ -1,7 +1,6 @@
 package com.tonapps.signer.screen.root
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.signer.Key
@@ -9,7 +8,6 @@ import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.deeplink.entities.SignRequestEntity
 import com.tonapps.signer.password.Password
-import com.tonapps.signer.screen.key.KeyFragment
 import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
@@ -23,10 +21,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
-import uikit.navigation.Navigation
-import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
     private val vault: SignerVault,

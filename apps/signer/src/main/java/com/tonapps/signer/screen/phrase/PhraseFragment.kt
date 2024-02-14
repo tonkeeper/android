@@ -3,15 +3,9 @@ package com.tonapps.signer.screen.phrase
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.R
 import com.tonapps.signer.extensions.copyToClipboard
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
-import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 import uikit.widget.PhraseWords
 

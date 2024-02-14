@@ -8,7 +8,6 @@ import com.tonapps.signer.screen.main.list.MainItem
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import uikit.list.ListCell
 
 class MainViewModel(
     private val repository: KeyRepository
@@ -34,7 +33,7 @@ class MainViewModel(
         private fun mapKeys(keys: List<KeyEntity>): List<MainItem.Account> {
             val items = mutableListOf<MainItem.Account>()
             for ((index, key) in keys.withIndex()) {
-                val position = ListCell.getPosition(keys.size, index)
+                val position = com.tonapps.uikit.list.ListCell.getPosition(keys.size, index)
                 items.add(MainItem.Account(key, position))
             }
             return items.toList()

@@ -3,7 +3,6 @@ package com.tonapps.signer.screen.camera
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatImageView
@@ -28,9 +27,8 @@ import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import qr.QRImageAnalyzer
+import com.tonapps.qr.QRImageAnalyzer
 import uikit.extensions.applyBottomInsets
-import uikit.extensions.pinToBottomInsets
 
 class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
 

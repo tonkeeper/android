@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/action_cell_icon"
+        android:layout_width="@dimen/iconSize"
+        android:layout_height="@dimen/iconSize"
+        android:layout_marginEnd="@dimen/offsetMedium"
+        android:layout_gravity="center"/>
+    
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/action_cell_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="@color/textPrimary"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/action_cell_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="@color/textSecondary"/>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/action_cell_chevron"
+        android:layout_width="16dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:layout_marginStart="@dimen/offsetMedium"
+        android:src="@drawable/ic_chevron_right_16"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/action_cell_right"
+        android:layout_width="@dimen/iconSize"
+        android:layout_height="@dimen/iconSize"
+        android:layout_gravity="center"
+        android:layout_marginStart="@dimen/offsetMedium"
+        android:visibility="gone"/>
+</merge>

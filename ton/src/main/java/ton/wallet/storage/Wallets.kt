@@ -1,5 +1,6 @@
 package ton.wallet.storage
 
+import android.graphics.Color
 import core.keyvalue.KeyValue
 import org.ton.api.pub.PublicKeyEd25519
 import ton.contract.WalletVersion
@@ -16,6 +17,8 @@ internal class Wallets(
         private const val WALLET_PUBLIC_KEY = "public_key"
         private const val WALLET_TYPE = "type"
         private const val WALLET_VERSION = "version"
+        private const val WALLET_EMOJI = "emoji"
+        private const val WALLET_COLOR = "color"
     }
 
     suspend fun get(id: Long): Wallet? {
@@ -26,7 +29,9 @@ internal class Wallets(
             name = name,
             publicKey = publicKey,
             type = getType(id),
-            version = getVersion(id)
+            version = getVersion(id),
+            emoji = getEmoji(id),
+            color = getColor(id),
         )
     }
 
@@ -34,6 +39,8 @@ internal class Wallets(
         setPublicKey(wallet.id, wallet.publicKey)
         setName(wallet.id, wallet.name)
         setType(wallet.id, wallet.type)
+        setEmoji(wallet.id, wallet.emoji)
+        setColor(wallet.id, wallet.color)
 
         addId(wallet.id)
     }
@@ -61,8 +68,12 @@ internal class Wallets(
         keyValue.putString(key(WALLET_TYPE, id), type.name)
     }
 
-    private suspend fun getName(id: Long): String? {
-        return keyValue.getString(key(WALLET_NAME, id))
+    private suspend fun getName(id: Long): String {
+        val name = keyValue.getString(key(WALLET_NAME, id))
+        if (name.isNullOrBlank()) {
+            return "Wallet"
+        }
+        return name
     }
 
     private suspend fun getType(id: Long): WalletType {
@@ -80,6 +91,31 @@ internal class Wallets(
         keyValue.putByteArray(key, publicKey.key.toByteArray())
     }
 
+    suspend fun setEmoji(id: Long, emoji: CharSequence) {
+        val key = key(WALLET_EMOJI, id)
+        keyValue.putString(key, emoji.toString())
+    }
+
+    private suspend fun getEmoji(id: Long): String {
+        val value = keyValue.getString(key(WALLET_EMOJI, id))
+        if (value.isNullOrBlank()) {
+            return "\uD83D\uDE00"
+        }
+        return value
+    }
+
+    suspend fun setColor(id: Long, color: Int) {
+        keyValue.putInt(key(WALLET_COLOR, id), color)
+    }
+
+    private suspend fun getColor(id: Long): Int {
+        val value = keyValue.getInt(key(WALLET_COLOR, id))
+        if (value == 0) {
+            return Color.parseColor("#2E3847")
+        }
+        return value
+    }
+
     fun hasWallet(): Boolean {
         return keyValue.contains(WALLET_IDS_KEY)
     }
@@ -88,6 +124,7 @@ internal class Wallets(
         keyValue.remove(key(WALLET_NAME, id))
         keyValue.remove(key(WALLET_PUBLIC_KEY, id))
         keyValue.remove(key(WALLET_TYPE, id))
+        keyValue.remove(key(WALLET_EMOJI, id))
 
         deleteId(id)
     }

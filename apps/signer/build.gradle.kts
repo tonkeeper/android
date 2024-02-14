@@ -5,22 +5,20 @@ plugins {
 }
 
 android {
-    namespace = "com.tonapps.signer"
+    namespace = Build.namespacePrefix("signer")
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
         applicationId = "com.tonapps.signer"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 5
-        versionName = "0.0.5"
+        versionCode = 6
+        versionName = "0.0.6"
     }
 
     lint {
         baseline = file("lint-baseline.xml")
     }
-
-    // experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
 
     buildFeatures {
         buildConfig = true
@@ -77,16 +75,17 @@ dependencies {
     implementation(Libs.AndroidX.Camera.lifecycle)
     implementation(Libs.AndroidX.Camera.view)
     implementation(Libs.AndroidX.security)
+    implementation(Libs.AndroidX.lifecycleSavedState)
 
     implementation(Libs.ton)
 
-    implementation(project(Libs.Module.uiKit)) {
+    implementation(project(Libs.UIKit.core)) {
         exclude("com.airbnb.android", "lottie")
         exclude("com.facebook.fresco", "fresco")
     }
 
-    implementation(project(Libs.Module.qr))
-    implementation(project(Libs.Module.security))
+    implementation(project(Libs.Lib.qr))
+    implementation(project(Libs.Lib.security))
     implementation(Libs.Koin.core)
 }
 

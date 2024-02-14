@@ -1,0 +1,216 @@
+<resources>
+    <string name="app_name" translatable="false">Tonkeeper X</string>
+    <string name="ton" translatable="false">TON</string>
+    <string name="toncoin" translatable="false">Toncoin</string>
+
+    <string name="settings">Настройки</string>
+    <string name="wallet">Кошелёк</string>
+    <string name="activity">Активность</string>
+    <string name="history">История</string>
+    <string name="price">Цена</string>
+    <string name="scan">Cканировать</string>
+    <string name="stake">Депозит</string>
+    <string name="wallet_initialized">Кошелёк инициализирован</string>
+    <string name="bid">Ставка</string>
+    <string name="unstake_request">Запрос на вывод</string>
+    <string name="domain_renew">Домен продлён</string>
+    <string name="unstake">Вывести</string>
+    <string name="unknown">Неизвестно</string>
+    <string name="nft_purchase">Покупка NFT</string>
+    <string name="burned">Сожжено</string>
+    <string name="unsubscribed">Отмена подписки</string>
+    <string name="subscribed">Подписка</string>
+
+    <string name="continue_action">Продолжить</string>
+    <string name="get_started">Начать</string>
+    <string name="updating">Обновление</string>
+    <string name="details">Детали</string>
+    <string name="view_in_explorer">Подробнее</string>
+    <string name="owner">Владелец</string>
+    <string name="scan_qr_code">Отсканируйте QR-код</string>
+    <string name="loading">Загрузка…</string>
+    <string name="transfer">Отправить</string>
+    <string name="jetton_transfer">Отправка %1$s</string>
+    <string name="name_your_wallet">Имя кошелька</string>
+    <string name="name_your_wallet_subtitle">Назовите свой кошелек, чтобы его можно было легко идентифицировать при использовании Tonkeeper. Эти имена хранятся локально и видны только вам.</string>
+
+    <string name="tokens">Токены</string>
+    <string name="today">Сегодня</string>
+    <string name="address">Адрес</string>
+    <string name="yesterday">Вчера</string>
+    <string name="collectibles">Коллекции</string>
+    <string name="call_contract">Вызов контракта</string>
+    <string name="contract_address">Адрес контракта</string>
+    <string name="about_collection">Подробнее о коллекции</string>
+    <string name="save">Сохранить</string>
+    <string name="share">Поделиться</string>
+    <string name="copied">Скопировано</string>
+    <string name="view_on_nft_market">Посмотреть на NFT Маркете</string>
+    <string name="open_market">Открыть маркет</string>
+
+    <string name="widget">Виджет</string>
+    <string name="empty_history_title">Здесь будет отображаться твоя история</string>
+    <string name="empty_history_subtitle">Соверши свою первую транзакцию!</string>
+
+    <string name="empty_collectibles_title">Здесь будут показаны твои коллекции</string>
+    <string name="empty_collectibles_subtitle">Получи свою первую коллекцию</string>
+
+    <string name="buy_toncoin">Купить Toncoin</string>
+    <string name="buy_or_sell">Торговля</string>
+    <string name="fiat_open_description">Вы открываете внешнее приложение, которым не управляет Tonkeeper.</string>
+    <string name="buy">Купить</string>
+    <string name="search">Поиск</string>
+    <string name="country_title">Выберите вашу страну</string>
+    <string name="intro_description">Создайте новый кошелек или добавьте существующий</string>
+    <string name="intro_title" formatted="true">Приветствуем в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_line_1_title">Рекордная скорость</string>
+    <string name="intro_line_1_description">TON — это сеть, созданная для скорости и пропускной способности. Комиссии значительно ниже, чем в других блокчейнах, а транзакции подтверждаются за считанные секунды.</string>
+
+    <string name="intro_line_2_title">Сквозная защита</string>
+    <string name="intro_line_2_description">Tonkeeper хранит ваши криптографические ключи на вашем устройстве, не требуя документов, личной информации, контактных данных или KYC.</string>
+
+    <string name="intro_line_3_title">Встроенные подписки</string>
+    <string name="intro_line_3_description">Подписки TON являются одноранговыми и не имеют границ, поэтому никто не может ограничивать поставщиков или клиентов. Практически нулевые комиссии и полный контроль для вас.</string>
+
+    <string name="start_title">Tonkeeper</string>
+    <string name="start_description">Создайте новый кошелек или добавьте существующий</string>
+    <string name="start_create_new_wallet">Создать новый кошелёк</string>
+    <string name="start_import_wallet">Подключить существующий</string>
+    <string name="passcode_enter">Введите пин-код</string>
+    <string name="passcode_create">Создать пин-код</string>
+    <string name="passcode_re_enter">Введите пин-код ещё раз</string>
+    <string name="cancel">Отмена</string>
+    <string name="fee">Комиссия</string>
+    <string name="period_24h">24ч</string>
+    <string name="enable_notification">Включить уведомления</string>
+    <string name="enable_notification_title">Получайте мгновенные уведомления</string>
+    <string name="enable_notification_subtitle">Получайте уведомления при получении TON, токенов и NFT.</string>
+    <string name="widget_placeholder">Нужно выбрать кошелек</string>
+
+    <string name="import_wallet_title">Введите фразу восстановления</string>
+    <string name="import_wallet_description">Чтобы восстановить доступ к вашему кошельку, введите 24 секретных слова восстановления, данные вам при создании кошелька.</string>
+
+    <string name="start_dialog_title">Сперва подключим кошелёк</string>
+    <string name="start_dialog_description">Чтобы использовать Tonkeeper, нужен кошелёк. Создайте новый или подключите существующий.</string>
+
+    <string name="wallet_generating">Создаём кошелёк…</string>
+    <string name="wallet_created">Кошелёк создан!</string>
+
+    <string name="wallet_attention_title">Возьмите ручку и лист бумаги</string>
+    <string name="wallet_attention_description">Мы настоятельно рекомендуем вам записать секретный ключ. Это единственный способ вернуть доступ к кошельку, если потеряете устройство. Не отправляйте ключ себе по почте и не делайте скриншот. Безопаснее всего вообще не хранить ключ на устройстве.</string>
+
+    <string name="phrase_title">Ваш секретный ключ</string>
+    <string name="phrase_description">Запишите эти 24 слова ровно в таком же порядке и сохраните их в секретном, надёжном месте.</string>
+
+    <string name="phrase_check_title">Давайте проверим</string>
+    <string name="phrase_check_description">Чтобы убедиться, что вы записали секретный ключ правильно, введите слова %1$d, %2$d, и %3$dst.</string>
+
+    <string name="security">Безопасность</string>
+
+    <string name="send">Отправить</string>
+    <string name="swap">Обмен</string>
+    <string name="manage">Управление</string>
+    <string name="manage_wallets">Управление кошельками</string>
+    <string name="receive">Получить</string>
+    <string name="log_out">Выйти</string>
+    <string name="amount">Сумма</string>
+
+    <string name="recipient">Получатель</string>
+    <string name="recipient_address">Адрес получателя</string>
+
+    <string name="sender">Отправитель</string>
+    <string name="sender_address">Адрес отправителя</string>
+
+    <string name="transaction">Транзакция</string>
+
+    <string name="address_hint">Адрес или имя</string>
+    <string name="comment">Комментарий</string>
+    <string name="paste">Вставить</string>
+    <string name="version">Версия %1$s (%2$d)</string>
+    <string name="currency">Валюта</string>
+    <string name="rename">Переименовать</string>
+    <string name="wallet_name">Имя Кошелька</string>
+    <string name="primary_currency">Основная валюта</string>
+    <string name="currency_usd_name">Доллар США</string>
+    <string name="currency_eur_name">Евро</string>
+    <string name="currency_rub_name">Российский рубль</string>
+    <string name="currency_aed_name">Дирхам ОАЭ</string>
+    <string name="currency_uah_name">Украинская гривна</string>
+    <string name="currency_uzs_name">Узбекский сум</string>
+    <string name="currency_gbp_name">Фунт стерлингов</string>
+    <string name="currency_chf_name">Швейцарский франк</string>
+    <string name="currency_cny_name">Китайский юань</string>
+    <string name="currency_krw_name">Южнокорейская вона</string>
+    <string name="currency_idr_name">Индонезийская рупия</string>
+    <string name="currency_inr_name">Индийская рупия</string>
+    <string name="currency_jpy_name">Японская иена</string>
+    <string name="currency_kzt_name">Казахский тенге</string>
+
+    <string name="done">Готово</string>
+    <string name="error">Ошибка</string>
+
+    <string name="receive_coin">Получить %1$s</string>
+    <string name="receive_coin_description">Отправляйте на этот адрес только %1$s и токены в сети TON, иначе вы можете потерять свои средства.</string>
+    <string name="copy">Копировать</string>
+    <string name="legal">Юридические документы</string>
+    <string name="terms">Правила использования</string>
+    <string name="privacy">Политика конфиденциальности</string>
+    <string name="do_not_show_again">Больше не показывать</string>
+    <string name="licenses">Лицензии</string>
+    <string name="montserrat_font">Шрифт Montserrat</string>
+    <string name="use_biometric">Использовать биометрию</string>
+    <string name="biometric_description">Вы всегда можете разблокировать кошелёк с помощью пин-кода.</string>
+    <string name="lock_screen">Экран блокировки</string>
+    <string name="lock_screen_description">Требовать пин-кода для просмотра содержимого кошелька.</string>
+    <string name="change_passcode">Поменять пин-код</string>
+    <string name="reset_passcode">Сбросить пин-код</string>
+    <string name="recovery_phrase">Показать секретный ключ</string>
+    <string name="logout_description">Ключи кошелька будут удалены с этого устройства.</string>
+    <string name="logout_confirmation">У меня есть резервная копия фразы восстановления.</string>
+    <string name="back_up_now">Скопировать сейчас</string>
+    <string name="max">Максимум</string>
+    <string name="confirm_and_send">Подтвердить и отправить</string>
+    <string name="confirm_action">Подтвердить действие</string>
+    <string name="ton_connect_title">Войти в %1$s?</string>
+    <string name="ton_connect_description">%1$s запрашивает доступ к адресу вашего кошелька %2$s %3$s</string>
+    <string name="connect_wallet">Подключить кошелёк</string>
+    <string name="ton_connect_subtitle">Обязательно проверьте адрес сервиса перед подключением кошелька.</string>
+    <string name="available_balance">Доступно:  %1$s</string>
+    <string name="insufficient_balance">Недостаточно средств</string>
+    <string name="to_address">Кому: %1$s</string>
+    <string name="remaining_balance">Останется: %1$s</string>
+    <string name="wallet_balance">Баланс кошелька</string>
+    <string name="rate">Курс</string>
+    <string name="widget_updated">Обновлено в %1$s</string>
+    <string name="set_up_wallet">Добавить</string>
+    <string name="support">Поддержка</string>
+    <string name="tonkeeper_news">Новости Tonkeeper</string>
+    <string name="contact_us">Написать команде</string>
+    <string name="received">Получено</string>
+    <string name="language">Язык</string>
+    <string name="sent">Отправлено</string>
+    <string name="system">Системный</string>
+    <string name="network_fee">Комиссия сети</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="send_request_comment">Обязательно укажите memo или тег при отправке на биржу.</string>
+    <string name="banner_top">Сейчас вы используете экспериментальную версию Tonkeeper.</string>
+    <string name="banner_top_button">Установить стабильную</string>
+
+    <string name="import_wallet">Импортировать кошелек</string>
+    <string name="import_wallet_subtitle">Выберите один из вариантов ниже.</string>
+    <string name="import_wallet_words">Импортируйте кошелек с 24 секретными словами восстановления.</string>
+    <string name="watch_wallet">Наблюдать за аккаунтом</string>
+    <string name="watch_wallet_subtitle">Для мониторинга активности кошелька без фразы восстановления</string>
+    <string name="testnet_wallet">Testnet аккаунт</string>
+    <string name="testnet_wallet_subtitle">Импортируйте кошелек с 24 секретными словами восстановления в Testnet.</string>
+    <string name="signer_wallet">Пара для Signer</string>
+    <string name="signer_wallet_subtitle">Более высокий уровень контроля и безопасности</string>
+    <string name="active_address">Активный адрес</string>
+    <string name="signer_description">Открой Signer » Выбери нужный ключ » Отсканируй QR-код</string>
+    <string name="signer_open">Открыть Signer на этом устройстве</string>
+    <string name="add_wallet">Добавить кошелек</string>
+    <string name="wallets">Кошельки</string>
+    <string name="customize">Персонализировать</string>
+    <string name="customize_wallet_title">Персонализируйте кошелек</string>
+    <string name="customize_wallet_subtitle">Имя и значок кошелька хранятся локально на вашем устройстве.</string>
+</resources>

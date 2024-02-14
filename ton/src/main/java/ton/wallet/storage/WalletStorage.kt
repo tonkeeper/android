@@ -32,6 +32,14 @@ internal class WalletStorage(context: Context) {
         wallets.setName(createDate, name)
     }
 
+    suspend fun setWalletEmoji(createDate: Long, emoji: CharSequence) {
+        wallets.setEmoji(createDate, emoji)
+    }
+
+    suspend fun setWalletColor(createDate: Long, color: Int) {
+        wallets.setColor(createDate, color)
+    }
+
     suspend fun setWalletVersion(createDate: Long, version: WalletVersion) {
         wallets.setVersion(createDate, version)
     }

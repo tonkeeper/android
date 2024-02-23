@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.core.tonconnect
 
 import android.content.Context
 import android.net.Uri
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.Coin
 import com.tonapps.tonkeeper.core.currency.ton
@@ -19,7 +20,6 @@ import com.tonapps.tonkeeper.extensions.sendToBlockchain
 import com.tonapps.tonkeeper.fragment.root.RootActivity
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import core.EventBus
-import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

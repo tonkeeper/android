@@ -10,13 +10,14 @@ import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.emoji.EmojiView
+import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeper.data.AccountColor
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.name.adapter.ColorAdapter
 import com.tonapps.tonkeeper.ui.screen.name.adapter.EmojiAdapter
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.list.LinearLayoutManager
+import com.tonapps.wallet.data.account.entities.WalletLabel
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -30,6 +31,7 @@ import uikit.extensions.reject
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
 import uikit.widget.InputView
+import uikit.widget.LoaderView
 
 abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name) {
 
@@ -51,6 +53,7 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
     private lateinit var overView: View
     private lateinit var actionView: View
     private lateinit var nextButton: Button
+    private lateinit var loaderView: LoaderView
 
     init {
         arguments = Bundle().apply {
@@ -88,7 +91,7 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
         emojiView.adapter = emojiAdapter
 
         overView = view.findViewById(R.id.over)
-        overView.setBackgroundColor(getColor(UIKitColor.backgroundPage).withAlpha(.68f))
+        overView.setBackgroundColor(requireContext().backgroundPageColor.withAlpha(.68f))
         overView.setOnClickListener { walletName.hideKeyboard() }
 
         actionView = view.findViewById(R.id.action)
@@ -98,13 +101,15 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
         nextButton.setOnClickListener { sendData() }
         nextButton.setText(if (mode == NameModeCreate) Localization.continue_action else Localization.save)
 
+        loaderView = view.findViewById(R.id.loader)
+
         colorView.layoutManager = object : LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false) {
 
             override fun onLayoutCompleted(state: RecyclerView.State) {
                 super.onLayoutCompleted(state)
-                val firstVisible = findFirstCompletelyVisibleItemPosition()
-                val lastVisible = findLastCompletelyVisibleItemPosition()
-                val count = lastVisible - firstVisible + 1
+                val firstVisible = findFirstVisibleItemPosition()
+                val lastVisible = findLastVisibleItemPosition()
+                val count = (lastVisible - firstVisible) + 1
                 applyEmojiLayoutManager(count)
             }
         }
@@ -119,7 +124,7 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
         }
 
         collectFlow(nameViewModel.emojiFlow, emojiAdapter::submitList)
-        collectFlow(nameViewModel.uiStateFlow, ::setUiState)
+        collectFlow(nameViewModel.walletLabelFlow, ::applyWalletLabel)
     }
 
     private fun setExtrasAlpha(alpha: Float) {
@@ -132,10 +137,10 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
         }
     }
 
-    private fun setUiState(state: UiState) {
-        setName(state.name)
-        setColor(state.color)
-        setEmoji(state.emoji)
+    private fun applyWalletLabel(label: WalletLabel) {
+        setName(label.name)
+        setColor(label.color)
+        setEmoji(label.emoji)
     }
 
     fun setName(name: String) {
@@ -148,6 +153,19 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
         scrollToColor(newColor)
         walletColor.backgroundTintList = ColorStateList.valueOf(newColor)
         colorAdapter.activeColor = newColor
+    }
+
+    fun setLoading(loading: Boolean) {
+        if (loading) {
+            nextButton.visibility = View.GONE
+            loaderView.visibility = View.VISIBLE
+            walletName.isEnabled = false
+            stopScroll()
+            focus(false)
+        } else {
+            nextButton.visibility = View.VISIBLE
+            loaderView.visibility = View.GONE
+        }
     }
 
     private fun scrollToColor(color: Int) {
@@ -202,6 +220,8 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
             walletName.reject()
             return
         }
+
+        focus(false)
 
         val emoji = walletEmoji.getEmoji()
         val color = colorAdapter.activeColor

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="textPrimaryDark">#D9D9D9</color>
+    <color name="textSecondaryDark">#8D8D93</color>
+    <color name="textTertiaryDark">#4E4E52</color>
+    <color name="textAccentDark">#45AEF5</color>
+    <color name="textPrimaryAlternateDark">#000000</color>
+
+    <color name="backgroundPageDark">#000000</color>
+    <color name="backgroundTransparentDark">#F5000000</color>
+    <color name="backgroundContentDark">#17171A</color>
+    <color name="backgroundContentTintDark">#222224</color>
+    <color name="backgroundContentAttentionDark">#2F2F33</color>
+    <color name="backgroundHighlightedDark">#0AFFFFFF</color>
+    <color name="backgroundOverlayStrongDark">#B80F0F0F</color>
+    <color name="backgroundOverlayLightDark">#7A0F0F0F</color>
+    <color name="backgroundOverlayExtraLightDark">#3D0F0F0F</color>
+
+    <color name="iconPrimaryDark">#FFFFFF</color>
+    <color name="iconSecondaryDark">#8D8D93</color>
+    <color name="iconTertiaryDark">#4E4E52</color>
+    <color name="iconPrimaryAlternateDark">#000000</color>
+
+    <color name="buttonPrimaryBackgroundDark">#45AEF5</color>
+    <color name="buttonPrimaryBackgroundDisabledDark">#378AC3</color>
+    <color name="buttonPrimaryBackgroundHighlightedDark">#5BB8F6</color>
+    <color name="buttonPrimaryForegroundDark">#FFFFFF</color>
+
+    <color name="buttonSecondaryBackgroundDark">#17171A</color>
+    <color name="buttonSecondaryBackgroundDisabledDark">#0E0E0F</color>
+    <color name="buttonSecondaryBackgroundHighlightedDark">#202024</color>
+    <color name="buttonSecondaryForegroundDark">#FFFFFF</color>
+
+    <color name="buttonTertiaryBackgroundDark">#222224</color>
+    <color name="buttonTertiaryBackgroundDisabledDark">#18181A</color>
+    <color name="buttonTertiaryBackgroundHighlightedDark">#2A2A2E</color>
+    <color name="buttonTertiaryForegroundDark">#FFFFFF</color>
+
+    <color name="buttonGreenBackgroundDark">#39CC83</color>
+    <color name="buttonGreenBackgroundDisabledDark">#2B9962</color>
+    <color name="buttonGreenBackgroundHighlightedDark">#49CC8B</color>
+
+    <color name="fieldBackgroundDark">#17171A</color>
+    <color name="fieldActiveBorderDark">#45AEF5</color>
+    <color name="fieldErrorBorderDark">#FF4766</color>
+    <color name="fieldErrorBackgroundDark">#14FF4766</color>
+
+    <color name="accentBlueDark">#45AEF5</color>
+    <color name="accentGreenDark">#39CC83</color>
+    <color name="accentRedDark">#FF4766</color>
+    <color name="accentOrangeDark">#F5A73B</color>
+    <color name="accentPurpleDark">#7665E5</color>
+
+    <color name="tabBarActiveIconDark">#45AEF5</color>
+    <color name="tabBarInactiveIconDark">#8D8D93</color>
+
+    <color name="separatorCommonDark">#14FFFFFF</color>
+    <color name="separatorAlternateDark">#14FFFFFF</color>
+
+</resources>

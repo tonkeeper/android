@@ -13,13 +13,16 @@ import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
+import androidx.core.view.doOnNextLayout
 import androidx.core.view.marginBottom
+import androidx.core.view.updateMargins
 import androidx.core.view.updatePadding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.roundTop
 import uikit.extensions.setPaddingBottom
+import uikit.extensions.setView
 import kotlin.math.abs
 
 class ModalView @JvmOverloads constructor(
@@ -28,7 +31,8 @@ class ModalView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : FrameLayout(context, attrs, defStyle), ValueAnimator.AnimatorUpdateListener {
 
-    private companion object {
+    companion object {
+        const val animationDuration = 225L
         private val interpolator = PathInterpolator(.2f, 0f, 0f, 1f)
     }
 
@@ -56,7 +60,7 @@ class ModalView @JvmOverloads constructor(
     private val bottomSheetView: FrameLayout
 
     private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = 220
+        duration = animationDuration
         interpolator = ModalView.interpolator
         addUpdateListener(this@ModalView)
         doOnStart { setLayerType(LAYER_TYPE_HARDWARE, null) }
@@ -69,6 +73,10 @@ class ModalView @JvmOverloads constructor(
 
         bottomSheetView = findViewById(R.id.modal_design_bottom_sheet)
         bottomSheetView.roundTop(context.getDimensionPixelSize(R.dimen.cornerMedium))
+        bottomSheetView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            setPeekHeight(v.measuredHeight)
+        }
+        bottomSheetView.setOnClickListener {  }
 
         coordinatorView = findViewById(R.id.modal_coordinator)
 
@@ -84,12 +92,27 @@ class ModalView @JvmOverloads constructor(
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
         val statusInsets = compatInsets.getInsets(WindowInsetsCompat.Type.statusBars())
+        applyTopInsets(statusInsets.top + context.getDimensionPixelSize(R.dimen.offsetMedium))
+
         val navigationInsets = compatInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
-        bottomSheetView.layoutParams = (bottomSheetView.layoutParams as CoordinatorLayout.LayoutParams).apply {
-            topMargin = statusInsets.top + context.getDimensionPixelSize(R.dimen.offsetMedium)
-        }
-        // containerView.updatePadding(top = statusInsets.top, bottom = navigationInsets.bottom)
+        applyBottomInsets(navigationInsets.bottom)
         return super.onApplyWindowInsets(insets)
+    }
+
+    private fun applyTopInsets(newTopMargin: Int) {
+        val layoutParams = bottomSheetView.layoutParams as CoordinatorLayout.LayoutParams
+        val oldTopMargin = layoutParams.topMargin
+        if (newTopMargin != oldTopMargin) {
+            layoutParams.updateMargins(top = newTopMargin)
+            requestLayout()
+        }
+    }
+
+    private fun applyBottomInsets(newBottomPadding: Int) {
+        val oldBottomPadding = bottomSheetView.marginBottom
+        if (newBottomPadding != oldBottomPadding) {
+            bottomSheetView.setPaddingBottom(newBottomPadding)
+        }
     }
 
     fun startShowAnimation() {
@@ -99,8 +122,7 @@ class ModalView @JvmOverloads constructor(
     }
 
     fun setContentView(view: View) {
-        bottomSheetView.removeAllViews()
-        bottomSheetView.addView(view)
+        bottomSheetView.setView(view)
     }
 
     fun show() {
@@ -123,10 +145,9 @@ class ModalView @JvmOverloads constructor(
         bgView.alpha = value
     }
 
-    fun fixPeekHeight() {
-        bottomSheetView.requestLayout()
-        bottomSheetView.post {
-            behavior.peekHeight = bottomSheetView.measuredHeight
+    private fun setPeekHeight(newPeekHeight: Int) {
+        post {
+            behavior.peekHeight = newPeekHeight
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
     }

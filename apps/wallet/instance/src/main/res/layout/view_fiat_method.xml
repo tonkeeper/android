@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:singleLine="true"/>
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetExtraExtraSmall"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/textSecondaryColor"
             android:singleLine="true"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>

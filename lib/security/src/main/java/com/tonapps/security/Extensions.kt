@@ -69,30 +69,6 @@ fun Key.decrypt(iv: ByteArray, data: ByteArray): ByteArray? {
     }.getOrNull()
 }
 
-fun File.asAtomicFile(): AtomicFile {
-    return AtomicFile(this)
-}
-
-fun AtomicFile.write(data: ByteArray) {
-    val stream = startWrite()
-    try {
-        stream.write(data)
-    } catch (e: Exception) {
-        failWrite(stream)
-        throw e
-    } finally {
-        finishWrite(stream)
-    }
-}
-
-fun File.atomicWrite(data: ByteArray) {
-    asAtomicFile().write(data)
-}
-
-fun File.atomicRead(): ByteArray {
-    return asAtomicFile().readFully()
-}
-
 fun base64(input: String): ByteArray? {
     return try {
         Base64.decode(input, Base64.DEFAULT)

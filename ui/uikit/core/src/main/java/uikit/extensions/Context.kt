@@ -23,8 +23,9 @@ import androidx.annotation.DimenRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleableRes
-import com.tonapps.uikit.color.UIKitColor
-import java.util.Locale
+import com.tonapps.uikit.color.backgroundHighlightedColor
+import com.tonapps.uikit.color.stateList
+import com.tonapps.uikit.color.textTertiaryColor
 
 fun Context.inflate(
     @LayoutRes layoutId: Int,
@@ -88,18 +89,14 @@ fun Context.createRipple(
     content: Drawable? = null,
     mask: Drawable? = null
 ): RippleDrawable {
-    val color = getColor(UIKitColor.backgroundHighlighted)
-    val stateList = ColorStateList.valueOf(color)
-    return RippleDrawable(stateList, content, mask)
+    return RippleDrawable(backgroundHighlightedColor.stateList, content, mask)
 }
 
 fun Context.textWithLabel(text: String, label: String?): CharSequence {
     if (label.isNullOrEmpty()) {
         return text
     }
-
-    val labelColor = getColor(UIKitColor.textTertiary)
     val span = SpannableString("$text $label")
-    span.setSpan(ForegroundColorSpan(labelColor), text.length, text.length + label.length + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    span.setSpan(ForegroundColorSpan(textTertiaryColor), text.length, text.length + label.length + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     return span
 }

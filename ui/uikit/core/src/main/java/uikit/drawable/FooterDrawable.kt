@@ -4,14 +4,14 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.separatorCommonColor
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 
 class FooterDrawable(context: Context): BaseDrawable() {
 
     private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(UIKitColor.separatorCommon)
+        color = context.separatorCommonColor
         strokeWidth = .5f.dp
     }
 

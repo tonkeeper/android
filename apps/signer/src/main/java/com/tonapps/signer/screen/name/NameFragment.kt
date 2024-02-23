@@ -1,8 +1,13 @@
 package com.tonapps.signer.screen.name
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
@@ -13,7 +18,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
+import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.pinToBottomInsets
+import uikit.insets.KeyboardAnimationCallback
 import uikit.widget.HeaderView
 import uikit.widget.InputView
 
@@ -43,10 +50,10 @@ class NameFragment: BaseFragment(R.layout.fragment_name), BaseFragment.BottomShe
         headerView.doOnActionClick = { finish() }
 
         nameInput = view.findViewById(R.id.name)
+        nameInput.setOnDoneActionListener {save() }
 
         saveButton = view.findViewById(R.id.save)
         saveButton.setOnClickListener { save() }
-        saveButton.pinToBottomInsets()
 
         nameInput.doOnTextChange = {
             nameInput.error = false
@@ -56,6 +63,10 @@ class NameFragment: BaseFragment(R.layout.fragment_name), BaseFragment.BottomShe
         keyRepository.getKey(id).filterNotNull().onEach {
             nameInput.text = it.name
         }.launchIn(lifecycleScope)
+
+        view.doKeyboardAnimation { offset, _ ->
+            saveButton.translationY = -offset.toFloat()
+        }
     }
 
     private fun save() {

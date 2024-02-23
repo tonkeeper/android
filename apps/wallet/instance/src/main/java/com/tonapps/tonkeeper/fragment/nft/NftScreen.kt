@@ -15,13 +15,12 @@ import com.tonapps.tonkeeper.api.imageURL
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
 import com.tonapps.tonkeeper.core.ExternalUrl
-import com.tonapps.tonkeeper.extensions.launch
 import io.tonapi.models.NftItem
 import ton.extensions.toUserFriendly
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.drawable
-import uikit.extensions.verticalScrolled
+import uikit.extensions.topScrolled
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.navigation
@@ -71,7 +70,7 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         headerView.doOnCloseClick = { finish() }
 
         contentView = view.findViewById(R.id.content)
-        collectFlow(contentView.verticalScrolled, headerView::setDivider)
+        collectFlow(contentView.topScrolled, headerView::setDivider)
 
         imageView = view.findViewById(R.id.image)
 
@@ -142,7 +141,7 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
     private fun setAsyncState(asyncState: AsyncState) {
         if (asyncState == AsyncState.Loading) {
             loaderView.visibility = View.VISIBLE
-            loaderView.resetAnimation()
+            loaderView.startAnimation()
 
             contentView.visibility = View.GONE
         } else {

@@ -12,8 +12,8 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
+import com.tonapps.uikit.color.tabBarActiveIconColor
 import uikit.base.BaseFragment
 import uikit.widget.WebViewFixed
 
@@ -59,7 +59,7 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
         progressBar = view.findViewById(R.id.progress_bar)
 
         refreshView = view.findViewById(R.id.refresh)
-        refreshView.setColorSchemeColors(getColor(UIKitColor.tabBarActiveIcon))
+        refreshView.setColorSchemeColors(requireContext().tabBarActiveIconColor)
 
         webView = view.findViewById(R.id.web_view)
         webView.webViewClient = object : WebViewClient() {

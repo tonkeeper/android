@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/icon"
         app:layout_constraintTop_toTopOf="parent" />
@@ -29,7 +29,7 @@
         android:layout_marginTop="6dp"
         android:fontFamily="@font/montserrat_medium"
         android:lineHeight="20sp"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         android:textSize="14sp"
         app:layout_constraintStart_toEndOf="@+id/icon"
         app:layout_constraintTop_toBottomOf="@+id/title" />

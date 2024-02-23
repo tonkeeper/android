@@ -23,6 +23,6 @@ android {
 
 
 dependencies {
-    implementation(project(Libs.Lib.extensions))
-    implementation(project(Libs.Wallet.Data.core))
+    implementation(project(Dependence.Lib.extensions))
+    implementation(project(Dependence.Wallet.Data.core))
 }

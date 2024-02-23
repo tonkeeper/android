@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.graphics.Outline
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +20,7 @@ import androidx.core.animation.doOnEnd
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updateMargins
 import androidx.core.widget.NestedScrollView
 import androidx.core.widget.NestedScrollView.OnScrollChangeListener
 import androidx.recyclerview.widget.RecyclerView
@@ -48,6 +50,9 @@ var View.pivot: Float
         pivotX = value
         pivotY = value
     }
+
+val View.isVisibleForUser: Boolean
+    get() = isAttachedToWindow && isShown && windowVisibility == View.VISIBLE
 
 val View.window: Window?
     get() = context.window
@@ -170,10 +175,6 @@ fun TextView.setStartDrawable(@DrawableRes resId: Int) {
     setCompoundDrawablesWithIntrinsicBounds(getDrawable(resId), null, null, null)
 }
 
-fun View.getColor(resId: Int): Int {
-    return context.getColor(resId)
-}
-
 val ViewPager2.recyclerView: RecyclerView
     get() = getChildAt(0) as RecyclerView
 
@@ -231,33 +232,6 @@ fun View.reject() {
     startSnakeAnimation()
     hapticReject()
 }
-
-val NestedScrollView.verticalOffset: Flow<Int>
-    get() = callbackFlow {
-        val listener = object : OnScrollChangeListener {
-
-            var verticalOffset = 0
-
-            override fun onScrollChange(
-                v: NestedScrollView,
-                scrollX: Int,
-                scrollY: Int,
-                oldScrollX: Int,
-                oldScrollY: Int
-            ) {
-                verticalOffset = scrollY
-                trySend(verticalOffset)
-            }
-        }
-        setOnScrollChangeListener(listener)
-        awaitClose()
-    }
-
-val NestedScrollView.verticalScrolled: Flow<Boolean>
-    get() = verticalOffset.map {
-        it > 0
-    }.distinctUntilChanged()
-
 
 inline fun View.doKeyboardAnimation(crossinline block: (offset: Int, progress: Float) -> Unit) {
     val animationCallback = object : KeyboardAnimationCallback(this) {

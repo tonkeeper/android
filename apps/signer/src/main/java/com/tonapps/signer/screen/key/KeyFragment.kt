@@ -7,7 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.core.entities.KeyEntity
-import com.tonapps.signer.TonkeeperApp
+import com.tonapps.signer.deeplink.TKDeepLink
 import com.tonapps.signer.extensions.authorizationRequiredError
 import com.tonapps.signer.extensions.copyToClipboard
 import com.tonapps.signer.screen.name.NameFragment
@@ -19,14 +19,16 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.api.pub.PublicKeyEd25519
-import com.tonapps.qr.QRView
+import com.tonapps.qr.ui.QRView
 import com.tonapps.uikit.list.ListCell
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.round
+import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ActionCellView
 import uikit.widget.HeaderView
@@ -87,8 +89,10 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
         deleteView.setOnClickListener { openDeleteDialog() }
 
         scrollView = view.findViewById(R.id.scroll)
+        scrollView.applyNavBottomPadding()
 
         collectFlow(keyViewModel.keyEntity, ::applyEntity)
+        collectFlow(scrollView.topScrolled, headerView::setDivider)
     }
 
     private fun applyEntity(key: KeyEntity) {
@@ -110,15 +114,15 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
     }
 
     private fun setExportByUri(publicKey: PublicKeyEd25519, name: String) {
-        val uri = TonkeeperApp.buildExportUri(publicKey, name)
+        val uri = TKDeepLink.buildLinkUri(publicKey, name)
         qrView.setContent(uri.toString())
 
         exportTonkeeperView.setOnClickListener {
-            TonkeeperApp.openOrInstall(requireContext(), uri)
+            TKDeepLink.openOrInstall(requireContext(), uri)
         }
 
         exportTonkeeperWebView.setOnClickListener {
-            navigation?.openURL(TonkeeperApp.buildExportUriWeb(publicKey, name).toString(), true)
+            navigation?.openURL(TKDeepLink.buildLinkUriWeb(publicKey, name).toString(), true)
         }
     }
 

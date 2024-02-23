@@ -12,6 +12,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.ton.mnemonic.Mnemonic
@@ -84,8 +85,11 @@ class PhraseChild: BaseFragment(R.layout.fragment_init_phrase) {
 
         nextButton = view.findViewById(R.id.wallet_next)
         nextButton.setOnClickListener {
-            val words = wordFormView.getWords()
-            initViewModel.setWords(words)
+            wordFormView.hideKeyboard()
+            lifecycleScope.launch {
+                val words = wordFormView.getWords()
+                initViewModel.setWords(words)
+            }
         }
 
         collectFlow(phraseViewModel.hintWords, ::setHintWords)
@@ -140,12 +144,14 @@ class PhraseChild: BaseFragment(R.layout.fragment_init_phrase) {
     }
 
     private fun focus() {
-        val words = wordFormView.getWords()
-        if (words.isEmpty()) {
-            wordFormView.focus()
-        } else if (words.size != Mnemonic.DEFAULT_WORD_COUNT) {
-            val input = wordFormView.getLastEmptyInput() ?: return
-            wordFormView.focus(input)
+        lifecycleScope.launch {
+            val words = wordFormView.getWords()
+            if (words.isEmpty()) {
+                wordFormView.focus()
+            } else if (words.size != Mnemonic.DEFAULT_WORD_COUNT) {
+                val input = wordFormView.getLastEmptyInput() ?: return@launch
+                wordFormView.focus(input)
+            }
         }
     }
 

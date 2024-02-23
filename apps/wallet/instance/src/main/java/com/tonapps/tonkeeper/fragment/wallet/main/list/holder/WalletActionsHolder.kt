@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
+import com.tonapps.tonkeeper.extensions.openCamera
 import com.tonapps.tonkeeper.extensions.receive
 import com.tonapps.tonkeeper.extensions.sendCoin
 import com.tonapps.tonkeeper.fragment.wallet.main.list.item.WalletActionItem
@@ -17,6 +18,7 @@ class WalletActionsHolder(
     private val sendView = findViewById<View>(R.id.send)
     private val receiveView = findViewById<View>(R.id.receive)
     private val buyOrSellView = findViewById<View>(R.id.buy_or_sell)
+    private val scanView = findViewById<View>(R.id.scan)
 
     init {
         sendView.setOnClickListener { Navigation.from(context)?.sendCoin() }
@@ -25,20 +27,15 @@ class WalletActionsHolder(
             // nav?.add(FiatModalFragment.newInstance())
             FiatDialog.open(context)
         }
+
+        scanView.setOnClickListener {
+            Navigation.from(context)?.openCamera()
+        }
     }
 
     override fun onBind(item: WalletActionItem) {
-        sendView.visibility = if (item.walletType == WalletType.Watch) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
-
-        buyOrSellView.visibility = if (item.walletType == WalletType.Testnet || item.walletType == WalletType.Watch) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
+        sendView.isEnabled = item.walletType != WalletType.Watch
+        buyOrSellView.isEnabled = item.walletType != WalletType.Testnet && item.walletType != WalletType.Watch
     }
 
 }

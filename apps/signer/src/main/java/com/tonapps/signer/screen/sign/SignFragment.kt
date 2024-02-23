@@ -11,6 +11,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
+import com.tonapps.signer.deeplink.TKDeepLink
 import com.tonapps.signer.core.entities.KeyEntity
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.extensions.authorizationRequiredError
@@ -19,7 +20,8 @@ import com.tonapps.signer.extensions.short4
 import com.tonapps.signer.screen.qr.QRFragment
 import com.tonapps.signer.screen.root.RootViewModel
 import com.tonapps.signer.screen.sign.list.SignAdapter
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.uikit.color.textTertiaryColor
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -33,6 +35,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.setColor
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.LoaderView
+import uikit.widget.ModalView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 
@@ -67,12 +70,12 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
     private lateinit var bocRawView: AppCompatTextView
     private lateinit var emulateButton: View
     private lateinit var copyButton: View
+    private lateinit var actionView: View
     private lateinit var slideView: SlideActionView
     private lateinit var processLoader: LoaderView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        behavior.isHideable = false
 
         closeView = view.findViewById(R.id.close)
         closeView.setOnClickListener { finish() }
@@ -102,6 +105,8 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
         copyButton = view.findViewById(R.id.copy)
         copyButton.setOnClickListener { copyBody() }
+
+        actionView = view.findViewById(R.id.action)
 
         slideView = view.findViewById(R.id.slide)
         slideView.doOnDone = { sign() }
@@ -142,16 +147,28 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         if (returnResult.toApp) {
             rootViewModel.responseSignedBoc(boc)
         } else if (returnResult.uri != null) {
-            val uriWithBoc = returnResult.uri.buildUpon().appendQueryParameter(Key.BOC, boc).build()
-            val intent = Intent(Intent.ACTION_VIEW, uriWithBoc)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            finish()
+            returnSigned(returnResult.uri, boc)
         } else {
-            val uri = Uri.parse("tonkeeper://signer").buildUpon()
-                .appendQueryParameter(Key.BOC, boc)
-                .build()
-            navigation?.add(QRFragment.newInstance(args.id, uri.toString()))
+            showQR(boc)
+        }
+    }
+
+    private fun returnSigned(uri: Uri, boc: String) {
+        val uriWithBoc = uri.buildUpon().appendQueryParameter(Key.BOC, boc).build()
+        val intent = Intent(Intent.ACTION_VIEW, uriWithBoc)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun showQR(boc: String) {
+        val uri = TKDeepLink.buildPublishUri(boc)
+        navigation?.add(QRFragment.newInstance(args.id, uri.toString()))
+        finishDelay()
+    }
+
+    private fun finishDelay() {
+        postDelayed(ModalView.animationDuration) {
             finish()
         }
     }
@@ -187,8 +204,8 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
     private fun setSubtitle(label: String, hex: String) {
         val span = SpannableString("$label $hex")
-        span.setColor(getColor(UIKitColor.textTertiary),0, label.length)
-        span.setColor(getColor(UIKitColor.textSecondary), label.length, span.length)
+        span.setColor(requireContext().textTertiaryColor,0, label.length)
+        span.setColor(requireContext().textSecondaryColor, label.length, span.length)
         subtitleView.text = span
     }
 }

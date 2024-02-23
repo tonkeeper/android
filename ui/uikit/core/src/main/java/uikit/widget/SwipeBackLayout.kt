@@ -3,6 +3,7 @@ package uikit.widget
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -27,8 +28,8 @@ class SwipeBackLayout @JvmOverloads constructor(
     ValueAnimator.AnimatorUpdateListener {
 
     private companion object {
-        private val animationOffsetX = 42f.dp
-        private val interpolator = AccelerateDecelerateInterpolator()
+        private val animationOffsetX = 60f.dp
+        private val interpolator = PathInterpolator(.42f, 0f, .58f, 1f)
     }
 
     private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -37,12 +38,6 @@ class SwipeBackLayout @JvmOverloads constructor(
         addUpdateListener(this@SwipeBackLayout)
         doOnStart { setLayerType(LAYER_TYPE_HARDWARE, null) }
         doOnEnd { setLayerType(LAYER_TYPE_NONE, null) }
-    }
-
-    var fragment: BaseFragment? = null
-
-    private val parentFragment: BaseFragment? by lazy {
-        fragment?.parent as? BaseFragment
     }
 
     private val bgView: View
@@ -79,7 +74,6 @@ class SwipeBackLayout @JvmOverloads constructor(
                 val percent = 1f - (left.toFloat() / measuredWidth)
                 bgView.alpha = percent
                 shadowView.x = left - shadowView.width.toFloat()
-                onAnimationUpdateParent(percent)
             }
 
             override fun onViewDragStateChanged(state: Int) {
@@ -184,16 +178,9 @@ class SwipeBackLayout @JvmOverloads constructor(
 
     override fun onAnimationUpdate(animation: ValueAnimator) {
         val progress = animation.animatedValue as Float
-        onAnimationUpdateParent(progress)
         alpha = progress
         contentContainer.translationX = animationOffsetX * (1f - progress)
         shadowView.translationX = animationOffsetX * (1f - progress)
-    }
-
-    private fun onAnimationUpdateParent(progress: Float) {
-        val parentView = parentFragment?.view ?: return
-
-        parentView.translationX = -animationOffsetX * progress
     }
 
     override fun hasOverlappingRendering() = false

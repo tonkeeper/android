@@ -2,17 +2,17 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
     
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/index"
+        android:id="@+id/word_input_index"
         android:layout_width="@dimen/iconSize"
         android:layout_height="24dp"
         android:layout_gravity="center"
         android:layout_marginStart="12dp"
         android:gravity="end|center_vertical"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="@color/textSecondary"/>
+        android:textColor="?attr/textSecondaryColor"/>
 
     <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/input"
+        android:id="@+id/word_input_text"
         android:layout_width="match_parent"
         android:layout_height="24dp"
         android:layout_gravity="center"
@@ -25,8 +25,7 @@
         android:gravity="start|center_vertical"
         android:background="@null"
         android:imeOptions="actionNext"
-        android:textColor="@color/textPrimary"
-        android:textAppearance="@style/TextAppearance.Body1"
-        />
+        android:textColor="?attr/textPrimaryColor"
+        android:textAppearance="@style/TextAppearance.Body1"/>
 
 </merge>

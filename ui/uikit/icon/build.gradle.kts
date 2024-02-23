@@ -15,5 +15,5 @@ android {
 }
 
 dependencies {
-    implementation(project(Libs.UIKit.color))
+    implementation(project(Dependence.UIKit.color))
 }

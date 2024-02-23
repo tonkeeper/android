@@ -3,32 +3,32 @@ package com.tonapps.tonkeeper.ui.screen.init
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.PasscodeManager
 import com.tonapps.tonkeeper.api.Tonapi
 import com.tonapps.tonkeeper.extensions.setRecoveryPhraseBackup
 import com.tonapps.tonkeeper.ui.screen.init.pager.ChildPageType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.crypto.base64
 import org.ton.crypto.hex
 import org.ton.mnemonic.Mnemonic
-import ton.MnemonicHelper
-import ton.contract.WalletVersion
 import ton.wallet.Wallet
+import ton.wallet.WalletManager
 
 class InitViewModel(
     private val action: InitAction,
-    private val argsName: String?,
-    private val argsPkBase64: String?,
+    argsName: String?,
+    argsPkBase64: String?,
+    private val walletManager: WalletManager,
     savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
@@ -41,7 +41,7 @@ class InitViewModel(
             add(ChildPageType.ImportTestnet)
         } else if (action == InitAction.Watch) {
             add(ChildPageType.Watch)
-        } else if (action == InitAction.Signer && pkBase64 == null) {
+        } else if (action == InitAction.Signer && argsPkBase64 == null) {
             add(ChildPageType.Signer)
         }
 
@@ -49,7 +49,7 @@ class InitViewModel(
             add(ChildPageType.Passcode)
         }
 
-        if (App.walletManager.hasWallet()) {
+        if (walletManager.hasWallet()) {
             add(ChildPageType.Name)
         }
     }
@@ -60,29 +60,15 @@ class InitViewModel(
     private val _currentPage = MutableStateFlow(0)
     val currentPage = _currentPage.asStateFlow()
 
-    private val _ready = MutableStateFlow(false)
-    val ready = _ready.asStateFlow()
-
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
 
-    private val words: List<String>
-        get() = args.words
-
-    private val name: String?
-        get() = args.name ?: argsName
-
-    private val passcode: String
-        get() = args.passcode
-
-    private val watchAccountId: String
-        get() = args.watchAccountId
-
-    private val pkBase64: String?
-        get() = args.pkBase64 ?: argsPkBase64
+    private val _savedWalletChannel = Channel<Unit>(Channel.BUFFERED)
+    val savedWalletFlow = _savedWalletChannel.receiveAsFlow()
 
     init {
-        args.pkBase64 = pkBase64
+        args.pkBase64 = argsPkBase64
+        args.name = argsName
 
         if (pages.isEmpty()) {
             initWallet()
@@ -136,62 +122,54 @@ class InitViewModel(
     private fun initWallet() {
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
-            savePasscode()
+            try {
+                savePasscode()
 
-            val wallet = when(action) {
-                InitAction.Watch -> watchWallet()
-                InitAction.Create -> createWallet()
-                InitAction.Import -> importWallet(false)
-                InitAction.Testnet -> importWallet(true)
-                InitAction.Signer -> signerWallet()
+                val wallet = when(action) {
+                    InitAction.Watch -> watchWallet()
+                    InitAction.Create -> createWallet()
+                    InitAction.Import -> importWallet(false)
+                    InitAction.Testnet -> importWallet(true)
+                    InitAction.Signer -> signerWallet()
+                }
+
+                if (action == InitAction.Create) {
+                    wallet.setRecoveryPhraseBackup(true)
+                }
+
+                _savedWalletChannel.trySend(Unit)
+            } catch (e: Throwable) {
+                Log.e("InitViewModelLog", "error", e)
             }
-
-            if (action == InitAction.Create) {
-                wallet.setRecoveryPhraseBackup(true)
-            }
-
-            _ready.value = true
         }
     }
 
     private suspend fun signerWallet(): Wallet {
-        val pkBase64 = pkBase64 ?: throw IllegalStateException("Pk base64 is empty")
+        val pkBase64 = args.pkBase64 ?: throw IllegalStateException("Pk base64 is empty")
         val publicKey = PublicKeyEd25519(base64(pkBase64))
-
-        var name = name ?: ""
-        if (!name.endsWith("(Signer)")) {
-            name += " (Signer)"
-        }
-
-        return App.walletManager.addWatchWallet(publicKey, name, args.emoji, args.color, true)
+        return walletManager.addWatchWallet(publicKey, args.name, args.emoji, args.color, true)
     }
 
     private suspend fun watchWallet(): Wallet {
-        if (watchAccountId.isEmpty()) {
-            throw IllegalStateException("Watch account id is empty")
-        }
-
+        val watchAccountId = args.watchAccountId ?: throw IllegalStateException("Watch account id is empty")
         val publicKey = resolvePublicKey(watchAccountId)
-        return App.walletManager.addWatchWallet(publicKey, name, args.emoji, args.color, false)
+        return walletManager.addWatchWallet(publicKey, args.name, args.emoji, args.color, false)
     }
 
     private suspend fun createWallet(): Wallet {
         val words = Mnemonic.generate()
-        return App.walletManager.addWallet(words, name, args.emoji, args.color, false)
+        return walletManager.addWallet(words, args.name, args.emoji, args.color, false)
     }
 
     private suspend fun importWallet(testnet: Boolean): Wallet {
-        if (words.isEmpty()) {
-            throw IllegalStateException("Words is empty")
-        }
-
-        val wallet = App.walletManager.addWallet(words, name, args.emoji, args.color, testnet)
+        val words = args.words ?: throw IllegalStateException("Words can't be null")
+        val wallet = walletManager.addWallet(words, args.name, args.emoji, args.color, testnet)
         for (v in WalletVersion.entries) {
             val w = wallet.asVersion(v)
             val address = w.address
             val account = Tonapi.resolveAccount(address, testnet) ?: continue
             if (account.balance > 0) {
-                App.walletManager.setWalletVersion(wallet.id, v)
+                walletManager.setWalletVersion(wallet.id, v)
             }
             return w
         }
@@ -200,6 +178,7 @@ class InitViewModel(
     }
 
     private suspend fun savePasscode() {
+        val passcode = args.passcode ?: return
         if (passcode.length == PasscodeManager.CODE_LENGTH) {
             App.passcode.setPinCode(passcode)
         }

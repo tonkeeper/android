@@ -47,11 +47,10 @@ abstract class AppDatabase : RoomDatabase() {
 
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
-                    db.setMaxSqlCacheSize(SQLiteDatabase.MAX_SQL_CACHE_SIZE)
                     db.enableWriteAheadLogging()
-                    db.query("PRAGMA journal_mode = WAL")
-                    db.query("PRAGMA synchronous = OFF")
-                    db.query("PRAGMA temp_store = MEMORY")
+                    db.setMaxSqlCacheSize(SQLiteDatabase.MAX_SQL_CACHE_SIZE)
+                    db.query("PRAGMA temp_store = MEMORY").close()
+                    db.query("PRAGMA secure_delete = TRUE").close()
                 }
             })
             builder.fallbackToDestructiveMigration()

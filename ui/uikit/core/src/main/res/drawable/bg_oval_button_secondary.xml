@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/buttonSecondaryBackgroundDisabled">
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="?attr/buttonSecondaryBackgroundDisabledColor">
     <item>
         <shape android:shape="oval">
-            <solid android:color="@color/buttonSecondaryBackground"/>
+            <solid android:color="?attr/buttonSecondaryBackgroundColor"/>
         </shape>
     </item>
 </ripple>

@@ -5,9 +5,9 @@ import android.net.Uri
 import android.util.Log
 import com.tonapps.tonkeeper.core.tonconnect.models.TCEvent
 import com.tonapps.network.Network
+import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
-import okhttp3.Response
 
 internal class Realtime(
     context: Context,

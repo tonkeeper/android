@@ -23,11 +23,34 @@
             android:title="@string/receive"/>
 
         <uikit.widget.IconButtonView
+            android:id="@+id/scan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:icon="@drawable/ic_qr_viewfinder_thin_28"
+            android:title="@string/scan"/>
+
+        <uikit.widget.IconButtonView
+            android:id="@+id/swap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:icon="@drawable/ic_swap_horizontal_outline_28"
+            android:title="@string/swap"
+            android:enabled="false"/>
+
+        <uikit.widget.IconButtonView
             android:id="@+id/buy_or_sell"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:icon="@drawable/ic_usd_28"
             android:title="@string/buy_or_sell"/>
+
+        <uikit.widget.IconButtonView
+            android:id="@+id/stake"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:icon="@drawable/ic_staking_outline_28"
+            android:title="@string/stake"
+            android:enabled="false"/>
 
     </uikit.widget.ButtonsLayout>
 </FrameLayout>

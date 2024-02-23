@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.fragment.settings.language
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.ConfigurationCompat
 import androidx.core.os.LocaleListCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.wallet.localization.Localization

@@ -9,8 +9,9 @@ import com.facebook.drawee.generic.RoundingParams
 import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.fragment.nft.NftScreen
+import com.tonapps.uikit.color.backgroundHighlightedColor
+import com.tonapps.uikit.color.stateList
 import uikit.extensions.getDimension
 import uikit.extensions.round
 import uikit.navigation.Navigation
@@ -25,7 +26,7 @@ class CollectiblesHolder(parent: ViewGroup): com.tonapps.uikit.list.BaseListHold
     private val collectionView = findViewById<AppCompatTextView>(R.id.collection)
 
     init {
-        itemView.foreground = RippleDrawable(ColorStateList.valueOf(context.getColor(UIKitColor.backgroundHighlighted)), null, null)
+        itemView.foreground = RippleDrawable(context.backgroundHighlightedColor.stateList, null, null)
 
         itemView.round(radius.toInt())
         imageView.hierarchy.roundingParams = RoundingParams.fromCornersRadii(radius, radius, 0f, 0f)

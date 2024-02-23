@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/buttonSecondaryBackgroundDisabled">
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="?attr/buttonSecondaryBackgroundDisabledColor">
     <item android:state_enabled="false">
         <shape android:shape="rectangle">
-            <solid android:color="@color/buttonSecondaryBackgroundDisabled"/>
+            <solid android:color="?attr/buttonSecondaryBackgroundDisabledColor"/>
             <corners android:radius="18dp"/>
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/buttonSecondaryBackground"/>
+            <solid android:color="?attr/buttonSecondaryBackgroundColor"/>
             <corners android:radius="18dp"/>
         </shape>
     </item>

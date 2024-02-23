@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.fragment.send.confirm
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.totalFees
@@ -16,7 +17,6 @@ import com.tonapps.tonkeeper.extensions.sendToBlockchain
 import com.tonapps.tonkeeper.fragment.send.TransactionData
 import com.tonapps.wallet.data.core.Currency
 import core.EventBus
-import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
 
     init {
         viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
             updateUiState {
                 it.copy(
                     signer = wallet.signer
@@ -66,7 +66,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
 
         viewModelScope.launch {
             try {
-                val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: throw Exception("failed to get wallet")
+                val wallet = App.walletManager.getWalletInfo() ?: throw Exception("failed to get wallet")
                 val seqno = getSeqno(wallet)
                 val cell = BagOfCells(base64(boc)).first()
                 val b = wallet.contract.createTransferMessageCell(wallet.contract.address, seqno, cell)
@@ -90,7 +90,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         }
 
         viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: throw Exception("failed to get wallet")
+            val wallet = App.walletManager.getWalletInfo() ?: throw Exception("failed to get wallet")
             val seqno = getSeqno(wallet)
             val cell = buildUnsignedBody(wallet, seqno, tx)
 
@@ -113,8 +113,8 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
 
     private suspend fun transferMessage(tx: TransactionData) = withContext(Dispatchers.IO) {
         try {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: throw Exception("failed to get wallet")
-            val privateKey = com.tonapps.tonkeeper.App.walletManager.getPrivateKey(wallet.id)
+            val wallet = App.walletManager.getWalletInfo() ?: throw Exception("failed to get wallet")
+            val privateKey = App.walletManager.getPrivateKey(wallet.id)
             val gift = tx.buildWalletTransfer(wallet.contract.address)
 
             wallet.sendToBlockchain(privateKey, gift) ?: throw Exception("failed to send to blockchain")
@@ -160,7 +160,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
 
     fun setAmount(amount: Coins, tokenAddress: String, tokenSymbol: String) {
         viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
             val accountId = wallet.accountId
 
             val value = Coin.toCoins(amount.amount.value.toLong())
@@ -186,7 +186,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         }
 
         viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
             try {
                 val gift = tx.buildWalletTransfer(wallet.contract.address)
                 val emulate = wallet.emulate(gift)

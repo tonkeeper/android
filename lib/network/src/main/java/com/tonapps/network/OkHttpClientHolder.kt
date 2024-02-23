@@ -51,7 +51,7 @@ class OkHttpClientHolder {
             }
             val engine = createCronetEngine(provider.createBuilder())
             val okHttpBuilder = okHttpBuilder()
-            okHttpBuilder.addInterceptor(CronetInterceptor.newBuilder(engine).build())
+            // okHttpBuilder.addInterceptor(CronetInterceptor.newBuilder(engine).build())
             return okHttpBuilder.build()
         }
         return okHttpBuilder().build()

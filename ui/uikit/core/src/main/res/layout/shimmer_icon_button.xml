@@ -12,7 +12,7 @@
             android:layout_height="@dimen/iconSize"
             android:layout_gravity="center"
             android:background="@drawable/bg_oval"
-            android:backgroundTint="@color/backgroundContentTint"/>
+            android:backgroundTint="?attr/backgroundContentTintColor"/>
 
         <View
             android:layout_width="40dp"

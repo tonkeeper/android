@@ -9,6 +9,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.emoji.Emoji
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.Coin
 import com.tonapps.tonkeeper.core.PaymentURL
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
@@ -19,18 +21,19 @@ import com.tonapps.tonkeeper.fragment.web.WebFragment
 import com.tonapps.tonkeeper.core.tonconnect.TonConnect
 import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
-import com.tonapps.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonapps.tonkeeper.fragment.send.SendScreen
-import com.tonapps.tonkeeper.fragment.settings.accounts.AccountsScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitAction
-import com.tonapps.tonkeeper.ui.screen.init.InitScreen
-import kotlinx.coroutines.launch
+import com.tonapps.tonkeeper.ui.screen.init.InitFragment
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.R
+import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
 import uikit.navigation.NavigationActivity
+import java.util.Locale
 
-class RootActivity: NavigationActivity(), DeepLink.Processor {
+class RootActivity: NavigationActivity() {
 
-    private val deepLink = DeepLink(this)
+    private val rootViewModel: RootViewModel by viewModel()
 
     val fiatDialog: FiatDialog by lazy {
         FiatDialog(this, lifecycleScope)
@@ -43,182 +46,57 @@ class RootActivity: NavigationActivity(), DeepLink.Processor {
     lateinit var tonConnect: TonConnect
 
     private lateinit var uiHandler: Handler
-    private var initialized = false
-    private var lastIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(App.instance.getThemeRes())
         super.onCreate(savedInstanceState)
+        Emoji.init(this)
+
         uiHandler = Handler(mainLooper)
         tonConnect = TonConnect(this)
 
-        initRoot(false, intent)
+        collectFlow(rootViewModel.hasWalletFlow) { init(it, false) }
+        collectFlow(rootViewModel.changeWallet) { init(hasWallet = true, recreate = true) }
+        collectFlow(rootViewModel.addFragmentAction) { add(it) }
+
+        handleIntent(intent)
     }
 
-    override fun openUri(uri: Uri): Boolean {
-        val fragment = resolveScreen(uri) ?: return false
-        add(fragment)
-        return true
-    }
-
-    private fun resolveIntent(intent: Intent?): BaseFragment? {
-        val data = intent?.data ?: return null
-        if (!deepLink.handle(data)) {
-            return resolveScreen(data)
+    fun init(hasWallet: Boolean, recreate: Boolean) {
+        if (hasWallet) {
+            setMainFragment(recreate)
+        } else {
+            setIntroFragment()
         }
-        return null
     }
 
-    private fun resolveScreen(uri: Uri): BaseFragment? {
-        if (tonConnect.isSupportUri(uri)) {
-            return tonConnect.resolveScreen(uri)
-        } else if (uri.scheme == "ton" || uri.host == "app.tonkeeper.com") {
-            return resolveSendScreen(uri)
-        } else if (uri.toString() == AccountsScreen.DeepLink && !hasFragment<AccountsScreen>()) {
-            return AccountsScreen.newInstance()
-        } else if (DeepLink.isTonkeeperUri(uri)) {
-            return resolveTonkeeperScreen(uri)
+    private fun setIntroFragment() {
+        if (setPrimaryFragment(IntroFragment.newInstance())) {
+            // hideLockPassword()
         }
-        return null
     }
 
-    private fun resolveTonkeeperScreen(uri: Uri): BaseFragment? {
-        val firstPath = DeepLink.getTonkeeperUriFirstPath(uri)
-        if (firstPath == "signer") {
-            return resolveSinger(uri)
-        }
-        return null
-    }
-
-    private fun resolveSinger(uri: Uri): BaseFragment? {
-        val pkBase64 = uri.getQueryParameter("pk") ?: return null
-        val name = uri.getQueryParameter("name")
-        return InitScreen.newInstance(InitAction.Signer, name, pkBase64)
-    }
-
-    private inline fun <reified F> hasFragment(): Boolean {
-        return findFragment<F>() != null
-    }
-
-    private inline fun <reified F> findFragment(): F? {
-        return supportFragmentManager.findFragment<F>()
-    }
-
-    private fun resolveSendScreen(uri: Uri): BaseFragment? {
-        val paymentURL = PaymentURL(uri)
-        if (paymentURL.action != PaymentURL.ACTION_TRANSFER) {
-            return null
-        }
-        val amount = Coin.toCoins(paymentURL.amount)
-        val currentSendScreen = findFragment<SendScreen>()
-        if (currentSendScreen != null) {
-            currentSendScreen.forceSetAddress(paymentURL.address)
-            currentSendScreen.forceSetAmount(amount)
-            currentSendScreen.forceSetComment(paymentURL.text)
-            currentSendScreen.forceSetJetton(paymentURL.jettonAddress)
-            return null
-        }
-        return SendScreen.newInstance(paymentURL.address, paymentURL.text, amount, paymentURL.jettonAddress)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (!initialized) {
-            return
-        }
-
-        val intentScreen = resolveIntent(lastIntent)
-        lastIntent = null
-
-        if (intentScreen is InitScreen) {
-            add(intentScreen)
-        }
-
-        lifecycleScope.launch {
-            com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
-
-            supportFragmentManager.commit {
-                intentScreen?.let {
-                    add(hostFragmentId, it)
-                }
-                insertLockScreenIfNeed(this)
-            }
+    private fun setMainFragment(recreate: Boolean) {
+        if (setPrimaryFragment(MainFragment.newInstance(), recreate)) { //  && !Password.isUnlocked()
+            //showLockPassword()
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        lastIntent = intent
+        handleIntent(intent)
     }
 
-    private fun setIntroFragment(intent: Intent?) {
-        val introFragment = IntroFragment.newInstance()
-        val intentScreen = resolveIntent(intent)
-        if (intentScreen is InitScreen) {
-            lastIntent = null
-        }
-
-        supportFragmentManager.commit {
-            replace(hostFragmentId, introFragment, introFragment.javaClass.name)
-            setPrimaryNavigationFragment(introFragment)
-            if (intentScreen is InitScreen) {
-                add(hostFragmentId, intentScreen)
-            }
-            runOnCommit {
-                clearBackStack()
-                initialized = true
-            }
-        }
-    }
-
-    private fun setMainFragment(skipPasscode: Boolean, intent: Intent?) {
-        val mainFragment = MainFragment.newInstance()
-        val intentScreen = resolveIntent(intent)
-        lastIntent = null
-        supportFragmentManager.commit {
-            replace(hostFragmentId, mainFragment, mainFragment.javaClass.name)
-            setPrimaryNavigationFragment(mainFragment)
-            intentScreen?.let {
-                add(hostFragmentId, it)
-            }
-            if (!skipPasscode) {
-                insertLockScreenIfNeed(this)
-            }
-            runOnCommit {
-                clearBackStack()
-                tonConnect.onCreate()
-                initialized = true
-            }
-        }
-    }
-
-    private fun insertLockScreenIfNeed(transaction: FragmentTransaction) {
-        if (true) {
-            return
-        }
-        if (!com.tonapps.tonkeeper.App.settings.lockScreen || !com.tonapps.tonkeeper.App.passcode.hasPinCode) {
-            return
-        }
-        val currentLockScreen = supportFragmentManager.findFragment<LockScreen>()
-        if (currentLockScreen == null) {
-            transaction.add(hostFragmentId, LockScreen.newInstance())
-        }
-    }
-
-    private fun clearBackStack() {
-        if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        }
-    }
-
-    override fun initRoot(skipPasscode: Boolean, intent: Intent?) {
-        lifecycleScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo()
-            if (wallet == null) {
-                setIntroFragment(intent)
-            } else {
-                setMainFragment(skipPasscode, intent)
-            }
-        }
+    /*
+    /*if (DeepLink.isSupportedUri(uri)) {
+                        deepLink.handle(uri)
+                    } else {
+                        add(WebFragment.newInstance(url))
+                    }*/
+     */
+    private fun handleIntent(intent: Intent) {
+        val uri = intent.data ?: return
+        rootViewModel.processDeepLink(uri)
     }
 
     override fun openURL(url: String, external: Boolean) {
@@ -237,10 +115,8 @@ class RootActivity: NavigationActivity(), DeepLink.Processor {
             val intent = Intent(action, uri)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
-        } else if (DeepLink.isSupportedUri(uri)) {
-            deepLink.handle(uri)
         } else {
-            add(WebFragment.newInstance(url))
+            rootViewModel.processDeepLink(uri)
         }
     }
 

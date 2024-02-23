@@ -4,18 +4,19 @@ import android.net.Uri
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
-import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.drawable.ScalingUtils
 import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.request.ImageRequestBuilder
+import com.tonapps.tonkeeper.extensions.getDiffColor
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.fragment.jetton.JettonScreen
 import com.tonapps.tonkeeper.fragment.wallet.main.list.item.WalletJettonCellItem
+import com.tonapps.uikit.color.accentOrangeColor
+import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.wallet.localization.Localization
 import uikit.extensions.dp
 import uikit.navigation.Navigation
 import uikit.widget.FrescoView
@@ -45,22 +46,17 @@ class WalletCellJettonHolder(
         }
         loadIcon(item.iconURI)
         titleView.text = item.code
-
-        if (item.rate.isNullOrBlank()) {
-            rateView.visibility = View.GONE
-        } else {
-            rateView.visibility = View.VISIBLE
-            rateView.text = createRate(item.rate, item.rateDiff24h!!)
-        }
-
         balanceView.text = item.balance
 
-        if (item.balanceCurrency.isNullOrBlank()) {
-            balanceCurrencyView.visibility = View.GONE
+        if (item.rate.isNullOrBlank()) {
+            rateView.setText(Localization.unverified_token)
+            rateView.setTextColor(context.accentOrangeColor)
         } else {
-            balanceCurrencyView.visibility = View.VISIBLE
-            balanceCurrencyView.text = item.balanceCurrency
+            rateView.text = createRate(item.rate, item.rateDiff24h!!)
+            rateView.setTextColor(context.textSecondaryColor)
         }
+
+        balanceCurrencyView.text = item.balanceCurrencyFormat
     }
 
     private fun loadIcon(uri: Uri) {
@@ -72,21 +68,11 @@ class WalletCellJettonHolder(
     private fun createRate(rate: String, diff24h: String): SpannableString {
         val span = SpannableString("$rate $diff24h")
         span.setSpan(
-            ForegroundColorSpan(getDiffColor(diff24h)),
+            ForegroundColorSpan(context.getDiffColor(diff24h)),
             rate.length,
             rate.length + diff24h.length + 1,
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         return span
-    }
-
-    @ColorInt
-    private fun getDiffColor(diff: String): Int {
-        val resId = when {
-            diff.startsWith("-") -> UIKitColor.accentRed
-            diff.startsWith("+") -> UIKitColor.accentGreen
-            else -> UIKitColor.textSecondary
-        }
-        return context.getColor(resId)
     }
 }

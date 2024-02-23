@@ -13,11 +13,11 @@ class NameSavedState(private val handle: SavedStateHandle) {
     }
 
     var emoji: CharSequence
-        get() = handle.get<String>(EMOJI) ?: ""
+        get() = handle.get<String>(EMOJI) ?: "\uD83D\uDC8E"
         set(value) = handle.set(EMOJI, value)
 
     var name: String
-        get() = handle.get<String>(NAME) ?: ""
+        get() = handle.get<String>(NAME) ?: "Wallet"
         set(value) = handle.set(NAME, value)
 
     var color: Int

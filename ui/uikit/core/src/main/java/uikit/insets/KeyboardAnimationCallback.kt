@@ -1,8 +1,6 @@
 package uikit.insets
 
-import android.util.Log
 import android.view.View
-import android.view.animation.PathInterpolator
 import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout

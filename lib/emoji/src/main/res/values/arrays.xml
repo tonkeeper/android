@@ -25,6 +25,6 @@
     </array>
 
     <array name="preloaded_fonts" translatable="false">
-        <item>@font/emoji</item>
+        <item>@font/noto_color_emoji</item>
     </array>
 </resources>

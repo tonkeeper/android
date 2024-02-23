@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="@dimen/offsetMedium"
                 android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="@color/textTertiary"
+                android:textColor="?attr/textTertiaryColor"
                 android:text="@string/biometric_description"/>
 
             <uikit.widget.item.ItemSwitchView
@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="@dimen/offsetMedium"
                 android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="@color/textTertiary"
+                android:textColor="?attr/textTertiaryColor"
                 android:text="@string/lock_screen_description"/>
 
             <uikit.widget.item.ItemIconView

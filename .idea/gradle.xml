@@ -35,6 +35,7 @@
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/lib" />
+            <option value="$PROJECT_DIR$/lib/blockchain" />
             <option value="$PROJECT_DIR$/lib/emoji" />
             <option value="$PROJECT_DIR$/lib/extensions" />
             <option value="$PROJECT_DIR$/lib/icu" />

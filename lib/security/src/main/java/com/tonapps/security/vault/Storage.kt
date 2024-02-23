@@ -3,14 +3,11 @@ package com.tonapps.security.vault
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import com.tonapps.security.Security
-import com.tonapps.security.atomicRead
-import com.tonapps.security.atomicWrite
 import com.tonapps.security.clear
 import com.tonapps.security.decrypt
 import com.tonapps.security.encrypt
 import com.tonapps.security.getByteArray
 import com.tonapps.security.putByteArray
-import java.io.File
 import javax.crypto.SecretKey
 
 internal class Storage(
@@ -66,17 +63,23 @@ internal class Storage(
 
     @SuppressLint("ApplySharedPref")
     private fun delete(id: Long) {
-        prefs.edit()
+        val saved = prefs.edit()
             .remove(wrapIvKey(id))
             .remove(wrapBodyKey(id))
             .commit()
+        if (!saved) {
+            throw IllegalStateException("failed to delete")
+        }
     }
 
     @SuppressLint("ApplySharedPref")
     private fun setIvAndBody(id: Long, iv: ByteArray, body: ByteArray) {
-        prefs.edit()
+        val saved = prefs.edit()
             .putByteArray(wrapIvKey(id), iv)
             .putByteArray(wrapBodyKey(id), body)
             .commit()
+        if (!saved) {
+            throw IllegalStateException("failed to save")
+        }
     }
 }

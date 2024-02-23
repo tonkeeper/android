@@ -39,7 +39,7 @@
                 android:layout_marginTop="@dimen/offsetLarge"
                 android:icon="@drawable/ic_message_bubble_28"
                 android:text="@string/support"
-                android:tint="@color/iconSecondary"
+                android:tint="?attr/iconSecondaryColor"
                 app:position="single"/>
 
             <androidx.appcompat.widget.LinearLayoutCompat
@@ -55,7 +55,7 @@
                     android:text="@string/app_name"
                     android:gravity="center"
                     android:textSize="14sp"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:fontFamily="@font/montserrat_semi_bold"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -66,7 +66,7 @@
                     android:text="@string/app_name"
                     android:gravity="center"
                     android:textSize="12sp"
-                    android:textColor="@color/textSecondary"
+                    android:textColor="?attr/textSecondaryColor"
                     android:fontFamily="@font/montserrat_medium"/>
             </androidx.appcompat.widget.LinearLayoutCompat>
 

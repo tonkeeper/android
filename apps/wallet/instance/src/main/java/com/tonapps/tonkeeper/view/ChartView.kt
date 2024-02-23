@@ -10,8 +10,8 @@ import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.view.doOnLayout
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.api.chart.ChartEntity
+import com.tonapps.uikit.color.accentBlueColor
 import uikit.extensions.dp
 import uikit.extensions.withAlpha
 
@@ -33,7 +33,7 @@ class ChartView @JvmOverloads constructor(
         }
     }
 
-    private val accentColor = context.getColor(UIKitColor.accentBlue)
+    private val accentColor = context.accentBlueColor
 
     private val path = Path()
 

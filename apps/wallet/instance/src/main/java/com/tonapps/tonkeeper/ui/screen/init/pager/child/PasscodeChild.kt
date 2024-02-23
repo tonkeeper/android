@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.init.pager.child
 
-import androidx.fragment.app.viewModels
 import com.tonapps.tonkeeper.fragment.passcode.create.PasscodeCreateScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import org.koin.androidx.viewmodel.ext.android.getViewModel

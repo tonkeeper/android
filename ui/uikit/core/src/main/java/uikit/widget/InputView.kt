@@ -3,14 +3,18 @@ package uikit.widget
 import android.animation.ValueAnimator
 import android.content.Context
 import android.text.Editable
+import android.text.InputFilter
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentRedColor
 import uikit.R
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
@@ -19,6 +23,7 @@ import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
 import uikit.extensions.range
 import uikit.extensions.scale
+import uikit.extensions.setCursorColor
 import uikit.extensions.useAttributes
 
 class InputView @JvmOverloads constructor(
@@ -97,6 +102,11 @@ class InputView @JvmOverloads constructor(
         get() = inputDrawable.error
         set(value) {
             inputDrawable.error = value
+            if (value) {
+                editText.setCursorColor(context.accentRedColor)
+            } else {
+                editText.setCursorColor(context.accentBlueColor)
+            }
         }
 
     var loading: Boolean = false
@@ -106,7 +116,7 @@ class InputView @JvmOverloads constructor(
                 if (value && hintReduced) {
                     visibleClearView = false
                     loaderView.visibility = View.VISIBLE
-                    loaderView.resetAnimation()
+                    loaderView.startAnimation()
                 } else {
                     if (hintReduced) {
                         visibleClearView = true
@@ -159,11 +169,18 @@ class InputView @JvmOverloads constructor(
     val isEmpty: Boolean
         get() = text.isBlank()
 
-
     var singleLine: Boolean = false
         set(value) {
             editText.isSingleLine = value
             field = value
+        }
+
+    var maxLength: Int = 0
+        set(value) {
+            if (field != value) {
+                field = value
+                editText.filters = if (value > 0) arrayOf(InputFilter.LengthFilter(value)) else emptyArray()
+            }
         }
 
     init {
@@ -176,6 +193,7 @@ class InputView @JvmOverloads constructor(
         editText = findViewById(R.id.input_field)
         editText.onFocusChangeListener = this
         editText.addTextChangedListener(this)
+        editText.setCursorColor(context.accentBlueColor)
 
         optionsView = findViewById(R.id.input_options)
         actionView = findViewById(R.id.input_action)
@@ -195,6 +213,7 @@ class InputView @JvmOverloads constructor(
             actionValue = it.getString(R.styleable.InputView_android_button)
             isEnabled = it.getBoolean(R.styleable.InputView_android_enabled, true)
             singleLine = it.getBoolean(R.styleable.InputView_android_singleLine, false)
+            maxLength = it.getInt(R.styleable.InputView_android_maxLength, 0)
             disableClearButton = it.getBoolean(R.styleable.InputView_disableClearButton, false)
         }
 
@@ -215,6 +234,18 @@ class InputView @JvmOverloads constructor(
 
     fun setOnEditorActionListener(listener: TextView.OnEditorActionListener) {
         editText.setOnEditorActionListener(listener)
+    }
+
+    fun setOnDoneActionListener(listener: () -> Unit) {
+        onEditorAction(EditorInfo.IME_ACTION_DONE)
+        setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                listener()
+                true
+            } else {
+                false
+            }
+        }
     }
 
     fun focus() {

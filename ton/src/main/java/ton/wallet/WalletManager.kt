@@ -1,20 +1,15 @@
 package ton.wallet
 
 import android.app.Application
-import android.graphics.Color
-import android.util.Log
-import io.ktor.util.hex
-import kotlinx.coroutines.CoroutineScope
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic
-import ton.contract.WalletVersion
 import ton.wallet.storage.WalletStorage
 
 // TODO refactor WalletManager
@@ -25,6 +20,9 @@ class WalletManager(
     companion object {
         const val MNEMONIC_WORD_COUNT = Mnemonic.DEFAULT_WORD_COUNT
     }
+
+    private val _walletFlow = MutableStateFlow<Wallet?>(null)
+    val walletFlow = _walletFlow.asStateFlow().filterNotNull()
 
     private val storage = WalletStorage(application)
 
@@ -102,7 +100,7 @@ class WalletManager(
 
             if (wallet == cacheWallet) {
                 cacheWallet = null
-                getWalletInfo()
+                _walletFlow.value = getWalletInfo()
             }
         }
     }
@@ -111,6 +109,8 @@ class WalletManager(
         storage.clearAll()
         cacheWallets.clear()
         cacheWallet = null
+
+        _walletFlow.value = null
     }
 
     suspend fun getWalletInfo(): Wallet? = withContext(Dispatchers.IO) {
@@ -158,6 +158,8 @@ class WalletManager(
     suspend fun setActiveWallet(walletId: Long) {
         storage.setSelectedWallet(walletId)
         cacheWallet = null
+
+        _walletFlow.value = getWalletInfo()
     }
 
     suspend fun addWatchWallet(
@@ -215,6 +217,8 @@ class WalletManager(
 
         cacheWallet = null
         cacheWallets.clear()
+
+        _walletFlow.value = wallet
     }
 
 }

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.icu.text.SimpleDateFormat
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeper.Global
 import com.tonapps.tonkeeper.api.amount
@@ -22,7 +23,6 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.event.WalletStateUpdateEvent
 import com.tonapps.tonkeeper.helper.DateFormat
 import core.EventBus
-import core.formatter.CurrencyFormatter
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
@@ -54,17 +54,6 @@ object HistoryHelper {
     private val calendar = Calendar.getInstance()
     private val dateFormat1 = SimpleDateFormat("h:mm a")
     private val dateFormat2 = SimpleDateFormat("MMM dd, h:mm a")
-
-    // dirty hack to remove trailing zeros
-    private val amountModifier = { value: String ->
-        val decimalSeparator = CurrencyFormatter.monetaryDecimalSeparator
-        val r = value.removeSuffix(decimalSeparator + "00")
-        if (r == "") {
-            "0${decimalSeparator}01"
-        } else {
-            r
-        }
-    }
 
     fun withLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
         val last = items.lastOrNull()
@@ -217,12 +206,12 @@ object HistoryHelper {
 
             if (!isOut) {
                 tokenCode = "TON"
-                value = CurrencyFormatter.format("TON", tonFromJetton, amountModifier)
-                value2 = CurrencyFormatter.format(symbol, amount, amountModifier)
+                value = CurrencyFormatter.format("TON", tonFromJetton)
+                value2 = CurrencyFormatter.format(symbol, amount)
             } else {
                 tokenCode = symbol
-                value = CurrencyFormatter.format(symbol, amount, amountModifier)
-                value2 = CurrencyFormatter.format("TON", tonFromJetton, amountModifier)
+                value = CurrencyFormatter.format(symbol, amount)
+                value2 = CurrencyFormatter.format("TON", tonFromJetton)
             }
 
             val inCurrency = wallet.currency(jettonSwap.jettonPreview!!.address)
@@ -251,7 +240,7 @@ object HistoryHelper {
             val isOut = !wallet.isMyAddress(jettonTransfer.recipient?.address ?: "")
 
             val amount = Coin.parseFloat(jettonTransfer.amount, jettonTransfer.jetton.decimals)
-            var value = CurrencyFormatter.format(symbol, amount, amountModifier)
+            var value = CurrencyFormatter.format(symbol, amount)
 
             val itemAction: ActionType
             val accountAddress: AccountAddress?
@@ -300,7 +289,7 @@ object HistoryHelper {
             val accountAddress: AccountAddress
 
             val amount = Coin.toCoins(tonTransfer.amount)
-            var value = CurrencyFormatter.format("TON", amount, amountModifier)
+            var value = CurrencyFormatter.format("TON", amount)
 
             if (isOut) {
                 itemAction = ActionType.Send
@@ -340,7 +329,7 @@ object HistoryHelper {
             val executor = smartContractExec.executor
 
             val amount = Coin.toCoins(smartContractExec.tonAttached)
-            val value = CurrencyFormatter.format("TON", amount, amountModifier)
+            val value = CurrencyFormatter.format("TON", amount)
 
             return HistoryItem.Event(
                 txId = txId,
@@ -407,7 +396,7 @@ object HistoryHelper {
             val depositStake = action.depositStake!!
 
             val amount = Coin.toCoins(depositStake.amount)
-            val value = CurrencyFormatter.format("TON", amount, amountModifier)
+            val value = CurrencyFormatter.format("TON", amount)
 
             return HistoryItem.Event(
                 iconURL = depositStake.implementation.iconURL,
@@ -427,7 +416,7 @@ object HistoryHelper {
 
             val amount = jettonMint.parsedAmount
 
-            val value = CurrencyFormatter.format(jettonMint.jetton.symbol, amount, amountModifier)
+            val value = CurrencyFormatter.format(jettonMint.jetton.symbol, amount)
 
             return HistoryItem.Event(
                 txId = txId,
@@ -445,7 +434,7 @@ object HistoryHelper {
             val withdrawStakeRequest = action.withdrawStakeRequest!!
 
             val amount = Coin.toCoins(withdrawStakeRequest.amount ?: 0L)
-            val value = CurrencyFormatter.format("TON", amount, amountModifier)
+            val value = CurrencyFormatter.format("TON", amount)
 
             return HistoryItem.Event(
                 iconURL = withdrawStakeRequest.implementation.iconURL,
@@ -481,7 +470,7 @@ object HistoryHelper {
             val amount = Coin.toCoins(auctionBid.amount.value.toLong())
             val tokenCode = auctionBid.amount.tokenName
 
-            val value = CurrencyFormatter.format(auctionBid.amount.tokenName, amount, amountModifier)
+            val value = CurrencyFormatter.format(auctionBid.amount.tokenName, amount)
 
             return HistoryItem.Event(
                 txId = txId,
@@ -500,7 +489,7 @@ object HistoryHelper {
             val withdrawStake = action.withdrawStake!!
 
             val amount = Coin.toCoins(withdrawStake.amount)
-            val value = CurrencyFormatter.format("TON", amount, amountModifier)
+            val value = CurrencyFormatter.format("TON", amount)
 
             return HistoryItem.Event(
                 txId = txId,
@@ -519,7 +508,7 @@ object HistoryHelper {
             val nftPurchase = action.nftPurchase!!
 
             val amount = Coin.toCoins(nftPurchase.amount.value.toLong())
-            val value = CurrencyFormatter.format(nftPurchase.amount.tokenName, amount, amountModifier)
+            val value = CurrencyFormatter.format(nftPurchase.amount.tokenName, amount)
             val nftItem = nftPurchase.nft
 
             return HistoryItem.Event(
@@ -541,7 +530,7 @@ object HistoryHelper {
             val jettonBurn = action.jettonBurn!!
 
             val amount = jettonBurn.parsedAmount
-            val value = CurrencyFormatter.format(jettonBurn.jetton.symbol, amount, amountModifier)
+            val value = CurrencyFormatter.format(jettonBurn.jetton.symbol, amount)
 
             return HistoryItem.Event(
                 txId = txId,
@@ -574,7 +563,7 @@ object HistoryHelper {
             val subscribe = action.subscribe!!
 
             val amount = Coin.toCoins(subscribe.amount)
-            val value = CurrencyFormatter.format("TON", amount, amountModifier)
+            val value = CurrencyFormatter.format("TON", amount)
 
             return HistoryItem.Event(
                 txId = txId,

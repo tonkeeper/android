@@ -16,18 +16,18 @@ android {
 }
 
 dependencies {
-    api(project(Libs.UIKit.color))
-    api(project(Libs.UIKit.icon))
-    api(project(Libs.UIKit.list))
+    api(project(Dependence.UIKit.color))
+    api(project(Dependence.UIKit.icon))
+    api(project(Dependence.UIKit.list))
 
-    implementation(Libs.AndroidX.core)
-    implementation(Libs.AndroidX.activity)
-    implementation(Libs.AndroidX.fragment)
-    implementation(Libs.AndroidX.appCompat)
-    implementation(Libs.AndroidX.splashscreen)
-    implementation(Libs.UI.material)
-    implementation(Libs.lottie)
-    implementation(Libs.fresco) {
+    implementation(Dependence.KotlinX.coroutines)
+    implementation(Dependence.AndroidX.core)
+    implementation(Dependence.AndroidX.activity)
+    implementation(Dependence.AndroidX.fragment)
+    implementation(Dependence.AndroidX.appCompat)
+    implementation(Dependence.AndroidX.splashscreen)
+    implementation(Dependence.UI.material)
+    implementation(Dependence.fresco) {
         exclude(group = "com.facebook.soloader", module = "soloader")
         exclude(group = "com.facebook.fresco", module = "soloader")
         exclude(group = "com.facebook.fresco", module = "nativeimagefilters")

@@ -34,6 +34,7 @@ class PasswordDialog(
         if (!BuildConfig.DEBUG) {
             window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
+
         window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 
         setContentView(R.layout.dialog_password)

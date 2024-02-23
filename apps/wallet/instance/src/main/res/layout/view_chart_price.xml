@@ -12,7 +12,7 @@
         android:textSize="20sp"
         android:fontFamily="@font/roboto_mono"
         android:textFontWeight="700"
-        android:textColor="@color/textPrimary"/>
+        android:textColor="?attr/textPrimaryColor"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/diff"
@@ -21,7 +21,7 @@
         android:textSize="14sp"
         android:fontFamily="@font/roboto_mono"
         android:textFontWeight="500"
-        android:textColor="@color/textPrimary"/>
+        android:textColor="?attr/textPrimaryColor"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:layout_width="match_parent"
@@ -30,6 +30,6 @@
         android:text="@string/price"
         android:fontFamily="@font/roboto_mono"
         android:textFontWeight="500"
-        android:textColor="@color/textSecondary"/>
+        android:textColor="?attr/textSecondaryColor"/>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

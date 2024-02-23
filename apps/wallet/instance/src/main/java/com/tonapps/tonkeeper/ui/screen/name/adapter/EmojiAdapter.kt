@@ -3,11 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.name.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.emoji.EmojiView
+import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.list.BaseListAdapter
-import com.tonapps.uikit.list.BaseListHolder
-import com.tonapps.uikit.list.BaseListItem
 
 class EmojiAdapter(
     private val listener: (CharSequence) -> Unit
@@ -57,5 +54,7 @@ class EmojiAdapter(
         recyclerView.setRecycledViewPool(viewPool)
         recyclerView.setHasFixedSize(false)
         recyclerView.isNestedScrollingEnabled = true
+        recyclerView.itemAnimator = null
+        recyclerView.layoutAnimation = null
     }
 }

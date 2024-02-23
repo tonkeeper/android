@@ -45,7 +45,7 @@
                 android:layout_marginEnd="@dimen/offsetMedium"
                 android:layout_gravity="center|end"
                 android:background="@drawable/bg_emoji_edit">
-                <com.tonapps.emoji.EmojiView
+                <com.tonapps.emoji.ui.EmojiView
                     android:id="@+id/wallet_emoji"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
@@ -66,17 +66,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="36dp"
                     android:layout_marginTop="@dimen/offsetLarge"
-                    android:paddingLeft="38dp"
-                    android:paddingRight="0dp"
+                    android:paddingHorizontal="26dp"
                     android:clipToPadding="false"/>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/emoji"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="6dp"
+                    android:clipToPadding="false"
+                    android:paddingTop="@dimen/offsetMedium"
                     android:layout_gravity="center_horizontal"
-                    android:paddingHorizontal="@dimen/offsetLarge"
+                    android:paddingHorizontal="26dp"
                     android:foreground="@drawable/fg_emoji_picker"/>
             </uikit.widget.ColumnLayout>
 
@@ -106,6 +107,13 @@
             android:enabled="false"
             android:textAppearance="@style/TextAppearance.Label1"
             android:text="@string/continue_action"/>
+
+        <uikit.widget.LoaderView
+            android:id="@+id/loader"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:visibility="gone"
+            android:layout_gravity="center_horizontal"/>
 
     </FrameLayout>
 

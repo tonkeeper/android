@@ -8,9 +8,9 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.widget.RemoteViews
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
-import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

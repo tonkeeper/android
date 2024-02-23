@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.chart
 
 import androidx.lifecycle.viewModelScope
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.Tonapi
 import com.tonapps.tonkeeper.api.account.AccountRepository
@@ -15,7 +16,6 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.wallet.data.core.Currency
 import core.QueueScope
-import core.formatter.CurrencyFormatter
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -82,7 +82,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
                 )
             }
 
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@submit
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val historyItems = getEvents(wallet, lt)
             val items = HistoryHelper.removeLoadingItem(uiState.value.historyItems) + historyItems
 

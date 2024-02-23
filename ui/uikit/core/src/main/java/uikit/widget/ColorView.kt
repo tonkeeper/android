@@ -5,10 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
-import com.tonapps.uikit.color.UIKitColor
-import uikit.R
+import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.dp
-import uikit.extensions.getDimensionPixelSize
 
 class ColorView @JvmOverloads constructor(
     context: Context,
@@ -21,7 +19,7 @@ class ColorView @JvmOverloads constructor(
     private val activeStrokeSizeHalf = activeStrokeSize / 2
     private val activeOffset = 3f.dp + activeStrokeSizeHalf
     private val activePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(UIKitColor.backgroundPage)
+        color = context.backgroundPageColor
         style = Paint.Style.STROKE
         strokeWidth = activeStrokeSize
     }

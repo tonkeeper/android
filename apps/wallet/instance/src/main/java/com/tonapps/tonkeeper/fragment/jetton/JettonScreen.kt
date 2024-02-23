@@ -11,13 +11,15 @@ import com.tonapps.tonkeeper.extensions.launch
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonAdapter
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonItemDecoration
 import uikit.base.BaseFragment
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.topScrolled
-import uikit.extensions.verticalScrolled
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
 import uikit.widget.HeaderView
+import uikit.widget.SimpleRecyclerView
 
 class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScreenFeature>(R.layout.fragment_jetton), BaseFragment.SwipeBack {
 
@@ -57,7 +59,7 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
 
     private lateinit var headerView: HeaderView
     private lateinit var shimmerView: View
-    private lateinit var listView: RecyclerView
+    private lateinit var listView: SimpleRecyclerView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -68,9 +70,9 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
         shimmerView = view.findViewById(R.id.shimmer)
 
         listView = view.findViewById(R.id.list)
-        listView.layoutManager = com.tonapps.uikit.list.LinearLayoutManager(view.context)
         listView.adapter = ConcatAdapter(jettonAdapter, historyAdapter)
         listView.addItemDecoration(JettonItemDecoration(view.context))
+        listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
         collectFlow(listView.topScrolled, headerView::setDivider)
     }
 

@@ -12,7 +12,7 @@
         android:layout_width="2dp"
         android:layout_height="match_parent"
         android:background="@drawable/cursor"
-        android:backgroundTint="@color/backgroundContentTint"/>
+        android:backgroundTint="?attr/backgroundContentTintColor"/>
 
     <view class="com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView$AnimationTextView"
         android:id="@+id/crypt"

@@ -5,7 +5,7 @@ import android.view.View
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.signer.add.SignerAddFragment
 import com.tonapps.tonkeeper.ui.screen.init.InitAction
-import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.init.InitFragment
 import uikit.base.BaseSheetDialog
 import uikit.navigation.Navigation.Companion.navigation
 
@@ -35,7 +35,7 @@ class ImportWalletDialog(context: Context): BaseSheetDialog(context), View.OnCli
     override fun onClick(v: View) {
         val nav = navigation ?: return
         val action = associatedActions[v.id] ?: return
-        nav.add(InitScreen.newInstance(action))
+        nav.add(InitFragment.newInstance(action))
         dismiss()
     }
 

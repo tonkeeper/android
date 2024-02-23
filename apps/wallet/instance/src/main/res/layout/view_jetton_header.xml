@@ -18,7 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.H2"
-            android:textColor="@color/textPrimary" />
+            android:textColor="?attr/textPrimaryColor" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/currency_balance"
@@ -27,7 +27,7 @@
             android:layout_marginTop="2dp"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary" />
+            android:textColor="?attr/textSecondaryColor" />
 
         <View
             android:layout_width="match_parent"
@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary"/>
+            android:textColor="?attr/textSecondaryColor"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -49,7 +49,7 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:background="@drawable/bg_oval"
-        android:backgroundTint="@color/backgroundContent"
+        android:backgroundTint="?attr/backgroundContentColor"
         app:roundAsCircle="true" />
 
 

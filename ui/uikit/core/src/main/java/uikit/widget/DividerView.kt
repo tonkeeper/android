@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.separatorCommonColor
 import uikit.extensions.dp
 
 class DividerView @JvmOverloads constructor(
@@ -15,7 +15,7 @@ class DividerView @JvmOverloads constructor(
 ) : View(context, attrs, defStyle) {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(UIKitColor.separatorCommon)
+        color = context.separatorCommonColor
         strokeWidth = .5f.dp
     }
 

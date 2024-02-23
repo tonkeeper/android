@@ -10,9 +10,8 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundContentTintColor
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getDrawable
@@ -20,6 +19,7 @@ import uikit.extensions.inflate
 import uikit.extensions.round
 import com.tonapps.uikit.list.ListCell
 import uikit.extensions.drawable
+import uikit.widget.FrescoView
 
 open class ActionSheet(
     val context: Context
@@ -91,7 +91,7 @@ open class ActionSheet(
     private fun buildView() {
         container.removeAllViews()
 
-        val backgroundColor = context.getColor(UIKitColor.backgroundContentTint)
+        val backgroundColor = context.backgroundContentTintColor
         var popupHeight = 0
 
         for ((index, item) in items.withIndex()) {
@@ -123,7 +123,7 @@ open class ActionSheet(
         val titleView = itemView.findViewById<AppCompatTextView>(R.id.title)
         val subtitleView = itemView.findViewById<AppCompatTextView>(R.id.subtitle)
         val iconView = itemView.findViewById<AppCompatImageView>(R.id.icon)
-        val imageView = itemView.findViewById<SimpleDraweeView>(R.id.image)
+        val imageView = itemView.findViewById<FrescoView>(R.id.image)
 
         titleView.text = item.title
         if (item.icon == null) {

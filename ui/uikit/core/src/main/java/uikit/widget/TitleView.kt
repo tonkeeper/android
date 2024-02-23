@@ -3,7 +3,7 @@ package uikit.widget
 import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.textPrimaryColor
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingVertical
@@ -16,7 +16,7 @@ class TitleView @JvmOverloads constructor(
 
     init {
         setTextAppearance(R.style.TextAppearance_H3)
-        setTextColor(context.getColor(UIKitColor.textPrimary))
+        setTextColor(context.textPrimaryColor)
         setPaddingVertical(context.getDimensionPixelSize(R.dimen.offsetMedium))
     }
 }

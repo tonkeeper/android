@@ -12,7 +12,7 @@
         android:transformPivotX="0dp"
         android:transformPivotY="0dp"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="@color/textSecondary"/>
+        android:textColor="?attr/textSecondaryColor"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
@@ -33,7 +33,7 @@
             android:maxLines="4"
             android:maxLength="220"
             android:textAppearance="@style/TextAppearance.Body1"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:textCursorDrawable="@drawable/cursor"
             android:gravity="top|start"
             android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
@@ -76,7 +76,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginEnd="14dp"
                 android:gravity="center_vertical"
-                android:textColor="@color/textAccent"
+                android:textColor="?attr/textAccentColor"
                 android:textAppearance="@style/TextAppearance.Label1" />
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -87,7 +87,7 @@
                 android:id="@+id/input_icon"
                 android:visibility="gone"
                 android:scaleType="centerInside"
-                android:tint="@color/textAccent" />
+                android:tint="?attr/textAccentColor" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 

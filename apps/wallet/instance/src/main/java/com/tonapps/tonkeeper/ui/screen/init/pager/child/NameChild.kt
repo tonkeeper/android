@@ -4,12 +4,14 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.data.AccountColor
 import com.tonapps.tonkeeper.ui.screen.name.base.NameFragment
 import com.tonapps.tonkeeper.ui.screen.name.base.NameModeCreate
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
+import uikit.extensions.collectFlow
 import uikit.extensions.setPaddingTop
 
 class NameChild: NameFragment(NameModeCreate) {
@@ -36,11 +38,15 @@ class NameChild: NameFragment(NameModeCreate) {
         initViewModel.uiTopOffset.onEach {
             view.setPaddingTop(it)
         }.launchIn(lifecycleScope)
+
+        collectFlow(initViewModel.loading, ::setLoading)
     }
 
     override fun onResume() {
         super.onResume()
         setName(nameValue)
+        setColor(AccountColor.all.first())
+        setEmoji("\uD83D\uDC8E")
         focus(true)
     }
 

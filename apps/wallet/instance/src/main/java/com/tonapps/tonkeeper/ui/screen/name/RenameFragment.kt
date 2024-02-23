@@ -27,14 +27,10 @@ class RenameFragment(mode: NameMode): NameFragment(mode), BaseFragment.BottomShe
         headerView.doOnActionClick = { finish() }
     }
 
-    override fun onResume() {
-        super.onResume()
-        focus(true)
-    }
-
     override fun onDragging() {
         super.onDragging()
         stopScroll()
+        focus(false)
     }
 
     override fun onData(name: String, emoji: CharSequence, color: Int) {

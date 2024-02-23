@@ -20,6 +20,7 @@ import com.tonapps.qr.QRImageAnalyzer
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
+import uikit.widget.ModalView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -62,6 +63,8 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         qrAnalyzer.flow.onEach(::handleBarcode).launchIn(lifecycleScope)
+
+        checkAndStartCamera()
     }
 
     private fun startCamera() {
@@ -149,9 +152,10 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         }
     }
 
-    override fun onEndShowingAnimation() {
-        super.onEndShowingAnimation()
-        checkAndStartCamera()
+    private fun finishDelay() {
+        postDelayed(ModalView.animationDuration) {
+            finish()
+        }
     }
 
     override fun onDestroyView() {

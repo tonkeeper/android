@@ -1,9 +1,9 @@
 package ton.wallet.storage
 
 import android.graphics.Color
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import core.keyvalue.KeyValue
 import org.ton.api.pub.PublicKeyEd25519
-import ton.contract.WalletVersion
 import ton.wallet.Wallet
 import ton.wallet.WalletType
 

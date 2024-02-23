@@ -7,7 +7,10 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.fieldActiveBorderColor
+import com.tonapps.uikit.color.fieldBackgroundColor
+import com.tonapps.uikit.color.fieldErrorBorderColor
 import uikit.extensions.dp
 import uikit.extensions.hapticConfirm
 import uikit.extensions.hapticReject
@@ -92,10 +95,10 @@ class PasscodeView @JvmOverloads constructor(
             DONE
         }
 
-        private val defaultColor = context.getColor(UIKitColor.fieldBackground)
-        private val activeColor = context.getColor(UIKitColor.fieldActiveBorder)
-        private val errorColor = context.getColor(UIKitColor.fieldErrorBorder)
-        private var doneColor = context.getColor(UIKitColor.accentGreen)
+        private val defaultColor = context.fieldBackgroundColor
+        private val activeColor = context.fieldActiveBorderColor
+        private val errorColor = context.fieldErrorBorderColor
+        private var doneColor = context.accentGreenColor
 
         private val defaultSize = 12.dp
         private val activeSize = 16.dp

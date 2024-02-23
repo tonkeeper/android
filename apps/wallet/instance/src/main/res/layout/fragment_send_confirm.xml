@@ -28,7 +28,7 @@
                 android:text="@string/confirm_action"
                 android:gravity="center"
                 android:textAppearance="@style/TextAppearance.Body1"
-                android:textColor="@color/textSecondary"/>
+                android:textColor="?attr/textSecondaryColor"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/title"
@@ -37,7 +37,7 @@
                 android:layout_marginTop="@dimen/offsetExtraSmall"
                 android:gravity="center"
                 android:textAppearance="@style/TextAppearance.H3"
-                android:textColor="@color/textPrimary"/>
+                android:textColor="?attr/textPrimaryColor"/>
 
             <com.tonapps.tonkeeper.view.TransactionDetailView
                 android:id="@+id/recipient"
@@ -68,27 +68,31 @@
         </androidx.appcompat.widget.LinearLayoutCompat>
     </ScrollView>
 
-    <Button
-        android:id="@+id/send"
-        style="@style/Widget.App.Button"
+    <FrameLayout
+        android:id="@+id/action"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:layout_marginHorizontal="@dimen/offsetMedium"
         android:layout_marginBottom="@dimen/offsetMedium"
-        android:filterTouchesWhenObscured="true"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
-        android:text="@string/confirm_and_send"/>
+        android:layout_gravity="bottom">
 
-    <uikit.widget.ProcessTaskView
-        android:id="@+id/process"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginHorizontal="@dimen/offsetMedium"
-        android:layout_marginBottom="@dimen/offsetMedium"
-        android:visibility="gone"
-        app:successLabel="@string/done"
-        app:errorLabel="@string/error"/>
+        <Button
+            android:id="@+id/send"
+            style="@style/Widget.App.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:filterTouchesWhenObscured="true"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor"
+            android:text="@string/confirm_and_send"/>
+
+        <uikit.widget.ProcessTaskView
+            android:id="@+id/process"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:successLabel="@string/done"
+            app:errorLabel="@string/error"/>
+
+    </FrameLayout>
 </FrameLayout>

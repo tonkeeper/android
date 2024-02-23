@@ -4,4 +4,4 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:textAppearance="@style/TextAppearance.Label2"
-    android:textColor="@color/buttonSecondaryForeground"/>
+    android:textColor="?attr/buttonSecondaryForegroundColor"/>

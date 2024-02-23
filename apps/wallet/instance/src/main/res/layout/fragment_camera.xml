@@ -41,7 +41,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:textAppearance="@style/TextAppearance.H2"
             android:text="@string/scan_qr_code"/>
 

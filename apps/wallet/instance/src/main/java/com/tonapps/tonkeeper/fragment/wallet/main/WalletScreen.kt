@@ -2,11 +2,9 @@ package com.tonapps.tonkeeper.fragment.wallet.main
 
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
-import com.tonapps.tonkeeper.extensions.launch
 import com.tonapps.tonkeeper.fragment.main.MainTabScreen
 import com.tonapps.tonkeeper.fragment.main.MainViewModel
 import com.tonapps.tonkeeper.fragment.settings.main.SettingsScreen
@@ -19,7 +17,6 @@ import uikit.extensions.bottomScrolled
 import uikit.extensions.collectFlow
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.topScrolled
-import uikit.extensions.verticalScrolled
 import uikit.navigation.Navigation.Companion.navigation
 
 class WalletScreen: MainTabScreen<WalletScreenState, WalletScreenEffect, WalletScreenFeature>(R.layout.fragment_wallet) {
@@ -32,7 +29,7 @@ class WalletScreen: MainTabScreen<WalletScreenState, WalletScreenEffect, WalletS
         requireParentFragment().getViewModel()
     }
 
-    override val feature: WalletScreenFeature by viewModels()
+    override val feature: WalletScreenFeature by viewModel()
 
     private val adapter = WalletAdapter()
 
@@ -63,7 +60,7 @@ class WalletScreen: MainTabScreen<WalletScreenState, WalletScreenEffect, WalletS
     }
 
     override fun newUiState(state: WalletScreenState) {
-        headerView.setWallet(state.title, state.emoji, state.color)
+        headerView.setWallet(state.walletLabel)
         if (state.items.isNotEmpty()) {
             adapter.submitList(state.items) {
                 toggleVisibilityAnimation(shimmerView, listView)

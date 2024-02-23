@@ -8,12 +8,15 @@ import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import androidx.core.view.postDelayed
 import androidx.core.widget.doAfterTextChanged
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentRedColor
+import com.tonapps.uikit.color.textSecondaryColor
 import uikit.R
-import uikit.HapticHelper
 import uikit.drawable.InputDrawable
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
+import uikit.extensions.setCursorColor
 import uikit.extensions.startSnakeAnimation
 
 class PasswordInputView @JvmOverloads constructor(
@@ -35,8 +38,13 @@ class PasswordInputView @JvmOverloads constructor(
         get() = inputDrawable.error
         set(value) {
             inputDrawable.error = value
-            if (value) {
-                HapticHelper.warning(context)
+            if (error) {
+                val errorColor = context.accentRedColor
+                inputView.setTextColor(errorColor)
+                inputView.setCursorColor(errorColor)
+            } else {
+                inputView.setTextColor(context.textSecondaryColor)
+                inputView.setCursorColor(context.accentBlueColor)
             }
         }
 
@@ -84,7 +92,7 @@ class PasswordInputView @JvmOverloads constructor(
 
     fun failedPassword() {
         error = true
-        startSnakeAnimation(duration = errorAnimationDuration)
+        inputView.startSnakeAnimation(duration = errorAnimationDuration)
         postDelayed(errorAnimationDuration) {
             clear()
         }

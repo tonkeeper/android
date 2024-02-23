@@ -11,7 +11,9 @@ import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.core.graphics.withSave
 import androidx.core.view.isVisible
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.buttonPrimaryBackgroundColor
+import com.tonapps.uikit.color.buttonTertiaryBackgroundColor
+import com.tonapps.uikit.color.constantWhiteColor
 import uikit.ArgbEvaluator
 import uikit.extensions.dp
 import uikit.extensions.range
@@ -31,15 +33,15 @@ class SwitchView @JvmOverloads constructor(
         private val thumbOffset = 2.5f.dp
     }
 
-    private val defaultTrackColor = context.getColor(UIKitColor.buttonTertiaryBackground)
-    private val activeTrackColor = context.getColor(UIKitColor.buttonPrimaryBackground)
+    private val defaultTrackColor = context.buttonTertiaryBackgroundColor
+    private val activeTrackColor = context.buttonPrimaryBackgroundColor
 
     private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = defaultTrackColor
     }
 
     private val thumbPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(UIKitColor.constantWhite)
+        color = context.constantWhiteColor
         setShadowLayer(8f.dp, 0f, 3f.dp, Color.parseColor("#26000000"))
     }
 

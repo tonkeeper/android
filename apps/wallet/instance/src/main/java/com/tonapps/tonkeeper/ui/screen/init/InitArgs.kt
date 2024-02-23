@@ -17,8 +17,14 @@ class InitArgs(
         private const val PK_BASE64_KEY = "pk_base64"
     }
 
-    var words: List<String>
-        get() = savedStateHandle[WORDS_KEY] ?: emptyList()
+    var words: List<String>?
+        get() {
+            val value = savedStateHandle.get<List<String>>(WORDS_KEY) ?: return null
+            if (value.isEmpty()) {
+                return null
+            }
+            return value
+        }
         set(value) = savedStateHandle.set(WORDS_KEY, value)
 
     var name: String?
@@ -33,12 +39,12 @@ class InitArgs(
         get() = savedStateHandle[EMOJI_KEY] ?: "\uD83D\uDC8E"
         set(value) = savedStateHandle.set(EMOJI_KEY, value)
 
-    var passcode: String
-        get() = savedStateHandle[PASSCODE_KEY] ?: ""
+    var passcode: String?
+        get() = savedStateHandle[PASSCODE_KEY]
         set(value) = savedStateHandle.set(PASSCODE_KEY, value)
 
-    var watchAccountId: String
-        get() = savedStateHandle[WATCH_ACCOUNT_ID_KEY] ?: ""
+    var watchAccountId: String?
+        get() = savedStateHandle[WATCH_ACCOUNT_ID_KEY]
         set(value) = savedStateHandle.set(WATCH_ACCOUNT_ID_KEY, value)
 
     var pkBase64: String?

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,7 +24,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomSheetLayout
@@ -66,10 +67,6 @@ open class BaseFragment(
         fun onEndShowingAnimation() {
 
         }
-
-        fun fixPeekHeight() {
-            view.fixPeekHeight()
-        }
     }
 
     val window: Window?
@@ -106,7 +103,7 @@ open class BaseFragment(
         val view = if (this is Modal) {
             wrapInModal(inflater.context, contentView, savedInstanceState)
         } else {
-            contentView.setBackgroundResource(UIKitColor.backgroundPage)
+            contentView.setBackgroundColor(requireContext().backgroundPageColor)
             when (this) {
                 is SwipeBack -> wrapInSwipeBack(inflater.context, contentView, savedInstanceState)
                 is BottomSheet -> wrapInBottomSheet(inflater.context, contentView, savedInstanceState)
@@ -137,7 +134,6 @@ open class BaseFragment(
         val swipeBackLayout = SwipeBackLayout(context)
         swipeBackLayout.doOnCloseScreen = ::finishInternal
         swipeBackLayout.doOnEndShowingAnimation = ::onEndShowingAnimation
-        swipeBackLayout.fragment = this
         swipeBackLayout.setContentView(view)
         if (savedInstanceState == null && !disableShowAnimation) {
             swipeBackLayout.startShowAnimation()

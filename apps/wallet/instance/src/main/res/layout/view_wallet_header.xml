@@ -18,11 +18,10 @@
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_gravity="center"
-            android:paddingStart="@dimen/offsetMedium"
-            android:paddingEnd="@dimen/offsetMedium"
+            android:paddingHorizontal="12dp"
             android:background="@drawable/bg_wallet_bubble">
             
-            <com.tonapps.emoji.EmojiView
+            <com.tonapps.emoji.ui.EmojiView
                 android:id="@+id/wallet_emoji"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
@@ -32,7 +31,7 @@
                 android:id="@+id/wallet_name"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_marginHorizontal="6dp"
+                android:layout_marginHorizontal="@dimen/offsetExtraSmall"
                 android:maxWidth="132dp"
                 android:singleLine="true"
                 android:gravity="center"
@@ -56,5 +55,6 @@
         android:layout_width="@dimen/iconSize"
         android:layout_height="@dimen/iconSize"
         android:layout_gravity="center"
+        android:tint="?attr/iconSecondaryColor"
         android:src="@drawable/ic_gear_new_28" />
 </merge>

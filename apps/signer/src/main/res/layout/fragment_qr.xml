@@ -29,7 +29,7 @@
         android:background="@color/constantWhite"
         android:padding="@dimen/offsetMedium">
 
-        <com.tonapps.qr.QRView
+        <com.tonapps.qr.ui.QRView
             android:id="@+id/qr"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -1,14 +1,12 @@
 package com.tonapps.signer.screen.sign
 
 import android.os.Bundle
-import android.util.Log
-import androidx.core.os.BundleCompat
+import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.signer.Key
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
-import com.tonapps.signer.extensions.base64
 import com.tonapps.signer.extensions.getObject
-import com.tonapps.signer.extensions.hex
-import com.tonapps.signer.extensions.parseCell
 import org.ton.cell.Cell
 
 data class SignArgs(private val args: Bundle) {

@@ -6,10 +6,9 @@ import android.view.Gravity
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.api.chart.ChartPeriod
+import com.tonapps.uikit.color.textPrimaryColor
 import uikit.extensions.dp
-import uikit.extensions.getColor
 
 class ChartPeriodView @JvmOverloads constructor(
     context: Context,
@@ -56,7 +55,7 @@ class ChartPeriodView @JvmOverloads constructor(
 
     private fun createButton(period: ChartPeriod): View {
         val view = AppCompatTextView(context)
-        view.setTextColor(getColor(UIKitColor.textPrimary))
+        view.setTextColor(context.textPrimaryColor)
         view.setTextAppearance(uikit.R.style.TextAppearance_Label2)
         view.gravity = Gravity.CENTER
         view.text = period.value

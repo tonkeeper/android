@@ -8,9 +8,9 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.core.fiat.models.FiatButton
 import com.tonapps.tonkeeper.core.fiat.models.FiatItem
+import com.tonapps.uikit.color.textSecondaryColor
 import uikit.base.BaseSheetDialog
 import uikit.extensions.dp
 import uikit.navigation.Navigation.Companion.navigation
@@ -78,7 +78,7 @@ internal class ConfirmationDialog(
             navigation?.openURL(button.url, true)
         }
         buttonView.setTextAppearance(uikit.R.style.TextAppearance_Body1)
-        buttonView.setTextColor(context.getColor(UIKitColor.textSecondary))
+        buttonView.setTextColor(context.textSecondaryColor)
         return buttonView
     }
 

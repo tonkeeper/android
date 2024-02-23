@@ -33,5 +33,5 @@ android {
 }
 
 dependencies {
-    implementation(Libs.AndroidX.annotation)
+    implementation(Dependence.AndroidX.annotation)
 }

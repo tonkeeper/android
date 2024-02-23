@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.fragment.settings.main
 
 import android.view.View
 import androidx.collection.ArrayMap
-import ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import uikit.mvi.UiEffect
 
 sealed class SettingsScreenEffect: UiEffect() {

@@ -15,12 +15,11 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.math.MathUtils
 import androidx.customview.widget.ViewDragHelper
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.R
 import uikit.HapticHelper
 import uikit.extensions.dp
-import uikit.extensions.getColor
 import uikit.extensions.getDimension
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.useAttributes
@@ -172,7 +171,7 @@ class SlideActionView @JvmOverloads constructor(
 
         private val gradientWidth = 84f.dp * 2
         private val color = Color.parseColor("#C2DAFF")
-        private val textColor = getColor(UIKitColor.textTertiary)
+        private val textColor = context.textTertiaryColor
         private val gradientColors = intArrayOf(textColor, color, color, textColor)
 
         private val animator = ValueAnimator.ofFloat(0f, 1f).apply {

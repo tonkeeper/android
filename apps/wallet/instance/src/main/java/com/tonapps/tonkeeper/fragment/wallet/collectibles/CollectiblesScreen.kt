@@ -7,14 +7,12 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.extensions.launch
 import com.tonapps.tonkeeper.extensions.receive
 import com.tonapps.tonkeeper.fragment.main.MainTabScreen
 import com.tonapps.tonkeeper.fragment.wallet.collectibles.list.CollectiblesAdapter
 import uikit.extensions.collectFlow
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.topScrolled
-import uikit.extensions.verticalScrolled
 import uikit.mvi.AsyncState
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.EmptyLayout

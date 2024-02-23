@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.core.currency
 
+import android.util.Log
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.jetton.JettonRepository
 import com.tonapps.tonkeeper.api.rates.RatesRepository

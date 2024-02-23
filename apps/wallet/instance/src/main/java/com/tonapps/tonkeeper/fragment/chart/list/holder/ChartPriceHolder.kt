@@ -2,8 +2,8 @@ package com.tonapps.tonkeeper.fragment.chart.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.tonkeeper.extensions.getDiffColor
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.extensions.colorForChange
 import com.tonapps.tonkeeper.fragment.chart.list.ChartItem
 
 class ChartPriceHolder(
@@ -16,7 +16,7 @@ class ChartPriceHolder(
     override fun onBind(item: ChartItem.Price) {
         priceView.text = item.rateFormat
         diffView.text = item.rate24h
-        diffView.setTextColor(getColor(item.rate24h.colorForChange))
+        diffView.setTextColor(context.getDiffColor(item.rate24h))
     }
 
 }

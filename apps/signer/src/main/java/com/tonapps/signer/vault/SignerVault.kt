@@ -6,6 +6,7 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.mnemonic.Mnemonic
 import com.tonapps.security.clear
 import com.tonapps.security.safeDestroy
+import com.tonapps.security.tryCallGC
 import com.tonapps.security.vault.Vault
 import com.tonapps.security.vault.getString
 import com.tonapps.security.vault.putString
@@ -34,6 +35,7 @@ class SignerVault(
         val seed = Mnemonic.toSeed(mnemonic)
         val privateKey = PrivateKeyEd25519(seed)
         seed.clear()
+        tryCallGC()
         return privateKey
     }
 }

@@ -8,6 +8,7 @@ data class WalletPickerItem(
     val wallet: Wallet,
     val selected: Boolean,
     val position: ListCell.Position,
+    val balance: String
 ): BaseListItem() {
 
     val color: Int

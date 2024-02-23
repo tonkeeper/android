@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.H3"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:singleLine="true"
         android:gravity="center_horizontal"/>
 
@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/offsetExtraSmall"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         android:singleLine="true"
         android:gravity="center_horizontal"/>
 
@@ -49,7 +49,7 @@
             android:layout_height="wrap_content"
             android:text="@string/fiat_open_description"
             android:textAppearance="@style/TextAppearance.Body1"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -90,7 +90,7 @@
             android:layout_marginLeft="10dp"
             android:text="@string/do_not_show_again"
             android:textAppearance="@style/TextAppearance.Body1"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/textSecondaryColor"
             android:singleLine="true"/>
     </androidx.appcompat.widget.LinearLayoutCompat>
 

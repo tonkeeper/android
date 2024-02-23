@@ -6,13 +6,13 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Shader
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundContentColor
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 
 class ButtonsLayoutDrawable(context: Context): BaseDrawable() {
 
-    private val lineColor = context.getColor(UIKitColor.backgroundContent)
+    private val lineColor = context.backgroundContentColor
 
     private val horizontalPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         strokeWidth = .5f.dp

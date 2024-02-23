@@ -3,13 +3,13 @@ package com.tonapps.tonkeeper.core.widget
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.widget.RemoteViews
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.api.account.AccountRepository
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.Coin
 import com.tonapps.tonkeeper.core.currency.ton
-import core.formatter.CurrencyFormatter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

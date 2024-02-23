@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundContentTintColor
 import uikit.R
 import uikit.extensions.dp
 
@@ -21,7 +21,7 @@ class WordHintView @JvmOverloads constructor(
     init {
         orientation = HORIZONTAL
         visibility = GONE
-        setBackgroundResource(UIKitColor.backgroundContentTint)
+        setBackgroundColor(context.backgroundContentTintColor)
     }
 
     fun hide() {

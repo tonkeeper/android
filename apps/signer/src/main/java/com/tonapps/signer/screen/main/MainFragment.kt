@@ -7,9 +7,10 @@ import com.tonapps.signer.screen.key.KeyFragment
 import com.tonapps.signer.screen.main.list.MainAdapter
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.topScrolled
-import uikit.extensions.verticalScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.SimpleRecyclerView
@@ -35,11 +36,9 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
+        listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
 
-        collectFlow(listView.topScrolled) {
-            headerView.setDivider(it)
-        }
-
+        collectFlow(listView.topScrolled, headerView::setDivider)
         collectFlow(mainViewModel.uiItems, adapter::submitList)
     }
 }

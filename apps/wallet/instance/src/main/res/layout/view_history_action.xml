@@ -12,7 +12,7 @@
         android:layout_marginTop="@dimen/offsetMedium"
         android:layout_marginStart="@dimen/offsetMedium"
         android:background="@drawable/bg_oval"
-        android:backgroundTint="@color/backgroundContentTint"
+        android:backgroundTint="?attr/backgroundContentTintColor"
         android:scaleType="centerInside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -40,7 +40,7 @@
         android:singleLine="true"
         android:maxLength="18"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         app:layout_constraintStart_toEndOf="@+id/icon"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -53,7 +53,7 @@
         android:singleLine="true"
         android:maxLength="18"
         android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         app:layout_constraintStart_toEndOf="@+id/icon"
         app:layout_constraintTop_toBottomOf="@+id/title"/>
 
@@ -67,7 +67,7 @@
         android:gravity="end"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -81,7 +81,7 @@
         android:gravity="end"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/amount" />
 
@@ -94,7 +94,7 @@
         android:gravity="end"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/amount2" />
 
@@ -140,7 +140,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
                     android:singleLine="true"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:fontFamily="@font/montserrat_medium"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -149,7 +149,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
                     android:singleLine="true"
-                    android:textColor="@color/textSecondary"
+                    android:textColor="?attr/textSecondaryColor"
                     android:fontFamily="@font/montserrat_medium"/>
 
             </androidx.appcompat.widget.LinearLayoutCompat>
@@ -165,7 +165,7 @@
             android:paddingVertical="8dp"
             android:background="@drawable/bg_content_tint"
             android:fontFamily="@font/montserrat_medium"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:textSize="14sp"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>

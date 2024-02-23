@@ -2,8 +2,8 @@ package com.tonapps.tonkeeper.fragment.settings.main.popup
 
 import android.content.Context
 import androidx.collection.ArrayMap
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.uikit.icon.UIKitIcon
-import ton.contract.WalletVersion
 import com.tonapps.tonkeeper.popup.ActionSheet
 
 class WalletVersionPopup(

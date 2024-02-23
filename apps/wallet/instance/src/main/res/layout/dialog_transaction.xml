@@ -21,7 +21,7 @@
         android:gravity="center"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.H2"
-        android:textColor="@color/textPrimary"/>
+        android:textColor="?attr/textPrimaryColor"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/currency"
@@ -31,7 +31,7 @@
         android:gravity="center"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="@color/textSecondary"/>
+        android:textColor="?attr/textSecondaryColor"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/date"
@@ -41,7 +41,7 @@
         android:gravity="center"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="@color/textSecondary"/>
+        android:textColor="?attr/textSecondaryColor"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/data"

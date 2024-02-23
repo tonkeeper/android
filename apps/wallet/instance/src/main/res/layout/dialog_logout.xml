@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textAppearance="@style/TextAppearance.H2"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:text="@string/log_out"/>
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -23,7 +23,7 @@
         android:layout_marginBottom="@dimen/offsetMedium"
         android:gravity="center"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         android:text="@string/logout_description"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/logout_confirmation"
                 android:textAppearance="@style/TextAppearance.Body1"
-                android:textColor="@color/textPrimary" />
+                android:textColor="?attr/textPrimaryColor" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/backup"
@@ -60,7 +60,7 @@
                 android:layout_marginTop="@dimen/gap"
                 android:visibility="gone"
                 android:textAppearance="@style/TextAppearance.Label1"
-                android:textColor="@color/textAccent"
+                android:textColor="?attr/textAccentColor"
                 android:text="@string/back_up_now"/>
         </androidx.appcompat.widget.LinearLayoutCompat>
 

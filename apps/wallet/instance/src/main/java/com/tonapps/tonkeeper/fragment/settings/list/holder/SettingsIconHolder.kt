@@ -5,6 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.fragment.settings.list.item.SettingsIconItem
 import com.tonapps.tonkeeper.fragment.settings.list.item.SettingsItem
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.iconPrimaryColor
+import com.tonapps.uikit.color.iconSecondaryColor
 import uikit.extensions.drawable
 import uikit.widget.item.ItemIconView
 
@@ -25,8 +28,10 @@ class SettingsIconHolder(
     override fun onBind(item: SettingsIconItem) {
         view.background = item.position.drawable(context)
         view.setOnClickListener { onClick?.invoke(item, it) }
-        if (item.colorRes != 0) {
-            view.setIconTintColor(context.getColor(item.colorRes))
+        if (item.secondaryIcon) {
+            view.setIconTintColor(context.iconSecondaryColor)
+        } else {
+            view.setIconTintColor(context.accentBlueColor)
         }
         view.iconRes = item.iconRes
         view.text = getString(item.titleRes)

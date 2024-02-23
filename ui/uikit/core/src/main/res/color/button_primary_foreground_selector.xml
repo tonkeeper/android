@@ -2,8 +2,8 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:state_enabled="false"
-        android:color="@color/buttonPrimaryForegroundDisabled"/>
+        android:color="?attr/buttonPrimaryForegroundColor"/>
 
     <item
-        android:color="@color/buttonPrimaryForeground"/>
+        android:color="?attr/buttonPrimaryForegroundColor"/>
 </selector>

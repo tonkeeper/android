@@ -15,7 +15,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:background="@drawable/bg_oval"
-            android:backgroundTint="@color/backgroundContent"
+            android:backgroundTint="?attr/backgroundContentColor"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

@@ -1,11 +1,11 @@
 package com.tonapps.tonkeeper.fragment.main
 
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.currency.CurrencyUpdateWorker
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -13,12 +13,16 @@ import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.event.RequestActionEvent
 import com.tonapps.tonkeeper.event.WalletSettingsEvent
 import com.tonapps.tonkeeper.extensions.isRecoveryPhraseBackup
+import com.tonapps.tonkeeper.fragment.root.RootViewModel
 import com.tonapps.tonkeeper.fragment.tonconnect.action.ConfirmActionFragment
 import com.tonapps.tonkeeper.fragment.wallet.collectibles.CollectiblesScreen
 import com.tonapps.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonapps.tonkeeper.fragment.wallet.main.WalletScreen
+import com.tonapps.uikit.color.constantBlackColor
+import com.tonapps.uikit.color.drawable
 import core.EventBus
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ton.wallet.Wallet
 import uikit.base.BaseFragment
@@ -33,6 +37,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
     }
 
     private val mainViewModel: MainViewModel by viewModel()
+    private val rootViewModel: RootViewModel by activityViewModel()
 
     private val fragmentMap by lazy {
         mapOf(
@@ -72,6 +77,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
             setFragment(itemId, false)
         }
         collectFlow(mainViewModel.childBottomScrolled, bottomTabsView::setDivider)
+        collectFlow(rootViewModel.openTabAction, this::forceSelectTab)
 
         setFragment(R.id.wallet, false)
 
@@ -87,7 +93,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
     private fun requestWalletState() {
         lifecycleScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
             updateWalletState(wallet)
         }
     }
@@ -116,6 +122,10 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         val isAlreadyFragment = childFragmentManager.findFragmentByTag(tag) != null
 
         val newFragment = fragmentByItemId(itemId)
+        if (newFragment == currentFragment) {
+            return
+        }
+
         val transaction = childFragmentManager.beginTransaction()
         currentFragment?.let { transaction.hide(it) }
         if (isAlreadyFragment) {
@@ -126,6 +136,9 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         } else {
             transaction.add(R.id.child_fragment, newFragment, tag)
         }
+        transaction.runOnCommit {
+            bottomTabsView.setDivider(false)
+        }
         transaction.commitNow()
 
         currentFragment = newFragment
@@ -133,7 +146,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
     override fun onResume() {
         super.onResume()
-        window?.setBackgroundDrawableResource(UIKitColor.constantBlack)
+        window?.setBackgroundDrawable(requireContext().constantBlackColor.drawable)
 
         Widget.updateAll()
     }

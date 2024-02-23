@@ -25,7 +25,7 @@
                 android:background="@drawable/bg_button_tertiary"
                 android:paddingHorizontal="@dimen/offsetMedium"
                 android:textAppearance="@style/TextAppearance.Label1"
-                android:textColor="@color/buttonTertiaryForeground"
+                android:textColor="?attr/buttonTertiaryForegroundColor"
                 android:gravity="center"
                 android:drawableEnd="@drawable/ic_chevron_down_16"
                 android:drawablePadding="6dp"/>
@@ -44,7 +44,7 @@
                     android:singleLine="true"
                     android:inputType="numberDecimal"
                     android:fontFamily="@font/montserrat_semi_bold"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:textCursorDrawable="@drawable/cursor"
                     android:gravity="center_vertical"
                     android:text="0"
@@ -59,7 +59,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:textAppearance="@style/TextAppearance.NUM2"
-                    android:textColor="@color/textSecondary"
+                    android:textColor="?attr/textSecondaryColor"
                     app:layout_constraintStart_toEndOf="@id/value"
                     app:layout_constraintTop_toTopOf="@id/value"
                     app:layout_constraintBottom_toBottomOf="@id/value"/>
@@ -74,7 +74,7 @@
                 android:paddingVertical="12dp"
                 android:paddingHorizontal="@dimen/offsetMedium"
                 android:background="@drawable/bg_island_border"
-                android:textColor="@color/textSecondary"
+                android:textColor="?attr/textSecondaryColor"
                 android:textAppearance="@style/TextAppearance.Body1" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
@@ -98,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.Body2"
                 android:gravity="end"
-                android:textColor="@color/textSecondary"/>
+                android:textColor="?attr/textSecondaryColor"/>
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -113,7 +113,7 @@
         android:layout_marginBottom="@dimen/offsetMedium"
         android:layout_gravity="bottom"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:enabled="false"
         android:text="@string/continue_action"/>
 

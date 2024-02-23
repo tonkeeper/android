@@ -12,8 +12,8 @@ android {
         applicationId = "com.tonapps.signer"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 6
-        versionName = "0.0.6"
+        versionCode = 8
+        versionName = "0.0.8"
     }
 
     lint {
@@ -59,33 +59,34 @@ android {
 }
 
 dependencies {
-    implementation(Libs.AndroidX.profileinstaller)
+    implementation(Dependence.AndroidX.profileinstaller)
     "baselineProfile"(project(":baselineprofile:signer"))
 
-    implementation(Libs.AndroidX.core)
-    implementation(Libs.AndroidX.appCompat)
-    implementation(Libs.AndroidX.activity)
-    implementation(Libs.AndroidX.fragment)
-    implementation(Libs.AndroidX.recyclerView)
-    implementation(Libs.AndroidX.viewPager2)
+    implementation(Dependence.AndroidX.core)
+    implementation(Dependence.AndroidX.appCompat)
+    implementation(Dependence.AndroidX.activity)
+    implementation(Dependence.AndroidX.fragment)
+    implementation(Dependence.AndroidX.recyclerView)
+    implementation(Dependence.AndroidX.viewPager2)
 
-    implementation(Libs.UI.material)
-    implementation(Libs.AndroidX.Camera.base)
-    implementation(Libs.AndroidX.Camera.core)
-    implementation(Libs.AndroidX.Camera.lifecycle)
-    implementation(Libs.AndroidX.Camera.view)
-    implementation(Libs.AndroidX.security)
-    implementation(Libs.AndroidX.lifecycleSavedState)
+    implementation(Dependence.UI.material)
+    implementation(Dependence.AndroidX.Camera.base)
+    implementation(Dependence.AndroidX.Camera.core)
+    implementation(Dependence.AndroidX.Camera.lifecycle)
+    implementation(Dependence.AndroidX.Camera.view)
+    implementation(Dependence.AndroidX.security)
+    implementation(Dependence.AndroidX.lifecycleSavedState)
+    api(project(Dependence.Lib.blockchain))
 
-    implementation(Libs.ton)
 
-    implementation(project(Libs.UIKit.core)) {
+    implementation(project(Dependence.UIKit.core)) {
         exclude("com.airbnb.android", "lottie")
         exclude("com.facebook.fresco", "fresco")
     }
 
-    implementation(project(Libs.Lib.qr))
-    implementation(project(Libs.Lib.security))
-    implementation(Libs.Koin.core)
+    implementation(project(Dependence.Lib.qr))
+    implementation(project(Dependence.Lib.security))
+    implementation(project(Dependence.Lib.icu))
+    implementation(Dependence.Koin.core)
 }
 

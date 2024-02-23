@@ -56,7 +56,7 @@
                     android:layout_marginTop="@dimen/offsetMedium"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:textAppearance="@style/TextAppearance.H2"
-                    android:textColor="@color/textPrimary"/>
+                    android:textColor="?attr/textPrimaryColor"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/collection_name"
@@ -65,7 +65,7 @@
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:layout_marginTop="@dimen/offsetExtraSmall"
                     android:textAppearance="@style/TextAppearance.Body2"
-                    android:textColor="@color/textSecondary"/>
+                    android:textColor="?attr/textSecondaryColor"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/nft_description"
@@ -74,7 +74,7 @@
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:layout_marginTop="@dimen/offsetExtraSmall"
                     android:textAppearance="@style/TextAppearance.Body2"
-                    android:textColor="@color/textSecondary"/>
+                    android:textColor="?attr/textSecondaryColor"/>
 
                 <uikit.widget.DividerView
                     android:layout_width="match_parent"
@@ -86,7 +86,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:textAppearance="@style/TextAppearance.Label1"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:text="@string/about_collection"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -96,7 +96,7 @@
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:layout_marginTop="@dimen/offsetExtraSmall"
                     android:textAppearance="@style/TextAppearance.Body2"
-                    android:textColor="@color/textSecondary"/>
+                    android:textColor="?attr/textSecondaryColor"/>
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -120,7 +120,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textAppearance="@style/TextAppearance.H3"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:text="@string/details"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -128,7 +128,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Label1"
-                    android:textColor="@color/textAccent"
+                    android:textColor="?attr/textAccentColor"
                     android:text="@string/view_in_explorer"
                     />
 
@@ -148,7 +148,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:textAppearance="@style/TextAppearance.Body1"
-                    android:textColor="@color/textSecondary"
+                    android:textColor="?attr/textSecondaryColor"
                     android:gravity="center_vertical"
                     android:text="@string/owner"/>
 
@@ -157,7 +157,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:textAppearance="@style/TextAppearance.Label1"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:gravity="center_vertical"
                     android:text="@string/owner"/>
 
@@ -177,7 +177,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:textAppearance="@style/TextAppearance.Body1"
-                    android:textColor="@color/textSecondary"
+                    android:textColor="?attr/textSecondaryColor"
                     android:gravity="center_vertical"
                     android:text="@string/contract_address"/>
 
@@ -186,7 +186,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:textAppearance="@style/TextAppearance.Label1"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:gravity="center_vertical"
                     android:text="@string/owner"/>
 

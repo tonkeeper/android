@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.jetton
 
 import androidx.lifecycle.viewModelScope
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.Tonapi
 import com.tonapps.tonkeeper.api.getAddress
@@ -13,7 +14,6 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.wallet.data.core.Currency
 import core.QueueScope
-import core.formatter.CurrencyFormatter
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

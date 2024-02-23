@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.api.account
 
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.Tonapi
 import com.tonapps.tonkeeper.api.account.db.AccountDao
 import com.tonapps.tonkeeper.api.base.AccountKey
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class AccountRepository(
     private val api: SourceAPI<AccountsApi> = Tonapi.accounts,
-    private val dao: AccountDao = com.tonapps.tonkeeper.App.db.accountDao()
+    private val dao: AccountDao = App.db.accountDao()
 ) {
 
     private val memory = ConcurrentHashMap<String, Account>()

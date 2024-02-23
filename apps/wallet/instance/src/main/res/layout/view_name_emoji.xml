@@ -4,10 +4,11 @@
     android:layout_height="48dp"
     android:background="@drawable/ripple_emoji_view">
 
-    <com.tonapps.emoji.EmojiView
+    <com.tonapps.emoji.ui.EmojiView
         android:id="@+id/emoji"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        android:fadeEnabled="true"/>
 
 </FrameLayout>

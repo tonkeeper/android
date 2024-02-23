@@ -22,5 +22,5 @@ android {
 }
 
 dependencies {
-    implementation(Libs.ton)
+    implementation(Dependence.ton)
 }

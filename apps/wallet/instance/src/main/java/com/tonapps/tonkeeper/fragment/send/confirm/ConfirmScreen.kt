@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.fragment.send.SendScreenEffect
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeper.fragment.wallet.history.HistoryScreen
+import uikit.extensions.pinToBottomInsets
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 import uikit.widget.ProcessTaskView
@@ -37,6 +38,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
     private lateinit var amountView: TransactionDetailView
     private lateinit var feeView: TransactionDetailView
     private lateinit var commentView: TransactionDetailView
+    private lateinit var actionView: View
     private lateinit var sendButton: Button
     private lateinit var processView: ProcessTaskView
 
@@ -80,6 +82,9 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         commentView = view.findViewById(R.id.comment)
         commentView.title = getString(Localization.comment)
         commentView.position = com.tonapps.uikit.list.ListCell.Position.LAST
+
+        actionView = view.findViewById(R.id.action)
+        actionView.pinToBottomInsets()
 
         sendButton = view.findViewById(R.id.send)
 
@@ -176,13 +181,6 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         } else if (effect is ConfirmScreenEffect.OpenSignerApp) {
             signerLauncher.launch(SingerResultContract.Input(effect.body, effect.publicKey))
         }
-    }
-
-    private fun openSignerApp(uri: Uri) {
-        val intent = Intent(Intent.ACTION_VIEW, uri)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-
     }
 
     override fun onVisibleChange(visible: Boolean) {

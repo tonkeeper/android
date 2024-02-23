@@ -11,8 +11,12 @@
     <string name="price">Price</string>
     <string name="scan">Scan</string>
     <string name="stake">Stake</string>
+    <string name="watch_only">Watch only</string>
+    <string name="unverified_token">Unverified Token</string>
     <string name="wallet_initialized">Wallet Initialized</string>
     <string name="bid">Bid</string>
+    <string name="theme">Theme</string>
+    <string name="testnet" translatable="false">Testnet</string>
     <string name="unstake_request">Unstake Request</string>
     <string name="domain_renew">Domain Renew</string>
     <string name="unstake">Unstake</string>
@@ -57,6 +61,7 @@
     <string name="empty_collectibles_title">Your collectibles will be shown here</string>
     <string name="empty_collectibles_subtitle">Get your first item!</string>
 
+    <string name="new_wallet">New wallet</string>
     <string name="buy_toncoin">Buy Toncoin</string>
     <string name="buy_or_sell">Buy or sell</string>
     <string name="fiat_open_description">You are opening an external app not operated by Tonkeeper.</string>
@@ -79,6 +84,7 @@
     <string name="start_title">Tonkeeper</string>
     <string name="start_description">Create a new wallet or add an existing one</string>
     <string name="start_create_new_wallet">Create new wallet</string>
+    <string name="add_wallet_description">Create a new wallet or add an existing one.</string>
     <string name="start_import_wallet">Import existing wallet</string>
     <string name="passcode_enter">Enter passcode</string>
     <string name="passcode_create">Create passcode</string>
@@ -210,6 +216,7 @@
     <string name="banner_top_button">Install stable version</string>
     <string name="signer_description">Open Signer » Select the required key » Scan QR code</string>
     <string name="signer_open">Open Signer on this device</string>
+    <string name="signer" translatable="false">Signer</string>
 
     <string name="customize">Customize</string>
     <string name="customize_wallet_title">Customize your Wallet</string>

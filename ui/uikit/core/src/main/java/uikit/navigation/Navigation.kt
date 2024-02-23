@@ -42,8 +42,6 @@ interface Navigation {
         listener: ((bundle: Bundle) -> Unit)
     )
 
-    fun initRoot(skipPasscode: Boolean, intent: Intent? = null)
-
     fun add(fragment: BaseFragment)
 
     fun remove(fragment: Fragment)

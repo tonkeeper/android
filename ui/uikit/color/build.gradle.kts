@@ -14,3 +14,6 @@ android {
     }
 }
 
+dependencies {
+    implementation(Dependence.AndroidX.annotation)
+}

@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:text="@string/licenses"
             android:textAppearance="@style/TextAppearance.H3"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:paddingVertical="@dimen/offsetMedium"/>
 
         <uikit.widget.item.ItemIconView

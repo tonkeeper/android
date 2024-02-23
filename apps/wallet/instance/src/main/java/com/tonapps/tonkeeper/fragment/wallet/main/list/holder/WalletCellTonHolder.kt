@@ -6,8 +6,8 @@ import android.text.style.ForegroundColorSpan
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.ColorInt
+import com.tonapps.tonkeeper.extensions.getDiffColor
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.fragment.chart.ChartScreen
 import com.tonapps.tonkeeper.fragment.wallet.main.list.item.WalletTonCellItem
 import uikit.navigation.Navigation
@@ -33,22 +33,12 @@ class WalletCellTonHolder(
     private fun createRate(rate: String, diff24h: String): SpannableString {
         val span = SpannableString("$rate $diff24h")
         span.setSpan(
-            ForegroundColorSpan(getDiffColor(diff24h)),
+            ForegroundColorSpan(context.getDiffColor(diff24h)),
             rate.length,
             rate.length + diff24h.length + 1,
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         return span
-    }
-
-    @ColorInt
-    private fun getDiffColor(diff: String): Int {
-        val resId = when {
-            diff.startsWith("-") -> UIKitColor.accentRed
-            diff.startsWith("+") -> UIKitColor.accentGreen
-            else -> UIKitColor.textSecondary
-        }
-        return context.getColor(resId)
     }
 
 }

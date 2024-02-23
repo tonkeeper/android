@@ -12,6 +12,7 @@
     <string name="stake">Депозит</string>
     <string name="wallet_initialized">Кошелёк инициализирован</string>
     <string name="bid">Ставка</string>
+    <string name="theme">Тема</string>
     <string name="unstake_request">Запрос на вывод</string>
     <string name="domain_renew">Домен продлён</string>
     <string name="unstake">Вывести</string>
@@ -20,6 +21,11 @@
     <string name="burned">Сожжено</string>
     <string name="unsubscribed">Отмена подписки</string>
     <string name="subscribed">Подписка</string>
+    <string name="new_wallet">Новый кошелек</string>
+    <string name="add_wallet_description">Создайте новый кошелек или добавьте существующий.</string>
+
+    <string name="watch_only">Только просмотр</string>
+    <string name="unverified_token">Непроверенный токен</string>
 
     <string name="continue_action">Продолжить</string>
     <string name="get_started">Начать</string>

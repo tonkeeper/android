@@ -20,7 +20,7 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="center"
-            android:color="@color/textPrimary"/>
+            android:color="?attr/textPrimaryColor"/>
 
         <uikit.widget.WebViewFixed
             android:id="@+id/web"

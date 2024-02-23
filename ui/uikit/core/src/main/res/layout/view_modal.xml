@@ -7,7 +7,7 @@
         android:id="@+id/bg"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/backgroundOverlayStrong"/>
+        android:background="?attr/backgroundOverlayStrongColor"/>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/modal_coordinator"
@@ -29,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|top"
-            android:background="@color/backgroundPage"
+            android:background="?attr/backgroundPageColor"
             app:layout_behavior="@string/bottom_sheet_behavior"
             app:behavior_hideable="true"
             app:behavior_skipCollapsed="false"/>

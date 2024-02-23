@@ -13,4 +13,6 @@ open class ColumnLayout @JvmOverloads constructor(
     init {
         orientation = VERTICAL
     }
+
+    override fun hasOverlappingRendering() = false
 }

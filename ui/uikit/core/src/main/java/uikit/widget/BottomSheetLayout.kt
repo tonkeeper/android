@@ -70,12 +70,15 @@ class BottomSheetLayout @JvmOverloads constructor(
         }
     }
 
-    private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
+    private val showAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = 285
         interpolator = BottomSheetLayout.interpolator
         addUpdateListener(this@BottomSheetLayout)
         doOnStart { setLayerType(LAYER_TYPE_HARDWARE, null) }
-        doOnEnd { setLayerType(LAYER_TYPE_NONE, null) }
+        doOnEnd {
+            setLayerType(LAYER_TYPE_NONE, null)
+            doOnAnimationEnd?.invoke()
+        }
     }
 
     private val coordinatorView: CoordinatorLayout
@@ -102,14 +105,14 @@ class BottomSheetLayout @JvmOverloads constructor(
 
     fun setContentView(view: View) {
         view.roundTop(context.getDimensionPixelSize(R.dimen.cornerMedium))
-        contentView.removeAllViews()
-        contentView.addView(view)
+        contentView.setView(view)
     }
 
     fun startShowAnimation() {
         doOnLayout {
             behavior.peekHeight = contentView.measuredHeight
-            animation.start()
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            showAnimation.start()
         }
     }
 

@@ -5,7 +5,8 @@ import android.util.AttributeSet
 import android.view.Gravity
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.textPrimaryColor
+import com.tonapps.uikit.color.textSecondaryColor
 import uikit.R
 import uikit.extensions.dp
 
@@ -17,13 +18,13 @@ class PhraseWord @JvmOverloads constructor(
 
     private val indexView = AppCompatTextView(context).apply {
         setTextAppearance(R.style.TextAppearance_Body1)
-        setTextColor(context.getColor(UIKitColor.textSecondary))
+        setTextColor(context.textSecondaryColor)
         setSingleLine()
     }
 
     private val wordView = AppCompatTextView(context).apply {
         setTextAppearance(R.style.TextAppearance_Body1)
-        setTextColor(context.getColor(UIKitColor.textPrimary))
+        setTextColor(context.textPrimaryColor)
         setSingleLine()
     }
 

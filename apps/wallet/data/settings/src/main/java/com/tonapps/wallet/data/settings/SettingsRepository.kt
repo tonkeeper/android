@@ -17,9 +17,18 @@ class SettingsRepository(
         private const val BIOMETRIC_KEY = "biometric"
         private const val COUNTRY_KEY = "country"
         private const val LANGUAGE_CODE_KEY = "language_code"
+        private const val THEME_KEY = "theme"
     }
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+
+    var theme: String = prefs.getString(THEME_KEY, "blue")!!
+        set(value) {
+            if (value != field) {
+                prefs.edit().putString(THEME_KEY, value).apply()
+                field = value
+            }
+        }
 
     var currency: Currency = Currency(prefs.getString(CURRENCY_CODE_KEY, Currency.FIAT.first())!!)
         set(value) {

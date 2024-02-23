@@ -6,16 +6,16 @@
   <path
       android:pathData="M18,7V12H21V7C21,3.134 17.866,0 14,0C10.134,0 7,3.134 7,7V12H10V7C10,4.791 11.791,3 14,3C16.209,3 18,4.791 18,7Z"
       android:strokeAlpha="0.32"
-      android:fillColor="@color/accentBlue"
+      android:fillColor="#ffffff"
       android:fillType="evenOdd"
       android:fillAlpha="0.32"/>
   <path
       android:pathData="M14,15C13.172,15 12.5,15.672 12.5,16.5V18.5C12.5,19.328 13.172,20 14,20C14.828,20 15.5,19.328 15.5,18.5V16.5C15.5,15.672 14.828,15 14,15Z"
       android:strokeAlpha="0.32"
-      android:fillColor="@color/accentBlue"
+      android:fillColor="#ffffff"
       android:fillAlpha="0.32"/>
   <path
       android:pathData="M3,17.4C3,15.16 3,14.04 3.436,13.184C3.819,12.431 4.431,11.819 5.184,11.436C6.04,11 7.16,11 9.4,11H18.6C20.84,11 21.96,11 22.816,11.436C23.569,11.819 24.181,12.431 24.564,13.184C25,14.04 25,15.16 25,17.4V19.6C25,21.84 25,22.96 24.564,23.816C24.181,24.569 23.569,25.181 22.816,25.564C21.96,26 20.84,26 18.6,26H9.4C7.16,26 6.04,26 5.184,25.564C4.431,25.181 3.819,24.569 3.436,23.816C3,22.96 3,21.84 3,19.6V17.4ZM14,15C13.172,15 12.5,15.672 12.5,16.5V18.5C12.5,19.328 13.172,20 14,20C14.828,20 15.5,19.328 15.5,18.5V16.5C15.5,15.672 14.828,15 14,15Z"
-      android:fillColor="@color/accentBlue"
+      android:fillColor="#ffffff"
       android:fillType="evenOdd"/>
 </vector>

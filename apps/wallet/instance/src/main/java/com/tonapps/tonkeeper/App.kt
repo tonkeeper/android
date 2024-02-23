@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper
 
 import android.app.Application
+import android.content.res.Configuration
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
@@ -23,7 +24,9 @@ class App: Application(), CameraXConfig.Provider {
 
     companion object {
 
+        @Deprecated("Use injection")
         lateinit var walletManager: WalletManager
+
         lateinit var fiat: Fiat
         lateinit var settings: SettingsRepository
         lateinit var passcode: PasscodeManager
@@ -35,11 +38,6 @@ class App: Application(), CameraXConfig.Provider {
         super.onCreate()
         instance = this
 
-        startKoin {
-            androidContext(this@App)
-            modules(koinModel)
-        }
-
         NaCl.sodium()
         Network.init(instance.applicationContext)
 
@@ -49,8 +47,38 @@ class App: Application(), CameraXConfig.Provider {
         settings = SettingsRepository(this)
         passcode = PasscodeManager(this)
 
+        startKoin {
+            androidContext(this@App)
+            modules(koinModel)
+        }
+
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         initFresco()
+    }
+
+    fun getThemeRes(): Int {
+        val themeName = settings.theme
+        if (themeName == "dark") {
+            return uikit.R.style.Theme_App_Dark
+        } else if (themeName == "light") {
+            return uikit.R.style.Theme_App_Light
+        }
+        return uikit.R.style.Theme_App_Blue
+    }
+
+    fun setThemeRes(newTheme: Int): Boolean {
+        val currentTheme = getThemeRes()
+        if (newTheme == uikit.R.style.Theme_App_Dark && newTheme != currentTheme) {
+            settings.theme = "dark"
+            return true
+        } else if (newTheme == uikit.R.style.Theme_App_Light && newTheme != currentTheme) {
+            settings.theme = "light"
+            return true
+        } else if (newTheme != currentTheme) {
+            settings.theme = "blue"
+            return true
+        }
+        return false
     }
 
     fun deleteWallet(address: String?) {

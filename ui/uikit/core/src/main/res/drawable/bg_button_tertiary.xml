@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/buttonTertiaryBackgroundHighlighted">
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="?attr/buttonTertiaryBackgroundHighlightedColor">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/buttonTertiaryBackground"/>
+            <solid android:color="?attr/buttonTertiaryBackgroundColor"/>
             <corners android:radius="24dp"/>
         </shape>
     </item>

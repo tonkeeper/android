@@ -4,32 +4,50 @@
     android:layout_width="match_parent"
     android:layout_height="132dp">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/amount"
+            android:id="@+id/wallet_balance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:singleLine="true"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:textSize="44sp"
             android:fontFamily="@font/montserrat_semi_bold"
             android:gravity="center"/>
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/address"
-            android:layout_width="match_parent"
+        <uikit.widget.RowLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/textSecondary"
-            android:textAppearance="@style/TextAppearance.Body2"
-            android:singleLine="true"
-            android:gravity="center"/>
+            android:layout_gravity="center">
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/wallet_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/textSecondaryColor"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:singleLine="true"
+                android:gravity="center"/>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/wallet_type"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="@dimen/offsetExtraSmall"
+                android:paddingHorizontal="@dimen/offsetExtraSmall"
+                android:gravity="center"
+                android:background="@drawable/bg_wallet_type"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Body4CAPS"
+                android:textColor="?attr/textSecondaryColor"/>
+        </uikit.widget.RowLayout>
+
+    </uikit.widget.ColumnLayout>
 
 
 </FrameLayout>

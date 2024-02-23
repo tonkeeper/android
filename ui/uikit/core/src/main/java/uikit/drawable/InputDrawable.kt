@@ -7,15 +7,19 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.fieldActiveBorderColor
+import com.tonapps.uikit.color.fieldBackgroundColor
+import com.tonapps.uikit.color.fieldErrorBackgroundColor
+import com.tonapps.uikit.color.fieldErrorBorderColor
 import uikit.ArgbEvaluator
+import uikit.HapticHelper
 import uikit.R
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 import uikit.extensions.getDimension
 
 class InputDrawable(
-    context: Context
+    private val context: Context
 ): BaseDrawable() {
 
     private val animator = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -24,11 +28,11 @@ class InputDrawable(
 
     private val cornerRadius = context.getDimension(R.dimen.cornerMedium)
     private val borderSize = 1.5f.dp
-    private val backgroundColor = context.getColor(UIKitColor.fieldBackground)
-    private val borderColor = context.getColor(UIKitColor.fieldActiveBorder)
+    private val backgroundColor = context.fieldBackgroundColor
+    private val borderColor = context.fieldActiveBorderColor
 
-    private val errorBackgroundColor = context.getColor(UIKitColor.fieldErrorBackground)
-    private val errorBorderColor = context.getColor(UIKitColor.fieldErrorBorder)
+    private val errorBackgroundColor = context.fieldErrorBackgroundColor
+    private val errorBorderColor = context.fieldErrorBorderColor
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = backgroundColor
@@ -45,6 +49,9 @@ class InputDrawable(
             if (value != field) {
                 field = value
                 updateState()
+                if (value) {
+                    HapticHelper.warning(context)
+                }
             }
         }
 

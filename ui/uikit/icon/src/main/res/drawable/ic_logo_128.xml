@@ -6,14 +6,14 @@
   <path
       android:pathData="M64,58L118,34L64,118V58Z"
       android:strokeAlpha="0.5"
-      android:fillColor="@color/accentBlue"
+      android:fillColor="#ffffff"
       android:fillAlpha="0.5"/>
   <path
       android:pathData="M64,58L10,34L64,118V58Z"
       android:strokeAlpha="0.75"
-      android:fillColor="@color/accentBlue"
+      android:fillColor="#ffffff"
       android:fillAlpha="0.75"/>
   <path
       android:pathData="M64,58L10,34L64,10L118,34L64,58Z"
-      android:fillColor="@color/accentBlue"/>
+      android:fillColor="#ffffff"/>
 </vector>

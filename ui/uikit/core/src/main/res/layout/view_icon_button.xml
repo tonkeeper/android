@@ -13,7 +13,7 @@
             android:layout_height="@dimen/iconSize"
             android:layout_gravity="center"
             android:scaleType="centerInside"
-            android:tint="@color/buttonTertiaryForeground" />
+            android:tint="?attr/buttonTertiaryForegroundColor" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/title"
@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetExtraSmall"
             android:textAppearance="@style/TextAppearance.Label3"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/textSecondaryColor"
             android:singleLine="true"
             android:gravity="center"/>
 

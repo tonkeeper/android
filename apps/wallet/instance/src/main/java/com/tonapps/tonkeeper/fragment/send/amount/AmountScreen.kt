@@ -8,10 +8,13 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.fragment.send.popup.SelectTokenPopup
 import com.tonapps.tonkeeper.fragment.send.view.AmountInput
+import com.tonapps.uikit.color.buttonPrimaryBackgroundColor
+import com.tonapps.uikit.color.buttonSecondaryBackgroundColor
+import com.tonapps.uikit.color.constantRedColor
+import com.tonapps.uikit.color.textSecondaryColor
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 
@@ -112,21 +115,21 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
 
         if (state.insufficientBalance) {
             availableView.setText(Localization.insufficient_balance)
-            availableView.setTextColor(getColor(UIKitColor.constantRed))
+            availableView.setTextColor(requireContext().constantRedColor)
         } else if (state.remaining != "") {
             availableView.text = getString(Localization.remaining_balance, state.remaining)
-            availableView.setTextColor(getColor(UIKitColor.textSecondary))
+            availableView.setTextColor(requireContext().textSecondaryColor)
         } else {
             availableView.text = getString(Localization.available_balance, state.available)
-            availableView.setTextColor(getColor(UIKitColor.textSecondary))
+            availableView.setTextColor(requireContext().textSecondaryColor)
         }
 
         continueButton.isEnabled = state.canContinue
 
         if (state.maxActive) {
-            maxButton.background.setTint(getColor(UIKitColor.buttonPrimaryBackground))
+            maxButton.background.setTint(requireContext().buttonPrimaryBackgroundColor)
         } else {
-            maxButton.background.setTint(getColor(UIKitColor.buttonSecondaryBackground))
+            maxButton.background.setTint(requireContext().buttonSecondaryBackgroundColor)
         }
 
         sendFeature.setMax(state.maxActive)

@@ -58,6 +58,9 @@ class RootViewModel(
         if (uri.scheme != Key.SCHEME) {
             return false
         }
+        if (uri.query.isNullOrEmpty()) { // if no query, then it's a just open app
+            return true
+        }
 
         val returnResult = ReturnResultEntity(fromApp, uri.getQueryParameter("return"))
 

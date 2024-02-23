@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
 import androidx.lifecycle.viewModelScope
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.account.AccountRepository
 import com.tonapps.tonkeeper.api.asJettonBalance
@@ -12,7 +13,6 @@ import com.tonapps.tonkeeper.core.Coin
 import com.tonapps.tonkeeper.core.currency.from
 import com.tonapps.wallet.data.core.Currency
 import core.QueueScope
-import core.formatter.CurrencyFormatter
 import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

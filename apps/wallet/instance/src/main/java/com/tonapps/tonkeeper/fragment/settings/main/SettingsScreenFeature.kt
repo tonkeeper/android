@@ -1,14 +1,15 @@
 package com.tonapps.tonkeeper.fragment.settings.main
 
+import android.content.Context
 import android.os.Build
 import android.view.View
 import androidx.collection.ArrayMap
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.tonkeeper.api.internal.repositories.KeysRepository
 import com.tonapps.tonkeeper.api.shortAddress
@@ -29,7 +30,6 @@ import com.tonapps.uikit.list.ListCell
 import core.EventBus
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.launch
-import ton.contract.WalletVersion
 
 class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect>(SettingsScreenState()) {
 
@@ -64,7 +64,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
 
     fun selectWalletVersion(view: View) {
         viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
             val wallets = ArrayMap<WalletVersion, String>()
             for (v in WalletVersion.entries.sorted()) {
                 wallets[v] = wallet.asVersion(v).address.shortAddress
@@ -82,9 +82,9 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
 
     fun setWalletVersion(version: WalletVersion) {
         viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
+            val wallet = App.walletManager.getWalletInfo() ?: return@launch
             if (wallet.version != version) {
-                com.tonapps.tonkeeper.App.walletManager.setWalletVersion(wallet.id, version)
+                App.walletManager.setWalletVersion(wallet.id, version)
                 sendEffect(SettingsScreenEffect.ReloadWallet)
             }
         }
@@ -104,8 +104,8 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
 
     fun logout() {
         viewModelScope.launch {
-            com.tonapps.tonkeeper.App.walletManager.logout()
-            com.tonapps.tonkeeper.App.passcode.clearPinCode()
+            App.walletManager.logout()
+            App.passcode.clearPinCode()
             CurrencyUpdateWorker.disable()
             sendEffect(SettingsScreenEffect.Logout)
         }
@@ -120,91 +120,84 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             id = SettingsIdItem.ACCOUNT_ID,
             label = wallet.label,
             position = ListCell.Position.SINGLE,
+            walletType = wallet.type
         ))
 
         items.add(SettingsTextItem(
             id = SettingsIdItem.CURRENCY_ID,
             titleRes = Localization.currency,
             data = App.settings.currency.code,
-            position = com.tonapps.uikit.list.ListCell.Position.FIRST
+            position = ListCell.Position.FIRST
         ))
         items.add(SettingsTextItem(
             id = SettingsIdItem.CONTRACT_VERSION,
             titleRes = Localization.active_address,
             data = wallet.version.toString(),
-            position = com.tonapps.uikit.list.ListCell.Position.MIDDLE
+            position = ListCell.Position.MIDDLE
         ))
         items.add(SettingsTextItem(
             id = SettingsIdItem.LANGUAGE_ID,
             titleRes = Localization.language,
             data = App.settings.language.name,
-            position = com.tonapps.uikit.list.ListCell.Position.LAST
+            position = ListCell.Position.LAST
         ))
 
+        items.add(SettingsIconItem(
+            id = SettingsIdItem.SECURITY_ID,
+            titleRes = Localization.security,
+            iconRes = UIKitIcon.ic_lock_28,
+            position = ListCell.Position.FIRST,
+            dot = !wallet.isRecoveryPhraseBackup()
+        ))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            items.add(SettingsIconItem(
-                id = SettingsIdItem.SECURITY_ID,
-                titleRes = Localization.security,
-                iconRes = UIKitIcon.ic_lock_28,
-                position = com.tonapps.uikit.list.ListCell.Position.FIRST,
-                colorRes = UIKitColor.accentBlue,
-                dot = !wallet.isRecoveryPhraseBackup()
-            ))
-
             items.add(SettingsIconItem(
                 id = SettingsIdItem.WIDGET_ID,
                 titleRes = Localization.widget,
                 iconRes = R.drawable.ic_widget_28,
-                position = com.tonapps.uikit.list.ListCell.Position.LAST,
-                colorRes = UIKitColor.accentBlue,
-            ))
-        } else {
-            items.add(SettingsIconItem(
-                id = SettingsIdItem.SECURITY_ID,
-                titleRes = Localization.security,
-                iconRes = UIKitIcon.ic_lock_28,
-                position = com.tonapps.uikit.list.ListCell.Position.SINGLE,
-                colorRes = UIKitColor.accentBlue,
-                dot = !wallet.isRecoveryPhraseBackup()
+                position = ListCell.Position.MIDDLE,
             ))
         }
+        items.add(SettingsIconItem(
+            id = SettingsIdItem.THEME_ID,
+            titleRes = Localization.theme,
+            iconRes = UIKitIcon.ic_appearance_28,
+            position = ListCell.Position.LAST,
+        ))
 
 
         items.add(SettingsIconItem(
             id = SettingsIdItem.SUPPORT_ID,
             titleRes = Localization.support,
             iconRes = UIKitIcon.ic_message_bubble_28,
-            position = com.tonapps.uikit.list.ListCell.Position.FIRST,
-            colorRes = UIKitColor.accentBlue,
+            position = ListCell.Position.FIRST,
         ))
         items.add(SettingsIconItem(
             id = SettingsIdItem.TONKEEPER_NEWS_ID,
             titleRes = Localization.tonkeeper_news,
             iconRes = R.drawable.ic_telegram_28,
-            position = com.tonapps.uikit.list.ListCell.Position.MIDDLE,
-            colorRes = UIKitColor.iconSecondary,
+            position = ListCell.Position.MIDDLE,
+            secondaryIcon = true
         ))
         items.add(SettingsIconItem(
             id = SettingsIdItem.CONTACT_US_ID,
             titleRes = Localization.contact_us,
             iconRes = R.drawable.ic_envelope_28,
-            position = com.tonapps.uikit.list.ListCell.Position.MIDDLE,
-            colorRes = UIKitColor.iconSecondary,
+            position = ListCell.Position.MIDDLE,
+            secondaryIcon = true
         ))
         items.add(SettingsIconItem(
             id = SettingsIdItem.LEGAL_ID,
             titleRes = Localization.legal,
             iconRes = R.drawable.ic_doc_28,
-            position = com.tonapps.uikit.list.ListCell.Position.LAST,
-            colorRes = UIKitColor.iconSecondary,
+            position = ListCell.Position.LAST,
+            secondaryIcon = true
         ))
 
         items.add(SettingsIconItem(
             id = SettingsIdItem.LOGOUT_ID,
             titleRes = Localization.log_out,
             iconRes = R.drawable.ic_door_28,
-            position = com.tonapps.uikit.list.ListCell.Position.SINGLE,
-            colorRes = UIKitColor.accentBlue,
+            position = ListCell.Position.SINGLE,
         ))
 
         items.add(getVersionItem())

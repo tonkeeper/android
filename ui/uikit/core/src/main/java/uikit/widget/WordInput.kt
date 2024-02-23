@@ -10,12 +10,15 @@ import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentRedColor
 import uikit.R
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 import uikit.extensions.requestFocusWithSelection
+import uikit.extensions.setCursorColor
 
 class WordInput @JvmOverloads constructor(
     context: Context,
@@ -46,8 +49,8 @@ class WordInput @JvmOverloads constructor(
         background = inputDrawable
 
         inflate(context, R.layout.view_word_input, this)
-        indexTextView = findViewById(R.id.index)
-        inputEditText = findViewById(R.id.input)
+        indexTextView = findViewById(R.id.word_input_index)
+        inputEditText = findViewById(R.id.word_input_text)
         inputEditText.onFocusChangeListener = this
         inputEditText.setOnEditorActionListener(this)
         inputEditText.addTextChangedListener(this)
@@ -120,7 +123,7 @@ class WordInput @JvmOverloads constructor(
         doOnTextChanged?.invoke(s.toString())
 
         if (inputDrawable.error && s.isNullOrBlank()) {
-            inputDrawable.error = false
+            setError(false)
         }
     }
 
@@ -130,7 +133,11 @@ class WordInput @JvmOverloads constructor(
 
     fun setError(error: Boolean) {
         inputDrawable.error = error
+        if (error) {
+            inputEditText.setCursorColor(context.accentRedColor)
+        } else {
+            inputEditText.setCursorColor(context.accentBlueColor)
+        }
     }
-
 
 }

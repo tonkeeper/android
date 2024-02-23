@@ -15,6 +15,7 @@
         android:layout_height="wrap_content"
         android:overScrollMode="never"
         android:maxHeight="320dp"
+        android:minHeight="78dp"
         android:layout_marginHorizontal="@dimen/offsetMedium"/>
 
     <FrameLayout

@@ -6,7 +6,8 @@ import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundContentTintColor
+import com.tonapps.uikit.color.buttonPrimaryBackgroundColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.extensions.dp
 import uikit.extensions.getDrawable
@@ -40,13 +41,13 @@ class CheckBoxView @JvmOverloads constructor(
     }
 
     private val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(UIKitColor.backgroundContentTint)
+        color = context.backgroundContentTintColor
         style = Paint.Style.STROKE
         strokeWidth = strokeSize
     }
 
     private val activePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(UIKitColor.buttonPrimaryBackground)
+        color = context.buttonPrimaryBackgroundColor
     }
 
     var checked: Boolean = false

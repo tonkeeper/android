@@ -1,32 +1,25 @@
 package com.tonapps.tonkeeper.ui.screen.picker
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import android.widget.Button
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.tonapps.tonkeeper.dialog.IntroWalletDialog
-import com.tonapps.tonkeeper.extensions.launch
+import com.tonapps.tonkeeper.fragment.root.RootViewModel
+import com.tonapps.tonkeeper.ui.screen.add.AddFragment
 import com.tonapps.tonkeeper.ui.screen.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.picker.list.WalletPickerItem
 import com.tonapps.tonkeeperx.R
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import ton.wallet.Wallet
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
 import uikit.extensions.bottomScrolled
 import uikit.extensions.collectFlow
-import uikit.extensions.isMaxScrollReached
 import uikit.extensions.topScrolled
-import uikit.extensions.verticalOffset
-import uikit.extensions.verticalScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ModalHeader
+import uikit.widget.ModalView
 import uikit.widget.SimpleRecyclerView
 
 class WalletPickerFragment: BaseFragment(R.layout.fragment_wallet_picker), BaseFragment.Modal {
@@ -35,7 +28,8 @@ class WalletPickerFragment: BaseFragment(R.layout.fragment_wallet_picker), BaseF
         fun newInstance() = WalletPickerFragment()
     }
 
-    private val pickerViewModel: WalletPickerViewModel by viewModels()
+    private val rootViewModel: RootViewModel by activityViewModel()
+    private val pickerViewModel: WalletPickerViewModel by viewModel()
     private val adapter = WalletPickerAdapter(::selectWallet)
 
     private lateinit var listView: RecyclerView
@@ -56,8 +50,7 @@ class WalletPickerFragment: BaseFragment(R.layout.fragment_wallet_picker), BaseF
 
         val addButton = view.findViewById<View>(R.id.add)
         addButton.setOnClickListener {
-            IntroWalletDialog(requireContext()).show()
-            finish()
+            navigation?.add(AddFragment.newInstance())
         }
 
         collectFlow(pickerViewModel.walletsFlow, ::setItems)
@@ -69,16 +62,21 @@ class WalletPickerFragment: BaseFragment(R.layout.fragment_wallet_picker), BaseF
             if (index != -1) {
                 listView.scrollToPosition(index)
             }
-            fixPeekHeight()
         }
     }
 
     private fun selectWallet(wallet: Wallet) {
         collectFlow(pickerViewModel.setWallet(wallet)) { reload ->
             if (reload) {
-                navigation?.initRoot(true)
+                notifyChangeWallet()
             }
             finish()
+        }
+    }
+
+    private fun notifyChangeWallet() {
+        postDelayed(ModalView.animationDuration) {
+            rootViewModel.notifyChangeWallet()
         }
     }
 }

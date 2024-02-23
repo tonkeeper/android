@@ -6,7 +6,7 @@
         android:layout_width="wrap_content"
         android:layout_height="@dimen/itemHeight"
         android:gravity="center"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         android:textAppearance="@style/TextAppearance.Body1"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -24,7 +24,7 @@
             android:gravity="end"
             android:layout_gravity="end"
             android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary"/>
+            android:textColor="?attr/textPrimaryColor"/>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/description"
@@ -34,7 +34,7 @@
             android:gravity="end"
             android:layout_gravity="end"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary"/>
+            android:textColor="?attr/textSecondaryColor"/>
 
         <uikit.widget.LoaderView
             android:id="@+id/loader"

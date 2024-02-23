@@ -1,8 +1,8 @@
 package ton.wallet.storage
 
 import android.content.Context
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import core.keyvalue.KeyValue
-import ton.contract.WalletVersion
 import ton.wallet.Wallet
 
 internal class WalletStorage(context: Context) {
@@ -71,15 +71,10 @@ internal class WalletStorage(context: Context) {
 
     suspend fun getWallets(): List<Wallet> {
         val walletIds = wallets.getIds()
-        val wallets = HashMap<String, Wallet>()
-        getWallet()?.let {
-            wallets[it.accountId] = it
-        }
+        val wallets = mutableMapOf<String, Wallet>()
         for (walletId in walletIds) {
-            val wallet = getWallet(walletId)
-            if (wallet != null) {
-                wallets[wallet.accountId] = wallet
-            }
+            val wallet = getWallet(walletId) ?: continue
+            wallets[wallet.key] = wallet
         }
         return wallets.values.toList()
     }

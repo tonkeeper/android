@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary" />
+            android:textColor="?attr/textPrimaryColor" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/rate"
@@ -36,7 +36,7 @@
             android:layout_marginTop="2dp"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary" />
+            android:textColor="?attr/textSecondaryColor" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -57,7 +57,7 @@
             android:singleLine="true"
             android:maxLength="12"
             android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary"/>
+            android:textColor="?attr/textPrimaryColor"/>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/balance_currency"
@@ -67,7 +67,7 @@
             android:gravity="end"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary" />
+            android:textColor="?attr/textSecondaryColor" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

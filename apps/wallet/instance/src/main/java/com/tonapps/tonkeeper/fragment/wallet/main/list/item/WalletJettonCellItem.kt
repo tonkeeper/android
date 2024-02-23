@@ -9,7 +9,8 @@ data class WalletJettonCellItem(
     val iconURI: Uri,
     val code: String,
     val balance: String,
-    val balanceCurrency: String?,
+    val balanceCurrencyFormat: String,
+    val balanceCurrency: Float,
     val rate: String?,
-    val rateDiff24h: String?
+    val rateDiff24h: String?,
 ): WalletCellItem(TYPE_JETTON, position)

@@ -1,16 +1,16 @@
 package ton.wallet
 
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletV3R1Contract
+import com.tonapps.blockchain.ton.contract.WalletV3R2Contract
+import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
-import ton.contract.BaseWalletContract
-import ton.contract.WalletV3R1Contract
-import ton.contract.WalletV3R2Contract
-import ton.contract.WalletV4R2Contract
-import ton.contract.WalletVersion
 import ton.extensions.toWalletAddress
 
 data class Wallet(
@@ -25,6 +25,10 @@ data class Wallet(
 
     companion object {
         const val WORKCHAIN = 0
+    }
+
+    val key: String by lazy {
+        address + "_" + version.name + "_" + type.name
     }
 
     fun asVersion(version: WalletVersion): Wallet {

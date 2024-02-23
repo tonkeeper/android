@@ -10,7 +10,7 @@
         android:layout_height="44dp"
         android:background="@drawable/bg_oval">
         
-        <com.tonapps.emoji.EmojiView
+        <com.tonapps.emoji.ui.EmojiView
             android:id="@+id/wallet_emoji"
             android:layout_width="24dp"
             android:layout_height="24dp"
@@ -24,13 +24,31 @@
         android:layout_marginHorizontal="@dimen/offsetMedium"
         android:layout_weight="1">
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/wallet_name"
+        <uikit.widget.RowLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary"/>
+            android:layout_height="wrap_content">
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/wallet_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="?attr/textPrimaryColor"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/wallet_type"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="@dimen/offsetExtraSmall"
+                android:paddingHorizontal="@dimen/offsetExtraSmall"
+                android:gravity="center"
+                android:background="@drawable/bg_wallet_type"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Body4CAPS"
+                android:textColor="?attr/textSecondaryColor"/>
+
+        </uikit.widget.RowLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/wallet_balance"
@@ -39,7 +57,7 @@
             android:layout_marginTop="@dimen/offsetExtraExtraSmall"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary"/>
+            android:textColor="?attr/textSecondaryColor"/>
         
     </uikit.widget.ColumnLayout>
     
@@ -48,6 +66,6 @@
         android:layout_width="28dp"
         android:layout_height="28dp"
         android:layout_gravity="center"
-        android:tint="@color/accentBlue"/>
+        android:tint="?attr/accentBlueColor"/>
 
 </uikit.widget.RowLayout>

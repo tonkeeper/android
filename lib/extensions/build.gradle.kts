@@ -22,6 +22,6 @@ android {
 }
 
 dependencies {
-    implementation(Libs.KotlinX.coroutines)
-    implementation(Libs.AndroidX.core)
+    implementation(Dependence.KotlinX.coroutines)
+    implementation(Dependence.AndroidX.core)
 }

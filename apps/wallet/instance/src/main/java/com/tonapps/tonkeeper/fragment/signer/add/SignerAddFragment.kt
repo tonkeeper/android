@@ -14,10 +14,11 @@ import androidx.camera.view.PreviewView
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.signer.SignerApp
-import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.init.InitFragment
 import com.tonapps.qr.QRImageAnalyzer
 import uikit.HapticHelper
 import uikit.base.BaseFragment
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
@@ -40,6 +41,7 @@ class SignerAddFragment: BaseFragment(R.layout.fragment_signer_add), BaseFragmen
 
     private var isFlashAvailable = false
 
+    private lateinit var containerView: View
     private lateinit var headerView: HeaderView
     private lateinit var flashView: AppCompatImageView
     private lateinit var signerOpenButton: Button
@@ -50,6 +52,9 @@ class SignerAddFragment: BaseFragment(R.layout.fragment_signer_add), BaseFragmen
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
+
+        containerView = view.findViewById(R.id.container)
+        containerView.applyNavBottomPadding()
 
         headerView = view.findViewById(R.id.header)
         headerView.doOnCloseClick = { finish() }
@@ -66,6 +71,7 @@ class SignerAddFragment: BaseFragment(R.layout.fragment_signer_add), BaseFragmen
         }
 
         collectFlow(qrAnalyzer.flow, ::handleBarcode)
+        checkAndStartCamera()
     }
 
     private fun handleBarcode(barcode: Barcode) {
@@ -74,7 +80,7 @@ class SignerAddFragment: BaseFragment(R.layout.fragment_signer_add), BaseFragmen
             return
         }
 
-        val fragment = InitScreen.singer(uri) ?: return
+        val fragment = InitFragment.singer(uri) ?: return
         navigation?.add(fragment)
         finish()
     }
@@ -126,12 +132,6 @@ class SignerAddFragment: BaseFragment(R.layout.fragment_signer_add), BaseFragmen
         } else {
             activityResultLauncher.launch(android.Manifest.permission.CAMERA)
         }
-    }
-
-
-    override fun onEndShowingAnimation() {
-        super.onEndShowingAnimation()
-        checkAndStartCamera()
     }
 
     override fun onDestroyView() {

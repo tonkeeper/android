@@ -8,7 +8,8 @@ import android.view.animation.OvershootInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentRedColor
 import uikit.R
 import uikit.base.BaseDialog
 import uikit.extensions.dp
@@ -71,8 +72,8 @@ class AlertDialog private constructor(
     }
 
     private fun setColoredButton() {
-        negativeButton.setTextColor(context.getColor(UIKitColor.accentRed))
-        positiveButton.setTextColor(context.getColor(UIKitColor.accentBlue))
+        negativeButton.setTextColor(context.accentRedColor)
+        positiveButton.setTextColor(context.accentBlueColor)
     }
 
     override fun onAnimationUpdate(animation: ValueAnimator) {

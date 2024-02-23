@@ -14,9 +14,10 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.iconSecondaryColor
 import uikit.R
 import uikit.extensions.dp
+import uikit.extensions.isVisibleForUser
 import uikit.extensions.useAttributes
 
 class LoaderView @JvmOverloads constructor(
@@ -55,7 +56,7 @@ class LoaderView @JvmOverloads constructor(
         updatePaint()
 
         context.useAttributes(attrs, R.styleable.LoaderView) {
-            val color = it.getColor(R.styleable.LoaderView_android_color, context.getColor(UIKitColor.iconSecondary))
+            val color = it.getColor(R.styleable.LoaderView_android_color, context.iconSecondaryColor)
             setColor(color)
 
             val trackColor = it.getColor(R.styleable.LoaderView_android_trackTint, Color.TRANSPARENT)
@@ -70,7 +71,7 @@ class LoaderView @JvmOverloads constructor(
         this.type = type
         updatePaint()
         stopAnimation()
-        resetAnimation()
+        startAnimation()
     }
 
     fun setProgressAnimation(progress: Float) {
@@ -125,8 +126,12 @@ class LoaderView @JvmOverloads constructor(
     private fun updateBounds() {
         val paddingLeft = paddingLeft
         val paddingTop = paddingTop
-        bounds[(paddingLeft + thickness), (paddingTop + thickness), (size - paddingLeft - thickness)] =
+        bounds.set(
+            (paddingLeft + thickness),
+            (paddingTop + thickness),
+            (size - paddingLeft - thickness),
             (size - paddingTop - thickness)
+        )
     }
 
     private fun updatePaint() {
@@ -146,44 +151,47 @@ class LoaderView @JvmOverloads constructor(
         if (trackColor != Color.TRANSPARENT) {
             canvas.drawArc(bounds, 0f, 360f, false, trackPaint)
         }
-
         when (type) {
-            TYPE_DEFAULT -> canvas.drawArc(
-                bounds,
-                startAngle + indeterminateRotateOffset,
-                indeterminateSweep,
-                false,
-                paint
-            )
-            TYPE_PROGRESS -> {
-                val angle = 360 * progress
-                canvas.drawArc(bounds, startAngle + indeterminateRotateOffset, angle, false, paint)
-            }
+            TYPE_DEFAULT -> drawDefault(canvas)
+            TYPE_PROGRESS -> drawProgress(canvas)
         }
     }
 
-    fun resetAnimation() {
-        if (type == TYPE_PROGRESS) {
-            val rotateAnimator = ValueAnimator.ofFloat(0f, 360f)
-            rotateAnimator.duration = 2000
-            rotateAnimator.repeatCount = ValueAnimator.INFINITE
-            rotateAnimator.interpolator = LinearInterpolator()
-            rotateAnimator.addUpdateListener { animation: ValueAnimator ->
-                indeterminateRotateOffset = animation.animatedValue as Float
-                invalidate()
-            }
-            rotateAnimator.start()
-            return
+    private fun drawDefault(canvas: Canvas) {
+        canvas.drawArc(bounds, startAngle + indeterminateRotateOffset, indeterminateSweep, false, paint)
+    }
+
+    private fun drawProgress(canvas: Canvas) {
+        val angle = 360 * progress
+        canvas.drawArc(bounds, startAngle + indeterminateRotateOffset, angle, false, paint)
+    }
+
+    private fun cancelAnimator(animator: Animator?) {
+        if (animator != null && animator.isRunning) {
+            animator.cancel()
         }
-        if (startAngleRotate != null && startAngleRotate!!.isRunning) {
-            startAngleRotate!!.cancel()
+    }
+
+    private fun cancelAnimators(vararg animator: Animator?) {
+        for (a in animator) {
+            cancelAnimator(a)
         }
-        if (progressAnimator != null && progressAnimator!!.isRunning) {
-            progressAnimator!!.cancel()
+    }
+
+    private fun startProgressAnimation() {
+        val rotateAnimator = ValueAnimator.ofFloat(0f, 360f)
+        rotateAnimator.duration = 2000
+        rotateAnimator.repeatCount = ValueAnimator.INFINITE
+        rotateAnimator.interpolator = LinearInterpolator()
+        rotateAnimator.addUpdateListener { animation: ValueAnimator ->
+            indeterminateRotateOffset = animation.animatedValue as Float
+            invalidate()
         }
-        if (indeterminateAnimator != null && indeterminateAnimator!!.isRunning) {
-            indeterminateAnimator!!.cancel()
-        }
+        rotateAnimator.start()
+    }
+
+    private fun startDefaultAnimation() {
+        stopAnimation()
         indeterminateSweep = INDETERMINANT_MIN_SWEEP
         indeterminateAnimator = AnimatorSet()
         var prevSet: AnimatorSet? = null
@@ -204,26 +212,27 @@ class LoaderView @JvmOverloads constructor(
 
             override fun onAnimationEnd(animation: Animator) {
                 if (!wasCancelled) {
-                    resetAnimation()
+                    startAnimation()
                 }
             }
         })
         indeterminateAnimator!!.start()
     }
 
+    fun startAnimation() {
+        if (!isVisibleForUser) {
+            return
+        }
+
+        if (type == TYPE_PROGRESS) {
+            startProgressAnimation()
+        } else {
+            startDefaultAnimation()
+        }
+    }
+
     fun stopAnimation() {
-        if (startAngleRotate != null) {
-            startAngleRotate!!.cancel()
-            startAngleRotate = null
-        }
-        if (progressAnimator != null) {
-            progressAnimator!!.cancel()
-            progressAnimator = null
-        }
-        if (indeterminateAnimator != null) {
-            indeterminateAnimator!!.cancel()
-            indeterminateAnimator = null
-        }
+        cancelAnimators(startAngleRotate, progressAnimator, indeterminateAnimator)
     }
 
     private fun createIndeterminateAnimator(step: Float): AnimatorSet {
@@ -265,14 +274,23 @@ class LoaderView @JvmOverloads constructor(
         return set
     }
 
-    override fun onAttachedToWindow() {
+    /*override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        resetAnimation()
+        startAnimation()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         stopAnimation()
+    }*/
+
+    override fun onVisibilityAggregated(isVisible: Boolean) {
+        super.onVisibilityAggregated(isVisible)
+        if (isVisible) {
+            startAnimation()
+        } else {
+            stopAnimation()
+        }
     }
 
     override fun hasOverlappingRendering() = false
@@ -282,5 +300,4 @@ class LoaderView @JvmOverloads constructor(
         const val TYPE_PROGRESS = 1
         const val TYPE_DEFAULT = 2
     }
-
 }

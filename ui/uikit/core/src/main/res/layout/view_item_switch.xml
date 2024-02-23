@@ -8,7 +8,7 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:layout_weight="1"/>
 
     <uikit.widget.SwitchView

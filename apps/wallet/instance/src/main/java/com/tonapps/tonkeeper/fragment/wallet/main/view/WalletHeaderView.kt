@@ -8,18 +8,14 @@ import android.view.WindowInsets
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.WindowInsetsCompat
-import com.tonapps.emoji.EmojiView
+import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.wallet.data.account.entities.WalletLabel
 import uikit.drawable.HeaderDrawable
-import uikit.extensions.darken
 import uikit.extensions.getDimensionPixelSize
-import uikit.extensions.isDark
-import uikit.extensions.lighten
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.setPaddingTop
-import uikit.widget.HeaderView
 import uikit.widget.RowLayout
 
 class WalletHeaderView @JvmOverloads constructor(
@@ -72,20 +68,16 @@ class WalletHeaderView @JvmOverloads constructor(
         drawable.setDivider(value)
     }
 
-    fun setWallet(name: String?, emoji: CharSequence?, color: Int) {
-        if (name.isNullOrBlank()) {
-            nameView.setText(Localization.loading)
-        } else {
-            nameView.text = name
+    fun setWallet(walletLabel: WalletLabel) {
+        if (walletLabel.isEmpty) {
+            walletView.visibility = View.GONE
+            return
         }
 
-        if (emoji.isNullOrBlank()) {
-            emojiView.setEmoji("⏳")
-        } else {
-            emojiView.setEmoji(emoji)
-        }
-
-        walletView.backgroundTintList = ColorStateList.valueOf(color)
+        walletView.visibility = View.VISIBLE
+        nameView.text = walletLabel.name
+        emojiView.setEmoji(walletLabel.emoji)
+        walletView.backgroundTintList = ColorStateList.valueOf(walletLabel.color)
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {

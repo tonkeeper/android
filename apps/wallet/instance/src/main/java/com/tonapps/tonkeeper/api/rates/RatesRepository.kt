@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.api.rates
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.tonkeeper.api.Tonapi
 import com.tonapps.tonkeeper.api.base.BaseBlobRepository
 import com.tonapps.tonkeeper.api.base.SourceAPI
@@ -10,6 +11,7 @@ import com.tonapps.tonkeeper.api.withRetry
 import com.tonapps.wallet.data.core.Currency
 import io.tonapi.apis.RatesApi
 import io.tonapi.models.GetRates200Response
+import io.tonapi.models.TokenRates
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -53,12 +55,18 @@ class RatesRepository(
         tokens: List<String>,
         currency: List<String>,
         testnet: Boolean,
-    ): GetRates200Response? {
-        return fromCloud(
-            tokens = tokens.joinToString(","),
-            currency = currency.joinToString(","),
-            testnet = testnet
-        )
+    ): GetRates200Response {
+        val rates = mutableMapOf<String, TokenRates>()
+        val chunks = tokens.chunked(100)
+        for (chunk in chunks) {
+            val response = fromCloud(
+                tokens = chunk.joinToString(","),
+                currency = currency.joinToString(","),
+                testnet = testnet
+            )?.rates ?: continue
+            rates.putAll(response)
+        }
+        return GetRates200Response(rates)
     }
 
     private suspend fun fromCloud(

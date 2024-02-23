@@ -7,7 +7,10 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.graphics.withSave
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.fieldActiveBorderColor
+import com.tonapps.uikit.color.fieldBackgroundColor
+import com.tonapps.uikit.color.fieldErrorBorderColor
 import uikit.ArgbEvaluator
 import uikit.R
 import uikit.extensions.dp
@@ -40,10 +43,10 @@ class PinInputView @JvmOverloads constructor(
     }
 
     private val numbers = mutableListOf<Int>()
-    private val defaultColor = context.getColor(UIKitColor.fieldBackground)
-    private val activeColor = context.getColor(UIKitColor.fieldActiveBorder)
-    private val errorColor = context.getColor(UIKitColor.fieldErrorBorder)
-    private var doneColor = context.getColor(UIKitColor.accentGreen)
+    private val defaultColor = context.fieldBackgroundColor
+    private val activeColor = context.fieldActiveBorderColor
+    private val errorColor = context.fieldErrorBorderColor
+    private var doneColor = context.accentGreenColor
     private val dotSize = 12f.dp
     private val dotActiveSize = 16f.dp
     private val dotActiveScale = dotActiveSize / dotSize

@@ -7,17 +7,19 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
-import com.tonapps.tonkeeper.extensions.launch
 import com.tonapps.tonkeeper.fragment.chart.list.ChartAdapter
 import com.tonapps.tonkeeper.fragment.chart.list.ChartItemDecoration
+import com.tonapps.uikit.list.ListPaginationListener
 import uikit.base.BaseFragment
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.topScrolled
-import uikit.extensions.verticalScrolled
 import uikit.mvi.AsyncState
 import uikit.mvi.UiScreen
 import uikit.widget.HeaderView
+import uikit.widget.SimpleRecyclerView
 
 class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeature>(R.layout.fragment_chart), BaseFragment.SwipeBack {
 
@@ -32,7 +34,7 @@ class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeat
         feature.loadChart(it)
     }
 
-    private val scrollListener = object : com.tonapps.uikit.list.ListPaginationListener() {
+    private val scrollListener = object : ListPaginationListener() {
         override fun onLoadMore() {
             feature.loadMore()
         }
@@ -40,7 +42,7 @@ class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeat
 
     private lateinit var headerView: HeaderView
     private lateinit var shimmerView: View
-    private lateinit var listView: RecyclerView
+    private lateinit var listView: SimpleRecyclerView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -50,9 +52,9 @@ class ChartScreen: UiScreen<ChartScreenState, ChartScreenEffect, ChartScreenFeat
         shimmerView = view.findViewById(R.id.shimmer)
 
         listView = view.findViewById(R.id.list)
-        listView.layoutManager = com.tonapps.uikit.list.LinearLayoutManager(view.context)
         listView.adapter = ConcatAdapter(chartAdapter, historyAdapter)
         listView.addItemDecoration(ChartItemDecoration(view.context))
+        listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
         collectFlow(listView.topScrolled, headerView::setDivider)
     }
 

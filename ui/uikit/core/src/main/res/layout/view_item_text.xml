@@ -7,14 +7,14 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:layout_weight="1"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/textAccent"
+        android:textColor="?attr/textAccentColor"
         android:textAppearance="@style/TextAppearance.Label1"
         android:layout_gravity="center"/>
 </merge>

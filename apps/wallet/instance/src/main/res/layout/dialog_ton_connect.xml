@@ -26,8 +26,8 @@
             android:layout_marginVertical="@dimen/offsetMedium"
             android:scaleType="centerInside"
             android:src="@drawable/ic_close_16"
-            android:tint="@color/buttonSecondaryForeground"
-            android:backgroundTint="@color/buttonSecondaryBackground"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
             android:background="@drawable/bg_oval_button_secondary"/>
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetMedium"
             android:textAppearance="@style/TextAppearance.H2"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:gravity="center"/>
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetExtraExtraSmall"
             android:textAppearance="@style/TextAppearance.Body1"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/textSecondaryColor"
             android:gravity="center"/>
 
         <FrameLayout
@@ -105,7 +105,7 @@
             android:layout_height="wrap_content"
             android:layout_marginVertical="@dimen/offsetMedium"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textTertiary"
+            android:textColor="?attr/textTertiaryColor"
             android:gravity="center"
             android:text="@string/ton_connect_subtitle"/>
     </androidx.appcompat.widget.LinearLayoutCompat>

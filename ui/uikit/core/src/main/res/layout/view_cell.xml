@@ -13,7 +13,7 @@
         android:layout_gravity="center"
         android:gravity="center_vertical"
         android:singleLine="true"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:textAppearance="@style/TextAppearance.Label1"/>
 
     <androidx.appcompat.widget.AppCompatImageView
@@ -28,7 +28,7 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:singleLine="true"
-        android:textColor="@color/textAccent"
+        android:textColor="?attr/textAccentColor"
         android:textAppearance="@style/TextAppearance.Label1"/>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

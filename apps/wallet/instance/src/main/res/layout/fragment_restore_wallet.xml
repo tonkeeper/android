@@ -32,7 +32,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="@string/import_wallet_title"
-                    android:textColor="@color/textPrimary"
+                    android:textColor="?attr/textPrimaryColor"
                     android:textAppearance="@style/TextAppearance.H2"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -41,7 +41,7 @@
                     android:layout_marginTop="@dimen/offsetExtraExtraSmall"
                     android:gravity="center"
                     android:text="@string/import_wallet_description"
-                    android:textColor="@color/textSecondary"
+                    android:textColor="?attr/textSecondaryColor"
                     android:textAppearance="@style/TextAppearance.Body1"/>
 
                 <uikit.widget.WordFormView
@@ -71,7 +71,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_gravity="center"
-                        android:color="@color/iconPrimary"/>
+                        android:color="?attr/iconPrimaryColor"/>
 
                 </FrameLayout>
 

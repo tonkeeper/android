@@ -1,17 +1,15 @@
 package com.tonapps.signer.screen.sign
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.signer.core.repository.KeyRepository
-import com.tonapps.signer.extensions.base64
-import com.tonapps.signer.extensions.hex
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.screen.sign.list.SignItem
-import com.tonapps.signer.ton.contract.BaseWalletContract
-import com.tonapps.signer.ton.tlb.JettonTransfer
-import com.tonapps.signer.ton.tlb.NftTransfer
-import com.tonapps.signer.ton.tlb.StringTlbConstructor
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +37,6 @@ import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.loadTlb
 import com.tonapps.security.vault.safeArea
-import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.uikit.list.ListCell
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -80,7 +77,7 @@ class SignViewModel(
     }.flowOn(Dispatchers.IO).take(1)
 
     fun openEmulate() = keyEntity.map {
-        val contract = BaseWalletContract.create(it.publicKey, v)
+        val contract = com.tonapps.blockchain.ton.contract.BaseWalletContract.create(it.publicKey, v)
         val cell = contract.createTransferMessageCell(contract.address, emptyPrivateKey(), 0, unsignedBody)
         cell.hex()
     }.flowOn(Dispatchers.IO).take(1)
@@ -163,17 +160,17 @@ class SignViewModel(
         }
     }
 
-    private fun parseJettonTransfer(opCode: Int, cell: Cell?): JettonTransfer? {
+    private fun parseJettonTransfer(opCode: Int, cell: Cell?): com.tonapps.blockchain.ton.tlb.JettonTransfer? {
         return if (opCode == 0xf8a7ea5) {
-            cell?.parse { loadTlb(JettonTransfer.tlbCodec()) }
+            cell?.parse { loadTlb(com.tonapps.blockchain.ton.tlb.JettonTransfer.tlbCodec()) }
         } else {
             null
         }
     }
 
-    private fun parseNftTransfer(opCode: Int, cell: Cell?): NftTransfer? {
+    private fun parseNftTransfer(opCode: Int, cell: Cell?): com.tonapps.blockchain.ton.tlb.NftTransfer? {
         return if (opCode == 0x5fcc3d14) {
-            cell?.parse { loadTlb(NftTransfer.tlbCodec()) }
+            cell?.parse { loadTlb(com.tonapps.blockchain.ton.tlb.NftTransfer.tlbCodec()) }
         } else {
             null
         }
@@ -199,31 +196,25 @@ class SignViewModel(
 
     private fun parseComment(
         cell: Cell?,
-        jettonTransfer: JettonTransfer?,
-        nftTransfer: NftTransfer?
+        jettonTransfer: com.tonapps.blockchain.ton.tlb.JettonTransfer?,
+        nftTransfer: com.tonapps.blockchain.ton.tlb.NftTransfer?
     ): String? {
         return if (jettonTransfer != null) {
             jettonTransfer.comment
         } else if (nftTransfer != null) {
             nftTransfer.comment
         } else {
-            cell?.parse { loadTlb(StringTlbConstructor) }
+            cell?.parse { loadTlb(com.tonapps.blockchain.ton.tlb.StringTlbConstructor) }
         }
     }
 
     private fun parseValue(value: CurrencyCollection): String {
-        return formatCoins("TON", value.coins)
+        return formatCoins(value.coins)
     }
 
-    private fun formatCoins(currency: String = "", coins: Coins): String {
-        if (currency.isEmpty()) {
-            return coins.toString()
-        }
-        val builder = StringBuilder()
-        builder.append(coins)
-        builder.append(" ")
-        builder.append(currency)
-        return builder.toString()
+    private fun formatCoins(coins: Coins): String {
+        val value = coins.amount.toLong() / 1000000000L.toFloat()
+        return CurrencyFormatter.format("TON", value)
     }
 
     private fun parseAddress(address: MsgAddressInt, bounceable: Boolean = true): String {

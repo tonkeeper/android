@@ -3,7 +3,6 @@ package uikit.widget
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -13,11 +12,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.core.view.WindowInsetsCompat
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.uikit.color.tabBarActiveIconColor
+import com.tonapps.uikit.color.tabBarInactiveIconColor
 import uikit.R
 import uikit.drawable.FooterDrawable
 import uikit.extensions.createRipple
-import uikit.extensions.getColor
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingBottom
 import uikit.extensions.useAttributes
@@ -40,7 +40,7 @@ class BottomTabsView @JvmOverloads constructor(
         }
 
     private val drawable = FooterDrawable(context).apply {
-        setColor(getColor(UIKitColor.backgroundTransparent))
+        setColor(context.backgroundTransparentColor)
     }
 
     private val menu: MenuBuilder by lazy { MenuBuilder(context) }
@@ -105,8 +105,8 @@ class BottomTabsView @JvmOverloads constructor(
     }
 
     private fun updateSelected() {
-        val colorActive = context.getColor(UIKitColor.tabBarActiveIcon)
-        val colorInactive = context.getColor(UIKitColor.tabBarInactiveIcon)
+        val colorActive = context.tabBarActiveIconColor
+        val colorInactive = context.tabBarInactiveIconColor
 
         for (i in 0 until childCount) {
             val view = getChildAt(i)

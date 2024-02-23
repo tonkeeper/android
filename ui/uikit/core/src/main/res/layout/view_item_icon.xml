@@ -9,7 +9,7 @@
         android:gravity="center_vertical"
         android:textAppearance="@style/TextAppearance.Label1"
         android:drawablePadding="8dp"
-        android:textColor="@color/textPrimary"/>
+        android:textColor="?attr/textPrimaryColor"/>
 
     <View
         android:layout_width="match_parent"
@@ -21,5 +21,6 @@
         android:layout_width="@dimen/iconSize"
         android:layout_height="@dimen/iconSize"
         android:layout_gravity="center"
+        android:tint="?attr/accentBlueColor"
         android:scaleType="centerInside"/>
 </merge>

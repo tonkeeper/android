@@ -6,7 +6,6 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.iconRes
@@ -14,6 +13,9 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.fragment.nft.NftScreen
+import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.textPrimaryColor
+import com.tonapps.uikit.color.textTertiaryColor
 import uikit.extensions.drawable
 import uikit.navigation.Navigation
 import uikit.widget.FrescoView
@@ -24,9 +26,9 @@ class HistoryActionHolder(
     private val disableOpenAction: Boolean
 ): HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
 
-    private val amountColorReceived = context.getColor(UIKitColor.accentGreen)
-    private val amountColorDefault = context.getColor(UIKitColor.textPrimary)
-    private val amountColorTertiary = context.getColor(UIKitColor.textTertiary)
+    private val amountColorReceived = context.accentGreenColor
+    private val amountColorDefault = context.textPrimaryColor
+    private val amountColorTertiary = context.textTertiaryColor
 
     private val loaderView = findViewById<LoaderView>(R.id.loader)
     private val iconView = findViewById<FrescoView>(R.id.icon)

@@ -17,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 26
-        versionName = "0.0.25"
+        versionCode = 28
+        versionName = "0.0.27"
     }
 
     buildFeatures {
@@ -52,69 +52,73 @@ android {
 
 dependencies {
     "baselineProfile"(project(":baselineprofile:x"))
-    implementation(project(Libs.Wallet.localization))
-    implementation(project(Libs.Wallet.Data.core))
-    implementation(project(Libs.Wallet.Data.account))
-    implementation(project(Libs.Wallet.Data.settings))
-    implementation(project(Libs.UIKit.core))
 
-    implementation(Libs.AndroidX.core)
-    implementation(Libs.AndroidX.appCompat)
-    implementation(Libs.AndroidX.activity)
-    implementation(Libs.AndroidX.fragment)
-    implementation(Libs.AndroidX.recyclerView)
-    implementation(Libs.AndroidX.viewPager2)
-    implementation(Libs.AndroidX.security)
-    implementation(Libs.AndroidX.workManager)
-    implementation(Libs.AndroidX.biometric)
-    implementation(Libs.AndroidX.swiperefreshlayout)
+    implementation(Dependence.Koin.core)
 
-    implementation(Libs.AndroidX.Camera.base)
-    implementation(Libs.AndroidX.Camera.core)
-    implementation(Libs.AndroidX.Camera.lifecycle)
-    implementation(Libs.AndroidX.Camera.view)
-    implementation(Libs.ML.barcode)
+    implementation(project(Dependence.Wallet.localization))
+    implementation(project(Dependence.Wallet.Data.core))
+    implementation(project(Dependence.Wallet.Data.account))
+    implementation(project(Dependence.Wallet.Data.settings))
+    implementation(project(Dependence.UIKit.core))
 
-    implementation(Libs.guava)
-    implementation(Libs.sodium)
+    implementation(Dependence.AndroidX.core)
+    implementation(Dependence.AndroidX.appCompat)
+    implementation(Dependence.AndroidX.activity)
+    implementation(Dependence.AndroidX.fragment)
+    implementation(Dependence.AndroidX.recyclerView)
+    implementation(Dependence.AndroidX.viewPager2)
+    implementation(Dependence.AndroidX.workManager)
+    implementation(Dependence.AndroidX.biometric)
+    implementation(Dependence.AndroidX.swiperefreshlayout)
 
+    implementation(Dependence.guava)
+    implementation(Dependence.sodium)
 
-    implementation(Libs.KotlinX.serialization)
-    implementation(Libs.KotlinX.datetime)
-    implementation(Libs.AndroidX.Room.base)
-    implementation(Libs.AndroidX.Room.runtime)
-    annotationProcessor(Libs.AndroidX.Room.compiler)
-    kapt(Libs.AndroidX.Room.compiler)
+    /*implementation(Dependence.KotlinX.serialization)
+    implementation(Dependence.KotlinX.datetime)
+    implementation(Dependence.AndroidX.Room.base)
+    implementation(Dependence.AndroidX.Room.runtime)
+    annotationProcessor(Dependence.AndroidX.Room.compiler)
+    kapt(Dependence.AndroidX.Room.compiler)*/
 
 
+    implementation(Dependence.UI.material)
 
-    implementation(Libs.UI.material)
+    implementation(Dependence.Squareup.moshi)
+    implementation(Dependence.Squareup.moshiAdapters)
 
-    implementation(Libs.Squareup.okhttp)
-    implementation(Libs.Squareup.sse)
-    implementation(Libs.Squareup.moshi)
-    implementation(Libs.Squareup.moshiAdapters)
+    implementation(platform(Dependence.Firebase.bom))
+    implementation(Dependence.Firebase.analytics)
+    implementation(Dependence.Firebase.crashlytics)
+    implementation(Dependence.Firebase.messaging)
 
-    implementation(Libs.lottie)
-    implementation(Libs.fresco)
+    implementation(project(Dependence.Module.core))
+    implementation(project(Dependence.Module.tonApi))
+    implementation(project(Dependence.Module.shimmer))
+    implementation(project(Dependence.Module.blur))
+
+    implementation(project(Dependence.Lib.network))
+    implementation(project(Dependence.Lib.icu))
+    implementation(project(Dependence.Lib.qr))
+    implementation(project(Dependence.Lib.emoji))
+    implementation(project(Dependence.Lib.blockchain))
+    implementation(project(Dependence.Module.ton))
+
+    implementation(Dependence.AndroidX.Camera.base)
+    implementation(Dependence.AndroidX.Camera.core)
+    implementation(Dependence.AndroidX.Camera.lifecycle)
+    implementation(Dependence.AndroidX.Camera.view)
+
+    implementation(Dependence.Squareup.okhttp)
+    implementation(Dependence.Squareup.sse)
+
+    implementation(Dependence.fresco)
 
 
-    implementation(Libs.ton)
+    implementation(Dependence.AndroidX.Room.base)
+    implementation(Dependence.AndroidX.Room.runtime)
+    annotationProcessor(Dependence.AndroidX.Room.compiler)
+    kapt(Dependence.AndroidX.Room.compiler)
 
-    implementation(platform(Libs.Firebase.bom))
-    implementation(Libs.Firebase.analytics)
-    implementation(Libs.Firebase.crashlytics)
-    implementation(Libs.Firebase.messaging)
 
-    implementation(project(Libs.Module.core))
-    implementation(project(Libs.Module.ton))
-    implementation(project(Libs.Module.tonApi))
-    implementation(project(Libs.Module.shimmer))
-    implementation(project(Libs.Module.blur))
-
-    implementation(project(Libs.Lib.network))
-    implementation(project(Libs.Lib.qr))
-    implementation(project(Libs.Lib.emoji))
-
-    implementation(Libs.Koin.core)
 }

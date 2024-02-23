@@ -23,7 +23,7 @@
         android:layout_marginTop="8dp"
         android:paddingHorizontal="12dp"
         android:textAppearance="@style/TextAppearance.Label2"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:singleLine="true"/>
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -34,7 +34,7 @@
         android:layout_marginBottom="8dp"
         android:paddingHorizontal="12dp"
         android:textAppearance="@style/TextAppearance.Body3"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         android:singleLine="true"/>
 
 </uikit.widget.NFTLayout>

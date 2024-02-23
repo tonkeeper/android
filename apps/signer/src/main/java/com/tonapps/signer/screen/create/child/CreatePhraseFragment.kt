@@ -11,12 +11,13 @@ import com.tonapps.signer.screen.create.CreateViewModel
 import com.tonapps.signer.screen.create.pager.PageType
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.parseWords
-import uikit.extensions.pinToBottomInsets
 import uikit.extensions.scrollDown
 import uikit.extensions.scrollView
 import uikit.extensions.setPaddingBottom
@@ -46,6 +47,7 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
         scrollView = view.findViewById(R.id.scroll)
         scrollView.doKeyboardAnimation { offset, _ ->
             scrollView.setPaddingBottom(offset)
+            pasteButton.translationY = -offset.toFloat()
             updateScroll(false)
         }
 
@@ -64,21 +66,18 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
         }
 
         nextButton = view.findViewById(R.id.next)
-        nextButton.setOnClickListener {
-            createViewModel.setMnemonic(wordFormView.getWords())
-        }
+        nextButton.setOnClickListener { saveMnemonic() }
 
         pasteButton = view.findViewById(R.id.paste)
         pasteButton.setOnClickListener { paste() }
-        pasteButton.pinToBottomInsets()
 
-        createViewModel.page(PageType.Phrase).onEach {
+        collectFlow(createViewModel.page(PageType.Phrase)) {
             wordFormView.focus()
-        }.launchIn(lifecycleScope)
+        }
 
-        createViewModel.uiTopOffset.onEach {
+        collectFlow(createViewModel.uiTopOffset) {
             scrollView.setPaddingTop(it)
-        }.launchIn(lifecycleScope)
+        }
     }
 
     private fun scrollToFocusedInput(smooth: Boolean): Boolean {
@@ -107,15 +106,24 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
     private fun paste() {
         val text = context?.fromClipboard() ?: return
 
-        wordFormView.setWords(text.parseWords())
+        wordFormView.putWords(text.parseWords())
+    }
+
+    private fun saveMnemonic() {
+        lifecycleScope.launch {
+            createViewModel.setMnemonic(wordFormView.getWords())
+        }
     }
 
     private fun visibleParse(visible: Boolean) {
-        withAnimation {
-            pasteButton.visibility = if (visible) {
-                View.VISIBLE
-            } else {
-                View.GONE
+        val currentVisible = pasteButton.visibility == View.VISIBLE
+        if (currentVisible != visible) {
+            withAnimation {
+                pasteButton.visibility = if (visible) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
             }
         }
     }

@@ -12,7 +12,8 @@ import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.content.res.ResourcesCompat
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundPageColor
+import com.tonapps.uikit.color.textTertiaryColor
 import uikit.extensions.dp
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.sp
@@ -25,7 +26,7 @@ class TonConnectCryptoView @JvmOverloads constructor(
 
     private val keyView: AnimationTextView
     private val cryptView: AnimationTextView
-    private val backgroundColor = context.getColor(UIKitColor.backgroundPage)
+    private val backgroundColor = context.backgroundPageColor
 
     init {
         inflate(context, R.layout.view_ton_connect_crypto, this)
@@ -70,7 +71,7 @@ class TonConnectCryptoView @JvmOverloads constructor(
         private val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             textSize = 14f.sp
             typeface = ResourcesCompat.getFont(context, uikit.R.font.montserrat_medium)
-            color = context.getColor(UIKitColor.textTertiary)
+            color = context.textTertiaryColor
         }
 
         private var measureText = 0f

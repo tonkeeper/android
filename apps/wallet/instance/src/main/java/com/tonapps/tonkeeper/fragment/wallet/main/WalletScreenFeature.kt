@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.fragment.wallet.main
 
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.account.AccountRepository
 import com.tonapps.tonkeeper.api.getAddress
@@ -15,6 +16,7 @@ import com.tonapps.tonkeeper.event.ChangeCurrencyEvent
 import com.tonapps.tonkeeper.event.ChangeWalletLabelEvent
 import com.tonapps.tonkeeper.event.WalletStateUpdateEvent
 import com.tonapps.tonkeeper.event.UpdateCurrencyRateEvent
+import com.tonapps.tonkeeper.extensions.label
 import com.tonapps.tonkeeper.fragment.wallet.main.list.item.WalletActionItem
 import com.tonapps.tonkeeper.fragment.wallet.main.list.item.WalletBannerItem
 import com.tonapps.tonkeeper.fragment.wallet.main.list.item.WalletDataItem
@@ -25,18 +27,21 @@ import com.tonapps.tonkeeper.fragment.wallet.main.list.item.WalletTonCellItem
 import com.tonapps.wallet.data.core.Currency
 import core.EventBus
 import core.QueueScope
-import core.formatter.CurrencyFormatter
 import io.tonapi.models.Account
 import io.tonapi.models.JettonBalance
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ton.extensions.toUserFriendly
 import ton.wallet.Wallet
+import ton.wallet.WalletManager
 
-class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(WalletScreenState()) {
+class WalletScreenFeature(
+    private val walletManager: WalletManager
+): UiFeature<WalletScreenState, WalletScreenEffect>(WalletScreenState()) {
 
     private val changeCurrencyAction = fun(_: ChangeCurrencyEvent) {
         queueScope.submit { updateWalletState(false) }
@@ -54,11 +59,6 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         queueScope.submit { updateWalletState(false) }
     }
 
-    // dirty hack to remove trailing zeros
-    private val amountModifier = { value: String ->
-        value.removeSuffix(CurrencyFormatter.monetaryDecimalSeparator + "00")
-    }
-
     private val currency: Currency
         get() = App.settings.currency
 
@@ -68,6 +68,15 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     private val jettonRepository = JettonRepository()
 
     init {
+        viewModelScope.launch {
+            val wallet = walletManager.getWalletInfo() ?: return@launch
+            updateUiState { currentState ->
+                currentState.copy(
+                    walletLabel = wallet.label
+                )
+            }
+        }
+
         requestWalletState()
         EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
         EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
@@ -91,7 +100,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
     private suspend fun updateWalletState(
         sync: Boolean,
     ) {
-        val wallet = App.walletManager.getWalletInfo() ?: return
+        val wallet = walletManager.getWalletInfo() ?: return
 
         val data = getWalletData(wallet.accountId, wallet.testnet, sync) ?: return
 
@@ -127,7 +136,8 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         val items = mutableListOf<WalletItem>()
         items.add(WalletDataItem(
             amount = CurrencyFormatter.formatFiat(currency.code, allInCurrency),
-            address = data.accountId.toUserFriendly(testnet = wallet.testnet)
+            address = data.accountId.toUserFriendly(testnet = wallet.testnet),
+            walletType = wallet.type
         ))
         items.add(WalletActionItem(wallet.type))
         items.add(WalletSpaceItem)
@@ -143,9 +153,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
             currentState.copy(
                 walletType = wallet.type,
                 asyncState = asyncState,
-                title = wallet.name,
-                emoji = wallet.emoji,
-                color = wallet.color,
+                walletLabel = wallet.label,
                 items = items
             )
         }
@@ -194,13 +202,15 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
         val size = jettons.size + 1
 
         val tonItem = WalletTonCellItem(
-            balance = CurrencyFormatter.format(value = balance, modifier = amountModifier),
+            balance = CurrencyFormatter.format(value = balance),
             balanceCurrency = CurrencyFormatter.formatFiat(currency.code, tonInCurrency),
             rate = CurrencyFormatter.formatRate(currency.code, rate),
             rateDiff24h = rate24h,
             position = com.tonapps.uikit.list.ListCell.getPosition(size, 0)
         )
         items.add(tonItem)
+
+        val jettonItems = mutableListOf<WalletJettonCellItem>()
 
         for ((index, jetton) in jettons.withIndex()) {
             val cellPosition = com.tonapps.uikit.list.ListCell.getPosition(size, index + 1)
@@ -217,9 +227,7 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
 
             val tokenRate24h = getRate24h(wallet, jettonAddress)
 
-            val balanceCurrency = if (hasRate) {
-                CurrencyFormatter.formatFiat(currency.code, tokenBalanceCurrency)
-            } else ""
+            val balanceCurrencyFormat = CurrencyFormatter.formatFiat(currency.code, tokenBalanceCurrency)
 
             val tokenRateFormat = if (hasRate) {
                 CurrencyFormatter.formatRate(currency.code, tokenRate)
@@ -231,13 +239,17 @@ class WalletScreenFeature: UiFeature<WalletScreenState, WalletScreenEffect>(Wall
                 position = cellPosition,
                 iconURI = Uri.parse(jetton.jetton.image),
                 code = jetton.jetton.symbol,
-                balance = CurrencyFormatter.format(value = tokenBalance, modifier = amountModifier),
-                balanceCurrency = balanceCurrency,
+                balance = CurrencyFormatter.format(value = tokenBalance),
+                balanceCurrencyFormat = balanceCurrencyFormat,
+                balanceCurrency = tokenBalanceCurrency,
                 rate = tokenRateFormat,
                 rateDiff24h = tokenRate24h,
             )
-            items.add(item)
+            jettonItems.add(item)
         }
+
+        jettonItems.sortByDescending { it.balanceCurrency }
+        items.addAll(jettonItems)
 
         return items
     }

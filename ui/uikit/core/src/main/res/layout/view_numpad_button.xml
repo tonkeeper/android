@@ -4,5 +4,5 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_numpad_button"
     android:gravity="center"
-    android:textColor="@color/textPrimary"
+    android:textColor="?attr/textPrimaryColor"
     android:textAppearance="@style/TextAppearance.NUM1" />

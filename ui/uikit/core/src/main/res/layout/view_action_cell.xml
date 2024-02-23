@@ -6,7 +6,8 @@
         android:layout_width="@dimen/iconSize"
         android:layout_height="@dimen/iconSize"
         android:layout_marginEnd="@dimen/offsetMedium"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        android:tint="?attr/accentBlueColor"/>
     
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
@@ -20,16 +21,16 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary"/>
+            android:textColor="?attr/textPrimaryColor"/>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/action_cell_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
             android:ellipsize="end"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary"/>
+            android:textColor="?attr/textSecondaryColor"/>
     </androidx.appcompat.widget.LinearLayoutCompat>
     
     <androidx.appcompat.widget.AppCompatImageView

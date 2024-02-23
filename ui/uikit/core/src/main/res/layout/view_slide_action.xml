@@ -7,14 +7,14 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textTertiary"/>
+        android:textColor="?attr/textTertiaryColor"/>
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/button"
         android:layout_width="76dp"
         android:layout_height="@dimen/itemHeight"
         android:background="@drawable/bg_content"
-        android:backgroundTint="@color/buttonPrimaryBackground"
+        android:backgroundTint="?attr/buttonPrimaryBackgroundColor"
         android:src="@drawable/ic_arrow_right_outline_28"
         android:scaleType="centerInside"/>
 

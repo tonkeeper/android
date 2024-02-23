@@ -28,8 +28,8 @@
             android:gravity="center_vertical"
             android:textCursorDrawable="@drawable/cursor"
             android:textAppearance="@style/TextAppearance.Body1"
-            android:textColor="@color/textPrimary"
-            android:textColorHint="@color/textSecondary"/>
+            android:textColor="?attr/textPrimaryColor"
+            android:textColorHint="?attr/textSecondaryColor"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -39,7 +39,7 @@
         android:layout_height="match_parent"
         android:paddingLeft="@dimen/offsetMedium"
         android:gravity="center_vertical"
-        android:textColor="@color/accentBlue"
+        android:textColor="?attr/accentBlueColor"
         android:textAppearance="@style/TextAppearance.Label1"/>
 
 </merge>

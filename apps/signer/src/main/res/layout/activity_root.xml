@@ -20,7 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        android:background="@color/backgroundPage"
+        android:background="?attr/backgroundPageColor"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -30,7 +30,7 @@
             android:layout_margin="@dimen/offsetMedium"
             android:layout_gravity="end"
             android:textAppearance="@style/TextAppearance.Label2"
-            android:textColor="@color/buttonSecondaryForeground"
+            android:textColor="?attr/buttonSecondaryForegroundColor"
             android:background="@drawable/bg_button_secondary"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
@@ -58,5 +58,5 @@
         android:paddingBottom="14dp"
         android:background="@drawable/bg_content_tint_24"
         android:textAppearance="@style/TextAppearance.Label2"
-        android:textColor="@color/textPrimary"/>
+        android:textColor="?attr/textPrimaryColor"/>
 </FrameLayout>

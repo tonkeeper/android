@@ -2,8 +2,8 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:state_enabled="false"
-        android:color="@color/buttonPrimaryBackgroundDisabled"/>
+        android:color="?attr/buttonPrimaryBackgroundDisabledColor"/>
 
     <item
-        android:color="@color/buttonPrimaryBackground"/>
+        android:color="?attr/buttonPrimaryBackgroundColor"/>
 </selector>

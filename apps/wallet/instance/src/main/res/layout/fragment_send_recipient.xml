@@ -31,7 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="@dimen/offsetMedium"
-            android:textColor="@color/accentOrange"
+            android:textColor="?attr/accentOrangeColor"
             android:textAppearance="@style/TextAppearance.Body2"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
@@ -44,7 +44,7 @@
         android:layout_marginHorizontal="@dimen/offsetMedium"
         android:layout_marginBottom="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:layout_gravity="bottom"
         android:enabled="false"
         android:text="@string/continue_action"/>

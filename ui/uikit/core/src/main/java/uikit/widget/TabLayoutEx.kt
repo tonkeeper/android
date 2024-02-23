@@ -1,11 +1,13 @@
 package uikit.widget
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.core.view.setPadding
 import com.google.android.material.tabs.TabLayout
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundContentTintColor
+import com.tonapps.uikit.color.stateList
 import uikit.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
@@ -43,7 +45,7 @@ class TabLayoutEx @JvmOverloads constructor(
 
     init {
         tabMode = MODE_SCROLLABLE
-        tabRippleColor = context.getColorStateList(UIKitColor.backgroundContentTint)
+        tabRippleColor = context.backgroundContentTintColor.stateList
         isTabIndicatorFullWidth = false
         tabIndicatorAnimationMode = INDICATOR_ANIMATION_MODE_ELASTIC
         setSelectedTabIndicator(R.drawable.bg_tab_indicator)

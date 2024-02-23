@@ -5,12 +5,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.emoji.EmojiView
+import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeper.fragment.settings.list.item.SettingsAccountItem
 import com.tonapps.tonkeeper.fragment.settings.list.item.SettingsItem
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
+import ton.wallet.WalletType
 import uikit.extensions.drawable
 
 class SettingsAccountHolder(
@@ -23,6 +24,7 @@ class SettingsAccountHolder(
     private val nameView = findViewById<AppCompatTextView>(R.id.wallet_name)
     private val balanceView = findViewById<AppCompatTextView>(R.id.wallet_balance)
     private val checkView = findViewById<AppCompatImageView>(R.id.check)
+    private val typeView = findViewById<AppCompatTextView>(R.id.wallet_type)
 
     override fun onBind(item: SettingsAccountItem) {
         itemView.setOnClickListener {
@@ -34,6 +36,22 @@ class SettingsAccountHolder(
         nameView.text = item.name
         balanceView.setText(Localization.customize)
         checkView.setImageResource(UIKitIcon.ic_chevron_right_16)
+        setType(item.walletType)
+    }
+
+    private fun setType(type: WalletType) {
+        if (type == WalletType.Default) {
+            typeView.visibility = View.GONE
+            return
+        }
+        typeView.visibility = View.VISIBLE
+        val resId = when (type) {
+            WalletType.Watch -> Localization.watch_only
+            WalletType.Testnet -> Localization.testnet
+            WalletType.Signer -> Localization.signer
+            else -> throw IllegalArgumentException("Unknown wallet type: $type")
+        }
+        typeView.setText(resId)
     }
 
 

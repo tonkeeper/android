@@ -16,12 +16,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
 }
 
 dependencies {
-    implementation(Libs.AndroidX.appCompat)
-    implementation(Libs.AndroidX.Emoji.core)
+    implementation(Dependence.AndroidX.appCompat)
+    implementation(Dependence.AndroidX.Emoji.core)
 }

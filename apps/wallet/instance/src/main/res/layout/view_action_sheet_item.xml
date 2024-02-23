@@ -28,7 +28,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:gravity="center_vertical"/>
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -38,7 +38,7 @@
             android:layout_marginTop="2dp"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/textSecondaryColor"
             android:gravity="center_vertical"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
@@ -48,6 +48,6 @@
         android:layout_width="16dp"
         android:layout_height="16dp"
         android:layout_gravity="center"
-        android:tint="@color/accentBlue"/>
+        android:tint="?attr/accentBlueColor"/>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

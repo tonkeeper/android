@@ -35,6 +35,7 @@
             android:name="com.tonapps.tonkeeper.fragment.root.RootActivity"
             android:exported="true"
             android:launchMode="singleTask"
+            android:largeHeap="true"
             android:windowSoftInputMode="adjustResize"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.App.Starting"

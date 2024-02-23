@@ -9,7 +9,9 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.RippleDrawable
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundContentColor
+import com.tonapps.uikit.color.backgroundHighlightedColor
+import com.tonapps.uikit.color.separatorCommonColor
 import com.tonapps.uikit.list.ListCell
 import uikit.R
 import uikit.base.BaseDrawable
@@ -19,7 +21,7 @@ import uikit.extensions.getDimension
 class CellBackgroundDrawable(
     context: Context,
     private val position: ListCell.Position,
-    backgroundColor: Int = context.getColor(UIKitColor.backgroundContent)
+    backgroundColor: Int = context.backgroundContentColor
 ): BaseDrawable() {
 
     companion object {
@@ -40,9 +42,9 @@ class CellBackgroundDrawable(
         fun create(
             context: Context,
             position: ListCell.Position,
-            backgroundColor: Int = context.getColor(UIKitColor.backgroundContent)
+            backgroundColor: Int = context.backgroundContentColor
         ): Drawable {
-            val color = context.getColor(UIKitColor.backgroundHighlighted)
+            val color = context.backgroundHighlightedColor
             return RippleDrawable(
                 ColorStateList.valueOf(color),
                 CellBackgroundDrawable(context, position, backgroundColor),
@@ -60,7 +62,7 @@ class CellBackgroundDrawable(
     private val singleCorners = createCorners(radius, radius, radius, radius)
 
     private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(UIKitColor.separatorCommon)
+        color = context.separatorCommonColor
     }
 
     private val dividerHeight = .5f.dp

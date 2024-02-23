@@ -8,6 +8,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.passcode.create.pager.InputAdapter
 import com.tonapps.tonkeeper.fragment.passcode.create.pager.InputHolder
 import com.tonapps.tonkeeper.fragment.passcode.create.pager.InputType
+import uikit.extensions.applyNavBottomPadding
 import uikit.widget.NumPadView
 import uikit.extensions.findViewHolderForAdapterPosition
 import uikit.mvi.UiScreen
@@ -21,11 +22,14 @@ open class PasscodeCreateScreen: UiScreen<PasscodeCreateScreenState, PasscodeCre
 
     override val feature: PasscodeCreateScreenFeature by viewModels()
 
+    private lateinit var containerView: View
     private lateinit var pagerView: ViewPager2
     private lateinit var numPadView: NumPadView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        containerView = view.findViewById(R.id.passcode_container)
+        containerView.applyNavBottomPadding()
 
         pagerView = view.findViewById(R.id.pager)
         pagerView.adapter = InputAdapter()

@@ -1,6 +1,7 @@
 package uikit.widget
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
@@ -25,12 +26,19 @@ class FrescoView @JvmOverloads constructor(
         }
     }
 
+    fun setPlaceholder(drawable: Drawable) {
+        hierarchy.setPlaceholderImage(drawable)
+    }
+
     private fun setImageDrawable(drawable: Drawable, callerContext: Any?) {
         clear(callerContext)
         hierarchy.setPlaceholderImage(drawable)
     }
 
     private fun requestDrawable(uri: Uri): Drawable {
+        if (uri.pathSegments.isEmpty()) {
+            return ColorDrawable()
+        }
         val resourceId = uri.pathSegments[0].toInt()
         return getDrawable(resourceId)
     }

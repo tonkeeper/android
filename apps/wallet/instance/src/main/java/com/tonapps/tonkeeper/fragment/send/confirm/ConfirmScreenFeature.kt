@@ -6,7 +6,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.totalFees
-import com.tonapps.tonkeeper.core.Coin
+import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.core.currency.currency
 import com.tonapps.tonkeeper.core.currency.from
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -15,7 +15,7 @@ import com.tonapps.tonkeeper.extensions.emulate
 import com.tonapps.tonkeeper.extensions.getSeqno
 import com.tonapps.tonkeeper.extensions.sendToBlockchain
 import com.tonapps.tonkeeper.fragment.send.TransactionData
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
 import core.EventBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -25,13 +25,13 @@ import org.ton.block.Coins
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.crypto.base64
-import ton.wallet.Wallet
+import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import uikit.mvi.UiFeature
 import uikit.widget.ProcessTaskView
 
 class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(ConfirmScreenState()) {
 
-    private val currency: Currency
+    private val currency: WalletCurrency
         get() = App.settings.currency
 
     private var lastSeqno = 0
@@ -48,7 +48,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
     }
 
     private fun buildUnsignedBody(
-        wallet: Wallet,
+        wallet: WalletLegacy,
         seqno: Int,
         tx: TransactionData
     ): Cell {
@@ -222,7 +222,7 @@ class ConfirmScreenFeature: UiFeature<ConfirmScreenState, ConfirmScreenEffect>(C
         }
     }
 
-    private suspend fun getSeqno(wallet: Wallet): Int {
+    private suspend fun getSeqno(wallet: WalletLegacy): Int {
         if (lastSeqno == 0) {
             lastSeqno = wallet.getSeqno()
         }

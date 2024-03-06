@@ -1,14 +1,14 @@
 package com.tonapps.tonkeeper.core.currency
 
 import com.tonapps.tonkeeper.api.to
-import com.tonapps.tonkeeper.core.Coin
-import ton.wallet.Wallet
+import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import com.tonapps.blockchain.Coin
 
-fun Wallet.currency(fromCurrency: String) = from(fromCurrency, accountId, testnet)
+fun WalletLegacy.currency(fromCurrency: String) = from(fromCurrency, accountId, testnet)
 
-fun Wallet.ton(value: Float) = currency("TON").value(value)
+fun WalletLegacy.ton(value: Float) = currency("TON").value(value)
 
-fun Wallet.ton(value: Long) = currency("TON").value(value)
+fun WalletLegacy.ton(value: Long) = currency("TON").value(value)
 
 fun from(
     fromCurrency: String,

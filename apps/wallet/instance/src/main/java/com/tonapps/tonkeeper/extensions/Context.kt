@@ -71,3 +71,13 @@ private fun Context.getRateColor(diff: String): Int {
     return getDiffColor(diff).withAlpha(.64f)
 }
 
+fun Context.buildRateString(rate: String, diff24h: String): SpannableString {
+    val span = SpannableString("$rate $diff24h")
+    span.setSpan(
+        ForegroundColorSpan(getDiffColor(diff24h)),
+        rate.length,
+        rate.length + diff24h.length + 1,
+        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+    )
+    return span
+}

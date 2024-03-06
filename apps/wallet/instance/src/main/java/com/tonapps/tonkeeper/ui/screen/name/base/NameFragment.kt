@@ -11,12 +11,12 @@ import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.emoji.ui.EmojiView
-import com.tonapps.tonkeeper.data.AccountColor
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.name.adapter.ColorAdapter
 import com.tonapps.tonkeeper.ui.screen.name.adapter.EmojiAdapter
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.list.LinearLayoutManager
+import com.tonapps.wallet.data.account.WalletColor
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -169,7 +169,7 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
     }
 
     private fun scrollToColor(color: Int) {
-        val index = AccountColor.all.indexOf(color)
+        val index = WalletColor.all.indexOf(color)
         if (index >= 0) {
             colorView.scrollToPosition(index)
         }

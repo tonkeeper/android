@@ -1,16 +1,16 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
 import com.tonapps.tonkeeper.App
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
 import io.tonapi.models.JettonBalance
-import ton.wallet.Wallet
+import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import uikit.mvi.UiState
 
 data class AmountScreenState(
-    val wallet: Wallet? = null,
+    val wallet: WalletLegacy? = null,
     val tonBalance: Float = 0f,
     val amount: Float = 0f,
-    val currency: Currency = App.settings.currency,
+    val currency: WalletCurrency = App.settings.currency,
     val available: String = "",
     val rate: String = "0 ${App.settings.currency.code}",
     val insufficientBalance: Boolean = false,

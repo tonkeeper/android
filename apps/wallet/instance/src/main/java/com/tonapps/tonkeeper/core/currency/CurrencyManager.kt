@@ -1,14 +1,14 @@
 package com.tonapps.tonkeeper.core.currency
 
 import android.util.Log
+import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.jetton.JettonRepository
 import com.tonapps.tonkeeper.api.rates.RatesRepository
 import com.tonapps.tonkeeper.core.widget.Widget
-import com.tonapps.tonkeeper.event.UpdateCurrencyRateEvent
 import core.EventBus
 import io.tonapi.models.TokenRates
-import ton.extensions.toRawAddress
 
 class CurrencyManager {
 
@@ -32,12 +32,11 @@ class CurrencyManager {
     private val repository = RatesRepository()
 
     suspend fun sync() {
-        val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return
+        val wallet = App.walletManager.getWalletInfo() ?: return
         val accountId = wallet.accountId
 
         sync(accountId, wallet.testnet)
 
-        EventBus.post(UpdateCurrencyRateEvent)
 
         Widget.updateAll()
     }

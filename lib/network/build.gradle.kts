@@ -23,8 +23,6 @@ android {
 
 dependencies {
     implementation(Dependence.KotlinX.coroutines)
-    implementation(Dependence.GooglePlay.cronet)
     implementation(Dependence.Squareup.okhttp)
-    implementation(Dependence.GooglePlay.cronetOkhttp)
     implementation(Dependence.Squareup.sse)
 }

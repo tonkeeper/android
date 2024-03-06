@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.totalFees
-import com.tonapps.tonkeeper.core.Coin
+import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.core.currency.ton
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.tonconnect.models.TCApp

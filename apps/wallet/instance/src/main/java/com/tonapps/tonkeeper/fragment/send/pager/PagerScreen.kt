@@ -45,4 +45,6 @@ abstract class PagerScreen<S: UiState, E: UiEffect, F: UiFeature<S, E>>(
         super.onResume()
         visible = true
     }
+
+    fun isVisibleForUser() = visible && isVisible
 }

@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.extensions.launch
+import com.tonapps.tonkeeper.fragment.chart.ChartScreen
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonAdapter
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonItemDecoration
 import uikit.base.BaseFragment
@@ -27,7 +28,10 @@ class JettonScreen : UiScreen<JettonScreenState, JettonScreenEffect, JettonScree
         private const val JETTON_ADDRESS_KEY = "JETTON_ADDRESS_KEY"
         private const val JETTON_NAME_KEY = "JETTON_NAME_KEY"
 
-        fun newInstance(jettonAddress: String, jettonName: String): JettonScreen {
+        fun newInstance(jettonAddress: String, jettonName: String): BaseFragment {
+            if (jettonAddress == "TON") {
+                return ChartScreen.newInstance()
+            }
             val screen = JettonScreen()
             screen.arguments = Bundle().apply {
                 putString(JETTON_ADDRESS_KEY, jettonAddress)

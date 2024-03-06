@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.uikit.color.stateList
 import uikit.R
 import uikit.extensions.createRipple
 import uikit.extensions.useAttributes
@@ -30,6 +31,12 @@ class IconButtonView @JvmOverloads constructor(
             iconView.setImageResource(it.getResourceId(R.styleable.IconButtonView_android_icon, 0))
             titleView.text = it.getString(R.styleable.IconButtonView_android_title)
             isEnabled = it.getBoolean(R.styleable.IconButtonView_android_enabled, true)
+
+            val tintColor = it.getColor(R.styleable.IconButtonView_android_tint, 0)
+            if (tintColor != 0) {
+                iconView.imageTintList = tintColor.stateList
+                titleView.setTextColor(tintColor)
+            }
         }
     }
 

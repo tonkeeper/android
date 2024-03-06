@@ -1,9 +1,9 @@
 package com.tonapps.tonkeeper.api.collectibles
 
-import com.tonapps.tonkeeper.api.Tonapi
+import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.base.AccountKey
 import com.tonapps.tonkeeper.api.base.BaseAccountRepository
-import com.tonapps.tonkeeper.api.base.SourceAPI
+import com.tonapps.wallet.api.SourceAPI
 import com.tonapps.tonkeeper.api.collectibles.db.CollectiblesDao
 import com.tonapps.tonkeeper.api.fromJSON
 import io.tonapi.apis.AccountsApi

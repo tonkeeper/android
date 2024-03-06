@@ -19,6 +19,7 @@ dependencies {
     api(project(Dependence.UIKit.color))
     api(project(Dependence.UIKit.icon))
     api(project(Dependence.UIKit.list))
+    api(project(Dependence.Module.shimmer))
 
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.AndroidX.core)

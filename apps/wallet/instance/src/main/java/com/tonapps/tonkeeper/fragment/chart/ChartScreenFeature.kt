@@ -3,31 +3,31 @@ package com.tonapps.tonkeeper.fragment.chart
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.api.Tonapi
+import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.account.AccountRepository
 import com.tonapps.tonkeeper.api.chart.ChartHelper
 import com.tonapps.tonkeeper.api.chart.ChartPeriod
 import com.tonapps.tonkeeper.api.withRetry
 import com.tonapps.tonkeeper.api.withTON
-import com.tonapps.tonkeeper.core.Coin
+import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.core.currency.CurrencyManager
 import com.tonapps.tonkeeper.core.currency.ton
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
 import core.QueueScope
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
-import ton.wallet.Wallet
+import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 
 class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartScreenState()) {
 
     private val currencyManager = CurrencyManager.getInstance()
-    private val currency: Currency
+    private val currency: WalletCurrency
         get() = App.settings.currency
 
     private val accountRepository = AccountRepository()
@@ -110,7 +110,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
     }
 
     private suspend fun getEvents(
-        wallet: Wallet,
+        wallet: WalletLegacy,
         beforeLt: Long? = null
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val accountId = wallet.accountId

@@ -30,6 +30,7 @@
         <attr name="android:icon" format="reference"/>
         <attr name="android:title" format="string|reference"/>
         <attr name="android:enabled" format="boolean"/>
+        <attr name="android:tint" format="color|reference"/>
     </declare-styleable>
 
     <declare-styleable name="LoaderView">

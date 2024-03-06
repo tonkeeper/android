@@ -23,10 +23,14 @@
             <option value="$PROJECT_DIR$/apps" />
             <option value="$PROJECT_DIR$/apps/signer" />
             <option value="$PROJECT_DIR$/apps/wallet" />
+            <option value="$PROJECT_DIR$/apps/wallet/api" />
             <option value="$PROJECT_DIR$/apps/wallet/data" />
             <option value="$PROJECT_DIR$/apps/wallet/data/account" />
             <option value="$PROJECT_DIR$/apps/wallet/data/core" />
+            <option value="$PROJECT_DIR$/apps/wallet/data/events" />
+            <option value="$PROJECT_DIR$/apps/wallet/data/rates" />
             <option value="$PROJECT_DIR$/apps/wallet/data/settings" />
+            <option value="$PROJECT_DIR$/apps/wallet/data/tokens" />
             <option value="$PROJECT_DIR$/apps/wallet/instance" />
             <option value="$PROJECT_DIR$/apps/wallet/localization" />
             <option value="$PROJECT_DIR$/baselineprofile" />
@@ -42,6 +46,7 @@
             <option value="$PROJECT_DIR$/lib/network" />
             <option value="$PROJECT_DIR$/lib/qr" />
             <option value="$PROJECT_DIR$/lib/security" />
+            <option value="$PROJECT_DIR$/lib/sqlite" />
             <option value="$PROJECT_DIR$/ton" />
             <option value="$PROJECT_DIR$/tonapi" />
             <option value="$PROJECT_DIR$/ui" />

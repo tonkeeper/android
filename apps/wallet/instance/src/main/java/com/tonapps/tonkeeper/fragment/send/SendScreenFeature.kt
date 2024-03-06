@@ -6,10 +6,15 @@ import androidx.lifecycle.MutableLiveData
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeper.api.shortAddress
 import io.tonapi.models.JettonBalance
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import uikit.extensions.textWithLabel
 import uikit.mvi.UiFeature
 
 class SendScreenFeature: UiFeature<SendScreenState, SendScreenEffect>(SendScreenState()) {
+
+    private val _onReadyView: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val onReadyView = _onReadyView.asStateFlow()
 
     private val _transaction = MutableLiveData(TransactionData())
     val transaction: LiveData<TransactionData> = _transaction
@@ -77,5 +82,9 @@ class SendScreenFeature: UiFeature<SendScreenState, SendScreenEffect>(SendScreen
             setHeaderSubtitle(context.textWithLabel(name, address?.shortAddress))
         }
         setHeaderVisible(true)
+    }
+
+    fun readyView() {
+        _onReadyView.value = true
     }
 }

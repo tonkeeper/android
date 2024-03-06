@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.name.base
 
 import android.graphics.Color
 import androidx.lifecycle.SavedStateHandle
-import com.tonapps.tonkeeper.data.AccountColor
 
 class NameSavedState(private val handle: SavedStateHandle) {
 

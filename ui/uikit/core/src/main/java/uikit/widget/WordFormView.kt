@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.R
+import uikit.extensions.isVisibleForUser
 import uikit.extensions.isWords
 import uikit.extensions.parseWords
 
@@ -184,7 +185,9 @@ class WordFormView @JvmOverloads constructor(
             val text = input.text
             if (isValidValue(text)) {
                 words.add(text)
-                input.setError(false)
+                withContext(Dispatchers.Main) {
+                    input.setError(false)
+                }
             }
         }
         words.toList()

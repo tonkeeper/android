@@ -2,5 +2,6 @@
 <resources>
     <declare-styleable name="QRView">
         <attr name="android:color" format="color|reference"/>
+        <attr name="with_cutout" format="boolean"/>
     </declare-styleable>
 </resources>

@@ -9,7 +9,7 @@ import android.os.VibratorManager
 object HapticHelper {
 
     fun selection(context: Context) {
-        play(context, 30, 30)
+        play(context, 30, 30, 30)
     }
 
     fun error(context: Context) {

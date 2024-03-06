@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.fragment.jetton
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.api.Tonapi
+import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.jetton.JettonRepository
 import com.tonapps.tonkeeper.api.parsedBalance
@@ -12,13 +12,13 @@ import com.tonapps.tonkeeper.core.currency.CurrencyManager
 import com.tonapps.tonkeeper.core.currency.currency
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
 import core.QueueScope
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import ton.wallet.Wallet
+import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 
@@ -29,7 +29,7 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
     private val accountsApi = Tonapi.accounts
     private val queueScope = QueueScope(viewModelScope.coroutineContext)
 
-    private val currency: Currency
+    private val currency: WalletCurrency
         get() = App.settings.currency
 
     fun loadMore(address: String, lt: Long) {
@@ -42,7 +42,7 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
                 )
             }
 
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@submit
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val events = getEvents(wallet, address, lt)
 
             val items = HistoryHelper.removeLoadingItem(uiState.value.historyItems) + events
@@ -59,7 +59,7 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
 
     fun load(address: String) {
         queueScope.submit(Dispatchers.IO) {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@submit
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val accountId = wallet.accountId
             val jetton = jettonRepository.getByAddress(accountId, address, wallet.testnet) ?: return@submit
             val balance = jetton.parsedBalance
@@ -89,7 +89,7 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
     }
 
     private suspend fun getEvents(
-        wallet: Wallet,
+        wallet: WalletLegacy,
         jettonAddress: String,
         beforeLt: Long? = null
     ): List<HistoryItem> = withContext(Dispatchers.IO) {

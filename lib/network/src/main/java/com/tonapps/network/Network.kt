@@ -1,6 +1,5 @@
 package com.tonapps.network
 
-import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -24,16 +23,11 @@ object Network {
         val data: String
     )
 
-    private val holder = OkHttpClientHolder()
-
-    val okHttpClient: OkHttpClient
-        get() = holder.get()
-
-    fun init(context: Context) {
-        holder.init(context)
+    val okHttpClient: OkHttpClient by lazy {
+        okHttpBuilder().build()
     }
 
-    private val sseFactory: EventSource.Factory by lazy { EventSources.createFactory(holder.get()) }
+    private val sseFactory: EventSource.Factory by lazy { EventSources.createFactory(okHttpClient) }
 
     fun subscribe(url: String): Flow<SSEvent> = callbackFlow {
         val listener = object : EventSourceListener() {
@@ -65,7 +59,7 @@ object Network {
 
     fun newRequest(uri: Uri) = newRequest(uri.toString())
 
-    fun newCall(request: Request) = holder.get().newCall(request)
+    fun newCall(request: Request) = okHttpClient.newCall(request)
 
     fun request(request: Request) = newCall(request).execute()
 
@@ -73,6 +67,12 @@ object Network {
         val request = newRequest(url).build()
         val response = newCall(request).execute()
         return response.body?.string()!!
+    }
+
+    private fun okHttpBuilder(): OkHttpClient.Builder {
+        return OkHttpClient().newBuilder()
+            .retryOnConnectionFailure(true)
+            .addInterceptor(AuthorizationInterceptor.bearer("AF77F5JND26OLHQAAAAKQMSCYW3UVPFRA7CF2XHX6QG4M5WAMF5QRS24R7J4TF2UTSXOZEY"))
     }
 
 }

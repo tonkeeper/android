@@ -2,9 +2,9 @@ package com.tonapps.tonkeeper.core.tonconnect.models
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.tonkeeper.api.shortAddress
 import kotlinx.parcelize.Parcelize
-import ton.extensions.toUserFriendly
 
 @Parcelize
 data class TCData(

@@ -2,24 +2,21 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.viewpager2.widget.ViewPager2
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.extensions.launch
-import com.tonapps.tonkeeper.fragment.root.RootActivity
-import com.tonapps.tonkeeper.fragment.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.init.pager.PagerAdapter
-import kotlinx.coroutines.flow.filter
+import com.tonapps.uikit.color.backgroundPageColor
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.runAnimation
+import uikit.extensions.withAlpha
 import uikit.widget.HeaderView
 
-class InitFragment: BaseFragment(R.layout.fragment_pager), BaseFragment.SwipeBack {
+class InitFragment: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
     companion object {
 
@@ -61,32 +58,47 @@ class InitFragment: BaseFragment(R.layout.fragment_pager), BaseFragment.SwipeBac
         arguments?.getString(PK_BASE64_KEY) ?: ""
     }
 
-    private val viewModel: InitViewModel by viewModel { parametersOf(argsAction, argsName, argsPkBase64) }
-    private val rootViewModel: RootViewModel by viewModel()
+    private val initViewModel: InitViewModel by viewModel { parametersOf(argsAction, argsName, argsPkBase64) }
 
     private lateinit var headerView: HeaderView
     private lateinit var pagerView: ViewPager2
+    private lateinit var loaderView: View
+    private lateinit var loaderIconView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (argsName.isNotBlank()) {
+            initViewModel.setName(argsName)
+        }
+        if (argsPkBase64.isNotBlank()) {
+            initViewModel.setPublicKey(argsPkBase64)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.setBackgroundResource(uikit.R.drawable.bg_page_gradient)
-        headerView.doOnLayout { viewModel.setUiTopOffset(it.measuredHeight) }
+        headerView.doOnLayout { initViewModel.setUiTopOffset(it.measuredHeight) }
         headerView.doOnCloseClick = {
-            if (!viewModel.prev()) {
+            if (!initViewModel.prev()) {
                 finish()
             }
         }
 
         pagerView = view.findViewById(R.id.pager)
         pagerView.isUserInputEnabled = false
-        pagerView.adapter = PagerAdapter(this, viewModel.pages, argsName)
-        pagerView.offscreenPageLimit = viewModel.pages.size
+        pagerView.adapter = PagerAdapter(this, initViewModel.pages, argsName)
+        pagerView.offscreenPageLimit = initViewModel.pages.size
 
-        collectFlow(viewModel.currentPage, ::setCurrentPage)
-        collectFlow(viewModel.savedWalletFlow) {
-            (activity as RootActivity).init(hasWallet = true, recreate = true)
-        }
+        loaderView = view.findViewById(R.id.loader)
+        loaderView.setBackgroundColor(requireContext().backgroundPageColor.withAlpha(.64f))
+        loaderView.setOnClickListener {  }
+
+        loaderIconView = view.findViewById(R.id.loader_icon)
+        loaderIconView.runAnimation(R.anim.gear_loading)
+
+        collectFlow(initViewModel.currentPage, ::setCurrentPage)
     }
 
     private fun setCurrentPage(newIndex: Int) {

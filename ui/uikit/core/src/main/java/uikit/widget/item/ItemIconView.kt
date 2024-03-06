@@ -18,12 +18,19 @@ class ItemIconView @JvmOverloads constructor(
 ) : BaseItemView(context, attrs, defStyle) {
 
     private val textView: AppCompatTextView
+    private val descriptionView: AppCompatTextView
     private val iconView: AppCompatImageView
 
     var text: String?
         get() = textView.text.toString()
         set(value) {
             textView.text = value
+        }
+
+    var description: String?
+        get() = descriptionView.text.toString()
+        set(value) {
+            descriptionView.text = value
         }
 
     var iconRes: Int = 0
@@ -48,6 +55,7 @@ class ItemIconView @JvmOverloads constructor(
 
         textView = findViewById(R.id.text)
         iconView = findViewById(R.id.icon)
+        descriptionView = findViewById(R.id.description)
 
         context.useAttributes(attrs, R.styleable.ItemIconView) {
             text = it.getString(R.styleable.ItemIconView_android_text)

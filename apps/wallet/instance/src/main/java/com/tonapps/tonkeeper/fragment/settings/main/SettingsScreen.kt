@@ -7,21 +7,17 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import androidx.collection.ArrayMap
 import androidx.fragment.app.viewModels
-import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.widget.WidgetBalanceProvider
 import com.tonapps.tonkeeper.dialog.LogoutDialog
-import com.tonapps.tonkeeper.fragment.currency.CurrencyScreen
 import com.tonapps.tonkeeper.fragment.root.RootActivity
 import com.tonapps.tonkeeper.fragment.settings.language.LanguageFragment
 import com.tonapps.tonkeeper.fragment.settings.legal.LegalFragment
 import com.tonapps.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonapps.tonkeeper.fragment.settings.list.item.SettingsIdItem
-import com.tonapps.tonkeeper.fragment.settings.main.popup.WalletVersionPopup
 import com.tonapps.tonkeeper.fragment.settings.security.SecurityFragment
-import com.tonapps.tonkeeper.ui.screen.name.RenameFragment
+import com.tonapps.tonkeeper.ui.screen.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.theme.ThemeScreen
 import uikit.base.BaseFragment
 import uikit.decoration.ListCellDecoration
@@ -74,11 +70,7 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
         super.newUiEffect(effect)
         when (effect) {
             is SettingsScreenEffect.Logout -> {
-                (activity as RootActivity).init(hasWallet = true, recreate = true)
                 // navigation?.initRoot(true)
-            }
-            is SettingsScreenEffect.SelectWalletVersion -> {
-                pickWalletVersion(effect.view, effect.current, effect.wallets)
             }
             is SettingsScreenEffect.ReloadWallet -> {
                 // navigation?.initRoot(true)
@@ -97,7 +89,7 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
 
         when (item.id) {
             SettingsIdItem.ACCOUNT_ID -> {
-                nav.add(RenameFragment.newInstance())
+                // nav.add(RenameFragment.newInstance())
             }
             SettingsIdItem.LOGOUT_ID -> {
                 showLogoutDialog()
@@ -123,27 +115,11 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
             SettingsIdItem.WIDGET_ID -> {
                 installWidget()
             }
-            SettingsIdItem.CONTRACT_VERSION -> {
-                feature.selectWalletVersion(view)
-            }
             SettingsIdItem.THEME_ID -> {
                 nav.add(ThemeScreen.newInstance())
             }
             SettingsIdItem.LANGUAGE_ID -> { nav.add(LanguageFragment.newInstance()) }
         }
-    }
-
-    private fun pickWalletVersion(
-        view: View,
-        current: WalletVersion,
-        wallets: ArrayMap<WalletVersion, String>
-    ) {
-        val actions = WalletVersionPopup(requireContext(), current, wallets)
-        actions.doOnItemClick = { item ->
-            val version = WalletVersion.valueOf(item.title.toString())
-            feature.setWalletVersion(version)
-        }
-        actions.show(view)
     }
 
     private fun installWidget() {

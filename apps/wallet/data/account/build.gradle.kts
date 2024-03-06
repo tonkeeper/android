@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -22,5 +23,16 @@ android {
 }
 
 dependencies {
+    implementation(Dependence.KotlinX.coroutines)
+    implementation(Dependence.Koin.core)
     implementation(Dependence.ton)
+    implementation(project(Dependence.Module.tonApi))
+    implementation(project(Dependence.Wallet.Data.core))
+    implementation(project(Dependence.Wallet.Data.rates))
+    implementation(project(Dependence.Wallet.api))
+    implementation(project(Dependence.Lib.extensions))
+    implementation(project(Dependence.Lib.blockchain))
+    implementation(project(Dependence.Lib.sql))
+
+    implementation(project(Dependence.Module.core))
 }

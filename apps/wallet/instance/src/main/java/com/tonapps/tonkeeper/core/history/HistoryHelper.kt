@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.icu.text.SimpleDateFormat
+import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeper.Global
@@ -16,7 +18,6 @@ import com.tonapps.tonkeeper.api.parsedAmount
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
 import com.tonapps.tonkeeper.api.ton
-import com.tonapps.tonkeeper.core.Coin
 import com.tonapps.tonkeeper.core.currency.currency
 import com.tonapps.tonkeeper.core.currency.ton
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -36,8 +37,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import com.tonapps.network.Network
 import com.tonapps.tonkeeper.App
-import ton.extensions.toUserFriendly
-import ton.wallet.Wallet
+import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import java.util.Calendar
 import java.util.Date
 
@@ -86,7 +86,7 @@ object HistoryHelper {
     }
 
     suspend fun mapping(
-        wallet: Wallet,
+        wallet: WalletLegacy,
         event: AccountEvent,
         groupByDate: Boolean = true,
         removeDate: Boolean = false,
@@ -95,7 +95,7 @@ object HistoryHelper {
     }
 
     suspend fun mapping(
-        wallet: Wallet,
+        wallet: WalletLegacy,
         events: AccountEvents,
         groupByDate: Boolean = true,
         removeDate: Boolean = false,
@@ -117,7 +117,7 @@ object HistoryHelper {
     }
 
     suspend fun mapping(
-        wallet: Wallet,
+        wallet: WalletLegacy,
         events: List<AccountEvent>,
         groupByDate: Boolean = true,
         removeDate: Boolean = false,
@@ -183,7 +183,7 @@ object HistoryHelper {
 
     private suspend fun action(
         txId: String,
-        wallet: Wallet,
+        wallet: WalletLegacy,
         action: Action,
         timestamp: Long,
     ): HistoryItem.Event {

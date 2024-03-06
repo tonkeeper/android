@@ -10,6 +10,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.fragment.send.SendScreenEffect
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
+import uikit.extensions.collectFlow
 import uikit.widget.InputView
 
 class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, RecipientScreenFeature>(R.layout.fragment_send_recipient) {
@@ -47,6 +48,10 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         nextButton = view.findViewById(R.id.next)
         nextButton.setOnClickListener {
             sendFeature.nextPage()
+        }
+
+        collectFlow(sendFeature.onReadyView) {
+            openKeyboard()
         }
     }
 
@@ -102,12 +107,17 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
 
     override fun onVisibleChange(visible: Boolean) {
         super.onVisibleChange(visible)
-        if (visible) {
-            addressInput.focus()
+        if (!visible) {
+            addressInput.hideKeyboard()
+        } else {
             sendFeature.setHeaderTitle(getString(Localization.recipient))
             sendFeature.setHeaderSubtitle(null)
-        } else {
-            addressInput.hideKeyboard()
+        }
+    }
+
+    private fun openKeyboard() {
+        if (isVisibleForUser()) {
+            addressInput.focus()
         }
     }
 }

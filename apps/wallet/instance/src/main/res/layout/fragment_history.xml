@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-
-    <uikit.widget.HeaderView
-        android:id="@+id/header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:title="@string/history"/>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -32,14 +26,19 @@
             android:positiveButtonText="@string/buy_toncoin"
             android:negativeButtonText="@string/receive"/>
 
-        <com.facebook.shimmer.ShimmerFrameLayout
+        <uikit.widget.SkeletonLayout
             android:id="@+id/shimmer"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <include layout="@layout/shimmer_history"/>
-        </com.facebook.shimmer.ShimmerFrameLayout>
+        </uikit.widget.SkeletonLayout>
 
     </FrameLayout>
 
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="@string/history"/>
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+</FrameLayout>

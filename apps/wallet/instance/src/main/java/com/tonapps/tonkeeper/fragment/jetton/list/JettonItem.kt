@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.fragment.jetton.list
 
 import io.tonapi.models.JettonBalance
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 
 sealed class JettonItem(
     type: Int

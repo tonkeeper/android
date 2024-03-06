@@ -15,12 +15,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.facebook.shimmer.ShimmerFrameLayout
+        <uikit.widget.SkeletonLayout
             android:id="@+id/shimmer"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <include layout="@layout/shimmer_chart"/>
-        </com.facebook.shimmer.ShimmerFrameLayout>
+        </uikit.widget.SkeletonLayout>
 
         <uikit.widget.SimpleRecyclerView
             android:id="@+id/list"

@@ -1,10 +1,17 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
-import com.tonapps.extensions.getEnum
+import android.util.Log
 import com.tonapps.extensions.locale
-import com.tonapps.extensions.putEnum
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class SettingsRepository(
     private val context: Context
@@ -20,6 +27,11 @@ class SettingsRepository(
         private const val THEME_KEY = "theme"
     }
 
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    private val _currencyFlow = MutableStateFlow<WalletCurrency?>(null)
+    val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
     var theme: String = prefs.getString(THEME_KEY, "blue")!!
@@ -30,11 +42,12 @@ class SettingsRepository(
             }
         }
 
-    var currency: Currency = Currency(prefs.getString(CURRENCY_CODE_KEY, Currency.FIAT.first())!!)
+    var currency: WalletCurrency = WalletCurrency(prefs.getString(CURRENCY_CODE_KEY, WalletCurrency.FIAT.first())!!)
         set(value) {
             if (field != value) {
                 prefs.edit().putString(CURRENCY_CODE_KEY, value.code).apply()
                 field = value
+                _currencyFlow.value = value
             }
         }
 
@@ -71,4 +84,10 @@ class SettingsRepository(
                 field = value
             }
         }
+
+    init {
+        scope.launch(Dispatchers.IO) {
+            _currencyFlow.value = currency
+        }
+    }
 }

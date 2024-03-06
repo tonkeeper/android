@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.fragment.camera
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.camera.core.TorchState
@@ -121,6 +122,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
             return
         }
         val url = getUrlFromBarcode(barcode) ?: return
+        Log.d("CameraFragment", "handleBarcode: $url")
         readyUrl = true
         if (DeepLink.openUrl(requireContext(), url)) {
             finish()

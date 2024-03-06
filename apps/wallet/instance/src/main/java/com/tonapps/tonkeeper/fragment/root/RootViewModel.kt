@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitFragment
 import com.tonapps.tonkeeperx.R
-import core.extensions.getQuery
+import com.tonapps.wallet.data.account.WalletRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,30 +19,21 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import ton.wallet.WalletManager
+import com.tonapps.wallet.data.account.legacy.WalletManager
+import kotlinx.coroutines.flow.map
 import uikit.base.BaseFragment
 
 class RootViewModel(
-    private val walletManager: WalletManager
+    private val walletRepository: WalletRepository
 ): ViewModel() {
 
-    private val _hasWalletFlow = MutableStateFlow<Boolean?>(null)
-    val hasWalletFlow = _hasWalletFlow.asStateFlow().filterNotNull()
-
-    private val _changeWalletAction = MutableSharedFlow<Unit>(extraBufferCapacity = Int.MAX_VALUE)
-    val changeWallet = _changeWalletAction.asSharedFlow()
+    val hasWalletFlow = walletRepository.walletsFlow.map { it.isNotEmpty() }
 
     private val _addFragmentAction = Channel<BaseFragment>(Channel.BUFFERED)
     val addFragmentAction = _addFragmentAction.receiveAsFlow()
 
     private val _openTabAction = Channel<Int>(Channel.BUFFERED)
     val openTabAction = _openTabAction.receiveAsFlow()
-
-    init {
-        viewModelScope.launch {
-            _hasWalletFlow.value = walletManager.getWalletInfo() != null
-        }
-    }
 
     fun processDeepLink(uri: Uri): Boolean {
         if (DeepLink.isSupportedUri(uri)) {
@@ -74,11 +65,5 @@ class RootViewModel(
             return
         }
         Log.d("RootViewModelLog", "Unknown deeplink: $uri")
-    }
-
-    fun notifyChangeWallet() {
-        viewModelScope.launch {
-            _changeWalletAction.tryEmit(Unit)
-        }
     }
 }

@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.fragment.send
 
+import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.Global
-import com.tonapps.tonkeeper.core.Coin
 import io.tonapi.models.JettonBalance
 import org.ton.block.AddrStd
 import org.ton.block.Coins

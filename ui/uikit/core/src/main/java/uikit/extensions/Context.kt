@@ -23,6 +23,7 @@ import androidx.annotation.DimenRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleableRes
+import androidx.core.content.res.ResourcesCompat
 import com.tonapps.uikit.color.backgroundHighlightedColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textTertiaryColor
@@ -99,4 +100,8 @@ fun Context.textWithLabel(text: String, label: String?): CharSequence {
     val span = SpannableString("$text $label")
     span.setSpan(ForegroundColorSpan(textTertiaryColor), text.length, text.length + label.length + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     return span
+}
+
+fun Context.drawable(id: Int): Drawable {
+    return ResourcesCompat.getDrawable(resources, id, theme)!!
 }

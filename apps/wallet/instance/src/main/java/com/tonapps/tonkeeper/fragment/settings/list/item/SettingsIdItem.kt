@@ -19,7 +19,6 @@ open class SettingsIdItem(
         const val CONTACT_US_ID = 11
         const val WIDGET_ID = 13
         const val LANGUAGE_ID = 14
-        const val CONTRACT_VERSION = 15
         const val ACCOUNT_ID = 16
         const val THEME_ID = 17
     }

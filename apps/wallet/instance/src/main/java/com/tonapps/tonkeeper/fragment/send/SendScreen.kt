@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.extensions.openCamera
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.fragment.send.pager.SendScreenAdapter
 import uikit.base.BaseFragment
+import uikit.extensions.hideKeyboard
 import uikit.mvi.UiScreen
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
@@ -107,6 +108,16 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
     override fun onDestroyView() {
         super.onDestroyView()
         pagerView.unregisterOnPageChangeCallback(pageChangeCallback)
+    }
+
+    override fun onEndShowingAnimation() {
+        super.onEndShowingAnimation()
+        feature.readyView()
+    }
+
+    override fun onDragging() {
+        super.onDragging()
+        getCurrentFocus()?.hideKeyboard()
     }
 
     override fun newUiState(state: SendScreenState) {

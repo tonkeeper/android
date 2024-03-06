@@ -1,10 +1,10 @@
 package com.tonapps.tonkeeper.api.jetton
 
-import com.tonapps.tonkeeper.api.Tonapi
+import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.base.AccountKey
 import com.tonapps.tonkeeper.api.base.BaseAccountRepository
 import com.tonapps.tonkeeper.api.base.RepositoryResponse
-import com.tonapps.tonkeeper.api.base.SourceAPI
+import com.tonapps.wallet.api.SourceAPI
 import com.tonapps.tonkeeper.api.fromJSON
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.jetton.db.JettonDao
@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.api.symbol
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.JettonBalance
 
+// TODO need to be refactoring
 class JettonRepository(
     private val api: SourceAPI<AccountsApi> = Tonapi.accounts,
     private val dao: JettonDao = com.tonapps.tonkeeper.App.db.jettonDao()

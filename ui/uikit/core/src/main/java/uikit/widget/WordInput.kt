@@ -17,6 +17,7 @@ import uikit.drawable.InputDrawable
 import uikit.extensions.dp
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
+import uikit.extensions.isVisibleForUser
 import uikit.extensions.requestFocusWithSelection
 import uikit.extensions.setCursorColor
 

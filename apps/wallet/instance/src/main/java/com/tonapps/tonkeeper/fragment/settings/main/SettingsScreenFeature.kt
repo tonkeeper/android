@@ -5,18 +5,14 @@ import android.os.Build
 import android.view.View
 import androidx.collection.ArrayMap
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.tonkeeper.api.internal.repositories.KeysRepository
-import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.currency.CurrencyUpdateWorker
 import com.tonapps.tonkeeper.core.language.name
-import com.tonapps.tonkeeper.event.ChangeCurrencyEvent
-import com.tonapps.tonkeeper.event.ChangeWalletLabelEvent
 import com.tonapps.tonkeeper.event.WalletSettingsEvent
 import com.tonapps.tonkeeper.extensions.isRecoveryPhraseBackup
 import com.tonapps.tonkeeper.extensions.label
@@ -37,15 +33,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
         private const val defaultSupportLink = "mailto:support@tonkeeper.com"
     }
 
-    private val changeCurrencyAction = fun(_: ChangeCurrencyEvent) {
-        requestUpdateItems()
-    }
-
     private val walletSettingsUpdate = fun(_: WalletSettingsEvent) {
-        requestUpdateItems()
-    }
-
-    private val updateWalletNameAction = fun (event: ChangeWalletLabelEvent) {
         requestUpdateItems()
     }
 
@@ -57,37 +45,7 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
 
     init {
         requestUpdateItems()
-        EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.subscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
-        EventBus.subscribe(ChangeWalletLabelEvent::class.java, updateWalletNameAction)
-    }
-
-    fun selectWalletVersion(view: View) {
-        viewModelScope.launch {
-            val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            val wallets = ArrayMap<WalletVersion, String>()
-            for (v in WalletVersion.entries.sorted()) {
-                wallets[v] = wallet.asVersion(v).address.shortAddress
-            }
-
-            val effect = SettingsScreenEffect.SelectWalletVersion(
-                view = view,
-                current = wallet.version,
-                wallets = wallets
-            )
-
-            sendEffect(effect)
-        }
-    }
-
-    fun setWalletVersion(version: WalletVersion) {
-        viewModelScope.launch {
-            val wallet = App.walletManager.getWalletInfo() ?: return@launch
-            if (wallet.version != version) {
-                App.walletManager.setWalletVersion(wallet.id, version)
-                sendEffect(SettingsScreenEffect.ReloadWallet)
-            }
-        }
     }
 
     private fun requestUpdateItems() {
@@ -128,12 +86,6 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             titleRes = Localization.currency,
             data = App.settings.currency.code,
             position = ListCell.Position.FIRST
-        ))
-        items.add(SettingsTextItem(
-            id = SettingsIdItem.CONTRACT_VERSION,
-            titleRes = Localization.active_address,
-            data = wallet.version.toString(),
-            position = ListCell.Position.MIDDLE
         ))
         items.add(SettingsTextItem(
             id = SettingsIdItem.LANGUAGE_ID,
@@ -219,8 +171,6 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
 
     override fun onCleared() {
         super.onCleared()
-        EventBus.unsubscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.unsubscribe(WalletSettingsEvent::class.java, walletSettingsUpdate)
-        EventBus.unsubscribe(ChangeWalletLabelEvent::class.java, updateWalletNameAction)
     }
 }

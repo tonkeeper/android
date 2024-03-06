@@ -2,8 +2,6 @@ package com.tonapps.tonkeeper.fragment.wallet.history
 
 import com.tonapps.tonkeeper.api.history.HistoryRepository
 import com.tonapps.tonkeeper.core.history.HistoryHelper
-import com.tonapps.tonkeeper.event.ChangeCurrencyEvent
-import com.tonapps.tonkeeper.event.UpdateCurrencyRateEvent
 import com.tonapps.tonkeeper.event.WalletStateUpdateEvent
 import core.EventBus
 import core.QueueScope
@@ -14,16 +12,8 @@ import kotlinx.coroutines.delay
 
 class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(HistoryScreenState()) {
 
-    private val changeCurrencyAction = fun(_: ChangeCurrencyEvent) {
-        queueScope.submit { updateEventsState(false) }
-    }
-
     private val newTransactionItem = fun(_: WalletStateUpdateEvent) {
         queueScope.submit { updateEventsState(true) }
-    }
-
-    private val updateCurrencyRateAction = fun(_: UpdateCurrencyRateEvent) {
-        queueScope.submit { updateEventsState(false) }
     }
 
     private val queueScope = QueueScope(Dispatchers.IO)
@@ -31,9 +21,6 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
 
     init {
         requestEventsState()
-
-        EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
-        EventBus.subscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.subscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
     }
 
@@ -105,9 +92,6 @@ class HistoryScreenFeature: UiFeature<HistoryScreenState, HistoryScreenEffect>(H
     override fun onCleared() {
         super.onCleared()
         queueScope.cancel()
-
-        EventBus.subscribe(UpdateCurrencyRateEvent::class.java, updateCurrencyRateAction)
-        EventBus.unsubscribe(ChangeCurrencyEvent::class.java, changeCurrencyAction)
         EventBus.unsubscribe(WalletStateUpdateEvent::class.java, newTransactionItem)
     }
 

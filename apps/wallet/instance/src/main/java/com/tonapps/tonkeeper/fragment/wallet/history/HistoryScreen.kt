@@ -8,7 +8,6 @@ import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
-import com.tonapps.tonkeeper.extensions.receive
 import com.tonapps.tonkeeper.fragment.main.MainTabScreen
 import uikit.extensions.collectFlow
 import uikit.extensions.toggleVisibilityAnimation
@@ -58,7 +57,7 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
             if (first) {
                 FiatDialog.open(requireContext())
             } else {
-                navigation?.receive()
+                // navigation?.receive()
             }
         }
 

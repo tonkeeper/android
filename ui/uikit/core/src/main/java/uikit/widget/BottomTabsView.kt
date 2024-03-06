@@ -54,6 +54,7 @@ class BottomTabsView @JvmOverloads constructor(
         }
 
     var doOnClick: ((itemId: Int) -> Unit)? = null
+    var doOnLongClick: ((itemId: Int) -> Unit)? = null
 
     init {
         background = drawable
@@ -135,6 +136,10 @@ class BottomTabsView @JvmOverloads constructor(
             view.setOnClickListener {
                 selectedItemId = menuItem.itemId
                 doOnClick?.invoke(menuItem.itemId)
+            }
+            view.setOnLongClickListener {
+                doOnLongClick?.invoke(menuItem.itemId)
+                true
             }
         }
 

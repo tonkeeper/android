@@ -9,11 +9,10 @@ import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import ton.wallet.WalletManager
+import com.tonapps.wallet.data.account.legacy.WalletManager
 
 class NameViewModel(
     mode: NameMode,

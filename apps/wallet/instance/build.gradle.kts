@@ -56,9 +56,14 @@ dependencies {
     implementation(Dependence.Koin.core)
 
     implementation(project(Dependence.Wallet.localization))
+    implementation(project(Dependence.Wallet.api))
+
     implementation(project(Dependence.Wallet.Data.core))
+    implementation(project(Dependence.Wallet.Data.tokens))
     implementation(project(Dependence.Wallet.Data.account))
     implementation(project(Dependence.Wallet.Data.settings))
+    implementation(project(Dependence.Wallet.Data.rates))
+
     implementation(project(Dependence.UIKit.core))
 
     implementation(Dependence.AndroidX.core)
@@ -94,7 +99,6 @@ dependencies {
 
     implementation(project(Dependence.Module.core))
     implementation(project(Dependence.Module.tonApi))
-    implementation(project(Dependence.Module.shimmer))
     implementation(project(Dependence.Module.blur))
 
     implementation(project(Dependence.Lib.network))

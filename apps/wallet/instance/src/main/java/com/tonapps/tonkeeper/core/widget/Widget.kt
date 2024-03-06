@@ -11,7 +11,7 @@ import android.os.IBinder
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.fragment.root.RootActivity
 import com.tonapps.tonkeeper.core.currency.CurrencyManager
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 
@@ -59,7 +59,7 @@ abstract class Widget: AppWidgetProvider() {
 
     val currencyManager = CurrencyManager.getInstance()
 
-    val currency: Currency
+    val currency: WalletCurrency
         get() = App.settings.currency
 
     abstract fun update(context: Context, manager: AppWidgetManager, id: Int)

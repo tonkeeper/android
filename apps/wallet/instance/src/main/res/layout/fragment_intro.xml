@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:layout_width="match_parent"
@@ -11,10 +9,9 @@
         android:layout_weight="1"
         android:src="@drawable/bg_intro"/>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="@dimen/offsetLarge">
 
         <uikit.widget.TextHeaderView
@@ -41,6 +38,6 @@
             android:textAppearance="@style/TextAppearance.Label1"
             android:text="@string/start_import_wallet"/>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </uikit.widget.ColumnLayout>
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+</uikit.widget.ColumnLayout>

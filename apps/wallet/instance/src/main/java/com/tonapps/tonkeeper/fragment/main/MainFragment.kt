@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.fragment.main
 
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.FragmentContainerView
@@ -17,14 +16,15 @@ import com.tonapps.tonkeeper.fragment.root.RootViewModel
 import com.tonapps.tonkeeper.fragment.tonconnect.action.ConfirmActionFragment
 import com.tonapps.tonkeeper.fragment.wallet.collectibles.CollectiblesScreen
 import com.tonapps.tonkeeper.fragment.wallet.history.HistoryScreen
-import com.tonapps.tonkeeper.fragment.wallet.main.WalletScreen
+import com.tonapps.tonkeeper.ui.screen.picker.PickerScreen
+import com.tonapps.tonkeeper.ui.screen.wallet.WalletScreen
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
 import core.EventBus
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import ton.wallet.Wallet
+import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
@@ -76,6 +76,11 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         bottomTabsView.doOnClick = { itemId ->
             setFragment(itemId, false)
         }
+        bottomTabsView.doOnLongClick = { itemId ->
+            if (itemId == R.id.wallet) {
+                navigation?.add(PickerScreen.newInstance())
+            }
+        }
         collectFlow(mainViewModel.childBottomScrolled, bottomTabsView::setDivider)
         collectFlow(rootViewModel.openTabAction, this::forceSelectTab)
 
@@ -98,7 +103,7 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
         }
     }
 
-    private fun updateWalletState(wallet: Wallet) {
+    private fun updateWalletState(wallet: WalletLegacy) {
         bottomTabsView.enableDot(R.id.settings, !wallet.isRecoveryPhraseBackup())
     }
 

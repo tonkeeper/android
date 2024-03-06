@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.fragment.chart.list
 
 import com.tonapps.tonkeeper.api.chart.ChartEntity
 import com.tonapps.tonkeeper.api.chart.ChartPeriod
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 
 sealed class ChartItem(
     type: Int

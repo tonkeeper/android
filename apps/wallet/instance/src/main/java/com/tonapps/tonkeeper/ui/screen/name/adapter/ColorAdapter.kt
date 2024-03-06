@@ -4,8 +4,8 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.data.AccountColor
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.WalletColor
 import uikit.widget.ColorView
 
 class ColorAdapter(
@@ -14,8 +14,8 @@ class ColorAdapter(
 
     var activeColor: Int = Color.TRANSPARENT
         set(value) {
-            val oldIndex = AccountColor.all.indexOf(field)
-            val newIndex = AccountColor.all.indexOf(value)
+            val oldIndex = WalletColor.all.indexOf(field)
+            val newIndex = WalletColor.all.indexOf(value)
             field = value
             if (oldIndex >= 0) {
                 notifyItemChanged(oldIndex)
@@ -40,10 +40,10 @@ class ColorAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = Holder(parent)
 
-    override fun getItemCount() = AccountColor.all.size
+    override fun getItemCount() = WalletColor.all.size
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
-        holder.bind(AccountColor.all[position])
+        holder.bind(WalletColor.all[position])
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {

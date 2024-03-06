@@ -4,10 +4,9 @@ import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.api.getAddress
-import com.tonapps.tonkeeper.extensions.receive
 import com.tonapps.tonkeeper.extensions.sendCoin
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonItem
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 import uikit.navigation.Navigation
 
 class JettonActionsHolder(
@@ -28,9 +27,9 @@ class JettonActionsHolder(
             View.VISIBLE
         }
 
-        receiveView.setOnClickListener { Navigation.from(context)?.receive(
+       /* receiveView.setOnClickListener { Navigation.from(context)?.receive(
             item.jetton,
-        ) }
+        ) }*/
     }
 
 }

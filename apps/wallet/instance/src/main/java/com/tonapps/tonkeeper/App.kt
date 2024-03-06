@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper
 
 import android.app.Application
-import android.content.res.Configuration
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
@@ -13,12 +12,14 @@ import com.tonapps.tonkeeper.event.WalletRemovedEvent
 import core.EventBus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import com.tonapps.network.Network
+import com.tonapps.wallet.data.account.accountModule
+import com.tonapps.wallet.data.rates.ratesModule
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.token.tokenModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.libsodium.jni.NaCl
-import ton.wallet.WalletManager
+import com.tonapps.wallet.data.account.legacy.WalletManager
 
 class App: Application(), CameraXConfig.Provider {
 
@@ -28,7 +29,10 @@ class App: Application(), CameraXConfig.Provider {
         lateinit var walletManager: WalletManager
 
         lateinit var fiat: Fiat
+
+        @Deprecated("Use injection")
         lateinit var settings: SettingsRepository
+
         lateinit var passcode: PasscodeManager
         lateinit var db: AppDatabase
         lateinit var instance: App
@@ -39,8 +43,6 @@ class App: Application(), CameraXConfig.Provider {
         instance = this
 
         NaCl.sodium()
-        Network.init(instance.applicationContext)
-
         db = AppDatabase.getInstance(this)
         walletManager = WalletManager(this)
         fiat = Fiat(this)
@@ -49,7 +51,7 @@ class App: Application(), CameraXConfig.Provider {
 
         startKoin {
             androidContext(this@App)
-            modules(koinModel)
+            modules(koinModel, accountModule, ratesModule, tokenModule)
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
@@ -60,8 +62,6 @@ class App: Application(), CameraXConfig.Provider {
         val themeName = settings.theme
         if (themeName == "dark") {
             return uikit.R.style.Theme_App_Dark
-        } else if (themeName == "light") {
-            return uikit.R.style.Theme_App_Light
         }
         return uikit.R.style.Theme_App_Blue
     }
@@ -70,9 +70,6 @@ class App: Application(), CameraXConfig.Provider {
         val currentTheme = getThemeRes()
         if (newTheme == uikit.R.style.Theme_App_Dark && newTheme != currentTheme) {
             settings.theme = "dark"
-            return true
-        } else if (newTheme == uikit.R.style.Theme_App_Light && newTheme != currentTheme) {
-            settings.theme = "light"
             return true
         } else if (newTheme != currentTheme) {
             settings.theme = "blue"

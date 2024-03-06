@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -20,4 +21,10 @@ android {
         jvmTarget = "1.8"
     }
 }
+
+dependencies {
+    implementation(project(Dependence.Lib.extensions))
+}
+
+
 

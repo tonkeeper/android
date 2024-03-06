@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.viewModels
 import com.facebook.drawee.view.SimpleDraweeView
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.tonkeeper.api.description
@@ -16,7 +17,6 @@ import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
 import com.tonapps.tonkeeper.core.ExternalUrl
 import io.tonapi.models.NftItem
-import ton.extensions.toUserFriendly
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.drawable

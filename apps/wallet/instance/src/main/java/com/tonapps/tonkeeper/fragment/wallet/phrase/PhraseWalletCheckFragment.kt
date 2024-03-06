@@ -6,7 +6,7 @@ import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
-import ton.wallet.WalletManager
+import com.tonapps.wallet.data.account.legacy.WalletManager
 import uikit.widget.TextHeaderView
 import uikit.widget.WordInput
 import kotlinx.coroutines.launch

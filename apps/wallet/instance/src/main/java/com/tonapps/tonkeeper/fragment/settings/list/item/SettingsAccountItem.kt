@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.fragment.settings.list.item
 
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletLabel
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 
 data class SettingsAccountItem(
     override val id: Int,

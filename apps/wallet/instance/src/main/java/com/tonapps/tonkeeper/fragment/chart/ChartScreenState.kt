@@ -4,7 +4,7 @@ import com.tonapps.tonkeeper.api.chart.ChartEntity
 import com.tonapps.tonkeeper.api.chart.ChartPeriod
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.fragment.chart.list.ChartItem
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 import uikit.mvi.AsyncState
 import uikit.mvi.UiState
 

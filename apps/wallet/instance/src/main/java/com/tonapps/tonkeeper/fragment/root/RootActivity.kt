@@ -4,32 +4,17 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentTransaction
-import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.emoji.Emoji
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.core.Coin
-import com.tonapps.tonkeeper.core.PaymentURL
-import com.tonapps.tonkeeper.core.deeplink.DeepLink
-import com.tonapps.tonkeeper.fragment.intro.IntroFragment
-import uikit.base.BaseFragment
 import com.tonapps.tonkeeper.fragment.main.MainFragment
-import com.tonapps.tonkeeper.fragment.web.WebFragment
 import com.tonapps.tonkeeper.core.tonconnect.TonConnect
 import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
-import com.tonapps.tonkeeper.fragment.send.SendScreen
-import com.tonapps.tonkeeper.ui.screen.init.InitAction
-import com.tonapps.tonkeeper.ui.screen.init.InitFragment
+import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import uikit.R
 import uikit.extensions.collectFlow
-import uikit.extensions.findFragment
 import uikit.navigation.NavigationActivity
-import java.util.Locale
 
 class RootActivity: NavigationActivity() {
 
@@ -50,36 +35,30 @@ class RootActivity: NavigationActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(App.instance.getThemeRes())
         super.onCreate(savedInstanceState)
-        Emoji.init(this)
 
         uiHandler = Handler(mainLooper)
         tonConnect = TonConnect(this)
 
-        collectFlow(rootViewModel.hasWalletFlow) { init(it, false) }
-        collectFlow(rootViewModel.changeWallet) { init(hasWallet = true, recreate = true) }
+        collectFlow(rootViewModel.hasWalletFlow) { init(it) }
         collectFlow(rootViewModel.addFragmentAction) { add(it) }
 
         handleIntent(intent)
     }
 
-    fun init(hasWallet: Boolean, recreate: Boolean) {
+    fun init(hasWallet: Boolean) {
         if (hasWallet) {
-            setMainFragment(recreate)
+            setMainFragment()
         } else {
             setIntroFragment()
         }
     }
 
     private fun setIntroFragment() {
-        if (setPrimaryFragment(IntroFragment.newInstance())) {
-            // hideLockPassword()
-        }
+        setPrimaryFragment(StartScreen.newInstance())
     }
 
-    private fun setMainFragment(recreate: Boolean) {
-        if (setPrimaryFragment(MainFragment.newInstance(), recreate)) { //  && !Password.isUnlocked()
-            //showLockPassword()
-        }
+    private fun setMainFragment() {
+        setPrimaryFragment(MainFragment.newInstance())
     }
 
     override fun onNewIntent(intent: Intent) {

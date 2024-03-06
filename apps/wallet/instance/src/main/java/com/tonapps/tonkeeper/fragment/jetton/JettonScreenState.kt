@@ -5,7 +5,7 @@ import com.tonapps.tonkeeper.api.parsedBalance
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonItem
 import io.tonapi.models.JettonBalance
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 import uikit.mvi.AsyncState
 import uikit.mvi.UiState
 

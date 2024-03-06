@@ -8,7 +8,7 @@ import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.api.account.AccountRepository
 import com.tonapps.tonkeeper.api.shortAddress
-import com.tonapps.tonkeeper.core.Coin
+import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.core.currency.ton
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers

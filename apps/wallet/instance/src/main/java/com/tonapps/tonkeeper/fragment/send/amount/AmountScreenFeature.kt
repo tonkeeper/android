@@ -9,9 +9,9 @@ import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.jetton.JettonRepository
 import com.tonapps.tonkeeper.api.parsedBalance
 import com.tonapps.tonkeeper.api.symbol
-import com.tonapps.tonkeeper.core.Coin
+import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.core.currency.from
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
 import core.QueueScope
 import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,7 @@ import uikit.mvi.UiFeature
 
 class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(AmountScreenState()) {
 
-    private val currency: Currency
+    private val currency: WalletCurrency
         get() = App.settings.currency
 
     private val currentJetton: JettonBalance?

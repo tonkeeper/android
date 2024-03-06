@@ -18,31 +18,8 @@ object Emoji {
 
     val scope = CoroutineScope(Dispatchers.Main)
 
-    private val lruCache = object : LruCache<CharSequence, PictogramDrawable>((Runtime.getRuntime().maxMemory() / 1024).toInt() / 8) {
-        override fun sizeOf(key: CharSequence, value: PictogramDrawable): Int {
-            if (value.bitmap.isRecycled) {
-                remove(key)
-                return 0
-            }
-            return value.bitmap.allocationByteCount
-        }
-    }
-
     private val all = Collections.synchronizedList(mutableListOf<EmojiEntity>())
     private val simpleEmojiTypeface = DefaultStyle()
-
-    @Volatile
-    private var notoEmojiTypeface: NotoStyle? = null
-
-    private val defaultStyle: DefaultStyle
-        get() = notoEmojiTypeface ?: simpleEmojiTypeface
-
-    fun init(context: Context) {
-        scope.launch {
-            notoEmojiTypeface = NotoStyle.create(context)
-            lruCache.evictAll()
-        }
-    }
 
     suspend fun get(context: Context): Array<EmojiEntity> {
         if (all.isEmpty()) {
@@ -54,21 +31,11 @@ object Emoji {
     }
 
     internal suspend fun getDrawable(context: Context, emoji: CharSequence): PictogramDrawable {
-        return getDrawableFromCache(emoji) ?: createDrawable(context, emoji)
-    }
-
-    private fun getDrawableFromCache(emoji: CharSequence): PictogramDrawable? {
-        val drawable = lruCache.get(emoji) ?: return null
-        if (drawable.bitmap.isRecycled) {
-            lruCache.remove(emoji)
-            return null
-        }
-        drawable.alpha = 255
-        return drawable
+        return createDrawable(context, emoji)
     }
 
     private suspend fun createDrawable(context: Context, emoji: CharSequence): PictogramDrawable = withContext(Dispatchers.IO) {
-        val tmpBitmap = defaultStyle.draw(emoji)
+        val tmpBitmap = simpleEmojiTypeface.draw(emoji)
         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             tmpBitmap.copy(Bitmap.Config.HARDWARE, false)
         } else {
@@ -76,7 +43,6 @@ object Emoji {
         }
         val drawable = PictogramDrawable(emoji, context, bitmap)
         drawable.alpha = 0
-        lruCache.put(emoji, drawable)
         drawable
     }
 

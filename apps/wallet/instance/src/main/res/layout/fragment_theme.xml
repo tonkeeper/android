@@ -28,13 +28,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Dark"
-            app:position="middle"/>
-
-        <uikit.widget.item.ItemIconView
-            android:id="@+id/theme_light"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Light"
             app:position="last"/>
 
     </uikit.widget.ColumnLayout>

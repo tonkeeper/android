@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.extensions
 
 import com.tonapps.tonkeeper.fragment.camera.CameraFragment
-import com.tonapps.tonkeeper.fragment.receive.ReceiveScreen
 import com.tonapps.tonkeeper.fragment.root.RootActivity
 import com.tonapps.tonkeeper.fragment.send.SendScreen
 import io.tonapi.models.JettonBalance
@@ -29,8 +28,4 @@ fun Navigation.sendCoin(
     } else {
         add(SendScreen.newInstance(address, text, amount, jettonAddress))
     }
-}
-
-fun Navigation.receive(jetton: JettonBalance? = null) {
-    add(ReceiveScreen.newInstance(jetton))
 }

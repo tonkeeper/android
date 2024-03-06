@@ -11,7 +11,7 @@ import com.tonapps.tonkeeper.fragment.settings.list.item.SettingsItem
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 import uikit.extensions.drawable
 
 class SettingsAccountHolder(

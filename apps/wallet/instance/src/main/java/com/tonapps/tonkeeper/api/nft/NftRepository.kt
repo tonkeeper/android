@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.api.nft
 
-import com.tonapps.tonkeeper.api.Tonapi
-import com.tonapps.tonkeeper.api.base.SourceAPI
+import com.tonapps.wallet.api.Tonapi
+import com.tonapps.wallet.api.SourceAPI
 import com.tonapps.tonkeeper.api.fromJSON
 import com.tonapps.tonkeeper.api.nft.db.NftDao
 import com.tonapps.tonkeeper.api.nft.db.NftEntity

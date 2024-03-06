@@ -2,6 +2,7 @@ package com.tonapps.extensions
 
 import android.content.Context
 import android.os.Build
+import java.io.File
 import java.util.Locale
 
 val Context.locale: Locale
@@ -13,3 +14,6 @@ val Context.locale: Locale
         }
     }
 
+fun Context.cacheFolder(name: String): File {
+    return cacheDir.folder(name)
+}

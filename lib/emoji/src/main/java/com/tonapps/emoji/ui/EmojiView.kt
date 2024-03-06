@@ -33,9 +33,13 @@ class EmojiView @JvmOverloads constructor(
         }
     }
 
-    fun setEmoji(emoji: CharSequence) {
-        this.emoji = emoji
-        drawable.setEmoji(emoji)
+    fun setEmoji(emoji: CharSequence): Boolean {
+        if (this.emoji != emoji) {
+            this.emoji = emoji
+            drawable.setEmoji(emoji)
+            return true
+        }
+        return false
     }
 
     fun getEmoji(): CharSequence {

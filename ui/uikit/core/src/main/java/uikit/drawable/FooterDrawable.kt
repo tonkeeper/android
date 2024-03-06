@@ -8,41 +8,6 @@ import com.tonapps.uikit.color.separatorCommonColor
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 
-class FooterDrawable(context: Context): BaseDrawable() {
-
-    private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.separatorCommonColor
-        strokeWidth = .5f.dp
-    }
-
-    private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.TRANSPARENT
-    }
-
-    private var divider: Boolean = false
-
-    override fun draw(canvas: Canvas) {
-        if (backgroundPaint.color != Color.TRANSPARENT) {
-            canvas.drawPaint(backgroundPaint)
-        }
-
-        if (divider) {
-            canvas.drawLine(0f, 0f, bounds.right.toFloat(), 0f, dividerPaint)
-        }
-    }
-
-    fun setDivider(value: Boolean) {
-        if (divider != value) {
-            divider = value
-            invalidateSelf()
-        }
-    }
-
-    fun setColor(color: Int) {
-        if (backgroundPaint.color != color) {
-            backgroundPaint.color = color
-            invalidateSelf()
-        }
-    }
-
+class FooterDrawable(context: Context): BarDrawable(context) {
+    override val y: Float = 0f
 }

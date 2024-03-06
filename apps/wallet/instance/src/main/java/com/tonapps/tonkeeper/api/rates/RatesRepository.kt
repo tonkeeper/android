@@ -1,14 +1,13 @@
 package com.tonapps.tonkeeper.api.rates
 
 import android.content.Context
-import android.util.Log
-import com.tonapps.tonkeeper.api.Tonapi
+import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.base.BaseBlobRepository
-import com.tonapps.tonkeeper.api.base.SourceAPI
+import com.tonapps.wallet.api.SourceAPI
 import com.tonapps.tonkeeper.api.fromJSON
 import com.tonapps.tonkeeper.api.toJSON
 import com.tonapps.tonkeeper.api.withRetry
-import com.tonapps.wallet.data.core.Currency
+import com.tonapps.wallet.data.core.WalletCurrency
 import io.tonapi.apis.RatesApi
 import io.tonapi.models.GetRates200Response
 import io.tonapi.models.TokenRates
@@ -24,13 +23,13 @@ class RatesRepository(
         accountId: String,
         testnet: Boolean,
         jettons: List<String>
-    ): GetRates200Response? {
+    ): GetRates200Response {
 
         val response = fromCloud(
-            tokens = Currency.CRYPTO + jettons,
-            currency = Currency.FIAT,
+            tokens = WalletCurrency.CRYPTO + jettons,
+            currency = WalletCurrency.FIAT,
             testnet = testnet
-        ) ?: return null
+        )
 
         setMemory(accountId, testnet, response)
 

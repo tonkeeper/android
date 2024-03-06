@@ -24,6 +24,7 @@
     </queries>
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.NFC" />
 
     <application
         android:allowBackup="false"
@@ -54,6 +55,7 @@
                 <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
             <intent-filter android:priority="1">
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <action android:name="android.intent.action.SEND"/>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

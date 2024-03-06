@@ -11,6 +11,11 @@ internal class PictogramDrawable(
     bitmap: Bitmap
 ): BitmapDrawable(context.resources, bitmap) {
 
+    init {
+        setDither(true)
+        setAntiAlias(true)
+    }
+
     override fun draw(canvas: Canvas) {
         if (!bitmap.isRecycled) {
             super.draw(canvas)

@@ -51,6 +51,7 @@ class QRView @JvmOverloads constructor(
         context.theme.obtainStyledAttributes(attrs, R.styleable.QRView, 0, 0).apply {
             try {
                 color = getColor(R.styleable.QRView_android_color, Color.WHITE)
+                withCutout = getBoolean(R.styleable.QRView_with_cutout, false)
             } finally {
                 recycle()
             }

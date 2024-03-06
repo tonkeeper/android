@@ -2,9 +2,10 @@ package com.tonapps.tonkeeper.api
 
 import android.util.Log
 import com.squareup.moshi.adapter
+import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.Global
-import com.tonapps.tonkeeper.core.Coin
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
@@ -22,7 +23,6 @@ import io.tonapi.models.NftItem
 import io.tonapi.models.PoolImplementationType
 import io.tonapi.models.TokenRates
 import kotlinx.coroutines.delay
-import ton.extensions.toUserFriendly
 import kotlin.math.abs
 
 private val nftItemPreviewSizes = arrayOf(

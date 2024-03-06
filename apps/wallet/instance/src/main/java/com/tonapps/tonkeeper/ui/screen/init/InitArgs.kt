@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
 import androidx.lifecycle.SavedStateHandle
-import com.tonapps.tonkeeper.data.AccountColor
+import com.tonapps.wallet.data.account.WalletColor
 
 class InitArgs(
     private val savedStateHandle: SavedStateHandle
@@ -32,7 +32,7 @@ class InitArgs(
         set(value) = savedStateHandle.set(NAME_KEY, value)
 
     var color: Int
-        get() = savedStateHandle[COLOR_KEY] ?: AccountColor.all.first()
+        get() = savedStateHandle[COLOR_KEY] ?: WalletColor.all.first()
         set(value) = savedStateHandle.set(COLOR_KEY, value)
 
     var emoji: CharSequence

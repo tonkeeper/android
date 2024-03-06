@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.tonkeeper.api.TonNetwork
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.tonkeeper.core.tonconnect.AppRepository
 import com.tonapps.tonkeeper.core.tonconnect.Bridge
 import com.tonapps.tonkeeper.core.tonconnect.Proof

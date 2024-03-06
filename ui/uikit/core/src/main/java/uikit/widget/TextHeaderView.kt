@@ -11,7 +11,7 @@ class TextHeaderView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : LinearLayoutCompat(context, attrs, defStyle) {
+) : ColumnLayout(context, attrs, defStyle) {
 
     private val titleView: AppCompatTextView
     private val descriptionView: AppCompatTextView
@@ -29,7 +29,6 @@ class TextHeaderView @JvmOverloads constructor(
         }
 
     init {
-        orientation = VERTICAL
         inflate(context, R.layout.view_text_header, this)
 
         titleView = findViewById(R.id.title)

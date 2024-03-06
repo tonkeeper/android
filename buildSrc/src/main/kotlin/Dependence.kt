@@ -8,7 +8,7 @@ object Dependence {
 
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0"
-        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0"
+        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.5.0"
     }
 
@@ -103,6 +103,7 @@ object Dependence {
         const val emoji = ":lib:emoji"
         const val blockchain = ":lib:blockchain"
         const val icu = ":lib:icu"
+        const val sql = ":lib:sqlite"
     }
 
     object UIKit {
@@ -114,11 +115,14 @@ object Dependence {
 
     object Wallet {
         const val localization = ":apps:wallet:localization"
+        const val api = ":apps:wallet:api"
 
         object Data {
             const val core = ":apps:wallet:data:core"
             const val account = ":apps:wallet:data:account"
             const val settings = ":apps:wallet:data:settings"
+            const val rates = ":apps:wallet:data:rates"
+            const val tokens = ":apps:wallet:data:tokens"
         }
     }
 }

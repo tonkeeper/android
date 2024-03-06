@@ -12,8 +12,7 @@
         android:background="@drawable/bg_oval"
         android:backgroundTint="@color/constantTon"
         android:scaleType="centerInside"
-        android:layout_gravity="center"
-        android:src="@drawable/ic_ton" />
+        android:layout_gravity="center" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"

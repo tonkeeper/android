@@ -2,7 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.init.pager.child.watch
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.tonkeeper.api.Tonapi
+import com.tonapps.tonkeeper.api.ApiHelper
+import com.tonapps.wallet.api.Tonapi
 import core.QueueScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,7 @@ class WatchViewModel: ViewModel() {
 
             _inputState.value = AsyncState.Loading
 
-            val account = Tonapi.resolveAccount(address, false)
+            val account = ApiHelper.resolveAccount(address, false)
             if (account == null) {
                 _inputState.value = AsyncState.Error
                 return@submit

@@ -4,10 +4,9 @@ import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
-import com.tonapps.tonkeeper.extensions.receive
 import com.tonapps.tonkeeper.extensions.sendCoin
 import com.tonapps.tonkeeper.fragment.chart.list.ChartItem
-import ton.wallet.WalletType
+import com.tonapps.wallet.data.account.WalletType
 import uikit.navigation.Navigation
 
 class ChartActionsHolder(
@@ -20,7 +19,7 @@ class ChartActionsHolder(
 
     init {
         sendView.setOnClickListener { Navigation.from(context)?.sendCoin() }
-        receiveView.setOnClickListener { Navigation.from(context)?.receive() }
+        // receiveView.setOnClickListener { Navigation.from(context)?.receive() }
         buyOrSellView.setOnClickListener { FiatDialog.open(context) }
     }
 

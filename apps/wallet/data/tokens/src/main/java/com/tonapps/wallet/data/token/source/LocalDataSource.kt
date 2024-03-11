@@ -9,7 +9,7 @@ import com.tonapps.wallet.data.core.BlobDataSource
 internal class LocalDataSource(context: Context): BlobDataSource<List<BalanceEntity>>(
     context = context,
     path = "wallet",
-    lruInitialCapacity = 3
+    lruInitialCapacity = 12
 ) {
     override fun onMarshall(data: List<BalanceEntity>) = data.toByteArray()
 

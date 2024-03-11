@@ -2,6 +2,7 @@ package com.tonapps.icu
 
 import android.util.ArrayMap
 import android.util.Log
+import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -79,6 +80,19 @@ object CurrencyFormatter {
         value: BigInteger
     ): String {
         var bigDecimal = value.toBigDecimal().stripTrailingZeros()
+        if (bigDecimal.scale() > 0) {
+            bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP)
+        }
+        val decimals = bigDecimal.scale()
+        val amount = getFormat(decimals).format(value)
+        return format(currency, amount)
+    }
+
+    fun format(
+        currency: String = "",
+        value: BigDecimal
+    ): String {
+        var bigDecimal = value.stripTrailingZeros()
         if (bigDecimal.scale() > 0) {
             bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP)
         }

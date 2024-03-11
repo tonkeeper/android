@@ -5,25 +5,34 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletLabel
 
-data class Item(
-    val accountId: String,
-    val walletId: Long,
-    val walletLabel: WalletLabel,
-    val walletType: WalletType,
-    val selected: Boolean,
-    val position: ListCell.Position,
-    val balance: String
-): BaseListItem() {
+sealed class Item(type: Int): BaseListItem(type) {
+    companion object {
+        const val TYPE_WALLET = 0
+        const val TYPE_ADD_WALLET = 1
+    }
 
-    val color: Int
-        get() = walletLabel.color
+    data class Wallet(
+        val accountId: String,
+        val walletId: Long,
+        val walletLabel: WalletLabel,
+        val walletType: WalletType,
+        val selected: Boolean,
+        val position: ListCell.Position,
+        val balance: String
+    ): Item(TYPE_WALLET) {
 
-    val emoji: CharSequence
-        get() = walletLabel.emoji
+        val color: Int
+            get() = walletLabel.color
 
-    val name: String
-        get() = walletLabel.name
+        val emoji: CharSequence
+            get() = walletLabel.emoji
 
-    val testnet: Boolean
-        get() = walletType == WalletType.Testnet
+        val name: String
+            get() = walletLabel.name
+
+        val testnet: Boolean
+            get() = walletType == WalletType.Testnet
+    }
+
+    data object AddWallet: Item(TYPE_ADD_WALLET)
 }

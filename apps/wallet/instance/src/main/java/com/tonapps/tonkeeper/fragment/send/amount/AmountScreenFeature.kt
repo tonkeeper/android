@@ -3,40 +3,37 @@ package com.tonapps.tonkeeper.fragment.send.amount
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.api.account.AccountRepository
-import com.tonapps.tonkeeper.api.asJettonBalance
-import com.tonapps.tonkeeper.api.getAddress
-import com.tonapps.tonkeeper.api.jetton.JettonRepository
-import com.tonapps.tonkeeper.api.parsedBalance
-import com.tonapps.tonkeeper.api.symbol
-import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.core.currency.from
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import core.QueueScope
-import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.mvi.UiFeature
 
-class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(AmountScreenState()) {
+@Deprecated("Need refactoring")
+class AmountScreenFeature(
+    private val tokenRepository: TokenRepository
+): UiFeature<AmountScreenState, AmountScreenEffect>(AmountScreenState()) {
 
     private val currency: WalletCurrency
         get() = App.settings.currency
 
-    private val currentJetton: JettonBalance?
-        get() = uiState.value.selectedJetton
+    private val currentToken: AccountTokenEntity?
+        get() = uiState.value.selectedToken
 
     private val currentTokenCode: String
-        get() = currentJetton?.symbol ?: "TON"
+        get() = uiState.value.selectedTokenCode
 
     val currentBalance: Float
-        get() = currentJetton?.parsedBalance ?: uiState.value.tonBalance
+        get() = currentToken?.balance?.value ?: 0f
+
+    val decimals: Int
+        get() = currentToken?.decimals ?: 9
 
     private val queueScope = QueueScope(Dispatchers.IO)
-    private val accountRepository = AccountRepository()
-    private val jettonRepository = JettonRepository()
 
     init {
         viewModelScope.launch {
@@ -44,55 +41,35 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
         }
     }
 
-    private fun getCurrentTokenAddress(testnet: Boolean): String {
-        val jetton = currentJetton ?: return "TON"
-        return jetton.getAddress(testnet)
+    private fun getCurrentTokenAddress(): String {
+        return currentToken?.address ?: "TON"
     }
 
     private suspend fun loadData() = withContext(Dispatchers.IO) {
         val wallet = App.walletManager.getWalletInfo()!!
         val accountId = wallet.accountId
-
-        val accountDeferred = async { accountRepository.get(accountId, wallet.testnet) }
-        val jettonsDeferred = async { jettonRepository.get(accountId, wallet.testnet) }
-
-        val account = accountDeferred.await()?.data ?: return@withContext
-        val jettons = jettonsDeferred.await()?.data ?: return@withContext
-        val tonAsJetton = account.asJettonBalance()
+        val tokens = tokenRepository.get(currency, accountId, wallet.testnet)
 
         updateUiState {
             it.copy(
                 wallet = wallet,
-                tonBalance = Coin.toCoins(account.balance),
-                jettons = listOf(tonAsJetton) + jettons,
-                selectedJetton = tonAsJetton,
+                tokens = tokens,
+                selectedTokenAddress = WalletCurrency.TON.code,
             )
         }
     }
 
-    fun selectJetton(jettonAddress: String) {
-        viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
-            val jettonBalance = jettonRepository.getByAddress(wallet.accountId, jettonAddress, wallet.testnet) ?: return@launch
-
-            updateUiState {
-                it.copy(
-                    selectedJetton = jettonBalance,
-                    decimals = jettonBalance.jetton.decimals,
-                    canContinue = false,
-                )
-            }
-        }
-    }
-
-    fun selectJetton(jettonBalance: JettonBalance) {
+    fun selectToken(tokenAddress: String) {
         updateUiState {
             it.copy(
-                selectedJetton = jettonBalance,
-                decimals = jettonBalance.jetton.decimals,
+                selectedTokenAddress = tokenAddress,
                 canContinue = false,
             )
         }
+    }
+
+    fun selectToken(token: AccountTokenEntity) {
+        selectToken(token.address)
 
         viewModelScope.launch {
             updateValue(uiState.value.amount)
@@ -102,7 +79,7 @@ class AmountScreenFeature: UiFeature<AmountScreenState, AmountScreenEffect>(Amou
     private suspend fun updateValue(newValue: Float) {
         val wallet = App.walletManager.getWalletInfo() ?: return
         val accountId = wallet.accountId
-        val currentTokenAddress = getCurrentTokenAddress(wallet.testnet)
+        val currentTokenAddress = getCurrentTokenAddress()
 
         val balanceInCurrency = from(currentTokenAddress, accountId, wallet.testnet)
             .value(currentBalance)

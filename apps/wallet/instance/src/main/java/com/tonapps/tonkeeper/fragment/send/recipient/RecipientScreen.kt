@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.fragment.send.SendScreenEffect
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import uikit.extensions.collectFlow
+import uikit.extensions.pinToBottomInsets
 import uikit.widget.InputView
 
 class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, RecipientScreenFeature>(R.layout.fragment_send_recipient) {
@@ -49,6 +50,7 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         nextButton.setOnClickListener {
             sendFeature.nextPage()
         }
+        nextButton.pinToBottomInsets()
 
         collectFlow(sendFeature.onReadyView) {
             openKeyboard()

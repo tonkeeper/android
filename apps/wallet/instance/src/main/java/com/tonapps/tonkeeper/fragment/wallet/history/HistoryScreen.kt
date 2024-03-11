@@ -9,11 +9,18 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.fragment.main.MainTabScreen
+import com.tonapps.tonkeeper.fragment.main.MainViewModel
+import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.uikit.list.ListPaginationListener
+import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.extensions.collectFlow
+import uikit.extensions.isMaxScrollReached
 import uikit.extensions.toggleVisibilityAnimation
 import uikit.extensions.topScrolled
 import uikit.mvi.AsyncState
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
@@ -28,29 +35,37 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
 
     private val adapter = HistoryAdapter()
 
-    private val scrollListener = object : com.tonapps.uikit.list.ListPaginationListener() {
+    private val offsetScrollListener = object : ListPaginationListener() {
         override fun onLoadMore() {
             val latLt = adapter.getLastLt() ?: return
             feature.loadMore(latLt)
         }
     }
 
-    override val feature: HistoryScreenFeature by viewModels()
+    override val feature: HistoryScreenFeature by viewModel()
+    private val mainViewModel: MainViewModel by lazy {
+        requireParentFragment().getViewModel()
+    }
 
     private lateinit var headerView: HeaderView
     private lateinit var listView: RecyclerView
     private lateinit var emptyView: EmptyLayout
-    private lateinit var shimmerView: View
+
+    private val scrollListener = object : RecyclerVerticalScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
+            headerView.setDivider(verticalScrollOffset > 0)
+            mainViewModel.setBottomScrolled(!recyclerView.isMaxScrollReached)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         headerView = view.findViewById(R.id.header)
+        headerView.setColor(requireContext().backgroundTransparentColor)
 
         listView = view.findViewById(R.id.list)
-        listView.layoutManager = com.tonapps.uikit.list.LinearLayoutManager(view.context)
         listView.adapter = adapter
-        collectFlow(listView.topScrolled, headerView::setDivider)
+        listView.addOnScrollListener(scrollListener)
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
@@ -60,29 +75,27 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
                 // navigation?.receive()
             }
         }
-
-        shimmerView = view.findViewById(R.id.shimmer)
     }
 
     override fun newUiState(state: HistoryScreenState) {
         setAsyncState(state.asyncState)
         if (state.items.isEmpty() && state.asyncState == AsyncState.Default) {
-            setEmptyState()
+            emptyView.visibility = View.VISIBLE
+            listView.visibility = View.GONE
+        } else if (state.items.isEmpty() && state.asyncState == AsyncState.Loading) {
+            emptyView.visibility = View.GONE
+            listView.visibility = View.VISIBLE
+            adapter.submitList(state.items)
         } else if (state.items.isNotEmpty()) {
-            adapter.submitList(state.items) {
-                emptyView.visibility = View.GONE
-                toggleVisibilityAnimation(shimmerView, listView)
-            }
+            emptyView.visibility = View.GONE
+            listView.visibility = View.VISIBLE
+            adapter.submitList(state.items)
         }
 
-        listView.clearOnScrollListeners()
+        listView.removeOnScrollListener(offsetScrollListener)
         if (!state.loadedAll) {
-            listView.addOnScrollListener(scrollListener)
+            listView.addOnScrollListener(offsetScrollListener)
         }
-    }
-
-    private fun setEmptyState() {
-        toggleVisibilityAnimation(shimmerView, emptyView)
     }
 
     override fun newUiEffect(effect: HistoryScreenEffect) {
@@ -103,5 +116,32 @@ class HistoryScreen: MainTabScreen<HistoryScreenState, HistoryScreenEffect, Hist
     override fun onUpScroll() {
         listView.smoothScrollToPosition(0)
         headerView.setDivider(false)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        attachScrollHandler()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        detachScrollHandler()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (hidden) {
+            detachScrollHandler()
+        } else {
+            attachScrollHandler()
+        }
+    }
+
+    private fun attachScrollHandler() {
+        scrollListener.attach(listView)
+    }
+
+    private fun detachScrollHandler() {
+        scrollListener.detach()
     }
 }

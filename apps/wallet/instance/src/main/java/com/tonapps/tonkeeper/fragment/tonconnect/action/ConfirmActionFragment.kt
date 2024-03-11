@@ -10,7 +10,6 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.tonconnect.TonConnect
 import com.tonapps.tonkeeper.core.tonconnect.models.TCTransaction
-import com.tonapps.tonkeeper.fragment.passcode.lock.LockScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
@@ -88,7 +87,7 @@ class ConfirmActionFragment: BaseFragment(R.layout.dialog_confirm_action), BaseF
         feeView.text = transaction.fee
 
         confirmButton.setOnClickListener {
-            navigation?.add(LockScreen.newInstance(SIGN_REQUEST_KEY))
+            // navigation?.add(LockScreen.newInstance(SIGN_REQUEST_KEY))
         }
 
         adapter.submitList(transaction.previewItems)

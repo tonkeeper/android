@@ -15,40 +15,10 @@ import kotlin.jvm.JvmField
 class WalletV4R2Contract(
     workchain: Int = DEFAULT_WORKCHAIN,
     publicKey: PublicKeyEd25519,
-) : BaseWalletContract(workchain, publicKey) {
-
-    override fun getStateCell(): Cell {
-        return CellBuilder.createCell {
-            storeUInt(0, 32)
-            storeUInt(walletId, 32)
-            storeBits(publicKey.key)
-            storeBit(false)
-        }
-    }
+) : WalletV4R1Contract(workchain, publicKey) {
 
     override fun getCode(): Cell {
         return CODE
-    }
-
-    override fun createTransferUnsignedBody(
-        validUntil: Long,
-        seqno: Int,
-        vararg gifts: WalletTransfer
-    ) = CellBuilder.createCell {
-        storeUInt(walletId, 32)
-        storeUInt(validUntil, 32)
-        storeUInt(seqno, 32)
-        storeUInt(0, 8)
-        for (gift in gifts) {
-            var sendMode = 3
-            if (gift.sendMode > -1) {
-                sendMode = gift.sendMode
-            }
-            val intMsg = CellRef(createIntMsg(gift))
-
-            storeUInt(sendMode, 8)
-            storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)
-        }
     }
 
     companion object {

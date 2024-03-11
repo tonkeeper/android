@@ -41,6 +41,7 @@ internal class Wallets(
         setType(wallet.id, wallet.type)
         setEmoji(wallet.id, wallet.emoji)
         setColor(wallet.id, wallet.color)
+        setVersion(wallet.id, wallet.version)
 
         addId(wallet.id)
     }

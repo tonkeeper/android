@@ -1,38 +1,44 @@
 package com.tonapps.tonkeeper.fragment.wallet.collectibles
 
 import androidx.lifecycle.viewModelScope
-import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.collectibles.CollectiblesRepository
-import com.tonapps.tonkeeper.fragment.wallet.collectibles.list.CollectiblesItem
+import com.tonapps.tonkeeper.fragment.wallet.collectibles.list.Item
+import com.tonapps.wallet.data.account.WalletRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.launch
+import uikit.extensions.collectFlow
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 
-class CollectiblesScreenFeature: UiFeature<CollectiblesScreenState, CollectiblesScreenEffect>(
+class CollectiblesScreenFeature(
+    private val walletRepository: WalletRepository
+): UiFeature<CollectiblesScreenState, CollectiblesScreenEffect>(
     CollectiblesScreenState()
 ) {
 
     private val repository = CollectiblesRepository()
 
     init {
-        requestState()
+        collectFlow(walletRepository.activeWalletFlow) {
+            requestState(it)
+        }
     }
 
-    private fun requestState() {
+    private fun requestState(wallet: WalletEntity) {
         updateUiState { currentState ->
             currentState.copy(
-                asyncState = AsyncState.Loading
+                asyncState = AsyncState.Loading,
+                items = Item.Skeleton.list
             )
         }
 
         viewModelScope.launch {
-            load(false)
-            load(true)
+            load(false, wallet)
+            load(true, wallet)
         }
     }
 
-    private suspend fun load(sync: Boolean) {
-        val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return
+    private suspend fun load(sync: Boolean, wallet: WalletEntity) {
         val accountId = wallet.accountId
         val response = if (sync) {
             repository.getFromCloud(accountId, wallet.testnet)
@@ -42,9 +48,9 @@ class CollectiblesScreenFeature: UiFeature<CollectiblesScreenState, Collectibles
 
         val nftItems = response?.data ?: return
 
-        val items = mutableListOf<CollectiblesItem>()
+        val items = mutableListOf<Item>()
         for (nftItem in nftItems) {
-            items.add(CollectiblesItem(nftItem))
+            items.add(Item.Nft(nftItem))
         }
 
         val asyncState = if (sync) {

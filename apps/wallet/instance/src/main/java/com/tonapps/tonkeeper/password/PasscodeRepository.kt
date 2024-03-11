@@ -1,0 +1,58 @@
+package com.tonapps.tonkeeper.password
+
+import android.content.Context
+import android.util.Log
+import androidx.biometric.BiometricPrompt
+import com.tonapps.wallet.data.settings.SettingsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+
+class PasscodeRepository(
+    private val dataStore: PasscodeDataStore,
+    private val settingsRepository: SettingsRepository,
+) {
+
+    val hasPinCode: Boolean
+        get() = dataStore.hasPinCode
+
+    suspend fun set(code: String) {
+        dataStore.setPinCode(code)
+    }
+
+    suspend fun confirmation(context: Context): Boolean = withContext(Dispatchers.Main) {
+        if (!settingsRepository.biometric || !PasscodeBiometric.isAvailableOnDevice(context)) {
+            return@withContext dialog(context)
+        }
+
+        if (!biometric(context)) {
+            dialog(context)
+        } else {
+            true
+        }
+    }
+
+    private suspend fun biometric(context: Context): Boolean = suspendCancellableCoroutine { continuation ->
+        PasscodeBiometric.showPrompt(context, object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                continuation.resume(false)
+            }
+
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                continuation.resume(true)
+            }
+
+            override fun onAuthenticationFailed() {
+                continuation.resume(false)
+            }
+        })
+    }
+
+    private suspend fun dialog(context: Context): Boolean = suspendCancellableCoroutine { continuation ->
+        val dialog = PasscodeDialog(context) { result ->
+            continuation.resume(result)
+        }
+        dialog.show()
+    }
+}

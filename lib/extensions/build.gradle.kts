@@ -24,5 +24,7 @@ android {
 
 dependencies {
     implementation(Dependence.KotlinX.coroutines)
+    implementation(Dependence.Koin.core)
     implementation(Dependence.AndroidX.core)
+    implementation(project(Dependence.UIKit.core))
 }

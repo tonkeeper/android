@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.api
 
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.wallet.api.Tonapi
 import io.tonapi.models.Account

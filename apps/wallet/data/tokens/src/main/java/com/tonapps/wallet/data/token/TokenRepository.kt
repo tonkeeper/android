@@ -52,7 +52,7 @@ class TokenRepository(
         return fiatBalance
     }
 
-    private suspend fun get(
+    suspend fun get(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean

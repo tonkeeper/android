@@ -15,7 +15,6 @@ import com.tonapps.tonkeeper.core.tonconnect.models.TCData
 import com.tonapps.tonkeeper.core.tonconnect.models.TCRequest
 import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
 import com.tonapps.tonkeeper.extensions.launch
-import com.tonapps.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
@@ -122,7 +121,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         connectProcessView.visibility = View.VISIBLE
         connectProcessView.state = ProcessTaskView.State.LOADING
 
-        navigation?.add(LockScreen.newInstance(TC_REQUEST))
+        // navigation?.add(LockScreen.newInstance(TC_REQUEST))
     }
 
     private fun setSuccess() {

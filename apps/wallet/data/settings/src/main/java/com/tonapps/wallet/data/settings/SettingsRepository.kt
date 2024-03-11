@@ -1,9 +1,9 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
-import android.util.Log
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.localization.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,6 +32,9 @@ class SettingsRepository(
     private val _currencyFlow = MutableStateFlow<WalletCurrency?>(null)
     val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
+    private val _languageFlow = MutableStateFlow<Language?>(null)
+    val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
     var theme: String = prefs.getString(THEME_KEY, "blue")!!
@@ -51,13 +54,12 @@ class SettingsRepository(
             }
         }
 
-    var language: String = prefs.getString(LANGUAGE_CODE_KEY, "en")!!
+    var language: Language = Language(prefs.getString(LANGUAGE_CODE_KEY, "en") ?: Language.DEFAULT)
         set(value) {
             if (value != field) {
-                field = value.ifEmpty {
-                    "en"
-                }
-                prefs.edit().putString(LANGUAGE_CODE_KEY, field).apply()
+                field = value
+                prefs.edit().putString(LANGUAGE_CODE_KEY, field.code).apply()
+                _languageFlow.value = field
             }
         }
 
@@ -88,6 +90,7 @@ class SettingsRepository(
     init {
         scope.launch(Dispatchers.IO) {
             _currencyFlow.value = currency
+            _languageFlow.value = language
         }
     }
 }

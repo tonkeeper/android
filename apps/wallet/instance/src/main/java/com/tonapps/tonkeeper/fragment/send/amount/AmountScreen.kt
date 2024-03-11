@@ -6,6 +6,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
@@ -15,6 +16,7 @@ import com.tonapps.uikit.color.buttonPrimaryBackgroundColor
 import com.tonapps.uikit.color.buttonSecondaryBackgroundColor
 import com.tonapps.uikit.color.constantRedColor
 import com.tonapps.uikit.color.textSecondaryColor
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 
@@ -24,12 +26,12 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         fun newInstance() = AmountScreen()
     }
 
-    override val feature: AmountScreenFeature by viewModels()
+    override val feature: AmountScreenFeature by viewModel()
 
     private val selectTokenPopup: SelectTokenPopup by lazy {
         val popup = SelectTokenPopup(requireContext())
-        popup.doOnSelectJetton = { jetton ->
-            feature.selectJetton(jetton)
+        popup.doOnSelectJetton = { token ->
+            feature.selectToken(token)
             forceSetAmount(0f)
         }
         popup
@@ -52,7 +54,6 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         valueView.doOnTextChanged { _, _, _, _ ->
             feature.setValue(getValue())
         }
-        valueView.setMaxLength(9)
 
         valueCurrencyView = view.findViewById(R.id.value_currency)
 
@@ -60,7 +61,13 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         availableView = view.findViewById(R.id.available)
 
         maxButton = view.findViewById(R.id.max)
-        maxButton.setOnClickListener { setMaxValue() }
+        maxButton.setOnClickListener {
+            if (maxButton.isActivated) {
+                clearValue()
+            } else {
+                setMaxValue()
+            }
+        }
 
         continueButton = view.findViewById(R.id.continue_action)
         continueButton.setOnClickListener { next() }
@@ -69,7 +76,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     fun forceSetJetton(address: String?) {
-        address?.let { feature.selectJetton(it) }
+        address?.let { feature.selectToken(it) }
     }
 
     fun forceSetAmount(amount: Float) {
@@ -94,24 +101,30 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     private fun setMaxValue() {
         val maxValue = feature.currentBalance
         val text = valueView.text ?: return
-        text.replace(0, text.length, maxValue.toString())
+        val format = CurrencyFormatter.format(value = maxValue, decimals = feature.decimals)
+        text.replace(0, text.length, format)
+    }
+
+    private fun clearValue() {
+        forceSetAmount(0f)
     }
 
     override fun newUiState(state: AmountScreenState) {
         rateView.text = state.rate
+        valueView.setMaxLength(state.decimals)
 
-        if (1 >= state.jettons.size) {
+        if (1 >= state.tokens.size) {
             tokenView.visibility = View.GONE
         } else {
             tokenView.visibility = View.VISIBLE
-            tokenView.text = state.selectedToken
-            selectTokenPopup.selectedJetton = state.selectedJetton
-            selectTokenPopup.jettons = state.jettons
+            tokenView.text = state.selectedTokenCode
+            selectTokenPopup.tokens = state.tokens
+            selectTokenPopup.selectedToken = state.selectedToken
         }
 
-        sendFeature.setJetton(state.selectedJetton)
+        sendFeature.setJetton(state.selectedToken)
 
-        valueCurrencyView.text = state.selectedToken
+        valueCurrencyView.text = state.selectedTokenCode
 
         if (state.insufficientBalance) {
             availableView.setText(Localization.insufficient_balance)
@@ -132,6 +145,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
             maxButton.background.setTint(requireContext().buttonSecondaryBackgroundColor)
         }
 
+        maxButton.isActivated = state.maxActive
         sendFeature.setMax(state.maxActive)
     }
 

@@ -2,18 +2,21 @@ package com.tonapps.tonkeeper.fragment.wallet.collectibles
 
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.main.MainTabScreen
-import com.tonapps.tonkeeper.fragment.wallet.collectibles.list.CollectiblesAdapter
-import uikit.extensions.collectFlow
+import com.tonapps.tonkeeper.fragment.main.MainViewModel
+import com.tonapps.tonkeeper.fragment.wallet.collectibles.list.Adapter
+import com.tonapps.uikit.color.backgroundTransparentColor
+import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.extensions.isMaxScrollReached
 import uikit.extensions.toggleVisibilityAnimation
-import uikit.extensions.topScrolled
 import uikit.mvi.AsyncState
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
@@ -25,24 +28,36 @@ class CollectiblesScreen: MainTabScreen<CollectiblesScreenState, CollectiblesScr
         fun newInstance() = CollectiblesScreen()
     }
 
-    override val feature: CollectiblesScreenFeature by viewModels()
+    override val feature: CollectiblesScreenFeature by viewModel()
 
-    private val adapter = CollectiblesAdapter()
+    private val mainViewModel: MainViewModel by lazy {
+        requireParentFragment().getViewModel()
+    }
+
+    private val adapter = Adapter()
 
     private lateinit var headerView: HeaderView
     private lateinit var listView: RecyclerView
     private lateinit var emptyView: EmptyLayout
-    private lateinit var shimmerView: View
+
+    private val scrollListener = object : RecyclerVerticalScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
+            headerView.setDivider(verticalScrollOffset > 0)
+            mainViewModel.setBottomScrolled(!recyclerView.isMaxScrollReached)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
+        headerView.setColor(requireContext().backgroundTransparentColor)
+
         listView = view.findViewById(R.id.list)
         listView.layoutManager = object : GridLayoutManager(context, spanCount) {
             override fun supportsPredictiveItemAnimations(): Boolean = false
         }
         listView.adapter = adapter
-        collectFlow(listView.topScrolled, headerView::setDivider)
+        listView.addOnScrollListener(scrollListener)
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
@@ -52,8 +67,6 @@ class CollectiblesScreen: MainTabScreen<CollectiblesScreenState, CollectiblesScr
                 // navigation?.receive()
             }
         }
-
-        shimmerView = view.findViewById(R.id.shimmer)
     }
 
     override fun onUpScroll() {
@@ -64,13 +77,7 @@ class CollectiblesScreen: MainTabScreen<CollectiblesScreenState, CollectiblesScr
     override fun newUiState(state: CollectiblesScreenState) {
         setAsyncState(state.asyncState)
 
-        if (state.items.isEmpty() && state.asyncState == AsyncState.Default) {
-            toggleVisibilityAnimation(shimmerView, emptyView)
-        } else if (state.items.isNotEmpty()) {
-            adapter.submitList(state.items) {
-                toggleVisibilityAnimation(shimmerView, listView)
-            }
-        }
+        adapter.submitList(state.items)
     }
 
     private fun setAsyncState(asyncState: AsyncState) {
@@ -80,4 +87,32 @@ class CollectiblesScreen: MainTabScreen<CollectiblesScreenState, CollectiblesScr
             headerView.setDefault()
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        attachScrollHandler()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        detachScrollHandler()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (hidden) {
+            detachScrollHandler()
+        } else {
+            attachScrollHandler()
+        }
+    }
+
+    private fun attachScrollHandler() {
+        scrollListener.attach(listView)
+    }
+
+    private fun detachScrollHandler() {
+        scrollListener.detach()
+    }
+
 }

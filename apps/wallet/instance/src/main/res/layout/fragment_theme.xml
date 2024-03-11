@@ -14,7 +14,7 @@
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="@dimen/offsetMedium">
+        android:padding="@dimen/offsetMedium">
 
         <uikit.widget.item.ItemIconView
             android:id="@+id/theme_blue"

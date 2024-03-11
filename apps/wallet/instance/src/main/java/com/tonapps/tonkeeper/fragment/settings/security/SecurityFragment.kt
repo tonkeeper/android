@@ -6,7 +6,6 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.event.WalletSettingsEvent
 import com.tonapps.tonkeeper.extensions.isRecoveryPhraseBackup
-import com.tonapps.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonapps.tonkeeper.fragment.wallet.phrase.PhraseWalletFragment
 import core.EventBus
 import kotlinx.coroutines.launch
@@ -69,7 +68,7 @@ class SecurityFragment : BaseFragment(R.layout.fragment_security), BaseFragment.
     }
 
     private fun openRecoveryPhrase() {
-        navigation?.add(LockScreen.newInstance(RECORD_PHRASE_REQUEST))
+        // navigation?.add(LockScreen.newInstance(RECORD_PHRASE_REQUEST))
     }
 
     private fun requestWallet() {

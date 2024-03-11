@@ -5,7 +5,6 @@ import com.tonapps.blockchain.Coin
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
-import com.tonapps.tonkeeper.Global
 import com.tonapps.tonkeeper.api.amount
 import com.tonapps.tonkeeper.api.description
 import com.tonapps.tonkeeper.api.fee
@@ -37,6 +36,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import com.tonapps.network.Network
 import com.tonapps.tonkeeper.App
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import java.util.Calendar
 import java.util.Date
@@ -313,7 +313,7 @@ object HistoryHelper {
                 comment = tonTransfer.comment,
                 value = value,
                 tokenCode = "TON",
-                coinIconUrl = Global.tonCoinUrl,
+                coinIconUrl = TokenEntity.TON.imageUri.toString(),
                 timestamp = timestamp,
                 date = date,
                 isOut = isOut,

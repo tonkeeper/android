@@ -40,10 +40,15 @@
                 android:textColor="?attr/textPrimaryColor"/>
 
             <com.tonapps.tonkeeper.view.TransactionDetailView
-                android:id="@+id/recipient"
+                android:id="@+id/wallet"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"/>
+
+            <com.tonapps.tonkeeper.view.TransactionDetailView
+                android:id="@+id/recipient"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
             <com.tonapps.tonkeeper.view.TransactionDetailView
                 android:id="@+id/recipient_address"

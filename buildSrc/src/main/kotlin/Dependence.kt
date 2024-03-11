@@ -123,6 +123,7 @@ object Dependence {
             const val settings = ":apps:wallet:data:settings"
             const val rates = ":apps:wallet:data:rates"
             const val tokens = ":apps:wallet:data:tokens"
+            const val collectibles = ":apps:wallet:data:collectibles"
         }
     }
 }

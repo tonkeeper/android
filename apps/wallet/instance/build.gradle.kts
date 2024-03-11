@@ -17,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 28
-        versionName = "0.0.27"
+        versionCode = 29
+        versionName = "0.0.28"
     }
 
     buildFeatures {
@@ -63,6 +63,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.account))
     implementation(project(Dependence.Wallet.Data.settings))
     implementation(project(Dependence.Wallet.Data.rates))
+    implementation(project(Dependence.Wallet.Data.collectibles))
 
     implementation(project(Dependence.UIKit.core))
 
@@ -106,6 +107,7 @@ dependencies {
     implementation(project(Dependence.Lib.qr))
     implementation(project(Dependence.Lib.emoji))
     implementation(project(Dependence.Lib.blockchain))
+    implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Module.ton))
 
     implementation(Dependence.AndroidX.Camera.base)

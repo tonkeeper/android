@@ -1,8 +1,9 @@
 package com.tonapps.tonkeeper.fragment.send
 
+import android.net.Uri
 import com.tonapps.blockchain.Coin
-import com.tonapps.tonkeeper.Global
-import io.tonapi.models.JettonBalance
+import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
@@ -18,31 +19,34 @@ data class TransactionData(
     val comment: String? = null,
     val amountRaw: String = "0",
     val max: Boolean = false,
-    val jetton: JettonBalance? = null,
+    val token: AccountTokenEntity? = null,
     val bounce: Boolean = false,
 ) {
 
-    val icon: String
-        get() = jetton?.jetton?.image ?: Global.tonCoinUrl
+    private val t: TokenEntity
+        get() = token?.balance?.token ?: TokenEntity.TON
+
+    val icon: Uri
+        get() = t.imageUri
 
     val tokenName: String
-        get() = jetton?.jetton?.name ?: "TON"
+        get() = t.name
 
     val tokenAddress: String
-        get() = jetton?.jetton?.address ?: "TON"
+        get() = t.address
 
     val tokenSymbol: String
-        get() = jetton?.jetton?.symbol ?: "TON"
+        get() = t.symbol
 
     val isTon: Boolean
-        get() = tokenSymbol == "TON"
+        get() = t.isTon
 
     val destination: AddrStd
         get() {
             if (isTon) {
                 return AddrStd.parse(address!!)
             }
-            return AddrStd.parse(jetton!!.walletAddress.address)
+            return AddrStd.parse(token?.balance?.walletAddress!!)
         }
 
     val sendMode: Int
@@ -58,16 +62,11 @@ data class TransactionData(
             if (isTon) {
                 return amount
             }
-            return Coins.ofNano(Coin.toNano(0.64f))
+            return Coins.ofNano(Coin.toNano(0.001f))
         }
 
-    private val decimals: Int
-        get() {
-            if (isTon) {
-                return 9
-            }
-            return jetton?.jetton?.decimals ?: 9
-        }
+    val decimals: Int
+        get() = t.decimals
 
     val amount: Coins
         get() {

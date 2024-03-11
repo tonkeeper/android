@@ -7,10 +7,11 @@ import com.tonapps.tonkeeper.core.history.list.holder.HistoryHeaderHolder
 import com.tonapps.tonkeeper.core.history.list.holder.HistoryLoaderHolder
 import com.tonapps.tonkeeper.core.history.list.holder.HistorySpaceHolder
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.uikit.list.BaseListAdapter
 
 open class HistoryAdapter(
     private val disableOpenAction: Boolean = false,
-): com.tonapps.uikit.list.BaseListAdapter() {
+): BaseListAdapter() {
 
     init {
         super.setHasStableIds(true)

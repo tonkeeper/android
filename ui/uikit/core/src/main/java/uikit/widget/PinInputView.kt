@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.core.graphics.withSave
 import com.tonapps.uikit.color.accentGreenColor
@@ -58,6 +59,9 @@ class PinInputView @JvmOverloads constructor(
     val code: String
         get() = numbers.joinToString("")
 
+    val count: Int
+        get() = numbers.size
+
     var doOnCodeUpdated: ((code: String) -> Unit)? = null
 
     fun appendNumber(number: Int) {
@@ -73,6 +77,7 @@ class PinInputView @JvmOverloads constructor(
 
     fun removeLastNumber(update: Boolean = true) {
         if (currentCount == 0 || numbers.isEmpty()) {
+            Log.d("PinInputView", "removeLastNumber")
             return
         }
 

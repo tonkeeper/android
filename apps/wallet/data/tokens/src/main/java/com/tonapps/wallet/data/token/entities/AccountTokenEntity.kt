@@ -20,6 +20,9 @@ data class AccountTokenEntity(
     val address: String
         get() = balance.token.address
 
+    val decimals: Int
+        get() = balance.token.decimals
+
     val name: String
         get() = balance.token.name
 

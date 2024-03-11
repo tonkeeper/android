@@ -45,6 +45,7 @@ class LabelEditorView @JvmOverloads constructor(
 ) : ColumnLayout(context, attrs, defStyle) {
 
     var doOnDone: ((name: String, emoji: String, color: Int) -> Unit)? = null
+    var doOnChange: ((name: String, emoji: String, color: Int) -> Unit)? = null
 
     private val colorAdapter = ColorAdapter {
         color = it
@@ -67,6 +68,7 @@ class LabelEditorView @JvmOverloads constructor(
         get() = nameInput.text
         set(value) {
             nameInput.text = value
+            notifyChange()
         }
 
     var emoji: CharSequence
@@ -75,6 +77,7 @@ class LabelEditorView @JvmOverloads constructor(
             if (emojiView.setEmoji(value)) {
                 HapticHelper.selection(context)
                 emojiView.runAnimation(uikit.R.anim.scale_switch)
+                notifyChange()
             }
         }
 
@@ -85,6 +88,7 @@ class LabelEditorView @JvmOverloads constructor(
                 colorView.backgroundTintList = value.stateList
                 scrollToColor(value)
                 field = value
+                notifyChange()
             }
         }
 
@@ -152,6 +156,10 @@ class LabelEditorView @JvmOverloads constructor(
         nameInput.hideKeyboard()
     }
 
+    fun focus() {
+        nameInput.focus()
+    }
+
     private fun setExtrasAlpha(alpha: Float) {
         actionView.background.alpha = (alpha * 255).toInt()
         overlayView.alpha = alpha
@@ -204,6 +212,10 @@ class LabelEditorView @JvmOverloads constructor(
         }
         removeFocus()
         doOnDone?.invoke(name, emoji.toString(), color)
+    }
+
+    private fun notifyChange() {
+        doOnChange?.invoke(name, emoji.toString(), color)
     }
 
 }

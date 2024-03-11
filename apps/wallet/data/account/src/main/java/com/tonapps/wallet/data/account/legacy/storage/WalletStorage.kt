@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account.legacy.storage
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import core.keyvalue.KeyValue
@@ -14,6 +15,14 @@ internal class WalletStorage(context: Context) {
     private val mnemonicStorage = MnemonicStorage(context)
     private val keyValue = KeyValue(context, "tonkeeper_def")
     private val wallets = Wallets(keyValue)
+
+    suspend fun getSeed(id: Long): ByteArray? {
+        return mnemonicStorage.getSeed(id)
+    }
+
+    suspend fun setSeed(id: Long, seed: ByteArray) {
+        mnemonicStorage.setSeed(id, seed)
+    }
 
     suspend fun addWallet(
         wallet: WalletLegacy,

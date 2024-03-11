@@ -23,6 +23,7 @@
     <string name="subscribed">Подписка</string>
     <string name="new_wallet">Новый кошелек</string>
     <string name="add_wallet_description">Создайте новый кошелек или добавьте существующий.</string>
+    <string name="watch_wallet_add">Мониторинг активности кошелька без фразы восстановления. Вы будете уведомлены о любых транзакциях с этого кошелька.</string>
 
     <string name="watch_only">Только просмотр</string>
     <string name="unverified_token">Непроверенный токен</string>
@@ -218,4 +219,7 @@
     <string name="customize">Персонализировать</string>
     <string name="customize_wallet_title">Персонализируйте кошелек</string>
     <string name="customize_wallet_subtitle">Имя и значок кошелька хранятся локально на вашем устройстве.</string>
+
+    <string name="choose_wallet_title">Выбери кошелек</string>
+    <string name="choose_wallet_subtitle">Выберите кошельки, которые хотите добавить.</string>
 </resources>

@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/pager"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/step_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
@@ -15,9 +15,10 @@
         android:icon="@drawable/ic_chevron_left_16"/>
 
     <FrameLayout
-        android:id="@+id/loader"
+        android:id="@+id/loader_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:visibility="gone">
         
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/loader_icon"

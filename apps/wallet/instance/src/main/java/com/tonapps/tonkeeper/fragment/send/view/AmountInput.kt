@@ -45,11 +45,18 @@ class AmountInput @JvmOverloads constructor(
         super.onTextChanged(text, start, lengthBefore, lengthAfter)
     }
 
-    override fun afterTextChanged(s: Editable?) {
-        val editable = s ?: return
-        if (editable.length > 1 && editable.startsWith("0") && !editable.startsWith("0.")) {
+    override fun afterTextChanged(editable: Editable) {
+        val value = editable.toString()
+        if (value == "." || value == ",") {
+            editable.insert(0, "0")
+        } else if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
             editable.delete(0, 1)
         }
+        /*if (editable.length > 1 && editable.startsWith("0") && !editable.startsWith("0.")) {
+            editable.delete(0, 1)
+        } else if (editable.length == 1 && editable.toString() == ".") {
+            editable.insert(0, "0")
+        }*/
     }
 
     fun setMaxLength(maxLength: Int) {

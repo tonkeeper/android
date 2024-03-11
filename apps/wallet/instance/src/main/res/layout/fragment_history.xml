@@ -26,13 +26,6 @@
             android:positiveButtonText="@string/buy_toncoin"
             android:negativeButtonText="@string/receive"/>
 
-        <uikit.widget.SkeletonLayout
-            android:id="@+id/shimmer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <include layout="@layout/shimmer_history"/>
-        </uikit.widget.SkeletonLayout>
-
     </FrameLayout>
 
     <uikit.widget.HeaderView

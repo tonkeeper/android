@@ -11,6 +11,7 @@ import kotlinx.parcelize.Parcelize
 data class BalanceEntity(
     val token: TokenEntity,
     val value: Float,
+    val walletAddress: String
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -18,7 +19,8 @@ data class BalanceEntity(
 
     constructor(jettonBalance: JettonBalance) : this(
         token = TokenEntity(jettonBalance.jetton),
-        value = Coin.parseFloat(jettonBalance.balance, jettonBalance.jetton.decimals)
+        value = Coin.parseFloat(jettonBalance.balance, jettonBalance.jetton.decimals),
+        walletAddress = jettonBalance.walletAddress.address,
     ) {
         rates = jettonBalance.price
     }

@@ -22,7 +22,7 @@
             android:id="@+id/label_color"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginEnd="@dimen/offsetMedium"
+            android:layout_marginEnd="8dp"
             android:layout_gravity="center|end"
             android:background="@drawable/bg_emoji_edit">
             <com.tonapps.emoji.ui.EmojiView

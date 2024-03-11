@@ -15,7 +15,13 @@ object Coin {
         decimals: Int = DEFAULT_DECIMALS
     ): Float {
         val floatValue = value.toFloatOrNull() ?: return 0f
-        return floatValue * 10.0.pow(-decimals.toDouble()).toFloat()
+        val doubleValue = floatValue * 10.0.pow(-decimals.toDouble())
+        val parsed = doubleValue.toFloat()
+        val string = parsed.toString()
+        if (string.endsWith("E-$decimals")) {
+            return string.removeSuffix("E-$decimals").toFloat()
+        }
+        return parsed
     }
 
     fun bigDecimal(

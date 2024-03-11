@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.account.legacy
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletV3R1Contract
 import com.tonapps.blockchain.ton.contract.WalletV3R2Contract
+import com.tonapps.blockchain.ton.contract.WalletV4R1Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
@@ -41,6 +42,8 @@ data class WalletLegacy(
             WalletVersion.V4R2 -> WalletV4R2Contract(WORKCHAIN, publicKey)
             WalletVersion.V3R2 -> WalletV3R2Contract(WORKCHAIN, publicKey)
             WalletVersion.V3R1 -> WalletV3R1Contract(WORKCHAIN, publicKey)
+            WalletVersion.V4R1 -> WalletV4R1Contract(WORKCHAIN, publicKey)
+            WalletVersion.UNKNOWN -> throw IllegalArgumentException("Unknown wallet version")
         }
     }
 

@@ -8,11 +8,7 @@ class NFTLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : LinearLayoutCompat(context, attrs, defStyle) {
-
-    init {
-        orientation = VERTICAL
-    }
+) : ColumnLayout(context, attrs, defStyle) {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)

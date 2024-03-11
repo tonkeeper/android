@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:title="@string/customize_wallet_title"
+        android:description="@string/customize_wallet_subtitle"/>
+
+    <com.tonapps.tonkeeper.ui.component.label.LabelEditorView
+        android:id="@+id/editor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:button="@string/continue_action"/>
+
+</uikit.widget.ColumnLayout>

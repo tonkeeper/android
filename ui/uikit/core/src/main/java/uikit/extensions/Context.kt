@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.animation.AnimationUtils
+import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.annotation.AnimRes
 import androidx.annotation.ColorInt
@@ -104,4 +105,12 @@ fun Context.textWithLabel(text: String, label: String?): CharSequence {
 
 fun Context.drawable(id: Int): Drawable {
     return ResourcesCompat.getDrawable(resources, id, theme)!!
+}
+
+fun Context.getCurrentFocus(): View? {
+    return activity?.currentFocus
+}
+
+fun Context.getCurrentFocusEditText(): EditText? {
+    return getCurrentFocus() as? EditText
 }

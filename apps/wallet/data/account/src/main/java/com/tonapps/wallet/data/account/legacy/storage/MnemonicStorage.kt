@@ -7,25 +7,36 @@ internal class MnemonicStorage(context: Context) {
 
     private companion object {
         private const val WORDS_KEY = "words"
+        private const val SEED_KEY = "seed"
     }
 
     private val encryptedKeyValue = EncryptedKeyValue(context, "tonkeeper")
 
+    suspend fun getSeed(id: Long): ByteArray? {
+        val key = keySeed(id)
+        return encryptedKeyValue.getByteArray(key, null)
+    }
+
+    suspend fun setSeed(id: Long, seed: ByteArray) {
+        val key = keySeed(id)
+        encryptedKeyValue.putByteArray(key, seed)
+    }
+
     suspend fun add(id: Long, mnemonic: List<String>) {
-        val key = key(id)
+        val key = keyWords(id)
         if (mnemonic.isNotEmpty()) {
             encryptedKeyValue.putString(key, mnemonic.joinToString(","))
         }
     }
 
     suspend fun get(id: Long): List<String> {
-        val key = key(id)
+        val key = keyWords(id)
         val words = encryptedKeyValue.getString(key, null)?.split(",")
         return words ?: emptyList()
     }
 
     suspend fun delete(id: Long) {
-        val key = key(id)
+        val key = keyWords(id)
         encryptedKeyValue.remove(key)
     }
 
@@ -33,10 +44,17 @@ internal class MnemonicStorage(context: Context) {
         encryptedKeyValue.clear()
     }
 
-    private fun key(id: Long): String {
+    private fun keyWords(id: Long): String {
         if (id == 0L) {
             return WORDS_KEY
         }
         return "${WORDS_KEY}_$id"
+    }
+
+    private fun keySeed(id: Long): String {
+        if (id == 0L) {
+            return SEED_KEY
+        }
+        return "${SEED_KEY}_$id"
     }
 }

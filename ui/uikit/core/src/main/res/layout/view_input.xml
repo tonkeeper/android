@@ -46,6 +46,7 @@
             android:layout_marginHorizontal="@dimen/offsetExtraSmall"
             android:layout_gravity="center"
             android:visibility="gone"
+            android:tint="?attr/iconSecondaryColor"
             android:src="@drawable/ic_xmark_circle_16"/>
 
         <uikit.widget.LoaderView

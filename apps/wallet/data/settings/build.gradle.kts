@@ -27,4 +27,5 @@ dependencies {
     implementation(Dependence.Koin.core)
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Wallet.Data.core))
+    implementation(project(Dependence.Wallet.localization))
 }

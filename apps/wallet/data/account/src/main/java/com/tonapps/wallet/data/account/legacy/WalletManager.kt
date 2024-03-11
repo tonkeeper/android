@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account.legacy
 
 import android.app.Application
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.wallet.data.account.WalletType
 import kotlinx.coroutines.Dispatchers
@@ -36,9 +37,26 @@ class WalletManager(
     }
 
     suspend fun getPrivateKey(id: Long): PrivateKeyEd25519 {
-        val mnemonic = getMnemonic(id)
-        val seed = Mnemonic.toSeed(mnemonic)
+        val seed = getSeed(id)
         return PrivateKeyEd25519(seed)
+    }
+
+    private suspend fun getSeed(id: Long): ByteArray {
+        val seed = storage.getSeed(id)
+        if (seed != null) {
+            return seed
+        }
+        return createSeed(id)
+    }
+
+    private suspend fun createSeed(id: Long): ByteArray {
+        val mnemonic = getMnemonic(id)
+        if (mnemonic.isEmpty()) {
+            return ByteArray(0)
+        }
+        val seed = Mnemonic.toSeed(mnemonic)
+        storage.setSeed(id, seed)
+        return seed
     }
 
     suspend fun edit(
@@ -162,6 +180,7 @@ class WalletManager(
         emoji: CharSequence,
         color: Int,
         singer: Boolean,
+        version: WalletVersion = WalletVersion.V4R2
     ): WalletLegacy = withContext(Dispatchers.IO) {
         val wallet = WalletLegacy(
             id = System.currentTimeMillis(),
@@ -199,6 +218,30 @@ class WalletManager(
             type = if (testnet) WalletType.Testnet else WalletType.Default,
             emoji = emoji,
             color = color
+        )
+
+        insertWallet(wallet, mnemonic)
+
+        wallet
+    }
+
+    suspend fun addWallet(
+        mnemonic: List<String>,
+        publicKey: PublicKeyEd25519,
+        version: WalletVersion,
+        name: String? = null,
+        emoji: CharSequence,
+        color: Int,
+        testnet: Boolean
+    ): WalletLegacy = withContext(Dispatchers.IO) {
+        val wallet = WalletLegacy(
+            id = System.currentTimeMillis(),
+            name = name ?: "Wallet",
+            publicKey = publicKey,
+            type = if (testnet) WalletType.Testnet else WalletType.Default,
+            emoji = emoji,
+            color = color,
+            version = version
         )
 
         insertWallet(wallet, mnemonic)

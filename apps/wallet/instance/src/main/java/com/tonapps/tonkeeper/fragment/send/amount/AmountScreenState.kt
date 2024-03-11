@@ -4,11 +4,11 @@ import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.data.core.WalletCurrency
 import io.tonapi.models.JettonBalance
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import uikit.mvi.UiState
 
 data class AmountScreenState(
     val wallet: WalletLegacy? = null,
-    val tonBalance: Float = 0f,
     val amount: Float = 0f,
     val currency: WalletCurrency = App.settings.currency,
     val available: String = "",
@@ -17,11 +17,16 @@ data class AmountScreenState(
     val remaining: String = "",
     val canContinue: Boolean = false,
     val maxActive: Boolean = false,
-    val jettons: List<JettonBalance> = emptyList(),
-    val selectedJetton: JettonBalance? = null,
-    val decimals: Int = 9
+    val tokens: List<AccountTokenEntity> = emptyList(),
+    val selectedTokenAddress: String = WalletCurrency.TON.code
 ): UiState() {
 
-    val selectedToken: String
-        get() = selectedJetton?.jetton?.symbol ?: "TON"
+    val selectedToken: AccountTokenEntity?
+        get() = tokens.firstOrNull { it.address == selectedTokenAddress }
+
+    val decimals: Int
+        get() = selectedToken?.decimals ?: 9
+
+    val selectedTokenCode: String
+        get() = selectedToken?.symbol ?: "TON"
 }

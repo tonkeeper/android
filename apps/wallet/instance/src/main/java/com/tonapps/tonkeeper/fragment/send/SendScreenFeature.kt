@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import io.tonapi.models.JettonBalance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,8 +40,8 @@ class SendScreenFeature: UiFeature<SendScreenState, SendScreenEffect>(SendScreen
         _transaction.value = _transaction.value?.copy(amountRaw = amount)
     }
 
-    fun setJetton(jetton: JettonBalance?) {
-        _transaction.value = _transaction.value?.copy(jetton = jetton)
+    fun setJetton(token: AccountTokenEntity?) {
+        _transaction.value = _transaction.value?.copy(token = token)
     }
 
     fun setMax(max: Boolean) {

@@ -12,13 +12,12 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.widget.WidgetBalanceProvider
 import com.tonapps.tonkeeper.dialog.LogoutDialog
 import com.tonapps.tonkeeper.fragment.root.RootActivity
-import com.tonapps.tonkeeper.fragment.settings.language.LanguageFragment
 import com.tonapps.tonkeeper.fragment.settings.legal.LegalFragment
 import com.tonapps.tonkeeper.fragment.settings.list.SettingsAdapter
 import com.tonapps.tonkeeper.fragment.settings.list.item.SettingsIdItem
 import com.tonapps.tonkeeper.fragment.settings.security.SecurityFragment
-import com.tonapps.tonkeeper.ui.screen.currency.CurrencyScreen
-import com.tonapps.tonkeeper.ui.screen.theme.ThemeScreen
+import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
+import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeScreen
 import uikit.base.BaseFragment
 import uikit.decoration.ListCellDecoration
 import uikit.extensions.applyNavBottomPadding
@@ -118,7 +117,6 @@ class SettingsScreen: UiScreen<SettingsScreenState, SettingsScreenEffect, Settin
             SettingsIdItem.THEME_ID -> {
                 nav.add(ThemeScreen.newInstance())
             }
-            SettingsIdItem.LANGUAGE_ID -> { nav.add(LanguageFragment.newInstance()) }
         }
     }
 

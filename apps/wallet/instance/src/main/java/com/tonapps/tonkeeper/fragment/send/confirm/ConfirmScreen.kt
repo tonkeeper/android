@@ -1,7 +1,5 @@
 package com.tonapps.tonkeeper.fragment.send.confirm
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -11,11 +9,12 @@ import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.signer.SingerResultContract
-import com.tonapps.tonkeeper.fragment.passcode.lock.LockScreen
 import com.tonapps.tonkeeper.fragment.send.SendScreenEffect
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeper.fragment.wallet.history.HistoryScreen
+import com.tonapps.uikit.list.ListCell
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.extensions.pinToBottomInsets
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -24,15 +23,15 @@ import uikit.widget.ProcessTaskView
 class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, ConfirmScreenFeature>(R.layout.fragment_send_confirm) {
 
     companion object {
-        private const val SEND_REQUEST = "send"
 
         fun newInstance() = ConfirmScreen()
     }
 
-    override val feature: ConfirmScreenFeature by viewModels()
+    override val feature: ConfirmScreenFeature by viewModel()
 
     private lateinit var iconView: FrescoView
     private lateinit var titleView: AppCompatTextView
+    private lateinit var walletView: TransactionDetailView
     private lateinit var recipientView: TransactionDetailView
     private lateinit var recipientAddressView: TransactionDetailView
     private lateinit var amountView: TransactionDetailView
@@ -50,22 +49,19 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(SEND_REQUEST) { _ ->
-            feature.send(sendFeature.transaction.value!!)
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         iconView = view.findViewById(R.id.icon)
 
         titleView = view.findViewById(R.id.title)
 
+        walletView = view.findViewById(R.id.wallet)
+        walletView.title = getString(Localization.wallet)
+        walletView.position = com.tonapps.uikit.list.ListCell.Position.FIRST
+
         recipientView = view.findViewById(R.id.recipient)
         recipientView.title = getString(Localization.recipient)
-        recipientView.position = com.tonapps.uikit.list.ListCell.Position.FIRST
+        recipientView.position = com.tonapps.uikit.list.ListCell.Position.MIDDLE
 
         recipientAddressView = view.findViewById(R.id.recipient_address)
         recipientAddressView.title = getString(Localization.recipient_address)
@@ -93,8 +89,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         sendFeature.transaction.observe(viewLifecycleOwner) { transaction ->
             setRecipient(transaction.address!!, transaction.name)
             setComment(transaction.comment)
-
-            feature.setAmount(transaction.amount, transaction.tokenAddress, transaction.tokenSymbol)
+            feature.setAmount(transaction.amountRaw, transaction.decimals, transaction.tokenAddress)
             iconView.setImageURI(transaction.icon)
 
             if (transaction.isTon) {
@@ -105,10 +100,6 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         }
     }
 
-    private fun send() {
-        navigation?.add(LockScreen.newInstance(SEND_REQUEST))
-    }
-
     private fun sign() {
         feature.sign(sendFeature.transaction.value!!)
     }
@@ -116,12 +107,12 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
     private fun setComment(comment: String?) {
         if (comment.isNullOrEmpty()) {
             commentView.visibility = View.GONE
-            feeView.position = com.tonapps.uikit.list.ListCell.Position.LAST
+            feeView.position = ListCell.Position.LAST
         } else {
             commentView.visibility = View.VISIBLE
             commentView.value = comment
 
-            feeView.position = com.tonapps.uikit.list.ListCell.Position.MIDDLE
+            feeView.position = ListCell.Position.MIDDLE
         }
     }
 
@@ -150,6 +141,10 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
             processView.visibility = View.GONE
         }
 
+        state.walletLabel?.let {
+            walletView.value = it.title
+        }
+
         amountView.value = state.amount
         amountView.description = state.amountInCurrency
 
@@ -165,7 +160,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
             if (state.signer) {
                 sign()
             } else {
-                send()
+                feature.send(requireContext(), sendFeature.transaction.value!!)
             }
         }
     }

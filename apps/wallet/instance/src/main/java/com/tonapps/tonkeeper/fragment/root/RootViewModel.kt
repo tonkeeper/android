@@ -1,29 +1,26 @@
 package com.tonapps.tonkeeper.fragment.root
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.fragment.wallet.history.HistoryScreen
-import com.tonapps.tonkeeper.ui.screen.init.InitFragment
+import com.tonapps.tonkeeper.password.PasscodeRepository
+import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.WalletRepository
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
-import com.tonapps.wallet.data.account.legacy.WalletManager
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
 
 class RootViewModel(
+    private val passcodeRepository: PasscodeRepository,
     private val walletRepository: WalletRepository
 ): ViewModel() {
 
@@ -54,8 +51,8 @@ class RootViewModel(
     }
 
     private fun resolveSignerLink(uri: Uri) {
-        val fragment = InitFragment.singer(uri) ?: return
-        _addFragmentAction.trySend(fragment)
+        // val fragment = InitScreen.singer(uri) ?: return
+       //  _addFragmentAction.trySend(fragment)
     }
 
     private fun resolveOther(uri: Uri) {

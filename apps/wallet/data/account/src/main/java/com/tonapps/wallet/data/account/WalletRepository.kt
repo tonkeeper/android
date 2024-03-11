@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account
 
 import android.graphics.Color
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import com.tonapps.wallet.data.account.legacy.WalletManager
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic
 
 class WalletRepository(
@@ -77,11 +79,47 @@ class WalletRepository(
         _activeWalletFlow.value = wallets.find { it.id == activeWalletId }
     }
 
-    suspend fun createNewWallet() {
+    suspend fun createNewWallet(label: WalletLabel) {
         val words = Mnemonic.generate()
-        val legacy = legacyManager.addWallet(words, "Wallet", "\uD83D\uDC8E", WalletColor.all.first(), false)
+        val legacy = legacyManager.addWallet(words, label.name, label.emoji, label.color, false)
 
         updateWallets()
+    }
+
+    suspend fun addWatchWallet(
+        publicKey: PublicKeyEd25519,
+        label: WalletLabel,
+        version: WalletVersion,
+    ) {
+        val legacy = legacyManager.addWatchWallet(publicKey, label.name, label.emoji, label.color, false, version)
+
+        updateWallets()
+    }
+
+    suspend fun addWallets(
+        mnemonic: List<String>,
+        publicKey: PublicKeyEd25519,
+        versions: List<WalletVersion>,
+        name: String? = null,
+        emoji: CharSequence,
+        color: Int,
+        testnet: Boolean
+    ) {
+        for (version in versions) {
+            val nameWithVersion = if (versions.size > 1) {
+                "$name ${version.title}"
+            } else {
+                name
+            }
+            legacyManager.addWallet(mnemonic, publicKey, version, nameWithVersion, emoji, color, testnet)
+        }
+
+        updateWallets()
+    }
+
+    suspend fun getMnemonic(id: Long): Array<String> {
+        val mnemonic = legacyManager.getMnemonic(id)
+        return mnemonic.toTypedArray()
     }
 
     private suspend fun getWallets(): List<WalletEntity> {

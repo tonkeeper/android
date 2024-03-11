@@ -17,6 +17,7 @@ import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
 import com.tonapps.tonkeeper.core.ExternalUrl
 import io.tonapi.models.NftItem
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.drawable
@@ -41,7 +42,7 @@ class NftScreen: UiScreen<NftScreenState, NftScreenEffect, NftScreenFeature>(R.l
         }
     }
 
-    override val feature: NftScreenFeature by viewModels()
+    override val feature: NftScreenFeature by viewModel()
 
     private val nftAddress: String by lazy {
         arguments?.getString(NFT_ADDRESS_KEY) ?: ""

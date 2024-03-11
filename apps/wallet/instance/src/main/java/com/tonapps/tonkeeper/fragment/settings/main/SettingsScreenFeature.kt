@@ -1,9 +1,6 @@
 package com.tonapps.tonkeeper.fragment.settings.main
 
-import android.content.Context
 import android.os.Build
-import android.view.View
-import androidx.collection.ArrayMap
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.localization.Localization
@@ -12,7 +9,6 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.tonkeeper.api.internal.repositories.KeysRepository
 import com.tonapps.tonkeeper.core.currency.CurrencyUpdateWorker
-import com.tonapps.tonkeeper.core.language.name
 import com.tonapps.tonkeeper.event.WalletSettingsEvent
 import com.tonapps.tonkeeper.extensions.isRecoveryPhraseBackup
 import com.tonapps.tonkeeper.extensions.label
@@ -63,7 +59,6 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
     fun logout() {
         viewModelScope.launch {
             App.walletManager.logout()
-            App.passcode.clearPinCode()
             CurrencyUpdateWorker.disable()
             sendEffect(SettingsScreenEffect.Logout)
         }
@@ -86,12 +81,6 @@ class SettingsScreenFeature: UiFeature<SettingsScreenState, SettingsScreenEffect
             titleRes = Localization.currency,
             data = App.settings.currency.code,
             position = ListCell.Position.FIRST
-        ))
-        items.add(SettingsTextItem(
-            id = SettingsIdItem.LANGUAGE_ID,
-            titleRes = Localization.language,
-            data = App.settings.language.name,
-            position = ListCell.Position.LAST
         ))
 
         items.add(SettingsIconItem(

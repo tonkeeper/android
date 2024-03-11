@@ -5,6 +5,7 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrNone
+import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.CommonMsgInfoRelaxed
 import org.ton.block.Either
@@ -79,7 +80,7 @@ abstract class BaseWalletContract(
         StateInit(code, cell)
     }
 
-    val address: MsgAddressInt by lazy {
+    val address: AddrStd by lazy {
         SmartContract.address(workchain, stateInit)
     }
 

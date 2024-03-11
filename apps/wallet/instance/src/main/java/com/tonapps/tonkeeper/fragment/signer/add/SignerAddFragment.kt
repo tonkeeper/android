@@ -14,7 +14,7 @@ import androidx.camera.view.PreviewView
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.signer.SignerApp
-import com.tonapps.tonkeeper.ui.screen.init.InitFragment
+import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.qr.QRImageAnalyzer
 import uikit.HapticHelper
 import uikit.base.BaseFragment
@@ -80,9 +80,9 @@ class SignerAddFragment: BaseFragment(R.layout.fragment_signer_add), BaseFragmen
             return
         }
 
-        val fragment = InitFragment.singer(uri) ?: return
+        /*val fragment = InitScreen.singer(uri) ?: return
         navigation?.add(fragment)
-        finish()
+        finish()*/
     }
 
     private fun startCamera() {

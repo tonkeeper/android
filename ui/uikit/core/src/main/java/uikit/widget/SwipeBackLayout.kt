@@ -17,6 +17,9 @@ import androidx.customview.widget.ViewDragHelper
 import uikit.R
 import uikit.base.BaseFragment
 import uikit.extensions.dp
+import uikit.extensions.getCurrentFocus
+import uikit.extensions.getCurrentFocusEditText
+import uikit.extensions.hideKeyboard
 import uikit.extensions.setView
 import kotlin.math.abs
 

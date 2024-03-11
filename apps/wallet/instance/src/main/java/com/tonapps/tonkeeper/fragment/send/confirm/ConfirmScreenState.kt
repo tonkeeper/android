@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.send.confirm
 
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.wallet.data.account.entities.WalletLabel
 import uikit.mvi.UiState
 import uikit.widget.ProcessTaskView
 
@@ -14,5 +15,6 @@ data class ConfirmScreenState(
     val processState: ProcessTaskView.State = ProcessTaskView.State.LOADING,
     val buttonEnabled: Boolean = false,
     val emulatedEventItems: List<HistoryItem> = emptyList(),
-    val signer: Boolean = false
+    val signer: Boolean = false,
+    val walletLabel: WalletLabel? = null
 ): UiState()

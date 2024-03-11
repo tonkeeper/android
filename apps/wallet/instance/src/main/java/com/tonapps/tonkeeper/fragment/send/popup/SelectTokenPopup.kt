@@ -8,10 +8,11 @@ import com.tonapps.tonkeeper.api.parsedBalance
 import io.tonapi.models.JettonBalance
 import uikit.extensions.textWithLabel
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
 class SelectTokenPopup(context: Context): ActionSheet(context) {
 
-    var jettons = listOf<JettonBalance>()
+    var tokens = listOf<AccountTokenEntity>()
         set(value) {
             if (field != value) {
                 field = value
@@ -19,7 +20,7 @@ class SelectTokenPopup(context: Context): ActionSheet(context) {
             }
         }
 
-    var selectedJetton: JettonBalance? = null
+    var selectedToken: AccountTokenEntity? = null
         set(value) {
             if (field != value) {
                 field = value
@@ -27,22 +28,21 @@ class SelectTokenPopup(context: Context): ActionSheet(context) {
             }
         }
 
-    var doOnSelectJetton: ((JettonBalance) -> Unit)? = null
+    var doOnSelectJetton: ((AccountTokenEntity) -> Unit)? = null
 
     init {
         doOnItemClick = { item ->
-            val jetton = jettons[item.id.toInt()]
+            val jetton = tokens[item.id.toInt()]
             doOnSelectJetton?.invoke(jetton)
         }
     }
 
     private fun updateTokens() {
         clearItems()
-        for ((index, jetton) in jettons.withIndex()) {
-            val info = jetton.jetton
-            val format = CurrencyFormatter.format(value = jetton.parsedBalance)
-            val title = context.textWithLabel(info.symbol, format)
-            val selected = jetton == selectedJetton
+        for ((index, token) in tokens.withIndex()) {
+            val format = CurrencyFormatter.format(value = token.balance.value)
+            val title = context.textWithLabel(token.symbol, format)
+            val selected = token == selectedToken
             addItem(
                 id = index.toLong(),
                 title = title,
@@ -51,7 +51,7 @@ class SelectTokenPopup(context: Context): ActionSheet(context) {
                 } else {
                     null
                 },
-                imageUri = Uri.parse(info.image)
+                imageUri = token.imageUri
             )
         }
     }

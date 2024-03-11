@@ -4,7 +4,9 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.text.Editable
 import android.text.InputFilter
+import android.text.Spanned
 import android.text.TextWatcher
+import android.text.method.DigitsKeyListener
 import android.util.AttributeSet
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -181,6 +183,12 @@ class InputView @JvmOverloads constructor(
                 field = value
                 editText.filters = if (value > 0) arrayOf(InputFilter.LengthFilter(value)) else emptyArray()
             }
+        }
+
+    var inputType: Int
+        get() = editText.inputType
+        set(value) {
+            editText.inputType = value
         }
 
     init {

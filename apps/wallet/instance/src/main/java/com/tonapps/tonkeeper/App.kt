@@ -20,6 +20,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.libsodium.jni.NaCl
 import com.tonapps.wallet.data.account.legacy.WalletManager
+import com.tonapps.wallet.data.collectibles.collectiblesModule
 
 class App: Application(), CameraXConfig.Provider {
 
@@ -33,7 +34,6 @@ class App: Application(), CameraXConfig.Provider {
         @Deprecated("Use injection")
         lateinit var settings: SettingsRepository
 
-        lateinit var passcode: PasscodeManager
         lateinit var db: AppDatabase
         lateinit var instance: App
     }
@@ -47,11 +47,10 @@ class App: Application(), CameraXConfig.Provider {
         walletManager = WalletManager(this)
         fiat = Fiat(this)
         settings = SettingsRepository(this)
-        passcode = PasscodeManager(this)
 
         startKoin {
             androidContext(this@App)
-            modules(koinModel, accountModule, ratesModule, tokenModule)
+            modules(koinModel, accountModule, ratesModule, tokenModule, collectiblesModule)
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

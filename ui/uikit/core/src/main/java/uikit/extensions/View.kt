@@ -254,3 +254,13 @@ fun View.applyBottomInsets() {
         insets
     }
 }
+
+fun View.getViews(): List<View> {
+    val result = mutableListOf<View>()
+    if (this is ViewGroup) {
+        for (i in 0 until childCount) {
+            result.add(getChildAt(i))
+        }
+    }
+    return result
+}

@@ -5,7 +5,6 @@ import com.squareup.moshi.adapter
 import com.tonapps.blockchain.Coin
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.Global
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
@@ -116,33 +115,6 @@ val JettonPreview.isTon: Boolean
     get() {
         return address == "TON"
     }
-
-val JettonBalance.isTon: Boolean
-    get() {
-        return jetton.isTon
-    }
-
-fun Account.asJettonBalance(): JettonBalance {
-    val icon = Global.tonCoinUrl
-    return JettonBalance(
-        balance = balance.toString(),
-        walletAddress = AccountAddress(
-            address = address,
-            isScam = false,
-            isWallet = true,
-            name = name,
-            icon = icon,
-        ),
-        jetton = JettonPreview(
-            address = "TON",
-            name = "TON",
-            symbol = "TON",
-            decimals = 9,
-            image = icon,
-            verification = JettonVerificationType.whitelist
-        )
-    )
-}
 
 val JettonSwapAction.jettonPreview: JettonPreview?
     get() {

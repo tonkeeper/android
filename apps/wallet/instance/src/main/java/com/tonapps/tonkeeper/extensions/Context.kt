@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.extensions
 import android.Manifest
 import android.content.ClipData
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.text.Spannable

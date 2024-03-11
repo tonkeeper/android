@@ -21,7 +21,14 @@ import uikit.widget.SimpleRecyclerView
 class PickerScreen: BaseFragment(R.layout.fragment_wallet_picker), BaseFragment.Modal {
 
     private val pickerViewModel: PickerViewModel by viewModel()
-    private val adapter = Adapter(::setActiveWallet)
+    private val adapter = Adapter { item ->
+        if (item is Item.Wallet) {
+            pickerViewModel.setActiveWallet(item.walletId)
+        } else if (item is Item.AddWallet) {
+            navigation?.add(AddScreen.newInstance())
+        }
+        finish()
+    }
 
     private lateinit var listView: RecyclerView
     private lateinit var skeletonView: View
@@ -31,36 +38,17 @@ class PickerScreen: BaseFragment(R.layout.fragment_wallet_picker), BaseFragment.
         val headerView = view.findViewById<ModalHeader>(R.id.header)
         headerView.onCloseClick = ::finish
 
-        val footerDrawable = FooterDrawable(requireContext())
-        val footerView = view.findViewById<View>(R.id.footer)
-        footerView.background = footerDrawable
-
-        skeletonView = view.findViewById<View>(R.id.skeleton)
+        skeletonView = view.findViewById(R.id.skeleton)
 
         listView = view.findViewById<SimpleRecyclerView>(R.id.list)
         listView.adapter = adapter
         collectFlow(listView.topScrolled, headerView::setDivider)
-        collectFlow(listView.bottomScrolled, footerDrawable::setDivider)
-
-        val addButton = view.findViewById<View>(R.id.add)
-        addButton.setOnClickListener {
-            navigation?.add(AddScreen.newInstance())
-        }
 
         collectFlow(pickerViewModel.itemsFlow, ::setItems)
     }
 
-    private fun setActiveWallet(id: Long) {
-        pickerViewModel.setActiveWallet(id)
-        finish()
-    }
-
     private fun setItems(items: List<Item>) {
-        val index = items.indexOfFirst { item -> item.selected }
         adapter.submitList(items) {
-            if (index != -1) {
-                listView.scrollToPosition(index)
-            }
             skeletonView.visibility = View.GONE
             listView.visibility = View.VISIBLE
             HapticHelper.selection(requireContext())

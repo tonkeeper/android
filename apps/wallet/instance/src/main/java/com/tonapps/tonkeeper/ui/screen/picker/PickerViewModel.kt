@@ -50,7 +50,7 @@ class PickerViewModel(
         val balances = getBalances(wallets)
         val uiItems = mutableListOf<Item>()
         for ((index, wallet) in wallets.withIndex()) {
-            val item = Item(
+            val item = Item.Wallet(
                 accountId = wallet.accountId,
                 walletId = wallet.id,
                 walletLabel = wallet.label,
@@ -61,6 +61,7 @@ class PickerViewModel(
             )
             uiItems.add(item)
         }
+        uiItems.add(Item.AddWallet)
         _itemsFlow.value = uiItems
     }
 

@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.emoji.Emoji
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.fragment.main.MainFragment
 import com.tonapps.tonkeeper.core.tonconnect.TonConnect

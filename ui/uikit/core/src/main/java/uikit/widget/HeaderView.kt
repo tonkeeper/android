@@ -117,6 +117,10 @@ open class HeaderView @JvmOverloads constructor(
         drawable.setDivider(value)
     }
 
+    fun setColor(color: Int) {
+        drawable.setColor(color)
+    }
+
     fun setIcon(@DrawableRes resId: Int) {
         setDrawableForView(closeView, resId)
     }

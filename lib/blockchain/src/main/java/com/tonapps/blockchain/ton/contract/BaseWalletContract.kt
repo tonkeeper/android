@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton.contract
 
+import android.util.Log
 import kotlinx.datetime.Clock
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
@@ -99,7 +100,13 @@ abstract class BaseWalletContract(
         unsignedBody: Cell
     ): Cell {
         val signature = BitString(privateKey.sign(unsignedBody.hash()))
+        return signedBody(signature, unsignedBody)
+    }
 
+    fun signedBody(
+        signature: BitString,
+        unsignedBody: Cell
+    ): Cell {
         return CellBuilder.createCell {
             storeBits(signature)
             storeBits(unsignedBody.bits)

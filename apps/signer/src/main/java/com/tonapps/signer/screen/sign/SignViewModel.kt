@@ -1,9 +1,10 @@
 package com.tonapps.signer.screen.sign
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.icu.CurrencyFormatter
@@ -77,14 +78,10 @@ class SignViewModel(
     }.flowOn(Dispatchers.IO).take(1)
 
     fun openEmulate() = keyEntity.map {
-        val contract = com.tonapps.blockchain.ton.contract.BaseWalletContract.create(it.publicKey, v)
-        val cell = contract.createTransferMessageCell(contract.address, emptyPrivateKey(), 0, unsignedBody)
+        val contract = BaseWalletContract.create(it.publicKey, v)
+        val cell = contract.createTransferMessageCell(contract.address, EmptyPrivateKeyEd25519, 0, unsignedBody)
         cell.hex()
     }.flowOn(Dispatchers.IO).take(1)
-
-    private fun emptyPrivateKey(): PrivateKeyEd25519 {
-        return PrivateKeyEd25519(ByteArray(32))
-    }
 
     private fun sign(privateKey: PrivateKeyEd25519): Cell {
         val data = privateKey.sign(unsignedBody.hash())

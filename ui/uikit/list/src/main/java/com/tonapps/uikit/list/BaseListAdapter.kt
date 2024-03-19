@@ -8,6 +8,16 @@ abstract class BaseListAdapter: ListAdapter<BaseListItem, BaseListHolder<out Bas
     DiffCallback.create()
 ) {
 
+    private var recyclerViewRef: RecyclerView? = null
+
+    override fun submitList(list: List<BaseListItem>?) {
+        submitList(list, null)
+    }
+
+    override fun submitList(list: List<BaseListItem>?, commitCallback: Runnable?) {
+        super.submitList(list, commitCallback)
+    }
+
     abstract fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem>
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
@@ -27,8 +37,14 @@ abstract class BaseListAdapter: ListAdapter<BaseListItem, BaseListHolder<out Bas
         return currentList[position]
     }
 
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        recyclerViewRef = null
+    }
+
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
+        recyclerViewRef = recyclerView
         recyclerView.setHasFixedSize(true)
         recyclerView.isNestedScrollingEnabled = false
         recyclerView.itemAnimator = null

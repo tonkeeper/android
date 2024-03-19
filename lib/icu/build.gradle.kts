@@ -20,3 +20,8 @@ android {
         jvmTarget = "1.8"
     }
 }
+
+
+dependencies {
+    implementation(Dependence.Squareup.okio)
+}

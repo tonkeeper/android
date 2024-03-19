@@ -1,10 +1,20 @@
 package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.password.PasscodeBiometric
+import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 import uikit.widget.item.ItemSwitchView
@@ -24,17 +34,36 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
         headerView.doOnCloseClick = { finish() }
 
         biometricView = view.findViewById(R.id.biometric)
-        biometricView.checked = com.tonapps.tonkeeper.App.settings.biometric
-        biometricView.doOnCheckedChanged = { com.tonapps.tonkeeper.App.settings.biometric = it }
+        biometricView.checked = securityViewModel.biometric
+        biometricView.doOnCheckedChanged = { securityViewModel.biometric = it }
+
+        val biometricDescriptionView = view.findViewById<View>(R.id.biometric_description)
+        val biometricVisibility = if (PasscodeBiometric.isAvailableOnDevice(requireContext())) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+        biometricView.visibility = biometricVisibility
+        biometricDescriptionView.visibility = biometricVisibility
 
         lockScreenView = view.findViewById(R.id.lock_screen)
-        lockScreenView.checked = com.tonapps.tonkeeper.App.settings.lockScreen
-        lockScreenView.doOnCheckedChanged = { securityViewModel.enableLockScreen(it) }
+        lockScreenView.checked = securityViewModel.lockScreen
+        lockScreenView.doOnCheckedChanged = { securityViewModel.lockScreen = it }
 
         recoveryPhraseView = view.findViewById(R.id.recovery_phrase)
-        recoveryPhraseView.setOnClickListener {
+        recoveryPhraseView.setOnClickListener { openRecoveryPhrase() }
 
+        collectFlow(securityViewModel.hasMnemonicFlow) {
+            recoveryPhraseView.visibility = if (it) View.VISIBLE else View.GONE
         }
+    }
+
+    private fun openRecoveryPhrase() {
+        securityViewModel.getRecoveryPhrase(requireContext()).catch {
+            navigation?.toast(getString(Localization.authorization_required))
+        }.onEach {
+            navigation?.add(PhraseScreen.newInstance(it))
+        }.launchIn(lifecycleScope)
     }
 
     companion object {

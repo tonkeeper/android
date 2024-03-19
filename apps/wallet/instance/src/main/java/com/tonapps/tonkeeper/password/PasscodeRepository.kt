@@ -1,10 +1,10 @@
 package com.tonapps.tonkeeper.password
 
 import android.content.Context
-import android.util.Log
 import androidx.biometric.BiometricPrompt
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -21,6 +21,8 @@ class PasscodeRepository(
         dataStore.setPinCode(code)
     }
 
+    suspend fun compare(code: String) = dataStore.compare(code)
+
     suspend fun confirmation(context: Context): Boolean = withContext(Dispatchers.Main) {
         if (!settingsRepository.biometric || !PasscodeBiometric.isAvailableOnDevice(context)) {
             return@withContext dialog(context)
@@ -33,6 +35,15 @@ class PasscodeRepository(
         }
     }
 
+    fun confirmationFlow(context: Context) = flow {
+        val valid = confirmation(context)
+        if (!valid) {
+            throw Exception("failed to request passcode")
+        } else {
+            emit(Unit)
+        }
+    }
+
     private suspend fun biometric(context: Context): Boolean = suspendCancellableCoroutine { continuation ->
         PasscodeBiometric.showPrompt(context, object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -41,10 +52,6 @@ class PasscodeRepository(
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 continuation.resume(true)
-            }
-
-            override fun onAuthenticationFailed() {
-                continuation.resume(false)
             }
         })
     }

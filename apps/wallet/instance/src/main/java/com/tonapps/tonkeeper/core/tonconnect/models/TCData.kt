@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.parcelize.Parcelize
 
 @Parcelize

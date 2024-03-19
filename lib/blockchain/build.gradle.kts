@@ -24,4 +24,5 @@ android {
 
 dependencies {
     api(Dependence.ton)
+    api(Dependence.KotlinX.io)
 }

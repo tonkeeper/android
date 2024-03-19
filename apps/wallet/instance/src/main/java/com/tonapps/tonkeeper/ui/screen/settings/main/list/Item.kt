@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list
 
+import android.net.Uri
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
@@ -87,7 +88,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     )
 
     class Support(
-        position: ListCell.Position
+        position: ListCell.Position,
+        val url: String
     ): Icon(
         titleRes = Localization.support,
         iconRes = UIKitIcon.ic_message_bubble_28,
@@ -96,7 +98,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     )
 
     class News(
-        position: ListCell.Position
+        position: ListCell.Position,
+        val url: String
     ): Icon(
         titleRes = Localization.tonkeeper_news,
         iconRes = R.drawable.ic_telegram_28,
@@ -105,7 +108,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     )
 
     class Contact(
-        position: ListCell.Position
+        position: ListCell.Position,
+        val url: String
     ): Icon(
         titleRes = Localization.contact_us,
         iconRes = R.drawable.ic_envelope_28,

@@ -8,6 +8,8 @@ import android.util.TypedValue
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 
+typealias UIKitColor = R.attr
+
 @ColorInt
 fun Context.resolveColor(@AttrRes colorRef: Int): Int {
     val v = TypedValue()

@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.account.legacy.storage
 
 import android.graphics.Color
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.wallet.data.account.WalletSource
 import org.ton.api.pub.PublicKeyEd25519
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.account.WalletType
@@ -19,6 +20,7 @@ internal class Wallets(
         private const val WALLET_VERSION = "version"
         private const val WALLET_EMOJI = "emoji"
         private const val WALLET_COLOR = "color"
+        private const val WALLET_SOURCE = "source"
     }
 
     suspend fun get(id: Long): WalletLegacy? {
@@ -32,6 +34,7 @@ internal class Wallets(
             version = getVersion(id),
             emoji = getEmoji(id),
             color = getColor(id),
+            source = getSource(id)
         )
     }
 
@@ -42,15 +45,14 @@ internal class Wallets(
         setEmoji(wallet.id, wallet.emoji)
         setColor(wallet.id, wallet.color)
         setVersion(wallet.id, wallet.version)
+        setSource(wallet.id, wallet.source)
 
         addId(wallet.id)
     }
 
     suspend fun setName(id: Long, name: String?) {
         val key = key(WALLET_NAME, id)
-        if (name.isNullOrBlank()) {
-            keyValue.remove(key)
-        } else {
+        if (!name.isNullOrBlank()) {
             keyValue.putString(key, name)
         }
     }
@@ -117,6 +119,15 @@ internal class Wallets(
         return value
     }
 
+    private suspend fun setSource(id: Long, source: WalletSource) {
+        keyValue.putString(key(WALLET_SOURCE, id), source.name)
+    }
+
+    private suspend fun getSource(id: Long): WalletSource {
+        val value = keyValue.getString(key(WALLET_SOURCE, id))
+        return WalletSource.valueOf(value ?: WalletSource.Default.name)
+    }
+
     fun hasWallet(): Boolean {
         return keyValue.contains(WALLET_IDS_KEY)
     }
@@ -126,6 +137,9 @@ internal class Wallets(
         keyValue.remove(key(WALLET_PUBLIC_KEY, id))
         keyValue.remove(key(WALLET_TYPE, id))
         keyValue.remove(key(WALLET_EMOJI, id))
+        keyValue.remove(key(WALLET_COLOR, id))
+        keyValue.remove(key(WALLET_VERSION, id))
+        keyValue.remove(key(WALLET_SOURCE, id))
 
         deleteId(id)
     }

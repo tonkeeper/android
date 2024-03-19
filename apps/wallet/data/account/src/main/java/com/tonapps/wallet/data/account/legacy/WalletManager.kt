@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.account.legacy
 import android.app.Application
 import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.WalletType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -176,15 +177,16 @@ class WalletManager(
 
     suspend fun addWatchWallet(
         publicKey: PublicKeyEd25519,
-        name: String? = null,
+        name: String,
         emoji: CharSequence,
         color: Int,
         singer: Boolean,
-        version: WalletVersion = WalletVersion.V4R2
+        version: WalletVersion = WalletVersion.V4R2,
+        source: WalletSource = WalletSource.Default
     ): WalletLegacy = withContext(Dispatchers.IO) {
         val wallet = WalletLegacy(
             id = System.currentTimeMillis(),
-            name = name ?: "Wallet",
+            name = name,
             publicKey = publicKey,
             type = if (singer) {
                 WalletType.Signer
@@ -192,7 +194,9 @@ class WalletManager(
                 WalletType.Watch
             },
             emoji = emoji,
-            color = color
+            color = color,
+            version = version,
+            source = source,
         )
 
         insertWallet(wallet, emptyList())
@@ -202,10 +206,12 @@ class WalletManager(
 
     suspend fun addWallet(
         mnemonic: List<String>,
-        name: String? = null,
+        name: String,
         emoji: CharSequence,
         color: Int,
-        testnet: Boolean
+        testnet: Boolean,
+        source: WalletSource,
+        version: WalletVersion,
     ): WalletLegacy = withContext(Dispatchers.IO) {
         val seed = Mnemonic.toSeed(mnemonic)
         val privateKey = PrivateKeyEd25519(seed)
@@ -213,11 +219,13 @@ class WalletManager(
 
         val wallet = WalletLegacy(
             id = System.currentTimeMillis(),
-            name = name ?: "Wallet",
+            name = name,
             publicKey = publicKey,
             type = if (testnet) WalletType.Testnet else WalletType.Default,
             emoji = emoji,
-            color = color
+            color = color,
+            source = source,
+            version = version
         )
 
         insertWallet(wallet, mnemonic)
@@ -229,19 +237,21 @@ class WalletManager(
         mnemonic: List<String>,
         publicKey: PublicKeyEd25519,
         version: WalletVersion,
-        name: String? = null,
+        name: String,
         emoji: CharSequence,
         color: Int,
-        testnet: Boolean
+        testnet: Boolean,
+        source: WalletSource,
     ): WalletLegacy = withContext(Dispatchers.IO) {
         val wallet = WalletLegacy(
             id = System.currentTimeMillis(),
-            name = name ?: "Wallet",
+            name = name,
             publicKey = publicKey,
             type = if (testnet) WalletType.Testnet else WalletType.Default,
             emoji = emoji,
             color = color,
-            version = version
+            version = version,
+            source = source
         )
 
         insertWallet(wallet, mnemonic)

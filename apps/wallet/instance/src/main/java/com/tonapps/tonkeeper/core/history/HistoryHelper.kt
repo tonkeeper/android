@@ -12,7 +12,6 @@ import com.tonapps.tonkeeper.api.getNameOrAddress
 import com.tonapps.tonkeeper.api.iconURL
 import com.tonapps.tonkeeper.api.imageURL
 import com.tonapps.tonkeeper.api.jettonPreview
-import com.tonapps.tonkeeper.api.nft.NftRepository
 import com.tonapps.tonkeeper.api.parsedAmount
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
@@ -48,8 +47,6 @@ object HistoryHelper {
 
     const val MINUS_SYMBOL = "-"
     const val PLUS_SYMBOL = "+"
-
-    private val nftRepository = NftRepository()
 
     private val calendar = Calendar.getInstance()
     private val dateFormat1 = SimpleDateFormat("h:mm a")
@@ -361,7 +358,7 @@ object HistoryHelper {
                 subtitle = nftItemTransfer.sender?.getNameOrAddress(wallet.testnet) ?: ""
             }
 
-            val nftItem = nftRepository.getItem(nftItemTransfer.nft, wallet.testnet)
+            // val nftItem = nftRepository.getItem(nftItemTransfer.nft, wallet.testnet)
 
             return HistoryItem.Event(
                 txId = txId,
@@ -370,10 +367,10 @@ object HistoryHelper {
                 title = simplePreview.name,
                 subtitle = subtitle,
                 value = "NFT",
-                nftImageURL = nftItem?.imageURL,
+                /*nftImageURL = nftItem?.imageURL,
                 nftTitle = nftItem?.title,
                 nftCollection = nftItem?.description,
-                nftAddress = nftItem?.address,
+                nftAddress = nftItem?.address,*/
                 tokenCode = "NFT",
                 timestamp = timestamp,
                 date = date,

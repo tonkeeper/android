@@ -13,6 +13,7 @@ data class AccountItem(
     val walletVersion: WalletVersion,
     val balanceFormat: String,
     val tokens: Boolean,
+    val collectibles: Boolean,
     val selected: Boolean,
     val position: ListCell.Position
 ): BaseListItem(0), Parcelable

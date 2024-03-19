@@ -20,6 +20,7 @@
     <application
         android:allowBackup="false"
         android:fullBackupContent="false"
+        android:enableOnBackInvokedCallback="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -33,7 +34,7 @@
         tools:replace="android:allowBackup"
         android:localeConfig="@xml/locales_config">
         <activity
-            android:name="com.tonapps.tonkeeper.fragment.root.RootActivity"
+            android:name="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:largeHeap="true"

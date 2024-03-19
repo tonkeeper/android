@@ -48,13 +48,25 @@ object CurrencyFormatter {
     private val monetaryDecimalSeparator = format.decimalFormatSymbols.monetaryDecimalSeparator.toString()
     private val zeroDecimalsValue = "${monetaryDecimalSeparator}00"
     private val zeroAmountValue = "0${zeroDecimalsValue}"
+    private val zeroEndValue = "${monetaryDecimalSeparator}0"
+
+    private fun formatFloat(
+        value: Float,
+        decimals: Int,
+    ): String {
+        val format = getFormat(decimals).format(value)
+        if (format.endsWith(zeroEndValue)) {
+            return format.removeSuffix(zeroEndValue)
+        }
+        return format.removeSuffix("0")
+    }
 
     fun format(
         currency: String = "",
         value: Float,
         decimals: Int,
     ): String {
-        val amount = getFormat(decimals).format(value)
+        val amount = formatFloat(value, decimals)
         return format(currency, amount)
     }
 

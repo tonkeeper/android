@@ -15,13 +15,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <uikit.widget.ColumnLayout
         android:id="@+id/lock"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        android:background="?attr/backgroundPageColor"
-        android:orientation="vertical">
+        android:background="?attr/backgroundPageColor">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/lock_sign_out"
@@ -44,7 +43,7 @@
             android:layout_height="match_parent"
             android:layout_marginTop="@dimen/offsetLarge"/>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </uikit.widget.ColumnLayout>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/toast"

@@ -10,7 +10,9 @@ import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
 
-class Adapter: BaseListAdapter() {
+class Adapter(
+    private val onClickBalance: () -> Unit,
+): BaseListAdapter() {
 
     init {
         submitList(listOf(Item.Skeleton))
@@ -21,7 +23,7 @@ class Adapter: BaseListAdapter() {
         viewType: Int
     ): BaseListHolder<out BaseListItem> {
         return when(viewType) {
-            Item.TYPE_BALANCE -> BalanceHolder(parent)
+            Item.TYPE_BALANCE -> BalanceHolder(parent, onClickBalance)
             Item.TYPE_ACTIONS -> ActionsHolder(parent)
             Item.TYPE_TOKEN -> TokenHolder(parent)
             Item.TYPE_SPACE -> SpaceHolder(parent)

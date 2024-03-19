@@ -3,6 +3,9 @@
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
 
+    <string name="sending_transaction">Отправка транзакции</string>
+    <string name="transaction_confirmed">Транзакция подтверждена</string>
+    <string name="no_internet_connection">Нет соединения с интернетом</string>
     <string name="settings">Настройки</string>
     <string name="wallet">Кошелёк</string>
     <string name="activity">Активность</string>
@@ -24,9 +27,11 @@
     <string name="new_wallet">Новый кошелек</string>
     <string name="add_wallet_description">Создайте новый кошелек или добавьте существующий.</string>
     <string name="watch_wallet_add">Мониторинг активности кошелька без фразы восстановления. Вы будете уведомлены о любых транзакциях с этого кошелька.</string>
-
+    <string name="invalid_link">Неверная ссылка</string>
     <string name="watch_only">Только просмотр</string>
     <string name="unverified_token">Непроверенный токен</string>
+    <string name="authorization_required">Требуется авторизация</string>
+    <string name="sign_out">Выйти</string>
 
     <string name="continue_action">Продолжить</string>
     <string name="get_started">Начать</string>
@@ -178,8 +183,9 @@
     <string name="max">Максимум</string>
     <string name="confirm_and_send">Подтвердить и отправить</string>
     <string name="confirm_action">Подтвердить действие</string>
-    <string name="ton_connect_title">Войти в %1$s?</string>
-    <string name="ton_connect_description">%1$s запрашивает доступ к адресу вашего кошелька %2$s %3$s</string>
+    <string name="ton_connect_title">Войти в %1$s</string>
+    <string name="not_supported">Не поддерживается</string>
+    <string name="ton_connect_description">%1$s запрашивает доступ к адресу вашего кошелька %2$s</string>
     <string name="connect_wallet">Подключить кошелёк</string>
     <string name="ton_connect_subtitle">Обязательно проверьте адрес сервиса перед подключением кошелька.</string>
     <string name="available_balance">Доступно:  %1$s</string>

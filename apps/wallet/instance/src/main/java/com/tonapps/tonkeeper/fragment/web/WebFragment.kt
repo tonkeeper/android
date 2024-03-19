@@ -30,6 +30,10 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
             }
             return fragment
         }
+
+        fun newInstance(uri: Uri): WebFragment {
+            return newInstance(uri.toString())
+        }
     }
 
     private val startUrl: String by lazy {

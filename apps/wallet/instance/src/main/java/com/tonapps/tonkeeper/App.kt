@@ -8,10 +8,7 @@ import androidx.camera.core.CameraXConfig
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.tonapps.tonkeeper.core.fiat.Fiat
-import com.tonapps.tonkeeper.event.WalletRemovedEvent
-import core.EventBus
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import com.tonapps.wallet.api.apiModule
 import com.tonapps.wallet.data.account.accountModule
 import com.tonapps.wallet.data.rates.ratesModule
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -21,6 +18,7 @@ import org.koin.core.context.startKoin
 import org.libsodium.jni.NaCl
 import com.tonapps.wallet.data.account.legacy.WalletManager
 import com.tonapps.wallet.data.collectibles.collectiblesModule
+import com.tonapps.wallet.data.events.eventsModule
 
 class App: Application(), CameraXConfig.Provider {
 
@@ -50,40 +48,11 @@ class App: Application(), CameraXConfig.Provider {
 
         startKoin {
             androidContext(this@App)
-            modules(koinModel, accountModule, ratesModule, tokenModule, collectiblesModule)
+            modules(koinModel, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         initFresco()
-    }
-
-    fun getThemeRes(): Int {
-        val themeName = settings.theme
-        if (themeName == "dark") {
-            return uikit.R.style.Theme_App_Dark
-        }
-        return uikit.R.style.Theme_App_Blue
-    }
-
-    fun setThemeRes(newTheme: Int): Boolean {
-        val currentTheme = getThemeRes()
-        if (newTheme == uikit.R.style.Theme_App_Dark && newTheme != currentTheme) {
-            settings.theme = "dark"
-            return true
-        } else if (newTheme != currentTheme) {
-            settings.theme = "blue"
-            return true
-        }
-        return false
-    }
-
-    fun deleteWallet(address: String?) {
-        GlobalScope.launch {
-            walletManager.logout(address)
-            address?.let {
-                EventBus.post(WalletRemovedEvent(address))
-            }
-        }
     }
 
     private fun initFresco() {

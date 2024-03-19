@@ -12,6 +12,7 @@ import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.account.entities.WalletLabel
+import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
@@ -22,7 +23,7 @@ class WalletHeaderView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : RowLayout(context, attrs, defStyle) {
+) : RowLayout(context, attrs, defStyle), BarDrawable.BarDrawableOwner {
 
     private val barHeight = context.getDimensionPixelSize(uikit.R.dimen.barHeight)
     private var topOffset: Int = 0
@@ -66,7 +67,7 @@ class WalletHeaderView @JvmOverloads constructor(
         arrowView = findViewById(R.id.wallet_arrow)
     }
 
-    fun setDivider(value: Boolean) {
+    override fun setDivider(value: Boolean) {
         drawable.setDivider(value)
     }
 

@@ -5,14 +5,20 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
+import android.view.WindowManager
+import androidx.activity.BackEventCompat
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
+import androidx.lifecycle.lifecycleScope
 import uikit.R
 import uikit.base.BaseActivity
 import uikit.base.BaseFragment
@@ -40,8 +46,9 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_navigation)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         baseView = findViewById(R.id.base)
 
@@ -50,9 +57,31 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
 
         toastView = findViewById(R.id.toast)
 
-        onBackPressedDispatcher.addCallback(this) {
-            onBackPress()
+        val callback = object : OnBackPressedCallback(true) {
+
+            private val target: BaseFragment.PredictiveBackGesture?
+                get() = supportFragmentManager.fragments.lastOrNull() as? BaseFragment.PredictiveBackGesture
+
+            override fun handleOnBackCancelled() {
+                super.handleOnBackCancelled()
+                target?.onPredictiveBackCancelled()
+            }
+
+            override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+                super.handleOnBackProgressed(backEvent)
+                target?.onPredictiveBackProgressed(backEvent)
+            }
+
+            override fun handleOnBackStarted(backEvent: BackEventCompat) {
+                super.handleOnBackStarted(backEvent)
+                target?.onPredictiveOnBackStarted(backEvent)
+            }
+
+            override fun handleOnBackPressed() {
+                onBackPress()
+            }
         }
+        onBackPressedDispatcher.addCallback(this, callback)
     }
 
     private fun onBackPress() {

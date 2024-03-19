@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.widget.NestedScrollView
 import com.tonapps.tonkeeper.fragment.signer.add.SignerAddFragment
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
@@ -22,17 +23,17 @@ class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal 
         val scrollView = view.findViewById<NestedScrollView>(R.id.scroll)
         collectFlow(scrollView.topScrolled, headerView::setDivider)
 
-        openByClick(R.id.new_wallet, InitScreen.Type.New)
-        openByClick(R.id.import_wallet, InitScreen.Type.Import)
-        openByClick(R.id.watch_wallet, InitScreen.Type.Watch)
-        openByClick(R.id.testnet_wallet, InitScreen.Type.Testnet)
+        openByClick(R.id.new_wallet, InitArgs.Type.New)
+        openByClick(R.id.import_wallet, InitArgs.Type.Import)
+        openByClick(R.id.watch_wallet, InitArgs.Type.Watch)
+        openByClick(R.id.testnet_wallet, InitArgs.Type.Testnet)
 
         view.findViewById<View>(R.id.signer_wallet).setOnClickListener {
             navigation?.add(SignerAddFragment.newInstance())
         }
     }
 
-    private fun openByClick(id: Int, type: InitScreen.Type) {
+    private fun openByClick(id: Int, type: InitArgs.Type) {
         view?.findViewById<View>(id)?.setOnClickListener {
             navigation?.add(InitScreen.newInstance(type))
         }

@@ -1,10 +1,11 @@
 package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
 import android.os.Bundle
+import android.text.SpannableString
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
@@ -14,10 +15,16 @@ import com.tonapps.tonkeeper.core.tonconnect.TonConnect
 import com.tonapps.tonkeeper.core.tonconnect.models.TCData
 import com.tonapps.tonkeeper.core.tonconnect.models.TCRequest
 import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
-import com.tonapps.tonkeeper.extensions.launch
-import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import com.tonapps.uikit.color.textAccentColor
+import com.tonapps.uikit.color.textTertiaryColor
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.collectFlow
+import uikit.extensions.setColor
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
@@ -25,8 +32,6 @@ import uikit.widget.ProcessTaskView
 class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Modal {
 
     companion object {
-
-        private const val TC_REQUEST = "tonconnect"
 
         private const val REQUEST_KEY = "request"
 
@@ -39,11 +44,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         }
     }
 
-    private val request: TCRequest by lazy {
-        arguments?.getParcelable(REQUEST_KEY)!!
-    }
-
-    private val viewModel: TCAuthViewModel by viewModels()
+    private val viewModel: TCAuthViewModel by viewModel { parametersOf(arguments?.getParcelable(REQUEST_KEY)!!) }
 
     private lateinit var closeView: View
     private lateinit var loaderView: LoaderView
@@ -55,13 +56,6 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
     private lateinit var connectButton: Button
     private lateinit var connectProcessView: ProcessTaskView
     private lateinit var cryptoView: TonConnectCryptoView
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        navigation?.setFragmentResultListener(TC_REQUEST) { _ ->
-            viewModel.connect()
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -89,31 +83,31 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
         cryptoView = view.findViewById(R.id.crypto)
 
-        viewModel.dataState.launch(this) {
-            val data = it ?: return@launch
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
-            setData(data, wallet)
-        }
-
-        viewModel.connectState.launch(this) {
-            if (it == ConnectState.Success) {
-                setSuccess()
-            } else if (it == ConnectState.Error) {
-                setFailure()
-            }
-        }
-        
-        viewModel.requestData(request)
+        collectFlow(viewModel.dataState, ::setData)
     }
 
-    private fun setData(data: TCData, wallet: WalletLegacy) {
-        cryptoView.setKey(data.accountId.toUserFriendly(testnet = wallet.testnet))
+    private fun setData(data: TCData) {
+        cryptoView.setKey(data.accountId.toUserFriendly(testnet = data.testnet))
         siteIconView.setImageURI(data.manifest.iconUrl)
-        nameView.text = getString(Localization.ton_connect_title, data.manifest.name)
-        descriptionView.text = getString(Localization.ton_connect_description, data.host, data.shortAddress, "V")
+        setName(data.host)
+        setDescription(data.host, data.shortAddress)
 
         loaderView.visibility = View.GONE
         contentView.visibility = View.VISIBLE
+    }
+
+    private fun setName(host: String) {
+        val name = getString(Localization.ton_connect_title, host)
+        val spannableString = SpannableString(name)
+        spannableString.setColor(requireContext().textAccentColor, name.length - host.length, name.length)
+        nameView.text = spannableString
+    }
+
+    private fun setDescription(host: String, shortAddress: String) {
+        val description = getString(Localization.ton_connect_description, host, shortAddress)
+        val spannableString = SpannableString(description)
+        spannableString.setColor(requireContext().textTertiaryColor, description.length - shortAddress.length, description.length)
+        descriptionView.text = spannableString
     }
 
     private fun connectWallet() {
@@ -121,7 +115,11 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         connectProcessView.visibility = View.VISIBLE
         connectProcessView.state = ProcessTaskView.State.LOADING
 
-        // navigation?.add(LockScreen.newInstance(TC_REQUEST))
+        viewModel.connect(requireContext()).catch {
+            setFailure()
+        }.onEach {
+            setSuccess()
+        }.launchIn(lifecycleScope)
     }
 
     private fun setSuccess() {

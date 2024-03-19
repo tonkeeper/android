@@ -12,7 +12,6 @@ import com.tonapps.tonkeeper.core.signer.SingerResultContract
 import com.tonapps.tonkeeper.fragment.send.SendScreenEffect
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
-import com.tonapps.tonkeeper.fragment.wallet.history.HistoryScreen
 import com.tonapps.uikit.list.ListCell
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.extensions.pinToBottomInsets
@@ -169,7 +168,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         super.newUiEffect(effect)
         if (effect is ConfirmScreenEffect.CloseScreen) {
             if (effect.navigateToHistory) {
-                navigation?.openURL(HistoryScreen.DeepLink)
+                // navigation?.openURL(HistoryScreen.DeepLink)
             }
 
             sendFeature.sendEffect(SendScreenEffect.Finish)

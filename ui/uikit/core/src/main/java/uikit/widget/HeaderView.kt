@@ -12,6 +12,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.WindowInsetsCompat
 import uikit.R
+import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
@@ -23,7 +24,7 @@ open class HeaderView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : RowLayout(context, attrs, defStyle) {
+) : RowLayout(context, attrs, defStyle), BarDrawable.BarDrawableOwner {
 
     private companion object {
         private const val ANIMATION_DURATION = 180L
@@ -113,7 +114,7 @@ open class HeaderView @JvmOverloads constructor(
         return super.onApplyWindowInsets(insets)
     }
 
-    fun setDivider(value: Boolean) {
+    override fun setDivider(value: Boolean) {
         drawable.setDivider(value)
     }
 

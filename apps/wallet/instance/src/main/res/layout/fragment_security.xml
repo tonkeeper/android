@@ -26,11 +26,14 @@
                 android:id="@+id/biometric"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:text="@string/use_biometric"/>
 
             <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/biometric_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:layout_marginVertical="@dimen/offsetMedium"
                 android:textAppearance="@style/TextAppearance.Body2"
                 android:textColor="?attr/textTertiaryColor"
@@ -75,6 +78,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetMedium"
+                android:visibility="gone"
                 android:text="@string/recovery_phrase"
                 android:icon="@drawable/ic_key_28"/>
 

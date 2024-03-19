@@ -2,6 +2,20 @@ package com.tonapps.blockchain.ton.extensions
 
 import org.ton.block.AddrStd
 
+fun AddrStd.toWalletAddress(testnet: Boolean): String {
+    return toString(
+        userFriendly = true,
+        bounceable = false,
+        testOnly = testnet,
+    )
+}
+
+fun AddrStd.toAccountId(): String {
+    return toString(
+        userFriendly = false,
+    ).lowercase()
+}
+
 fun String.toUserFriendly(
     wallet: Boolean = true,
     testnet: Boolean
@@ -16,14 +30,6 @@ fun String.toUserFriendly(
     } catch (e: Exception) {
         this
     }
-}
-
-fun AddrStd.toWalletAddress(testnet: Boolean): String {
-    return toString(
-        userFriendly = true,
-        bounceable = false,
-        testOnly = testnet,
-    )
 }
 
 fun String.toRawAddress(): String {

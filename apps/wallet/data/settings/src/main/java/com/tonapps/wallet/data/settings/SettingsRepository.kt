@@ -7,6 +7,8 @@ import com.tonapps.wallet.localization.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
@@ -25,15 +27,22 @@ class SettingsRepository(
         private const val COUNTRY_KEY = "country"
         private const val LANGUAGE_CODE_KEY = "language_code"
         private const val THEME_KEY = "theme"
+        private const val HIDDEN_BALANCES_KEY = "hidden_balances"
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private val _currencyFlow = MutableStateFlow<WalletCurrency?>(null)
+    private val _currencyFlow = MutableSharedFlow<WalletCurrency>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _languageFlow = MutableStateFlow<Language?>(null)
+    private val _languageFlow = MutableSharedFlow<Language>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
+    private val _themeFlow = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val themeFlow = _themeFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
+    private val _hiddenBalancesFlow = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val hiddenBalancesFlow = _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
@@ -42,6 +51,7 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putString(THEME_KEY, value).apply()
                 field = value
+                _themeFlow.tryEmit(value)
             }
         }
 
@@ -50,7 +60,7 @@ class SettingsRepository(
             if (field != value) {
                 prefs.edit().putString(CURRENCY_CODE_KEY, value.code).apply()
                 field = value
-                _currencyFlow.value = value
+                _currencyFlow.tryEmit(value)
             }
         }
 
@@ -59,7 +69,7 @@ class SettingsRepository(
             if (value != field) {
                 field = value
                 prefs.edit().putString(LANGUAGE_CODE_KEY, field.code).apply()
-                _languageFlow.value = field
+                _languageFlow.tryEmit(field)
             }
         }
 
@@ -87,10 +97,21 @@ class SettingsRepository(
             }
         }
 
+    var hiddenBalances: Boolean = prefs.getBoolean(HIDDEN_BALANCES_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(HIDDEN_BALANCES_KEY, value).apply()
+                field = value
+                _hiddenBalancesFlow.tryEmit(value)
+            }
+        }
+
     init {
         scope.launch(Dispatchers.IO) {
-            _currencyFlow.value = currency
-            _languageFlow.value = language
+            _themeFlow.tryEmit(theme)
+            _languageFlow.tryEmit(language)
+            _currencyFlow.tryEmit(currency)
+            _hiddenBalancesFlow.tryEmit(hiddenBalances)
         }
     }
 }

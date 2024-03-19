@@ -4,10 +4,8 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ConcatAdapter
-import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
-import com.tonapps.tonkeeper.extensions.launch
 import com.tonapps.tonkeeper.fragment.chart.ChartScreen
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonAdapter
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonItemDecoration

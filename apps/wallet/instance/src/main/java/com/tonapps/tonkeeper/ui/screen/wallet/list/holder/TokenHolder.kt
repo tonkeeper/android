@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.navigation.Navigation.Companion.navigation
@@ -32,7 +33,11 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
         }
         setImageUri(item.iconUri)
         titleView.text = item.name
-        balanceView.text = item.balanceFormat
+        balanceView.text = if (item.hiddenBalance) {
+            HIDDEN_BALANCE
+        } else {
+            item.balanceFormat
+        }
 
         if (item.testnet) {
             rateView.visibility = View.GONE

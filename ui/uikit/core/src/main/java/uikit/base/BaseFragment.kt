@@ -14,6 +14,8 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.FrameLayout
+import androidx.activity.BackEventCompat
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,7 +39,21 @@ open class BaseFragment(
     @LayoutRes layoutId: Int
 ): Fragment(layoutId) {
 
-    interface SwipeBack {
+    interface PredictiveBackGesture {
+        fun onPredictiveBackCancelled() {
+
+        }
+
+        fun onPredictiveBackProgressed(backEvent: BackEventCompat) {
+
+        }
+
+        fun onPredictiveOnBackStarted(backEvent: BackEventCompat) {
+
+        }
+    }
+
+    interface SwipeBack: PredictiveBackGesture {
 
         fun onEndShowingAnimation() {
 

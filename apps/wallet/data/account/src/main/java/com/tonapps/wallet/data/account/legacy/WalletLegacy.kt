@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.contract.WalletV4R1Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.WalletType
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
@@ -22,7 +23,8 @@ data class WalletLegacy(
     val type: WalletType,
     val emoji: CharSequence,
     val color: Int,
-    val version: WalletVersion = WalletVersion.V4R2
+    val version: WalletVersion,
+    val source: WalletSource
 ) {
 
     companion object {
@@ -31,10 +33,6 @@ data class WalletLegacy(
 
     val key: String by lazy {
         address + "_" + version.name + "_" + type.name
-    }
-
-    fun asVersion(version: WalletVersion): WalletLegacy {
-        return copy(version = version)
     }
 
     val contract: BaseWalletContract by lazy {

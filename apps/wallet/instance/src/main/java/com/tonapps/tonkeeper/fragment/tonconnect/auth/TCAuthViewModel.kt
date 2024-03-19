@@ -1,5 +1,7 @@
 package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
@@ -13,10 +15,22 @@ import com.tonapps.tonkeeper.core.tonconnect.models.TCRequest
 import com.tonapps.tonkeeper.core.tonconnect.models.reply.TCAddressItemReply
 import com.tonapps.tonkeeper.core.tonconnect.models.reply.TCConnectEventSuccess
 import com.tonapps.tonkeeper.core.tonconnect.models.reply.TCReply
+import com.tonapps.tonkeeper.password.PasscodeRepository
+import com.tonapps.wallet.data.account.WalletRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import io.ktor.util.hex
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
@@ -27,30 +41,33 @@ import org.ton.cell.CellBuilder
 import org.ton.crypto.base64
 import org.ton.tlb.storeTlb
 
-class TCAuthViewModel: ViewModel() {
-
+class TCAuthViewModel(
+    private val request: TCRequest,
+    private val walletRepository: WalletRepository,
+    private val passcodeRepository: PasscodeRepository
+): ViewModel() {
 
     private val _dataState = MutableStateFlow<TCData?>(null)
-    val dataState = _dataState.asStateFlow()
-
-    private val _connectState = MutableStateFlow(ConnectState.Default)
-    val connectState = _connectState.asStateFlow()
-
+    val dataState = _dataState.asStateFlow().filterNotNull()
 
     private val bridge = Bridge()
     private val manifestRepository = TCManifestRepository()
     private val appRepository = AppRepository()
     private val proof = Proof()
 
-    fun requestData(request: TCRequest) {
-        viewModelScope.launch {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
+    init {
+        walletRepository.activeWalletFlow.onEach {
+            requestData(it)
+        }.launchIn(viewModelScope)
+    }
 
+    private fun requestData(wallet: WalletEntity) {
+        viewModelScope.launch {
             val manifest = manifestRepository.manifest(request.payload.manifestUrl)
 
             val data = TCData(
                 manifest = manifest,
-                accountId = wallet.accountId.lowercase(),
+                accountId = wallet.accountId,
                 clientId = request.id,
                 items = request.payload.items,
                 testnet = wallet.testnet,
@@ -60,22 +77,20 @@ class TCAuthViewModel: ViewModel() {
         }
     }
 
-    fun connect() {
-        val data = _dataState.value ?: return
-        viewModelScope.launch {
-            try {
-                sendConnect(data)
-                _connectState.tryEmit(ConnectState.Success)
-            } catch (e: Throwable) {
-                _connectState.tryEmit(ConnectState.Error)
-            }
-        }
-    }
+    private fun passcode(context: Context) = passcodeRepository.confirmationFlow(context)
 
-    private suspend fun sendConnect(data: TCData) = withContext(Dispatchers.IO) {
-        val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: throw Exception("Wallet not found")
+    private fun wallet(context: Context) = passcode(context).combine(walletRepository.activeWalletFlow) { _, wallet ->
+        wallet
+    }.take(1)
+
+    fun connect(context: Context): Flow<Unit> = wallet(context).combine(dataState) { wallet, data ->
+        sendConnect(data, wallet)
+    }.take(1).flowOn(Dispatchers.IO)
+
+    private suspend fun sendConnect(data: TCData, wallet: WalletEntity) = withContext(Dispatchers.IO) {
         val accountId = wallet.accountId
         val app = appRepository.createApp(accountId, data.url, data.clientId)
+        val privateKey = walletRepository.getPrivateKey(wallet.id)
 
         val items = mutableListOf<TCReply>()
         for (requestItem in data.items) {
@@ -83,7 +98,7 @@ class TCAuthViewModel: ViewModel() {
                 items.add(createAddressItemReply(
                     accountId = accountId,
                     testnet = wallet.testnet,
-                    stateInit = wallet.stateInit,
+                    stateInit = wallet.contract.stateInit,
                     publicKey = wallet.publicKey
                 ))
             } else if (requestItem.name == TCItem.TON_PROOF) {
@@ -91,7 +106,7 @@ class TCAuthViewModel: ViewModel() {
                     requestItem.payload,
                     app.domain,
                     AddrStd.parse(accountId),
-                    com.tonapps.tonkeeper.App.walletManager.getPrivateKey(wallet.id)
+                    privateKey
                 ))
             }
         }

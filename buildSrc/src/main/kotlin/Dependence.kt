@@ -10,6 +10,7 @@ object Dependence {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0"
         const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.5.0"
+        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.3.1"
     }
 
     object GooglePlay {
@@ -77,6 +78,7 @@ object Dependence {
         const val sse = "com.squareup.okhttp3:okhttp-sse:4.12.0"
         const val moshi = "com.squareup.moshi:moshi-kotlin:1.15.0"
         const val moshiAdapters = "com.squareup.moshi:moshi-adapters:1.15.0"
+        const val okio = "com.squareup.okio:okio:3.9.0"
     }
 
     object Firebase {
@@ -103,7 +105,7 @@ object Dependence {
         const val emoji = ":lib:emoji"
         const val blockchain = ":lib:blockchain"
         const val icu = ":lib:icu"
-        const val sql = ":lib:sqlite"
+        const val sqlite = ":lib:sqlite"
     }
 
     object UIKit {
@@ -124,6 +126,7 @@ object Dependence {
             const val rates = ":apps:wallet:data:rates"
             const val tokens = ":apps:wallet:data:tokens"
             const val collectibles = ":apps:wallet:data:collectibles"
+            const val events = ":apps:wallet:data:events"
         }
     }
 }

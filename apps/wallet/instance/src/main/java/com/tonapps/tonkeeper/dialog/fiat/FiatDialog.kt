@@ -9,7 +9,7 @@ import com.tonapps.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import com.tonapps.tonkeeper.dialog.fiat.list.MethodAdapter
 import com.tonapps.tonkeeper.fragment.country.CountryScreen
 import com.tonapps.tonkeeper.fragment.fiat.web.FiatWebFragment
-import com.tonapps.tonkeeper.fragment.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import uikit.base.BaseSheetDialog

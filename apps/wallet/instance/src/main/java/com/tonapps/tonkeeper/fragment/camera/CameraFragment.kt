@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.fragment.camera
 
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -18,6 +19,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.ton.block.AddrStd
 import com.tonapps.qr.QRImageAnalyzer
+import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
@@ -31,6 +35,8 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
 
         fun newInstance() = CameraFragment()
     }
+
+    private val rootViewModel: RootViewModel by activityViewModel()
 
     private val activityResultLauncher = registerForPermission { isGranted: Boolean ->
         if (isGranted) {
@@ -122,9 +128,8 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
             return
         }
         val url = getUrlFromBarcode(barcode) ?: return
-        Log.d("CameraFragment", "handleBarcode: $url")
         readyUrl = true
-        if (DeepLink.openUrl(requireContext(), url)) {
+        if (rootViewModel.processDeepLink(Uri.parse(url), true)) {
             finish()
         }
     }

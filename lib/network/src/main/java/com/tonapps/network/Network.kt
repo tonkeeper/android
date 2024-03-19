@@ -14,6 +14,7 @@ import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
+import org.json.JSONObject
 
 object Network {
 
@@ -21,7 +22,9 @@ object Network {
         val id: String?,
         val type: String?,
         val data: String
-    )
+    ) {
+        val json = JSONObject(data)
+    }
 
     val okHttpClient: OkHttpClient by lazy {
         okHttpBuilder().build()

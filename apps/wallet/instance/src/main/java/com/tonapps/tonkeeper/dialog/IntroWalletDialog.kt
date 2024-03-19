@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.dialog
 
 import android.content.Context
 import android.widget.Button
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import uikit.base.BaseSheetDialog
@@ -29,7 +30,7 @@ class IntroWalletDialog(context: Context): BaseSheetDialog(context) {
 
     private fun newWallet() {
         dismiss()
-        navigation?.add(InitScreen.newInstance(InitScreen.Type.New))
+        navigation?.add(InitScreen.newInstance(InitArgs.Type.New))
     }
 
     private fun importWallet() {

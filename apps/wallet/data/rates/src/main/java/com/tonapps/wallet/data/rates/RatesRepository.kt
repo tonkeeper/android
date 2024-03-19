@@ -1,17 +1,19 @@
 package com.tonapps.wallet.data.rates
 
 import android.content.Context
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.entity.RateEntity
 import com.tonapps.wallet.data.rates.entity.RatesEntity
-import com.tonapps.wallet.data.rates.source.RemoteDataSource
 import com.tonapps.wallet.data.rates.source.BlobDataSource
 import io.tonapi.models.TokenRates
 
-class RatesRepository(context: Context) {
+class RatesRepository(
+    context: Context,
+    private val api: API
+) {
 
     private val localDataSource = BlobDataSource(context)
-    private val remoteDataSource = RemoteDataSource()
 
     fun cache(currency: WalletCurrency, tokens: List<String>): RatesEntity {
         return localDataSource.get(currency).filter(tokens)
@@ -25,7 +27,7 @@ class RatesRepository(context: Context) {
         if (!tokens.contains("TON")) {
             tokens.add("TON")
         }
-        val rates = remoteDataSource.load(currency, tokens)
+        val rates = api.getRates(currency.code, tokens)
         insertRates(currency, rates)
     }
 

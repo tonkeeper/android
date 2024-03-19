@@ -2,16 +2,15 @@ package com.tonapps.sqlite
 
 import android.database.sqlite.SQLiteDatabase
 
-fun SQLiteDatabase.withTransaction(block: SQLiteDatabase.() -> Long): Long {
-    val id: Long
+fun SQLiteDatabase.withTransaction(block: SQLiteDatabase.() -> Unit) {
     beginTransaction()
     try {
-        id = block()
+        block()
         setTransactionSuccessful()
+    } catch (ignored: Exception) {
     } finally {
         endTransaction()
     }
-    return id
 }
 
 fun SQLiteDatabase.emptyRawQuery(sql: String) {

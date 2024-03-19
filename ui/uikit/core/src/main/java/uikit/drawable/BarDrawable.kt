@@ -10,11 +10,15 @@ import uikit.extensions.dp
 
 abstract class BarDrawable(context: Context): BaseDrawable() {
 
+    interface BarDrawableOwner {
+        fun setDivider(value: Boolean)
+    }
+
     private var divider: Boolean = false
 
     private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.separatorCommonColor
-        strokeWidth = .5f.dp
+        strokeWidth = 1f.dp
     }
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

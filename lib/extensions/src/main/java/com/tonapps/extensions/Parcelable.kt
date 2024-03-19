@@ -28,6 +28,9 @@ fun ByteArray.createParcel(): Parcel {
 }
 
 inline fun <reified T: Parcelable> ByteArray.toParcel(): T? {
+    if (isEmpty()) {
+        return null
+    }
     return try {
         val parcel = createParcel()
         val creator = parcelableCreator<T>()

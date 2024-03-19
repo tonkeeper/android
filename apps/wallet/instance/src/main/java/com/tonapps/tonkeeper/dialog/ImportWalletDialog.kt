@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.signer.add.SignerAddFragment
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import uikit.base.BaseSheetDialog
 import uikit.navigation.Navigation.Companion.navigation
@@ -12,10 +13,10 @@ class ImportWalletDialog(context: Context): BaseSheetDialog(context), View.OnCli
 
     private companion object {
         private val associatedActions = mapOf(
-            R.id.import_wallet to InitScreen.Type.Import,
-            R.id.watch_wallet to InitScreen.Type.Watch,
-            R.id.testnet_wallet to InitScreen.Type.Testnet,
-            R.id.signer_wallet to InitScreen.Type.Signer,
+            R.id.import_wallet to InitArgs.Type.Import,
+            R.id.watch_wallet to InitArgs.Type.Watch,
+            R.id.testnet_wallet to InitArgs.Type.Testnet,
+            R.id.signer_wallet to InitArgs.Type.Signer,
         )
     }
 

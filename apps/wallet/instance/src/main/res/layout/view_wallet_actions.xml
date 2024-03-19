@@ -34,8 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:icon="@drawable/ic_swap_horizontal_outline_28"
-            android:title="@string/swap"
-            android:enabled="false"/>
+            android:title="@string/swap"/>
 
         <uikit.widget.IconButtonView
             android:id="@+id/buy_or_sell"

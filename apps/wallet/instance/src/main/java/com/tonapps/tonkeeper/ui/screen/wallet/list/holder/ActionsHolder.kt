@@ -6,6 +6,7 @@ import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.openCamera
 import com.tonapps.tonkeeper.extensions.sendCoin
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
+import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.WalletType
@@ -16,6 +17,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     private val sendView = findViewById<View>(R.id.send)
     private val receiveView = findViewById<View>(R.id.receive)
     private val buyOrSellView = findViewById<View>(R.id.buy_or_sell)
+    private val swapView = findViewById<View>(R.id.swap)
     private val navigation = Navigation.from(context)
 
     init {
@@ -28,6 +30,11 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         receiveView.setOnClickListener {
             navigation?.add(QRScreen.newInstance(item.address, item.token, item.walletType))
         }
+        swapView.setOnClickListener {
+            navigation?.add(SwapScreen.newInstance(item.swapUri, item.address))
+        }
+
+        swapView.isEnabled = item.walletType == WalletType.Default
         sendView.isEnabled = item.walletType != WalletType.Watch
         buyOrSellView.isEnabled = item.walletType != WalletType.Testnet && item.walletType != WalletType.Watch
     }

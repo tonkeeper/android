@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import com.tonapps.tonkeeper.dialog.ImportWalletDialog
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
@@ -22,7 +23,7 @@ class StartScreen: BaseFragment(R.layout.fragment_intro) {
 
         val newWalletButton = view.findViewById<Button>(R.id.new_wallet)
         newWalletButton.setOnClickListener {
-            navigation?.add(InitScreen.newInstance(InitScreen.Type.New))
+            navigation?.add(InitScreen.newInstance(InitArgs.Type.New))
         }
 
         val importWalletButton = view.findViewById<Button>(R.id.import_wallet)

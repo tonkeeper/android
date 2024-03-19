@@ -8,14 +8,16 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import com.tonapps.tonkeeper.core.widget.WidgetBalanceProvider
-import com.tonapps.tonkeeper.fragment.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
+import com.tonapps.tonkeeper.ui.screen.settings.legal.LegalScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeScreen
+import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -45,6 +47,10 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             is Item.Theme -> navigation?.add(ThemeScreen.newInstance())
             is Item.Widget -> installWidget()
             is Item.Security -> navigation?.add(SecurityScreen.newInstance())
+            is Item.Legal -> navigation?.add(LegalScreen.newInstance())
+            is Item.News -> navigation?.openURL(item.url, true)
+            is Item.Support -> navigation?.openURL(item.url, true)
+            is Item.Contact -> navigation?.openURL(item.url, true)
             else -> return
         }
     }

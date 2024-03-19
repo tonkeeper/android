@@ -10,8 +10,10 @@ import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
+import com.tonapps.wallet.data.account.WalletSource
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import org.ton.api.pub.PublicKeyEd25519
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.runAnimation
@@ -20,19 +22,27 @@ import uikit.widget.HeaderView
 
 class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
-    enum class Type {
-        New, Import, Watch, Testnet, Signer
+
+
+    private val args: InitArgs by lazy {
+        InitArgs(requireArguments())
     }
 
-    private val type: Type by lazy {
-        requireArguments().getSerializable(ARG_TYPE) as Type
-    }
-
-    private val initViewModel: InitViewModel by viewModel { parametersOf(type) }
+    private val initViewModel: InitViewModel by viewModel { parametersOf(args.type) }
 
     private lateinit var headerView: HeaderView
     private lateinit var loaderContainerView: View
     private lateinit var loaderIconView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        args.name?.let {
+            initViewModel.setLabelName(it)
+        }
+        args.publicKeyEd25519?.let {
+            initViewModel.setPublicKey(it)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -105,13 +115,16 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
     companion object {
 
-        private const val ARG_TYPE = "type"
+        fun newInstance(
+            type: InitArgs.Type,
+            publicKeyEd25519: PublicKeyEd25519? = null,
+            name: String? = null,
+            walletSource: WalletSource? = null
+        ) = newInstance(InitArgs(type, name, publicKeyEd25519, walletSource))
 
-        fun newInstance(type: Type): InitScreen {
+        fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()
-            fragment.arguments = Bundle().apply {
-                putSerializable(ARG_TYPE, type)
-            }
+            fragment.arguments = args.toBundle()
             return fragment
         }
     }

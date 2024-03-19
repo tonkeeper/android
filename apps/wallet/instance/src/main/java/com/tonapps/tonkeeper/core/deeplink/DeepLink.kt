@@ -3,8 +3,8 @@ package com.tonapps.tonkeeper.core.deeplink
 import android.content.Context
 import android.net.Uri
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.fragment.root.RootActivity
-import com.tonapps.tonkeeper.fragment.main.MainFragment
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import uikit.extensions.activity
 import uikit.extensions.findFragment
 
@@ -92,7 +92,7 @@ class DeepLink(private val activity: RootActivity) {
     }
 
     private fun handleAppTab(tab: String): Boolean {
-        val fragment = fragmentManager.findFragment<MainFragment>() ?: return false
+        val fragment = fragmentManager.findFragment<MainScreen>() ?: return false
         val tabId = when (tab) {
             INTERNAL_PATH_WALLET -> R.id.wallet
             INTERNAL_PATH_ACTIVITY -> R.id.activity

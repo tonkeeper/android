@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.api.rates
 import android.content.Context
 import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.base.BaseBlobRepository
-import com.tonapps.wallet.api.SourceAPI
+import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.tonkeeper.api.fromJSON
 import com.tonapps.tonkeeper.api.toJSON
 import com.tonapps.tonkeeper.api.withRetry

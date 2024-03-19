@@ -5,7 +5,7 @@ import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.account.db.AccountDao
 import com.tonapps.tonkeeper.api.base.AccountKey
 import com.tonapps.tonkeeper.api.base.RepositoryResponse
-import com.tonapps.wallet.api.SourceAPI
+import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.tonkeeper.api.withRetry
 import io.tonapi.apis.AccountsApi
 import io.tonapi.models.Account

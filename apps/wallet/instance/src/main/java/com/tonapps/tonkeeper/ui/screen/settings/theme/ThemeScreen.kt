@@ -6,11 +6,15 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 
 class ThemeScreen: BaseFragment(R.layout.fragment_theme), BaseFragment.SwipeBack {
+
+    private val themeViewModel: ThemeViewModel by viewModel()
 
     private lateinit var headerView: HeaderView
     private lateinit var themeBlueView: ItemIconView
@@ -27,25 +31,26 @@ class ThemeScreen: BaseFragment(R.layout.fragment_theme), BaseFragment.SwipeBack
         themeDarkView = view.findViewById(R.id.theme_dark)
         bindClick(themeDarkView, uikit.R.style.Theme_App_Dark)
 
-        checkCurrentTheme()
+        collectFlow(themeViewModel.currentThemeFlow, ::setCurrentTheme)
     }
 
-    private fun checkCurrentTheme() {
+    private fun setCurrentTheme(currentTheme: Int) {
+        themeBlueView.isEnabled = true
+        themeDarkView.isEnabled = true
         themeBlueView.iconRes = 0
         themeDarkView.iconRes = 0
 
-        val currentTheme = App.instance.getThemeRes()
         if (currentTheme == uikit.R.style.Theme_App_Blue) {
             themeBlueView.iconRes = UIKitIcon.ic_done_16
+            themeBlueView.isEnabled = false
         } else if (currentTheme == uikit.R.style.Theme_App_Dark) {
             themeDarkView.iconRes = UIKitIcon.ic_done_16
+            themeDarkView.isEnabled = false
         }
     }
 
     private fun setTheme(id: Int) {
-        if (App.instance.setThemeRes(id)) {
-            requireActivity().recreate()
-        }
+        themeViewModel.setTheme(id)
     }
 
     private fun bindClick(view: View, id: Int) {

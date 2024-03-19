@@ -30,9 +30,10 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.core))
     implementation(project(Dependence.Wallet.Data.rates))
     implementation(project(Dependence.Wallet.api))
+    implementation(project(Dependence.Lib.network))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.blockchain))
-    implementation(project(Dependence.Lib.sql))
+    implementation(project(Dependence.Lib.sqlite))
 
     implementation(project(Dependence.Module.core))
 }

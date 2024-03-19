@@ -17,7 +17,7 @@ import com.tonapps.tonkeeper.core.tonconnect.models.reply.TCResultSuccess
 import com.tonapps.tonkeeper.event.RequestActionEvent
 import com.tonapps.tonkeeper.extensions.emulate
 import com.tonapps.tonkeeper.extensions.sendToBlockchain
-import com.tonapps.tonkeeper.fragment.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import core.EventBus
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +39,13 @@ class TonConnect(private val context: Context) {
         fun from(context: Context): TonConnect? {
             val activity = context.activity as? RootActivity ?: return null
             return activity.tonConnect
+        }
+
+        fun isSupportUri(uri: Uri): Boolean {
+            if (uri.scheme == "tc") {
+                return true
+            }
+            return uri.host == "app.tonkeeper.com" && uri.path == "/ton-connect" || uri.host == "ton-connect"
         }
     }
 
@@ -72,23 +79,6 @@ class TonConnect(private val context: Context) {
         val accountId = getAccountId()
         val clientIds = appRepository.getClientIds(accountId)
         realtime.start(clientIds)
-    }
-
-    fun isSupportUri(uri: Uri): Boolean {
-        if (uri.scheme == "tc") {
-            return true
-        }
-        return uri.host == "app.tonkeeper.com" && uri.path == "/ton-connect" || uri.host == "ton-connect"
-    }
-
-    fun resolveScreen(uri: Uri): TCAuthFragment? {
-        val request = try {
-            TCRequest(uri)
-        } catch (e: Throwable) {
-            return null
-        }
-
-        return TCAuthFragment.newInstance(request)
     }
 
     private fun onEvent(event: TCEvent) {

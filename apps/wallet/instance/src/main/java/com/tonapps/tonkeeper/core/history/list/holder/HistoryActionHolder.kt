@@ -12,12 +12,10 @@ import com.tonapps.tonkeeper.core.history.iconRes
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.dialog.TransactionDialog
-import com.tonapps.tonkeeper.fragment.nft.NftScreen
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textTertiaryColor
 import uikit.extensions.drawable
-import uikit.navigation.Navigation
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 
@@ -107,7 +105,7 @@ class HistoryActionHolder(
 
         nftView.visibility = View.VISIBLE
         nftView.setOnClickListener {
-            Navigation.from(context)?.add(NftScreen.newInstance(item.nftAddress!!))
+            // Navigation.from(context)?.add(NftScreen.newInstance(item.nftAddress!!))
         }
         nftIconView.setImageURI(item.nftImageURL)
         nftNameView.text = item.nftTitle

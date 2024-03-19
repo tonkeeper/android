@@ -28,10 +28,10 @@ class Holder(
         itemView.setOnClickListener { onClick(item) }
         addressView.text = item.address.shortAddress
         selectedView.checked = item.selected
-        setDetails(item.walletVersion, item.balanceFormat, item.tokens)
+        setDetails(item.walletVersion, item.balanceFormat, item.tokens, item.collectibles)
     }
 
-    private fun setDetails(walletVersion: WalletVersion, balance: String, tokens: Boolean) {
+    private fun setDetails(walletVersion: WalletVersion, balance: String, tokens: Boolean, collectibles: Boolean) {
         val builder = StringBuilder()
         builder.append(walletVersion.title)
         builder.append(DOT)
@@ -39,6 +39,10 @@ class Holder(
         if (tokens) {
             builder.append(", ")
             builder.append("tokens")
+        }
+        if (collectibles) {
+            builder.append(", ")
+            builder.append("nft")
         }
 
         val spannableString = SpannableString(builder)

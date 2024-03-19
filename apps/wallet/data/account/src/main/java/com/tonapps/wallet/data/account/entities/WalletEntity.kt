@@ -6,7 +6,9 @@ import com.tonapps.blockchain.ton.contract.WalletV3R2Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R1Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import org.ton.api.pub.PublicKeyEd25519
@@ -19,6 +21,7 @@ data class WalletEntity(
     val type: WalletType,
     val version: WalletVersion = WalletVersion.V4R2,
     val label: WalletLabel,
+    val source: WalletSource = WalletSource.Default
 ) {
 
     companion object {
@@ -35,6 +38,7 @@ data class WalletEntity(
             emoji = legacy.emoji.toString(),
             color = legacy.color
         ),
+        source = legacy.source
     )
 
     val contract: BaseWalletContract = when (version) {
@@ -48,10 +52,10 @@ data class WalletEntity(
     val testnet: Boolean
         get() = type == WalletType.Testnet
 
-    val accountId: String = MsgAddressInt.toString(
-        contract.address,
-        userFriendly = false
-    ).lowercase()
+    val hasPrivateKey: Boolean
+        get() = type == WalletType.Default || type == WalletType.Testnet
 
-    val address: String = AddrStd(accountId).toWalletAddress(testnet)
+    val accountId: String = contract.address.toAccountId()
+
+    val address: String = contract.address.toWalletAddress(testnet)
 }

@@ -30,7 +30,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetMedium"
-                android:text="@string/key_export_tonkeeper"/>
+                android:text="@string/key_export_tonkeeper"
+                android:tint="?attr/iconSecondaryColor"/>
 
             <uikit.widget.ActionCellView
                 android:id="@+id/export_tonkeeper_web"

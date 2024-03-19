@@ -29,13 +29,15 @@ sealed class Item(type: Int): BaseListItem(type) {
         val balance: String,
         val address: String,
         val walletType: WalletType,
-        val status: Status
+        val status: Status,
+        val hiddenBalance: Boolean
     ): Item(TYPE_BALANCE)
 
     data class Actions(
         val address: String,
         val token: TokenEntity,
-        val walletType: WalletType
+        val walletType: WalletType,
+        val swapUri: Uri,
     ): Item(TYPE_ACTIONS)
 
     data class Token(
@@ -51,7 +53,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val rate: String,
         val rateDiff24h: String,
         val verified: Boolean,
-        val testnet: Boolean
+        val testnet: Boolean,
+        val hiddenBalance: Boolean
     ): Item(TYPE_TOKEN)
 
     data object Space: Item(TYPE_SPACE)

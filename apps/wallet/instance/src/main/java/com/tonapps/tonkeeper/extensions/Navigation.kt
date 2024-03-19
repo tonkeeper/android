@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.extensions
 
 import com.tonapps.tonkeeper.fragment.camera.CameraFragment
-import com.tonapps.tonkeeper.fragment.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.fragment.send.SendScreen
 import io.tonapi.models.JettonBalance
 import uikit.extensions.findFragment

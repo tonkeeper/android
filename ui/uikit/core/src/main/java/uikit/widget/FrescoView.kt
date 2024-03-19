@@ -32,7 +32,11 @@ class FrescoView @JvmOverloads constructor(
 
     private fun setImageDrawable(drawable: Drawable, callerContext: Any?) {
         clear(callerContext)
-        hierarchy.setPlaceholderImage(drawable)
+        if (scaleType == ScaleType.CENTER_INSIDE) {
+            setImageDrawable(drawable)
+        } else {
+            setPlaceholder(drawable)
+        }
     }
 
     private fun requestDrawable(uri: Uri): Drawable {

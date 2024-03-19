@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.extensions
 
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.tonkeeper.api.ApiHelper
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import io.tonapi.models.MessageConsequences
@@ -35,7 +36,7 @@ suspend fun WalletLegacy.buildBody(
 }
 
 suspend fun WalletLegacy.sign(
-    privateKey: PrivateKeyEd25519 = PrivateKeyEd25519(),
+    privateKey: PrivateKeyEd25519 = EmptyPrivateKeyEd25519,
     vararg gifts: WalletTransfer
 ): Cell {
     val (unsignedBody, seqno) = buildBody(*gifts)

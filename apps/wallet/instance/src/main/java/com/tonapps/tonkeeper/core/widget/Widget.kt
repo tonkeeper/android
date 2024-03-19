@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.IBinder
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.fragment.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.core.currency.CurrencyManager
 import com.tonapps.wallet.data.core.WalletCurrency
 import kotlinx.coroutines.DelicateCoroutinesApi

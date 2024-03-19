@@ -4,7 +4,7 @@ import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.base.AccountKey
 import com.tonapps.tonkeeper.api.base.BaseAccountRepository
 import com.tonapps.tonkeeper.api.base.RepositoryResponse
-import com.tonapps.wallet.api.SourceAPI
+import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.tonkeeper.api.fromJSON
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.jetton.db.JettonDao

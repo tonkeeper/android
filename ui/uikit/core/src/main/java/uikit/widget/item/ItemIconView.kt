@@ -5,7 +5,11 @@ import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.uikit.list.ListCell
 import uikit.R
 import uikit.drawable.DotDrawable
 import uikit.extensions.setEndDrawable
@@ -60,16 +64,18 @@ class ItemIconView @JvmOverloads constructor(
         context.useAttributes(attrs, R.styleable.ItemIconView) {
             text = it.getString(R.styleable.ItemIconView_android_text)
             iconRes = it.getResourceId(R.styleable.ItemIconView_android_icon, UIKitIcon.ic_chevron_right_16)
-            position = com.tonapps.uikit.list.ListCell.from(it.getString(R.styleable.ItemIconView_position))
+            position = ListCell.from(it.getString(R.styleable.ItemIconView_position))
 
             val tint = it.getColor(R.styleable.ItemIconView_android_tint, 0)
             if (tint != 0) {
                 setIconTintColor(tint)
+            } else {
+                setIconTintColor(context.accentBlueColor)
             }
         }
     }
 
     fun setIconTintColor(color: Int) {
-        iconView.imageTintList = ColorStateList.valueOf(color)
+        iconView.imageTintList = color.stateList
     }
 }

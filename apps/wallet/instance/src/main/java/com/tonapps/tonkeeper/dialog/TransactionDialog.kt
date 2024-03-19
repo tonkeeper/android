@@ -12,7 +12,7 @@ import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
-import com.tonapps.tonkeeper.fragment.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import kotlinx.coroutines.CoroutineScope
 import uikit.base.BaseSheetDialog

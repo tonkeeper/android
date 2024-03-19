@@ -26,6 +26,5 @@
         android:layout_width="@dimen/iconSize"
         android:layout_height="@dimen/iconSize"
         android:layout_gravity="center"
-        android:tint="?attr/accentBlueColor"
         android:scaleType="centerInside"/>
 </merge>

@@ -34,6 +34,16 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
         collectFlow(editNameViewModel.uiLabelFlow, ::setLabel)
     }
 
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch { editorView.loadEmoji() }
+    }
+
+    override fun onPause() {
+        editNameViewModel.save(editorView.name, editorView.emoji, editorView.color)
+        super.onPause()
+    }
+
     private fun setLabel(label: WalletLabel) {
         with(editorView) {
             name = label.name
@@ -45,11 +55,6 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
     private fun saveLabel(name: String, emoji: String, color: Int) {
         editNameViewModel.save(name, emoji, color)
         finish()
-    }
-
-    override fun onEndShowingAnimation() {
-        super.onEndShowingAnimation()
-        lifecycleScope.launch { editorView.loadEmoji() }
     }
 
     override fun onDragging() {

@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.token
 
 import android.content.Context
 import androidx.collection.ArrayMap
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
@@ -18,13 +19,14 @@ import java.util.concurrent.ConcurrentHashMap
 
 class TokenRepository(
     private val context: Context,
-    private val ratesRepository: RatesRepository
+    private val ratesRepository: RatesRepository,
+    private val api: API
 ) {
 
     private val totalBalanceCache = ConcurrentHashMap<String, Float>(3, 1.0f, 2)
 
     private val localDataSource = LocalDataSource(context)
-    private val remoteDataSource = RemoteDataSource()
+    private val remoteDataSource = RemoteDataSource(api)
 
     suspend fun getTotalBalances(
         currency: WalletCurrency,

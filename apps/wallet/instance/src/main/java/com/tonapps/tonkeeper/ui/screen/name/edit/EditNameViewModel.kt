@@ -15,8 +15,6 @@ class EditNameViewModel(
     val uiLabelFlow = walletRepository.activeWalletFlow.map { it.label }.take(1)
 
     fun save(name: String, emoji: CharSequence, color: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            walletRepository.editLabel(name, emoji.toString(), color)
-        }
+        walletRepository.saveLabel(name, emoji.toString(), color)
     }
 }

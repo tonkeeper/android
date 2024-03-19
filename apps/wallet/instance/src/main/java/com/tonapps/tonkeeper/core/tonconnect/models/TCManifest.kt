@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.core.tonconnect.models
 
+import android.net.Uri
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
@@ -12,6 +13,9 @@ data class TCManifest(
     val termsOfUseUrl: String?,
     val privacyPolicyUrl: String?
 ) : Parcelable {
+
+    val host: String
+        get() = Uri.parse(url).host ?: name
 
     constructor(json: JSONObject) : this(
         url = json.getString("url"),

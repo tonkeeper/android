@@ -10,45 +10,46 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import android.net.Network
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 
 @SuppressLint("MissingPermission")
-class NetworkMonitor(context: Context) {
+class NetworkMonitor(
+    context: Context,
+    scope: CoroutineScope
+):  ConnectivityManager.NetworkCallback() {
 
-    val isOnline: Flow<Boolean> = callbackFlow {
-        val connectivityManager = context.getSystemService(ConnectivityManager::class.java) as ConnectivityManager
-        /*if (connectivityManager == null) {
-            channel.trySend(false)
-            channel.close()
-            return@callbackFlow
-        }*/
+    private val networks = mutableSetOf<Network>()
+    private val connectivityManager = context.getSystemService(ConnectivityManager::class.java) as ConnectivityManager
 
-        val callback = object : ConnectivityManager.NetworkCallback() {
+    private val _isOnlineFlow = MutableStateFlow(true)
+    val isOnlineFlow: Flow<Boolean> = _isOnlineFlow.stateIn(
+        scope = scope,
+        started = SharingStarted.Eagerly,
+        initialValue = true
+    )
 
-            private val networks = mutableSetOf<Network>()
-
-            override fun onAvailable(network: Network) {
-                networks += network
-                channel.trySend(true)
-            }
-
-            override fun onLost(network: Network) {
-                networks -= network
-                channel.trySend(networks.isNotEmpty())
-            }
-        }
-
+    init {
         val request = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
-        connectivityManager.registerNetworkCallback(request, callback)
-
+        connectivityManager.registerNetworkCallback(request, this)
         val isOnline = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-
-        channel.trySend(isOnline == true)
-
-        awaitClose {
-            connectivityManager.unregisterNetworkCallback(callback)
-        }
+        _isOnlineFlow.value = isOnline == true
     }
-        .conflate()
+
+    override fun onAvailable(network: Network) {
+        networks += network
+        _isOnlineFlow.value = true
+    }
+
+    override fun onLost(network: Network) {
+        networks -= network
+        _isOnlineFlow.value = networks.isNotEmpty()
+    }
 }

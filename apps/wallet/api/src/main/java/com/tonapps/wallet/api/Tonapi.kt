@@ -1,7 +1,7 @@
 package com.tonapps.wallet.api
 
-import com.tonapps.wallet.api.entity.TokenEntity
-
+import com.tonapps.wallet.api.core.BaseAPI
+import com.tonapps.wallet.api.core.SourceAPI
 
 object Tonapi {
     private val main = BaseAPI("https://keeper.tonapi.io")

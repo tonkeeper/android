@@ -33,21 +33,5 @@
             android:text="@string/privacy"
             app:position="last"/>
 
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/licenses"
-            android:textAppearance="@style/TextAppearance.H3"
-            android:textColor="?attr/textPrimaryColor"
-            android:paddingVertical="@dimen/offsetMedium"/>
-
-        <uikit.widget.item.ItemIconView
-            android:id="@+id/licenses_font"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/montserrat_font"
-            app:position="single"/>
-
     </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.appcompat.widget.LinearLayoutCompat>

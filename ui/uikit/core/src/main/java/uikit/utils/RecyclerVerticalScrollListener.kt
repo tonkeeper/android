@@ -4,12 +4,12 @@ import androidx.recyclerview.widget.RecyclerView
 
 abstract class RecyclerVerticalScrollListener: RecyclerView.OnScrollListener() {
 
-    private var isAttached = false
+    private var recyclerViewRef: RecyclerView? = null
 
     abstract fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int)
 
     private fun scrolled(recyclerView: RecyclerView) {
-        if (!isAttached) {
+        if (recyclerViewRef == null) {
             return
         }
         recyclerView.post {
@@ -22,12 +22,21 @@ abstract class RecyclerVerticalScrollListener: RecyclerView.OnScrollListener() {
     }
 
     fun attach(recyclerView: RecyclerView) {
-        isAttached = true
+        if (recyclerViewRef == recyclerView) {
+            return
+        }
+
+        if (recyclerViewRef != null) {
+            detach()
+        }
+
+        recyclerViewRef = recyclerView
+        recyclerView.addOnScrollListener(this)
         scrolled(recyclerView)
     }
 
     fun detach() {
-        isAttached = false
-
+        recyclerViewRef?.removeOnScrollListener(this)
+        recyclerViewRef = null
     }
 }

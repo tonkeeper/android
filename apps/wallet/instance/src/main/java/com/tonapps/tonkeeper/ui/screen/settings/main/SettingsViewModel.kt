@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
@@ -17,7 +18,8 @@ import uikit.extensions.collectFlow
 
 class SettingsViewModel(
     private val walletRepository: WalletRepository,
-    private val settings: SettingsRepository
+    private val settings: SettingsRepository,
+    private val api: API
 ): ViewModel() {
 
     private data class Data(
@@ -63,9 +65,9 @@ class SettingsViewModel(
         uiItems.add(Item.Language(language.nameLocalized.capitalized, ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
-        uiItems.add(Item.Support(ListCell.Position.FIRST))
-        uiItems.add(Item.News(ListCell.Position.MIDDLE))
-        uiItems.add(Item.Contact(ListCell.Position.MIDDLE))
+        uiItems.add(Item.Support(ListCell.Position.FIRST, api.config.directSupportUrl))
+        uiItems.add(Item.News(ListCell.Position.MIDDLE, api.config.tonkeeperNewsUrl))
+        uiItems.add(Item.Contact(ListCell.Position.MIDDLE, api.config.supportLink))
         uiItems.add(Item.Legal(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)

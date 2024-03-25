@@ -7,19 +7,15 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import blur.node.api31.BlurNode
 import blur.node.api31.ContentNode
-import blur.node.legacy.BlurNodeLegacy
-import blur.node.legacy.ContentNodeLegacy
+import blur.node.api26.BlurNodeLegacy
+import blur.node.api26.ContentNodeLegacy
 
-class BlurCompat(
-    context: Context,
-    enable: Boolean,
-    experimental: Boolean
-) {
+class BlurCompat(context: Context) {
 
-    private val impl = if (experimental) {
-        ImplExperimental(context)
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && enable) {
+    private val impl = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Impl31(context)
+    /*} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Impl26(context) */
     } else {
         Impl(context)
     }
@@ -31,16 +27,16 @@ class BlurCompat(
         impl.draw(input, callback)
     }
 
-    fun setBounds(rect: RectF) {
-        impl.setBounds(rect)
+    fun setSafeArea(rect: RectF) {
+        impl.setSafeArea(rect)
     }
 
-    fun setBounds(left: Float, top: Float, right: Float, bottom: Float) {
-        setBounds(RectF(left, top, right, bottom))
+    fun setSafeArea(left: Float, top: Float, right: Float, bottom: Float) {
+        setSafeArea(RectF(left, top, right, bottom))
     }
 
-    fun setBounds(left: Float, top: Float, size: Int) {
-        setBounds(left, top, left + size, top + size)
+    fun setSafeArea(left: Float, top: Float, size: Int) {
+        setSafeArea(left, top, left + size, top + size)
     }
 
     fun attached() {
@@ -55,14 +51,12 @@ class BlurCompat(
 
         open val hasBlur: Boolean = false
 
-        private val contentNode = ContentNodeLegacy()
-
         open fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
-            contentNode.draw(canvas, callback)
+
         }
 
-        open fun setBounds(rect: RectF) {
-            contentNode.setBounds(rect)
+        open fun setSafeArea(rect: RectF) {
+
         }
 
         open fun attached() {
@@ -70,11 +64,12 @@ class BlurCompat(
         }
 
         open fun detached() {
-            contentNode.release()
+
         }
     }
 
-    private class ImplExperimental(context: Context): Impl(context) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private class Impl26(context: Context): Impl(context) {
 
         override val hasBlur: Boolean = true
 
@@ -87,8 +82,8 @@ class BlurCompat(
             blurNode.draw(canvas, callback)
         }
 
-        override fun setBounds(rect: RectF) {
-            super.setBounds(rect)
+        override fun setSafeArea(rect: RectF) {
+            super.setSafeArea(rect)
             contentNode.setBounds(rect)
             blurNode.setBounds(rect)
         }
@@ -115,8 +110,8 @@ class BlurCompat(
             }
         }
 
-        override fun setBounds(rect: RectF) {
-            super.setBounds(rect)
+        override fun setSafeArea(rect: RectF) {
+            super.setSafeArea(rect)
             contentNode.setBounds(rect)
             blurNode.setBounds(rect)
         }

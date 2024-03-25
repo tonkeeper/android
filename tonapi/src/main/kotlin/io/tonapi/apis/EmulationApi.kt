@@ -412,7 +412,6 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     @Throws(IllegalStateException::class, IOException::class)
     fun emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: kotlin.String?) : ApiResponse<MessageConsequences?> {
         val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage)
-
         return request<EmulateMessageToWalletRequest, MessageConsequences>(
             localVariableConfig
         )

@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="@style/TextAppearance.H2"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         android:gravity="center"/>
 
     <uikit.widget.password.PasswordInputView
@@ -26,7 +26,7 @@
         android:visibility="gone"
         android:gravity="center"
         android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         android:text="@string/password_limit"/>
 
 </uikit.widget.ColumnLayout>

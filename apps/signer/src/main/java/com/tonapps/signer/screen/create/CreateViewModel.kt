@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.mnemonic.Mnemonic
-import security.tryCallGC
+import com.tonapps.security.tryCallGC
 import javax.crypto.SecretKey
 
 class CreateViewModel(
@@ -114,6 +114,7 @@ class CreateViewModel(
 
                 _onReady.trySend(Unit)
             } catch (e: Throwable) {
+                CrashActivity.open(e, context)
                 _currentPage.tryEmit(pages.first())
             }
         }

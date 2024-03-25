@@ -1,5 +1,6 @@
 package core
 
+@Deprecated("Use Flow from kotlinx.coroutines")
 object EventBus {
 
     private val subscribers = mutableMapOf<Class<*>, MutableSet<(BaseEvent) -> Unit>>()

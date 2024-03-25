@@ -1,7 +1,7 @@
 package com.tonapps.signer.screen.sign.list
 
-import uikit.list.BaseListItem
-import uikit.list.ListCell
+import com.tonapps.uikit.list.BaseListItem
+import com.tonapps.uikit.list.ListCell
 
 sealed class SignItem(
     type: Int,
@@ -20,6 +20,7 @@ sealed class SignItem(
         val value: String,
         val value2: String?,
         val comment: String?,
+        val extra: Boolean,
         position: ListCell.Position
     ): SignItem(SEND, position)
 }

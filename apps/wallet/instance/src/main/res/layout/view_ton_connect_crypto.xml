@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <view class="com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView$AnimationTextView"
+        android:id="@+id/key"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1"/>
+
+    <View
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/cursor"
+        android:backgroundTint="?attr/backgroundContentTintColor"/>
+
+    <view class="com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView$AnimationTextView"
+        android:id="@+id/crypt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="4dp"
+        android:layout_weight="1"/>
+</merge>

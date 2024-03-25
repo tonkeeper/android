@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/empty_placeholder_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.H2"
+        android:textColor="?attr/textPrimaryColor"
+        android:gravity="center"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/empty_placeholder_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/textSecondaryColor"
+        android:gravity="center"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:layout_gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/empty_placeholder_button_first"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Label1"/>
+
+        <Button
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/empty_placeholder_button_second"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.Label1"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</merge>

@@ -8,9 +8,8 @@
         <item name="postSplashScreenTheme">@style/Theme.Signer</item>
     </style>
 
-    <style name="Theme.Signer" parent="Theme.App">
+    <style name="Theme.Signer" parent="Theme.App.Blue">
         <item name="android:windowBackground">@drawable/bg_window</item>
-        <item name="android:colorBackground">@color/backgroundPage</item>
     </style>
 
 </resources>

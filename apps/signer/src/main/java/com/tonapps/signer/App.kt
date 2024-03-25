@@ -10,7 +10,8 @@ import androidx.camera.core.CameraXConfig
 import com.tonapps.signer.screen.crash.CrashActivity
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
-import security.Security
+import org.ton.crypto.base64
+import com.tonapps.security.Security
 import java.io.PrintWriter
 import java.io.StringWriter
 

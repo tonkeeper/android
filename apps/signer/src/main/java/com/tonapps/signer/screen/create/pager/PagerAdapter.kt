@@ -1,6 +1,7 @@
 package com.tonapps.signer.screen.create.pager
 
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.tonapps.signer.screen.create.child.CreateNameFragment
 import com.tonapps.signer.screen.create.child.CreatePasswordFragment
@@ -22,6 +23,14 @@ class PagerAdapter(
             PageType.Name -> CreateNameFragment.newInstance()
             PageType.Phrase -> CreatePhraseFragment.newInstance()
         }
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerView.setHasFixedSize(true)
+        recyclerView.isNestedScrollingEnabled = false
+        recyclerView.itemAnimator = null
+        recyclerView.layoutAnimation = null
     }
 
 }

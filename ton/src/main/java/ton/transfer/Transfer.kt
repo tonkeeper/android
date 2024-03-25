@@ -51,12 +51,15 @@ object Transfer {
             storeTlb(MsgAddressInt, responseAddress)
             storeBit(false)
             storeTlb(Coins, Coins.ofNano(forwardAmount))
-            storeBit(payload != null)
-            payload?.let {
-                storeRef(AnyTlbConstructor, CellRef(it))
+            if (payload == null) {
+                storeBit(false)
+            } else {
+                storeBit(false)
+                storeRef(AnyTlbConstructor, CellRef(payload))
             }
         }
     }
+
 
     fun nft(
         newOwnerAddress: MsgAddressInt,

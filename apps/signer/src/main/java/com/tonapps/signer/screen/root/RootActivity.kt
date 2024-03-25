@@ -4,23 +4,19 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.signer.BuildConfig
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.SimpleState
-import com.tonapps.signer.deeplink.entities.ReturnResultEntity
-import com.tonapps.signer.extensions.base64
-import com.tonapps.signer.extensions.parseCell
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.password.ui.PasswordView
 import com.tonapps.signer.screen.intro.IntroFragment
 import com.tonapps.signer.screen.main.MainFragment
-import com.tonapps.signer.screen.qr.QRFragment
 import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.signer.screen.sign.SignFragment
 import kotlinx.coroutines.Job
@@ -46,6 +42,7 @@ class RootActivity: NavigationActivity() {
     private var checkPasswordJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_Signer)
         super.onCreate(savedInstanceState)
         if (!BuildConfig.DEBUG) {
             window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
@@ -196,10 +193,6 @@ class RootActivity: NavigationActivity() {
         if (setPrimaryFragment(MainFragment.newInstance()) && !Password.isUnlocked()) {
             showLockPassword()
         }
-    }
-
-    override fun initRoot(skipPasscode: Boolean, intent: Intent?) {
-
     }
 
     override fun openURL(url: String, external: Boolean) {

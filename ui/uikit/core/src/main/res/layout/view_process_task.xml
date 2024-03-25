@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <uikit.widget.LoaderView
+        android:id="@+id/loader"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center"
+        android:color="@color/constantWhite"
+        android:trackTint="#52ffffff"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/success"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:tint="?attr/accentGreenColor"
+            android:src="@drawable/ic_checkmark_circle_32"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/success_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:textColor="?attr/accentGreenColor"
+            android:lineHeight="20dp"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/failed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:tint="?attr/accentRedColor"
+            android:src="@drawable/ic_exclamationmark_circle_32"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/failed_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:textColor="?attr/accentRedColor"
+            android:lineHeight="20dp"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</merge>

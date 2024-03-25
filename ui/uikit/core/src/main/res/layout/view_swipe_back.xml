@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <View
+        android:id="@+id/bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/backgroundPageColor"/>
+
+    <View
+        android:id="@+id/shadow"
+        android:layout_width="@dimen/shadowSize"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_shadow_horizontal"/>
+
+    <FrameLayout
+        android:id="@+id/swipe_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</merge>

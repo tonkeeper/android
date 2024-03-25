@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:height="@dimen/offsetMedium"
+        android:gravity="top"
+        android:drawable="@drawable/bg_page_gradient"/>
+
+    <item
+        android:height="@dimen/offsetMedium"
+        android:gravity="bottom"
+        android:drawable="@drawable/bg_gradient"/>
+</layer-list>

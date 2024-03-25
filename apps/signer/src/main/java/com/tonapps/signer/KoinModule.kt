@@ -13,7 +13,7 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val koinModel = module {
-    single(createdAtStart=false) { SignerVault(androidContext()) }
+    single(createdAtStart = false) { SignerVault(androidContext()) }
 
     includes(coreModule)
 

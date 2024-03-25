@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical">
+    android:background="?attr/backgroundPageColor">
 
-    <ScrollView
+    <uikit.widget.HeaderView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="wrap_content"
+        android:title="@string/unknown_error"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:clipToPadding="false">
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -17,15 +22,20 @@
                 android:id="@+id/stack"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:typeface="monospace"
+                android:textColor="?attr/accentGreenColor"
+                android:textSize="12sp" />
         </FrameLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <Button
+        style="@style/Widget.App.Button.Secondary"
         android:id="@+id/copy"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Copy"/>
+        android:layout_margin="16dp"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/copy"/>
 
-</LinearLayout>
+</uikit.widget.ColumnLayout>

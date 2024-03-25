@@ -13,7 +13,7 @@
         android:paddingTop="@dimen/offsetMedium"
         android:text="@string/key_export_qr_title"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"/>
+        android:textColor="?attr/textPrimaryColor"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:layout_width="match_parent"
@@ -24,9 +24,9 @@
         android:paddingBottom="@dimen/offsetMedium"
         android:text="@string/key_export_qr_subtitle"
         android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="@color/textSecondary"/>
+        android:textColor="?attr/textSecondaryColor"/>
 
-    <qr.QRView
+    <com.tonapps.qr.ui.QRView
         android:id="@+id/qr"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

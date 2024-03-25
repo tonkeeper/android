@@ -3,7 +3,6 @@ package com.tonapps.signer.screen.camera
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatImageView
@@ -28,9 +27,9 @@ import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import qr.QRImageAnalyzer
+import com.tonapps.qr.QRImageAnalyzer
 import uikit.extensions.applyBottomInsets
-import uikit.extensions.pinToBottomInsets
+import uikit.widget.ModalView
 
 class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
@@ -86,6 +85,8 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         qrAnalyzer.flow.onEach(::handleBarcode).launchIn(lifecycleScope)
+
+        checkAndStartCamera()
     }
 
     private fun showPermissionContainer() {
@@ -107,6 +108,12 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
 
         val uri = chunks.joinToString("").uriOrNull ?: return
         if (rootViewModel.processDeepLink(uri, false)) {
+            finishDelay()
+        }
+    }
+
+    private fun finishDelay() {
+        postDelayed(ModalView.animationDuration) {
             finish()
         }
     }
@@ -166,11 +173,6 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
             Password.setUnlock()
             activityResultLauncher.launch(android.Manifest.permission.CAMERA)
         }
-    }
-
-    override fun onEndShowingAnimation() {
-        super.onEndShowingAnimation()
-        checkAndStartCamera()
     }
 
     override fun onDestroyView() {

@@ -32,9 +32,6 @@ class SettingsFragment: BaseFragment(R.layout.fragment_settings), BaseFragment.S
         headerView.doOnCloseClick = { finish() }
 
         scrollView = view.findViewById(R.id.scroll)
-        scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
-            headerView.divider = scrollY > 0
-        }
 
         changeView = view.findViewById(R.id.change)
         changeView.setOnClickListener { navigation?.add(ChangeFragment.newInstance()) }

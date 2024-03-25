@@ -13,3 +13,8 @@ fun SQLiteDatabase.withTransaction(block: SQLiteDatabase.() -> Long): Long {
     }
     return id
 }
+
+fun SQLiteDatabase.emptyRawQuery(sql: String) {
+    val cursor = rawQuery(sql, null)
+    cursor?.close()
+}

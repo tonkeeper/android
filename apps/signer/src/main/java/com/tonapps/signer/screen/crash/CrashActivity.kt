@@ -1,8 +1,8 @@
 package com.tonapps.signer.screen.crash
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,10 +10,11 @@ import android.widget.TextView
 import com.tonapps.signer.App
 import com.tonapps.signer.R
 import com.tonapps.signer.extensions.copyToClipboard
+import uikit.base.BaseActivity
 import java.io.PrintWriter
 import java.io.StringWriter
 
-class CrashActivity: Activity() {
+class CrashActivity: BaseActivity() {
 
     companion object {
         private const val EXTRA_STACK_TRACE = "EXTRA_STACK_TRACE"

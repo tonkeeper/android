@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="QRView">
+        <attr name="android:color" format="color|reference"/>
+        <attr name="with_cutout" format="boolean"/>
+    </declare-styleable>
+</resources>

@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    implementation(Libs.KotlinX.coroutines)
+    implementation(Dependence.KotlinX.coroutines)
     compileOnly(fileTree("libs") {
         include("*.aar")
     })

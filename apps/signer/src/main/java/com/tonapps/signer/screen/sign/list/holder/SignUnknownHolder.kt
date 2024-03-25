@@ -3,12 +3,13 @@ package com.tonapps.signer.screen.sign.list.holder
 import android.view.ViewGroup
 import com.tonapps.signer.R
 import com.tonapps.signer.screen.sign.list.SignItem
-import uikit.list.ListCell.Companion.drawable
+import com.tonapps.uikit.icon.UIKitIcon
+import uikit.extensions.drawable
 
 class SignUnknownHolder(parent: ViewGroup): SignHolder<SignItem.Unknown>(parent) {
 
     init {
-        iconView.setImageResource(uikit.R.drawable.ic_gear_28)
+        iconView.setImageResource(UIKitIcon.ic_gear_28)
         titleView.setText(R.string.unknown)
     }
 

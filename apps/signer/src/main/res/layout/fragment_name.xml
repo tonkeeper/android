@@ -22,7 +22,7 @@
             android:text="@string/name_your_key"
             android:layout_marginHorizontal="@dimen/offsetLarge"
             android:textAppearance="@style/TextAppearance.H2"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:gravity="center"/>
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -32,7 +32,7 @@
             android:layout_marginHorizontal="@dimen/offsetLarge"
             android:text="@string/name_your_key_subtitle"
             android:textAppearance="@style/TextAppearance.Body1"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/textSecondaryColor"
             android:gravity="center"/>
 
         <uikit.widget.InputView
@@ -40,6 +40,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/offsetLarge"
+            android:maxLength="24"
+            android:singleLine="true"
             android:hint="@string/name"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>

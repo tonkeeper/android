@@ -4,7 +4,7 @@ import android.view.ViewGroup
 import com.tonapps.signer.R
 import com.tonapps.signer.extensions.short8
 import com.tonapps.signer.screen.main.list.MainItem
-import uikit.list.ListCell.Companion.drawable
+import uikit.extensions.drawable
 import uikit.widget.ActionCellView
 
 class MainAccountHolder(

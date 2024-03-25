@@ -22,9 +22,9 @@ android {
 }
 
 dependencies {
-    implementation(Libs.ton)
-    implementation(Libs.AndroidX.security)
+    api(project(Dependence.Lib.blockchain))
+    implementation(Dependence.AndroidX.security)
 
-    implementation(project(Libs.Module.core))
-    implementation(project(Libs.Module.tonApi))
+    implementation(project(Dependence.Module.core))
+    implementation(project(Dependence.Module.tonApi))
 }

@@ -1,63 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="@dimen/offsetMedium">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/title"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/sign_transaction"
-        android:textAppearance="@style/TextAppearance.H3"
-        android:textColor="@color/textPrimary"
-        android:singleLine="true"
-        app:layout_constraintEnd_toStartOf="@+id/close"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="wrap_content">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/offsetExtraSmall"
-        android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="@color/textTertiary"
-        android:singleLine="true"
-        app:layout_constraintEnd_toStartOf="@+id/close"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sign_transaction"
+            android:textAppearance="@style/TextAppearance.H3"
+            android:textColor="?attr/textPrimaryColor"
+            android:singleLine="true"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/close"
-        android:layout_width="@dimen/actionSize"
-        android:layout_height="@dimen/actionSize"
-        android:background="@drawable/bg_oval_button_secondary"
-        android:backgroundTint="@color/buttonSecondaryBackground"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_close_16"
-        android:tint="@color/buttonSecondaryForeground"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"
+            android:singleLine="true"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/title" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <uikit.widget.SimpleRecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:overScrollMode="never"
-        android:paddingVertical="@dimen/offsetMedium"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/subtitle"/>
+        android:paddingVertical="@dimen/offsetMedium"/>
 
     <FrameLayout
         android:id="@+id/audit"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/list">
+        android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/show_audit"
@@ -65,7 +65,7 @@
             android:layout_height="wrap_content"
             android:text="@string/audit_transaction"
             android:gravity="center"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/textSecondaryColor"
             android:textAppearance="@style/TextAppearance.Body2"/>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -82,7 +82,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
                 android:fontFamily="@font/roboto_mono"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/textPrimaryColor"
                 android:maxLines="6"
                 android:scrollbars="vertical"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -114,13 +114,10 @@
     </FrameLayout>
 
     <FrameLayout
-        android:id="@+id/process"
+        android:id="@+id/action"
         android:layout_width="match_parent"
         android:layout_height="@dimen/itemHeight"
-        android:layout_marginTop="@dimen/offsetMedium"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/audit">
+        android:layout_marginTop="@dimen/offsetMedium">
 
         <uikit.widget.SlideActionView
             android:id="@+id/slide"
@@ -137,4 +134,4 @@
     </FrameLayout>
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</uikit.widget.ColumnLayout>

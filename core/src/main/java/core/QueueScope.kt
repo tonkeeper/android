@@ -5,6 +5,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+@Deprecated("Use kotlinx.coroutines.channels.Channel instead")
 class QueueScope(context: CoroutineContext) {
 
     private val scope = CoroutineScope(context)

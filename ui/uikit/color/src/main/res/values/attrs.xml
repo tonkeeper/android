@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="textPrimaryColor" format="reference"/>
+    <attr name="textSecondaryColor" format="reference"/>
+    <attr name="textTertiaryColor" format="reference"/>
+    <attr name="textAccentColor" format="reference"/>
+    <attr name="textPrimaryAlternateColor" format="reference"/>
+
+    <attr name="backgroundPageColor" format="reference"/>
+    <attr name="backgroundTransparentColor" format="reference"/>
+    <attr name="backgroundContentColor" format="reference"/>
+    <attr name="backgroundContentTintColor" format="reference"/>
+    <attr name="backgroundContentAttentionColor" format="reference"/>
+    <attr name="backgroundHighlightedColor" format="reference"/>
+    <attr name="backgroundOverlayStrongColor" format="reference"/>
+    <attr name="backgroundOverlayLightColor" format="reference"/>
+    <attr name="backgroundOverlayExtraLightColor" format="reference"/>
+
+    <attr name="iconPrimaryColor" format="reference"/>
+    <attr name="iconSecondaryColor" format="reference"/>
+    <attr name="iconTertiaryColor" format="reference"/>
+    <attr name="iconPrimaryAlternateColor" format="reference"/>
+
+    <attr name="buttonPrimaryBackgroundColor" format="reference"/>
+    <attr name="buttonPrimaryBackgroundDisabledColor" format="reference"/>
+    <attr name="buttonPrimaryBackgroundHighlightedColor" format="reference"/>
+    <attr name="buttonPrimaryForegroundColor" format="reference"/>
+
+    <attr name="buttonSecondaryBackgroundColor" format="reference"/>
+    <attr name="buttonSecondaryBackgroundDisabledColor" format="reference"/>
+    <attr name="buttonSecondaryBackgroundHighlightedColor" format="reference"/>
+    <attr name="buttonSecondaryForegroundColor" format="reference"/>
+
+    <attr name="buttonTertiaryBackgroundColor" format="reference"/>
+    <attr name="buttonTertiaryBackgroundDisabledColor" format="reference"/>
+    <attr name="buttonTertiaryBackgroundHighlightedColor" format="reference"/>
+    <attr name="buttonTertiaryForegroundColor" format="reference"/>
+
+    <attr name="buttonGreenBackgroundColor" format="reference"/>
+    <attr name="buttonGreenBackgroundDisabledColor" format="reference"/>
+    <attr name="buttonGreenBackgroundHighlightedColor" format="reference"/>
+
+    <attr name="fieldBackgroundColor" format="reference"/>
+    <attr name="fieldActiveBorderColor" format="reference"/>
+    <attr name="fieldErrorBorderColor" format="reference"/>
+    <attr name="fieldErrorBackgroundColor" format="reference"/>
+
+    <attr name="accentBlueColor" format="reference"/>
+    <attr name="accentGreenColor" format="reference"/>
+    <attr name="accentRedColor" format="reference"/>
+    <attr name="accentOrangeColor" format="reference"/>
+    <attr name="accentPurpleColor" format="reference"/>
+
+    <attr name="tabBarActiveIconColor" format="reference"/>
+    <attr name="tabBarInactiveIconColor" format="reference"/>
+
+    <attr name="separatorCommonColor" format="reference"/>
+    <attr name="separatorAlternateColor" format="reference"/>
+</resources>

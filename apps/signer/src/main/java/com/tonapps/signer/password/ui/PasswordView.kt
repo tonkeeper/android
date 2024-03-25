@@ -2,15 +2,12 @@ package com.tonapps.signer.password.ui
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import androidx.core.view.doOnLayout
 import com.tonapps.signer.R
 import com.tonapps.signer.password.Password
-import uikit.extensions.doOnBottomInsetsChanged
-import uikit.extensions.dp
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.LoaderView
 import uikit.widget.password.PasswordInputView

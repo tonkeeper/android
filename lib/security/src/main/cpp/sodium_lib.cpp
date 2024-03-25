@@ -3,11 +3,11 @@
 #include <string>
 #include <sodium.h>
 
-extern "C" JNIEXPORT jint JNICALL Java_security_Sodium_init(JNIEnv *, jobject) {
+extern "C" JNIEXPORT jint JNICALL Java_com_tonapps_security_Sodium_init(JNIEnv *, jobject) {
     return sodium_init();
 }
 
-extern "C" JNIEXPORT jbyteArray JNICALL Java_security_Sodium_argon2IdHash (
+extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_argon2IdHash (
         JNIEnv *env,
         jobject,
         jcharArray passwd,

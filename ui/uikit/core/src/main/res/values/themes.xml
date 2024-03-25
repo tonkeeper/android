@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#10161F</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/bg_splash</item>
+        <item name="splashScreenIconSize">128dp</item>
+        <item name="windowSplashScreenAnimationDuration">0</item>
+        <item name="postSplashScreenTheme">@style/Theme.App.Blue</item>
+    </style>
+
+    <style name="Theme.App.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_window</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowLightStatusBar">@bool/use_light_system_bars</item>
+
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/use_light_system_bars</item>
+
+        <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
+    </style>
+
+    <style name="Theme.App.Blue" parent="Theme.App.Base">
+        <item name="textPrimaryColor">@color/textPrimaryBlue</item>
+        <item name="textSecondaryColor">@color/textSecondaryBlue</item>
+        <item name="textTertiaryColor">@color/textTertiaryBlue</item>
+        <item name="textAccentColor">@color/textAccentBlue</item>
+        <item name="textPrimaryAlternateColor">@color/textPrimaryAlternateBlue</item>
+
+        <item name="backgroundPageColor">@color/backgroundPageBlue</item>
+        <item name="backgroundTransparentColor">@color/backgroundTransparentBlue</item>
+        <item name="backgroundContentColor">@color/backgroundContentBlue</item>
+        <item name="backgroundContentTintColor">@color/backgroundContentTintBlue</item>
+        <item name="backgroundContentAttentionColor">@color/backgroundContentAttentionBlue</item>
+        <item name="backgroundHighlightedColor">@color/backgroundHighlightedBlue</item>
+        <item name="backgroundOverlayStrongColor">@color/backgroundOverlayStrongBlue</item>
+        <item name="backgroundOverlayLightColor">@color/backgroundOverlayLightBlue</item>
+        <item name="backgroundOverlayExtraLightColor">@color/backgroundOverlayExtraLightBlue</item>
+
+        <item name="iconPrimaryColor">@color/iconPrimaryBlue</item>
+        <item name="iconSecondaryColor">@color/iconSecondaryBlue</item>
+        <item name="iconTertiaryColor">@color/iconTertiaryBlue</item>
+        <item name="iconPrimaryAlternateColor">@color/iconPrimaryAlternateBlue</item>
+
+        <item name="buttonPrimaryBackgroundColor">@color/buttonPrimaryBackgroundBlue</item>
+        <item name="buttonPrimaryBackgroundDisabledColor">@color/buttonPrimaryBackgroundDisabledBlue</item>
+        <item name="buttonPrimaryBackgroundHighlightedColor">@color/buttonPrimaryBackgroundHighlightedBlue</item>
+        <item name="buttonPrimaryForegroundColor">@color/buttonPrimaryForegroundBlue</item>
+
+        <item name="buttonSecondaryBackgroundColor">@color/buttonSecondaryBackgroundBlue</item>
+        <item name="buttonSecondaryBackgroundDisabledColor">@color/buttonSecondaryBackgroundDisabledBlue</item>
+        <item name="buttonSecondaryBackgroundHighlightedColor">@color/buttonSecondaryBackgroundHighlightedBlue</item>
+        <item name="buttonSecondaryForegroundColor">@color/buttonSecondaryForegroundBlue</item>
+
+        <item name="buttonTertiaryBackgroundColor">@color/buttonTertiaryBackgroundBlue</item>
+        <item name="buttonTertiaryBackgroundDisabledColor">@color/buttonTertiaryBackgroundDisabledBlue</item>
+        <item name="buttonTertiaryBackgroundHighlightedColor">@color/buttonTertiaryBackgroundHighlightedBlue</item>
+        <item name="buttonTertiaryForegroundColor">@color/buttonTertiaryForegroundBlue</item>
+
+        <item name="buttonGreenBackgroundColor">@color/buttonGreenBackgroundBlue</item>
+        <item name="buttonGreenBackgroundDisabledColor">@color/buttonGreenBackgroundDisabledBlue</item>
+        <item name="buttonGreenBackgroundHighlightedColor">@color/buttonGreenBackgroundDisabledBlue</item>
+
+        <item name="fieldBackgroundColor">@color/fieldBackgroundBlue</item>
+        <item name="fieldActiveBorderColor">@color/fieldActiveBorderBlue</item>
+        <item name="fieldErrorBorderColor">@color/fieldErrorBorderBlue</item>
+        <item name="fieldErrorBackgroundColor">@color/fieldErrorBackgroundBlue</item>
+
+        <item name="accentBlueColor">@color/accentBlueBlue</item>
+        <item name="accentGreenColor">@color/accentGreenBlue</item>
+        <item name="accentRedColor">@color/accentRedBlue</item>
+        <item name="accentOrangeColor">@color/accentOrangeBlue</item>
+        <item name="accentPurpleColor">@color/accentPurpleBlue</item>
+
+        <item name="tabBarActiveIconColor">@color/tabBarActiveIconBlue</item>
+        <item name="tabBarInactiveIconColor">@color/tabBarInactiveIconBlue</item>
+
+        <item name="separatorCommonColor">@color/separatorCommonBlue</item>
+        <item name="separatorAlternateColor">@color/separatorAlternateBlue</item>
+
+        <item name="android:colorBackground">@color/backgroundPageBlue</item>
+        <item name="colorAccent">@color/textAccentBlue</item>
+    </style>
+
+    <style name="Theme.App.Dark" parent="Theme.App.Base">
+        <item name="textPrimaryColor">@color/textPrimaryDark</item>
+        <item name="textSecondaryColor">@color/textSecondaryDark</item>
+        <item name="textTertiaryColor">@color/textTertiaryDark</item>
+        <item name="textAccentColor">@color/textAccentDark</item>
+        <item name="textPrimaryAlternateColor">@color/textPrimaryAlternateDark</item>
+
+        <item name="backgroundPageColor">@color/backgroundPageDark</item>
+        <item name="backgroundTransparentColor">@color/backgroundTransparentDark</item>
+        <item name="backgroundContentColor">@color/backgroundContentDark</item>
+        <item name="backgroundContentTintColor">@color/backgroundContentTintDark</item>
+        <item name="backgroundContentAttentionColor">@color/backgroundContentAttentionDark</item>
+        <item name="backgroundHighlightedColor">@color/backgroundHighlightedDark</item>
+        <item name="backgroundOverlayStrongColor">@color/backgroundOverlayStrongDark</item>
+        <item name="backgroundOverlayLightColor">@color/backgroundOverlayLightDark</item>
+        <item name="backgroundOverlayExtraLightColor">@color/backgroundOverlayExtraLightDark</item>
+
+        <item name="iconPrimaryColor">@color/iconPrimaryDark</item>
+        <item name="iconSecondaryColor">@color/iconSecondaryDark</item>
+        <item name="iconTertiaryColor">@color/iconTertiaryDark</item>
+        <item name="iconPrimaryAlternateColor">@color/iconPrimaryAlternateDark</item>
+
+        <item name="buttonPrimaryBackgroundColor">@color/buttonPrimaryBackgroundDark</item>
+        <item name="buttonPrimaryBackgroundDisabledColor">@color/buttonPrimaryBackgroundDisabledDark</item>
+        <item name="buttonPrimaryBackgroundHighlightedColor">@color/buttonPrimaryBackgroundHighlightedDark</item>
+        <item name="buttonPrimaryForegroundColor">@color/buttonPrimaryForegroundDark</item>
+
+        <item name="buttonSecondaryBackgroundColor">@color/buttonSecondaryBackgroundDark</item>
+        <item name="buttonSecondaryBackgroundDisabledColor">@color/buttonSecondaryBackgroundDisabledDark</item>
+        <item name="buttonSecondaryBackgroundHighlightedColor">@color/buttonSecondaryBackgroundHighlightedDark</item>
+        <item name="buttonSecondaryForegroundColor">@color/buttonSecondaryForegroundDark</item>
+
+        <item name="buttonTertiaryBackgroundColor">@color/buttonTertiaryBackgroundDark</item>
+        <item name="buttonTertiaryBackgroundDisabledColor">@color/buttonTertiaryBackgroundDisabledDark</item>
+        <item name="buttonTertiaryBackgroundHighlightedColor">@color/buttonTertiaryBackgroundHighlightedDark</item>
+        <item name="buttonTertiaryForegroundColor">@color/buttonTertiaryForegroundDark</item>
+
+        <item name="buttonGreenBackgroundColor">@color/buttonGreenBackgroundDark</item>
+        <item name="buttonGreenBackgroundDisabledColor">@color/buttonGreenBackgroundDisabledDark</item>
+        <item name="buttonGreenBackgroundHighlightedColor">@color/buttonGreenBackgroundDisabledDark</item>
+
+        <item name="fieldBackgroundColor">@color/fieldBackgroundDark</item>
+        <item name="fieldActiveBorderColor">@color/fieldActiveBorderDark</item>
+        <item name="fieldErrorBorderColor">@color/fieldErrorBorderDark</item>
+        <item name="fieldErrorBackgroundColor">@color/fieldErrorBackgroundDark</item>
+
+        <item name="accentBlueColor">@color/accentBlueDark</item>
+        <item name="accentGreenColor">@color/accentGreenDark</item>
+        <item name="accentRedColor">@color/accentRedDark</item>
+        <item name="accentOrangeColor">@color/accentOrangeDark</item>
+        <item name="accentPurpleColor">@color/accentPurpleDark</item>
+
+        <item name="tabBarActiveIconColor">@color/tabBarActiveIconDark</item>
+        <item name="tabBarInactiveIconColor">@color/tabBarInactiveIconDark</item>
+
+        <item name="separatorCommonColor">@color/separatorCommonDark</item>
+        <item name="separatorAlternateColor">@color/separatorAlternateDark</item>
+
+        <item name="android:colorBackground">@color/backgroundPageDark</item>
+        <item name="colorAccent">@color/textAccentDark</item>
+    </style>
+
+</resources>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="132dp">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical">
+
+            <View
+                android:layout_width="220dp"
+                android:layout_height="34dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_content"/>
+
+            <View
+                android:layout_width="98dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_content"/>
+
+        </uikit.widget.ColumnLayout>
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <uikit.widget.ButtonsLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+            <uikit.widget.IconButtonView
+                android:id="@+id/send"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_arrow_up_outline_28"
+                android:title="@string/send"
+                android:tint="?attr/backgroundContentColor"/>
+
+            <uikit.widget.IconButtonView
+                android:id="@+id/receive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_arrow_down_outline_28"
+                android:title="@string/receive"
+                android:tint="?attr/backgroundContentColor"/>
+
+            <uikit.widget.IconButtonView
+                android:id="@+id/scan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_qr_viewfinder_thin_28"
+                android:title="@string/scan"
+                android:tint="?attr/backgroundContentColor"/>
+
+            <uikit.widget.IconButtonView
+                android:id="@+id/swap"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_swap_horizontal_outline_28"
+                android:title="@string/swap"
+                android:tint="?attr/backgroundContentColor"/>
+
+            <uikit.widget.IconButtonView
+                android:id="@+id/buy_or_sell"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_usd_28"
+                android:title="@string/buy_or_sell"
+                android:tint="?attr/backgroundContentColor"/>
+
+            <uikit.widget.IconButtonView
+                android:id="@+id/stake"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_staking_outline_28"
+                android:title="@string/stake"
+                android:tint="?attr/backgroundContentColor"/>
+
+        </uikit.widget.ButtonsLayout>
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+</uikit.widget.ColumnLayout>

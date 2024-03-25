@@ -24,6 +24,7 @@
     </queries>
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.NFC" />
 
     <application
         android:allowBackup="false"
@@ -36,7 +37,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Signer.Starting"
         android:hardwareAccelerated="true"
-        android:largeHeap="false">
+        android:largeHeap="true">
         <activity
             android:name="com.tonapps.signer.screen.root.RootActivity"
             android:exported="true"
@@ -45,6 +46,7 @@
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Signer.Starting"
             android:taskAffinity=""
+            android:largeHeap="true"
             android:screenOrientation="portrait"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode">
             <intent-filter>
@@ -53,6 +55,7 @@
                 <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
             <intent-filter android:priority="1">
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <action android:name="android.intent.action.SEND"/>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -61,6 +64,7 @@
             </intent-filter>
         </activity>
         <activity
+            android:theme="@style/Theme.Signer.Starting"
             android:name="com.tonapps.signer.screen.crash.CrashActivity"
             android:process=":crash_activity"
             android:exported="false"/>

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
 import uikit.extensions.setPaddingTop
 import uikit.widget.InputView
@@ -37,6 +38,7 @@ class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
         contentView = view.findViewById(R.id.content)
 
         nameInput = view.findViewById(R.id.name)
+        nameInput.setOnDoneActionListener { done() }
 
         actionView = view.findViewById(R.id.action)
         actionView.pinToBottomInsets()
@@ -50,13 +52,13 @@ class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
             doneButton.isEnabled = it.isNotBlank()
         }
 
-        createViewModel.page(PageType.Name).onEach {
+        collectFlow(createViewModel.page(PageType.Name)) {
             nameInput.focus()
-        }.launchIn(lifecycleScope)
+        }
 
-        createViewModel.uiTopOffset.onEach {
+        collectFlow(createViewModel.uiTopOffset) {
             contentView.setPaddingTop(it)
-        }.launchIn(lifecycleScope)
+        }
     }
 
     private fun done() {

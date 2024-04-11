@@ -17,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 31
-        versionName = "0.0.29"
+        versionCode = 33
+        versionName = "0.0.31"
     }
 
     buildFeatures {
@@ -54,6 +54,7 @@ dependencies {
     "baselineProfile"(project(":baselineprofile:x"))
 
     implementation(Dependence.Koin.core)
+    implementation(Dependence.KotlinX.datetime)
 
     implementation(project(Dependence.Wallet.localization))
     implementation(project(Dependence.Wallet.api))
@@ -65,6 +66,8 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.rates))
     implementation(project(Dependence.Wallet.Data.collectibles))
     implementation(project(Dependence.Wallet.Data.events))
+    implementation(project(Dependence.Wallet.Data.tonconnect))
+    implementation(project(Dependence.Wallet.Data.push))
 
     implementation(project(Dependence.UIKit.core))
 
@@ -79,15 +82,6 @@ dependencies {
     implementation(Dependence.AndroidX.swiperefreshlayout)
 
     implementation(Dependence.guava)
-    implementation(Dependence.sodium)
-
-    /*implementation(Dependence.KotlinX.serialization)
-    implementation(Dependence.KotlinX.datetime)
-    implementation(Dependence.AndroidX.Room.base)
-    implementation(Dependence.AndroidX.Room.runtime)
-    annotationProcessor(Dependence.AndroidX.Room.compiler)
-    kapt(Dependence.AndroidX.Room.compiler)*/
-
 
     implementation(Dependence.UI.material)
 
@@ -107,6 +101,7 @@ dependencies {
     implementation(project(Dependence.Lib.icu))
     implementation(project(Dependence.Lib.qr))
     implementation(project(Dependence.Lib.emoji))
+    implementation(project(Dependence.Lib.security))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Module.ton))

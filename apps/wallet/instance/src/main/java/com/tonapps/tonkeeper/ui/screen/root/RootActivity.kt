@@ -4,22 +4,28 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
-import com.tonapps.tonkeeper.core.tonconnect.TonConnect
 import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
+import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.toastLoading
+import com.tonapps.tonkeeper.fragment.send.SendScreen
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.fragment.web.WebFragment
+import com.tonapps.tonkeeper.sign.SignRequestEntity
 import com.tonapps.tonkeeper.ui.component.PasscodeView
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -39,8 +45,6 @@ class RootActivity: NavigationActivity() {
         TransactionDialog(this, lifecycleScope)
     }
 
-    lateinit var tonConnect: TonConnect
-
     private lateinit var uiHandler: Handler
 
     private lateinit var lockView: View
@@ -51,8 +55,6 @@ class RootActivity: NavigationActivity() {
         super.onCreate(savedInstanceState)
 
         uiHandler = Handler(mainLooper)
-        tonConnect = TonConnect(this)
-        tonConnect.onCreate()
 
         handleIntent(intent)
 
@@ -67,6 +69,7 @@ class RootActivity: NavigationActivity() {
             insets
         }
 
+        collectFlow(rootViewModel.tonConnectEventsFlow, ::onDAppEvent)
         collectFlow(rootViewModel.hasWalletFlow) { init(it) }
         collectFlow(rootViewModel.eventFlow) { event(it) }
         collectFlow(rootViewModel.lockFlow) {
@@ -79,6 +82,24 @@ class RootActivity: NavigationActivity() {
 
         collectFlow(rootViewModel.themeFlow) {
             recreate()
+        }
+    }
+
+    private suspend fun onDAppEvent(event: DAppEventEntity) {
+        if (event.method != "sendTransaction") {
+            return
+        }
+
+        val params = event.params
+        for (i in 0 until params.length()) {
+            val param = DAppEventEntity.parseParam(params.get(i))
+            val request = SignRequestEntity(param)
+            try {
+                val boc = rootViewModel.requestSign(this, event.wallet, request)
+                rootViewModel.tonconnectBoc(event.id, event.app, boc)
+            } catch (e: Throwable) {
+                rootViewModel.tonconnectReject(event.id, event.app)
+            }
         }
     }
 
@@ -95,16 +116,17 @@ class RootActivity: NavigationActivity() {
     }
 
     fun event(event: RootEvent) {
-        if (event is RootEvent.Toast) {
-            toast(getString(event.resId))
-        } else if (event is RootEvent.Singer) {
-            add(InitScreen.newInstance(InitArgs.Type.Signer, event.publicKey, event.name, event.walletSource))
-        } else if (event is RootEvent.TonConnect) {
-            add(TCAuthFragment.newInstance(event.request))
-        } else if (event is RootEvent.Browser) {
-            add(WebFragment.newInstance(event.uri))
+        when (event) {
+            is RootEvent.Toast -> toast(event.resId)
+            is RootEvent.Singer -> add(InitScreen.newInstance(InitArgs.Type.Signer, event.publicKey, event.name, event.walletSource))
+            is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
+            is RootEvent.Browser -> add(WebFragment.newInstance(event.uri))
+            is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount ?: 0f, event.jettonAddress))
+            else -> { }
         }
     }
+
+
 
     fun init(hasWallet: Boolean) {
         if (hasWallet) {
@@ -129,7 +151,7 @@ class RootActivity: NavigationActivity() {
 
     private fun handleIntent(intent: Intent) {
         val uri = intent.data ?: return
-        rootViewModel.processDeepLink(uri, false)
+        processDeepLink(uri, false)
     }
 
     override fun openURL(url: String, external: Boolean) {
@@ -149,12 +171,11 @@ class RootActivity: NavigationActivity() {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         } else {
-            rootViewModel.processDeepLink(uri, false)
+            processDeepLink(uri, false)
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        tonConnect.onDestroy()
+    private fun processDeepLink(uri: Uri, fromQR: Boolean) {
+        rootViewModel.processDeepLink(uri, fromQR)
     }
 }

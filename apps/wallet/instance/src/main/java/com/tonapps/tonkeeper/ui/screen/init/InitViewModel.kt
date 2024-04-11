@@ -1,5 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
+import android.Manifest
+import android.app.Application
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +19,6 @@ import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.Tonapi
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.api.entity.AccountEntity
 import com.tonapps.wallet.data.account.WalletColor
@@ -49,6 +54,7 @@ import org.ton.mnemonic.Mnemonic
 @OptIn(FlowPreview::class)
 class InitViewModel(
     private val type: InitArgs.Type,
+    application: Application,
     private val passcodeRepository: PasscodeRepository,
     private val walletRepository: WalletRepository,
     private val tokenRepository: TokenRepository,
@@ -56,7 +62,7 @@ class InitViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     savedStateHandle: SavedStateHandle
-): ViewModel() {
+): AndroidViewModel(application) {
 
     private val savedState = InitModelState(savedStateHandle)
     private val testnet: Boolean = type == InitArgs.Type.Testnet
@@ -82,6 +88,17 @@ class InitViewModel(
         }.flowOn(Dispatchers.IO)
 
     val accountsFlow = savedState.accountsFlow.filterNotNull()
+
+    private val hasPushPermission: Boolean
+        get() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                return ContextCompat.checkSelfPermission(
+                    getApplication(),
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+            return true
+        }
 
     init {
         if (!passcodeRepository.hasPinCode) {
@@ -254,14 +271,22 @@ class InitViewModel(
         setLabel(oldLabel.copy(name = name))
     }
 
+    fun setPush() {
+        nextStep(InitEvent.Step.Push)
+    }
+
     fun nextStep(from: InitEvent.Step) {
-        if (from == InitEvent.Step.LabelAccount) {
-            execute()
-        } else if (from == InitEvent.Step.WatchAccount) {
+        if (from == InitEvent.Step.WatchAccount) {
             _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
         } else if (from == InitEvent.Step.SelectAccount) {
             applyNameFromSelectedAccounts()
             _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
+        } else if (from == InitEvent.Step.Push) {
+            execute()
+        } else if (!hasPushPermission) {
+            _eventFlow.tryEmit(InitEvent.Step.Push)
+        } else {
+            execute()
         }
     }
 
@@ -307,7 +332,7 @@ class InitViewModel(
     private suspend fun saveWatchWallet() {
         val account = getWatchAccount() ?: throw IllegalStateException("Account is not set")
         val label = getLabel()
-        val publicKey = resolvePublicKey(account.address)
+        val publicKey = getPublicKey(account.address)
 
         walletRepository.addWatchWallet(publicKey, label, account.walletVersion, WalletSource.Default)
     }
@@ -331,11 +356,12 @@ class InitViewModel(
         walletRepository.addSignerWallet(publicKey, label.name, label.emoji, label.color, walletSource)
     }
 
-    private fun resolvePublicKey(
+    private fun getPublicKey(
         accountId: String,
     ): PublicKeyEd25519 {
-        val hex = Tonapi.accounts.get(false).getAccountPublicKey(accountId).publicKey
-        return PublicKeyEd25519(hex(hex))
+        api.getPublicKey(accountId, testnet).let { hex ->
+            return PublicKeyEd25519(hex(hex))
+        }
     }
 
 }

@@ -14,6 +14,7 @@ import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.uikit.list.ListCell
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.ton.crypto.base64
 import uikit.extensions.pinToBottomInsets
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -44,7 +45,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         if (it == null) {
             feature.setFailedResult()
         } else {
-            feature.sendSignedBoc(it)
+            feature.sendSignature(base64(it))
         }
     }
 

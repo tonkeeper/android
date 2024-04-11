@@ -20,6 +20,14 @@ class EventsRepository(
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api, collectiblesRepository)
 
+    suspend fun getSingleRemote(
+        accountId: String,
+        testnet: Boolean,
+        eventId: String
+    ): EventEntity = withContext(Dispatchers.IO) {
+        remoteDataSource.getSingle(accountId, testnet, eventId)
+    }
+
     suspend fun getRemote(
         accountId: String,
         testnet: Boolean
@@ -27,6 +35,14 @@ class EventsRepository(
         val events = remoteDataSource.get(accountId, testnet)
         localDataSource.setCache(cacheKey(accountId, testnet), events)
         events
+    }
+
+    suspend fun getRemoteOffset(
+        accountId: String,
+        testnet: Boolean,
+        beforeLt: Long
+    ): List<EventEntity> = withContext(Dispatchers.IO) {
+        remoteDataSource.get(accountId, testnet, beforeLt, 100)
     }
 
     suspend fun getLocal(

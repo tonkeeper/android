@@ -3,12 +3,13 @@ package com.tonapps.tonkeeper.ui.screen.qr
 import android.os.Bundle
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletType
+import uikit.base.BaseArgs
 
 data class QRArgs(
     val address: String,
     val token: TokenEntity,
     val walletType: WalletType
-) {
+): BaseArgs() {
 
     private companion object {
         private const val ARG_ADDRESS = "address"
@@ -30,7 +31,7 @@ data class QRArgs(
         return deepLink
     }
 
-    fun toBundle(): Bundle {
+    override fun toBundle(): Bundle {
         val bundle = Bundle()
         bundle.putString(ARG_ADDRESS, address)
         bundle.putParcelable(ARG_TOKEN, token)

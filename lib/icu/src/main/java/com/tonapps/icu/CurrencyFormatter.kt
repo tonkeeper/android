@@ -1,5 +1,13 @@
 package com.tonapps.icu
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.style.ImageSpan
 import android.util.ArrayMap
 import android.util.Log
 import java.math.BigDecimal
@@ -14,30 +22,51 @@ object CurrencyFormatter {
     private const val CURRENCY_SIGN = "¤"
     private const val SMALL_SPACE = " "
     private const val APOSTROPHE = "'"
+    private const val TON_SYMBOL = "TON"
 
     private val symbols = ArrayMap<String, String>().apply {
         put("USD", "$")
         put("EUR", "€")
         put("RUB", "₽")
+        put("AED", "د.إ")
         put("UAH", "₴")
+        put("KZT", "₸")
         put("UZS", "лв")
         put("GBP", "£")
         put("CHF", "₣")
         put("CNY", "¥")
-        put("JPY", "¥")
         put("KRW", "₩")
         put("IDR", "Rp")
         put("INR", "₹")
+        put("JPY", "¥")
+        put("CAD", "C$")
+        put("ARS", "ARS$")
+        put("BYN", "Br")
+        put("COP", "COL$")
+        put("ETB", "ብር")
+        put("ILS", "₪")
+        put("KES", "KSh")
+        put("NGN", "₦")
+        put("UGX", "USh")
+        put("VES", "Bs.\u200E")
+        put("ZAR", "R")
         put("TRY", "₺")
         put("THB", "฿")
-        put("KZT", "₸")
-        put("AED", "د.إ")
-        put("TON", "TON")
+        put("VND", "₫")
+        put("BRL", "R$")
+        put("GEL", "₾")
+        put("BDT", "৳")
+
+        put("TON", TON_SYMBOL)
         put("BTC", "₿")
     }
 
+    private fun isTON(currency: String): Boolean {
+        return currency == "TON"
+    }
+
     private fun isCrypto(currency: String): Boolean {
-        return currency == "TON" || currency == "BTC"
+        return isTON(currency) || currency == "BTC"
     }
 
     private val format = NumberFormat.getCurrencyInstance() as DecimalFormat
@@ -55,6 +84,9 @@ object CurrencyFormatter {
         decimals: Int,
     ): String {
         val format = getFormat(decimals).format(value)
+        if (format == "0") {
+            return format
+        }
         if (format.endsWith(zeroEndValue)) {
             return format.removeSuffix(zeroEndValue)
         }
@@ -65,7 +97,7 @@ object CurrencyFormatter {
         currency: String = "",
         value: Float,
         decimals: Int,
-    ): String {
+    ): CharSequence {
         val amount = formatFloat(value, decimals)
         return format(currency, amount)
     }
@@ -74,7 +106,7 @@ object CurrencyFormatter {
         currency: String = "",
         value: BigInteger,
         decimals: Int
-    ): String {
+    ): CharSequence {
         val amount = getFormat(decimals).format(value)
         return format(currency, amount)
     }
@@ -82,7 +114,7 @@ object CurrencyFormatter {
     fun format(
         currency: String = "",
         value: Float,
-    ): String {
+    ): CharSequence {
         val decimals = decimalCount(value)
         return format(currency, value, decimals)
     }
@@ -90,7 +122,7 @@ object CurrencyFormatter {
     fun format(
         currency: String = "",
         value: BigInteger
-    ): String {
+    ): CharSequence {
         var bigDecimal = value.toBigDecimal().stripTrailingZeros()
         if (bigDecimal.scale() > 0) {
             bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP)
@@ -103,7 +135,7 @@ object CurrencyFormatter {
     fun format(
         currency: String = "",
         value: BigDecimal
-    ): String {
+    ): CharSequence {
         var bigDecimal = value.stripTrailingZeros()
         if (bigDecimal.scale() > 0) {
             bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP)
@@ -116,45 +148,45 @@ object CurrencyFormatter {
     fun formatRate(
         currency: String,
         value: Float
-    ): String {
+    ): CharSequence {
         return format(currency, value, 4)
     }
 
     fun formatFiat(
         currency: String,
         value: Float
-    ): String {
+    ): CharSequence {
         return format(currency, value, 2)
     }
 
     private fun format(
         currency: String = "",
         value: String,
-    ): String {
+    ): CharSequence {
         var amount = value.removeSuffix(zeroDecimalsValue)
         if (zeroAmountValue == value) {
             amount = "0"
         }
         val symbol = symbols[currency]
-        val stringBuilder = StringBuilder()
+        val builder = StringBuilder()
         if (symbol != null) {
             if (monetarySymbolFirstPosition && !isCrypto(currency)) {
-                stringBuilder.append(symbol)
-                stringBuilder.append(SMALL_SPACE)
-                stringBuilder.append(amount)
+                builder.append(symbol)
+                builder.append(SMALL_SPACE)
+                builder.append(amount)
             } else {
-                stringBuilder.append(amount)
-                stringBuilder.append(SMALL_SPACE)
-                stringBuilder.append(symbol)
+                builder.append(amount)
+                builder.append(SMALL_SPACE)
+                builder.append(symbol)
             }
         } else if (currency == "") {
-            stringBuilder.append(amount)
+            builder.append(amount)
         } else {
-            stringBuilder.append(amount)
-            stringBuilder.append(SMALL_SPACE)
-            stringBuilder.append(currency)
+            builder.append(amount)
+            builder.append(SMALL_SPACE)
+            builder.append(currency)
         }
-        return stringBuilder.toString()
+        return builder.toString()
     }
 
     private fun decimalCount(value: Float): Int {

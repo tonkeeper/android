@@ -49,13 +49,9 @@ class JettonRepository(
         address: String,
         testnet: Boolean,
     ): JettonBalance? {
-        var jetton: JettonBalance? = dao.getByAddress(accountId, address)?.let { fromJSON(it) }
-        if (jetton == null) {
-            jetton = getFromCloud(accountId, testnet)?.data?.find {
-                it.getAddress(testnet) == address
-            }
+        return getFromCloud(accountId, testnet)?.data?.find {
+            it.getAddress(testnet) == address
         }
-        return jetton
     }
 
     override suspend fun insertCache(

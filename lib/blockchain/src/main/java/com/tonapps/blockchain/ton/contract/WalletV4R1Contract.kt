@@ -48,6 +48,7 @@ open class WalletV4R1Contract(
             storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)
         }
     }
+
     companion object {
         @JvmField
         val CODE =

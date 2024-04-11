@@ -94,7 +94,7 @@ fun Context.createRipple(
     return RippleDrawable(backgroundHighlightedColor.stateList, content, mask)
 }
 
-fun Context.textWithLabel(text: String, label: String?): CharSequence {
+fun Context.textWithLabel(text: String, label: CharSequence?): CharSequence {
     if (label.isNullOrEmpty()) {
         return text
     }

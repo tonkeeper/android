@@ -14,7 +14,7 @@ fun String.publicKey(): PublicKeyEd25519 {
 
 fun String.safePublicKey(): PublicKeyEd25519? {
     return try {
-        PublicKeyEd25519(base64())
+        publicKey()
     } catch (e: Throwable) {
         null
     }
@@ -22,4 +22,8 @@ fun String.safePublicKey(): PublicKeyEd25519? {
 
 fun PublicKeyEd25519.base64(): String {
     return base64(key.toByteArray())
+}
+
+fun PublicKeyEd25519.hex(): String {
+    return hex(key.toByteArray())
 }

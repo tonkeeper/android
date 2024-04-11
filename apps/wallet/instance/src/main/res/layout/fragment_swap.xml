@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <uikit.widget.WebViewFixed
+    <uikit.widget.webview.bridge.BridgeWebView
         android:id="@+id/web"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

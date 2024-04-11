@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
-import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.security.base64
 import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.screen.sign.list.SignItem
@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.CommonMsgInfoRelaxed
@@ -32,7 +31,6 @@ import org.ton.block.Either
 import org.ton.block.MessageRelaxed
 import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
-import org.ton.cell.CellBuilder
 import org.ton.cell.CellType
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
@@ -74,7 +72,7 @@ class SignViewModel(
     fun sign(context: Context) = Password.authenticate(context).safeArea {
         vault.getPrivateKey(it, id)
     }.map {
-        sign(it).base64()
+        org.ton.crypto.base64(sign(it))
     }.flowOn(Dispatchers.IO).take(1)
 
     fun openEmulate() = keyEntity.map {
@@ -83,15 +81,8 @@ class SignViewModel(
         cell.hex()
     }.flowOn(Dispatchers.IO).take(1)
 
-    private fun sign(privateKey: PrivateKeyEd25519): Cell {
-        val data = privateKey.sign(unsignedBody.hash())
-        val signature = BitString(data)
-
-        return CellBuilder.createCell {
-            storeBits(signature)
-            storeBits(unsignedBody.bits)
-            storeRefs(unsignedBody.refs)
-        }
+    private fun sign(privateKey: PrivateKeyEd25519): ByteArray {
+        return privateKey.sign(unsignedBody.hash())
     }
 
     private fun parseBoc(): Pair<Boolean, List<SignItem>> {

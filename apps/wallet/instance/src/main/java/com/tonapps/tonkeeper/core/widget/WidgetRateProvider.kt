@@ -30,7 +30,7 @@ class WidgetRateProvider: Widget() {
     private data class Rate(
         val diff24h: String,
         val diff7d: String,
-        val price: String,
+        val price: CharSequence,
         val date: String
     )
 

@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api.internal
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.extensions.file
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
@@ -22,18 +23,18 @@ internal class ConfigRepository(
         private set
 
     init {
-        scope.launch {
-            readCache()?.let {
-                configEntity = it
-            }
+        readCache()?.let {
+            configEntity = it
+        }
+        scope.launch(Dispatchers.Main) {
             remote()?.let {
                 configEntity = it
             }
         }
     }
 
-    private suspend fun readCache(): ConfigEntity? = withContext(Dispatchers.IO) {
-        configFile.readBytes().toParcel()
+    private fun readCache(): ConfigEntity? {
+        return configFile.readBytes().toParcel()
     }
 
     private suspend fun remote(): ConfigEntity? = withContext(Dispatchers.IO) {

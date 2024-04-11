@@ -15,7 +15,7 @@ class BlurCompat(context: Context) {
     private val impl = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Impl31(context)
     /*} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Impl26(context) */
+        Impl26(context)*/
     } else {
         Impl(context)
     }
@@ -27,16 +27,16 @@ class BlurCompat(context: Context) {
         impl.draw(input, callback)
     }
 
-    fun setSafeArea(rect: RectF) {
-        impl.setSafeArea(rect)
+    fun setBounds(rect: RectF) {
+        impl.setBounds(rect)
     }
 
-    fun setSafeArea(left: Float, top: Float, right: Float, bottom: Float) {
-        setSafeArea(RectF(left, top, right, bottom))
+    fun setBounds(left: Float, top: Float, right: Float, bottom: Float) {
+        setBounds(RectF(left, top, right, bottom))
     }
 
-    fun setSafeArea(left: Float, top: Float, size: Int) {
-        setSafeArea(left, top, left + size, top + size)
+    fun setBounds(left: Float, top: Float, size: Int) {
+        setBounds(left, top, left + size, top + size)
     }
 
     fun attached() {
@@ -51,11 +51,15 @@ class BlurCompat(context: Context) {
 
         open val hasBlur: Boolean = false
 
-        open fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+        fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+            onDraw(canvas, callback)
+        }
+
+        open fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
 
         }
 
-        open fun setSafeArea(rect: RectF) {
+        open fun setBounds(rect: RectF) {
 
         }
 
@@ -69,21 +73,23 @@ class BlurCompat(context: Context) {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private class Impl26(context: Context): Impl(context) {
+    private class Impl26(
+        context: Context
+    ): Impl(context) {
 
         override val hasBlur: Boolean = true
 
         private val contentNode = ContentNodeLegacy()
         private val blurNode = BlurNodeLegacy(context)
 
-        override fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+        override fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
             contentNode.draw(canvas, callback)
             blurNode.setSnapshot(contentNode.capture(callback))
             blurNode.draw(canvas, callback)
         }
 
-        override fun setSafeArea(rect: RectF) {
-            super.setSafeArea(rect)
+        override fun setBounds(rect: RectF) {
+            super.setBounds(rect)
             contentNode.setBounds(rect)
             blurNode.setBounds(rect)
         }
@@ -103,15 +109,15 @@ class BlurCompat(context: Context) {
         private val contentNode = ContentNode()
         private val blurNode = BlurNode(context)
 
-        override fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+        override fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
             contentNode.draw(canvas, callback)
             blurNode.draw(canvas) {
                 contentNode.drawRecorded(it)
             }
         }
 
-        override fun setSafeArea(rect: RectF) {
-            super.setSafeArea(rect)
+        override fun setBounds(rect: RectF) {
+            super.setBounds(rect)
             contentNode.setBounds(rect)
             blurNode.setBounds(rect)
         }

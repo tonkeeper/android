@@ -1,8 +1,10 @@
 package com.tonapps.security
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.util.AtomicFile
 import android.util.Base64
+import androidx.security.crypto.EncryptedSharedPreferences
 import com.tonapps.security.spec.SimpleSecretSpec
 import java.io.Closeable
 import java.io.File
@@ -122,4 +124,30 @@ fun hex(bytes: ByteArray): String = buildString(bytes.size * 2) {
         append(DIGITS[b shr 4])
         append(DIGITS[b and 0x0F])
     }
+}
+
+fun String.hex(): ByteArray {
+    val len = length
+    if (len % 2 != 0) {
+        throw IllegalArgumentException("Invalid hex string")
+    }
+    val data = ByteArray(len / 2)
+    var i = 0
+    while (i < len) {
+        data[i / 2] = ((Character.digit(this[i], 16) shl 4) + Character.digit(this[i + 1], 16)).toByte()
+        i += 2
+    }
+    return data
+}
+
+fun Context.securePrefs(name: String): SharedPreferences {
+    KeyHelper.createIfNotExists(name)
+
+    return EncryptedSharedPreferences.create(
+        name,
+        name,
+        this,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
 }

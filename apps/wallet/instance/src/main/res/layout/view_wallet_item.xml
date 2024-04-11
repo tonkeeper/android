@@ -33,6 +33,7 @@
                 android:layout_height="wrap_content"
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.Label1"
+                android:maxLength="24"
                 android:textColor="?attr/textPrimaryColor"/>
 
             <androidx.appcompat.widget.AppCompatTextView

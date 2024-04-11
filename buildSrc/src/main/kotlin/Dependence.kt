@@ -2,15 +2,15 @@ object Dependence {
 
     const val ton = "org.ton:ton-kotlin:0.2.15"
     const val fresco = "com.facebook.fresco:fresco:3.1.3"
-    const val guava = "com.google.guava:guava:31.0.1-android"
-    const val zxing = "com.google.zxing:core:3.5.2"
-    const val sodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.1"
+    const val guava = "com.google.guava:guava:33.1.0-android"
+    const val zxing = "com.google.zxing:core:3.5.3"
 
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0"
         const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3"
+        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.5.0"
-        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.3.1"
+        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.3.2"
     }
 
     object GooglePlay {
@@ -38,9 +38,9 @@ object Dependence {
         const val recyclerView = "androidx.recyclerview:recyclerview:1.3.2"
         const val viewPager2 = "androidx.viewpager2:viewpager2:1.0.0"
         const val security = "androidx.security:security-crypto:1.0.0"
-        const val workManager = "androidx.work:work-runtime-ktx:2.8.1"
+        const val workManager = "androidx.work:work-runtime-ktx:2.9.0"
         const val biometric = "androidx.biometric:biometric:1.1.0"
-        const val annotation = "androidx.annotation:annotation:1.7.0"
+        const val annotation = "androidx.annotation:annotation:1.7.1"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.1"
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
@@ -82,7 +82,7 @@ object Dependence {
     }
 
     object Firebase {
-        const val bom = "com.google.firebase:firebase-bom:32.4.0"
+        const val bom = "com.google.firebase:firebase-bom:32.7.4"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
         const val messaging = "com.google.firebase:firebase-messaging-ktx"
@@ -127,6 +127,8 @@ object Dependence {
             const val tokens = ":apps:wallet:data:tokens"
             const val collectibles = ":apps:wallet:data:collectibles"
             const val events = ":apps:wallet:data:events"
+            const val tonconnect = ":apps:wallet:data:tonconnect"
+            const val push = ":apps:wallet:data:push"
         }
     }
 }

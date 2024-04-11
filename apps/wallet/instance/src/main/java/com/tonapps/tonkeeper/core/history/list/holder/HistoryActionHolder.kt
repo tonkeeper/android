@@ -1,5 +1,7 @@
 package com.tonapps.tonkeeper.core.history.list.holder
 
+import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
@@ -55,13 +57,17 @@ class HistoryActionHolder(
         if (item.iconURL.isNullOrEmpty()) {
             iconView.setImageResource(item.action.iconRes)
         } else {
-            iconView.setImageURI(item.iconURL)
+            loadIcon(Uri.parse(item.iconURL))
         }
 
         bindPending(item.pending)
         bindComment(item.comment)
         bindNft(item)
         bindAmount(item)
+    }
+
+    private fun loadIcon(uri: Uri) {
+        iconView.setImageURI(uri, this)
     }
 
     private fun bindPending(pending: Boolean) {
@@ -113,7 +119,7 @@ class HistoryActionHolder(
     }
 
     @ColorInt
-    private fun getAmountColor(amount: String): Int {
+    private fun getAmountColor(amount: CharSequence): Int {
         if (amount == HistoryHelper.MINUS_SYMBOL) {
             return amountColorTertiary
         }

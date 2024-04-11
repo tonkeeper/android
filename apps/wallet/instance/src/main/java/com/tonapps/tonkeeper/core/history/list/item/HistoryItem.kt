@@ -1,11 +1,14 @@
 package com.tonapps.tonkeeper.core.history.list.item
 
+import android.os.Parcelable
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.helper.DateFormat
+import com.tonapps.uikit.list.ListCell
+import kotlinx.parcelize.Parcelize
 
 sealed class HistoryItem(
     type: Int,
-): com.tonapps.uikit.list.BaseListItem(type) {
+): com.tonapps.uikit.list.BaseListItem(type), Parcelable {
 
     companion object {
         const val TYPE_ACTION = 1
@@ -25,14 +28,17 @@ sealed class HistoryItem(
 
     val id: Long by lazy { getId(this) }
 
+    @Parcelize
     data class Space(
         val index: Int
     ): HistoryItem(TYPE_SPACE)
 
+    @Parcelize
     data class Loader(
         val index: Int
     ): HistoryItem(TYPE_LOADER)
 
+    @Parcelize
     data class Header(
         val title: String,
         val titleResId: Int? = null,
@@ -48,6 +54,7 @@ sealed class HistoryItem(
         )
     }
 
+    @Parcelize
     data class Event(
         val txId: String,
         val iconURL: String? = null,
@@ -56,9 +63,9 @@ sealed class HistoryItem(
         val subtitle: String,
         val timestamp: Long = 0L,
         val comment: String? = null,
-        val value: String,
-        val value2: String = "",
-        val currency: String? = null,
+        val value: CharSequence,
+        val value2: CharSequence = "",
+        val currency: CharSequence? = null,
         val nftImageURL: String? = null,
         val nftTitle: String? = null,
         val nftCollection: String? = null,
@@ -66,10 +73,10 @@ sealed class HistoryItem(
         val tokenCode: String? = null,
         val date: String = "",
         val pending: Boolean = false,
-        val position: com.tonapps.uikit.list.ListCell.Position = com.tonapps.uikit.list.ListCell.Position.SINGLE,
+        val position: ListCell.Position = ListCell.Position.SINGLE,
         val coinIconUrl: String = "",
-        val fee: String? = null,
-        val feeInCurrency: String? = null,
+        val fee: CharSequence? = null,
+        val feeInCurrency: CharSequence? = null,
         val isOut: Boolean,
         val address: String? = null,
         val addressName: String? = null,

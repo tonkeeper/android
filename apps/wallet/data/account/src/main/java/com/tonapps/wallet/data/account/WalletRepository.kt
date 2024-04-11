@@ -1,7 +1,13 @@
 package com.tonapps.wallet.data.account
 
+import android.content.Context
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.security.securePrefs
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletEvent
 import com.tonapps.wallet.data.account.entities.WalletLabel
@@ -20,15 +26,23 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.cell.Cell
+import org.ton.contract.wallet.WalletTransfer
+import org.ton.crypto.base64
 import org.ton.mnemonic.Mnemonic
 
 class WalletRepository(
+    private val context: Context,
     private val scope: CoroutineScope,
     private val legacyManager: WalletManager,
     private val api: API
 ) {
+
+    private val extras = Extras(context, api)
 
     private val _walletsFlow = MutableStateFlow<List<WalletEntity>?>(null)
     val walletsFlow = _walletsFlow.asStateFlow().filterNotNull()
@@ -38,7 +52,7 @@ class WalletRepository(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val realtimeEventsFlow = activeWalletFlow.flatMapLatest { wallet ->
-        api.subscribe(wallet.accountId, wallet.testnet).map { event ->
+        api.accountEvents(wallet.accountId, wallet.testnet).map { event ->
             val isBoc = event.json.has("boc")
             if (isBoc) {
                 WalletEvent.Boc(wallet, event.json)
@@ -52,6 +66,42 @@ class WalletRepository(
         scope.launch(Dispatchers.IO) {
             updateWallets()
         }
+    }
+
+    suspend fun getTonProofToken(walletId: Long): String? = withContext(Dispatchers.IO) {
+        val value = extras.getTonProofToken(walletId)
+        if (value != null) {
+            value
+        } else {
+            val wallet = getWallet(walletId) ?: return@withContext null
+            val newValue = createTonProofToken(wallet)
+            extras.setTonProofToken(walletId, newValue)
+            newValue
+        }
+    }
+
+    private suspend fun createTonProofToken(wallet: WalletEntity): String {
+        val secretKey = getPrivateKey(wallet.id)
+        val contract = wallet.contract
+        val address = contract.address
+        val payload = api.tonconnectPayload()
+        val proof = WalletProof.signTonkeeper(
+            address = address,
+            secretKey = secretKey,
+            payload = payload,
+            stateInit = contract.getStateCell().base64()
+        )
+        return api.tonconnectProof(address.toAccountId(), Json.encodeToString(proof))
+    }
+
+    suspend fun getWallet(accountId: String): WalletEntity? {
+        val legacyWallet = legacyManager.getWallets().find { it.accountId == accountId } ?: return null
+        return WalletEntity(legacyWallet)
+    }
+
+    suspend fun getWallet(id: Long): WalletEntity? {
+        val legacyWallet = legacyManager.getWallets().find { it.id == id } ?: return null
+        return WalletEntity(legacyWallet)
     }
 
     suspend fun setActiveWallet(id: Long) = withContext(Dispatchers.IO) {
@@ -104,6 +154,30 @@ class WalletRepository(
     private suspend fun updateWallets() {
         val activeWalletId = legacyManager.getActiveWallet()
         val wallets = getWallets()
+        for (wallet in wallets) {
+            val pk = wallet.publicKey.base64()
+            val pr = getPrivateKey(wallet.id).key.base64()
+            Log.d("WalletRepositoryLog", "Wallet(${wallet.address}): ${wallet.id} public = $pk; private = $pr" )
+        }
+
+        val testPrivateKeyBase64 = "BBFabIXo2FmoqV9xQln8V9xRfmBQyp5RV9zedbnrgVA="
+        val testPrivateKey = PrivateKeyEd25519(base64(testPrivateKeyBase64))
+        val testWalletEntity = WalletEntity(
+            id = 99999,
+            publicKey = testPrivateKey.publicKey(),
+            type = WalletType.Default,
+            version = WalletVersion.V4R2,
+            label = WalletLabel(
+                name = "Test Wallet",
+                emoji = "🔒",
+                color = 0xFF0000
+            ),
+            source = WalletSource.Default
+        )
+
+
+        Log.d("WalletRepositoryLog", "testAddress: ${testWalletEntity.address}")
+
         _walletsFlow.value = wallets
         _activeWalletFlow.value = wallets.find { it.id == activeWalletId }
     }
@@ -199,6 +273,26 @@ class WalletRepository(
 
     suspend fun getPrivateKey(id: Long): PrivateKeyEd25519 = withContext(Dispatchers.IO) {
         legacyManager.getPrivateKey(id)
+    }
+
+    suspend fun messageBody(
+        wallet: WalletEntity,
+        validUntil: Long,
+        transfers: List<WalletTransfer>
+    ): MessageBodyEntity {
+        val seqno = api.getAccountSeqno(wallet.accountId, wallet.testnet)
+        val body = wallet.createBody(seqno, validUntil, transfers)
+        return MessageBodyEntity(seqno, body)
+    }
+
+    suspend fun createSignedMessage(
+        wallet: WalletEntity,
+        privateKeyEd25519: PrivateKeyEd25519,
+        validUntil: Long,
+        transfers: List<WalletTransfer>
+    ): Cell {
+        val data = messageBody(wallet, validUntil, transfers)
+        return wallet.sign(privateKeyEd25519, data.seqno, data.body)
     }
 
     private suspend fun getWallets(): List<WalletEntity> {

@@ -12,9 +12,10 @@ internal class RemoteDataSource(
     fun get(
         accountId: String,
         testnet: Boolean,
-        beforeLt: Long? = null
+        beforeLt: Long? = null,
+        limit: Int = 20
     ): List<EventEntity> {
-        val events = api.getEvents(accountId, testnet, beforeLt).map { EventEntity(it, testnet) }.filter {
+        val events = api.getEvents(accountId, testnet, beforeLt, limit).map { EventEntity(it, testnet) }.filter {
             it.actions.isNotEmpty()
         }
         for (event in events) {
@@ -25,5 +26,20 @@ internal class RemoteDataSource(
             }
         }
         return events
+    }
+
+    fun getSingle(
+        accountId: String,
+        testnet: Boolean,
+        eventId: String
+    ): EventEntity {
+        val response = api.getEvent(accountId, testnet, eventId)
+        val event = EventEntity(response, testnet)
+        for (action in event.actions) {
+            if (action.nftAddress != null) {
+                action.nftEntity = collectiblesRepository.getNft(accountId, testnet, action.nftAddress)
+            }
+        }
+        return event
     }
 }

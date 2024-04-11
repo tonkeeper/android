@@ -77,7 +77,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <uikit.widget.WebViewFixed
+        <uikit.widget.webview.WebViewFixed
             android:id="@+id/web_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>

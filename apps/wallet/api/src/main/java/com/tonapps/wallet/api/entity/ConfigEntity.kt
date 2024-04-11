@@ -18,7 +18,8 @@ data class ConfigEntity(
     val directSupportUrl: String,
     val tonkeeperNewsUrl: String,
     val tonCommunityUrl: String,
-    val tonCommunityChatUrl: String
+    val tonCommunityChatUrl: String,
+    val tonApiV2Key: String
 ): Parcelable {
 
     val swapUri: Uri
@@ -36,7 +37,8 @@ data class ConfigEntity(
         directSupportUrl = json.getString("directSupportUrl"),
         tonkeeperNewsUrl = json.getString("tonkeeperNewsUrl"),
         tonCommunityUrl = json.getString("tonCommunityUrl"),
-        tonCommunityChatUrl = json.getString("tonCommunityChatUrl")
+        tonCommunityChatUrl = json.getString("tonCommunityChatUrl"),
+        tonApiV2Key = json.getString("tonApiV2Key")
     )
 
     constructor() : this(
@@ -51,7 +53,8 @@ data class ConfigEntity(
         directSupportUrl = "https://t.me/tonkeeper_supportbot",
         tonkeeperNewsUrl = "https://t.me/tonkeeper_new",
         tonCommunityUrl = "https://t.me/toncoin",
-        tonCommunityChatUrl = "https://t.me/toncoin_chat"
+        tonCommunityChatUrl = "https://t.me/toncoin_chat",
+        tonApiV2Key = ""
     )
 
     companion object {

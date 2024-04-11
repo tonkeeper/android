@@ -10,6 +10,8 @@ import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.AttrRes
+import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
@@ -19,6 +21,8 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.uikit.color.backgroundContentTintColor
 import uikit.R
 import uikit.base.BaseActivity
 import uikit.base.BaseFragment
@@ -26,6 +30,7 @@ import uikit.extensions.doOnEnd
 import uikit.extensions.hapticConfirm
 import uikit.extensions.primaryFragment
 import uikit.extensions.runAnimation
+import uikit.widget.ToastView
 
 abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
 
@@ -42,7 +47,7 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
 
     private lateinit var baseView: View
     private lateinit var contentView: View
-    private lateinit var toastView: AppCompatTextView
+    private lateinit var toastView: ToastView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -172,17 +177,11 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
-    override fun toast(message: String) {
-        contentView.hapticConfirm()
-        toastView.text = message
-
-        if (toastView.visibility == View.VISIBLE) {
-            return
-        }
-
-        toastView.visibility = View.VISIBLE
-        toastView.runAnimation(R.anim.toast).doOnEnd {
-            toastView.visibility = View.GONE
-        }
+    override fun toast(
+        message: String,
+        loading: Boolean,
+        color: Int
+    ) {
+        toastView.show(message, loading, color)
     }
 }

@@ -13,6 +13,7 @@ import com.tonapps.signer.BuildConfig
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.SimpleState
+import com.tonapps.signer.extensions.toast
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.password.ui.PasswordView
 import com.tonapps.signer.screen.intro.IntroFragment
@@ -168,7 +169,7 @@ class RootActivity: NavigationActivity() {
 
     private fun handleUri(uri: Uri, fromApp: Boolean) {
         if (!rootViewModel.processDeepLink(uri, fromApp)) {
-            toast(getString(R.string.wrong_url))
+            toast(R.string.wrong_url)
         }
     }
 

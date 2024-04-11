@@ -6,14 +6,18 @@ import com.tonapps.blockchain.ton.contract.WalletV3R2Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R1Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.block.MsgAddressInt
+import org.ton.cell.Cell
+import org.ton.contract.wallet.WalletTransfer
 
 data class WalletEntity(
     val id: Long,
@@ -58,4 +62,39 @@ data class WalletEntity(
     val accountId: String = contract.address.toAccountId()
 
     val address: String = contract.address.toWalletAddress(testnet)
+
+    fun createBody(
+        seqno: Int,
+        validUntil: Long,
+        gifts: List<WalletTransfer>
+    ): Cell {
+        return contract.createTransferUnsignedBody(
+            validUntil = validUntil,
+            seqno = seqno,
+            gifts = gifts.toTypedArray()
+        )
+    }
+
+    fun sign(
+        privateKeyEd25519: PrivateKeyEd25519,
+        seqno: Int,
+        body: Cell
+    ): Cell {
+        return contract.createTransferMessageCell(
+            address = contract.address,
+            privateKey = privateKeyEd25519,
+            seqno = seqno,
+            unsignedBody = body,
+        )
+    }
+
+
+    /*
+    val cell = contract.createTransferMessageCell(
+            address = contract.address,
+            privateKey = EmptyPrivateKeyEd25519,
+            seqno = seqno,
+            unsignedBody = unsignedBody,
+        )
+     */
 }

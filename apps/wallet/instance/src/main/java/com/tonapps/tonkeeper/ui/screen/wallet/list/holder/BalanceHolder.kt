@@ -62,10 +62,10 @@ class BalanceHolder(
         }
 
         setWalletType(item.walletType)
-        setWalletState(item.status, item.address)
+        setWalletState(item.status, item.address, item.walletType)
     }
 
-    private fun setWalletState(state: Item.Status, address: String) {
+    private fun setWalletState(state: Item.Status, address: String, walletType: WalletType) {
         if (state == Item.Status.Updating) {
             walletLoaderView.visibility = View.VISIBLE
             walletAddressView.setText(Localization.updating)
@@ -87,7 +87,11 @@ class BalanceHolder(
             walletAddressView.text = address.shortAddress
             walletAddressView.setTextColor(context.textSecondaryColor)
             walletAddressView.setOnClickListener {
-                context.copyWithToast(address)
+                if (walletType == WalletType.Watch) {
+                    context.copyWithToast(address, context.accentOrangeColor)
+                } else {
+                    context.copyWithToast(address)
+                }
             }
         }
     }

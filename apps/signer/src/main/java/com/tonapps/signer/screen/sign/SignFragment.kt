@@ -17,6 +17,7 @@ import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.extensions.authorizationRequiredError
 import com.tonapps.signer.extensions.copyToClipboard
 import com.tonapps.signer.extensions.short4
+import com.tonapps.signer.extensions.toast
 import com.tonapps.signer.screen.qr.QRFragment
 import com.tonapps.signer.screen.root.RootViewModel
 import com.tonapps.signer.screen.sign.list.SignAdapter
@@ -129,7 +130,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
     private fun emulateBody() {
         signViewModel.openEmulate().catch {
-            navigation?.toast(getString(R.string.unknown_error))
+            navigation?.toast(R.string.unknown_error)
         }.onEach(::openEmulate).launchIn(lifecycleScope)
     }
 

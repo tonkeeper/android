@@ -6,7 +6,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class RatesEntity(
-    private val currency: WalletCurrency,
+    val currency: WalletCurrency,
     private val map: HashMap<String, RateEntity>
 ): Parcelable {
 

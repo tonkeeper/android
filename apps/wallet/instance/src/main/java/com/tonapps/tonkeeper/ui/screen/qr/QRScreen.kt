@@ -6,6 +6,7 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.qr.ui.QRView
 import com.tonapps.tonkeeper.extensions.copyToClipboard
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletType
@@ -65,7 +66,7 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
 
         copyView = view.findViewById(R.id.copy)
         copyView.setOnClickListener {
-            navigation?.toast(getString(Localization.copied))
+            navigation?.toast(Localization.copied)
             context?.copyToClipboard(args.address)
         }
 
@@ -82,7 +83,7 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
 
         fun newInstance(address: String, token: TokenEntity, walletType: WalletType): QRScreen {
             val screen = QRScreen()
-            screen.arguments = QRArgs(address, token, walletType).toBundle()
+            screen.setArgs(QRArgs(address, token, walletType))
             return screen
         }
     }

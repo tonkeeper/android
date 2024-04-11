@@ -2,6 +2,7 @@ package com.tonapps.extensions
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import kotlinx.parcelize.parcelableCreator
 
 fun Parcelable.toByteArray(): ByteArray {
@@ -38,6 +39,7 @@ inline fun <reified T: Parcelable> ByteArray.toParcel(): T? {
         parcel.recycle()
         value
     } catch (e: Throwable) {
+        Log.e("TonConnectNewLog", "toParcel: ${e.message}", e)
         null
     }
 }

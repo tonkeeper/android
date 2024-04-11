@@ -29,8 +29,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val subtitle: String,
         val comment: String? = null,
         val loading: Boolean = false,
-        val value: String? = null,
-        val value2: String? = null,
+        val value: CharSequence? = null,
+        val value2: CharSequence? = null,
         val valueColorRef: Int = UIKitColor.textPrimaryColor,
         val nft: NftEntity? = null
     ): Item(TYPE_ACTION)
@@ -40,7 +40,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         account: AccountEntity,
         comment: String?,
         loading: Boolean,
-        value: String,
+        value: CharSequence,
         nft: NftEntity? = null
     ): Action(
         position = position,
@@ -58,7 +58,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         account: AccountEntity,
         comment: String?,
         loading: Boolean,
-        value: String,
+        value: CharSequence,
         nft: NftEntity? = null
     ): Action(
         position = position,

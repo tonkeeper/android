@@ -29,4 +29,5 @@ dependencies {
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
     implementation(Dependence.Squareup.okhttp)
+    implementation(Dependence.Squareup.sse)
 }

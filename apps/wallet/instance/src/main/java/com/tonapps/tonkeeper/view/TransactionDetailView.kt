@@ -75,7 +75,7 @@ class TransactionDetailView @JvmOverloads constructor(
         loaderView.visibility = GONE
     }
 
-    fun setData(value: String, description: String?) {
+    fun setData(value: CharSequence, description: CharSequence?) {
         setDefault()
         valueView.text = value
         if (description.isNullOrEmpty()) {

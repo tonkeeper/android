@@ -106,6 +106,10 @@ open class BaseFragment(
 
     open val secure: Boolean = false
 
+    fun setArgs(args: BaseArgs) {
+        arguments = args.toBundle()
+    }
+
     fun getSpannable(@StringRes id: Int): SpannableString {
         return requireContext().getSpannable(id)
     }
@@ -182,7 +186,7 @@ open class BaseFragment(
         return false
     }
 
-    fun finish() {
+    open fun finish() {
         val view = view ?: return
 
         when (view) {

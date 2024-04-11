@@ -45,17 +45,10 @@
 
     </uikit.widget.ColumnLayout>
 
-    <androidx.appcompat.widget.AppCompatTextView
+    <uikit.widget.ToastView
         android:id="@+id/toast"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         android:layout_gravity="center_horizontal"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp"
-        android:background="@drawable/bg_content_tint_24"
-        android:textAppearance="@style/TextAppearance.Label2"
-        android:textColor="?attr/textPrimaryColor"/>
+        android:visibility="gone"/>
 </FrameLayout>

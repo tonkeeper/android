@@ -58,7 +58,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "collect
         testnet: Boolean,
         id: String
     ): NftEntity? {
-        val query = "SELECT $COLUMN_OBJECT FROM $TABLE_NAME WHERE $COLUMN_ACCOUNT_ID = ? AND $COLUMN_ID = ?;"
+        val query = "SELECT $COLUMN_OBJECT FROM $TABLE_NAME WHERE $COLUMN_ACCOUNT_ID = ? AND $COLUMN_ID = ? LIMIT 1;"
         val cursor = readableDatabase.rawQuery(query, arrayOf(accountId(accountId, testnet), id))
         val result = if (cursor.moveToNext()) {
             val bytes = cursor.getBlob(0)

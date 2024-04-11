@@ -13,14 +13,14 @@ data class JettonScreenState(
     val walletType: WalletType = WalletType.Default,
     val asyncState: AsyncState = AsyncState.Loading,
     val jetton: JettonBalance? = null,
-    val currencyBalance: String = "",
-    val rateFormat: String = "",
+    val currencyBalance: CharSequence = "",
+    val rateFormat: CharSequence = "",
     val rate24h: String = "",
     val historyItems: List<HistoryItem> = emptyList(),
     val loadedAll: Boolean = false,
 ): UiState() {
 
-    val balance: String
+    val balance: CharSequence
         get() {
             val jetton = jetton ?: return ""
             return CurrencyFormatter.format(jetton.jetton.symbol, jetton.parsedBalance, jetton.jetton.decimals)

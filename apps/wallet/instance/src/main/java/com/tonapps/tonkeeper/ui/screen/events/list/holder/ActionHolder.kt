@@ -60,7 +60,7 @@ class ActionHolder(parent: ViewGroup): Holder<Item.Action>(parent, R.layout.view
         }
     }
 
-    private fun setValue(value: String?, colorRef: Int) {
+    private fun setValue(value: CharSequence?, colorRef: Int) {
         if (value.isNullOrBlank()) {
             amountView.visibility = View.GONE
         } else {

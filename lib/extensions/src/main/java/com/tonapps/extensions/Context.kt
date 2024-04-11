@@ -1,6 +1,8 @@
 package com.tonapps.extensions
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.content.pm.PackageInfo
 import android.os.Build
 import androidx.annotation.RawRes
 import java.io.File
@@ -25,4 +27,11 @@ fun Context.raw(@RawRes id: Int): ByteArray {
 
 fun Context.rawText(@RawRes id: Int): String {
     return raw(id).toString(Charsets.UTF_8)
+}
+
+val Context.packageInfo: PackageInfo
+    get() = packageManager.getPackageInfo(packageName, 0)
+
+fun Context.prefs(name: String): SharedPreferences {
+    return getSharedPreferences(name, Context.MODE_PRIVATE)
 }

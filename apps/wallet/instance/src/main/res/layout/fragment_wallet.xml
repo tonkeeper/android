@@ -14,8 +14,6 @@
     <com.tonapps.tonkeeper.ui.component.WalletHeaderView
         android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:title="@string/wallet"
-        android:action="@drawable/ic_gear_new_28"/>
+        android:layout_height="wrap_content"/>
 
 </FrameLayout>

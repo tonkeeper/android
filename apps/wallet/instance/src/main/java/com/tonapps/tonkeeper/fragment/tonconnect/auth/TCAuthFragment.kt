@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.view.View
 import android.widget.Button
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import com.facebook.common.util.UriUtil
@@ -11,20 +12,21 @@ import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.core.tonconnect.TonConnect
 import com.tonapps.tonkeeper.core.tonconnect.models.TCData
-import com.tonapps.tonkeeper.core.tonconnect.models.TCRequest
 import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textTertiaryColor
+import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.setColor
+import uikit.widget.CheckBoxView
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
@@ -35,7 +37,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
         private const val REQUEST_KEY = "request"
 
-        fun newInstance(request: TCRequest): TCAuthFragment {
+        fun newInstance(request: DAppRequestEntity): TCAuthFragment {
             val fragment = TCAuthFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(REQUEST_KEY, request)
@@ -49,13 +51,15 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
     private lateinit var closeView: View
     private lateinit var loaderView: LoaderView
     private lateinit var contentView: View
-    private lateinit var appIconView: FrescoView
+    private lateinit var appIconView: AppCompatImageView
     private lateinit var siteIconView: SimpleDraweeView
     private lateinit var nameView: AppCompatTextView
     private lateinit var descriptionView: AppCompatTextView
     private lateinit var connectButton: Button
     private lateinit var connectProcessView: ProcessTaskView
     private lateinit var cryptoView: TonConnectCryptoView
+    private lateinit var allowNotificationView: View
+    private lateinit var allowNotificationCheckbox: CheckBoxView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -69,7 +73,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         contentView.visibility = View.GONE
 
         appIconView = view.findViewById(R.id.app_icon)
-        appIconView.setImageURI(UriUtil.getUriForResourceId(R.mipmap.ic_launcher))
+
         siteIconView = view.findViewById(R.id.site_icon)
         nameView = view.findViewById(R.id.name)
         descriptionView = view.findViewById(R.id.description)
@@ -83,6 +87,14 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
         cryptoView = view.findViewById(R.id.crypto)
 
+        allowNotificationView = view.findViewById(R.id.allow_notification)
+        allowNotificationCheckbox = view.findViewById(R.id.allow_notification_checkbox)
+        allowNotificationCheckbox.checked = true
+
+        allowNotificationView.setOnClickListener {
+            allowNotificationCheckbox.toggle()
+        }
+
         collectFlow(viewModel.dataState, ::setData)
     }
 
@@ -90,7 +102,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         cryptoView.setKey(data.accountId.toUserFriendly(testnet = data.testnet))
         siteIconView.setImageURI(data.manifest.iconUrl)
         setName(data.host)
-        setDescription(data.host, data.shortAddress)
+        setDescription(data.manifest.name, data.shortAddress)
 
         loaderView.visibility = View.GONE
         contentView.visibility = View.VISIBLE
@@ -103,8 +115,8 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         nameView.text = spannableString
     }
 
-    private fun setDescription(host: String, shortAddress: String) {
-        val description = getString(Localization.ton_connect_description, host, shortAddress)
+    private fun setDescription(name: String, shortAddress: String) {
+        val description = getString(Localization.ton_connect_description, name, shortAddress)
         val spannableString = SpannableString(description)
         spannableString.setColor(requireContext().textTertiaryColor, description.length - shortAddress.length, description.length)
         descriptionView.text = spannableString
@@ -115,7 +127,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         connectProcessView.visibility = View.VISIBLE
         connectProcessView.state = ProcessTaskView.State.LOADING
 
-        viewModel.connect(requireContext()).catch {
+        viewModel.connect(requireContext(), allowNotificationCheckbox.checked).catch {
             setFailure()
         }.onEach {
             setSuccess()
@@ -123,7 +135,6 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
     }
 
     private fun setSuccess() {
-        TonConnect.from(requireContext())?.restartEventHandler()
 
         connectProcessView.state = ProcessTaskView.State.SUCCESS
         finalDelay()

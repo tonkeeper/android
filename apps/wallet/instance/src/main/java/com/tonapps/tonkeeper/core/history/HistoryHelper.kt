@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.core.history
 import android.icu.text.SimpleDateFormat
 import com.tonapps.blockchain.Coin
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.withMinus
+import com.tonapps.extensions.withPlus
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeper.api.amount
@@ -35,8 +37,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import com.tonapps.network.Network
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import com.tonapps.wallet.data.rates.RatesRepository
+import com.tonapps.wallet.data.rates.entity.RatesEntity
+import io.tonapi.models.MessageConsequences
 import java.util.Calendar
 import java.util.Date
 
@@ -51,6 +58,67 @@ object HistoryHelper {
     private val calendar = Calendar.getInstance()
     private val dateFormat1 = SimpleDateFormat("h:mm a")
     private val dateFormat2 = SimpleDateFormat("MMM dd, h:mm a")
+
+    data class Details(
+        val accountId: String,
+        val items: List<HistoryItem>,
+        val fee: Float,
+        val feeFormat: CharSequence,
+        val feeFiat: Float,
+        val feeFiatFormat: CharSequence
+    )
+
+    private fun createWalletLegacy(wallet: WalletEntity): WalletLegacy {
+        return WalletLegacy(
+            id = wallet.id,
+            name = wallet.label.name,
+            publicKey = wallet.publicKey,
+            type = wallet.type,
+            emoji = wallet.label.emoji,
+            color = wallet.label.color,
+            version = wallet.version,
+            source = wallet.source
+        )
+    }
+
+    suspend fun create(
+        wallet: WalletEntity,
+        response: MessageConsequences,
+        rates: RatesEntity,
+    ): Details {
+        val legacy = createWalletLegacy(wallet)
+        return create(legacy, response, rates)
+    }
+
+    suspend fun mapping(
+        wallet: WalletEntity,
+        events: List<AccountEvent>,
+        groupByDate: Boolean = true,
+        removeDate: Boolean = false,
+    ): List<HistoryItem> {
+        val legacy = createWalletLegacy(wallet)
+        return mapping(legacy, events, groupByDate, removeDate)
+    }
+
+    suspend fun create(
+        wallet: WalletLegacy,
+        response: MessageConsequences,
+        rates: RatesEntity,
+    ): Details {
+        val items = mapping(wallet, response.event, false, true)
+        val fee = Coin.toCoins(response.totalFees)
+        val feeFormat = CurrencyFormatter.format("TON", fee)
+        val feeFiat = rates.convert("TON", fee)
+        val feeFiatFormat = CurrencyFormatter.formatFiat(rates.currency.code, feeFiat)
+        return Details(
+            accountId = wallet.accountId,
+            items = items,
+            fee = fee,
+            feeFormat = feeFormat,
+            feeFiat = feeFiat,
+            feeFiatFormat = feeFiatFormat
+        )
+    }
 
     fun withLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
         val last = items.lastOrNull()
@@ -71,15 +139,6 @@ object HistoryHelper {
             return newItems
         }
         return items
-    }
-
-    fun subscribe(scope: CoroutineScope, accountId: String) {
-        val mempool = Network.subscribe("https://keeper.tonapi.io/v2/sse/mempool?accounts=${accountId}")
-        val tx = Network.subscribe("https://tonapi.io/v2/sse/accounts/transactions?accounts=${accountId}")
-
-        merge(mempool, tx).onEach {
-            EventBus.post(WalletStateUpdateEvent)
-        }.launchIn(scope)
     }
 
     suspend fun mapping(
@@ -197,8 +256,8 @@ object HistoryHelper {
             val tonFromJetton = Coin.toCoins(jettonSwap.ton)
 
             val isOut = jettonSwap.amountOut != ""
-            val value: String
-            val value2: String
+            val value: CharSequence
+            val value2: CharSequence
             val tokenCode: String
 
             if (!isOut) {
@@ -222,8 +281,8 @@ object HistoryHelper {
                 title = simplePreview.name,
                 subtitle = jettonSwap.router.getNameOrAddress(wallet.testnet),
                 comment = "",
-                value = withPlusPrefix(value),
-                value2 = withMinusPrefix(value2),
+                value = value.withPlus,
+                value2 = value2.withMinus,
                 tokenCode = tokenCode,
                 coinIconUrl = jettonPreview.image,
                 timestamp = timestamp,
@@ -245,11 +304,11 @@ object HistoryHelper {
             if (isOut) {
                 itemAction = ActionType.Send
                 accountAddress = jettonTransfer.recipient
-                value = withMinusPrefix(value)
+                value = value.withMinus
             } else {
                 itemAction = ActionType.Received
                 accountAddress = jettonTransfer.sender
-                value = withPlusPrefix(value)
+                value = value.withPlus
             }
 
             val inCurrency = wallet.currency(jettonTransfer.jetton.address)
@@ -291,11 +350,11 @@ object HistoryHelper {
             if (isOut) {
                 itemAction = ActionType.Send
                 accountAddress = tonTransfer.recipient
-                value = withMinusPrefix(value)
+                value = value.withMinus
             } else {
                 itemAction = ActionType.Received
                 accountAddress = tonTransfer.sender
-                value = withPlusPrefix(value)
+                value = value.withPlus
             }
 
             val inCurrency = wallet.ton(tonTransfer.amount)
@@ -334,7 +393,7 @@ object HistoryHelper {
                 action = ActionType.CallContract,
                 title = simplePreview.name,
                 subtitle = executor.getNameOrAddress(wallet.testnet),
-                value = withMinusPrefix(value),
+                value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
                 date = date,
@@ -401,7 +460,7 @@ object HistoryHelper {
                 action = ActionType.DepositStake,
                 title = simplePreview.name,
                 subtitle = depositStake.pool.getNameOrAddress(wallet.testnet),
-                value = withMinusPrefix(value),
+                value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
                 coinIconUrl = depositStake.implementation.iconURL,
@@ -420,7 +479,7 @@ object HistoryHelper {
                 action = ActionType.JettonMint,
                 title = simplePreview.name,
                 subtitle = jettonMint.jetton.name,
-                value = withPlusPrefix(value),
+                value = value.withPlus,
                 tokenCode = jettonMint.jetton.symbol,
                 timestamp = timestamp,
                 coinIconUrl = jettonMint.jetton.image,
@@ -474,7 +533,7 @@ object HistoryHelper {
                 action = ActionType.AuctionBid,
                 title = simplePreview.name,
                 subtitle = subtitle,
-                value = withMinusPrefix(value),
+                value = value.withMinus,
                 tokenCode = tokenCode,
                 timestamp = timestamp,
                 date = date,
@@ -494,7 +553,7 @@ object HistoryHelper {
                 action = ActionType.WithdrawStake,
                 title = simplePreview.name,
                 subtitle = withdrawStake.pool.getNameOrAddress(wallet.testnet),
-                value = withPlusPrefix(value),
+                value = value.withPlus,
                 tokenCode = "TON",
                 timestamp = timestamp,
                 coinIconUrl = withdrawStake.implementation.iconURL,
@@ -513,7 +572,7 @@ object HistoryHelper {
                 action = ActionType.NftPurchase,
                 title = simplePreview.name,
                 subtitle = nftPurchase.buyer.getNameOrAddress(wallet.testnet),
-                value = withMinusPrefix(value),
+                value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
                 nftImageURL = nftItem.imageURL,
@@ -534,7 +593,7 @@ object HistoryHelper {
                 action = ActionType.JettonBurn,
                 title = simplePreview.name,
                 subtitle = jettonBurn.sender.getNameOrAddress(wallet.testnet),
-                value = withMinusPrefix(value),
+                value = value.withMinus,
                 tokenCode = jettonBurn.jetton.symbol,
                 timestamp = timestamp,
                 coinIconUrl = jettonBurn.jetton.image,
@@ -567,7 +626,7 @@ object HistoryHelper {
                 action = ActionType.Subscribe,
                 title = simplePreview.name,
                 subtitle = subscribe.beneficiary.getNameOrAddress(wallet.testnet),
-                value = withMinusPrefix(value),
+                value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
                 coinIconUrl = subscribe.beneficiary.iconURL ?: "",
@@ -577,14 +636,6 @@ object HistoryHelper {
         } else {
             return createUnknown(txId, action, date, timestamp, simplePreview)
         }
-    }
-
-    private fun withPlusPrefix(value: String): String {
-        return "$PLUS_SYMBOL $value"
-    }
-
-    private fun withMinusPrefix(value: String): String {
-        return "$MINUS_SYMBOL $value"
     }
 
     private fun createUnknown(

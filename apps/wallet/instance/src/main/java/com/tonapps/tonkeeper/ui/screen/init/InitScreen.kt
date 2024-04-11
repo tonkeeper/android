@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.doOnLayout
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
+import com.tonapps.tonkeeper.ui.screen.init.step.PushScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.SelectScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
@@ -77,6 +78,7 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
             InitEvent.Step.WatchAccount -> WatchScreen.newInstance()
             InitEvent.Step.LabelAccount -> LabelScreen.newInstance()
             InitEvent.Step.SelectAccount -> SelectScreen.newInstance()
+            InitEvent.Step.Push -> PushScreen.newInstance()
             else -> throw IllegalArgumentException("Unknown step: $step")
         }
 

@@ -56,5 +56,5 @@
         android:layout_height="@dimen/iconSize"
         android:layout_gravity="center"
         android:tint="?attr/iconSecondaryColor"
-        android:src="@drawable/ic_gear_new_28" />
+        android:src="@drawable/ic_gear_outline_28" />
 </merge>

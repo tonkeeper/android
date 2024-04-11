@@ -1,6 +1,7 @@
 package uikit.widget
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -8,6 +9,7 @@ import android.util.AttributeSet
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.drawee.view.SimpleDraweeView
+import com.facebook.imagepipeline.request.ImageRequest
 import uikit.extensions.getDrawable
 
 
@@ -24,6 +26,12 @@ class FrescoView @JvmOverloads constructor(
             hierarchy.setPlaceholderImage(null)
             super.setImageURI(uri, callerContext)
         }
+    }
+
+    override fun setImageRequest(request: ImageRequest) {
+        setImageDrawable(null)
+        setPlaceholder(ColorDrawable(Color.TRANSPARENT))
+        super.setImageRequest(request)
     }
 
     fun setPlaceholder(drawable: Drawable) {

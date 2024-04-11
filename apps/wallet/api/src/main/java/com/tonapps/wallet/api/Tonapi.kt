@@ -1,11 +1,13 @@
 package com.tonapps.wallet.api
 
+import com.tonapps.network.Network
 import com.tonapps.wallet.api.core.BaseAPI
 import com.tonapps.wallet.api.core.SourceAPI
 
+@Deprecated("Use API instead")
 object Tonapi {
-    private val main = BaseAPI("https://keeper.tonapi.io")
-    private val test = BaseAPI("https://testnet.tonapi.io")
+    private val main = BaseAPI("https://keeper.tonapi.io", Network.okHttpClient)
+    private val test = BaseAPI("https://testnet.tonapi.io", Network.okHttpClient)
 
     val accounts = SourceAPI(main.accounts, test.accounts)
 

@@ -11,7 +11,7 @@ data class AccountItem(
     val address: String,
     val name: String?,
     val walletVersion: WalletVersion,
-    val balanceFormat: String,
+    val balanceFormat: CharSequence,
     val tokens: Boolean,
     val collectibles: Boolean,
     val selected: Boolean,

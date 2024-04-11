@@ -1,11 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.list.holder
 
-import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.facebook.imagepipeline.common.ResizeOptions
-import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonapps.tonkeeper.extensions.buildRateString
 import com.tonapps.tonkeeper.fragment.jetton.JettonScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.list.Item
@@ -31,7 +28,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
         itemView.setOnClickListener {
             context.navigation?.add(JettonScreen.newInstance(item.address, item.name))
         }
-        setImageUri(item.iconUri)
+        iconView.setImageURI(item.iconUri, this)
         titleView.text = item.name
         balanceView.text = if (item.hiddenBalance) {
             HIDDEN_BALANCE
@@ -44,22 +41,16 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             balanceFiatView.visibility = View.GONE
         } else {
             balanceFiatView.visibility = View.VISIBLE
-            balanceFiatView.text = item.fiatFormat
+            if (item.hiddenBalance) {
+                balanceFiatView.text = HIDDEN_BALANCE
+            } else {
+                balanceFiatView.text = item.fiatFormat
+            }
             setRate(item.rate, item.rateDiff24h, item.verified)
         }
     }
 
-    private fun setImageUri(uri: Uri) {
-        if (uri.scheme == "res") {
-            iconView.setImageURI(uri, this)
-        } else {
-            val builder = ImageRequestBuilder.newBuilderWithSource(uri)
-            builder.resizeOptions = ResizeOptions.forSquareSize(256)
-            iconView.setImageRequest(builder.build())
-        }
-    }
-
-    private fun setRate(rate: String, rateDiff24h: String, verified: Boolean) {
+    private fun setRate(rate: CharSequence, rateDiff24h: String, verified: Boolean) {
         rateView.visibility = View.VISIBLE
         if (verified) {
             rateView.text = context.buildRateString(rate, rateDiff24h)

@@ -36,12 +36,15 @@
             android:layout_gravity="center"
             android:orientation="horizontal">
 
-            <uikit.widget.FrescoView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/app_icon"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
-                android:scaleType="centerCrop"
-                app:roundedCornerRadius="20dp"/>
+                android:scaleType="centerInside"
+                android:padding="12dp"
+                android:src="@drawable/ic_logo_48"
+                android:tint="?attr/colorAccent"
+                android:background="@drawable/bg_content_20"/>
             
             <com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
                 android:id="@+id/crypto"
@@ -76,10 +79,33 @@
             android:textColor="?attr/textSecondaryColor"
             android:gravity="center"/>
 
+
+        <uikit.widget.RowLayout
+            android:id="@+id/allow_notification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_content"
+            android:layout_marginVertical="@dimen/offsetLarge"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="18dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="?attr/textPrimaryColor"
+                android:text="@string/allow_notification"/>
+
+            <uikit.widget.CheckBoxView
+                android:id="@+id/allow_notification_checkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </uikit.widget.RowLayout>
+
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/itemHeight"
-            android:layout_marginTop="@dimen/offsetMedium">
+            android:layout_height="@dimen/itemHeight">
 
             <Button
                 style="@style/Widget.App.Button"

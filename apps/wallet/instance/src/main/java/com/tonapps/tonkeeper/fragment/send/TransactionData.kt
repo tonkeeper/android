@@ -7,6 +7,7 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
+import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
@@ -62,7 +63,7 @@ data class TransactionData(
             if (isTon) {
                 return amount
             }
-            return Coins.ofNano(Coin.toNano(0.001f))
+            return Coins.ofNano(Coin.toNano(0.064f))
         }
 
     val decimals: Int
@@ -76,6 +77,7 @@ data class TransactionData(
 
     fun buildWalletTransfer(
         responseAddress: MsgAddressInt,
+        stateInit: StateInit?,
     ): WalletTransfer {
         val builder = WalletTransferBuilder()
         builder.bounceable = bounce
@@ -83,6 +85,7 @@ data class TransactionData(
         builder.body = buildWalletTransferBody(responseAddress)
         builder.sendMode = sendMode
         builder.coins = coins
+        builder.stateInit = stateInit
         return builder.build()
     }
 

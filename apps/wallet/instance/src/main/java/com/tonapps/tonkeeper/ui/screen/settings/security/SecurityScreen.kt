@@ -1,9 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.password.PasscodeBiometric
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
 import com.tonapps.tonkeeperx.R
@@ -60,7 +60,7 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
 
     private fun openRecoveryPhrase() {
         securityViewModel.getRecoveryPhrase(requireContext()).catch {
-            navigation?.toast(getString(Localization.authorization_required))
+            navigation?.toast(Localization.authorization_required)
         }.onEach {
             navigation?.add(PhraseScreen.newInstance(it))
         }.launchIn(lifecycleScope)

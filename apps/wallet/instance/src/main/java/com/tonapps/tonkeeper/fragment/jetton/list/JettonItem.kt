@@ -14,10 +14,10 @@ sealed class JettonItem(
     }
 
     data class Header(
-        val balance: String,
-        val currencyBalance: String,
+        val balance: CharSequence,
+        val currencyBalance: CharSequence,
         val iconUrl: String,
-        val rate: String,
+        val rate: CharSequence,
         val diff24h: String
     ): JettonItem(TYPE_HEADER)
 

@@ -101,7 +101,7 @@ class TransactionDialog(
         dateView.text = "$prefix $date"
     }
 
-    private fun applyCurrency(currency: String?) {
+    private fun applyCurrency(currency: CharSequence?) {
         if (currency.isNullOrBlank()) {
             currencyView.visibility = View.GONE
         } else {

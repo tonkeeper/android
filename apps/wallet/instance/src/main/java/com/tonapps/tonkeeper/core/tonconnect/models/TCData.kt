@@ -4,17 +4,17 @@ import android.net.Uri
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.tonkeeper.api.shortAddress
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppItemEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 import kotlinx.parcelize.Parcelize
 
-@Parcelize
 data class TCData(
-    val manifest: TCManifest,
+    val manifest: DAppManifestEntity,
     val accountId: String,
     val testnet: Boolean,
     val clientId: String,
-    val items: List<TCItem>
-): Parcelable {
+    val items: List<DAppItemEntity>
+) {
 
     val shortAddress: String
         get() = accountId.toUserFriendly(testnet = testnet).shortAddress

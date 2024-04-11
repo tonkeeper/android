@@ -15,10 +15,11 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.tokenModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
-import org.libsodium.jni.NaCl
 import com.tonapps.wallet.data.account.legacy.WalletManager
 import com.tonapps.wallet.data.collectibles.collectiblesModule
 import com.tonapps.wallet.data.events.eventsModule
+import com.tonapps.wallet.data.push.pushModule
+import com.tonapps.wallet.data.tonconnect.tonConnectModule
 
 class App: Application(), CameraXConfig.Provider {
 
@@ -39,8 +40,6 @@ class App: Application(), CameraXConfig.Provider {
     override fun onCreate() {
         super.onCreate()
         instance = this
-
-        NaCl.sodium()
         db = AppDatabase.getInstance(this)
         walletManager = WalletManager(this)
         fiat = Fiat(this)
@@ -48,7 +47,7 @@ class App: Application(), CameraXConfig.Provider {
 
         startKoin {
             androidContext(this@App)
-            modules(koinModel, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, pushModule, tonConnectModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

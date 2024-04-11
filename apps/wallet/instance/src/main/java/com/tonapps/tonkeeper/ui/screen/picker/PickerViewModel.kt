@@ -74,8 +74,8 @@ class PickerViewModel(
 
     private suspend fun getBalances(
         wallets: List<WalletEntity>
-    ): List<Deferred<String>> = withContext(Dispatchers.IO) {
-        val list = mutableListOf<Deferred<String>>()
+    ): List<Deferred<CharSequence>> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<Deferred<CharSequence>>()
         for (wallet in wallets) {
             list.add(async { getBalance(wallet.accountId, wallet.testnet) })
         }
@@ -85,7 +85,7 @@ class PickerViewModel(
     private suspend fun getBalance(
         accountId: String,
         testnet: Boolean
-    ): String {
+    ): CharSequence {
         val currency = if (testnet) {
             WalletCurrency.TON
         } else {

@@ -31,3 +31,13 @@ val String.withMinus: String
     get() {
         return if (startsWith("-")) this else "− $this"
     }
+
+val CharSequence.withMinus: CharSequence
+    get() {
+        return if (startsWith("-")) this else "− $this"
+    }
+
+val CharSequence.withPlus: CharSequence
+    get() {
+        return if (startsWith("+")) this else "+ $this"
+    }

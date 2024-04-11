@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.extensions
 
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
-import com.tonapps.tonkeeper.api.ApiHelper
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import io.tonapi.models.MessageConsequences
 import org.ton.api.pk.PrivateKeyEd25519
@@ -9,16 +9,6 @@ import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import ton.extensions.base64
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
-
-
-fun WalletLegacy.isRecoveryPhraseBackup(): Boolean {
-    // return com.tonapps.tonkeeper.App.settings.isRecoveryPhraseBackup(accountId)
-    return false
-}
-
-fun WalletLegacy.setRecoveryPhraseBackup(isBackup: Boolean) {
-    // com.tonapps.tonkeeper.App.settings.setRecoveryPhraseBackup(accountId, isBackup)
-}
 
 val WalletLegacy.label: WalletLabel
     get() = WalletLabel(
@@ -28,18 +18,20 @@ val WalletLegacy.label: WalletLabel
     )
 
 suspend fun WalletLegacy.buildBody(
+    api: API,
     vararg gifts: WalletTransfer
 ): Pair<Cell, Int> {
-    val seqno = ApiHelper.getAccountSeqnoOrZero(accountId, testnet)
+    val seqno = getSeqno(api)
     val cell = contract.createTransferUnsignedBody(seqno = seqno, gifts = gifts)
     return Pair(cell, seqno)
 }
 
 suspend fun WalletLegacy.sign(
+    api: API,
     privateKey: PrivateKeyEd25519 = EmptyPrivateKeyEd25519,
     vararg gifts: WalletTransfer
 ): Cell {
-    val (unsignedBody, seqno) = buildBody(*gifts)
+    val (unsignedBody, seqno) = buildBody(api, *gifts)
     return sign(
         seqno = seqno,
         privateKey = privateKey,
@@ -48,60 +40,68 @@ suspend fun WalletLegacy.sign(
 }
 
 suspend fun WalletLegacy.emulate(
+    api: API,
     boc: String
 ): MessageConsequences {
-    return ApiHelper.emulate(boc, testnet)
+    return api.emulate(boc, testnet)
 }
 
 suspend fun WalletLegacy.emulate(
+    api: API,
     cell: Cell
-) = emulate(cell.base64())
+) = emulate(api, cell.base64())
 
 suspend fun WalletLegacy.emulate(
+    api: API,
     vararg gifts: WalletTransfer
 ): MessageConsequences {
-    val cell = sign(gifts = gifts)
-    return emulate(cell)
+    val cell = sign(api, gifts = gifts)
+    return emulate(api, cell)
 }
 
 suspend fun WalletLegacy.emulate(
+    api: API,
     gifts: List<WalletTransfer>
 ): MessageConsequences {
-    val cell = sign(gifts = gifts.toTypedArray())
-    return emulate(cell)
+    val cell = sign(api, gifts = gifts.toTypedArray())
+    return emulate(api, cell)
 }
 
 suspend fun WalletLegacy.sendToBlockchain(
+    api: API,
     boc: String
 ): Boolean {
-    return ApiHelper.sendToBlockchain(boc, testnet)
+    return api.sendToBlockchain(boc, testnet)
 }
 
 suspend fun WalletLegacy.sendToBlockchain(
+    api: API,
     cell: Cell
-) = sendToBlockchain(cell.base64())
+) = sendToBlockchain(api, cell.base64())
 
 suspend fun WalletLegacy.sendToBlockchain(
+    api: API,
     privateKey: PrivateKeyEd25519,
     vararg gifts: WalletTransfer
 ): Cell? {
-    val cell = sign(privateKey = privateKey, gifts = gifts)
-    if (sendToBlockchain(cell)) {
+    val cell = sign(api, privateKey = privateKey, gifts = gifts)
+    if (sendToBlockchain(api, cell)) {
         return cell
     }
     return null
 }
 
 suspend fun WalletLegacy.sendToBlockchain(
+    api: API,
     privateKey: PrivateKeyEd25519,
     gifts: List<WalletTransfer>
 ): Cell? {
-    return sendToBlockchain(privateKey = privateKey, gifts = gifts.toTypedArray())
+    return sendToBlockchain(api, privateKey = privateKey, gifts = gifts.toTypedArray())
 }
 
-suspend fun WalletLegacy.getSeqno(): Int {
+suspend fun WalletLegacy.getSeqno(api: API): Int {
     return try {
-        ApiHelper.getAccountSeqnoOrZero(accountId, testnet)
+        api.getAccountSeqno(accountId, testnet)
     } catch (e: Throwable) {
         0
     }

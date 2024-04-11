@@ -2,8 +2,7 @@ package com.tonapps.tonkeeper.fragment.send.recipient
 
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.tonkeeper.api.ApiHelper
-import com.tonapps.wallet.api.Tonapi
+import com.tonapps.wallet.api.API
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -11,7 +10,9 @@ import kotlinx.coroutines.launch
 import ton.TonAddress
 import uikit.mvi.UiFeature
 
-class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEffect>(RecipientScreenState()) {
+class RecipientScreenFeature(
+    private val api: API
+): UiFeature<RecipientScreenState, RecipientScreenEffect>(RecipientScreenState()) {
 
     private var checkAddressJob: Job? = null
 
@@ -49,7 +50,7 @@ class RecipientScreenFeature: UiFeature<RecipientScreenState, RecipientScreenEff
 
             val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@launch
 
-            val account = ApiHelper.resolveAccount(value, wallet.testnet)
+            val account = api.resolveAccount(value, wallet.testnet)
             if (account == null) {
                 updateUiState { it.copy(
                     addressState = RecipientScreenState.AddressState.INVALID,

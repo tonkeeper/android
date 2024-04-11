@@ -9,6 +9,7 @@
     <string name="authorization_required">Authorization required</string>
     <string name="invalid_link">Invalid link</string>
     <string name="settings">Settings</string>
+    <string name="browser">Browser</string>
     <string name="wallet">Wallet</string>
     <string name="activity">Activity</string>
     <string name="history">History</string>
@@ -108,6 +109,7 @@
     <string name="fee">Fee</string>
     <string name="period_24h">24h</string>
     <string name="enable_notification">Enable notification</string>
+    <string name="allow_notification">Allow Notifications</string>
     <string name="enable_notification_title">Get instant notifications</string>
     <string name="enable_notification_subtitle">Get notified when you receive TON, tokens and NFTs</string>
     <string name="widget_placeholder">Need to select a wallet</string>
@@ -163,6 +165,7 @@
     <string name="currency_rub_name">Russian Ruble</string>
     <string name="currency_aed_name">United Arab Emirates Dirham</string>
     <string name="currency_uah_name">Ukrainian Hryvnia</string>
+    <string name="currency_kzt_name">Kazakhstani Tenge</string>
     <string name="currency_uzs_name">Uzbekistani sum</string>
     <string name="currency_gbp_name">Great Britain Pound</string>
     <string name="currency_chf_name">Swiss Franc</string>
@@ -171,7 +174,23 @@
     <string name="currency_idr_name">Indonesian Rupiah</string>
     <string name="currency_inr_name">Indian Rupee</string>
     <string name="currency_jpy_name">Japanese Yen</string>
-    <string name="currency_kzt_name">Kazakhstani Tenge</string>
+    <string name="currency_cad_name">Canadian Dollar</string>
+    <string name="currency_ars_name">Argentine Peso</string>
+    <string name="currency_byn_name">Belarusian Ruble</string>
+    <string name="currency_cop_name">Colombian Peso</string>
+    <string name="currency_etb_name">Ethiopian Birr</string>
+    <string name="currency_ils_name">Israeli Shekel</string>
+    <string name="currency_kes_name">Kenyan Shilling</string>
+    <string name="currency_ngn_name">Nigerian Naira</string>
+    <string name="currency_ugx_name">Ugandan Shilling</string>
+    <string name="currency_ves_name">Venezuelan Bolivar</string>
+    <string name="currency_zar_name">South African Rand</string>
+    <string name="currency_try_name">Turkish Lira</string>
+    <string name="currency_thb_name">Thai Baht</string>
+    <string name="currency_vnd_name">Vietnamese Dong</string>
+    <string name="currency_brl_name">Brazilian Real</string>
+    <string name="currency_gel_name">Georgian Lari</string>
+    <string name="currency_bdt_name">Bangladeshi Taka</string>
 
     <string name="done">Done</string>
     <string name="error">Error</string>

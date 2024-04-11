@@ -26,7 +26,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     }
 
     data class Balance(
-        val balance: String,
+        val balance: CharSequence,
         val address: String,
         val walletType: WalletType,
         val status: Status,
@@ -47,10 +47,10 @@ sealed class Item(type: Int): BaseListItem(type) {
         val symbol: String,
         val name: String,
         val balance: Float,
-        val balanceFormat: String,
+        val balanceFormat: CharSequence,
         val fiat: Float,
-        val fiatFormat: String,
-        val rate: String,
+        val fiatFormat: CharSequence,
+        val rate: CharSequence,
         val rateDiff24h: String,
         val verified: Boolean,
         val testnet: Boolean,

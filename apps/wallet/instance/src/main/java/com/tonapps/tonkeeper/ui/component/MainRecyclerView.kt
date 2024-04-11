@@ -3,12 +3,13 @@ package com.tonapps.tonkeeper.ui.component
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
+import android.util.Log
 import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import blur.BlurCompat
+import org.koin.core.time.measureDuration
 import uikit.extensions.getDimensionPixelSize
-import uikit.extensions.setPaddingBottom
 import uikit.widget.SimpleRecyclerView
 
 class MainRecyclerView @JvmOverloads constructor(
@@ -29,13 +30,14 @@ class MainRecyclerView @JvmOverloads constructor(
     private val bottomPadding: Int
         get() = bottomOffset + barSize
 
-    private val blurCompat = BlurCompat(context)
+    // private val headerBlur = BlurCompat(context)
+    // private val bottomBlur = BlurCompat(context)
 
-    init {
-        if (blurCompat.hasBlur) {
+    /*init {
+        if (headerBlur.hasBlur) {
             overScrollMode = OVER_SCROLL_NEVER
         }
-    }
+    }*/
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
@@ -51,21 +53,25 @@ class MainRecyclerView @JvmOverloads constructor(
         return super.onApplyWindowInsets(insets)
     }
 
-    override fun draw(canvas: Canvas) {
-        blurCompat.draw(canvas) { outputCanvas ->
-            super.draw(outputCanvas)
+    /*override fun draw(canvas: Canvas) {
+        headerBlur.draw(canvas) { outputCanvas ->
+            bottomBlur.draw(outputCanvas) {
+                super.draw(it)
+            }
         }
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        blurCompat.attached()
+        headerBlur.attached()
+        bottomBlur.attached()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        blurCompat.detached()
-    }
+        headerBlur.detached()
+        bottomBlur.detached()
+    }*/
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         super.onMeasure(widthSpec, heightSpec)
@@ -73,9 +79,9 @@ class MainRecyclerView @JvmOverloads constructor(
     }
 
     private fun applyBlurBounds() {
-        val viewHeight = measuredHeight.toFloat()
         val viewWidth = measuredWidth.toFloat()
-        // blurCompat.setBounds(0f, viewHeight - (bottomOffset + barSize), measuredWidth.toFloat(), viewHeight)
-        // blurCompat.setSafeArea(0f, topPadding.toFloat(), viewWidth, viewHeight - bottomPadding.toFloat())
+        val viewHeight = measuredHeight.toFloat()
+        // headerBlur.setBounds(0f, 0f, viewWidth, topPadding.toFloat())
+        // bottomBlur.setBounds(0f, viewHeight - bottomPadding, viewWidth, viewHeight)
     }
 }

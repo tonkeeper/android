@@ -10,7 +10,7 @@ import androidx.annotation.RequiresApi
 internal class ContentNodeLegacy: BaseNode("content") {
 
     private companion object {
-        private const val MAX_SIZE = 128
+        private const val MAX_SIZE = 64
     }
 
     private var snapshotCanvas = SnapshotCanvas(1, 1)

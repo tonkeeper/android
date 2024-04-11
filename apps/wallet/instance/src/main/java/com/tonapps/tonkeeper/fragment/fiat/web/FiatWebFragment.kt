@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
-import uikit.widget.WebViewFixed
+import uikit.widget.webview.WebViewFixed
 
 class FiatWebFragment: BaseFragment(R.layout.fragment_web_fiat) {
 

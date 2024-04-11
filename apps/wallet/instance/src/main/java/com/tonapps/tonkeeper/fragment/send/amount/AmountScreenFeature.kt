@@ -86,10 +86,11 @@ class AmountScreenFeature(
             .convert(currency.code)
 
         val insufficientBalance = newValue > currentBalance
-        var remaining = ""
-        if (newValue > 0) {
+        val remaining = if (newValue > 0) {
             val value = currentBalance - newValue
-            remaining = CurrencyFormatter.format(currentTokenCode, value)
+            CurrencyFormatter.format(currentTokenCode, value)
+        } else {
+            ""
         }
 
         updateUiState { currentState ->

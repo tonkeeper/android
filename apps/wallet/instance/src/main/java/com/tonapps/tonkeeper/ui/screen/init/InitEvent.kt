@@ -12,5 +12,6 @@ sealed class InitEvent {
         object WatchAccount: Step()
         object LabelAccount: Step()
         object SelectAccount: Step()
+        object Push: Step()
     }
 }

@@ -9,6 +9,7 @@
     <string name="settings">Настройки</string>
     <string name="wallet">Кошелёк</string>
     <string name="activity">Активность</string>
+    <string name="browser">Браузер</string>
     <string name="history">История</string>
     <string name="price">Цена</string>
     <string name="scan">Cканировать</string>
@@ -66,7 +67,7 @@
 
     <string name="empty_collectibles_title">Здесь будут показаны твои коллекции</string>
     <string name="empty_collectibles_subtitle">Получи свою первую коллекцию</string>
-
+    <string name="allow_notification">Разрешить Оповещения</string>
     <string name="buy_toncoin">Купить Toncoin</string>
     <string name="buy_or_sell">Торговля</string>
     <string name="fiat_open_description">Вы открываете внешнее приложение, которым не управляет Tonkeeper.</string>
@@ -157,6 +158,23 @@
     <string name="currency_inr_name">Индийская рупия</string>
     <string name="currency_jpy_name">Японская иена</string>
     <string name="currency_kzt_name">Казахский тенге</string>
+    <string name="currency_cad_name">Канадский доллар</string>
+    <string name="currency_ars_name">Аргентинское песо</string>
+    <string name="currency_byn_name">Белорусский рубль</string>
+    <string name="currency_cop_name">Колумбийское песо</string>
+    <string name="currency_etb_name">Эфиопский быр</string>
+    <string name="currency_ils_name">Израильский шекель</string>
+    <string name="currency_kes_name">Кенийский шиллинг</string>
+    <string name="currency_ngn_name">Нигерийская найра</string>
+    <string name="currency_ugx_name">Угандийский шиллинг</string>
+    <string name="currency_ves_name">Венесуэльский боливар</string>
+    <string name="currency_zar_name">Южноафриканский рэнд</string>
+    <string name="currency_try_name">Турецкая лира</string>
+    <string name="currency_thb_name">Тайский бат</string>
+    <string name="currency_vnd_name">Вьетнамский донг</string>
+    <string name="currency_brl_name">Бразильский реал</string>
+    <string name="currency_gel_name">Грузинский лари</string>
+    <string name="currency_bdt_name">Бангладешская така</string>
 
     <string name="done">Готово</string>
     <string name="error">Ошибка</string>

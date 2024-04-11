@@ -31,7 +31,7 @@ class Holder(
         setDetails(item.walletVersion, item.balanceFormat, item.tokens, item.collectibles)
     }
 
-    private fun setDetails(walletVersion: WalletVersion, balance: String, tokens: Boolean, collectibles: Boolean) {
+    private fun setDetails(walletVersion: WalletVersion, balance: CharSequence, tokens: Boolean, collectibles: Boolean) {
         val builder = StringBuilder()
         builder.append(walletVersion.title)
         builder.append(DOT)

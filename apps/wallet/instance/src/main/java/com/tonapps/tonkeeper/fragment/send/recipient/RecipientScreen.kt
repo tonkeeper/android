@@ -10,6 +10,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.fragment.send.SendScreenEffect
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.InputView
@@ -20,7 +21,7 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         fun newInstance() = RecipientScreen()
     }
 
-    override val feature: RecipientScreenFeature by viewModels()
+    override val feature: RecipientScreenFeature by viewModel()
 
     private lateinit var addressInput: InputView
     private lateinit var commentInput: InputView

@@ -1,24 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
-import com.tonapps.tonkeeper.core.tonconnect.models.TCRequest
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.WalletSource
+import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import org.ton.api.pub.PublicKeyEd25519
 
 sealed class RootEvent {
     data class Toast(val resId: Int): RootEvent()
-    data class OpenTab(val id: Int): RootEvent() {
-
-        constructor(link: String): this(
-            id = when (link) {
-                "tonkeeper://wallet" -> R.id.wallet
-                "tonkeeper://activity" -> R.id.activity
-                "tonkeeper://collectibles" -> R.id.collectibles
-                else -> 0
-            }
-        )
-    }
+    data class OpenTab(val link: String): RootEvent()
 
     data class Singer(
         val publicKey: PublicKeyEd25519,
@@ -27,10 +17,17 @@ sealed class RootEvent {
     ): RootEvent()
 
     data class TonConnect(
-        val request: TCRequest
+        val request: DAppRequestEntity
     ): RootEvent()
 
     data class Browser(
         val uri: Uri
+    ): RootEvent()
+
+    data class Transfer(
+        val address: String,
+        val amount: Float?,
+        val text: String?,
+        val jettonAddress: String?
     ): RootEvent()
 }

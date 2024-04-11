@@ -28,6 +28,8 @@ class SettingsRepository(
         private const val LANGUAGE_CODE_KEY = "language_code"
         private const val THEME_KEY = "theme"
         private const val HIDDEN_BALANCES_KEY = "hidden_balances"
+        private const val FIREBASE_TOKEN_KEY = "firebase_token"
+        private const val INSTALL_ID_KEY = "install_id"
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -44,7 +46,17 @@ class SettingsRepository(
     private val _hiddenBalancesFlow = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val hiddenBalancesFlow = _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
+    private val _firebaseTokenFlow = MutableSharedFlow<String?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val firebaseTokenFlow = _firebaseTokenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+
+    val installId: String
+        get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
+            val id = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString(INSTALL_ID_KEY, id).apply()
+            id
+        }
 
     var theme: String = prefs.getString(THEME_KEY, "blue")!!
         set(value) {
@@ -52,6 +64,15 @@ class SettingsRepository(
                 prefs.edit().putString(THEME_KEY, value).apply()
                 field = value
                 _themeFlow.tryEmit(value)
+            }
+        }
+
+    var firebaseToken: String? = prefs.getString(FIREBASE_TOKEN_KEY, null)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putString(FIREBASE_TOKEN_KEY, value).apply()
+                field = value
+                _firebaseTokenFlow.tryEmit(value)
             }
         }
 
@@ -112,6 +133,7 @@ class SettingsRepository(
             _languageFlow.tryEmit(language)
             _currencyFlow.tryEmit(currency)
             _hiddenBalancesFlow.tryEmit(hiddenBalances)
+            _firebaseTokenFlow.tryEmit(firebaseToken)
         }
     }
 }

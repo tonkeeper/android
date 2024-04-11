@@ -3,12 +3,14 @@ package com.tonapps.tonkeeper.ui.screen.events
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.component.WalletHeaderView
 import com.tonapps.tonkeeper.ui.screen.events.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -22,7 +24,14 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_list) {
 
     private val eventsViewModel: EventsViewModel by viewModel()
 
-    private val adapter = Adapter()
+    /*private val adapter = Adapter()
+    private val paginationListener = object : ListPaginationListener() {
+        override fun onLoadMore() {
+            eventsViewModel.loadMore()
+        }
+    }*/
+
+    private val legacyAdapter = HistoryAdapter()
 
     private lateinit var headerView: HeaderView
     private lateinit var listView: RecyclerView
@@ -34,9 +43,10 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_list) {
         headerView.setColor(requireContext().backgroundTransparentColor)
 
         listView = view.findViewById(R.id.list)
-        listView.adapter = adapter
+        listView.adapter = legacyAdapter
+        // listView.addOnScrollListener(paginationListener)
 
-        collectFlow(eventsViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(eventsViewModel.uiItemsFlow, legacyAdapter::submitList)
         collectFlow(eventsViewModel.isUpdatingFlow) { updating ->
             if (updating) {
                 headerView.setSubtitle(Localization.updating)

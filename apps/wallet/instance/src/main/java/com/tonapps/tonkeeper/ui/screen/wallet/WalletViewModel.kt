@@ -196,7 +196,7 @@ class WalletViewModel(
 
     private fun setItems(
         wallet: WalletEntity,
-        balance: String,
+        balance: CharSequence,
         list: List<Item.Token>,
         status: Item.Status
     ) {

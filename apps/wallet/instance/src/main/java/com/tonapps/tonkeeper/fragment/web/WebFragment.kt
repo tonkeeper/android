@@ -15,7 +15,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import uikit.base.BaseFragment
-import uikit.widget.WebViewFixed
+import uikit.widget.webview.WebViewFixed
 
 class WebFragment: BaseFragment(R.layout.fragment_web) {
 
@@ -75,10 +75,10 @@ class WebFragment: BaseFragment(R.layout.fragment_web) {
                 super.onLoadResource(view, url)
             }
 
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            /*override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
                 return DeepLink.openUri(requireContext(), uri)
-            }
+            }*/
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)

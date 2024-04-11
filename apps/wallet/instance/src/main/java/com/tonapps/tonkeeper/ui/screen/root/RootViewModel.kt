@@ -1,20 +1,30 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
+import android.app.Application
+import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.Coin
+import com.tonapps.extensions.getQueryLong
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.core.signer.SingerArgs
-import com.tonapps.tonkeeper.core.tonconnect.TonConnect
-import com.tonapps.tonkeeper.core.tonconnect.models.TCRequest
 import com.tonapps.tonkeeper.password.PasscodeRepository
-import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.push.GooglePushService
+import com.tonapps.wallet.data.push.PushManager
+import com.tonapps.tonkeeper.sign.SignManager
+import com.tonapps.tonkeeper.sign.SignRequestEntity
+import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.tonconnect.TonConnectRepository
+import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,17 +34,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
+import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
+    application: Application,
     private val passcodeRepository: PasscodeRepository,
     private val settingsRepository: SettingsRepository,
-    private val walletRepository: WalletRepository
-): ViewModel() {
+    private val walletRepository: WalletRepository,
+    private val pushManager: PushManager,
+    private val signManager: SignManager,
+    private val tonConnectRepository: TonConnectRepository
+): AndroidViewModel(application) {
 
     val hasWalletFlow = walletRepository.walletsFlow.map { it.isNotEmpty() }.distinctUntilChanged()
 
@@ -61,8 +78,43 @@ class RootViewModel(
         }
     }.drop(1)
 
+    val tonConnectEventsFlow = tonConnectRepository.eventsFlow
+
     init {
         _lockFlow.value = settingsRepository.lockScreen && passcodeRepository.hasPinCode
+
+        viewModelScope.launch(Dispatchers.IO) {
+            settingsRepository.firebaseToken = GooglePushService.requestToken()
+        }
+    }
+
+    suspend fun tonconnectReject(requestId: String, app: DAppEntity) {
+        tonConnectRepository.sendError(requestId, app, 300, "Reject Request")
+    }
+
+    suspend fun tonconnectBoc(
+        requestId: String,
+        app: DAppEntity,
+        boc: String
+    ) {
+        tonConnectRepository.send(requestId, app, boc)
+    }
+
+    suspend fun requestSign(
+        context: Context,
+        request: SignRequestEntity
+    ): String {
+        val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: throw Exception("wallet is null")
+        return requestSign(context, wallet, request)
+    }
+
+    suspend fun requestSign(
+        context: Context,
+        wallet: WalletEntity,
+        request: SignRequestEntity
+    ): String {
+        val navigation = context.navigation ?: throw Exception("navigation is null")
+        return signManager.action(navigation, wallet, request)
     }
 
     fun checkPasscode(code: String): Flow<Unit> = flow {
@@ -107,28 +159,36 @@ class RootViewModel(
         }
     }
 
-    private fun resolveOther(uri: Uri, wallet: WalletEntity) {
-        val url = uri.toString()
-        if (TonConnect.isSupportUri(uri)) {
+    private fun resolveOther(_uri: Uri, wallet: WalletEntity) {
+        val url = _uri.toString().replace("ton://", "https://app.tonkeeper.com/")
+        val uri = Uri.parse(url)
+        if (DeepLink.isTonConnectUri(uri)) {
             resolveTonConnect(uri, wallet)
+        } else if (MainScreen.isSupportedDeepLink(url)) {
+            _eventFlow.tryEmit(RootEvent.OpenTab(url))
+        } else if (uri.path?.startsWith("/transfer/") == true) {
+            _eventFlow.tryEmit(RootEvent.Transfer(
+                address = uri.pathSegments.last(),
+                amount = uri.getQueryLong("amount")?.let { Coin.toCoins(it) },
+                text = uri.getQueryParameter("text"),
+                jettonAddress = uri.getQueryParameter("jetton"),
+            ))
         } else {
+            Log.d("DeepLinkLog", "uri: ${uri.path}")
             toast(Localization.invalid_link)
         }
-
-        /*
-        if (url == HistoryScreen.DeepLink) {
-            _eventFlow.tryEmit(RootEvent.OpenTab(R.id.activity))
-        } else
-         */
     }
 
-    private fun resolveTonConnect(uri: Uri, wallet: WalletEntity) {
+    private fun resolveTonConnect(
+        uri: Uri,
+        wallet: WalletEntity
+    ) {
         try {
             if (!wallet.hasPrivateKey) {
                 toast(Localization.not_supported)
                 return
             }
-            val request = TCRequest(uri)
+            val request = DAppRequestEntity(uri)
             _eventFlow.tryEmit(RootEvent.TonConnect(request))
         } catch (e: Throwable) {
             toast(Localization.invalid_link)

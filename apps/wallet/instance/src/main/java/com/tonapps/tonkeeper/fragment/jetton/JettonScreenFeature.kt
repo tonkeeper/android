@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.fragment.jetton
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
@@ -59,27 +60,31 @@ class JettonScreenFeature: UiFeature<JettonScreenState, JettonScreenEffect>(Jett
 
     fun load(address: String) {
         queueScope.submit(Dispatchers.IO) {
-            val wallet = App.walletManager.getWalletInfo() ?: return@submit
-            val accountId = wallet.accountId
-            val jetton = jettonRepository.getByAddress(accountId, address, wallet.testnet) ?: return@submit
-            val balance = jetton.parsedBalance
-            val jettonAddress = jetton.getAddress(wallet.testnet)
-            val currencyBalance = wallet.currency(jettonAddress).value(balance).convert(currency.code)
-            val rate = currencyManager.getRate(accountId, wallet.testnet, address, currency.code)
-            val rate24h = currencyManager.getRate24h(accountId, wallet.testnet, address, currency.code)
-            val historyItems = getEvents(wallet, jettonAddress)
+            try {
+                val wallet = App.walletManager.getWalletInfo() ?: return@submit
+                val accountId = wallet.accountId
+                val jetton = jettonRepository.getByAddress(accountId, address, wallet.testnet) ?: return@submit
 
-            updateUiState {
-                it.copy(
-                    walletType = wallet.type,
-                    asyncState = AsyncState.Default,
-                    jetton = jetton,
-                    currencyBalance = CurrencyFormatter.formatFiat(currency.code, currencyBalance),
-                    rateFormat = CurrencyFormatter.formatRate(currency.code, rate),
-                    rate24h = rate24h,
-                    historyItems = historyItems
-                )
-            }
+                val balance = jetton.parsedBalance
+                val jettonAddress = jetton.getAddress(wallet.testnet)
+                val currencyBalance = wallet.currency(jettonAddress).value(balance).convert(currency.code)
+                val rate = currencyManager.getRate(accountId, wallet.testnet, address, currency.code)
+                val rate24h = currencyManager.getRate24h(accountId, wallet.testnet, address, currency.code)
+                val historyItems = getEvents(wallet, jettonAddress)
+
+                updateUiState {
+                    it.copy(
+                        walletType = wallet.type,
+                        asyncState = AsyncState.Default,
+                        jetton = jetton,
+                        currencyBalance = CurrencyFormatter.formatFiat(currency.code, currencyBalance),
+                        rateFormat = CurrencyFormatter.formatRate(currency.code, rate),
+                        rate24h = rate24h,
+                        historyItems = historyItems
+                    )
+                }
+
+            } catch (e: Throwable) { }
         }
     }
 

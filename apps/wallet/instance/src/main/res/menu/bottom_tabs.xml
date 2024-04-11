@@ -9,6 +9,10 @@
         android:icon="@drawable/ic_clock_28"
         android:checkable="true"
         android:title="@string/history" />
+    <!--item android:id="@+id/browser"
+        android:icon="@drawable/ic_explore_28"
+        android:checkable="true"
+        android:title="@string/browser" /-->
     <item android:id="@+id/collectibles"
         android:icon="@drawable/ic_tab_collectibles_28"
         android:checkable="true"

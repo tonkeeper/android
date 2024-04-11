@@ -18,8 +18,8 @@ sealed class ChartItem(
     }
 
     data class Header(
-        val balance: String,
-        val currencyBalance: String,
+        val balance: CharSequence,
+        val currencyBalance: CharSequence,
     ): ChartItem(TYPE_HEADER)
 
     data class Actions(
@@ -34,7 +34,7 @@ sealed class ChartItem(
     ): ChartItem(TYPE_CHART)
 
     data class Price(
-        val rateFormat: String,
+        val rateFormat: CharSequence,
         val rate24h: String
     ): ChartItem(TYPE_PRICE)
 

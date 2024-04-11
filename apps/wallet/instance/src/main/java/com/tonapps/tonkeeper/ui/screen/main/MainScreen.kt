@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.widget.Widget
+import com.tonapps.tonkeeper.ui.screen.browser.BrowserScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesScreen
 import com.tonapps.tonkeeper.ui.screen.events.EventsScreen
@@ -18,6 +19,7 @@ import com.tonapps.uikit.color.drawable
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import uikit.base.BaseFragment
@@ -27,6 +29,7 @@ import uikit.extensions.isMaxScrollReached
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
+import uikit.widget.FragmentView
 
 class MainScreen: BaseFragment(R.layout.fragment_main) {
 
@@ -88,19 +91,17 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
         mapOf(
             R.id.wallet to WalletScreen.newInstance(),
             R.id.activity to EventsScreen.newInstance(),
-            R.id.collectibles to CollectiblesScreen.newInstance()
+            R.id.collectibles to CollectiblesScreen.newInstance(),
+            // R.id.browser to BrowserScreen.newInstance()
         )
     }
 
     private var currentFragment: BaseFragment? = null
 
-    private lateinit var fragmentContainer: FragmentContainerView
     private lateinit var bottomTabsView: BottomTabsView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        fragmentContainer = view.findViewById(R.id.child_fragment)
-
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
         bottomTabsView.doOnClick = { itemId ->
             setFragment(itemId)
@@ -111,7 +112,7 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
             }
         }
         collectFlow(mainViewModel.childBottomScrolled, bottomTabsView::setDivider)
-        collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().map { it.id }, this::forceSelectTab)
+        collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().map { mainDeepLinks[it.link] }.filterNotNull(), this::forceSelectTab)
 
         setFragment(R.id.wallet)
     }
@@ -142,10 +143,7 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
         } else {
             transaction.add(R.id.child_fragment, newFragment, tag)
         }
-        transaction.runOnCommit {
-            bottomTabsView.setDivider(false)
-        }
-        transaction.commitNow()
+        transaction.commitNowAllowingStateLoss()
 
         currentFragment = newFragment
     }
@@ -156,6 +154,18 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
     }
 
     companion object {
+
+        private val mainDeepLinks = mapOf(
+            "tonkeeper://wallet" to R.id.wallet,
+            "tonkeeper://activity" to R.id.activity,
+            // "tonkeeper://browser" to R.id.browser,
+            "tonkeeper://collectibles" to R.id.collectibles
+        )
+
+        fun isSupportedDeepLink(uri: String): Boolean {
+            return mainDeepLinks.containsKey(uri)
+        }
+
         fun newInstance() = MainScreen()
     }
 

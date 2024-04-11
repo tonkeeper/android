@@ -24,8 +24,8 @@ class WidgetBalanceProvider: Widget() {
     }
 
     private data class Balance(
-        val tonBalance: String,
-        val currencyBalance: String,
+        val tonBalance: CharSequence,
+        val currencyBalance: CharSequence,
         val walletAddress: String
     )
 

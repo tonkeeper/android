@@ -1,6 +1,5 @@
 package com.tonapps.wallet.api.core
 
-import com.tonapps.network.Network
 import io.tonapi.apis.AccountsApi
 import io.tonapi.apis.BlockchainApi
 import io.tonapi.apis.ConnectApi
@@ -15,37 +14,39 @@ import io.tonapi.apis.StakingApi
 import io.tonapi.apis.StorageApi
 import io.tonapi.apis.TracesApi
 import io.tonapi.apis.WalletApi
+import okhttp3.OkHttpClient
 
 class BaseAPI(
-    basePath: String
+    basePath: String,
+    okHttpClient: OkHttpClient
 ) {
 
-    val accounts: AccountsApi by lazy { AccountsApi(basePath, Network.okHttpClient) }
+    val accounts: AccountsApi by lazy { AccountsApi(basePath, okHttpClient) }
 
-    val blockchain: BlockchainApi by lazy { BlockchainApi(basePath, Network.okHttpClient) }
+    val blockchain: BlockchainApi by lazy { BlockchainApi(basePath, okHttpClient) }
 
-    val connect: ConnectApi by lazy { ConnectApi(basePath, Network.okHttpClient) }
+    val connect: ConnectApi by lazy { ConnectApi(basePath, okHttpClient) }
 
-    val dns: DNSApi by lazy { DNSApi(basePath, Network.okHttpClient) }
+    val dns: DNSApi by lazy { DNSApi(basePath, okHttpClient) }
 
-    val emulation: EmulationApi by lazy { EmulationApi(basePath, Network.okHttpClient) }
+    val emulation: EmulationApi by lazy { EmulationApi(basePath, okHttpClient) }
 
-    val events: EventsApi by lazy { EventsApi(basePath, Network.okHttpClient) }
+    val events: EventsApi by lazy { EventsApi(basePath, okHttpClient) }
 
-    val jettons: JettonsApi by lazy { JettonsApi(basePath, Network.okHttpClient) }
+    val jettons: JettonsApi by lazy { JettonsApi(basePath, okHttpClient) }
 
-    val liteServer: LiteServerApi by lazy { LiteServerApi(basePath, Network.okHttpClient) }
+    val liteServer: LiteServerApi by lazy { LiteServerApi(basePath, okHttpClient) }
 
-    val nft: NFTApi by lazy { NFTApi(basePath, Network.okHttpClient) }
+    val nft: NFTApi by lazy { NFTApi(basePath, okHttpClient) }
 
-    val rates: RatesApi by lazy { RatesApi(basePath, Network.okHttpClient) }
+    val rates: RatesApi by lazy { RatesApi(basePath, okHttpClient) }
 
-    val staking: StakingApi by lazy { StakingApi(basePath, Network.okHttpClient) }
+    val staking: StakingApi by lazy { StakingApi(basePath, okHttpClient) }
 
-    val storage: StorageApi by lazy { StorageApi(basePath, Network.okHttpClient) }
+    val storage: StorageApi by lazy { StorageApi(basePath, okHttpClient) }
 
-    val traces: TracesApi by lazy { TracesApi(basePath, Network.okHttpClient) }
+    val traces: TracesApi by lazy { TracesApi(basePath, okHttpClient) }
 
-    val wallet: WalletApi by lazy { WalletApi(basePath, Network.okHttpClient) }
+    val wallet: WalletApi by lazy { WalletApi(basePath, okHttpClient) }
 
 }

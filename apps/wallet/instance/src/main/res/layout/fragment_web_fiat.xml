@@ -22,7 +22,7 @@
             android:layout_gravity="center"
             android:color="?attr/textPrimaryColor"/>
 
-        <uikit.widget.WebViewFixed
+        <uikit.widget.webview.WebViewFixed
             android:id="@+id/web"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

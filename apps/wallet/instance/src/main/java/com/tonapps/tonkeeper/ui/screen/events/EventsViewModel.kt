@@ -1,57 +1,46 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
+import android.app.Application
+import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.withMinus
-import com.tonapps.extensions.withPlus
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.ui.screen.events.list.Item
-import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.API
+import com.tonapps.tonkeeper.helper.DateFormat
+import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.events.entities.ActionEntity
-import com.tonapps.wallet.data.events.entities.EventEntity
-import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.push.PushManager
+import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.tonconnect.TonConnectRepository
+import com.tonapps.wallet.localization.Localization
+import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
+import java.util.Calendar
+import java.util.Date
 
 class EventsViewModel(
+    private val application: Application,
     private val walletRepository: WalletRepository,
     private val eventsRepository: EventsRepository,
     private val networkMonitor: NetworkMonitor,
-    private val api: API,
-): ViewModel() {
-
-    private data class Data(
-        val wallet: WalletEntity,
-        val list: List<HistoryItem>
-    ) {
-
-        fun lastOrNull() = list.lastOrNull()
-    }
-
-    private val _dataFlow = MutableStateFlow<Data?>(null)
-    private val dataFlow = _dataFlow.asStateFlow().filterNotNull()
+    private val tonConnectRepository: TonConnectRepository,
+    private val pushManager: PushManager
+): AndroidViewModel(application) {
 
     private val _isUpdatingFlow = MutableStateFlow(false)
     val isUpdatingFlow = _isUpdatingFlow.asSharedFlow()
@@ -60,194 +49,164 @@ class EventsViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow()
 
     init {
-        combine(walletRepository.activeWalletFlow, networkMonitor.isOnlineFlow) { wallet, isOnline ->
+        combine(
+            walletRepository.activeWalletFlow,
+            networkMonitor.isOnlineFlow
+        ) { wallet, isOnline ->
             loadEvents(wallet, isOnline)
-        }.launchIn(viewModelScope)
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
-        // collectFlow(walletRepository.realtimeEventsFlow.map { it.wallet }, ::loadRemote)
+        collectFlow(walletRepository.realtimeEventsFlow.map { it.wallet }) { wallet ->
+            loadEvents(wallet, true)
+        }
+    }
+
+    private suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
+        val events = pushManager.getRemoteDAppEvents(wallet)
+        return dAppEventsMapping(events)
+    }
+
+    private suspend fun getLocalDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
+        val events = pushManager.getLocalDAppEvents(wallet)
+        return dAppEventsMapping(events)
+    }
+
+    private fun dAppEventsMapping(
+        events: List<AppPushEntity>
+    ): List<HistoryItem.App> {
+        val dappUrls = events.map { it.dappUrl }
+        val apps = tonConnectRepository.getApps(dappUrls)
+
+        val items = mutableListOf<HistoryItem.App>()
+        for (event in events) {
+            val app = apps.firstOrNull {
+                it.url.startsWith(event.dappUrl) && it.accountId == event.account
+            } ?: continue
+
+            items.add(HistoryItem.App(
+                iconUri = Uri.parse(app.manifest.iconUrl),
+                title = app.manifest.name,
+                body = event.message,
+                date = DateHelper.formatTime(event.dateUnix),
+                timestamp = event.dateUnix,
+                deepLink = event.link
+            ))
+        }
+        return items
+    }
+
+
+    private fun getString(resId: Int): String {
+        return application.getString(resId)
+    }
+
+    private fun foundLastItem(): HistoryItem.Event? {
+        return _uiItemsFlow.value.lastOrNull { it is HistoryItem.Event } as? HistoryItem.Event
+    }
+
+    private fun lastLt(): Long? {
+        val item = foundLastItem() ?: return null
+        if (item.lt > 0) {
+            return item.lt
+        }
+        return null
     }
 
     fun loadMore() {
         if (_isUpdatingFlow.value) {
             return
         }
-        /*val data = _dataFlow.value ?: return
-        val beforeLt = data.lastOrNull()?.lt ?: return
-
-        _isUpdatingFlow.value = true
-
-        viewModelScope.launch {
-            try {
-                val e = eventsRepository.getRemoteOffset(data.wallet.accountId, data.wallet.testnet, beforeLt)
-                _dataFlow.value = Data(data.wallet, data.list + e)
-                _isUpdatingFlow.value = false
-            } catch (ignored: Throwable) {}
-        }*/
+        val lastLt = lastLt() ?: return
+        withUpdating {
+            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@withUpdating
+            _uiItemsFlow.value = HistoryHelper.withLoadingItem(_uiItemsFlow.value)
+            loadRemote(wallet, lastLt)
+        }
     }
 
-    private suspend fun loadEvents(
+    private fun loadEvents(
         wallet: WalletEntity,
         isOnline: Boolean
-    ) = withContext(Dispatchers.IO) {
-        _isUpdatingFlow.tryEmit(true)
-
-        val list = api.getEvents(wallet.accountId, wallet.testnet, null, 20)
-        val items = HistoryHelper.mapping(wallet, list)
-        _uiItemsFlow.value += items
-        _isUpdatingFlow.tryEmit(false)
-
-        /*loadLocal(wallet)
-        if (isOnline) {
-            loadRemote(wallet)
-        }*/
-
-        /*
-        val events = api.getEvents(accountId, testnet, beforeLt, limit).map { EventEntity(it, testnet) }.filter {
-            it.actions.isNotEmpty()
-        }
-         */
-    }
-
-    /*private suspend fun loadLocal(wallet: WalletEntity) {
-        _dataFlow.value = Data(wallet, eventsRepository.getLocal(wallet.accountId, wallet.testnet))
-    }
-
-    private suspend fun loadRemote(wallet: WalletEntity) {
-        try {
-            _dataFlow.value = Data(wallet, eventsRepository.getRemote(wallet.accountId, wallet.testnet))
-
-        } catch (ignored: Throwable) { }
-    }*/
-
-    /*private fun map(wallet: WalletEntity, list: List<EventEntity>): List<Item> {
-        val items = mutableListOf<Item>()
-
-        for (event in list) {
-            items.addAll(actions(wallet, event))
-        }
-
-        return items.toList()
-    }
-
-    private fun actions(
-        wallet: WalletEntity,
-        event: EventEntity,
-    ): List<Item> {
-        val items = mutableListOf<Item>()
-        for ((index, action) in event.actions.withIndex()) {
-            val position = ListCell.getPosition(event.actions.size, index)
-            if (action.type == ActionType.TonTransfer) {
-                items.addAll(actionTonTransfer(wallet, position, event, action))
-            } else if (action.type == ActionType.JettonTransfer) {
-                items.addAll(actionJettonTransfer(wallet, position, event, action))
-            } else if (action.type == ActionType.NftTransfer) {
-                items.addAll(actionNftTransfer(wallet, position, event, action))
-            } else {
-                items.add(Item.UnknownAction(position))
+    ) {
+        withUpdating {
+            _uiItemsFlow.value = emptyList()
+            loadLocal(wallet)
+            if (isOnline) {
+                loadRemote(wallet)
             }
-            items.add(Item.Space)
         }
-        return items
     }
 
-    private fun actionTonTransfer(
-        wallet: WalletEntity,
-        position: ListCell.Position,
-        event: EventEntity,
-        action: ActionEntity,
-    ): List<Item> {
-        val sender = action.sender ?: return listOf(Item.UnknownAction(position))
-        val recipient = action.recipient ?: return listOf(Item.UnknownAction(position))
-        val token = action.token ?: return listOf(Item.UnknownAction(position))
-        val amount = action.amount ?: return listOf(Item.UnknownAction(position))
-
-        val items = mutableListOf<Item>()
-        if (wallet.accountId == sender.accountId) {
-            items.add(Item.SendAction(
-                position = position,
-                account = recipient,
-                comment = action.comment,
-                loading = event.inProgress,
-                value = CurrencyFormatter.format(token.symbol, amount).withPlus
-            ))
-        } else {
-            items.add(Item.ReceiveAction(
-                position = position,
-                account = sender,
-                comment = action.comment,
-                loading = event.inProgress,
-                value = CurrencyFormatter.format(token.symbol, amount).withPlus
-            ))
-        }
-        return items
+    private suspend fun loadLocal(wallet: WalletEntity) {
+        val accountEvents = eventsRepository.getLocal(wallet.accountId, wallet.testnet) ?: return
+        val walletEventItems = mapping(wallet, accountEvents.events)
+        setItems(walletEventItems + getLocalDAppEvents(wallet))
     }
 
-    private fun actionJettonTransfer(
-        wallet: WalletEntity,
-        position: ListCell.Position,
-        event: EventEntity,
-        action: ActionEntity
-    ): List<Item> {
-        val sender = action.sender ?: return listOf(Item.UnknownAction(position))
-        val recipient = action.recipient ?: return listOf(Item.UnknownAction(position))
-        val token = action.token ?: return listOf(Item.UnknownAction(position))
-        val amount = action.amount ?: return listOf(Item.UnknownAction(position))
-
-        val items = mutableListOf<Item>()
-
-        if (wallet.accountId == sender.accountId) {
-            items.add(Item.SendAction(
-                position = position,
-                account = recipient,
-                comment = action.comment,
-                loading = event.inProgress,
-                value = CurrencyFormatter.format(token.symbol, amount).withPlus
-            ))
+    private suspend fun loadRemote(wallet: WalletEntity, beforeLt: Long? = null) {
+        val accountEvents = eventsRepository.getRemote(wallet.accountId, wallet.testnet, beforeLt) ?: return
+        val walletEventItems = mapping(wallet, accountEvents.events)
+        if (beforeLt == null) {
+            setItems(walletEventItems + getRemoteDAppEvents(wallet))
         } else {
-            items.add(Item.ReceiveAction(
-                position = position,
-                account = sender,
-                comment = action.comment,
-                loading = event.inProgress,
-                value = CurrencyFormatter.format(token.symbol, amount).withPlus
-            ))
+            setItems(_uiItemsFlow.value + walletEventItems)
         }
-
-
-        return items
     }
 
-
-    private fun actionNftTransfer(
+    private suspend fun mapping(
         wallet: WalletEntity,
-        position: ListCell.Position,
-        event: EventEntity,
-        action: ActionEntity
-    ): List<Item> {
-        val sender = action.sender ?: return listOf(Item.UnknownAction(position))
-        val recipient = action.recipient ?: return listOf(Item.UnknownAction(position))
+        events: List<AccountEvent>
+    ): List<HistoryItem> {
+        return HistoryHelper.mapping(
+            wallet = wallet,
+            events = events,
+            removeDate = false
+        )
+    }
 
-        val items = mutableListOf<Item>()
+    private fun setItems(items: List<HistoryItem>) {
+        val preparedItems = items.filter { it is HistoryItem.Event || it is HistoryItem.App }
+            .sortedBy { it.timestampForSort }
+            .reversed()
 
-        if (sender.accountId == wallet.accountId && recipient.accountId != wallet.accountId) {
-            items.add(Item.SendAction(
-                position = position,
-                account = sender,
-                comment = action.comment,
-                loading = event.inProgress,
-                value = "NFT",
-                nft = action.nftEntity
-            ))
-        } else {
-            items.add(Item.ReceiveAction(
-                position = position,
-                account = sender,
-                comment = action.comment,
-                loading = event.inProgress,
-                value = "NFT",
-                nft = action.nftEntity
-            ))
+        val uiItems = mutableListOf<HistoryItem>()
+        var currentDate: String? = null
+
+        for (item in preparedItems) {
+            val timestamp = item.timestampForSort
+            val dateFormat = formatDate(timestamp)
+            if (dateFormat != currentDate) {
+                uiItems.add(HistoryItem.Header(dateFormat, item.timestampForSort))
+                currentDate = dateFormat
+            }
+            uiItems.add(item)
         }
-        return items
-    } */
+
+        _uiItemsFlow.value = uiItems.toList()
+    }
+
+    private fun formatDate(timestamp: Long): String {
+        if (DateHelper.isToday(timestamp)) {
+            return getString(Localization.today)
+        } else if (DateHelper.isYesterday(timestamp)) {
+            return getString(Localization.yesterday)
+        } else if (DateHelper.isThisMonth(timestamp)) {
+            return DateHelper.formatWeekDay(timestamp)
+        } else if (DateHelper.isThisYear(timestamp)) {
+            return DateHelper.formatMonth(timestamp)
+        }
+        return DateHelper.formatYear(timestamp)
+    }
+
+    private fun setUpdating(updating: Boolean) {
+        _isUpdatingFlow.tryEmit(updating)
+    }
+
+    private fun withUpdating(action: suspend () -> Unit) {
+        viewModelScope.launch {
+            setUpdating(true)
+            action()
+            setUpdating(false)
+        }
+    }
 }

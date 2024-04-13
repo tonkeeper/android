@@ -73,6 +73,10 @@ class TonConnectRepository(
         }
     }
 
+    fun getApps(urls: List<String>): List<DAppEntity> {
+        return urls.mapNotNull { getApp(it) }.distinctBy { it.publicKeyHex }
+    }
+
     fun getApp(url: String): DAppEntity? {
         val apps = localDataSource.getApps()
         return apps.find { it.url.startsWith(url) }

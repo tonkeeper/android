@@ -154,30 +154,6 @@ class WalletRepository(
     private suspend fun updateWallets() {
         val activeWalletId = legacyManager.getActiveWallet()
         val wallets = getWallets()
-        for (wallet in wallets) {
-            val pk = wallet.publicKey.base64()
-            val pr = getPrivateKey(wallet.id).key.base64()
-            Log.d("WalletRepositoryLog", "Wallet(${wallet.address}): ${wallet.id} public = $pk; private = $pr" )
-        }
-
-        val testPrivateKeyBase64 = "BBFabIXo2FmoqV9xQln8V9xRfmBQyp5RV9zedbnrgVA="
-        val testPrivateKey = PrivateKeyEd25519(base64(testPrivateKeyBase64))
-        val testWalletEntity = WalletEntity(
-            id = 99999,
-            publicKey = testPrivateKey.publicKey(),
-            type = WalletType.Default,
-            version = WalletVersion.V4R2,
-            label = WalletLabel(
-                name = "Test Wallet",
-                emoji = "🔒",
-                color = 0xFF0000
-            ),
-            source = WalletSource.Default
-        )
-
-
-        Log.d("WalletRepositoryLog", "testAddress: ${testWalletEntity.address}")
-
         _walletsFlow.value = wallets
         _activeWalletFlow.value = wallets.find { it.id == activeWalletId }
     }

@@ -22,6 +22,7 @@ import com.tonapps.wallet.api.internal.ConfigRepository
 import com.tonapps.wallet.api.internal.InternalApi
 import io.tonapi.models.Account
 import io.tonapi.models.AccountEvent
+import io.tonapi.models.AccountEvents
 import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
@@ -81,12 +82,12 @@ class API(
         testnet: Boolean,
         beforeLt: Long? = null,
         limit: Int = 20
-    ): List<AccountEvent> {
+    ): AccountEvents {
         return accounts(testnet).getAccountEvents(
             accountId = accountId,
             limit = limit,
             beforeLt = beforeLt
-        ).events
+        )
     }
 
     fun getEvent(

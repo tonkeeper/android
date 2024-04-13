@@ -13,7 +13,6 @@
         android:layout_marginStart="@dimen/offsetMedium"
         android:background="@drawable/bg_oval"
         android:backgroundTint="?attr/backgroundContentTintColor"
-        android:tint="?attr/iconSecondaryColor"
         android:scaleType="centerInside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

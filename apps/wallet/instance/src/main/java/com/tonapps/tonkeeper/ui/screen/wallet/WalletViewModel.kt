@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.wallet
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
@@ -14,8 +13,12 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletEvent
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.push.PushManager
+import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.tonconnect.TonConnectRepository
+import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -37,14 +41,18 @@ class WalletViewModel(
     private val settings: SettingsRepository,
     private val tokenRepository: TokenRepository,
     private val api: API,
-    private val networkMonitor: NetworkMonitor
+    private val networkMonitor: NetworkMonitor,
+    private val pushManager: PushManager,
+    private val tonConnectRepository: TonConnectRepository
 ): ViewModel() {
 
     private data class Tokens(
         val wallet: WalletEntity,
         val currency: WalletCurrency,
         val list: List<AccountTokenEntity>,
-        val isOnline: Boolean
+        val isOnline: Boolean,
+        val push: List<AppPushEntity>,
+        val apps: List<DAppEntity>,
     )
 
     private val _tokensFlow = MutableStateFlow<Tokens?>(null)
@@ -87,19 +95,20 @@ class WalletViewModel(
             walletRepository.activeWalletFlow,
             settings.currencyFlow,
             networkMonitor.isOnlineFlow,
-            lastLtFlow
-        ) { wallet, currency, isOnline, lastLt ->
+            lastLtFlow,
+            pushManager.dAppPushFlow,
+        ) { wallet, currency, isOnline, lastLt, push ->
 
             if (lastLt == 0L) {
                 setStatus(Item.Status.Updating)
-                _tokensFlow.value = getLocalTokens(wallet, currency, isOnline)
+                _tokensFlow.value = getLocalTokens(wallet, currency, isOnline, push.distinctBy { it.dappUrl })
             }
 
             if (!isOnline) {
                 return@combine null
             }
 
-            getRemoteTokens(wallet, currency)?.let { tokens ->
+            getRemoteTokens(wallet, currency, push.distinctBy { it.dappUrl })?.let { tokens ->
                 setStatus(Item.Status.Default)
                 _tokensFlow.value = tokens
             }
@@ -121,7 +130,7 @@ class WalletViewModel(
             } else {
                 Item.Status.NoInternet
             }
-            setItems(tokens.wallet, balanceFormat, uiItems, actualStatus)
+            setItems(tokens.wallet, balanceFormat, uiItems, actualStatus, tokens.push, tokens.apps)
         }.launchIn(viewModelScope)
     }
 
@@ -136,25 +145,33 @@ class WalletViewModel(
     private suspend fun getLocalTokens(
         wallet: WalletEntity,
         currency: WalletCurrency,
-        isOnline: Boolean
+        isOnline: Boolean,
+        push: List<AppPushEntity>
     ): Tokens? = withContext(Dispatchers.IO) {
         val tokens = tokenRepository.getLocal(currency, wallet.accountId, wallet.testnet)
         if (tokens.isEmpty()) {
             return@withContext null
         }
-        Tokens(wallet, currency, tokens, isOnline)
+
+        Tokens(wallet, currency, tokens, isOnline, push, getApps(push))
     }
 
     private suspend fun getRemoteTokens(
         wallet: WalletEntity,
-        currency: WalletCurrency
+        currency: WalletCurrency,
+        push: List<AppPushEntity>
     ): Tokens? = withContext(Dispatchers.IO) {
         try {
             val tokens = tokenRepository.getRemote(currency, wallet.accountId, wallet.testnet)
-            Tokens(wallet, currency, tokens, true)
+            Tokens(wallet, currency, tokens, true, push, getApps(push))
         } catch (e: Throwable) {
             null
         }
+    }
+
+    private fun getApps(events: List<AppPushEntity>): List<DAppEntity> {
+        val dappUrls = events.map { it.dappUrl }
+        return tonConnectRepository.getApps(dappUrls)
     }
 
     private fun buildUiItems(
@@ -198,7 +215,9 @@ class WalletViewModel(
         wallet: WalletEntity,
         balance: CharSequence,
         list: List<Item.Token>,
-        status: Item.Status
+        status: Item.Status,
+        push: List<AppPushEntity>,
+        apps: List<DAppEntity>,
     ) {
         val items = mutableListOf<Item>()
         items.add(Item.Balance(
@@ -214,6 +233,9 @@ class WalletViewModel(
             walletType = wallet.type,
             swapUri = api.config.swapUri,
         ))
+        if (push.isNotEmpty()) {
+            items.add(Item.Push(push, apps))
+        }
         items.add(Item.Space)
         items.addAll(list)
         items.add(Item.Space)

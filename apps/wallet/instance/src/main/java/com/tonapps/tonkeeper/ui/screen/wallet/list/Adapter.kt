@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.list
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.ActionsHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.BalanceHolder
+import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.PushHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.SkeletonHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.SpaceHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.TokenHolder
@@ -28,6 +29,7 @@ class Adapter(
             Item.TYPE_TOKEN -> TokenHolder(parent)
             Item.TYPE_SPACE -> SpaceHolder(parent)
             Item.TYPE_SKELETON -> SkeletonHolder(parent)
+            Item.TYPE_PUSH -> PushHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

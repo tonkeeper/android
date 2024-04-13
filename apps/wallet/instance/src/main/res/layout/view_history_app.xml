@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/offsetMedium">
+    
+    <uikit.widget.FrescoView
+        android:id="@+id/image"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        fresco:roundedCornerRadius="12dp"/>
+
+    <View
+        android:layout_width="@dimen/offsetMedium"
+        android:layout_height="wrap_content"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"
+            android:singleLine="true"/>
+    </uikit.widget.ColumnLayout>
+
+</uikit.widget.RowLayout>

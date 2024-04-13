@@ -48,7 +48,6 @@ class RootViewModel(
     private val passcodeRepository: PasscodeRepository,
     private val settingsRepository: SettingsRepository,
     private val walletRepository: WalletRepository,
-    private val pushManager: PushManager,
     private val signManager: SignManager,
     private val tonConnectRepository: TonConnectRepository
 ): AndroidViewModel(application) {

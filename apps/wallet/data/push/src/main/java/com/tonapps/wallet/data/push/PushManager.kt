@@ -3,7 +3,6 @@ package com.tonapps.wallet.data.push
 import android.app.Notification
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.locale
 import com.tonapps.network.getBitmap
@@ -13,15 +12,21 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.push.entities.WalletPushEntity
+import com.tonapps.wallet.data.push.source.LocalDataSource
+import com.tonapps.wallet.data.push.source.RemoteDataSource
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -40,6 +45,11 @@ class PushManager(
 
     private val recentlyReceiveAppPushIds = ArrayDeque<String>(10)
     private val helper = NotificationHelper(context)
+    private val remoteDataSource = RemoteDataSource(api)
+    private val localDataSource = LocalDataSource(context)
+
+    private val _dAppPushFlow = MutableStateFlow<List<AppPushEntity>?>(null)
+    val dAppPushFlow = _dAppPushFlow.asStateFlow().filterNotNull()
 
     init {
         combine(
@@ -47,6 +57,21 @@ class PushManager(
             walletRepository.walletsFlow,
             ::subscribe
         ).flowOn(Dispatchers.IO).launchIn(scope)
+
+        walletRepository.activeWalletFlow.onEach {
+            _dAppPushFlow.value = getRemoteDAppEvents(it)
+        }.launchIn(scope)
+    }
+
+    suspend fun getLocalDAppEvents(wallet: WalletEntity): List<AppPushEntity> = withContext(Dispatchers.IO) {
+        localDataSource.get(wallet.id)
+    }
+
+    suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<AppPushEntity> = withContext(Dispatchers.IO) {
+        val token = walletRepository.getTonProofToken(wallet.id) ?: return@withContext emptyList()
+        val items = remoteDataSource.getEvents(token, wallet.accountId)
+        localDataSource.save(wallet.id, items)
+        return@withContext items
     }
 
     fun handleAppPush(push: AppPushEntity) {
@@ -57,11 +82,18 @@ class PushManager(
             try {
                 val app = tonConnectRepository.getApp(push.dappUrl) ?: throw IllegalStateException("App not found")
                 val wallet = walletRepository.getWallet(app.walletId) ?: throw IllegalStateException("Wallet not found")
+                localDataSource.insert(wallet.id, push)
                 val largeIcon = api.defaultHttpClient.getBitmap(app.manifest.iconUrl)
                 displayAppPush(app, push, wallet, largeIcon)
+
+                if (walletRepository.activeWalletFlow.lastOrNull() == wallet) {
+                    val old = _dAppPushFlow.value ?: emptyList()
+                    _dAppPushFlow.value = old + push
+                }
             } catch (ignored: Throwable) {}
         }
     }
+
 
     private suspend fun displayAppPush(
         app: DAppEntity,

@@ -14,7 +14,10 @@ import com.tonapps.tonkeeper.core.history.iconRes
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.dialog.TransactionDialog
+import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.iconSecondaryColor
+import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textTertiaryColor
 import uikit.extensions.drawable
@@ -56,6 +59,7 @@ class HistoryActionHolder(
 
         if (item.iconURL.isNullOrEmpty()) {
             iconView.setImageResource(item.action.iconRes)
+            iconView.imageTintList = context.iconSecondaryColor.stateList
         } else {
             loadIcon(Uri.parse(item.iconURL))
         }
@@ -67,6 +71,7 @@ class HistoryActionHolder(
     }
 
     private fun loadIcon(uri: Uri) {
+        iconView.imageTintList = null
         iconView.setImageURI(uri, this)
     }
 

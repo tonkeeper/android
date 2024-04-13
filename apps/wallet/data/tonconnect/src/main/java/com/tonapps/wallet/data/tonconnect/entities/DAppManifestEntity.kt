@@ -6,7 +6,7 @@ import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
 @Parcelize
-class DAppManifestEntity(
+data class DAppManifestEntity(
     val url: String,
     val name: String,
     val iconUrl: String,

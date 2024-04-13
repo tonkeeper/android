@@ -30,4 +30,6 @@ dependencies {
     implementation(project(Dependence.Lib.extensions))
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)
+    implementation(Dependence.Squareup.moshi)
+    implementation(Dependence.Squareup.moshiAdapters)
 }

@@ -7,8 +7,7 @@
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="vertical">
+        android:layout_gravity="center">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/wallet_balance"
@@ -59,6 +58,5 @@
         </uikit.widget.RowLayout>
 
     </uikit.widget.ColumnLayout>
-
 
 </FrameLayout>

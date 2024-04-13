@@ -15,11 +15,7 @@ class HistoryHeaderHolder(parent: ViewGroup): HistoryHolder<HistoryItem.Header>(
     }
 
     override fun onBind(item: HistoryItem.Header) {
-        if (item.titleResId != null) {
-            titleView.setText(item.titleResId)
-        } else {
-            titleView.text = item.title
-        }
+        titleView.text = item.title
     }
 
 }

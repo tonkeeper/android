@@ -46,11 +46,11 @@ val koinModel = module {
     viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get()) }
     viewModel { parameters -> InitViewModel(parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel() }
-    viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { RootViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { RecipientScreenFeature(get()) }
     viewModel { AmountScreenFeature(get()) }
     viewModel { PickerViewModel(get(), get(), get()) }
-    viewModel { WalletViewModel(get(), get(), get(), get(), get()) }
+    viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { ConfirmScreenFeature(get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
@@ -58,7 +58,7 @@ val koinModel = module {
     viewModel { LanguageViewModel(get()) }
     viewModel { SecurityViewModel(get(), get(), get()) }
     viewModel { ThemeViewModel(get()) }
-    viewModel { EventsViewModel(get(), get(), get(), get()) }
+    viewModel { EventsViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(request = parameters.get(), get(), get(), get()) }
     viewModel { CollectiblesViewModel(get(), get(), get()) }
     viewModel { parameters -> ActionViewModel(args = parameters.get(), get(), get()) }

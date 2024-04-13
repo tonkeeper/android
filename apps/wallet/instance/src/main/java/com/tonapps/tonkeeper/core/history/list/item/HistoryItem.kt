@@ -1,58 +1,61 @@
 package com.tonapps.tonkeeper.core.history.list.item
 
+import android.net.Uri
 import android.os.Parcelable
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.helper.DateFormat
+import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.push.entities.AppPushEntity
 import kotlinx.parcelize.Parcelize
 
 sealed class HistoryItem(
     type: Int,
-): com.tonapps.uikit.list.BaseListItem(type), Parcelable {
+): BaseListItem(type), Parcelable {
 
     companion object {
         const val TYPE_ACTION = 1
         const val TYPE_HEADER = 2
-        const val TYPE_SPACE = 3
-        const val TYPE_LOADER = 4
+        const val TYPE_LOADER = 3
+        const val TYPE_APP = 4
+    }
 
-        private fun getId(item: HistoryItem): Long {
-            val hashCode = if (item is Event) {
-                item.txId.hashCode()
-            } else {
-                item.toString().hashCode()
-            }
-            return hashCode.toLong()
+    val timestampForSort: Long by lazy {
+        when (this) {
+            is Event -> this.timestamp
+            is Loader -> this.date
+            is App -> this.timestamp
+            else -> 0L
         }
     }
 
-    val id: Long by lazy { getId(this) }
-
-    @Parcelize
-    data class Space(
-        val index: Int
-    ): HistoryItem(TYPE_SPACE)
-
     @Parcelize
     data class Loader(
-        val index: Int
+        val index: Int,
+        val date: Long
     ): HistoryItem(TYPE_LOADER)
 
     @Parcelize
     data class Header(
         val title: String,
-        val titleResId: Int? = null,
+        val date: Long,
     ): HistoryItem(TYPE_HEADER) {
 
         constructor(timestamp: Long) : this(
-            DateFormat.monthWithDate(timestamp)
-        )
-
-        constructor(titleResId: Int) : this(
-            title = "",
-            titleResId = titleResId,
+            title = DateFormat.monthWithDate(timestamp),
+            date = timestamp
         )
     }
+
+    @Parcelize
+    data class App(
+        val iconUri: Uri,
+        val title: String,
+        val body: String,
+        val date: String,
+        val timestamp: Long,
+        val deepLink: String
+    ): HistoryItem(TYPE_APP)
 
     @Parcelize
     data class Event(

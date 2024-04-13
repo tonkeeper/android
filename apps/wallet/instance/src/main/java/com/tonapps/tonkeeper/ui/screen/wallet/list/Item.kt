@@ -1,10 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.list
 
 import android.net.Uri
+import android.util.Log
+import androidx.collection.ArrayMap
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -14,6 +18,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_TOKEN = 2
         const val TYPE_SPACE = 3
         const val TYPE_SKELETON = 4
+        const val TYPE_PUSH = 5
     }
 
     enum class Status {
@@ -60,4 +65,16 @@ sealed class Item(type: Int): BaseListItem(type) {
     data object Space: Item(TYPE_SPACE)
 
     data object Skeleton: Item(TYPE_SKELETON)
+
+    data class Push(
+        val events: List<AppPushEntity>,
+        val apps: List<DAppEntity>
+    ): Item(TYPE_PUSH) {
+
+        val text = events.first().message
+
+        val iconUris: List<Uri> by lazy {
+            apps.map { Uri.parse(it.manifest.iconUrl) }
+        }
+    }
 }

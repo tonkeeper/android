@@ -8,48 +8,41 @@ import com.tonapps.wallet.data.events.entities.EventEntity
 import com.tonapps.wallet.data.events.source.LocalDataSource
 import com.tonapps.wallet.data.events.source.RemoteDataSource
 import com.tonapps.wallet.data.rates.entity.RatesEntity
+import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class EventsRepository(
     private val context: Context,
-    private val api: API,
-    private val collectiblesRepository: CollectiblesRepository
+    private val api: API
 ) {
 
     private val localDataSource = LocalDataSource(context)
-    private val remoteDataSource = RemoteDataSource(api, collectiblesRepository)
-
-    suspend fun getSingleRemote(
-        accountId: String,
-        testnet: Boolean,
-        eventId: String
-    ): EventEntity = withContext(Dispatchers.IO) {
-        remoteDataSource.getSingle(accountId, testnet, eventId)
-    }
+    private val remoteDataSource = RemoteDataSource(api)
 
     suspend fun getRemote(
         accountId: String,
-        testnet: Boolean
-    ): List<EventEntity> = withContext(Dispatchers.IO) {
-        val events = remoteDataSource.get(accountId, testnet)
-        localDataSource.setCache(cacheKey(accountId, testnet), events)
-        events
-    }
-
-    suspend fun getRemoteOffset(
-        accountId: String,
         testnet: Boolean,
-        beforeLt: Long
-    ): List<EventEntity> = withContext(Dispatchers.IO) {
-        remoteDataSource.get(accountId, testnet, beforeLt, 100)
+        beforeLt: Long? = null,
+    ): AccountEvents? = withContext(Dispatchers.IO) {
+        try {
+            if (beforeLt != null) {
+                remoteDataSource.get(accountId, testnet, beforeLt)
+            } else {
+                val events = remoteDataSource.get(accountId, testnet)
+                localDataSource.setCache(cacheKey(accountId, testnet), events)
+                events
+            }
+        } catch (e: Throwable) {
+            null
+        }
     }
 
     suspend fun getLocal(
         accountId: String,
         testnet: Boolean
-    ): List<EventEntity> = withContext(Dispatchers.IO) {
-        localDataSource.getCache(cacheKey(accountId, testnet)) ?: emptyList()
+    ): AccountEvents? = withContext(Dispatchers.IO) {
+        localDataSource.getCache(cacheKey(accountId, testnet))
     }
 
     private fun cacheKey(accountId: String, testnet: Boolean): String {

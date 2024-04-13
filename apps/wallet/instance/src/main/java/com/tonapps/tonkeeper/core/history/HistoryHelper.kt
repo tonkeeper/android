@@ -38,6 +38,7 @@ import kotlinx.coroutines.withContext
 import com.tonapps.network.Network
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.totalFees
+import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
@@ -56,8 +57,6 @@ object HistoryHelper {
     const val PLUS_SYMBOL = "+"
 
     private val calendar = Calendar.getInstance()
-    private val dateFormat1 = SimpleDateFormat("h:mm a")
-    private val dateFormat2 = SimpleDateFormat("MMM dd, h:mm a")
 
     data class Details(
         val accountId: String,
@@ -93,11 +92,10 @@ object HistoryHelper {
     suspend fun mapping(
         wallet: WalletEntity,
         events: List<AccountEvent>,
-        groupByDate: Boolean = true,
         removeDate: Boolean = false,
     ): List<HistoryItem> {
         val legacy = createWalletLegacy(wallet)
-        return mapping(legacy, events, groupByDate, removeDate)
+        return mapping(legacy, events, removeDate)
     }
 
     suspend fun create(
@@ -105,7 +103,7 @@ object HistoryHelper {
         response: MessageConsequences,
         rates: RatesEntity,
     ): Details {
-        val items = mapping(wallet, response.event, false, true)
+        val items = mapping(wallet, response.event, true)
         val fee = Coin.toCoins(response.totalFees)
         val feeFormat = CurrencyFormatter.format("TON", fee)
         val feeFiat = rates.convert("TON", fee)
@@ -127,7 +125,7 @@ object HistoryHelper {
         }
 
         val newItems = items.toMutableList()
-        newItems.add(HistoryItem.Loader(newItems.size))
+        newItems.add(HistoryItem.Loader(newItems.size, System.currentTimeMillis() / 1000))
         return newItems
     }
 
@@ -144,38 +142,29 @@ object HistoryHelper {
     suspend fun mapping(
         wallet: WalletLegacy,
         event: AccountEvent,
-        groupByDate: Boolean = true,
         removeDate: Boolean = false,
     ): List<HistoryItem> {
-        return mapping(wallet, arrayListOf(event), groupByDate, removeDate)
+        return mapping(wallet, arrayListOf(event), removeDate)
     }
 
     suspend fun mapping(
         wallet: WalletLegacy,
         events: AccountEvents,
-        groupByDate: Boolean = true,
         removeDate: Boolean = false,
     ): List<HistoryItem> {
-        return mapping(wallet, events.events, groupByDate, removeDate)
+        return mapping(wallet, events.events, removeDate)
     }
 
-    private fun formatDate(timestamp: Long): String {
+    fun formatDate(timestamp: Long): String {
         if (timestamp == 0L) {
             return ""
         }
-        val date = Date(timestamp * 1000)
-        val timestampDate = calendar.apply { time = date }
-        return if (calendar.get(Calendar.MONTH) == timestampDate.get(Calendar.MONTH)) {
-            dateFormat1.format(date)
-        } else {
-            dateFormat2.format(date)
-        }
+        return DateHelper.formatTime(timestamp)
     }
 
     suspend fun mapping(
         wallet: WalletLegacy,
         events: List<AccountEvent>,
-        groupByDate: Boolean = true,
         removeDate: Boolean = false,
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val items = mutableListOf<HistoryItem>()
@@ -184,27 +173,6 @@ object HistoryHelper {
 
             val pending = event.inProgress
             val prevEvent = events.getOrNull(index - 1)
-
-            if (groupByDate) {
-                if (prevEvent == null) {
-                    val isToday = DateFormat.isToday(event.timestamp)
-                    val isYesterday = DateFormat.isYesterday(event.timestamp)
-                    if (isToday) {
-                        items.add(HistoryItem.Header(Localization.today))
-                    } else if (isYesterday) {
-                        items.add(HistoryItem.Header(Localization.yesterday))
-                    } else {
-                        items.add(HistoryItem.Header(event.timestamp))
-                    }
-                } else {
-                    val sameDay = DateFormat.isSameDay(prevEvent.timestamp, event.timestamp)
-                    val sameMonth = DateFormat.isSameMonth(prevEvent.timestamp, event.timestamp)
-                    val sameYear = DateFormat.isSameYear(prevEvent.timestamp, event.timestamp)
-                    if (!sameDay) {
-                        items.add(HistoryItem.Header(event.timestamp))
-                    }
-                }
-            }
 
             val actions = event.actions
             val fee = event.fee
@@ -230,7 +198,6 @@ object HistoryHelper {
 
             if (chunkItems.size > 0) {
                 items.addAll(chunkItems)
-                items.add(HistoryItem.Space(index))
             }
         }
 
@@ -243,7 +210,7 @@ object HistoryHelper {
         action: Action,
         timestamp: Long,
     ): HistoryItem.Event {
-        val currency = com.tonapps.tonkeeper.App.settings.currency
+        val currency = App.settings.currency
 
         val simplePreview = action.simplePreview
         val date = formatDate(timestamp)

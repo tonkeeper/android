@@ -28,35 +28,35 @@
                 android:id="@+id/rooted"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/textPrimaryColor"
                 android:textAppearance="@style/TextAppearance.Body1"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/strongbox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/textPrimaryColor"
                 android:textAppearance="@style/TextAppearance.Body1"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/dev"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/textPrimaryColor"
                 android:textAppearance="@style/TextAppearance.Body1"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/adb"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/textPrimaryColor"
                 android:textAppearance="@style/TextAppearance.Body1"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/debug"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/textPrimaryColor"
                 android:textAppearance="@style/TextAppearance.Body1"/>
 
         </androidx.appcompat.widget.LinearLayoutCompat>

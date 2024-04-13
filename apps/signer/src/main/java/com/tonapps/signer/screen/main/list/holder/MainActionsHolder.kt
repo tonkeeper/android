@@ -7,6 +7,7 @@ import com.tonapps.signer.screen.add.AddFragment
 import com.tonapps.signer.screen.camera.CameraFragment
 import com.tonapps.signer.screen.main.list.MainItem
 import com.tonapps.signer.screen.settings.SettingsFragment
+import uikit.navigation.Navigation
 
 class MainActionsHolder(
     parent: ViewGroup
@@ -17,9 +18,9 @@ class MainActionsHolder(
     private val settingsView = findViewById<View>(R.id.settings)
 
     init {
-        scanView.setOnClickListener { nav?.add(CameraFragment.newInstance()) }
-        addView.setOnClickListener { nav?.add(AddFragment.newInstance()) }
-        settingsView.setOnClickListener { nav?.add(SettingsFragment.newInstance()) }
+        scanView.setOnClickListener { Navigation.from(context)?.add(CameraFragment.newInstance()) }
+        addView.setOnClickListener { Navigation.from(context)?.add(AddFragment.newInstance()) }
+        settingsView.setOnClickListener { Navigation.from(context)?.add(SettingsFragment.newInstance()) }
     }
 
     override fun onBind(item: MainItem.Actions) {

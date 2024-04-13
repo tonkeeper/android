@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:action="@drawable/ic_close_16"
+            android:visibility="gone"
+            app:ignoreSystemOffset="true"/>
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:title="@string/customize_wallet_title"
+            android:description="@string/customize_wallet_subtitle"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:layout_marginTop="@dimen/offsetLarge">
+
+            <uikit.widget.InputView
+                android:id="@+id/wallet_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                app:disableClearButton="true"
+                android:hint="@string/wallet_name"/>
+            
+            <FrameLayout
+                android:id="@+id/wallet_color"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="@dimen/offsetMedium"
+                android:layout_gravity="center|end"
+                android:background="@drawable/bg_emoji_edit">
+                <com.tonapps.emoji.ui.EmojiView
+                    android:id="@+id/wallet_emoji"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"/>
+            </FrameLayout>
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/color"
+                    android:layout_width="match_parent"
+                    android:layout_height="36dp"
+                    android:layout_marginTop="@dimen/offsetLarge"
+                    android:paddingHorizontal="26dp"
+                    android:clipToPadding="false"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/emoji"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="6dp"
+                    android:clipToPadding="false"
+                    android:paddingTop="@dimen/offsetMedium"
+                    android:layout_gravity="center_horizontal"
+                    android:paddingHorizontal="26dp"
+                    android:foreground="@drawable/fg_emoji_picker"/>
+            </uikit.widget.ColumnLayout>
+
+            <View
+                android:id="@+id/over"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
+        </FrameLayout>
+    </uikit.widget.ColumnLayout>
+
+    <FrameLayout
+        android:id="@+id/action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_gradient"
+        android:layout_gravity="bottom">
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/next"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:layout_marginBottom="@dimen/offsetLarge"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:enabled="false"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/continue_action"/>
+
+        <uikit.widget.LoaderView
+            android:id="@+id/loader"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:visibility="gone"
+            android:layout_gravity="center_horizontal"/>
+
+    </FrameLayout>
+
+
+</FrameLayout>

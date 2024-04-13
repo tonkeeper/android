@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
-import security.vault.safeArea
+import com.tonapps.security.vault.safeArea
 
 class KeyViewModel(
     private val id: Long,

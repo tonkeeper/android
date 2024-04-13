@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -33,7 +34,8 @@ android {
 }
 
 dependencies {
-    implementation(Libs.KotlinX.coroutines)
+    implementation(Dependence.KotlinX.coroutines)
+    implementation(Dependence.AndroidX.security)
     compileOnly(fileTree("libs") {
         include("*.aar")
     })

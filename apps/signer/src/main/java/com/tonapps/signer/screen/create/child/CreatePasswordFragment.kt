@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
 import uikit.extensions.setPaddingTop
 import uikit.widget.password.PasswordInputView
@@ -77,14 +78,14 @@ class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
             doneButton.isEnabled = Password.isValid(it)
         }
 
-        createViewModel.page(pageType).onEach {
+        collectFlow(createViewModel.page(pageType)) {
             passwordInput.error = false
             passwordInput.focusWithKeyboard()
-        }.launchIn(lifecycleScope)
+        }
 
-        createViewModel.uiTopOffset.onEach {
+        collectFlow(createViewModel.uiTopOffset) {
             contentView.setPaddingTop(it)
-        }.launchIn(lifecycleScope)
+        }
     }
 
     private fun sendPassword() {

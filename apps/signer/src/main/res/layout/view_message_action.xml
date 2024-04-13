@@ -12,7 +12,7 @@
         android:layout_marginTop="@dimen/offsetMedium"
         android:layout_marginStart="@dimen/offsetMedium"
         android:background="@drawable/bg_oval"
-        android:backgroundTint="@color/backgroundContentTint"
+        android:backgroundTint="?attr/backgroundContentTintColor"
         android:scaleType="centerInside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -26,7 +26,7 @@
         android:singleLine="true"
         android:maxLength="18"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         app:layout_constraintStart_toEndOf="@+id/icon"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -39,7 +39,7 @@
         android:singleLine="true"
         android:maxLength="18"
         android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/textSecondaryColor"
         app:layout_constraintStart_toEndOf="@+id/icon"
         app:layout_constraintTop_toBottomOf="@+id/title"/>
 
@@ -53,7 +53,7 @@
         android:gravity="end"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
+        android:textColor="?attr/textPrimaryColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -63,27 +63,13 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/offsetMedium"
         android:layout_marginTop="2dp"
-        android:maxLength="18"
-        android:gravity="end"
         android:singleLine="true"
+        android:maxLength="18"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="?attr/textSecondaryColor"
         android:visibility="gone"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="@color/textPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/amount" />
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/offsetMedium"
-        android:layout_marginTop="2dp"
-        android:gravity="end"
-        android:singleLine="true"
-        android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="@color/textSecondary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/amount2" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/body"
@@ -96,7 +82,7 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/date">
+        app:layout_constraintTop_toBottomOf="@+id/subtitle">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/comment"
@@ -109,7 +95,7 @@
             android:paddingBottom="8dp"
             android:background="@drawable/bg_content_tint"
             android:fontFamily="@font/montserrat_medium"
-            android:textColor="@color/textPrimary"
+            android:textColor="?attr/textPrimaryColor"
             android:textSize="14sp"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>

@@ -2,19 +2,15 @@ package com.tonapps.signer.screen.main
 
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.R
 import com.tonapps.signer.screen.key.KeyFragment
 import com.tonapps.signer.screen.main.list.MainAdapter
-import com.tonapps.signer.screen.root.RootViewModel
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
-import uikit.extensions.verticalScrolled
+import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.SimpleRecyclerView
@@ -40,11 +36,9 @@ class MainFragment: BaseFragment(R.layout.fragment_main) {
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
+        listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
 
-        collectFlow(listView.verticalScrolled) {
-            headerView.divider = it
-        }
-
+        collectFlow(listView.topScrolled, headerView::setDivider)
         collectFlow(mainViewModel.uiItems, adapter::submitList)
     }
 }

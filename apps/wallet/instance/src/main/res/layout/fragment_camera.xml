@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <uikit.widget.CameraOverlayView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/flash"
+        android:layout_width="@dimen/itemHeight"
+        android:layout_height="@dimen/itemHeight"
+        android:layout_marginBottom="108dp"
+        android:background="@drawable/bg_oval"
+        android:backgroundTint="#14ffffff"
+        android:layout_gravity="bottom|center_horizontal"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_flash"
+        android:visibility="gone"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:icon="@drawable/ic_chevron_down_16"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ignoreSystemOffset="true"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="?attr/textPrimaryColor"
+            android:textAppearance="@style/TextAppearance.H2"
+            android:text="@string/scan_qr_code"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</FrameLayout>

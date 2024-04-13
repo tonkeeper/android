@@ -15,13 +15,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <uikit.widget.ColumnLayout
         android:id="@+id/lock"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        android:background="@color/backgroundPage"
-        android:orientation="vertical">
+        android:background="?attr/backgroundPageColor">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/lock_sign_out"
@@ -30,7 +29,7 @@
             android:layout_margin="@dimen/offsetMedium"
             android:layout_gravity="end"
             android:textAppearance="@style/TextAppearance.Label2"
-            android:textColor="@color/buttonSecondaryForeground"
+            android:textColor="?attr/buttonSecondaryForegroundColor"
             android:background="@drawable/bg_button_secondary"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
@@ -44,19 +43,12 @@
             android:layout_height="match_parent"
             android:layout_marginTop="@dimen/offsetLarge"/>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </uikit.widget.ColumnLayout>
 
-    <androidx.appcompat.widget.AppCompatTextView
+    <uikit.widget.ToastView
         android:id="@+id/toast"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         android:layout_gravity="center_horizontal"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp"
-        android:background="@drawable/bg_content_tint_24"
-        android:textAppearance="@style/TextAppearance.Label2"
-        android:textColor="@color/textPrimary"/>
+        android:visibility="gone"/>
 </FrameLayout>

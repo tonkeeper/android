@@ -9,13 +9,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.PersistableBundle
 import android.provider.Settings
-import androidx.core.content.ContextCompat
 import androidx.security.crypto.EncryptedSharedPreferences
 import com.tonapps.signer.R
-import security.KeyHelper
+import com.tonapps.security.KeyHelper
 import uikit.HapticHelper
 import uikit.navigation.Navigation.Companion.navigation
-
 
 fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager

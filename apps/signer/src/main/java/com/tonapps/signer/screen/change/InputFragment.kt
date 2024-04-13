@@ -1,7 +1,6 @@
 package com.tonapps.signer.screen.change
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope

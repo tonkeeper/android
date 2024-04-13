@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge">
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:title="@string/choose_wallet_title"
+            android:description="@string/choose_wallet_subtitle"/>
+
+        <uikit.widget.SimpleRecyclerView
+            android:id="@+id/accounts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetLarge"
+        android:layout_gravity="bottom"
+        android:enabled="false"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/continue_action"/>
+
+</FrameLayout>

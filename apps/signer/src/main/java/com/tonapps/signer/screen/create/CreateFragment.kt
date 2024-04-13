@@ -1,9 +1,7 @@
 package com.tonapps.signer.screen.create
 
+import android.graphics.Color
 import android.os.Bundle
-import android.security.ConfirmationCallback
-import android.security.ConfirmationPrompt
-import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.lifecycle.lifecycleScope
@@ -15,8 +13,8 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
-import java.util.concurrent.Executor
 
 class CreateFragment: BaseFragment(R.layout.fragment_create), BaseFragment.SwipeBack {
 
@@ -56,15 +54,18 @@ class CreateFragment: BaseFragment(R.layout.fragment_create), BaseFragment.Swipe
 
         pagerView = view.findViewById(R.id.pager)
         pagerView.isUserInputEnabled = false
-        pagerView.offscreenPageLimit = adapter.itemCount
         pagerView.adapter = adapter
 
-        createViewModel.pageIndex().onEach {
-            pagerView.currentItem = it
-        }.launchIn(lifecycleScope)
-
-        createViewModel.onReady.onEach {
+        collectFlow(createViewModel.pageIndex(), ::setPage)
+        collectFlow(createViewModel.onReady) {
             finish()
-        }.launchIn(lifecycleScope)
+        }
+    }
+
+    private fun setPage(index: Int) {
+        val currentIndex = pagerView.currentItem
+        if (currentIndex != index) {
+            pagerView.setCurrentItem(index, true)
+        }
     }
 }

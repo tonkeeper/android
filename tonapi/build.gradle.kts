@@ -21,7 +21,7 @@ android {
 }
 
 dependencies {
-    implementation(Libs.Squareup.moshi)
-    implementation(Libs.Squareup.moshiAdapters)
-    implementation(Libs.Squareup.okhttp)
+    implementation(Dependence.Squareup.moshi)
+    implementation(Dependence.Squareup.moshiAdapters)
+    implementation(Dependence.Squareup.okhttp)
 }

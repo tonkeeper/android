@@ -7,19 +7,15 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import blur.node.api31.BlurNode
 import blur.node.api31.ContentNode
-import blur.node.legacy.BlurNodeLegacy
-import blur.node.legacy.ContentNodeLegacy
+import blur.node.api26.BlurNodeLegacy
+import blur.node.api26.ContentNodeLegacy
 
-class BlurCompat(
-    context: Context,
-    enable: Boolean,
-    experimental: Boolean
-) {
+class BlurCompat(context: Context) {
 
-    private val impl = if (experimental) {
-        ImplExperimental(context)
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && enable) {
+    private val impl = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Impl31(context)
+    /*} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Impl26(context)*/
     } else {
         Impl(context)
     }
@@ -55,14 +51,16 @@ class BlurCompat(
 
         open val hasBlur: Boolean = false
 
-        private val contentNode = ContentNodeLegacy()
+        fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+            onDraw(canvas, callback)
+        }
 
-        open fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
-            contentNode.draw(canvas, callback)
+        open fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+
         }
 
         open fun setBounds(rect: RectF) {
-            contentNode.setBounds(rect)
+
         }
 
         open fun attached() {
@@ -70,18 +68,21 @@ class BlurCompat(
         }
 
         open fun detached() {
-            contentNode.release()
+
         }
     }
 
-    private class ImplExperimental(context: Context): Impl(context) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private class Impl26(
+        context: Context
+    ): Impl(context) {
 
         override val hasBlur: Boolean = true
 
         private val contentNode = ContentNodeLegacy()
         private val blurNode = BlurNodeLegacy(context)
 
-        override fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+        override fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
             contentNode.draw(canvas, callback)
             blurNode.setSnapshot(contentNode.capture(callback))
             blurNode.draw(canvas, callback)
@@ -108,7 +109,7 @@ class BlurCompat(
         private val contentNode = ContentNode()
         private val blurNode = BlurNode(context)
 
-        override fun draw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
+        override fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
             contentNode.draw(canvas, callback)
             blurNode.draw(canvas) {
                 contentNode.drawRecorded(it)

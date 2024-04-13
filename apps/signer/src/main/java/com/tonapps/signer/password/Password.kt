@@ -1,19 +1,14 @@
 package com.tonapps.signer.password
 
 import android.content.Context
-import android.util.Log
-import com.tonapps.signer.core.entities.PrivateKeyEntity
 import com.tonapps.signer.password.ui.PasswordDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
-import security.vault.safeArea
 import java.util.concurrent.atomic.AtomicLong
 import javax.crypto.SecretKey
 

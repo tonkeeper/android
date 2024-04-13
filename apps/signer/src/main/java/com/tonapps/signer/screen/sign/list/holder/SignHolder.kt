@@ -6,7 +6,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.signer.R
 import com.tonapps.signer.screen.sign.list.SignItem
-import uikit.list.BaseListHolder
+import com.tonapps.uikit.list.BaseListHolder
 
 abstract class SignHolder<I: SignItem>(
     parent: ViewGroup
@@ -17,7 +17,6 @@ abstract class SignHolder<I: SignItem>(
     val subtitleView = findViewById<AppCompatTextView>(R.id.subtitle)
     val amountView = findViewById<AppCompatTextView>(R.id.amount)
     val amount2View = findViewById<AppCompatTextView>(R.id.amount2)
-    val dateView = findViewById<AppCompatTextView>(R.id.date)
     val bodyView = findViewById<View>(R.id.body)
     val commentView = findViewById<AppCompatTextView>(R.id.comment)
 }

@@ -1,13 +1,11 @@
 package com.tonapps.signer.screen.main.list
 
 import com.tonapps.signer.core.entities.KeyEntity
-import uikit.list.BaseListItem
-import uikit.list.ListCell
 
 sealed class MainItem(
     type: Int,
     open val id: Long,
-): BaseListItem(type) {
+): com.tonapps.uikit.list.BaseListItem(type) {
 
     companion object {
         const val TYPE_ACTIONS = 1
@@ -20,10 +18,10 @@ sealed class MainItem(
         override val id: Long,
         val label: String,
         val hex: String,
-        val position: ListCell.Position
+        val position: com.tonapps.uikit.list.ListCell.Position
     ): MainItem(TYPE_ACCOUNT, id) {
 
-        constructor(key: KeyEntity, position: ListCell.Position) : this(
+        constructor(key: KeyEntity, position: com.tonapps.uikit.list.ListCell.Position) : this(
             id = key.id,
             label = key.name,
             hex = key.hex,

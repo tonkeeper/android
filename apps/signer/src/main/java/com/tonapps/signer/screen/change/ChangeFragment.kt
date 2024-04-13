@@ -1,7 +1,6 @@
 package com.tonapps.signer.screen.change
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
@@ -9,6 +8,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.tonapps.signer.R
 import com.tonapps.signer.SimpleState
+import com.tonapps.signer.extensions.toast
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -77,7 +77,7 @@ class ChangeFragment: BaseFragment(R.layout.fragment_change), BaseFragment.Swipe
         }.launchIn(lifecycleScope)
 
         changeViewModel.onReady.onEach {
-            navigation?.toast(getString(R.string.password_changed))
+            navigation?.toast(R.string.password_changed)
             finish()
         }.launchIn(lifecycleScope)
     }

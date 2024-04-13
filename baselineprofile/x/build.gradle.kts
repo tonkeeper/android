@@ -22,7 +22,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    targetProjectPath = ":apps:x"
+    targetProjectPath = ":apps:wallet:instance"
 }
 
 dependencies {

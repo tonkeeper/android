@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 
@@ -37,6 +38,8 @@ class CollectiblesViewModel(
             loadItems(wallet, isOnline)
         }.launchIn(viewModelScope)
     }
+
+    fun openQRCode() = walletRepository.activeWalletFlow.take(1)
 
     private suspend fun loadItems(
         wallet: WalletEntity,

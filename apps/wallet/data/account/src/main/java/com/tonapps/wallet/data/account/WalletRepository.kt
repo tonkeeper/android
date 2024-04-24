@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -68,15 +70,29 @@ class WalletRepository(
         }
     }
 
+    fun removeCurrent() {
+        scope.launch {
+            val wallet = activeWalletFlow.firstOrNull() ?: return@launch
+            legacyManager.clear(wallet.id)
+            updateWallets()
+        }
+    }
+
     suspend fun getTonProofToken(walletId: Long): String? = withContext(Dispatchers.IO) {
         val value = extras.getTonProofToken(walletId)
         if (value != null) {
-            value
-        } else {
+            return@withContext value
+        }
+        try {
             val wallet = getWallet(walletId) ?: return@withContext null
+            if (!wallet.hasPrivateKey) {
+                return@withContext null
+            }
             val newValue = createTonProofToken(wallet)
             extras.setTonProofToken(walletId, newValue)
             newValue
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -259,6 +275,12 @@ class WalletRepository(
         val seqno = api.getAccountSeqno(wallet.accountId, wallet.testnet)
         val body = wallet.createBody(seqno, validUntil, transfers)
         return MessageBodyEntity(seqno, body)
+    }
+
+    suspend fun clear() {
+        legacyManager.clearAll()
+        _walletsFlow.value = null
+        _activeWalletFlow.value = null
     }
 
     suspend fun createSignedMessage(

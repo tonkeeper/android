@@ -8,6 +8,8 @@ import com.tonapps.qr.ui.QRView
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.accentOrangeColor
+import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.localization.Localization
@@ -66,7 +68,12 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
 
         copyView = view.findViewById(R.id.copy)
         copyView.setOnClickListener {
-            navigation?.toast(Localization.copied)
+            val color = if (args.walletType == WalletType.Default) {
+                requireContext().backgroundContentTintColor
+            } else {
+                requireContext().accentOrangeColor
+            }
+            navigation?.toast(getString(Localization.copied), color)
             context?.copyToClipboard(args.address)
         }
 

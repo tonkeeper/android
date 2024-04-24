@@ -5,6 +5,12 @@
     <string name="bitcoin" translatable="false">Bitcoin</string>
 
     <string name="sign_out">Sign out</string>
+    <string name="delete_watch_account">Delete watch account</string>
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nSign Out of All Wallets?</string>
+    <string name="sign_out_all_description">This will erase keys to all wallets. Make sure you have backed up your recovery phrases.</string>
+
+    <string name="sign_out_title">🚧 🚨 Sign Out? 🚨 🚧</string>
+    <string name="sign_out_description">This will erase key to your wallet. Make sure you have backed up your recovery phrase.</string>
 
     <string name="authorization_required">Authorization required</string>
     <string name="invalid_link">Invalid link</string>
@@ -250,4 +256,8 @@
     <string name="customize">Customize</string>
     <string name="customize_wallet_title">Customize your Wallet</string>
     <string name="customize_wallet_subtitle">Wallet name and icon are stored locally on your device.</string>
+
+    <string name="search_browser">Search or enter address</string>
+    <string name="explore">Explore</string>
+    <string name="connected">Connected</string>
 </resources>

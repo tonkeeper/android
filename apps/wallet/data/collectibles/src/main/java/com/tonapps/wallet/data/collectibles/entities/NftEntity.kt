@@ -39,6 +39,10 @@ data class NftEntity(
         getImageUri(64, 320) ?: previews.first().url.let { Uri.parse(it) }
     }
 
+    val mediumUri: Uri by lazy {
+        getImageUri(256, 512) ?: previews.first().url.let { Uri.parse(it) }
+    }
+
     val bigUri: Uri by lazy {
         getImageUri(512, 1024) ?: previews.last().url.let { Uri.parse(it) }
     }

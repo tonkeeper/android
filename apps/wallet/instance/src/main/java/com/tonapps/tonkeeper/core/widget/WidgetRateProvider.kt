@@ -37,14 +37,14 @@ class WidgetRateProvider: Widget() {
     @OptIn(DelicateCoroutinesApi::class)
     override fun update(context: Context, manager: AppWidgetManager, id: Int) {
         scope.launch(Dispatchers.IO) {
-            val (accountId, testnet) = getAccountId()
+            /*val (accountId, testnet) = getAccountId()
             val diff24h = currencyManager.getRate24h(accountId, testnet, "TON", currency.code)
             val diff7d = currencyManager.getRate7d(accountId, testnet, "TON", currency.code)
             val price = currencyManager.getRate(accountId, testnet, "TON", currency.code)
             val date = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Calendar.getInstance().time)
             val rate = Rate(diff24h, diff7d, CurrencyFormatter.formatRate(currency.code, price), date)
 
-            displayData(context, manager, id, rate)
+            displayData(context, manager, id, rate)*/
         }
     }
 

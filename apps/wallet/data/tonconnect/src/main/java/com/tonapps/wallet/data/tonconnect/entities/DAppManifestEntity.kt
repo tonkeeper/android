@@ -24,8 +24,4 @@ data class DAppManifestEntity(
         termsOfUseUrl = json.optString("termsOfUseUrl"),
         privacyPolicyUrl = json.optString("privacyPolicyUrl")
     )
-
-    constructor(data: String) : this(
-        JSONObject(data)
-    )
 }

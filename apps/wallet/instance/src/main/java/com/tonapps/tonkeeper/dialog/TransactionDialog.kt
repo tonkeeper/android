@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.api.shortAddress
@@ -76,7 +77,7 @@ class TransactionDialog(
 
         applyIcon(action.coinIconUrl)
         applyComment(action.comment)
-        applyAccount(action.isOut, action.address, action.addressName)
+        applyAccount(action.isOut, action.address, action.addressName?.ifPunycodeToUnicode())
         applyCurrency(action.currency)
         applyDate(action.action, action.date)
 
@@ -89,7 +90,7 @@ class TransactionDialog(
 
         explorerButton.setOnClickListener {
             dismiss()
-            navigation?.openURL("https://tonviewer.com/transaction/${action.txId}")
+            navigation?.openURL("https://tonviewer.com/transaction/${action.txId}", true)
         }
 
 

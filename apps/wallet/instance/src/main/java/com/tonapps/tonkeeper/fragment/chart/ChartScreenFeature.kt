@@ -10,8 +10,6 @@ import com.tonapps.tonkeeper.api.chart.ChartPeriod
 import com.tonapps.tonkeeper.api.withRetry
 import com.tonapps.tonkeeper.api.withTON
 import com.tonapps.blockchain.Coin
-import com.tonapps.tonkeeper.core.currency.CurrencyManager
-import com.tonapps.tonkeeper.core.currency.ton
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.wallet.data.core.WalletCurrency
@@ -21,12 +19,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import com.tonapps.wallet.data.rates.RatesRepository
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 
-class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartScreenState()) {
+class ChartScreenFeature(
+    private val historyHelper: HistoryHelper,
+    private val ratesRepository: RatesRepository,
+): UiFeature<ChartScreenState, ChartScreenEffect>(ChartScreenState()) {
 
-    private val currencyManager = CurrencyManager.getInstance()
     private val currency: WalletCurrency
         get() = App.settings.currency
 
@@ -37,7 +38,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
 
     fun load() {
         queueScope.submit {
-            val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo() ?: return@submit
+            val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val accountId = wallet.accountId
 
             val accountDeferred = async { accountRepository.get(accountId, wallet.testnet)?.data }
@@ -49,10 +50,12 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
             val historyItems = historyItemsDeferred.await()
 
             val balance = Coin.toCoins(account.balance)
-            val currencyBalance = wallet.ton(balance).convert(currency.code)
+            val rates = ratesRepository.getRates(currency, "TON")
 
-            val rate = currencyManager.getRate(accountId, wallet.testnet, "TON", currency.code)
-            val rate24h = currencyManager.getRate24h(accountId, wallet.testnet, "TON", currency.code)
+            val currencyBalance = rates.convert("TON", balance)
+
+            val rate = rates.getRate("TON")
+            val rate24h = rates.getDiff24h("TON")
 
             updateUiState {
                 it.copy(
@@ -78,13 +81,13 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
 
             updateUiState {
                 it.copy(
-                    historyItems = HistoryHelper.withLoadingItem(it.historyItems)
+                    historyItems = historyHelper.withLoadingItem(it.historyItems)
                 )
             }
 
             val wallet = App.walletManager.getWalletInfo() ?: return@submit
             val historyItems = getEvents(wallet, lt)
-            val items = HistoryHelper.removeLoadingItem(uiState.value.historyItems) + historyItems
+            val items = historyHelper.removeLoadingItem(uiState.value.historyItems) + historyItems
 
             updateUiState {
                 it.copy(
@@ -116,7 +119,7 @@ class ChartScreenFeature: UiFeature<ChartScreenState, ChartScreenEffect>(ChartSc
         val accountId = wallet.accountId
         val events = getAccountEvent(accountId, wallet.testnet, beforeLt)?.events ?: return@withContext emptyList()
         lastLt = events.lastOrNull()?.lt
-        HistoryHelper.mapping(wallet, events.filter {
+        historyHelper.mapping(wallet, events.filter {
             it.withTON
         })
     }

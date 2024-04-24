@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.blockchain.Coin
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.TokenRates
@@ -19,9 +20,10 @@ data class BalanceEntity(
 
     constructor(jettonBalance: JettonBalance) : this(
         token = TokenEntity(jettonBalance.jetton),
-        value = Coin.parseFloat(jettonBalance.balance, jettonBalance.jetton.decimals),
+        value = Coin.parseJettonBalance(jettonBalance.balance, jettonBalance.jetton.decimals),
         walletAddress = jettonBalance.walletAddress.address,
     ) {
         rates = jettonBalance.price
+        Log.d("ConfirmScreenFeatureLog", "jettonBalance = $jettonBalance")
     }
 }

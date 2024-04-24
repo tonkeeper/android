@@ -22,6 +22,14 @@ fun String.ifPunycodeToUnicode(): String {
     }
 }
 
+fun String.unicodeToPunycode(): String {
+    return try {
+        Punycode.encode(this) ?: throw IllegalArgumentException("Invalid punycode")
+    } catch (e: Exception) {
+        this
+    }
+}
+
 val String.withPlus: String
     get() {
         return if (startsWith("+")) this else "+ $this"

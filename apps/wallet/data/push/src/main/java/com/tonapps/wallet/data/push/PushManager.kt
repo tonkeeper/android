@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
@@ -86,14 +87,13 @@ class PushManager(
                 val largeIcon = api.defaultHttpClient.getBitmap(app.manifest.iconUrl)
                 displayAppPush(app, push, wallet, largeIcon)
 
-                if (walletRepository.activeWalletFlow.lastOrNull() == wallet) {
+                if (walletRepository.activeWalletFlow.firstOrNull() == wallet) {
                     val old = _dAppPushFlow.value ?: emptyList()
                     _dAppPushFlow.value = old + push
                 }
             } catch (ignored: Throwable) {}
         }
     }
-
 
     private suspend fun displayAppPush(
         app: DAppEntity,

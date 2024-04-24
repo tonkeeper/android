@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletRepository
+import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -47,6 +48,10 @@ class SettingsViewModel(
         }
     }
 
+    fun signOut() {
+        walletRepository.removeCurrent()
+    }
+
     private fun buildUiItems(
         wallet: WalletEntity,
         currency: WalletCurrency,
@@ -71,7 +76,11 @@ class SettingsViewModel(
         uiItems.add(Item.Legal(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
-        uiItems.add(Item.Logout(ListCell.Position.SINGLE))
+        if (wallet.type == WalletType.Watch) {
+            uiItems.add(Item.DeleteWatchAccount(ListCell.Position.SINGLE))
+        } else {
+            uiItems.add(Item.Logout(ListCell.Position.SINGLE))
+        }
         uiItems.add(Item.Space)
         uiItems.add(Item.Logo)
 

@@ -120,7 +120,13 @@ class WalletManager(
         }
     }
 
-    private suspend fun clearAll() = withContext(Dispatchers.IO) {
+    suspend fun clear(walletId: Long) {
+        storage.deleteWallet(walletId)
+        cacheWallets.clear()
+        cacheWallet = null
+    }
+
+    suspend fun clearAll() = withContext(Dispatchers.IO) {
         storage.clearAll()
         cacheWallets.clear()
         cacheWallet = null

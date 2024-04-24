@@ -19,7 +19,8 @@ data class ConfigEntity(
     val tonkeeperNewsUrl: String,
     val tonCommunityUrl: String,
     val tonCommunityChatUrl: String,
-    val tonApiV2Key: String
+    val tonApiV2Key: String,
+    val featuredPlayInterval: Int,
 ): Parcelable {
 
     val swapUri: Uri
@@ -38,7 +39,8 @@ data class ConfigEntity(
         tonkeeperNewsUrl = json.getString("tonkeeperNewsUrl"),
         tonCommunityUrl = json.getString("tonCommunityUrl"),
         tonCommunityChatUrl = json.getString("tonCommunityChatUrl"),
-        tonApiV2Key = json.getString("tonApiV2Key")
+        tonApiV2Key = json.getString("tonApiV2Key"),
+        featuredPlayInterval = json.optInt("featured_play_interval", 3000)
     )
 
     constructor() : this(
@@ -54,7 +56,8 @@ data class ConfigEntity(
         tonkeeperNewsUrl = "https://t.me/tonkeeper_new",
         tonCommunityUrl = "https://t.me/toncoin",
         tonCommunityChatUrl = "https://t.me/toncoin_chat",
-        tonApiV2Key = ""
+        tonApiV2Key = "",
+        featuredPlayInterval = 3000
     )
 
     companion object {

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
+import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
@@ -29,5 +30,9 @@ sealed class RootEvent {
         val amount: Float?,
         val text: String?,
         val jettonAddress: String?
+    ): RootEvent()
+
+    data class Transaction(
+        val event: HistoryItem.Event
     ): RootEvent()
 }

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PointF
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
@@ -57,46 +58,74 @@ class ChartView @JvmOverloads constructor(
     }
 
     private fun buildPath() {
-        path.reset()
         if (data.isEmpty()) {
             return
         }
 
-        val minX = data.minOf { it.x }.toDouble()
-        val maxX = data.maxOf { it.x }.toDouble()
+        val minX = data.minOf { it.x }
+        val maxX = data.maxOf { it.x }
         val minY = data.minOf { it.y }
         val maxY = data.maxOf { it.y }
 
-        val viewWidth = width + linePaint.strokeWidth
-        val viewHeight = height + linePaint.strokeWidth
+        val viewWidth = width - 2 * linePaint.strokeWidth
+        val viewHeight = height - 2 * linePaint.strokeWidth
 
         val widthScale = viewWidth / (maxX - minX)
         val heightScale = viewHeight / (maxY - minY)
 
-        val scaledData = data.map { point ->
-            ((point.x - minX) * widthScale).toFloat() to viewHeight - ((point.y - minY) * heightScale)
+        val points = data.map { point ->
+            val x = ((point.x - minX) * widthScale) + linePaint.strokeWidth
+            val y = ((maxY - point.y) * heightScale) + linePaint.strokeWidth
+            PointF(x, y)
+        }.toMutableList()
+
+        if (square) {
+            buildSquarePath(points, viewHeight)
+        } else {
+            buildDefaultPath(points, viewHeight)
         }
-
-        path.moveTo(scaledData.first().first, scaledData.first().second)
-
-        for (i in 0 until scaledData.size - 1) {
-            val currentPoint = scaledData[i]
-            if (square) {
-                val nextPoint = scaledData[i + 1]
-                path.lineTo(nextPoint.first, currentPoint.second)
-                path.lineTo(nextPoint.first, nextPoint.second)
-            } else {
-                path.lineTo(currentPoint.first, currentPoint.second)
-            }
-        }
-
-        path.lineTo(scaledData.last().first, viewHeight)
-        path.lineTo(0f, viewHeight)
-        path.close()
 
         gradientPaint.shader = LinearGradient(
             0f, 0f, 0f, viewHeight,
             accentColor.withAlpha(.3f), Color.TRANSPARENT, Shader.TileMode.CLAMP
         )
+    }
+
+    private fun buildDefaultPath(points: MutableList<PointF>, viewHeight: Float) {
+        path.reset()
+        val firstPoint = points.removeFirst()
+        val lastPoint = points.removeLast()
+
+        path.moveTo(firstPoint.x - linePaint.strokeWidth, firstPoint.y)
+        for (point in points) {
+            path.lineTo(point.x, point.y)
+        }
+
+        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), lastPoint.y)
+        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), viewHeight + (linePaint.strokeWidth * 2))
+        path.lineTo(0f, viewHeight + (linePaint.strokeWidth * 2))
+        path.close()
+    }
+
+    private fun buildSquarePath(points: MutableList<PointF>, viewHeight: Float) {
+        path.reset()
+
+        val firstPoint = points.first()
+        val lastPoint = points.last()
+        path.moveTo(firstPoint.x - linePaint.strokeWidth, firstPoint.y)
+        for ((index, point) in points.withIndex()) {
+            if (index < points.size - 1) {
+                val nextPoint = points[index + 1]
+                path.lineTo(nextPoint.x, point.y)
+                path.lineTo(nextPoint.x, nextPoint.y)
+            } else {
+                path.lineTo(point.x, point.y)
+            }
+        }
+
+        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), lastPoint.y)
+        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), viewHeight + (linePaint.strokeWidth * 2))
+        path.lineTo(0f, viewHeight + (linePaint.strokeWidth * 2))
+        path.close()
     }
 }

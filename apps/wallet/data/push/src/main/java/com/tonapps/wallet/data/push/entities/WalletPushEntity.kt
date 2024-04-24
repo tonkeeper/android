@@ -14,12 +14,7 @@ class WalletPushEntity(
 ) {
 
     val intent = Intent(Intent.ACTION_VIEW).apply {
-        val builder = Uri.Builder()
-        builder.scheme("tonkeeper")
-        builder.authority("push")
-        builder.appendQueryParameter("deeplink", deeplink)
-        builder.appendQueryParameter("account", account)
-        data = builder.build()
+        data = Uri.parse(deeplink)
     }
 
     constructor(bundle: Bundle) : this(

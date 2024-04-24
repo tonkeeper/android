@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.fragment.chart.list.holder
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.updateMargins
+import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.sendCoin
@@ -18,6 +20,8 @@ class ChartActionsHolder(
     private val buyOrSellView = findViewById<View>(R.id.buy_or_sell)
 
     init {
+        val offsetVertical = context.resources.getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+        (itemView.layoutParams as RecyclerView.LayoutParams).updateMargins(top = offsetVertical, bottom = offsetVertical)
         sendView.setOnClickListener { Navigation.from(context)?.sendCoin() }
         // receiveView.setOnClickListener { Navigation.from(context)?.receive() }
         buyOrSellView.setOnClickListener { FiatDialog.open(context) }

@@ -19,7 +19,7 @@ internal class NotificationHelper(context: Context) {
         return notificationManager.getNotificationChannelCompat(id) ?: createChannel(id)
     }
 
-    fun createChannel(id: String): NotificationChannelCompat {
+    private fun createChannel(id: String): NotificationChannelCompat {
         val builder = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_DEFAULT)
         builder.setName(id)
         val channel = builder.build()
@@ -28,6 +28,7 @@ internal class NotificationHelper(context: Context) {
     }
 
     fun createPendingIntent(context: Context, intent: Intent): PendingIntent {
+        intent.`package` = context.packageName
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         return PendingIntent.getActivity(context, 0, intent, flags)
     }

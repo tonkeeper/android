@@ -2,6 +2,7 @@ package com.tonapps.wallet.api.internal
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.packageInfo
 import com.tonapps.network.get
@@ -18,7 +19,7 @@ internal class InternalApi(
         val builder = Uri.Builder()
         builder.scheme("https")
             .authority("api.tonkeeper.com")
-            .appendPath(path)
+            .appendEncodedPath(path)
             .appendQueryParameter("lang", context.locale.language)
             .appendQueryParameter("build", context.packageInfo.versionName.removeSuffix("-debug"))
             .appendQueryParameter("platform", "android_x")
@@ -29,6 +30,11 @@ internal class InternalApi(
         val url = endpoint(path)
         val body = okHttpClient.get(url)
         return JSONObject(body)
+    }
+
+    fun getBrowserApps(): JSONObject {
+        val data = request("apps/popular")
+        return data.getJSONObject("data")
     }
 
     fun downloadConfig(): ConfigEntity? {

@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.core.history.list.holder
 
+import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
 import uikit.extensions.drawable
@@ -23,7 +25,12 @@ class HistoryAppHolder(
 
     override fun onBind(item: HistoryItem.App) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.openURL(item.deepLink)
+            Navigation.from(context)?.add(
+                DAppScreen.newInstance(
+                item.title,
+                item.host,
+                item.deepLink
+            ))
         }
         imageView.setImageURI(item.iconUri, this)
         messageView.text = item.body

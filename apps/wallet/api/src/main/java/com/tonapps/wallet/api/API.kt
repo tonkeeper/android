@@ -6,7 +6,9 @@ import android.util.Log
 import com.tonapps.blockchain.Coin
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValid
+import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.locale
+import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.network.SSEvent
 import com.tonapps.network.get
 import com.tonapps.network.interceptor.AcceptLanguageInterceptor
@@ -274,41 +276,22 @@ class API(
         value: String,
         testnet: Boolean,
     ): Account? = withContext(Dispatchers.IO) {
-        try {
-            if (!value.isValid()) {
-                return@withContext resolveDomain(value.lowercase().trim(), testnet)
-            }
+        if (value.isValid()) {
             return@withContext getAccount(value, testnet)
-        } catch (ignored: Throwable) {}
-        return@withContext null
+        }
+        return@withContext resolveDomain(value.lowercase().trim(), testnet)
     }
 
-    private fun resolveDomain(
-        domain: String,
-        testnet: Boolean,
-        suffixList: Array<String> = arrayOf(".ton", ".t.me")
-    ): Account? {
-        val accountId = domain.lowercase()
-        var account: Account? = null
-        try {
-            account = getAccount(accountId, testnet)
-        } catch (ignored: Throwable) {}
-
-        for (suffix in suffixList) {
-            if (account == null && !accountId.endsWith(suffix)) {
-                try {
-                    account = getAccount("$accountId$suffix", testnet)
-                } catch (ignored: Throwable) {}
-            }
-        }
-        if (account?.name == null) {
-            account = account?.copy(name = accountId)
-        }
-        return account
+    private fun resolveDomain(domain: String, testnet: Boolean): Account? {
+        return getAccount(domain, testnet) ?: getAccount(domain.unicodeToPunycode(), testnet)
     }
 
-    fun getAccount(accountId: String, testnet: Boolean): Account {
-        return accounts(testnet).getAccount(accountId)
+    private fun getAccount(accountId: String, testnet: Boolean): Account? {
+        return try {
+            accounts(testnet).getAccount(accountId)
+        } catch (e: Throwable) {
+            null
+        }
     }
 
     fun pushSubscribe(
@@ -331,7 +314,7 @@ class API(
             json.put("device", deviceId)
             json.put("token", firebaseToken)
             json.put("accounts", accountsArray)
-            //
+
             return tonAPIHttpClient.postJSON(url, json.toString()).isSuccessful
         } catch (e: Throwable) {
             false
@@ -381,6 +364,18 @@ class API(
             json.getJSONArray("items")
         } catch (e: Throwable) {
             JSONArray()
+        }
+    }
+
+    fun getBrowserApps(): JSONObject {
+        return internalApi.getBrowserApps()
+    }
+
+    fun getTransactionEvents(accountId: String, testnet: Boolean, eventId: String): AccountEvent? {
+        return try {
+            accounts(testnet).getAccountEvent(accountId, eventId)
+        } catch (e: Throwable) {
+            null
         }
     }
 

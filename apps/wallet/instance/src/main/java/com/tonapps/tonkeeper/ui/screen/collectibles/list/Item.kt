@@ -12,7 +12,7 @@ data class Item(
         get() = entity.address
 
     val imageURI: Uri
-        get() = entity.thumbUri
+        get() = entity.mediumUri
 
     val title: String
         get() = entity.name

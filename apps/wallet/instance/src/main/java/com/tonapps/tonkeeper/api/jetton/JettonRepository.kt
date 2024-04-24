@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.api.jetton
 
+import android.util.Log
 import com.tonapps.wallet.api.Tonapi
 import com.tonapps.tonkeeper.api.base.AccountKey
 import com.tonapps.tonkeeper.api.base.BaseAccountRepository
@@ -46,11 +47,12 @@ class JettonRepository(
 
     suspend fun getByAddress(
         accountId: String,
-        address: String,
+        jettonAddress: String,
         testnet: Boolean,
     ): JettonBalance? {
-        return getFromCloud(accountId, testnet)?.data?.find {
-            it.getAddress(testnet) == address
+        val cloud = getFromCloud(accountId, testnet) ?: return null
+        return cloud.data.find {
+            it.jetton.address == jettonAddress
         }
     }
 

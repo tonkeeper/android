@@ -127,6 +127,11 @@ class BottomTabsView @JvmOverloads constructor(
         val view = inflate(context, R.layout.view_bottom_tab, null)
         view.tag = menuItem.itemId
         view.background = context.createRipple()
+        view.visibility = if (menuItem.isVisible) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
         val iconView = view.findViewById<ImageView>(R.id.icon)
         val titleView = view.findViewById<TextView>(R.id.title)
         iconView.setImageDrawable(menuItem.icon!!)

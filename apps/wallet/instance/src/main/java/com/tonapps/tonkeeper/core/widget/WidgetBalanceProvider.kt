@@ -9,7 +9,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.api.account.AccountRepository
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.blockchain.Coin
-import com.tonapps.tonkeeper.core.currency.ton
+import com.tonapps.wallet.data.rates.RatesRepository
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,13 +33,16 @@ class WidgetBalanceProvider: Widget() {
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun update(context: Context, manager: AppWidgetManager, id: Int) {
-        scope.launch(Dispatchers.IO) {
+        /*scope.launch(Dispatchers.IO) {
             val wallet = com.tonapps.tonkeeper.App.walletManager.getWalletInfo()
             if (wallet == null) {
                 displayPlaceholderData(context, manager, id)
                 return@launch
             }
 
+            // val rates = ratesRepository.getRates(currency, "TON")
+            //
+            //            val currencyBalance = rates.convert("TON", balance)
             var response = accountRepository.getFromCloud(wallet.accountId, wallet.testnet)
             if (response == null) {
                 response = accountRepository.get(wallet.accountId, wallet.testnet)
@@ -58,7 +61,7 @@ class WidgetBalanceProvider: Widget() {
             )
 
             displayData(context, manager, id, balance)
-        }
+        }*/
     }
 
     private suspend fun displayPlaceholderData(

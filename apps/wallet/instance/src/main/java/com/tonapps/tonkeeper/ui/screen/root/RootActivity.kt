@@ -26,10 +26,12 @@ import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.navigation.NavigationActivity
 
@@ -49,6 +51,7 @@ class RootActivity: NavigationActivity() {
 
     private lateinit var lockView: View
     private lateinit var lockPasscodeView: PasscodeView
+    private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(rootViewModel.themeId)
@@ -61,6 +64,9 @@ class RootActivity: NavigationActivity() {
         lockView = findViewById(R.id.lock)
         lockPasscodeView = findViewById(R.id.lock_passcode)
         lockPasscodeView.doOnCheck = ::checkPasscode
+
+        lockSignOut = findViewById(R.id.lock_sign_out)
+        lockSignOut.setOnClickListener { signOutAll() }
 
         ViewCompat.setOnApplyWindowInsetsListener(lockView) { _, insets ->
             val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
@@ -122,11 +128,23 @@ class RootActivity: NavigationActivity() {
             is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebFragment.newInstance(event.uri))
             is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount ?: 0f, event.jettonAddress))
+            is RootEvent.Transaction -> TransactionDialog.open(this, event.event)
             else -> { }
         }
     }
 
-
+    private fun signOutAll() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(Localization.sign_out_all_title)
+        builder.setMessage(Localization.sign_out_all_description)
+        builder.setNegativeButton(Localization.sign_out) {
+            rootViewModel.signOut()
+            setIntroFragment()
+        }
+        builder.setPositiveButton(Localization.cancel)
+        builder.setColoredButtons()
+        builder.show()
+    }
 
     fun init(hasWallet: Boolean) {
         if (hasWallet) {

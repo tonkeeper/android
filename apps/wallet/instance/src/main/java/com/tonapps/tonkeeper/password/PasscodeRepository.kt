@@ -17,6 +17,10 @@ class PasscodeRepository(
     val hasPinCode: Boolean
         get() = dataStore.hasPinCode
 
+    suspend fun clear() {
+        dataStore.clearPinCode()
+    }
+
     suspend fun set(code: String) {
         dataStore.setPinCode(code)
     }

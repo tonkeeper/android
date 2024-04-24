@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.tonconnect.entities.reply
 
 import com.tonapps.wallet.data.account.entities.ProofEntity
+import kotlinx.serialization.Serializable
 import org.json.JSONObject
 
 data class DAppProofItemReplySuccess(
@@ -11,7 +12,7 @@ data class DAppProofItemReplySuccess(
     override fun toJSON(): JSONObject {
         val json = JSONObject()
         json.put("name", name)
-        json.put("proof", proof)
+        json.put("proof", proof.toJSON())
         return json
     }
 

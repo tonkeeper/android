@@ -9,6 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.Coin
 import com.tonapps.extensions.getQueryLong
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
+import com.tonapps.tonkeeper.core.history.HistoryHelper
+import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
 import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.push.GooglePushService
@@ -16,6 +18,7 @@ import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.sign.SignRequestEntity
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -26,6 +29,7 @@ import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +53,9 @@ class RootViewModel(
     private val settingsRepository: SettingsRepository,
     private val walletRepository: WalletRepository,
     private val signManager: SignManager,
-    private val tonConnectRepository: TonConnectRepository
+    private val tonConnectRepository: TonConnectRepository,
+    private val api: API,
+    private val historyHelper: HistoryHelper,
 ): AndroidViewModel(application) {
 
     val hasWalletFlow = walletRepository.walletsFlow.map { it.isNotEmpty() }.distinctUntilChanged()
@@ -84,6 +90,14 @@ class RootViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.firebaseToken = GooglePushService.requestToken()
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            walletRepository.clear()
+            passcodeRepository.clear()
+            _lockFlow.value = false
         }
     }
 
@@ -159,12 +173,12 @@ class RootViewModel(
     }
 
     private fun resolveOther(_uri: Uri, wallet: WalletEntity) {
-        val url = _uri.toString().replace("ton://", "https://app.tonkeeper.com/")
+        val url = _uri.toString().replace("ton://", "https://app.tonkeeper.com/").replace("tonkeeper://", "https://app.tonkeeper.com/")
         val uri = Uri.parse(url)
         if (DeepLink.isTonConnectUri(uri)) {
             resolveTonConnect(uri, wallet)
-        } else if (MainScreen.isSupportedDeepLink(url)) {
-            _eventFlow.tryEmit(RootEvent.OpenTab(url))
+        } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
+            _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString()))
         } else if (uri.path?.startsWith("/transfer/") == true) {
             _eventFlow.tryEmit(RootEvent.Transfer(
                 address = uri.pathSegments.last(),
@@ -172,9 +186,23 @@ class RootViewModel(
                 text = uri.getQueryParameter("text"),
                 jettonAddress = uri.getQueryParameter("jetton"),
             ))
+        } else if (uri.path?.startsWith("/action/") == true) {
+            val account = uri.getQueryParameter("account") ?: return
+            val hash = uri.pathSegments.lastOrNull() ?: return
+            showTransaction(account, hash)
         } else {
-            Log.d("DeepLinkLog", "uri: ${uri.path}")
+            Log.d("DeepLinkLog", "uri: $uri")
+            Log.d("DeepLinkLog", "path segments: ${uri.pathSegments}")
             toast(Localization.invalid_link)
+        }
+    }
+
+    private fun showTransaction(accountId: String, hash: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val wallet = walletRepository.getWallet(accountId) ?: return@launch
+            val event = api.getTransactionEvents(wallet.accountId, wallet.testnet, hash) ?: return@launch
+            val item = historyHelper.mapping(wallet, event).find { it is HistoryItem.Event } as? HistoryItem.Event ?: return@launch
+            _eventFlow.tryEmit(RootEvent.Transaction(item))
         }
     }
 

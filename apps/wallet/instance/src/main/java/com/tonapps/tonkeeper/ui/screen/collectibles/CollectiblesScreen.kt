@@ -9,8 +9,10 @@ import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -18,7 +20,9 @@ import uikit.base.BaseFragment
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.isMaxScrollReached
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
+import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
 class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
@@ -29,6 +33,7 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
 
     private lateinit var headerView: HeaderView
     private lateinit var listView: RecyclerView
+    private lateinit var emptyView: EmptyLayout
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -43,7 +48,16 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
         }
         listView.adapter = adapter
 
-        collectFlow(collectiblesViewModel.uiItemsFlow, adapter::submitList)
+        emptyView = view.findViewById(R.id.empty)
+        emptyView.doOnButtonClick = { first ->
+            if (first) {
+
+            } else {
+                openQRCode()
+            }
+        }
+
+        collectFlow(collectiblesViewModel.uiItemsFlow, ::setItems)
         collectFlow(collectiblesViewModel.isUpdatingFlow) { updating ->
             if (updating) {
                 headerView.setSubtitle(Localization.updating)
@@ -51,6 +65,37 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
                 headerView.setSubtitle(null)
             }
         }
+    }
+
+    private fun openQRCode() {
+        collectFlow(collectiblesViewModel.openQRCode()) { walletEntity ->
+            navigation?.add(QRScreen.newInstance(walletEntity.address, TokenEntity.TON, walletEntity.type))
+        }
+    }
+
+    private fun setItems(list: List<Item>) {
+        if (list.isEmpty()) {
+            setEmptyState()
+        } else {
+            setListState()
+            adapter.submitList(list)
+        }
+    }
+
+    private fun setEmptyState() {
+        if (emptyView.visibility == View.VISIBLE) {
+            return
+        }
+        emptyView.visibility = View.VISIBLE
+        listView.visibility = View.GONE
+    }
+
+    private fun setListState() {
+        if (listView.visibility == View.VISIBLE) {
+            return
+        }
+        emptyView.visibility = View.GONE
+        listView.visibility = View.VISIBLE
     }
 
     override fun getRecyclerView() = listView

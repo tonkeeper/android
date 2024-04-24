@@ -1,6 +1,5 @@
 package uikit.widget.webview.bridge
 
-import android.webkit.JavascriptInterface
 import androidx.collection.ArrayMap
 import org.json.JSONArray
 import org.json.JSONObject
@@ -21,7 +20,7 @@ abstract class JsBridge(
      */
     abstract suspend fun invokeFunction(name: String, args: JSONArray): Any?
 
-    fun jsInjection(): String {
+    open fun jsInjection(): String {
         val funcs = availableFunctions.joinToString(",") {"""
             $it: (...args) => {
                 return new Promise((resolve, reject) => window.invokeRnFunc('${it}', args, resolve, reject))

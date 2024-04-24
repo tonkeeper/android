@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.HeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+
+    <FrameLayout
+        android:id="@+id/search_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:paddingTop="@dimen/offsetMedium"
+        android:paddingBottom="8dp">
+
+        <uikit.widget.RowLayout
+            android:id="@+id/search"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="44dp"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:tint="?attr/iconSecondaryColor"
+                android:src="@drawable/ic_magnifying_glass_16"/>
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/search_input"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColorHint="?attr/textSecondaryColor"
+                android:textColor="?attr/textPrimaryColor"
+                android:gravity="center_vertical"
+                android:background="@android:color/transparent"
+                android:hint="@string/search_browser"/>
+
+        </uikit.widget.RowLayout>
+
+    </FrameLayout>
+
+</uikit.widget.ColumnLayout>

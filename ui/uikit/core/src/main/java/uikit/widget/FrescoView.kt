@@ -4,10 +4,13 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.VectorDrawable
 import android.net.Uri
 import android.util.AttributeSet
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.drawee.drawable.RoundedCornersDrawable
 import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.request.ImageRequest
 import uikit.extensions.getDrawable
@@ -21,10 +24,20 @@ class FrescoView @JvmOverloads constructor(
 
     override fun setImageURI(uri: Uri, callerContext: Any?) {
         if (UriUtil.isLocalResourceUri(uri)) {
-            setImageDrawable(requestDrawable(uri), callerContext)
+            loadLocalUri(uri, callerContext)
         } else {
             hierarchy.setPlaceholderImage(null)
             super.setImageURI(uri, callerContext)
+        }
+    }
+
+    private fun loadLocalUri(uri: Uri, callerContext: Any?) {
+        val drawable = requestDrawable(uri)
+        if (drawable == null) {
+            hierarchy.setPlaceholderImage(null)
+            super.setImageURI(uri, callerContext)
+        } else {
+            setImageDrawable(drawable, callerContext)
         }
     }
 
@@ -47,12 +60,17 @@ class FrescoView @JvmOverloads constructor(
         }
     }
 
-    private fun requestDrawable(uri: Uri): Drawable {
-        if (uri.pathSegments.isEmpty()) {
-            return ColorDrawable()
+    private fun requestDrawable(uri: Uri): Drawable? {
+        val drawable = if (uri.pathSegments.isEmpty()) {
+            ColorDrawable()
+        } else {
+            val resourceId = uri.pathSegments[0].toInt()
+            getDrawable(resourceId)
         }
-        val resourceId = uri.pathSegments[0].toInt()
-        return getDrawable(resourceId)
+        if (drawable is VectorDrawable || drawable is ColorDrawable) {
+            return drawable
+        }
+        return null
     }
 
     fun clear(callerContext: Any?) {

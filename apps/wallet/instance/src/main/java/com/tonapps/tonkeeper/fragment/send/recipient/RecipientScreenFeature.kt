@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.fragment.send.recipient
 
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.wallet.api.API
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -79,7 +80,7 @@ class RecipientScreenFeature(
             updateUiState { it.copy(
                 addressState = RecipientScreenState.AddressState.VALID,
                 address = address,
-                name = account.name,
+                name = account.name?.ifPunycodeToUnicode(),
                 requireComment = account.memoRequired == true,
                 bounce = bounce,
             ) }

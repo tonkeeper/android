@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.collectibles.list
 
 import android.graphics.drawable.RippleDrawable
 import android.net.Uri
+import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.generic.RoundingParams
@@ -42,8 +43,6 @@ class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_coll
     }
 
     private fun loadImage(uri: Uri) {
-        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
-        builder.resizeOptions = ResizeOptions.forSquareSize(192)
-        imageView.setImageRequest(builder.build())
+        imageView.setImageURI(uri, null)
     }
 }

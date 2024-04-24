@@ -24,10 +24,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 import java.util.Calendar
@@ -39,14 +41,15 @@ class EventsViewModel(
     private val eventsRepository: EventsRepository,
     private val networkMonitor: NetworkMonitor,
     private val tonConnectRepository: TonConnectRepository,
-    private val pushManager: PushManager
+    private val pushManager: PushManager,
+    private val historyHelper: HistoryHelper,
 ): AndroidViewModel(application) {
 
     private val _isUpdatingFlow = MutableStateFlow(false)
     val isUpdatingFlow = _isUpdatingFlow.asSharedFlow()
 
-    private val _uiItemsFlow = MutableStateFlow<List<HistoryItem>>(emptyList())
-    val uiItemsFlow = _uiItemsFlow.asStateFlow()
+    private val _uiItemsFlow = MutableStateFlow<List<HistoryItem>?>(null)
+    val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
         combine(
@@ -59,7 +62,14 @@ class EventsViewModel(
         collectFlow(walletRepository.realtimeEventsFlow.map { it.wallet }) { wallet ->
             loadEvents(wallet, true)
         }
+
+        collectFlow(pushManager.dAppPushFlow) {
+            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@collectFlow
+            loadEvents(wallet, true)
+        }
     }
+
+    fun openQRCode() = walletRepository.activeWalletFlow.take(1)
 
     private suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
         val events = pushManager.getRemoteDAppEvents(wallet)
@@ -89,7 +99,8 @@ class EventsViewModel(
                 body = event.message,
                 date = DateHelper.formatTime(event.dateUnix),
                 timestamp = event.dateUnix,
-                deepLink = event.link
+                deepLink = event.link,
+                host = app.manifest.host
             ))
         }
         return items
@@ -101,7 +112,7 @@ class EventsViewModel(
     }
 
     private fun foundLastItem(): HistoryItem.Event? {
-        return _uiItemsFlow.value.lastOrNull { it is HistoryItem.Event } as? HistoryItem.Event
+        return _uiItemsFlow.value?.lastOrNull { it is HistoryItem.Event } as? HistoryItem.Event
     }
 
     private fun lastLt(): Long? {
@@ -119,7 +130,8 @@ class EventsViewModel(
         val lastLt = lastLt() ?: return
         withUpdating {
             val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@withUpdating
-            _uiItemsFlow.value = HistoryHelper.withLoadingItem(_uiItemsFlow.value)
+            val oldValues = _uiItemsFlow.value ?: emptyList()
+            _uiItemsFlow.value = historyHelper.withLoadingItem(oldValues)
             loadRemote(wallet, lastLt)
         }
     }
@@ -129,7 +141,6 @@ class EventsViewModel(
         isOnline: Boolean
     ) {
         withUpdating {
-            _uiItemsFlow.value = emptyList()
             loadLocal(wallet)
             if (isOnline) {
                 loadRemote(wallet)
@@ -140,7 +151,9 @@ class EventsViewModel(
     private suspend fun loadLocal(wallet: WalletEntity) {
         val accountEvents = eventsRepository.getLocal(wallet.accountId, wallet.testnet) ?: return
         val walletEventItems = mapping(wallet, accountEvents.events)
-        setItems(walletEventItems + getLocalDAppEvents(wallet))
+        if (walletEventItems.isNotEmpty()) {
+            setItems(walletEventItems + getLocalDAppEvents(wallet))
+        }
     }
 
     private suspend fun loadRemote(wallet: WalletEntity, beforeLt: Long? = null) {
@@ -149,7 +162,8 @@ class EventsViewModel(
         if (beforeLt == null) {
             setItems(walletEventItems + getRemoteDAppEvents(wallet))
         } else {
-            setItems(_uiItemsFlow.value + walletEventItems)
+            val oldValues = _uiItemsFlow.value ?: emptyList()
+            setItems(oldValues + walletEventItems)
         }
     }
 
@@ -157,7 +171,7 @@ class EventsViewModel(
         wallet: WalletEntity,
         events: List<AccountEvent>
     ): List<HistoryItem> {
-        return HistoryHelper.mapping(
+        return historyHelper.mapping(
             wallet = wallet,
             events = events,
             removeDate = false

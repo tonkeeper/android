@@ -36,9 +36,7 @@ data class JettonScreenState(
             rate = rateFormat,
             diff24h = rate24h
         ))
-        items.add(JettonItem.Divider)
         items.add(JettonItem.Actions(jetton, walletType))
-        items.add(JettonItem.Divider)
         return items
     }
 }

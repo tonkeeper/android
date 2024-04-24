@@ -42,6 +42,15 @@ abstract class BaseListAdapter: ListAdapter<BaseListItem, BaseListHolder<out Bas
         recyclerViewRef = null
     }
 
+    override fun onViewRecycled(holder: BaseListHolder<*>) {
+        holder.unbind()
+    }
+
+    override fun onFailedToRecycleView(holder: BaseListHolder<*>): Boolean {
+        holder.unbind()
+        return super.onFailedToRecycleView(holder)
+    }
+
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         recyclerViewRef = recyclerView

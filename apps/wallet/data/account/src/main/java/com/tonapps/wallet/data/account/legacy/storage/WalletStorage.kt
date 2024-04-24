@@ -61,7 +61,9 @@ internal class WalletStorage(context: Context) {
     suspend fun deleteWallet(createDate: Long) {
         mnemonicStorage.delete(createDate)
         wallets.delete(createDate)
-        setSelectedWallet(wallets.getIds().first())
+        wallets.getIds().firstOrNull()?.let {
+            setSelectedWallet(it)
+        }
     }
 
     suspend fun getSelectedWallet(): Long {

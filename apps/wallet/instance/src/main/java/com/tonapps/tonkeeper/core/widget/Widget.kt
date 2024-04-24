@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.IBinder
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
-import com.tonapps.tonkeeper.core.currency.CurrencyManager
 import com.tonapps.wallet.data.core.WalletCurrency
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -57,7 +56,7 @@ abstract class Widget: AppWidgetProvider() {
     @OptIn(DelicateCoroutinesApi::class)
     val scope = GlobalScope
 
-    val currencyManager = CurrencyManager.getInstance()
+    // val currencyManager = CurrencyManager.getInstance()
 
     val currency: WalletCurrency
         get() = App.settings.currency

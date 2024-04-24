@@ -4,6 +4,7 @@ import android.util.Log
 import com.squareup.moshi.adapter
 import com.tonapps.blockchain.Coin
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.tonkeeperx.R
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.Account
@@ -136,7 +137,7 @@ val JettonSwapAction.ton: Long
 
 fun AccountAddress.getNameOrAddress(testnet: Boolean): String {
     if (!name.isNullOrBlank()) {
-        return name!!
+        return name!!.ifPunycodeToUnicode()
     }
     return address.toUserFriendly(
         wallet = isWallet,
@@ -170,13 +171,13 @@ val JettonBalance.symbol: String
     get() = jetton.symbol
 
 val JettonBalance.parsedBalance: Float
-    get() = Coin.parseFloat(balance, jetton.decimals)
+    get() = Coin.parseJettonBalance(balance, jetton.decimals)
 
 val JettonMintAction.parsedAmount: Float
-    get() = Coin.parseFloat(amount, jetton.decimals)
+    get() = Coin.parseJettonBalance(amount, jetton.decimals)
 
 val JettonBurnAction.parsedAmount: Float
-    get() = Coin.parseFloat(amount, jetton.decimals)
+    get() = Coin.parseJettonBalance(amount, jetton.decimals)
 
 fun NftItem.imageBySize(size: String): ImagePreview? {
     return previews?.firstOrNull { it.resolution == size }

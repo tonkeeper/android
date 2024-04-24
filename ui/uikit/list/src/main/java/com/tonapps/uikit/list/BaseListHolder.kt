@@ -36,8 +36,19 @@ abstract class BaseListHolder<I: BaseListItem>(
 
     abstract fun onBind(item: I)
 
+
+    fun unbind() {
+        item = null
+    }
+
+    @CallSuper
+    open fun onUnbind() {
+
+    }
+
     fun getString(resId: Int): String = context.getString(resId)
 
     @ColorInt
     fun getColor(resId: Int): Int = context.getColor(resId)
+
 }

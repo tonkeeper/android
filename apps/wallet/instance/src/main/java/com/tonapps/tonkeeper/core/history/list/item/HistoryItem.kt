@@ -22,7 +22,7 @@ sealed class HistoryItem(
 
     val timestampForSort: Long by lazy {
         when (this) {
-            is Event -> this.timestamp
+            is Event -> this.timestamp - this.index
             is Loader -> this.date
             is App -> this.timestamp
             else -> 0L
@@ -53,12 +53,14 @@ sealed class HistoryItem(
         val title: String,
         val body: String,
         val date: String,
+        val host: String,
         val timestamp: Long,
         val deepLink: String
     ): HistoryItem(TYPE_APP)
 
     @Parcelize
     data class Event(
+        val index: Int,
         val txId: String,
         val iconURL: String? = null,
         val action: ActionType,

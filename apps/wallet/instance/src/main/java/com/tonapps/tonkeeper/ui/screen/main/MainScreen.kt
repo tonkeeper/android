@@ -3,11 +3,9 @@ package com.tonapps.tonkeeper.ui.screen.main
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.LayoutRes
-import androidx.fragment.app.FragmentContainerView
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.core.widget.Widget
-import com.tonapps.tonkeeper.ui.screen.browser.BrowserScreen
+import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesScreen
 import com.tonapps.tonkeeper.ui.screen.events.EventsScreen
@@ -29,7 +27,6 @@ import uikit.extensions.isMaxScrollReached
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
-import uikit.widget.FragmentView
 
 class MainScreen: BaseFragment(R.layout.fragment_main) {
 
@@ -92,7 +89,7 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
             R.id.wallet to WalletScreen.newInstance(),
             R.id.activity to EventsScreen.newInstance(),
             R.id.collectibles to CollectiblesScreen.newInstance(),
-            // R.id.browser to BrowserScreen.newInstance()
+            R.id.browser to BrowserMainScreen.newInstance()
         )
     }
 
@@ -144,6 +141,7 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
             transaction.add(R.id.child_fragment, newFragment, tag)
         }
         transaction.commitNowAllowingStateLoss()
+        bottomTabsView.setDivider(false)
 
         currentFragment = newFragment
     }
@@ -158,7 +156,7 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
         private val mainDeepLinks = mapOf(
             "tonkeeper://wallet" to R.id.wallet,
             "tonkeeper://activity" to R.id.activity,
-            // "tonkeeper://browser" to R.id.browser,
+            "tonkeeper://browser" to R.id.browser,
             "tonkeeper://collectibles" to R.id.collectibles
         )
 

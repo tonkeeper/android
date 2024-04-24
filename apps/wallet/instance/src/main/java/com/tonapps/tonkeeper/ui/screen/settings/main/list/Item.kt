@@ -143,4 +143,13 @@ sealed class Item(type: Int): BaseListItem(type) {
         position = position,
         secondaryIcon = false
     )
+
+    class DeleteWatchAccount(
+        position: ListCell.Position
+    ): Icon(
+        titleRes = Localization.delete_watch_account,
+        iconRes = UIKitIcon.ic_trash_bin_28,
+        position = position,
+        secondaryIcon = false
+    )
 }

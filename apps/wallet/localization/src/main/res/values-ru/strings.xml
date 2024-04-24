@@ -29,11 +29,11 @@
     <string name="add_wallet_description">Создайте новый кошелек или добавьте существующий.</string>
     <string name="watch_wallet_add">Мониторинг активности кошелька без фразы восстановления. Вы будете уведомлены о любых транзакциях с этого кошелька.</string>
     <string name="invalid_link">Неверная ссылка</string>
-    <string name="watch_only">Только просмотр</string>
+    <string name="watch_only">Просмотр</string>
     <string name="unverified_token">Непроверенный токен</string>
     <string name="authorization_required">Требуется авторизация</string>
     <string name="sign_out">Выйти</string>
-
+    <string name="delete_watch_account">Удалить аккаунт для наблюдения</string>
     <string name="continue_action">Продолжить</string>
     <string name="get_started">Начать</string>
     <string name="updating">Обновление</string>
@@ -46,6 +46,14 @@
     <string name="jetton_transfer">Отправка %1$s</string>
     <string name="name_your_wallet">Имя кошелька</string>
     <string name="name_your_wallet_subtitle">Назовите свой кошелек, чтобы его можно было легко идентифицировать при использовании Tonkeeper. Эти имена хранятся локально и видны только вам.</string>
+
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nВыйти из всех кошельков?</string>
+    <string name="sign_out_all_description">Доступ к кошелькам будет отключён. Убедитесь, что вы сохранили все секретные ключи.</string>
+
+    <string name="sign_out_title">🚧 🚨 Выйти из кошелька? 🚨 🚧</string>
+    <string name="sign_out_description">Доступ к кошельку будет отключён. Убедитесь, что вы сохранили секретный ключ.</string>
+
+
 
     <string name="tokens">Токены</string>
     <string name="today">Сегодня</string>
@@ -246,4 +254,7 @@
 
     <string name="choose_wallet_title">Выбери кошелек</string>
     <string name="choose_wallet_subtitle">Выберите кошельки, которые хотите добавить.</string>
+    <string name="search_browser">Поиск</string>
+    <string name="explore">Витрина</string>
+    <string name="connected">Подключённые</string>
 </resources>

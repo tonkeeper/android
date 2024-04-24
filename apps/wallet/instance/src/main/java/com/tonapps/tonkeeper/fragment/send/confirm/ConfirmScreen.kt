@@ -89,7 +89,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         sendFeature.transaction.observe(viewLifecycleOwner) { transaction ->
             setRecipient(transaction.address!!, transaction.name)
             setComment(transaction.comment)
-            feature.setAmount(transaction.amountRaw, transaction.decimals, transaction.tokenAddress)
+            feature.setAmount(transaction.amountRaw, transaction.decimals, transaction.tokenAddress, transaction.tokenSymbol)
             iconView.setImageURI(transaction.icon)
 
             if (transaction.isTon) {
@@ -169,7 +169,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         super.newUiEffect(effect)
         if (effect is ConfirmScreenEffect.CloseScreen) {
             if (effect.navigateToHistory) {
-                // navigation?.openURL(HistoryScreen.DeepLink)
+                navigation?.openURL("tonkeeper://activity")
             }
 
             sendFeature.sendEffect(SendScreenEffect.Finish)

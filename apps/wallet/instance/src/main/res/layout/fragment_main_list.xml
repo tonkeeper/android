@@ -3,24 +3,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <uikit.widget.ColumnLayout
+    <com.tonapps.tonkeeper.ui.component.MainRecyclerView
+        android:id="@+id/list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:clipToPadding="false"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/filters"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/itemHeight"
-            android:visibility="gone"/>
-
-        <com.tonapps.tonkeeper.ui.component.MainRecyclerView
-            android:id="@+id/list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="@dimen/offsetMedium"
-            android:clipToPadding="false"/>
-
-    </uikit.widget.ColumnLayout>
+    <uikit.widget.EmptyLayout
+        android:id="@+id/empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:title="@string/empty_collectibles_title"
+        android:description="@string/empty_collectibles_subtitle"
+        android:negativeButtonText="@string/receive"/>
 
     <uikit.widget.HeaderView
         android:id="@+id/header"

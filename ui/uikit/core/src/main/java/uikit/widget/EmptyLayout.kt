@@ -38,8 +38,17 @@ class EmptyLayout @JvmOverloads constructor(
         context.useAttributes(attrs, R.styleable.EmptyLayout) {
             titleView.text = it.getString(R.styleable.EmptyLayout_android_title)
             subtitleView.text = it.getString(R.styleable.EmptyLayout_android_description)
-            firstButton.text = it.getString(R.styleable.EmptyLayout_android_positiveButtonText)
-            secondButton.text = it.getString(R.styleable.EmptyLayout_android_negativeButtonText)
+            setButtonText(firstButton, it.getString(R.styleable.EmptyLayout_android_positiveButtonText))
+            setButtonText(secondButton, it.getString(R.styleable.EmptyLayout_android_negativeButtonText))
+        }
+    }
+
+    private fun setButtonText(view: Button, text: String?) {
+        if (text.isNullOrEmpty()) {
+            view.visibility = GONE
+        } else {
+            view.text = text
+            view.visibility = VISIBLE
         }
     }
 

@@ -16,10 +16,12 @@ import com.tonapps.wallet.data.token.tokenModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import com.tonapps.wallet.data.account.legacy.WalletManager
+import com.tonapps.wallet.data.browser.browserModule
 import com.tonapps.wallet.data.collectibles.collectiblesModule
 import com.tonapps.wallet.data.events.eventsModule
 import com.tonapps.wallet.data.push.pushModule
 import com.tonapps.wallet.data.tonconnect.tonConnectModule
+import uikit.widget.webview.bridge.BridgeWebView
 
 class App: Application(), CameraXConfig.Provider {
 
@@ -35,6 +37,7 @@ class App: Application(), CameraXConfig.Provider {
 
         lateinit var db: AppDatabase
         lateinit var instance: App
+        lateinit var bridgeWebView: BridgeWebView
     }
 
     override fun onCreate() {
@@ -44,10 +47,11 @@ class App: Application(), CameraXConfig.Provider {
         walletManager = WalletManager(this)
         fiat = Fiat(this)
         settings = SettingsRepository(this)
+        bridgeWebView = BridgeWebView(this)
 
         startKoin {
             androidContext(this@App)
-            modules(koinModel, pushModule, tonConnectModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, browserModule, pushModule, tonConnectModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

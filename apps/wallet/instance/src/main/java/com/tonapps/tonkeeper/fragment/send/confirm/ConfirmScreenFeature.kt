@@ -1,15 +1,11 @@
 package com.tonapps.tonkeeper.fragment.send.confirm
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.blockchain.Coin
-import com.tonapps.tonkeeper.core.currency.currency
-import com.tonapps.tonkeeper.core.currency.from
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.event.WalletStateUpdateEvent
 import com.tonapps.tonkeeper.extensions.emulate
@@ -17,35 +13,26 @@ import com.tonapps.tonkeeper.extensions.getSeqno
 import com.tonapps.tonkeeper.extensions.label
 import com.tonapps.tonkeeper.extensions.sendToBlockchain
 import com.tonapps.tonkeeper.fragment.send.TransactionData
-import com.tonapps.tonkeeper.password.PasscodeDialog
 import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.core.WalletCurrency
 import core.EventBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.ton.block.Coins
-import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
-import org.ton.crypto.base64
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.rates.RatesRepository
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import org.ton.bitstring.BitString
 import org.ton.block.StateInit
-import org.ton.cell.CellBuilder
 import uikit.mvi.UiFeature
 import uikit.widget.ProcessTaskView
-import java.math.BigDecimal
 
 class ConfirmScreenFeature(
     private val passcodeRepository: PasscodeRepository,
     private val ratesRepository: RatesRepository,
     private val api: API,
+    private val historyHelper: HistoryHelper,
 ): UiFeature<ConfirmScreenState, ConfirmScreenEffect>(ConfirmScreenState()) {
 
     private val currency: WalletCurrency
@@ -189,15 +176,16 @@ class ConfirmScreenFeature(
         sendEffect(ConfirmScreenEffect.CloseScreen(true))
     }
 
-    fun setAmount(amountRaw: String, decimals: Int, tokenAddress: String) {
+    fun setAmount(amountRaw: String, decimals: Int, tokenAddress: String, symbol: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val value = Coin.parseFloat(amountRaw, decimals)
             val rates = ratesRepository.getRates(currency, tokenAddress)
             val fiat = rates.convert(tokenAddress, value)
 
+
             updateUiState {
                 it.copy(
-                    amount = amountRaw,
+                    amount = CurrencyFormatter.format(symbol, value),
                     amountInCurrency = "≈ " + CurrencyFormatter.format(currency.code, fiat)
                 )
             }
@@ -220,12 +208,11 @@ class ConfirmScreenFeature(
                 val gift = tx.buildWalletTransfer(wallet.contract.address, getStateInitIfNeed(wallet))
                 val emulate = wallet.emulate(api, gift)
                 val feeInTon = emulate.totalFees
-                val actions = HistoryHelper.mapping(wallet, emulate.event, false)
+                val actions = historyHelper.mapping(wallet, emulate.event, false)
                 val tokenAddress = tx.tokenAddress
 
-                val feeInCurrency = wallet.currency(tokenAddress)
-                    .value(feeInTon)
-                    .convert(currency.code)
+                val rates = ratesRepository.getRates(currency, tokenAddress)
+                val feeInCurrency = rates.convert(tokenAddress, Coin.toCoins(feeInTon))
 
                 val amount = Coin.toCoins(feeInTon)
                 updateUiState {

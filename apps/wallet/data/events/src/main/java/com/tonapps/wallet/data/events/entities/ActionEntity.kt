@@ -76,7 +76,7 @@ data class ActionEntity(
                 recipient = jettonTransfer.recipient?.let { AccountEntity(it, testnet) },
                 comment = jettonTransfer.comment,
                 token = TokenEntity(jettonTransfer.jetton),
-                amount = Coin.parseFloat(jettonTransfer.amount, jettonTransfer.jetton.decimals)
+                amount = Coin.parseJettonBalance(jettonTransfer.amount, jettonTransfer.jetton.decimals)
             )
         }
 

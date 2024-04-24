@@ -26,10 +26,10 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
     override fun onBind(item: Item.Token) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
-            context.navigation?.add(JettonScreen.newInstance(item.address, item.name))
+            context.navigation?.add(JettonScreen.newInstance(item.address, item.name, item.symbol))
         }
         iconView.setImageURI(item.iconUri, this)
-        titleView.text = item.name
+        titleView.text = item.symbol
         balanceView.text = if (item.hiddenBalance) {
             HIDDEN_BALANCE
         } else {

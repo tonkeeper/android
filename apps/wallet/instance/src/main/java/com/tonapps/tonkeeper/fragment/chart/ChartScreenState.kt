@@ -25,9 +25,9 @@ data class ChartScreenState(
     fun getTopItems(): List<ChartItem> {
         val items = mutableListOf<ChartItem>()
         items.add(ChartItem.Header(balance, currencyBalance))
-        items.add(ChartItem.Divider)
+        // items.add(ChartItem.Divider)
         items.add(ChartItem.Actions(walletType))
-        items.add(ChartItem.Divider)
+        // items.add(ChartItem.Divider)
         items.add(ChartItem.Price(rateFormat, rate24h))
         items.add(ChartItem.Chart(chartPeriod, chart))
         items.add(ChartItem.Period)

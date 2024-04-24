@@ -92,6 +92,18 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         return list.toList()
     }
 
+    fun getApps(accountId: String, testnet: Boolean): List<DAppEntity> {
+        val query = "SELECT $APP_COLUMN_OBJECT FROM $APP_TABLE_NAME WHERE $APP_COLUMN_ACCOUNT_ID = ?;"
+        val cursor = readableDatabase.rawQuery(query, arrayOf(accountId(accountId, testnet)))
+        val list = mutableListOf<DAppEntity>()
+        while (cursor.moveToNext()) {
+            val app = cursor.getBlob(0).toParcel<DAppEntity>() ?: continue
+            list.add(app)
+        }
+        cursor.close()
+        return list.toList()
+    }
+
     fun deleteApp(clientId: String, accountId: String, testnet: Boolean) {
         val s = writableDatabase.delete(
             APP_TABLE_NAME,

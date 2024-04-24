@@ -22,6 +22,7 @@ import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
+import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
@@ -51,6 +52,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             is Item.News -> navigation?.openURL(item.url, true)
             is Item.Support -> navigation?.openURL(item.url, true)
             is Item.Contact -> navigation?.openURL(item.url, true)
+            is Item.Logout -> signOut()
             else -> return
         }
     }
@@ -70,6 +72,19 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             )
             appWidgetManager.requestPinAppWidget(myProvider, null, successCallback)
         }
+    }
+
+    private fun signOut() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle(Localization.sign_out_title)
+        builder.setMessage(Localization.sign_out_description)
+        builder.setNegativeButton(Localization.sign_out) {
+            settingsViewModel.signOut()
+            finish()
+        }
+        builder.setPositiveButton(Localization.cancel)
+        builder.setColoredButtons()
+        builder.show()
     }
 
     companion object {

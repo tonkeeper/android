@@ -25,6 +25,7 @@ class SignManager(
     private val settingsRepository: SettingsRepository,
     private val walletRepository: WalletRepository,
     private val api: API,
+    private val historyHelper: HistoryHelper
 ) {
 
     suspend fun action(
@@ -75,7 +76,7 @@ class SignManager(
         val cell = walletRepository.createSignedMessage(wallet, EmptyPrivateKeyEd25519, request.validUntil, request.transfers)
         return try {
             val emulated = api.emulate(cell, wallet.testnet)
-            HistoryHelper.create(wallet, emulated, rates)
+            historyHelper.create(wallet, emulated, rates)
         } catch (e: Throwable) {
             null
         }

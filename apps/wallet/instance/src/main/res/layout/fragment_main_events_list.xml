@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/filters"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/itemHeight"
+            android:visibility="gone"/>
+
+        <com.tonapps.tonkeeper.ui.component.MainRecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:clipToPadding="false"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <uikit.widget.EmptyLayout
+        android:id="@+id/empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="@dimen/offsetMedium"
+        android:visibility="gone"
+        android:title="@string/empty_history_title"
+        android:description="@string/empty_history_subtitle"
+        android:positiveButtonText="@string/buy_toncoin"
+        android:negativeButtonText="@string/receive"/>
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</FrameLayout>

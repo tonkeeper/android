@@ -3,8 +3,9 @@ package com.tonapps.tonkeeper.fragment.send.amount
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.core.currency.from
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import core.QueueScope
@@ -15,7 +16,8 @@ import uikit.mvi.UiFeature
 
 @Deprecated("Need refactoring")
 class AmountScreenFeature(
-    private val tokenRepository: TokenRepository
+    private val tokenRepository: TokenRepository,
+    private val ratesRepository: RatesRepository
 ): UiFeature<AmountScreenState, AmountScreenEffect>(AmountScreenState()) {
 
     private val currency: WalletCurrency
@@ -81,9 +83,8 @@ class AmountScreenFeature(
         val accountId = wallet.accountId
         val currentTokenAddress = getCurrentTokenAddress()
 
-        val balanceInCurrency = from(currentTokenAddress, accountId, wallet.testnet)
-            .value(currentBalance)
-            .convert(currency.code)
+        val rates = ratesRepository.getRates(currency, currentTokenAddress)
+        val balanceInCurrency = rates.convert(currentTokenAddress, currentBalance)
 
         val insufficientBalance = newValue > currentBalance
         val remaining = if (newValue > 0) {

@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.component.PasscodeView
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import uikit.base.BaseDialog
+import uikit.dialog.alert.AlertDialog
 import uikit.widget.HeaderView
 
 class PasscodeDialog(

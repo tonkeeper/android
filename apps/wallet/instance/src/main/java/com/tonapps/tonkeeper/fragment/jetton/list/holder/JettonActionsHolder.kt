@@ -6,6 +6,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.api.getAddress
 import com.tonapps.tonkeeper.extensions.sendCoin
 import com.tonapps.tonkeeper.fragment.jetton.list.JettonItem
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletType
 import uikit.navigation.Navigation
 
@@ -18,7 +19,7 @@ class JettonActionsHolder(
 
     override fun onBind(item: JettonItem.Actions) {
         sendView.setOnClickListener { Navigation.from(context)?.sendCoin(
-            jettonAddress = item.jetton.getAddress(item.walletType == WalletType.Testnet),
+            jettonAddress = item.jetton.jetton.address,
         ) }
 
         sendView.visibility = if (item.walletType == WalletType.Watch) {

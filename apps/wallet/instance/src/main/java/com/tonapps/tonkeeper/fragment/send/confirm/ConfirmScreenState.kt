@@ -6,7 +6,7 @@ import uikit.mvi.UiState
 import uikit.widget.ProcessTaskView
 
 data class ConfirmScreenState(
-    val amount: String? = null,
+    val amount: CharSequence? = null,
     val amountInCurrency: String? = null,
     val feeValue: Long = 0,
     val fee: String? = null,

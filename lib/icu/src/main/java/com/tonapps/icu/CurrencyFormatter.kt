@@ -75,22 +75,15 @@ object CurrencyFormatter {
 
     private val monetarySymbolFirstPosition = format.toPattern().startsWith(CURRENCY_SIGN)
     private val monetaryDecimalSeparator = format.decimalFormatSymbols.monetaryDecimalSeparator.toString()
-    private val zeroDecimalsValue = "${monetaryDecimalSeparator}00"
-    private val zeroAmountValue = "0${zeroDecimalsValue}"
-    private val zeroEndValue = "${monetaryDecimalSeparator}0"
 
     private fun formatFloat(
         value: Float,
         decimals: Int,
     ): String {
-        val format = getFormat(decimals).format(value)
-        if (format == "0") {
-            return format
+        if (0f >= value) {
+            return "0"
         }
-        if (format.endsWith(zeroEndValue)) {
-            return format.removeSuffix(zeroEndValue)
-        }
-        return format.removeSuffix("0")
+        return getFormat(decimals).format(value)
     }
 
     fun format(
@@ -125,7 +118,7 @@ object CurrencyFormatter {
     ): CharSequence {
         var bigDecimal = value.toBigDecimal().stripTrailingZeros()
         if (bigDecimal.scale() > 0) {
-            bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP)
+            bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_DOWN)
         }
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(value)
@@ -138,7 +131,7 @@ object CurrencyFormatter {
     ): CharSequence {
         var bigDecimal = value.stripTrailingZeros()
         if (bigDecimal.scale() > 0) {
-            bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP)
+            bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_DOWN)
         }
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(value)
@@ -156,17 +149,20 @@ object CurrencyFormatter {
         currency: String,
         value: Float
     ): CharSequence {
-        return format(currency, value, 2)
+        var decimals = 2
+        if (0.0001f > value) {
+            decimals = 8
+        } else if (0.01f > value) {
+            decimals = 4
+        }
+        return format(currency, value, decimals)
     }
 
     private fun format(
         currency: String = "",
         value: String,
     ): CharSequence {
-        var amount = value.removeSuffix(zeroDecimalsValue)
-        if (zeroAmountValue == value) {
-            amount = "0"
-        }
+        val amount = removeTrailingZeros(value)
         val symbol = symbols[currency]
         val builder = StringBuilder()
         if (symbol != null) {
@@ -223,5 +219,16 @@ object CurrencyFormatter {
         decimalFormat.groupingSize = 3
         decimalFormat.isGroupingUsed = true
         return decimalFormat
+    }
+
+    private fun removeTrailingZeros(value: String): String {
+        if (!value.contains(monetaryDecimalSeparator)) {
+            return value
+        }
+        val fixed = value.replace(Regex("${monetaryDecimalSeparator}?0+$"), "")
+        if (fixed.endsWith(monetaryDecimalSeparator)) {
+            return fixed.removeSuffix(monetaryDecimalSeparator)
+        }
+        return fixed
     }
 }

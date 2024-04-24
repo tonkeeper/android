@@ -10,7 +10,8 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:src="@drawable/ic_ton_with_bg"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/balance"

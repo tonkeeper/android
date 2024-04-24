@@ -48,12 +48,16 @@ open class WebViewFixed @JvmOverloads constructor(
         return false
     }
 
-    override fun destroy() {
+    fun reset() {
         super.loadDataWithBaseURL(null, "", "text/html", "utf-8", null)
         super.clearHistory()
         try {
             (this.parent as ViewGroup).removeView(this)
         } catch (ignored: Throwable) { }
+    }
+
+    override fun destroy() {
+        reset()
         try {
             removeAllViews()
         } catch (ignored: Throwable) { }

@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import com.tonapps.extensions.ifPunycodeToUnicode
+import com.tonapps.icu.Punycode
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
@@ -82,7 +84,7 @@ class TransactionDetailView @JvmOverloads constructor(
             descriptionView.visibility = GONE
         } else {
             descriptionView.visibility = VISIBLE
-            descriptionView.text = description
+            descriptionView.text = description.toString().ifPunycodeToUnicode()
         }
     }
 

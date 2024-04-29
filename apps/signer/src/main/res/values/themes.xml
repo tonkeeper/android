@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Signer.Starting" parent="Theme.App.Starting">
+        <item name="windowSplashScreenBackground">#10161F</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/bg_splash</item>
+        <item name="splashScreenIconSize">128dp</item>
+        <item name="windowSplashScreenAnimationDuration">0</item>
+        <item name="postSplashScreenTheme">@style/Theme.Signer</item>
+    </style>
+
+    <style name="Theme.Signer" parent="Theme.App.Blue">
+        <item name="android:windowBackground">@drawable/bg_window</item>
+    </style>
+
+</resources>

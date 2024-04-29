@@ -1,7 +1,0 @@
-#Sat Jan 13 05:28:02 EST 2024
-base.0=/Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/dex/debugAndroidTest/mergeProjectDexDebugAndroidTest/0/classes.dex
-base.1=/Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/dex/debugAndroidTest/mergeProjectDexDebugAndroidTest/11/classes.dex
-path.0=0/classes.dex
-path.1=11/classes.dex
-renamed.0=classes.dex
-renamed.1=classes2.dex

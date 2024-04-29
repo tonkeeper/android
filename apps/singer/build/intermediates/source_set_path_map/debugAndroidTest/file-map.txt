@@ -1,4 +1,0 @@
-com.tonapps.singer.test.singer-androidTest-0 /Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/generated/res/resValues/androidTest/debug
-com.tonapps.singer.test.singer-mergeDebugAndroidTestResources-1 /Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
-com.tonapps.singer.test.singer-mergeDebugAndroidTestResources-2 /Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
-com.tonapps.singer.test.singer-merged_res-3 /Users/polstianka/AndroidStudioProjects/Tonkeeper/apps/singer/build/intermediates/merged_res/debugAndroidTest

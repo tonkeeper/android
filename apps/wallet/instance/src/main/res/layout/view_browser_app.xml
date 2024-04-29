@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="120dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <uikit.widget.FrescoView
+        android:id="@+id/icon"
+        android:layout_width="@dimen/barHeight"
+        android:layout_height="@dimen/barHeight"
+        android:layout_gravity="center_horizontal"
+        app:roundedCornerRadius="@dimen/offsetMedium"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_horizontal"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Body3"
+        android:textColor="?attr/textSecondaryColor"/>
+
+</uikit.widget.ColumnLayout>

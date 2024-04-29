@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:action="@drawable/ic_close_16"/>
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:title="@string/qr_sign_title"
+        android:description="@string/qr_sign_subtitle"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@color/constantWhite"
+        android:padding="@dimen/offsetMedium">
+
+        <com.tonapps.qr.ui.QRView
+            android:id="@+id/qr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:color="@color/constantPistachio"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:textSize="14sp"
+            android:textAllCaps="true"
+            android:fontFamily="@font/roboto_mono"
+            android:textColor="@color/constantBlack"
+            android:text="@string/signed_transaction"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:singleLine="true"
+            android:textSize="14sp"
+            android:textAllCaps="true"
+            android:fontFamily="@font/roboto_mono"
+            android:textColor="@color/constantBlack"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/done"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="@dimen/offsetLarge"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/done"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

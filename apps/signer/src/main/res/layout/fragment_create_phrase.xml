@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/offsetLarge">
+
+            <uikit.widget.TextHeaderView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/enter_recovery_phrase"
+                android:description="@string/enter_recovery_phrase_subtitle"/>
+
+            <uikit.widget.WordFormView
+                android:id="@+id/word_form"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge"/>
+
+            <Button
+                style="@style/Widget.App.Button"
+                android:id="@+id/next"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:enabled="false"
+                android:text="@string/continue_text"/>
+
+        </uikit.widget.ColumnLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/paste"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center"
+        android:layout_margin="@dimen/offsetMedium"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:text="@string/paste"
+        android:background="@drawable/bg_content_tint_24"
+        android:textAppearance="@style/TextAppearance.Label2"
+        android:textColor="?attr/textPrimaryColor"/>
+
+</FrameLayout>

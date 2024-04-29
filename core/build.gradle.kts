@@ -22,12 +22,15 @@ android {
 }
 
 dependencies {
-    implementation(Libs.KotlinX.coroutines)
-    implementation(Libs.AndroidX.lifecycle)
-    implementation(Libs.AndroidX.security)
+    implementation(Dependence.KotlinX.coroutines)
+    implementation(Dependence.AndroidX.lifecycle)
+    implementation(Dependence.AndroidX.security)
 
-    implementation(Libs.Squareup.okhttp)
-    implementation(Libs.Squareup.sse)
+    implementation(Dependence.Squareup.okhttp)
+    implementation(Dependence.Squareup.sse)
+    implementation(Dependence.zxing)
 
-    api(Libs.ton)
+    implementation(Dependence.ML.barcode)
+    implementation(Dependence.AndroidX.Camera.base)
+    implementation(Dependence.ton)
 }

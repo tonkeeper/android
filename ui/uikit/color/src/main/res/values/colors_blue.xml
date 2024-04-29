@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="textPrimaryBlue">#FFFFFF</color>
+    <color name="textSecondaryBlue">#8994A3</color>
+    <color name="textTertiaryBlue">#556170</color>
+    <color name="textAccentBlue">#45AEF5</color>
+    <color name="textPrimaryAlternateBlue">#10161F</color>
+
+    <color name="backgroundPageBlue">#10161F</color>
+    <color name="backgroundTransparentBlue">#F510161F</color>
+    <color name="backgroundContentBlue">#1D2633</color>
+    <color name="backgroundContentTintBlue">#2E3847</color>
+    <color name="backgroundContentAttentionBlue">#424C5C</color>
+    <color name="backgroundHighlightedBlue">#14C2DAFF</color>
+    <color name="backgroundOverlayStrongBlue">#B8000000</color>
+    <color name="backgroundOverlayLightBlue">#7A000000</color>
+    <color name="backgroundOverlayExtraLightBlue">#3D000000</color>
+
+    <color name="iconPrimaryBlue">#FFFFFF</color>
+    <color name="iconSecondaryBlue">#8994A3</color>
+    <color name="iconTertiaryBlue">#556170</color>
+    <color name="iconPrimaryAlternateBlue">#10161F</color>
+
+    <color name="buttonPrimaryBackgroundBlue">#45AEF5</color>
+    <color name="buttonPrimaryBackgroundDisabledBlue">#378AC2</color>
+    <color name="buttonPrimaryBackgroundHighlightedBlue">#5BB8F6</color>
+    <color name="buttonPrimaryForegroundBlue">#FFFFFF</color>
+
+    <color name="buttonSecondaryBackgroundBlue">#1D2633</color>
+    <color name="buttonSecondaryBackgroundDisabledBlue">#171F29</color>
+    <color name="buttonSecondaryBackgroundHighlightedBlue">#222C3B</color>
+    <color name="buttonSecondaryForegroundBlue">#FFFFFF</color>
+
+    <color name="buttonTertiaryBackgroundBlue">#2E3847</color>
+    <color name="buttonTertiaryBackgroundDisabledBlue">#28303D</color>
+    <color name="buttonTertiaryBackgroundHighlightedBlue">#364052</color>
+    <color name="buttonTertiaryForegroundBlue">#FFFFFF</color>
+
+    <color name="buttonGreenBackgroundBlue">#39CC83</color>
+    <color name="buttonGreenBackgroundDisabledBlue">#2B9962</color>
+    <color name="buttonGreenBackgroundHighlightedBlue">#49CC8B</color>
+
+    <color name="fieldBackgroundBlue">#1D2633</color>
+    <color name="fieldActiveBorderBlue">#45AEF5</color>
+    <color name="fieldErrorBorderBlue">#FF4766</color>
+    <color name="fieldErrorBackgroundBlue">#241A25</color>
+
+    <color name="accentBlueBlue">#45AEF5</color>
+    <color name="accentGreenBlue">#39CC83</color>
+    <color name="accentRedBlue">#FF4766</color>
+    <color name="accentOrangeBlue">#F5A73B</color>
+    <color name="accentPurpleBlue">#7665E5</color>
+
+    <color name="tabBarActiveIconBlue">#45AEF5</color>
+    <color name="tabBarInactiveIconBlue">#8994A3</color>
+
+    <color name="separatorCommonBlue">#14C2DAFF</color>
+    <color name="separatorAlternateBlue">#14FFFFFF</color>
+
+</resources>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="@dimen/offsetMedium"
+    android:layout_marginBottom="@dimen/offsetMedium"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.H2"
+        android:textColor="?attr/textPrimaryColor"
+        android:text="@string/log_out"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/gap"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/textSecondaryColor"
+        android:text="@string/logout_description"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/confirmation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetMedium"
+        android:layout_marginVertical="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"
+        android:orientation="horizontal">
+
+        <uikit.widget.CheckBoxView
+            android:id="@+id/checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="@dimen/gap">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/logout_confirmation"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="?attr/textPrimaryColor" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/backup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/gap"
+                android:visibility="gone"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="?attr/textAccentColor"
+                android:text="@string/back_up_now"/>
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/logout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/log_out"/>
+
+
+</androidx.appcompat.widget.LinearLayoutCompat>

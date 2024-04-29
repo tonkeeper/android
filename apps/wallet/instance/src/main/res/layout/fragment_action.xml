@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="84dp">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/confirm_action"
+                android:textColor="?attr/textPrimaryColor"
+                android:textAppearance="@style/TextAppearance.H3"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/action_wallet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:singleLine="true"
+                android:textColor="?attr/textSecondaryColor"/>
+
+        </uikit.widget.ColumnLayout>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/action_close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center_vertical|end"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:background="@drawable/bg_oval_button_secondary" />
+
+    </FrameLayout>
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|start"
+            android:text="@string/fee"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/fee"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"/>
+    </FrameLayout>
+
+    <uikit.widget.ProcessTaskView
+        android:id="@+id/process"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/itemHeight"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:visibility="gone"
+        app:successLabel="@string/done"
+        app:errorLabel="@string/error"/>
+
+    <uikit.widget.RowLayout
+        android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/itemHeight"
+        android:layout_marginTop="@dimen/offsetMedium">
+
+        <Button
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/cancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/buttonSecondaryForegroundColor"
+            android:text="@string/cancel"/>
+
+        <View
+            android:layout_width="@dimen/offsetMedium"
+            android:layout_height="0dp"/>
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/confirm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/buttonPrimaryForegroundColor"
+            android:text="@string/confirm"/>
+
+    </uikit.widget.RowLayout>
+
+</uikit.widget.ColumnLayout>

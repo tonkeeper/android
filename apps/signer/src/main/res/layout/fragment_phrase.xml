@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:icon="@drawable/ic_chevron_left_16"/>
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:title="@string/recovery_phrase"
+        android:description="@string/recovery_phrase_subtitle"/>
+
+    <uikit.widget.PhraseWords
+        android:id="@+id/phrase_words"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:layout_gravity="center"/>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/copy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:text="@string/copy"
+        android:textAppearance="@style/TextAppearance.Label1"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

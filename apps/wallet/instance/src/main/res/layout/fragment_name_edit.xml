@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:action="@drawable/ic_close_16"
+        app:ignoreSystemOffset="true"/>
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:title="@string/customize_wallet_title"
+        android:description="@string/customize_wallet_subtitle"/>
+
+    <com.tonapps.tonkeeper.ui.component.label.LabelEditorView
+        android:id="@+id/editor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:button="@string/save"/>
+
+</uikit.widget.ColumnLayout>

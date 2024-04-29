@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/alert_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <View
+        android:id="@+id/alert_outside"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC000000"/>
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/alert_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="8dp"
+        android:layout_margin="@dimen/offsetLarge"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_dialog"
+        android:orientation="vertical">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:paddingVertical="24dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/alert_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:textAppearance="@style/TextAppearance.H3"
+                android:textColor="?attr/textPrimaryColor"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/alert_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textPrimaryColor"/>
+
+        </uikit.widget.ColumnLayout>
+
+        <uikit.widget.DividerView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <uikit.widget.RowLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/itemHeight"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/alert_negative_button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:gravity="center"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/alert_positive_button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:gravity="center"/>
+
+        </uikit.widget.RowLayout>
+
+    </uikit.widget.ColumnLayout>
+
+</FrameLayout>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Widget.BottomSheet" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.BottomSheet.Modal</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize|stateVisible</item>
+    </style>
+
+    <style name="Widget.BottomSheet.Modal" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@drawable/bg_modal</item>
+        <item name="android:maxWidth">640dp</item>
+    </style>
+
+    <style name="Base.Widget.App.Button" parent="android:Widget.Material.Button">
+        <item name="backgroundTint">@null</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_height">@dimen/itemHeight</item>
+    </style>
+
+    <style name="Widget.App.Button" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_button_primary</item>
+        <item name="android:textColor">@color/button_primary_foreground_selector</item>
+    </style>
+
+    <style name="Widget.App.Button.Secondary" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_button_secondary</item>
+        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+    </style>
+
+    <style name="Widget.App.Button.Small.Secondary" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_small_button_secondary</item>
+        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.Label2</item>
+        <item name="minHeight">0dp</item>
+    </style>
+
+    <style name="Widget.App.Button.Tertiary" parent="android:Widget.Material.TextView">
+        <item name="android:background">@drawable/bg_button_tertiary</item>
+        <item name="android:textColor">?attr/buttonTertiaryForegroundColor</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.Label2</item>
+        <item name="android:paddingStart">@dimen/offsetMedium</item>
+        <item name="android:paddingEnd">@dimen/offsetMedium</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="Widget.App.Tabs" parent="Widget.Design.TabLayout">
+        <item name="tabTextAppearance">@style/Widget.App.Tabs.TextAppearance</item>
+    </style>
+
+    <style name="Widget.App.Tabs.TextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="Widget.Dialog" parent="android:Theme.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@style/Widget.Dialog.NoAnimation</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowLightStatusBar">@bool/use_light_system_bars</item>
+
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/use_light_system_bars</item>
+
+    </style>
+
+    <style name="Widget.Dialog.NoAnimation">
+        <item name="android:windowEnterAnimation">@null</item>
+        <item name="android:windowExitAnimation">@null</item>
+    </style>
+
+    <style name="Widget.App.WordEditText" parent="android:Widget.Material.EditText">
+        <item name="android:singleLine">true</item>
+        <item name="android:imeOptions">actionNext</item>
+        <item name="android:inputType">textNoSuggestions</item>
+        <item name="android:textCursorDrawable">@drawable/cursor</item>
+        <item name="android:textColor">?attr/textPrimaryColor</item>
+        <item name="android:textAppearance">@style/TextAppearance.Body1</item>
+        <item name="android:paddingTop">@dimen/offsetMedium</item>
+        <item name="android:paddingBottom">@dimen/offsetMedium</item>
+        <item name="android:paddingEnd">@dimen/offsetMedium</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:layout_marginTop">@dimen/offsetMedium</item>
+    </style>
+
+</resources>

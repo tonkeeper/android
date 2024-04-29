@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ignoreSystemOffset="true"
+            android:action="@drawable/ic_close_16"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/name_your_key"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:textAppearance="@style/TextAppearance.H2"
+            android:textColor="?attr/textPrimaryColor"
+            android:gravity="center"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:text="@string/name_your_key_subtitle"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:textColor="?attr/textSecondaryColor"
+            android:gravity="center"/>
+
+        <uikit.widget.InputView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/offsetLarge"
+            android:maxLength="24"
+            android:singleLine="true"
+            android:hint="@string/name"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/save"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetLarge"
+        android:layout_gravity="bottom"
+        android:enabled="false"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/save"/>
+
+</FrameLayout>

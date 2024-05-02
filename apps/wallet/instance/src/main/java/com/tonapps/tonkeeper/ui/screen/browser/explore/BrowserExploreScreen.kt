@@ -34,6 +34,11 @@ class BrowserExploreScreen : BaseFragment(R.layout.fragment_browser_explore) {
 
     private lateinit var listView: RecyclerView
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        collectFlow(exploreViewModel.uiItemsFlow, adapter::submitList)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         listView = view.findViewById(R.id.list)
@@ -53,8 +58,6 @@ class BrowserExploreScreen : BaseFragment(R.layout.fragment_browser_explore) {
 
             override fun supportsPredictiveItemAnimations(): Boolean = false
         }
-
-        collectFlow(exploreViewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onResume() {

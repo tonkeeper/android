@@ -4,32 +4,33 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
+import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.fragment.send.SendScreen
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.fragment.web.WebFragment
+import com.tonapps.tonkeeper.password.PasscodeBiometric
 import com.tonapps.tonkeeper.sign.SignRequestEntity
 import com.tonapps.tonkeeper.ui.component.PasscodeView
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
@@ -56,7 +57,6 @@ class RootActivity: NavigationActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(rootViewModel.themeId)
         super.onCreate(savedInstanceState)
-
         uiHandler = Handler(mainLooper)
 
         handleIntent(intent)
@@ -78,17 +78,34 @@ class RootActivity: NavigationActivity() {
         collectFlow(rootViewModel.tonConnectEventsFlow, ::onDAppEvent)
         collectFlow(rootViewModel.hasWalletFlow) { init(it) }
         collectFlow(rootViewModel.eventFlow) { event(it) }
-        collectFlow(rootViewModel.lockFlow) {
-            lockView.visibility = if (it) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-        }
+        collectFlow(rootViewModel.passcodeFlow, ::passcodeFlow)
 
         collectFlow(rootViewModel.themeFlow) {
             recreate()
         }
+    }
+
+    private fun passcodeFlow(config: RootViewModel.Passcode) {
+        if (!config.show) {
+            lockView.visibility = View.GONE
+            return
+        }
+        lockView.visibility = View.VISIBLE
+        if (config.biometric) {
+            PasscodeBiometric.showPrompt(this, object : BiometricPrompt.AuthenticationCallback() {
+
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    lockView.visibility = View.GONE
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    toast(Localization.authorization_required)
+                }
+            })
+        }
+
     }
 
     private suspend fun onDAppEvent(event: DAppEventEntity) {

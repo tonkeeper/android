@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
@@ -72,15 +73,20 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
                 openQRCode()
             }
         }
-
-        collectFlow(eventsViewModel.uiItemsFlow, ::setItems)
         collectFlow(eventsViewModel.isUpdatingFlow) { updating ->
             if (updating) {
                 headerView.setSubtitle(Localization.updating)
             } else {
                 headerView.setSubtitle(null)
+                // getRecyclerView()?.scrollToPosition(0)
             }
         }
+        collectFlow(eventsViewModel.uiItemsFlow, ::setItems)
+    }
+
+    override fun scrollUp() {
+        super.scrollUp()
+        eventsViewModel.update()
     }
 
     private fun openQRCode() {
@@ -114,9 +120,19 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
         containerView.visibility = View.VISIBLE
     }
 
-    override fun getRecyclerView() = listView
+    override fun getRecyclerView(): RecyclerView? {
+        if (this::listView.isInitialized) {
+            return listView
+        }
+        return null
+    }
 
-    override fun getHeaderDividerOwner() = headerView
+    override fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner? {
+        if (this::headerView.isInitialized) {
+            return headerView
+        }
+        return null
+    }
 
     companion object {
         fun newInstance() = EventsScreen()

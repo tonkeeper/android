@@ -7,25 +7,33 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.Coin
+import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getQueryLong
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
+import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.sign.SignRequestEntity
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.tonkeeper.ui.screen.wallet.WalletViewModel.Companion.getWalletScreen
+import com.tonapps.tonkeeper.ui.screen.wallet.list.Item
+import com.tonapps.tonkeeper.ui.screen.wallet.list.WalletAdapter
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
+import com.tonapps.wallet.data.tonconnect.entities.reply.DAppSuccessEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -38,13 +46,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
+import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
@@ -56,15 +70,23 @@ class RootViewModel(
     private val tonConnectRepository: TonConnectRepository,
     private val api: API,
     private val historyHelper: HistoryHelper,
+    private val screenCacheSource: ScreenCacheSource,
+    private val walletAdapter: WalletAdapter,
 ): AndroidViewModel(application) {
 
-    val hasWalletFlow = walletRepository.walletsFlow.map { it.isNotEmpty() }.distinctUntilChanged()
+    data class Passcode(
+        val show: Boolean,
+        val biometric: Boolean,
+    )
+
+    private val _hasWalletFlow = MutableEffectFlow<Boolean?>()
+    val hasWalletFlow = _hasWalletFlow.asSharedFlow().filterNotNull()
 
     private val _eventFlow = MutableSharedFlow<RootEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
-    private val _lockFlow = MutableStateFlow<Boolean?>(null)
-    val lockFlow = _lockFlow.asStateFlow().filterNotNull()
+    private val _passcodeFlow = MutableStateFlow<Passcode?>(null)
+    val passcodeFlow = _passcodeFlow.asStateFlow().filterNotNull()
 
     val themeId: Int
         get() {
@@ -86,10 +108,34 @@ class RootViewModel(
     val tonConnectEventsFlow = tonConnectRepository.eventsFlow
 
     init {
-        _lockFlow.value = settingsRepository.lockScreen && passcodeRepository.hasPinCode
+        _passcodeFlow.value = Passcode(
+            show = settingsRepository.lockScreen && passcodeRepository.hasPinCode,
+            biometric = settingsRepository.biometric
+        )
+
+        walletRepository.walletsFlow.onEach { wallets ->
+            if (wallets.isEmpty()) {
+                _hasWalletFlow.tryEmit(false)
+            } else {
+                val wallet = walletRepository.activeWalletFlow.first()
+                val items = screenCacheSource.getWalletScreen(wallet)
+                if (!items.isNullOrEmpty()) {
+                    submitWalletList(items)
+                } else {
+                    _hasWalletFlow.tryEmit(true)
+                }
+            }
+            Widget.updateAll()
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
         viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.firebaseToken = GooglePushService.requestToken()
+        }
+    }
+
+    private suspend fun submitWalletList(items: List<Item>) = withContext(Dispatchers.Main) {
+        walletAdapter.submitList(items) {
+            _hasWalletFlow.tryEmit(true)
         }
     }
 
@@ -97,8 +143,12 @@ class RootViewModel(
         viewModelScope.launch {
             walletRepository.clear()
             passcodeRepository.clear()
-            _lockFlow.value = false
+            hidePasscode()
         }
+    }
+
+    private fun hidePasscode() {
+        _passcodeFlow.value = Passcode(show = false, biometric = false)
     }
 
     suspend fun tonconnectReject(requestId: String, app: DAppEntity) {
@@ -130,10 +180,44 @@ class RootViewModel(
         return signManager.action(navigation, wallet, request)
     }
 
+    suspend fun tonconnectBridgeEvent(
+        context: Context,
+        url: String,
+        array: JSONArray
+    ): String? {
+        if (array.length() != 1) {
+            throw IllegalStateException("Invalid array length")
+        }
+        return tonconnectBridgeEvent(context, url, array.getJSONObject(0))
+    }
+
+    suspend fun tonconnectBridgeEvent(
+        context: Context,
+        url: String,
+        json: JSONObject
+    ): String? {
+        val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
+        val app = tonConnectRepository.getApp(url, wallet) ?: throw IllegalStateException("No app")
+        val event = DAppEventEntity(wallet.copy(), app.copy(), json)
+        if (event.method != "sendTransaction") {
+            throw IllegalStateException("Invalid method")
+        }
+        val params = event.params
+        if (params.length() != 1) {
+            throw IllegalStateException("Invalid params length")
+        }
+        val param = DAppEventEntity.parseParam(params.get(0))
+        val request = SignRequestEntity(param)
+
+        val boc = requestSign(context, event.wallet, request)
+        val data = DAppSuccessEntity(event.id, boc)
+        return data.toJSON().toString()
+    }
+
     fun checkPasscode(code: String): Flow<Unit> = flow {
         val valid = passcodeRepository.compare(code)
         if (valid) {
-            _lockFlow.value = false
+            hidePasscode()
             emit(Unit)
         } else {
             throw Exception("invalid passcode")

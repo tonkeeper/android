@@ -3,8 +3,14 @@ package com.tonapps.wallet.data.account.legacy.storage
 import android.content.Context
 import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.wallet.data.account.WalletSource
+import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.legacy.DebugWallet
+import com.tonapps.wallet.data.account.legacy.IsDebug
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import core.keyvalue.KeyValue
+import org.ton.api.pub.PublicKeyEd25519
+import org.ton.crypto.hex
 
 internal class WalletStorage(context: Context) {
 
@@ -81,6 +87,13 @@ internal class WalletStorage(context: Context) {
     }
 
     suspend fun getWallets(): List<WalletLegacy> {
+        if (IsDebug) {
+            val legacyWallet = DebugWallet
+            val testList = mutableListOf<WalletLegacy>()
+            testList.add(legacyWallet)
+            return testList
+        }
+
         val walletIds = wallets.getIds()
         val wallets = mutableMapOf<String, WalletLegacy>()
         for (walletId in walletIds) {

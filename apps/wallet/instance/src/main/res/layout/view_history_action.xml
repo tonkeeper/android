@@ -58,6 +58,20 @@
         app:layout_constraintTop_toBottomOf="@+id/title"/>
 
     <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/warning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/offsetMedium"
+        android:layout_marginTop="6dp"
+        android:singleLine="true"
+        android:text="@string/failed"
+        android:maxLength="18"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="?attr/accentOrangeColor"
+        app:layout_constraintStart_toEndOf="@+id/icon"
+        app:layout_constraintTop_toBottomOf="@+id/subtitle"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/amount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

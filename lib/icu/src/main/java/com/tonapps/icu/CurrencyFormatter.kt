@@ -73,8 +73,8 @@ object CurrencyFormatter {
     private val pattern = format.toPattern().replace(CURRENCY_SIGN, "").trim()
     private val cache = ConcurrentHashMap<String, DecimalFormat>(symbols.size, 1.0f, 2)
 
-    private val monetarySymbolFirstPosition = format.toPattern().startsWith(CURRENCY_SIGN)
-    private val monetaryDecimalSeparator = format.decimalFormatSymbols.monetaryDecimalSeparator.toString()
+    val monetarySymbolFirstPosition = format.toPattern().startsWith(CURRENCY_SIGN)
+    val monetaryDecimalSeparator = format.decimalFormatSymbols.monetaryDecimalSeparator.toString()
 
     private fun formatFloat(
         value: Float,
@@ -222,6 +222,9 @@ object CurrencyFormatter {
     }
 
     private fun removeTrailingZeros(value: String): String {
+        if (true) {
+            return value
+        }
         if (!value.contains(monetaryDecimalSeparator)) {
             return value
         }

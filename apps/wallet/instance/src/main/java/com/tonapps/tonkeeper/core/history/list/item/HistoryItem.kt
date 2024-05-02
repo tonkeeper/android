@@ -1,13 +1,19 @@
 package com.tonapps.tonkeeper.core.history.list.item
 
 import android.net.Uri
+import android.os.Parcel
 import android.os.Parcelable
+import com.tonapps.extensions.readBooleanCompat
+import com.tonapps.extensions.readCharSequenceCompat
+import com.tonapps.extensions.readEnum
+import com.tonapps.extensions.readParcelableCompat
+import com.tonapps.extensions.writeBooleanCompat
+import com.tonapps.extensions.writeCharSequenceCompat
+import com.tonapps.extensions.writeEnum
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.helper.DateFormat
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.push.entities.AppPushEntity
-import kotlinx.parcelize.Parcelize
 
 sealed class HistoryItem(
     type: Int,
@@ -18,6 +24,16 @@ sealed class HistoryItem(
         const val TYPE_HEADER = 2
         const val TYPE_LOADER = 3
         const val TYPE_APP = 4
+
+        fun createFromParcel(parcel: Parcel): HistoryItem {
+            return when (parcel.readInt()) {
+                TYPE_ACTION -> Event(parcel)
+                TYPE_HEADER -> Header(parcel)
+                TYPE_LOADER -> Loader(parcel)
+                TYPE_APP -> App(parcel)
+                else -> throw IllegalArgumentException("Unknown type")
+            }
+        }
     }
 
     val timestampForSort: Long by lazy {
@@ -29,13 +45,50 @@ sealed class HistoryItem(
         }
     }
 
-    @Parcelize
+    val uniqueId: String by lazy {
+        when (this) {
+            is Event -> "event_${this.txId}_${this.index}"
+            is Loader -> "loader_${this.index}"
+            is App -> "app_${this.timestamp}"
+            else -> ""
+        }
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeInt(type)
+        marshall(dest, flags)
+    }
+
+    abstract fun marshall(dest: Parcel, flags: Int)
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
     data class Loader(
         val index: Int,
         val date: Long
-    ): HistoryItem(TYPE_LOADER)
+    ): HistoryItem(TYPE_LOADER) {
 
-    @Parcelize
+        constructor(parcel: Parcel) : this(
+            index = parcel.readInt(),
+            date = parcel.readLong()
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeInt(index)
+            dest.writeLong(date)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Loader> {
+            override fun createFromParcel(parcel: Parcel) = Loader(parcel)
+
+            override fun newArray(size: Int): Array<Loader?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
     data class Header(
         val title: String,
         val date: Long,
@@ -45,9 +98,22 @@ sealed class HistoryItem(
             title = DateFormat.monthWithDate(timestamp),
             date = timestamp
         )
+
+        constructor(parcel: Parcel) : this(parcel.readLong())
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeLong(date)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Header> {
+            override fun createFromParcel(parcel: Parcel) = Header(parcel)
+
+            override fun newArray(size: Int): Array<Header?> {
+                return arrayOfNulls(size)
+            }
+        }
     }
 
-    @Parcelize
     data class App(
         val iconUri: Uri,
         val title: String,
@@ -56,9 +122,37 @@ sealed class HistoryItem(
         val host: String,
         val timestamp: Long,
         val deepLink: String
-    ): HistoryItem(TYPE_APP)
+    ): HistoryItem(TYPE_APP) {
 
-    @Parcelize
+        constructor(parcel: Parcel) : this(
+            iconUri = parcel.readParcelableCompat()!!,
+            title = parcel.readString()!!,
+            body = parcel.readString()!!,
+            date = parcel.readString()!!,
+            host = parcel.readString()!!,
+            timestamp = parcel.readLong(),
+            deepLink = parcel.readString()!!
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeParcelable(iconUri, flags)
+            dest.writeString(title)
+            dest.writeString(body)
+            dest.writeString(date)
+            dest.writeString(host)
+            dest.writeLong(timestamp)
+            dest.writeString(deepLink)
+        }
+
+        companion object CREATOR : Parcelable.Creator<App> {
+            override fun createFromParcel(parcel: Parcel) = App(parcel)
+
+            override fun newArray(size: Int): Array<App?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
     data class Event(
         val index: Int,
         val txId: String,
@@ -86,9 +180,78 @@ sealed class HistoryItem(
         val address: String? = null,
         val addressName: String? = null,
         val lt: Long = 0L,
+        val failed: Boolean
     ): HistoryItem(TYPE_ACTION) {
 
         val hasNft: Boolean
             get() = nftImageURL != null && nftTitle != null && nftCollection != null
+
+        constructor(parcel: Parcel) : this(
+            index = parcel.readInt(),
+            txId = parcel.readString()!!,
+            iconURL = parcel.readString(),
+            action = parcel.readEnum(ActionType::class.java)!!,
+            title = parcel.readString()!!,
+            subtitle = parcel.readString()!!,
+            timestamp = parcel.readLong(),
+            comment = parcel.readString(),
+            value = parcel.readCharSequenceCompat()!!,
+            value2 = parcel.readCharSequenceCompat()!!,
+            currency = parcel.readCharSequenceCompat(),
+            nftImageURL = parcel.readString(),
+            nftTitle = parcel.readString(),
+            nftCollection = parcel.readString(),
+            nftAddress = parcel.readString(),
+            tokenCode = parcel.readString(),
+            date = parcel.readString()!!,
+            pending = parcel.readBooleanCompat(),
+            position = parcel.readEnum(ListCell.Position::class.java)!!,
+            coinIconUrl = parcel.readString()!!,
+            fee = parcel.readCharSequenceCompat(),
+            feeInCurrency = parcel.readCharSequenceCompat(),
+            isOut = parcel.readBooleanCompat(),
+            address = parcel.readString(),
+            addressName = parcel.readString(),
+            lt = parcel.readLong(),
+            failed = parcel.readBooleanCompat()
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeInt(index)
+            dest.writeString(txId)
+            dest.writeString(iconURL)
+            dest.writeEnum(action)
+            dest.writeString(title)
+            dest.writeString(subtitle)
+            dest.writeLong(timestamp)
+            dest.writeString(comment)
+            dest.writeCharSequenceCompat(value)
+            dest.writeCharSequenceCompat(value2)
+            dest.writeCharSequenceCompat(currency)
+            dest.writeString(nftImageURL)
+            dest.writeString(nftTitle)
+            dest.writeString(nftCollection)
+            dest.writeString(nftAddress)
+            dest.writeString(tokenCode)
+            dest.writeString(date)
+            dest.writeBooleanCompat(pending)
+            dest.writeEnum(position)
+            dest.writeString(coinIconUrl)
+            dest.writeCharSequenceCompat(fee)
+            dest.writeCharSequenceCompat(feeInCurrency)
+            dest.writeBooleanCompat(isOut)
+            dest.writeString(address)
+            dest.writeString(addressName)
+            dest.writeLong(lt)
+            dest.writeBooleanCompat(failed)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Event> {
+            override fun createFromParcel(parcel: Parcel) = Event(parcel)
+
+            override fun newArray(size: Int): Array<Event?> {
+                return arrayOfNulls(size)
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.collectibles.entities
 
 import android.os.Parcelable
+import com.tonapps.extensions.ifPunycodeToUnicode
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -9,7 +10,7 @@ data class NftMetadataEntity(
 ): Parcelable {
 
     val name: String?
-        get() = strings["name"]
+        get() = strings["name"]?.ifPunycodeToUnicode()
 
     val description: String?
         get() = strings["description"]

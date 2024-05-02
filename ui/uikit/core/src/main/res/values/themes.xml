@@ -2,6 +2,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowActivityTransitions">false</item>
         <item name="windowSplashScreenBackground">#10161F</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/bg_splash</item>
         <item name="splashScreenIconSize">128dp</item>
@@ -10,6 +12,8 @@
     </style>
 
     <style name="Theme.App.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowActivityTransitions">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
         <item name="android:windowBackground">@drawable/bg_window</item>
 
         <item name="android:statusBarColor">@android:color/transparent</item>

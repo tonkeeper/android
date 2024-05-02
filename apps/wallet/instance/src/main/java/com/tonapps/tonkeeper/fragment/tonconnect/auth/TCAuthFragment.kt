@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
 import android.os.Bundle
 import android.text.SpannableString
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatImageView
@@ -17,6 +18,7 @@ import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
+import com.tonapps.wallet.data.tonconnect.entities.reply.DAppEventSuccessEntity
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -26,6 +28,7 @@ import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.setColor
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.CheckBoxView
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
@@ -35,16 +38,25 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
     companion object {
 
-        private const val REQUEST_KEY = "request"
+        const val REPLY_ARG = "reply"
 
-        fun newInstance(request: DAppRequestEntity): TCAuthFragment {
+        private const val REQUEST_KEY = "request"
+        private const val CALLBACK_KEY = "callback"
+
+        fun newInstance(
+            request: DAppRequestEntity,
+            callbackKey: String? = null
+        ): TCAuthFragment {
             val fragment = TCAuthFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(REQUEST_KEY, request)
+                putString(CALLBACK_KEY, callbackKey)
             }
             return fragment
         }
     }
+
+    private val callbackKey: String? by lazy { arguments?.getString(CALLBACK_KEY) }
 
     private val viewModel: TCAuthViewModel by viewModel { parametersOf(arguments?.getParcelable(REQUEST_KEY)!!) }
 
@@ -64,7 +76,10 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         closeView = view.findViewById(R.id.close)
-        closeView.setOnClickListener { finish() }
+        closeView.setOnClickListener {
+            cancelCallback()
+            finish()
+        }
 
         loaderView = view.findViewById(R.id.loader)
         loaderView.visibility = View.VISIBLE
@@ -130,19 +145,29 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         viewModel.connect(requireContext(), allowNotificationCheckbox.checked).catch {
             setFailure()
         }.onEach {
-            setSuccess()
+            setSuccess(it)
         }.launchIn(lifecycleScope)
     }
 
-    private fun setSuccess() {
-
+    private fun setSuccess(result: DAppEventSuccessEntity) {
         connectProcessView.state = ProcessTaskView.State.SUCCESS
         finalDelay()
+        callbackKey?.let {
+            navigation?.setFragmentResult(it, Bundle().apply {
+                putString(REPLY_ARG, result.toJSON().toString())
+            })
+        }
     }
 
     private fun setFailure() {
         connectProcessView.state = ProcessTaskView.State.FAILED
         finalDelay()
+    }
+
+    private fun cancelCallback() {
+        callbackKey?.let {
+            navigation?.setFragmentResult(it, Bundle())
+        }
     }
 
     private fun finalDelay() {

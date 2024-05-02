@@ -27,4 +27,11 @@ data class DAppItemEntity(
         payload = json.optString("payload")
     )
 
+    fun toJSON(): JSONObject {
+        return JSONObject().apply {
+            put("name", name)
+            payload?.let { put("payload", it) }
+        }
+    }
+
 }

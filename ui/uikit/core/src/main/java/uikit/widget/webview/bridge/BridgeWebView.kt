@@ -2,13 +2,18 @@ package uikit.widget.webview.bridge
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.Build
+import android.os.Message
 import android.util.AttributeSet
 import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +49,7 @@ class BridgeWebView @JvmOverloads constructor(
             }
         }
 
+    private val clientCallbacks = mutableListOf<WebViewClient>()
     private val jsExecuteQueue = LinkedList<String>()
     private val scope: CoroutineScope
         get() = findViewTreeLifecycleOwner()?.lifecycleScope ?: throw IllegalStateException("No lifecycle owner")
@@ -51,16 +57,36 @@ class BridgeWebView @JvmOverloads constructor(
     init {
         addJavascriptInterface(this, "ReactNativeWebView")
         webViewClient = object : WebViewClient() {
+
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 isPageLoaded = true
+                clientCallbacks.forEach { it.onPageStarted(view, url, favicon) }
+            }
+
+            @RequiresApi(Build.VERSION_CODES.N)
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                return clientCallbacks.map { it.shouldOverrideUrlLoading(view, request) }.firstOrNull() ?: false
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                clientCallbacks.forEach { it.onPageFinished(view, url) }
             }
         }
     }
 
+    fun addClientCallback(callback: WebViewClient) {
+        clientCallbacks.add(callback)
+    }
+
+    fun removeClientCallback(callback: WebViewClient) {
+        clientCallbacks.remove(callback)
+    }
+
     fun executeJS(code: String) {
         if (isPageLoaded) {
-            evaluateJavascript(code, null)
+            evaluateJavascript(code)
         } else {
             jsExecuteQueue.add(code)
         }
@@ -68,8 +94,12 @@ class BridgeWebView @JvmOverloads constructor(
 
     private fun executeJsQueue() {
         while (jsExecuteQueue.isNotEmpty()) {
-            jsExecuteQueue.poll()?.let { evaluateJavascript(it, null) }
+            jsExecuteQueue.poll()?.let { evaluateJavascript(it) }
         }
+    }
+
+    private fun evaluateJavascript(code: String) {
+        evaluateJavascript(code, null)
     }
 
     private suspend fun postMessage(
@@ -87,6 +117,7 @@ class BridgeWebView @JvmOverloads constructor(
 
     @JavascriptInterface
     fun postMessage(message: String) {
+        Log.d("DAppBridgeLog", "postMessage: $message")
         val json = JSONObject(message)
         val type = json.getString("type")
         if (type == BridgeMessage.Type.InvokeRnFunc.value) {

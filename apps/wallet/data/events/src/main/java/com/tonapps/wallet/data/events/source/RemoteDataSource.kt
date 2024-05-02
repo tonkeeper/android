@@ -14,6 +14,6 @@ internal class RemoteDataSource(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
-        limit: Int = 35
+        limit: Int = 10
     ): AccountEvents = api.getEvents(accountId, testnet, beforeLt, limit)
 }

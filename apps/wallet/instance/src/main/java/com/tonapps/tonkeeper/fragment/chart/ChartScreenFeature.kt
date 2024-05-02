@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.api.withTON
 import com.tonapps.blockchain.Coin
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.WalletCurrency
 import core.QueueScope
 import io.tonapi.models.AccountEvents
@@ -26,6 +27,7 @@ import uikit.mvi.UiFeature
 class ChartScreenFeature(
     private val historyHelper: HistoryHelper,
     private val ratesRepository: RatesRepository,
+    private val api: API,
 ): UiFeature<ChartScreenState, ChartScreenEffect>(ChartScreenState()) {
 
     private val currency: WalletCurrency
@@ -59,6 +61,8 @@ class ChartScreenFeature(
 
             updateUiState {
                 it.copy(
+                    swapUri = api.config.swapUri,
+                    address = wallet.address,
                     walletType = wallet.type,
                     asyncState = AsyncState.Default,
                     balance = CurrencyFormatter.format("TON", balance),

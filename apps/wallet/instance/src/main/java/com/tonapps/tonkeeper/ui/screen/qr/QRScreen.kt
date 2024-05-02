@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.qr
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.qr.ui.QRView

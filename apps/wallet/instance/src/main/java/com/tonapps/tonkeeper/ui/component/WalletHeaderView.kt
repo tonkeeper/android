@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.component
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import androidx.appcompat.widget.AppCompatImageView
@@ -15,8 +16,10 @@ import com.tonapps.wallet.data.account.entities.WalletLabel
 import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.setPaddingTop
+import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
 
 class WalletHeaderView @JvmOverloads constructor(
@@ -26,7 +29,7 @@ class WalletHeaderView @JvmOverloads constructor(
 ) : RowLayout(context, attrs, defStyle), BarDrawable.BarDrawableOwner {
 
     private val barHeight = context.getDimensionPixelSize(uikit.R.dimen.barHeight)
-    private var topOffset: Int = 0
+    private var topOffset: Int = statusBarHeight
         set(value) {
             if (field != value) {
                 field = value
@@ -58,6 +61,7 @@ class WalletHeaderView @JvmOverloads constructor(
 
     init {
         setPaddingHorizontal(context.getDimensionPixelSize(uikit.R.dimen.offsetMedium))
+        setPaddingTop(topOffset)
         super.setBackground(drawable)
         inflate(context, R.layout.view_wallet_header, this)
         settingsView = findViewById(R.id.settings)

@@ -22,6 +22,7 @@ sealed class JettonItem(
     ): JettonItem(TYPE_HEADER)
 
     data class Actions(
+        val wallet: String,
         val jetton: JettonBalance,
         val walletType: WalletType
     ): JettonItem(TYPE_ACTIONS)

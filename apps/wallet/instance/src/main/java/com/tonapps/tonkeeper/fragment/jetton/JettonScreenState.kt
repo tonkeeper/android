@@ -10,6 +10,7 @@ import uikit.mvi.AsyncState
 import uikit.mvi.UiState
 
 data class JettonScreenState(
+    val walletAddress: String = "",
     val walletType: WalletType = WalletType.Default,
     val asyncState: AsyncState = AsyncState.Loading,
     val jetton: JettonBalance? = null,
@@ -36,7 +37,7 @@ data class JettonScreenState(
             rate = rateFormat,
             diff24h = rate24h
         ))
-        items.add(JettonItem.Actions(jetton, walletType))
+        items.add(JettonItem.Actions(walletAddress, jetton, walletType))
         return items
     }
 }

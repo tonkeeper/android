@@ -69,6 +69,24 @@ class BottomTabsView @JvmOverloads constructor(
         drawable.setDivider(value)
     }
 
+    fun hideItem(id: Int) {
+        for (i in 0 until childCount) {
+            val view = getChildAt(i)
+            if (view.tag == id) {
+                view.visibility = View.GONE
+            }
+        }
+    }
+
+    fun showItem(id: Int) {
+        for (i in 0 until childCount) {
+            val view = getChildAt(i)
+            if (view.tag == id) {
+                view.visibility = View.VISIBLE
+            }
+        }
+    }
+
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
         val navigationInsets = compatInsets.getInsets(WindowInsetsCompat.Type.navigationBars())

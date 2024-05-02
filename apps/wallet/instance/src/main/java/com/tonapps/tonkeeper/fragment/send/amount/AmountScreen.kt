@@ -1,11 +1,14 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
 import android.os.Bundle
+import android.text.Editable
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
+import com.tonapps.blockchain.Coin
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
@@ -51,7 +54,18 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         tokenView.setOnClickListener { selectTokenPopup.show(it) }
 
         valueView = view.findViewById(R.id.value)
-        valueView.doOnTextChanged { _, _, _, _ ->
+        valueView.doOnTextChanged { text, _, _, _ ->
+            val editable = text as? Editable ?: return@doOnTextChanged
+            if (editable.contains(".") && CurrencyFormatter.monetaryDecimalSeparator != ".") {
+                editable.replace(editable.indexOf("."), editable.indexOf(".") + 1, CurrencyFormatter.monetaryDecimalSeparator)
+                return@doOnTextChanged
+            } else if (editable.contains(",") && CurrencyFormatter.monetaryDecimalSeparator != ",") {
+                editable.replace(editable.indexOf(","), editable.indexOf(",") + 1, CurrencyFormatter.monetaryDecimalSeparator)
+                return@doOnTextChanged
+            } else if (editable.contains(" ")) {
+                editable.replace(editable.indexOf(" "), editable.indexOf(" ") + 1, "")
+                return@doOnTextChanged
+            }
             feature.setValue(getValue())
         }
 
@@ -90,7 +104,9 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     private fun getValue(): Float {
-        return valueView.text.toString().toFloatOrNull() ?: 0f
+        val text = Coin.prepareValue(valueView.text.toString())
+        return text.toFloatOrNull() ?: 0f
+        // return valueView.text.toString().toFloatOrNull() ?: 0f
     }
 
     private fun next() {

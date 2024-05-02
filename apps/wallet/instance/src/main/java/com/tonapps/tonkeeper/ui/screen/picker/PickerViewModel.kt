@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.picker
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.ui.screen.picker.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.WalletRepository
@@ -69,6 +70,7 @@ class PickerViewModel(
         job.cancel()
         viewModelScope.launch(Dispatchers.IO) {
             walletRepository.setActiveWallet(id)
+            Widget.updateAll()
         }
     }
 

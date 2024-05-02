@@ -57,6 +57,4 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
     var walletSource: WalletSource?
         get() = savedStateHandle[WALLET_SOURCE]
         set(value) = savedStateHandle.set(WALLET_SOURCE, value)
-
-    val accountsFlow: Flow<List<AccountItem>?> = savedStateHandle.getStateFlow(ACCOUNTS, null)
 }

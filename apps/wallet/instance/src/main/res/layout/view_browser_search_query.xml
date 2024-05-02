@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="44dp"
+        android:layout_height="match_parent"
+        android:scaleType="centerInside"
+        android:tint="?attr/iconSecondaryColor"
+        android:src="@drawable/ic_magnifying_glass_16"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/textPrimaryColor"
+        android:gravity="center_vertical"
+        android:background="@android:color/transparent"/>
+
+    <View
+        android:layout_width="@dimen/offsetMedium"
+        android:layout_height="1dp"/>
+
+</uikit.widget.RowLayout>

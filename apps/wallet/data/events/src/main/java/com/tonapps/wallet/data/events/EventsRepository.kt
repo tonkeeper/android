@@ -20,6 +20,17 @@ class EventsRepository(
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
 
+    suspend fun getLast(
+        accountId: String,
+        testnet: Boolean
+    ): AccountEvents? = withContext(Dispatchers.IO) {
+        try {
+            remoteDataSource.get(accountId, testnet, limit = 2)
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
     suspend fun getRemote(
         accountId: String,
         testnet: Boolean,

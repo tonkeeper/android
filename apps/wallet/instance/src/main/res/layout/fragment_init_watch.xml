@@ -22,8 +22,9 @@
             android:layout_height="wrap_content"
             android:hint="@string/address_hint"
             android:layout_marginTop="@dimen/offsetLarge"
-            android:button="@string/paste"
-            android:icon="@drawable/ic_qr_viewfinder_28"/>
+            android:button="@string/paste"/>
+
+        <!--android:icon="@drawable/ic_qr_viewfinder_28"-->
 
     </uikit.widget.ColumnLayout>
 

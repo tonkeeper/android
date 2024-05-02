@@ -45,7 +45,7 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         scrollView = view.findViewById(R.id.scroll)
-        scrollView.doKeyboardAnimation { offset, _ ->
+        scrollView.doKeyboardAnimation { offset, _, _ ->
             scrollView.setPaddingBottom(offset)
             pasteButton.translationY = -offset.toFloat()
             updateScroll(false)

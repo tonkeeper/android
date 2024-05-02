@@ -1,7 +1,9 @@
 package com.tonapps.wallet.data.collectibles.source
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.SQLiteHelper
@@ -34,21 +36,26 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "collect
         db.execSQL("CREATE INDEX idx_accountId ON $TABLE_NAME($COLUMN_ACCOUNT_ID);")
     }
 
+    fun clear(
+        accountId: String,
+        testnet: Boolean
+    ) {
+        writableDatabase.delete(TABLE_NAME, "$COLUMN_ACCOUNT_ID = ?", arrayOf(accountId(accountId, testnet)))
+    }
+
     fun save(
         accountId: String,
         testnet: Boolean,
         list: List<NftEntity>,
     ) {
-        val query = "INSERT INTO collectibles (id, object, accountId) VALUES (?, ?, ?);"
+        clear(accountId, testnet)
         writableDatabase.withTransaction {
-            delete(TABLE_NAME, "$COLUMN_ACCOUNT_ID = ?", arrayOf(accountId))
-            val statement = compileStatement(query)
             for (nft in list) {
-                statement.bindString(1, nft.id)
-                statement.bindBlob(2, nft.toByteArray())
-                statement.bindString(3, accountId(accountId, testnet))
-                statement.execute()
-                statement.clearBindings()
+                val values = ContentValues()
+                values.put(COLUMN_ID, nft.id)
+                values.put(COLUMN_OBJECT, nft.toByteArray())
+                values.put(COLUMN_ACCOUNT_ID, accountId(accountId, testnet))
+                writableDatabase.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
             }
         }
     }

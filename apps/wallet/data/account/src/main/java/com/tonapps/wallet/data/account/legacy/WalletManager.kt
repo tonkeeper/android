@@ -14,6 +14,7 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic
 import com.tonapps.wallet.data.account.legacy.storage.WalletStorage
+import org.ton.crypto.hex
 
 // TODO refactor WalletManager
 class WalletManager(
@@ -133,16 +134,9 @@ class WalletManager(
     }
 
     suspend fun getWalletInfo(): WalletLegacy? = withContext(Dispatchers.IO) {
-        /*if (true) {
-            return@withContext Wallet(
-                id = 999,
-                name = "Debug Wallet",
-                publicKey = PublicKeyEd25519(hex("db642e022c80911fe61f19eb4f22d7fb95c1ea0b589c0f74ecf0cbf6db746c13")),
-                version = WalletVersion.V4R2,
-                type = WalletType.Default,
-            )
-        }*/
-
+        if (IsDebug) {
+            return@withContext DebugWallet
+        }
 
         if (cacheWallet != null) {
             return@withContext cacheWallet
@@ -171,6 +165,9 @@ class WalletManager(
     }
 
     suspend fun getActiveWallet(): Long {
+        if (IsDebug) {
+            return DebugWallet.id
+        }
         return storage.getSelectedWallet()
     }
 

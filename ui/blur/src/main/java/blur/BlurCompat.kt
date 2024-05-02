@@ -14,8 +14,8 @@ class BlurCompat(context: Context) {
 
     private val impl = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Impl31(context)
-    /*} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Impl26(context)*/
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Impl26(context)
     } else {
         Impl(context)
     }

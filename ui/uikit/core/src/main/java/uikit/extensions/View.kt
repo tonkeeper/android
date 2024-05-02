@@ -74,6 +74,9 @@ fun View.getRootWindowInsetsCompat(): WindowInsetsCompat? {
     return ViewCompat.getRootWindowInsets(this)
 }
 
+val View.statusBarHeight: Int
+    get() = getRootWindowInsetsCompat()?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+
 fun ViewGroup.inflate(
     @LayoutRes
     layoutRes: Int
@@ -241,17 +244,21 @@ fun View.reject() {
     hapticReject()
 }
 
-inline fun View.doKeyboardAnimation(crossinline block: (offset: Int, progress: Float) -> Unit) {
+inline fun View.doKeyboardAnimation(crossinline block: (
+    offset: Int,
+    progress: Float,
+    isShowing: Boolean
+) -> Unit) {
     val animationCallback = object : KeyboardAnimationCallback(this) {
-        override fun onKeyboardOffsetChanged(offset: Int, progress: Float) {
-            block(offset, progress)
+        override fun onKeyboardOffsetChanged(offset: Int, progress: Float, isShowing: Boolean) {
+            block(offset, progress, isShowing)
         }
     }
     ViewCompat.setWindowInsetsAnimationCallback(this, animationCallback)
 }
 
 fun View.pinToBottomInsets() {
-    doKeyboardAnimation { offset, _ ->
+    doKeyboardAnimation { offset, _, _ ->
         translationY = -offset.toFloat()
     }
 }

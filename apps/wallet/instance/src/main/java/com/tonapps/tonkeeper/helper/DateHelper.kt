@@ -16,10 +16,9 @@ object DateHelper {
     private val dateFormatMonth = SimpleDateFormat("MMM dd")
     private val dateFormatYear = SimpleDateFormat("yyyy")
 
-    private val dateFormatHour = SimpleDateFormat("HH:mm a")
-    private val dateFormatHourWeekDay = SimpleDateFormat("HH:mm a, EEEE")
-    private val dateFormatHourMonth = SimpleDateFormat("HH:mm a, MMM dd")
-    private val dateFormatHourYear = SimpleDateFormat("HH:mm a, MMM dd yyyy")
+    private val dateFormatHour = SimpleDateFormat("HH:mm")
+    private val dateFormatHourMonth = SimpleDateFormat("dd MMM, HH:mm")
+    private val dateFormatHourYear = SimpleDateFormat("MMM dd yyyy, HH:mm")
 
     fun formatWeekDay(timestamp: Long): String {
         return dateFormatWeekDay.format(timestamp * 1000)
@@ -37,10 +36,6 @@ object DateHelper {
         return dateFormatHour.format(timestamp * 1000)
     }
 
-    fun formatHourWeekDay(timestamp: Long): String {
-        return dateFormatHourWeekDay.format(timestamp * 1000)
-    }
-
     fun formatHourMonth(timestamp: Long): String {
         return dateFormatHourMonth.format(timestamp * 1000)
     }
@@ -55,7 +50,6 @@ object DateHelper {
         return when {
             isToday(timestamp) -> formatHour(timestamp)
             isYesterday(timestamp) -> formatHour(timestamp)
-            isThisMonth(timestamp) -> formatHourWeekDay(timestamp)
             isThisYear(timestamp) -> formatHourMonth(timestamp)
             else -> formatHourYear(timestamp)
         }

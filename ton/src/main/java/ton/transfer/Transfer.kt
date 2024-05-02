@@ -8,6 +8,7 @@ import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
 import org.ton.tlb.storeTlb
+import java.math.BigInteger
 
 object Transfer {
 
@@ -37,7 +38,7 @@ object Transfer {
         coins: Coins,
         toAddress: MsgAddressInt,
         responseAddress: MsgAddressInt,
-        queryId: Long = 0L,
+        queryId: BigInteger = BigInteger.ZERO,
         forwardAmount: Long = 1L,
         body: Any? = null,
     ): Cell {
@@ -54,12 +55,11 @@ object Transfer {
             if (payload == null) {
                 storeBit(false)
             } else {
-                storeBit(false)
+                storeBit(true)
                 storeRef(AnyTlbConstructor, CellRef(payload))
             }
         }
     }
-
 
     fun nft(
         newOwnerAddress: MsgAddressInt,
@@ -83,4 +83,5 @@ object Transfer {
             }
         }
     }
+
 }

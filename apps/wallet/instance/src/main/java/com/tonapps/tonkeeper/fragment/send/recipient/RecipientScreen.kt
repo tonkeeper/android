@@ -32,7 +32,13 @@ class RecipientScreen: PagerScreen<RecipientScreenState, RecipientScreenEffect, 
         super.onViewCreated(view, savedInstanceState)
 
         addressInput = view.findViewById(R.id.address)
-        addressInput.doOnTextChange = { feature.requestAddressCheck(it.trim()) }
+        addressInput.doOnTextChange = {
+            if (it.contains(" ")) {
+                addressInput.text = it.replace(" ", "")
+            } else {
+                feature.requestAddressCheck(it.trim())
+            }
+        }
         addressInput.doOnIconClick = {
             addressInput.hideKeyboard()
             sendFeature.sendEffect(SendScreenEffect.OpenCamera)

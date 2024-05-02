@@ -50,7 +50,7 @@ class PushManager(
     private val localDataSource = LocalDataSource(context)
 
     private val _dAppPushFlow = MutableStateFlow<List<AppPushEntity>?>(null)
-    val dAppPushFlow = _dAppPushFlow.asStateFlow().filterNotNull()
+    val dAppPushFlow = _dAppPushFlow.asStateFlow()
 
     init {
         combine(
@@ -81,8 +81,8 @@ class PushManager(
         }
         scope.launch(Dispatchers.IO) {
             try {
-                val app = tonConnectRepository.getApp(push.dappUrl) ?: throw IllegalStateException("App not found")
-                val wallet = walletRepository.getWallet(app.walletId) ?: throw IllegalStateException("Wallet not found")
+                val wallet = walletRepository.getWallet(push.account) ?: throw IllegalStateException("Wallet not found")
+                val app = tonConnectRepository.getApp(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
                 localDataSource.insert(wallet.id, push)
                 val largeIcon = api.defaultHttpClient.getBitmap(app.manifest.iconUrl)
                 displayAppPush(app, push, wallet, largeIcon)

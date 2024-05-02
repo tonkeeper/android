@@ -20,6 +20,7 @@ import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textTertiaryColor
+import com.tonapps.uikit.icon.UIKitIcon
 import uikit.extensions.drawable
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
@@ -41,6 +42,7 @@ class HistoryActionHolder(
     private val amountView = findViewById<AppCompatTextView>(R.id.amount)
     private val amount2View = findViewById<AppCompatTextView>(R.id.amount2)
     private val dateView = findViewById<AppCompatTextView>(R.id.date)
+    private val warningView = findViewById<AppCompatTextView>(R.id.warning)
 
     private val nftView = findViewById<View>(R.id.nft)
     private val nftIconView = findViewById<SimpleDraweeView>(R.id.nft_icon)
@@ -57,11 +59,17 @@ class HistoryActionHolder(
         subtitleView.text = item.subtitle
         dateView.text = item.date
 
-        if (item.iconURL.isNullOrEmpty()) {
+        if (item.failed) {
+            iconView.setImageResource(UIKitIcon.ic_exclamationmark_circle_28)
+            iconView.imageTintList = context.iconSecondaryColor.stateList
+            warningView.visibility = View.VISIBLE
+        } else if (item.iconURL.isNullOrEmpty()) {
             iconView.setImageResource(item.action.iconRes)
             iconView.imageTintList = context.iconSecondaryColor.stateList
+            warningView.visibility = View.GONE
         } else {
             loadIcon(Uri.parse(item.iconURL))
+            warningView.visibility = View.GONE
         }
 
         bindPending(item.pending)

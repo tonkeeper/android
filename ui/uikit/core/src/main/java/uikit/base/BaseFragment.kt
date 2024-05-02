@@ -106,6 +106,8 @@ open class BaseFragment(
 
     open val secure: Boolean = false
 
+    private var isFinished: Boolean = false
+
     fun setArgs(args: BaseArgs) {
         arguments = args.toBundle()
     }
@@ -187,7 +189,13 @@ open class BaseFragment(
     }
 
     open fun finish() {
+        if (isFinished) {
+            return
+        }
+
         val view = view ?: return
+
+        isFinished = true
 
         when (view) {
             is SwipeBackLayout -> view.startHideAnimation()

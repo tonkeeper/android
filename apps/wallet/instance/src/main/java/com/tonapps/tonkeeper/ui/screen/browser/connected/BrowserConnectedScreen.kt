@@ -7,9 +7,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
@@ -21,7 +24,8 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
         requireParentFragment().getViewModel()
     }
 
-    private val adapter = Adapter()
+    private val adapter = Adapter { deleteAppConfirm(it) }
+
     private val scrollListener = object : RecyclerVerticalScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
             mainViewModel.setTopScrolled(verticalScrollOffset > 0)
@@ -41,6 +45,19 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
         }
 
         collectFlow(connectedViewModel.uiItemsFlow, adapter::submitList)
+    }
+
+    private fun deleteAppConfirm(app: DAppEntity) {
+        val message = getString(Localization.remove_dapp_confirm, app.manifest.name)
+        AlertDialog.Builder(requireContext())
+            .setMessage(message)
+            .setColoredButtons()
+            .setNegativeButton(Localization.confirm) {
+                connectedViewModel.deleteApp(app)
+            }
+            .setPositiveButton(Localization.cancel) {
+
+            }.show()
     }
 
     override fun onResume() {

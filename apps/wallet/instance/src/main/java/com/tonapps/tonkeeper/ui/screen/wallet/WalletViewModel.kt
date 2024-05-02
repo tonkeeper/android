@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
@@ -11,6 +12,7 @@ import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletEvent
+import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.push.PushManager
@@ -27,12 +29,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 
@@ -43,7 +47,8 @@ class WalletViewModel(
     private val api: API,
     private val networkMonitor: NetworkMonitor,
     private val pushManager: PushManager,
-    private val tonConnectRepository: TonConnectRepository
+    private val tonConnectRepository: TonConnectRepository,
+    private val screenCacheSource: ScreenCacheSource
 ): ViewModel() {
 
     private data class Tokens(
@@ -70,6 +75,14 @@ class WalletViewModel(
     val uiLabelFlow = walletRepository.activeWalletFlow.map { it.label }
 
     init {
+        walletRepository.activeWalletFlow.map { screenCacheSource.getWalletScreen(it) }.flowOn(Dispatchers.IO).onEach { items ->
+            if (items.isNullOrEmpty()) {
+                _uiItemsFlow.value = listOf(Item.Skeleton(true))
+            } else {
+                _uiItemsFlow.value = items
+            }
+        }.launchIn(viewModelScope)
+
         collectFlow(settings.hiddenBalancesFlow.drop(1)) { hiddenBalance ->
             _uiItemsFlow.value = _uiItemsFlow.value.map {
                 when (it) {
@@ -78,6 +91,7 @@ class WalletViewModel(
                     else -> it
                 }
             }
+            // setCached(wallet, items)
         }
 
         collectFlow(walletRepository.realtimeEventsFlow) { event ->
@@ -98,17 +112,18 @@ class WalletViewModel(
             lastLtFlow,
             pushManager.dAppPushFlow,
         ) { wallet, currency, isOnline, lastLt, push ->
+            val pushes = push?.distinctBy { it.dappUrl } ?: emptyList()
 
             if (lastLt == 0L) {
                 setStatus(Item.Status.Updating)
-                _tokensFlow.value = getLocalTokens(wallet, currency, isOnline, push.distinctBy { it.dappUrl })
+                _tokensFlow.value = getLocalTokens(wallet, currency, isOnline, pushes)
             }
 
             if (!isOnline) {
                 return@combine null
             }
 
-            getRemoteTokens(wallet, currency, push.distinctBy { it.dappUrl })?.let { tokens ->
+            getRemoteTokens(wallet, currency, pushes)?.let { tokens ->
                 setStatus(Item.Status.Default)
                 _tokensFlow.value = tokens
             }
@@ -138,10 +153,6 @@ class WalletViewModel(
         _statusFlow.tryEmit(status)
     }
 
-    fun toggleBalance() {
-        settings.hiddenBalances = !settings.hiddenBalances
-    }
-
     private suspend fun getLocalTokens(
         wallet: WalletEntity,
         currency: WalletCurrency,
@@ -153,7 +164,7 @@ class WalletViewModel(
             return@withContext null
         }
 
-        Tokens(wallet, currency, tokens, isOnline, push, getApps(push))
+        Tokens(wallet, currency, tokens, isOnline, push, getApps(wallet, push))
     }
 
     private suspend fun getRemoteTokens(
@@ -163,15 +174,15 @@ class WalletViewModel(
     ): Tokens? = withContext(Dispatchers.IO) {
         try {
             val tokens = tokenRepository.getRemote(currency, wallet.accountId, wallet.testnet)
-            Tokens(wallet, currency, tokens, true, push, getApps(push))
+            Tokens(wallet, currency, tokens, true, push, getApps(wallet, push))
         } catch (e: Throwable) {
             null
         }
     }
 
-    private fun getApps(events: List<AppPushEntity>): List<DAppEntity> {
+    private fun getApps(wallet: WalletEntity, events: List<AppPushEntity>): List<DAppEntity> {
         val dappUrls = events.map { it.dappUrl }
-        return tonConnectRepository.getApps(dappUrls)
+        return tonConnectRepository.getApps(dappUrls, wallet)
     }
 
     private fun buildUiItems(
@@ -236,9 +247,34 @@ class WalletViewModel(
         if (push.isNotEmpty()) {
             items.add(Item.Push(push, apps))
         }
-        items.add(Item.Space)
+        items.add(Item.Space(true))
         items.addAll(list)
-        items.add(Item.Space)
-        _uiItemsFlow.value = items
+        items.add(Item.Space(true))
+        _uiItemsFlow.value = items.toList()
+        setCached(wallet, items)
+    }
+
+    private fun setCached(wallet: WalletEntity, items: List<Item>) {
+        screenCacheSource.set(CACHE_NAME, wallet.accountId, wallet.testnet, items)
+    }
+
+    companion object {
+        private const val CACHE_NAME = "wallet"
+
+        fun ScreenCacheSource.getWalletScreen(wallet: WalletEntity): List<Item>? {
+            val items: List<Item> = get(CACHE_NAME, wallet.accountId, wallet.testnet) { parcel ->
+                Item.createFromParcel(parcel)
+            }.map {
+                if (it is Item.Balance) {
+                    it.copy(status = Item.Status.Updating)
+                } else {
+                    it
+                }
+            }
+            if (items.isEmpty()) {
+                return null
+            }
+            return items
+        }
     }
 }

@@ -28,7 +28,7 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
         editorView = view.findViewById(R.id.editor)
         editorView.doOnDone = ::saveLabel
 
-        view.doKeyboardAnimation { offset, progress ->
+        view.doKeyboardAnimation { offset, progress, _ ->
             editorView.setBottomOffset(offset, progress)
         }
         collectFlow(editNameViewModel.uiLabelFlow, ::setLabel)

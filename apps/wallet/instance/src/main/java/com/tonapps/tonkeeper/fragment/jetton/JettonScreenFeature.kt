@@ -77,6 +77,7 @@ class JettonScreenFeature(
 
                 updateUiState {
                     it.copy(
+                        walletAddress = wallet.address,
                         walletType = wallet.type,
                         asyncState = AsyncState.Default,
                         jetton = jetton,

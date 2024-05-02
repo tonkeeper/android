@@ -11,8 +11,11 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.helper.DateFormat
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.ui.screen.wallet.WalletViewModel
+import com.tonapps.tonkeeper.ui.screen.wallet.list.Item
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.push.entities.AppPushEntity
@@ -20,6 +23,7 @@ import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +35,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 import java.util.Calendar
 import java.util.Date
@@ -43,6 +48,7 @@ class EventsViewModel(
     private val tonConnectRepository: TonConnectRepository,
     private val pushManager: PushManager,
     private val historyHelper: HistoryHelper,
+    private val screenCacheSource: ScreenCacheSource
 ): AndroidViewModel(application) {
 
     private val _isUpdatingFlow = MutableStateFlow(false)
@@ -52,6 +58,14 @@ class EventsViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
+        collectFlow(walletRepository.activeWalletFlow.map { getCached(it) }.flowOn(Dispatchers.IO)) { items ->
+            if (items.isNullOrEmpty()) {
+                _uiItemsFlow.value = emptyList()
+            } else {
+                _uiItemsFlow.value = items
+            }
+        }
+
         combine(
             walletRepository.activeWalletFlow,
             networkMonitor.isOnlineFlow
@@ -63,7 +77,7 @@ class EventsViewModel(
             loadEvents(wallet, true)
         }
 
-        collectFlow(pushManager.dAppPushFlow) {
+        collectFlow(pushManager.dAppPushFlow.filterNotNull()) {
             val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@collectFlow
             loadEvents(wallet, true)
         }
@@ -71,21 +85,43 @@ class EventsViewModel(
 
     fun openQRCode() = walletRepository.activeWalletFlow.take(1)
 
+    fun update() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch
+            loadLast(wallet, true)
+        }
+    }
+
+    private suspend fun loadLast(
+        wallet: WalletEntity,
+        inProgress: Boolean
+    ) = withContext(Dispatchers.IO) {
+        val events = eventsRepository.getLast(wallet.accountId, wallet.testnet)?.events?.filter {
+            it.inProgress == inProgress
+        } ?: return@withContext
+        val items = mapping(wallet, events)
+        val newItems = (_uiItemsFlow.value ?: emptyList()) + items
+        setItems(wallet, newItems.distinctBy {
+            it.uniqueId
+        }, false)
+    }
+
     private suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
         val events = pushManager.getRemoteDAppEvents(wallet)
-        return dAppEventsMapping(events)
+        return dAppEventsMapping(wallet, events)
     }
 
     private suspend fun getLocalDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
         val events = pushManager.getLocalDAppEvents(wallet)
-        return dAppEventsMapping(events)
+        return dAppEventsMapping(wallet, events)
     }
 
     private fun dAppEventsMapping(
+        wallet: WalletEntity,
         events: List<AppPushEntity>
     ): List<HistoryItem.App> {
         val dappUrls = events.map { it.dappUrl }
-        val apps = tonConnectRepository.getApps(dappUrls)
+        val apps = tonConnectRepository.getApps(dappUrls, wallet)
 
         val items = mutableListOf<HistoryItem.App>()
         for (event in events) {
@@ -152,7 +188,7 @@ class EventsViewModel(
         val accountEvents = eventsRepository.getLocal(wallet.accountId, wallet.testnet) ?: return
         val walletEventItems = mapping(wallet, accountEvents.events)
         if (walletEventItems.isNotEmpty()) {
-            setItems(walletEventItems + getLocalDAppEvents(wallet))
+            setItems(wallet, walletEventItems + getLocalDAppEvents(wallet), false)
         }
     }
 
@@ -160,10 +196,10 @@ class EventsViewModel(
         val accountEvents = eventsRepository.getRemote(wallet.accountId, wallet.testnet, beforeLt) ?: return
         val walletEventItems = mapping(wallet, accountEvents.events)
         if (beforeLt == null) {
-            setItems(walletEventItems + getRemoteDAppEvents(wallet))
+            setItems(wallet, walletEventItems + getRemoteDAppEvents(wallet), false)
         } else {
             val oldValues = _uiItemsFlow.value ?: emptyList()
-            setItems(oldValues + walletEventItems)
+            setItems(wallet, oldValues + walletEventItems, true)
         }
     }
 
@@ -178,7 +214,11 @@ class EventsViewModel(
         )
     }
 
-    private fun setItems(items: List<HistoryItem>) {
+    private fun setItems(
+        wallet: WalletEntity,
+        items: List<HistoryItem>,
+        more: Boolean
+    ) {
         val preparedItems = items.filter { it is HistoryItem.Event || it is HistoryItem.App }
             .sortedBy { it.timestampForSort }
             .reversed()
@@ -197,6 +237,9 @@ class EventsViewModel(
         }
 
         _uiItemsFlow.value = uiItems.toList()
+        if (!more) {
+            screenCacheSource.set(CACHE_NAME, wallet.accountId, wallet.testnet, uiItems)
+        }
     }
 
     private fun formatDate(timestamp: Long): String {
@@ -222,5 +265,19 @@ class EventsViewModel(
             action()
             setUpdating(false)
         }
+    }
+
+    private fun getCached(wallet: WalletEntity): List<HistoryItem>? {
+        val items: List<HistoryItem> = screenCacheSource.get(CACHE_NAME, wallet.accountId, wallet.testnet) {
+            HistoryItem.createFromParcel(it)
+        }
+        if (items.isEmpty()) {
+            return null
+        }
+        return items
+    }
+
+    private companion object {
+        private const val CACHE_NAME = "events"
     }
 }

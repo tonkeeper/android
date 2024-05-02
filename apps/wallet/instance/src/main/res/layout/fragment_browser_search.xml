@@ -4,23 +4,42 @@
     android:layout_height="match_parent">
 
     <uikit.widget.HeaderView
+        android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:title="@string/browser"/>
 
-    <uikit.widget.SimpleRecyclerView
-        android:id="@+id/list"
+    <FrameLayout
+        android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"/>
+        android:layout_weight="1">
+
+        <uikit.widget.SimpleRecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:layout_gravity="center"
+            android:textColor="?attr/textTertiaryColor"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:text="@string/browser_search_placeholder"/>
+
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/search_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:paddingHorizontal="@dimen/offsetMedium"
-        android:paddingTop="@dimen/offsetMedium"
-        android:paddingBottom="8dp">
+        android:padding="@dimen/offsetMedium">
 
         <uikit.widget.RowLayout
             android:id="@+id/search"

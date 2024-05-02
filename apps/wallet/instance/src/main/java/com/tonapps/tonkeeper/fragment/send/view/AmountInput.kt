@@ -46,13 +46,13 @@ class AmountInput @JvmOverloads constructor(
     }
 
     override fun afterTextChanged(editable: Editable) {
-        val value = editable.toString()
+        /*val value = editable.toString()
         if (value == "." || value == ",") {
             editable.insert(0, "0")
         } else if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
             editable.delete(0, 1)
         }
-        /*if (editable.length > 1 && editable.startsWith("0") && !editable.startsWith("0.")) {
+        if (editable.length > 1 && editable.startsWith("0") && !editable.startsWith("0.")) {
             editable.delete(0, 1)
         } else if (editable.length == 1 && editable.toString() == ".") {
             editable.insert(0, "0")

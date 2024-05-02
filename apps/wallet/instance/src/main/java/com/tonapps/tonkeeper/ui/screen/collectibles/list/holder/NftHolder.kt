@@ -1,13 +1,11 @@
-package com.tonapps.tonkeeper.ui.screen.collectibles.list
+package com.tonapps.tonkeeper.ui.screen.collectibles.list.holder
 
 import android.graphics.drawable.RippleDrawable
 import android.net.Uri
-import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.generic.RoundingParams
-import com.facebook.imagepipeline.common.ResizeOptions
-import com.facebook.imagepipeline.request.ImageRequestBuilder
+import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundHighlightedColor
@@ -18,7 +16,7 @@ import uikit.extensions.round
 import uikit.navigation.Navigation
 import uikit.widget.FrescoView
 
-class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_collectibles) {
+class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_collectibles) {
 
     private val radius = context.getDimension(uikit.R.dimen.cornerMedium)
 
@@ -33,7 +31,7 @@ class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_coll
         imageView.hierarchy.roundingParams = RoundingParams.fromCornersRadii(radius, radius, 0f, 0f)
     }
 
-    override fun onBind(item: Item) {
+    override fun onBind(item: Item.Nft) {
         itemView.setOnClickListener {
             Navigation.from(context)?.add(NftScreen.newInstance(item.entity))
         }

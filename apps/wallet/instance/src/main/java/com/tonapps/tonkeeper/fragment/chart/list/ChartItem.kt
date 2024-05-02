@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.fragment.chart.list
 
+import android.net.Uri
 import com.tonapps.tonkeeper.api.chart.ChartEntity
 import com.tonapps.tonkeeper.api.chart.ChartPeriod
 import com.tonapps.wallet.data.account.WalletType
@@ -23,6 +24,8 @@ sealed class ChartItem(
     ): ChartItem(TYPE_HEADER)
 
     data class Actions(
+        val swapUri: Uri,
+        val address: String,
         val walletType: WalletType
     ): ChartItem(TYPE_ACTIONS)
 

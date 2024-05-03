@@ -35,7 +35,7 @@ internal class BlurNode(
     }
 
     private fun applyRenderEffect() {
-        val radius = 12f
+        val radius = 26f
         val blurEffect = RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.MIRROR)
         val shaderEffect = RenderEffect.createShaderEffect(noiseShader)
         val fixedBlurEffect = RenderEffect.createBlendModeEffect(shaderEffect, blurEffect, BlendMode.MODULATE)

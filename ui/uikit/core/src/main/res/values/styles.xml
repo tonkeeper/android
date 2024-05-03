@@ -98,4 +98,14 @@
         <item name="android:layout_marginTop">@dimen/offsetMedium</item>
     </style>
 
+    <style name="Widget.App.TextTab" parent="android:Widget.Material.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">@dimen/actionSize</item>
+        <item name="android:textAppearance">@style/TextAppearance.Label2</item>
+        <item name="android:textColor">?attr/textPrimaryColor</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:singleLine">true</item>
+    </style>
 </resources>

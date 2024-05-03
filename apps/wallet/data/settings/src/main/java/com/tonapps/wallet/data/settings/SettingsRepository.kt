@@ -1,7 +1,9 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
+import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.locale
+import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.localization.Language
 import kotlinx.coroutines.CoroutineScope
@@ -30,24 +32,31 @@ class SettingsRepository(
         private const val HIDDEN_BALANCES_KEY = "hidden_balances"
         private const val FIREBASE_TOKEN_KEY = "firebase_token"
         private const val INSTALL_ID_KEY = "install_id"
+        private const val SEARCH_ENGINE_KEY = "search_engine"
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private val _currencyFlow = MutableSharedFlow<WalletCurrency>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
     val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _languageFlow = MutableSharedFlow<Language>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _languageFlow = MutableEffectFlow<Language>()
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _themeFlow = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _themeFlow = MutableEffectFlow<String>()
     val themeFlow = _themeFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _hiddenBalancesFlow = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _hiddenBalancesFlow = MutableEffectFlow<Boolean>()
     val hiddenBalancesFlow = _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _firebaseTokenFlow = MutableSharedFlow<String?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _firebaseTokenFlow = MutableEffectFlow<String?>()
     val firebaseTokenFlow = _firebaseTokenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
+    private val _countryFlow = MutableEffectFlow<String>()
+    val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
+    private val _searchEngineFlow = MutableEffectFlow<SearchEngine>()
+    val searchEngineFlow = _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
@@ -56,6 +65,15 @@ class SettingsRepository(
             val id = java.util.UUID.randomUUID().toString()
             prefs.edit().putString(INSTALL_ID_KEY, id).apply()
             id
+        }
+
+    var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putString(SEARCH_ENGINE_KEY, value.title).apply()
+                field = value
+                _searchEngineFlow.tryEmit(value)
+            }
         }
 
     var theme: String = prefs.getString(THEME_KEY, "blue")!!
@@ -94,7 +112,7 @@ class SettingsRepository(
             }
         }
 
-    var lockScreen: Boolean = prefs.getBoolean(LOCK_SCREEN_KEY, true)
+    var lockScreen: Boolean = prefs.getBoolean(LOCK_SCREEN_KEY, false)
         set(value) {
             if (value != field) {
                 prefs.edit().putBoolean(LOCK_SCREEN_KEY, value).apply()
@@ -115,6 +133,7 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putString(COUNTRY_KEY, value).apply()
                 field = value
+                _countryFlow.tryEmit(value)
             }
         }
 
@@ -129,11 +148,13 @@ class SettingsRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
+            _currencyFlow.tryEmit(currency)
             _themeFlow.tryEmit(theme)
             _languageFlow.tryEmit(language)
-            _currencyFlow.tryEmit(currency)
             _hiddenBalancesFlow.tryEmit(hiddenBalances)
             _firebaseTokenFlow.tryEmit(firebaseToken)
+            _countryFlow.tryEmit(country)
+            _searchEngineFlow.tryEmit(searchEngine)
         }
     }
 }

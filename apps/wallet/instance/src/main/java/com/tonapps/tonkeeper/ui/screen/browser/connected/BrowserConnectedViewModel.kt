@@ -6,6 +6,7 @@ import com.tonapps.extensions.mapList
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
+import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,9 +26,14 @@ class BrowserConnectedViewModel(
 
     init {
         combine(walletRepository.activeWalletFlow, tonConnectRepository.appsFlow) { wallet, apps ->
-            apps.filter { it.accountId == wallet.accountId }.map { Item(it) }
+            apps.filter { it.accountId == wallet.accountId }.distinctBy { it.url }.map { Item(it) }
         }.onEach {
             _uiItemsFlow.value = it
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }
+
+    fun deleteApp(app: DAppEntity) {
+        tonConnectRepository.disconnect(app)
+
     }
 }

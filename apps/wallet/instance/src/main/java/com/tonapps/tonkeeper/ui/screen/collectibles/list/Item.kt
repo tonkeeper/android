@@ -4,23 +4,32 @@ import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 
-data class Item(
-    val entity: NftEntity
-): BaseListItem(0) {
+sealed class Item(type: Int): BaseListItem(type) {
 
-    val nftAddress: String
-        get() = entity.address
+    companion object {
+        const val TYPE_NFT = 0
+        const val TYPE_SKELETON = 1
+    }
 
-    val imageURI: Uri
-        get() = entity.mediumUri
+    data class Nft(val entity: NftEntity): Item(TYPE_NFT) {
 
-    val title: String
-        get() = entity.name
+        val nftAddress: String
+            get() = entity.address
 
-    val collectionName: String
-        get() = entity.collectionName
+        val imageURI: Uri
+            get() = entity.mediumUri
 
-    val testnet: Boolean
-        get() = entity.testnet
+        val title: String
+            get() = entity.name
+
+        val collectionName: String
+            get() = entity.collectionName
+
+        val testnet: Boolean
+            get() = entity.testnet
+
+    }
+
+    data class Skeleton(val value: Boolean = true): Item(TYPE_SKELETON)
 
 }

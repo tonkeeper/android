@@ -114,7 +114,7 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
             }
         }
 
-        view.doKeyboardAnimation { offset, progress ->
+        view.doKeyboardAnimation { offset, progress, _ ->
             setExtrasAlpha(progress)
             actionView.translationY = -offset.toFloat()
         }

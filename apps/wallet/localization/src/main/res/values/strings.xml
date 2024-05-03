@@ -4,7 +4,12 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
 
+    <string name="failed">Failed</string>
+    <string name="remove_dapp_confirm">Remove %1$s?</string>
+
     <string name="sign_out">Sign out</string>
+    <string name="delete_watch_account_alert">Delete watch account?</string>
+    <string name="delete">Delete</string>
     <string name="delete_watch_account">Delete watch account</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nSign Out of All Wallets?</string>
     <string name="sign_out_all_description">This will erase keys to all wallets. Make sure you have backed up your recovery phrases.</string>
@@ -56,6 +61,7 @@
     <string name="address">Address</string>
     <string name="yesterday">Yesterday</string>
     <string name="collectibles">Collectibles</string>
+    <string name="purchases">Purchases</string>
     <string name="call_contract">Call contract</string>
     <string name="contract_address">Contract address</string>
     <string name="about_collection">About collection</string>
@@ -260,4 +266,5 @@
     <string name="search_browser">Search or enter address</string>
     <string name="explore">Explore</string>
     <string name="connected">Connected</string>
+    <string name="browser_search_placeholder">Enter an address or search the web</string>
 </resources>

@@ -9,6 +9,7 @@ import android.os.Build
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import com.tonapps.uikit.color.accentGreenColor
@@ -16,6 +17,8 @@ import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.localization.Localization
+import org.koin.core.Koin
+import org.koin.core.component.KoinComponent
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
 import java.util.Locale
@@ -63,6 +66,7 @@ fun Context.rateSpannable(rate: CharSequence, diff24h: String): SpannableString 
 fun Context.getDiffColor(diff: String): Int {
     return when {
         diff.startsWith("-") -> accentRedColor
+        diff.startsWith("−") -> accentRedColor
         diff.startsWith("+") -> accentGreenColor
         else -> textSecondaryColor
     }

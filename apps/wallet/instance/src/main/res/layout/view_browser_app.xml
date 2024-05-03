@@ -9,6 +9,7 @@
         android:layout_width="@dimen/barHeight"
         android:layout_height="@dimen/barHeight"
         android:layout_gravity="center_horizontal"
+        app:placeholderImage="@drawable/bg_content_tint_16"
         app:roundedCornerRadius="@dimen/offsetMedium"/>
 
     <androidx.appcompat.widget.AppCompatTextView

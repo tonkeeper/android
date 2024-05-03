@@ -159,12 +159,6 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         }
     }
 
-    private fun finishDelay() {
-        postDelayed(ModalView.animationDuration) {
-            finish()
-        }
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         cameraExecutor.shutdown()

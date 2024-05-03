@@ -7,6 +7,7 @@ import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -151,5 +152,14 @@ sealed class Item(type: Int): BaseListItem(type) {
         iconRes = UIKitIcon.ic_trash_bin_28,
         position = position,
         secondaryIcon = false
+    )
+
+    class SearchEngine(
+        engine: com.tonapps.wallet.data.core.SearchEngine,
+        position: ListCell.Position
+    ): Text(
+        titleRes = Localization.search,
+        value = engine.title,
+        position = position
     )
 }

@@ -17,10 +17,14 @@ import androidx.core.view.doOnNextLayout
 import androidx.core.view.marginBottom
 import androidx.core.view.updateMargins
 import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import uikit.R
+import uikit.extensions.activity
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.range
 import uikit.extensions.roundTop
+import uikit.extensions.scale
 import uikit.extensions.setPaddingBottom
 import uikit.extensions.setView
 import kotlin.math.abs
@@ -29,11 +33,11 @@ class ModalView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : FrameLayout(context, attrs, defStyle), ValueAnimator.AnimatorUpdateListener {
+) : FrameLayout(context, attrs, defStyle) {
 
     companion object {
-        const val animationDuration = 225L
-        private val interpolator = PathInterpolator(.2f, 0f, 0f, 1f)
+        private const val parentScale = .92f
+        private const val parentAlpha = .8f
     }
 
     var doOnHide: (() -> Unit)? = null
@@ -49,22 +53,32 @@ class ModalView @JvmOverloads constructor(
             if (slideOffset > 0f) {
                 return
             }
-            val opacity = 1f - abs(slideOffset)
-            bgView.alpha = opacity
+            val progress = 1f - abs(slideOffset)
+            if (progress >= 0f) {
+                onAnimationUpdateParent(progress)
+            }
         }
     }
 
-    val behavior: BottomSheetBehavior<FrameLayout>
     private val bgView: View
     private val coordinatorView: CoordinatorLayout
     private val bottomSheetView: FrameLayout
+    private val isAnimating: Boolean
+        get() {
+            return try {
+                behavior.state == BottomSheetBehavior.STATE_DRAGGING || behavior.state == BottomSheetBehavior.STATE_SETTLING
+            } catch (e: Exception) {
+                true
+            }
+        }
 
-    private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = animationDuration
-        interpolator = ModalView.interpolator
-        addUpdateListener(this@ModalView)
-        doOnStart { setLayerType(LAYER_TYPE_HARDWARE, null) }
-        doOnEnd { setLayerType(LAYER_TYPE_NONE, null) }
+    val behavior: BottomSheetBehavior<FrameLayout>
+    var fragment: Fragment? = null
+    var scaleBackground: Boolean = false
+
+    private val parentRootView: View? by lazy {
+        val v = context.activity?.findViewById<View>(R.id.root_container)
+        v
     }
 
     init {
@@ -83,10 +97,19 @@ class ModalView @JvmOverloads constructor(
         behavior = BottomSheetBehavior.from(bottomSheetView)
         behavior.addBottomSheetCallback(bottomSheetCallback)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
+        behavior.isFitToContents = true
 
         findViewById<View>(R.id.modal_touch_outside).setOnClickListener {
             hide(false)
         }
+        doOnLayout { onAnimationUpdateParent(0f) }
+    }
+
+    override fun requestLayout() {
+        if (isAnimating) {
+            return
+        }
+        super.requestLayout()
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
@@ -115,34 +138,34 @@ class ModalView @JvmOverloads constructor(
         }
     }
 
-    fun startShowAnimation() {
-        doOnLayout {
-            animation.start()
-        }
-    }
-
     fun setContentView(view: View) {
         bottomSheetView.setView(view)
     }
 
-    fun show() {
-        if (behavior.state == BottomSheetBehavior.STATE_HIDDEN) {
-            behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        }
-    }
-
     fun hide(force: Boolean) {
+        Log.d("ModalViewLog", "hide!")
         if (force) {
             behavior.isHideable = true
         }
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
-    override fun onAnimationUpdate(animation: ValueAnimator) {
-        val value = animation.animatedValue as Float
-        val height = measuredHeight
-        bottomSheetView.translationY = height * (1 - value)
-        bgView.alpha = value
+    override fun onDetachedFromWindow() {
+        onAnimationUpdateParent(0f)
+        super.onDetachedFromWindow()
+    }
+
+    private fun onAnimationUpdateParent(progress: Float) {
+        bgView.alpha = progress
+
+        if (!scaleBackground) {
+            return
+        }
+        val parentView = parentRootView ?: return
+        val radius = context.getDimensionPixelSize(R.dimen.cornerMedium)
+        parentView.roundTop(progress.range(0, radius))
+        parentView.scale = progress.range(1f, parentScale)
+        parentView.alpha = progress.range(1f, parentAlpha)
     }
 
     private fun setPeekHeight(newPeekHeight: Int) {

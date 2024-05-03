@@ -34,7 +34,7 @@ class LabelScreen: BaseFragment(R.layout.fragment_init_label) {
             initViewModel.nextStep(InitEvent.Step.LabelAccount)
         }
 
-        view.doKeyboardAnimation { offset, progress ->
+        view.doKeyboardAnimation { offset, progress, _ ->
             editorView.setBottomOffset(offset, progress)
         }
 

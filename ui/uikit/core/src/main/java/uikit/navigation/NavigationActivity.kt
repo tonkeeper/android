@@ -39,7 +39,7 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         val hostSheetId = R.id.sheet_container
     }
 
-    private val isInitialized: Boolean
+    open val isInitialized: Boolean
         get() = supportFragmentManager.fragments.isNotEmpty()
 
     private val modals: List<BaseFragment.Modal>
@@ -118,7 +118,11 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
-    fun setPrimaryFragment(fragment: BaseFragment, recreate: Boolean = false): Boolean {
+    fun setPrimaryFragment(
+        fragment: BaseFragment,
+        recreate: Boolean = false,
+        runnable: Runnable? = null
+    ): Boolean {
         if (primaryFragment?.javaClass == fragment.javaClass && !recreate) {
             return false
         }
@@ -133,6 +137,9 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
         transaction.replace(hostFragmentId, fragment)
         transaction.setPrimaryNavigationFragment(fragment)
+        runnable?.let {
+            transaction.runOnCommit(it)
+        }
         transaction.commitAllowingStateLoss()
         return true
     }

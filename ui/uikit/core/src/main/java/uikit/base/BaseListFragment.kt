@@ -5,7 +5,6 @@ import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.R
-import uikit.extensions.applyBottomInsets
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
@@ -28,6 +27,10 @@ open class BaseListFragment: BaseFragment(R.layout.fragment_list) {
         listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(R.dimen.cornerMedium))
 
         collectFlow(listView.topScrolled, headerView::setDivider)
+    }
+
+    fun findListItemView(position: Int): View? {
+        return listView.findViewHolderForAdapterPosition(position)?.itemView
     }
 
     fun setAdapter(adapter: RecyclerView.Adapter<*>) {

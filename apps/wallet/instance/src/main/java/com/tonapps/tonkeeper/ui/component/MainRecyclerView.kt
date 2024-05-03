@@ -2,13 +2,16 @@ package com.tonapps.tonkeeper.ui.component
 
 import android.content.Context
 import android.graphics.Canvas
+import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import blur.BlurCompat
-import org.koin.core.time.measureDuration
+import com.tonapps.tonkeeper.isBlurDisabled
+import com.tonapps.tonkeeper.koin.api
+import com.tonapps.wallet.api.entity.FlagsEntity
 import uikit.extensions.getDimensionPixelSize
 import uikit.widget.SimpleRecyclerView
 
@@ -30,14 +33,15 @@ class MainRecyclerView @JvmOverloads constructor(
     private val bottomPadding: Int
         get() = bottomOffset + barSize
 
-    // private val headerBlur = BlurCompat(context)
-    // private val bottomBlur = BlurCompat(context)
+    private val blurDisabled = context.isBlurDisabled
+    private val topBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
+    private val bottomBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
 
-    /*init {
-        if (headerBlur.hasBlur) {
+    init {
+        if (bottomBlur?.hasBlur == true) {
             overScrollMode = OVER_SCROLL_NEVER
         }
-    }*/
+    }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
@@ -53,35 +57,46 @@ class MainRecyclerView @JvmOverloads constructor(
         return super.onApplyWindowInsets(insets)
     }
 
-    /*override fun draw(canvas: Canvas) {
-        headerBlur.draw(canvas) { outputCanvas ->
-            bottomBlur.draw(outputCanvas) {
-                super.draw(it)
+    override fun dispatchDraw(canvas: Canvas) {
+        if (topBlur == null) {
+            super.dispatchDraw(canvas)
+        } else {
+            topBlur.draw(canvas) {
+                super.dispatchDraw(it)
             }
         }
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        headerBlur.attached()
-        bottomBlur.attached()
+    override fun draw(canvas: Canvas) {
+        if (bottomBlur == null) {
+            super.draw(canvas)
+        } else {
+            bottomBlur.draw(canvas) {
+                super.draw(it)
+            }
+        }
     }
-
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        headerBlur.detached()
-        bottomBlur.detached()
-    }*/
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         super.onMeasure(widthSpec, heightSpec)
         applyBlurBounds()
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        topBlur?.attached()
+        bottomBlur?.attached()
+    }
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        topBlur?.detached()
+        bottomBlur?.detached()
+    }
+
     private fun applyBlurBounds() {
         val viewWidth = measuredWidth.toFloat()
         val viewHeight = measuredHeight.toFloat()
-        // headerBlur.setBounds(0f, 0f, viewWidth, topPadding.toFloat())
-        // bottomBlur.setBounds(0f, viewHeight - bottomPadding, viewWidth, viewHeight)
+        topBlur?.setBounds( 0f, 0f, viewWidth, topPadding.toFloat())
+        bottomBlur?.setBounds(0f, viewHeight - bottomPadding, viewWidth, viewHeight)
     }
 }

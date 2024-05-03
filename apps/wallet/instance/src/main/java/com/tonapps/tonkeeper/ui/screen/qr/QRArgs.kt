@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.qr
 
 import android.os.Bundle
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletType
 import uikit.base.BaseArgs
@@ -26,7 +27,10 @@ data class QRArgs(
     fun getDeepLink(): String {
         var deepLink = "ton://transfer/${address}"
         if (!token.isTon) {
-            deepLink += "?token=${token.address}"
+            deepLink += "?token=${token.address.toUserFriendly(
+                wallet = false, 
+                testnet = walletType == WalletType.Testnet
+            )}"
         }
         return deepLink
     }

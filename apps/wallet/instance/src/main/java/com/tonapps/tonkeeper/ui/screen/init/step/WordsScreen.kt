@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.ui.component.WordEditText
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.iconPrimaryColor
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,7 +45,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         scrollView = view.findViewById(R.id.scroll)
-        scrollView.doKeyboardAnimation { offset, _ ->
+        scrollView.doKeyboardAnimation { offset, _, _ ->
             scrollView.updatePadding(bottom = offset)
         }
 
@@ -82,7 +83,11 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                 return@launch
             }
             setLoading()
-            initViewModel.setMnemonic(words)
+            try {
+                initViewModel.setMnemonic(words)
+            } catch (e: Throwable) {
+                setDefault()
+            }
         }
     }
 
@@ -91,6 +96,13 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         button.isEnabled = false
         loaderView.visibility = View.VISIBLE
         wordInputs.forEach { it.isEnabled = false }
+    }
+
+    private fun setDefault() {
+        button.setText(Localization.continue_action)
+        button.isEnabled = false
+        loaderView.visibility = View.GONE
+        wordInputs.forEach { it.isEnabled = true }
     }
 
     private fun onTextChanged(index: Int, editable: Editable) {

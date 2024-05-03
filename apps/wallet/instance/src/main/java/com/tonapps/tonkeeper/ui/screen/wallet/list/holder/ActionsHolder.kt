@@ -19,12 +19,13 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     private val receiveView = findViewById<View>(R.id.receive)
     private val buyOrSellView = findViewById<View>(R.id.buy_or_sell)
     private val swapView = findViewById<View>(R.id.swap)
+    private val scanView = findViewById<View>(R.id.scan)
     private val navigation = Navigation.from(context)
 
     init {
         sendView.setOnClickListener { navigation?.sendCoin() }
         buyOrSellView.setOnClickListener { FiatDialog.open(context) }
-        findViewById<View>(R.id.scan).setOnClickListener { navigation?.openCamera() }
+        scanView.setOnClickListener { navigation?.openCamera() }
     }
 
     override fun onBind(item: Item.Actions) {
@@ -35,9 +36,10 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(SwapScreen.newInstance(item.swapUri, item.address, TokenEntity.TON.address))
         }
 
-        swapView.isEnabled = item.walletType == WalletType.Default
+        swapView.isEnabled = item.walletType == WalletType.Default && !item.disableSwap
         sendView.isEnabled = item.walletType != WalletType.Watch
-        buyOrSellView.isEnabled = item.walletType != WalletType.Testnet && item.walletType != WalletType.Watch
+        scanView.isEnabled = item.walletType != WalletType.Watch
+        buyOrSellView.isEnabled = item.walletType != WalletType.Testnet && !item.disableSwap
     }
 
 }

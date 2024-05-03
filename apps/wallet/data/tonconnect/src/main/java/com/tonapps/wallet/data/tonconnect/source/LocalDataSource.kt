@@ -23,6 +23,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         private const val APP_COLUMN_CLIENT_ID = "client_id"
         private const val APP_COLUMN_OBJECT = "object"
         private const val APP_COLUMN_ACCOUNT_ID = "account_id"
+        private const val APP_COLUMN_URL = "url"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -44,9 +45,11 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         db.execSQL("CREATE TABLE $APP_TABLE_NAME (" +
                 "$APP_COLUMN_CLIENT_ID TEXT UNIQUE," +
                 "$APP_COLUMN_ACCOUNT_ID TEXT," +
-                "$APP_COLUMN_OBJECT BLOB" +
+                "$APP_COLUMN_OBJECT BLOB," +
+                "$APP_COLUMN_URL TEXT" +
                 ");")
         db.execSQL("CREATE INDEX idx_accountId ON $APP_TABLE_NAME($APP_COLUMN_ACCOUNT_ID);")
+        db.execSQL("CREATE INDEX idx_url ON $APP_TABLE_NAME($APP_COLUMN_URL);")
     }
 
     fun getManifest(url: String): DAppManifestEntity? {
@@ -73,10 +76,17 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
     }
 
     fun addApp(app: DAppEntity) {
+        writableDatabase.delete(
+            APP_TABLE_NAME,
+            "$APP_COLUMN_URL = ? AND $APP_COLUMN_ACCOUNT_ID = ?",
+            arrayOf(app.url, app.accountId)
+        )
+
         val value = ContentValues()
         value.put(APP_COLUMN_CLIENT_ID, app.clientId)
         value.put(APP_COLUMN_ACCOUNT_ID, accountId(app.accountId, app.testnet))
         value.put(APP_COLUMN_OBJECT, app.toByteArray())
+        value.put(APP_COLUMN_URL, app.url)
         writableDatabase.insert(APP_TABLE_NAME, null, value)
     }
 
@@ -89,7 +99,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
             list.add(app)
         }
         cursor.close()
-        return list.toList()
+        return uniqueApps(list)
     }
 
     fun getApps(accountId: String, testnet: Boolean): List<DAppEntity> {
@@ -101,7 +111,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
             list.add(app)
         }
         cursor.close()
-        return list.toList()
+        return uniqueApps(list)
     }
 
     fun deleteApp(clientId: String, accountId: String, testnet: Boolean) {
@@ -110,5 +120,9 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
             "$APP_COLUMN_CLIENT_ID = ? AND $APP_COLUMN_ACCOUNT_ID = ?",
             arrayOf(clientId, accountId(accountId, testnet))
         )
+    }
+
+    private fun uniqueApps(list: List<DAppEntity>): List<DAppEntity> {
+        return list.distinctBy { it.uniqueId }
     }
 }

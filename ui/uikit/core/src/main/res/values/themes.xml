@@ -2,6 +2,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowActivityTransitions">false</item>
         <item name="windowSplashScreenBackground">#10161F</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/bg_splash</item>
         <item name="splashScreenIconSize">128dp</item>
@@ -10,6 +12,8 @@
     </style>
 
     <style name="Theme.App.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowActivityTransitions">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
         <item name="android:windowBackground">@drawable/bg_window</item>
 
         <item name="android:statusBarColor">@android:color/transparent</item>
@@ -147,4 +151,65 @@
         <item name="colorAccent">@color/textAccentDark</item>
     </style>
 
+    <style name="Theme.App.Light" parent="Theme.App.Base">
+        <item name="textPrimaryColor">@color/textPrimaryLight</item>
+        <item name="textSecondaryColor">@color/textSecondaryLight</item>
+        <item name="textTertiaryColor">@color/textTertiaryLight</item>
+        <item name="textAccentColor">@color/textAccentLight</item>
+        <item name="textPrimaryAlternateColor">@color/textPrimaryAlternateLight</item>
+
+        <item name="backgroundPageColor">@color/backgroundPageLight</item>
+        <item name="backgroundTransparentColor">@color/backgroundTransparentLight</item>
+        <item name="backgroundContentColor">@color/backgroundContentLight</item>
+        <item name="backgroundContentTintColor">@color/backgroundContentTintLight</item>
+        <item name="backgroundContentAttentionColor">@color/backgroundContentAttentionLight</item>
+        <item name="backgroundHighlightedColor">@color/backgroundHighlightedLight</item>
+        <item name="backgroundOverlayStrongColor">@color/backgroundOverlayStrongLight</item>
+        <item name="backgroundOverlayLightColor">@color/backgroundOverlayLightLight</item>
+        <item name="backgroundOverlayExtraLightColor">@color/backgroundOverlayExtraLightLight</item>
+
+        <item name="iconPrimaryColor">@color/iconPrimaryLight</item>
+        <item name="iconSecondaryColor">@color/iconSecondaryLight</item>
+        <item name="iconTertiaryColor">@color/iconTertiaryLight</item>
+        <item name="iconPrimaryAlternateColor">@color/iconPrimaryAlternateLight</item>
+
+        <item name="buttonPrimaryBackgroundColor">@color/buttonPrimaryBackgroundLight</item>
+        <item name="buttonPrimaryBackgroundDisabledColor">@color/buttonPrimaryBackgroundDisabledLight</item>
+        <item name="buttonPrimaryBackgroundHighlightedColor">@color/buttonPrimaryBackgroundHighlightedLight</item>
+        <item name="buttonPrimaryForegroundColor">@color/buttonPrimaryForegroundLight</item>
+
+        <item name="buttonSecondaryBackgroundColor">@color/buttonSecondaryBackgroundLight</item>
+        <item name="buttonSecondaryBackgroundDisabledColor">@color/buttonSecondaryBackgroundDisabledLight</item>
+        <item name="buttonSecondaryBackgroundHighlightedColor">@color/buttonSecondaryBackgroundHighlightedLight</item>
+        <item name="buttonSecondaryForegroundColor">@color/buttonSecondaryForegroundLight</item>
+
+        <item name="buttonTertiaryBackgroundColor">@color/buttonTertiaryBackgroundLight</item>
+        <item name="buttonTertiaryBackgroundDisabledColor">@color/buttonTertiaryBackgroundDisabledLight</item>
+        <item name="buttonTertiaryBackgroundHighlightedColor">@color/buttonTertiaryBackgroundHighlightedLight</item>
+        <item name="buttonTertiaryForegroundColor">@color/buttonTertiaryForegroundLight</item>
+
+        <item name="buttonGreenBackgroundColor">@color/buttonGreenBackgroundLight</item>
+        <item name="buttonGreenBackgroundDisabledColor">@color/buttonGreenBackgroundDisabledLight</item>
+        <item name="buttonGreenBackgroundHighlightedColor">@color/buttonGreenBackgroundDisabledLight</item>
+
+        <item name="fieldBackgroundColor">@color/fieldBackgroundLight</item>
+        <item name="fieldActiveBorderColor">@color/fieldActiveBorderLight</item>
+        <item name="fieldErrorBorderColor">@color/fieldErrorBorderLight</item>
+        <item name="fieldErrorBackgroundColor">@color/fieldErrorBackgroundLight</item>
+
+        <item name="accentBlueColor">@color/accentBlueLight</item>
+        <item name="accentGreenColor">@color/accentGreenLight</item>
+        <item name="accentRedColor">@color/accentRedLight</item>
+        <item name="accentOrangeColor">@color/accentOrangeLight</item>
+        <item name="accentPurpleColor">@color/accentPurpleLight</item>
+
+        <item name="tabBarActiveIconColor">@color/tabBarActiveIconLight</item>
+        <item name="tabBarInactiveIconColor">@color/tabBarInactiveIconLight</item>
+
+        <item name="separatorCommonColor">@color/separatorCommonLight</item>
+        <item name="separatorAlternateColor">@color/separatorAlternateLight</item>
+
+        <item name="android:colorBackground">@color/backgroundPageLight</item>
+        <item name="colorAccent">@color/textAccentLight</item>
+    </style>
 </resources>

@@ -14,12 +14,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
-import uikit.extensions.collectFlow
 
 class CollectiblesViewModel(
     private val walletRepository: WalletRepository,
@@ -54,13 +52,18 @@ class CollectiblesViewModel(
     }
 
     private fun loadLocal(wallet: WalletEntity) {
-        _uiItemsFlow.value = buildUiItems(repository.getLocalNftItems(wallet.accountId, wallet.testnet))
+        val purchases = repository.getLocalNftItems(wallet.accountId, wallet.testnet)
+        val items = buildUiItems(purchases)
+        if (items.isNotEmpty()) {
+            setUiItems(wallet, items)
+        }
     }
 
     private fun loadRemote(wallet: WalletEntity) {
         try {
-            val items = repository.getRemoteNftItems(wallet.accountId, wallet.testnet)
-            _uiItemsFlow.value = buildUiItems(items)
+            val purchases = repository.getRemoteNftItems(wallet.accountId, wallet.testnet)
+            val items = buildUiItems(purchases)
+            setUiItems(wallet, items)
             _isUpdatingFlow.tryEmit(false)
         } catch (ignored: Throwable) { }
     }
@@ -70,8 +73,15 @@ class CollectiblesViewModel(
     ): List<Item> {
         val items = mutableListOf<Item>()
         for (nft in list) {
-            items.add(Item(nft))
+            items.add(Item.Nft(nft))
         }
         return items.toList()
+    }
+
+    private fun setUiItems(
+        wallet: WalletEntity,
+        items: List<Item>
+    ) {
+        _uiItemsFlow.value = items.toList()
     }
 }

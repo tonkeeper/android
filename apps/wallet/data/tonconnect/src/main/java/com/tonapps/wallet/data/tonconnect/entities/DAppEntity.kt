@@ -31,6 +31,9 @@ data class DAppEntity(
     val publicKeyHex: String
         get() = hex(keyPair.publicKey)
 
+    val uniqueId: String
+        get() = "$walletId:$url"
+
     fun encrypt(body: String): ByteArray {
         return encrypt(body.toByteArray())
     }

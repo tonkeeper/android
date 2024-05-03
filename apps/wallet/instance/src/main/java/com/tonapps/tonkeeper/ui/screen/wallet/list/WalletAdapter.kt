@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.list
 
+import android.util.Log
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.ActionsHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.BalanceHolder
@@ -10,21 +11,18 @@ import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.TokenHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
+import com.tonapps.wallet.data.settings.SettingsRepository
 
-class Adapter(
-    private val onClickBalance: () -> Unit,
+class WalletAdapter(
+    private val settingsRepository: SettingsRepository,
 ): BaseListAdapter() {
-
-    init {
-        submitList(listOf(Item.Skeleton))
-    }
 
     override fun createHolder(
         parent: ViewGroup,
         viewType: Int
     ): BaseListHolder<out BaseListItem> {
         return when(viewType) {
-            Item.TYPE_BALANCE -> BalanceHolder(parent, onClickBalance)
+            Item.TYPE_BALANCE -> BalanceHolder(parent, settingsRepository)
             Item.TYPE_ACTIONS -> ActionsHolder(parent)
             Item.TYPE_TOKEN -> TokenHolder(parent)
             Item.TYPE_SPACE -> SpaceHolder(parent)

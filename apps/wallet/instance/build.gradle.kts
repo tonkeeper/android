@@ -15,10 +15,10 @@ android {
 
     defaultConfig {
         applicationId = "com.tonapps.tonkeeperx"
-        minSdk = Build.minSdkVersion
+        minSdk = 27 // Build.minSdkVersion
         targetSdk = 34
-        versionCode = 35
-        versionName = "0.0.33"
+        versionCode = 37
+        versionName = "0.0.36"
     }
 
     buildFeatures {
@@ -115,7 +115,14 @@ dependencies {
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)
 
-    implementation(Dependence.fresco)
+    implementation(Dependence.fresco) {
+        exclude(group = "com.facebook.soloader", module = "soloader")
+        exclude(group = "com.facebook.fresco", module = "soloader")
+        exclude(group = "com.facebook.fresco", module = "nativeimagefilters")
+        exclude(group = "com.facebook.fresco", module = "nativeimagetranscoder")
+        exclude(group = "com.facebook.fresco", module = "memory-type-native")
+        exclude(group = "com.facebook.fresco", module = "imagepipeline-native")
+    }
 
 
     implementation(Dependence.AndroidX.Room.base)

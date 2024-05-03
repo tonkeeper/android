@@ -42,7 +42,7 @@
                     android:layout_marginVertical="@dimen/offsetMedium"
                     android:background="@null"
                     android:singleLine="true"
-                    android:digits="0123456789."
+                    android:digits="0123456789.,"
                     android:inputType="numberDecimal"
                     android:fontFamily="@font/montserrat_semi_bold"
                     android:textColor="?attr/textPrimaryColor"

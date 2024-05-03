@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import androidx.appcompat.R
 import androidx.appcompat.widget.AppCompatEditText
+import com.tonapps.icu.CurrencyFormatter
 
 class AmountInput @JvmOverloads constructor(
     context: Context,
@@ -18,6 +19,8 @@ class AmountInput @JvmOverloads constructor(
     private companion object {
         private const val maxTextSize = 40f
     }
+
+    private val separator = CurrencyFormatter.monetaryDecimalSeparator
 
     init {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, maxTextSize)
@@ -46,17 +49,23 @@ class AmountInput @JvmOverloads constructor(
     }
 
     override fun afterTextChanged(editable: Editable) {
-        val value = editable.toString()
-        if (value == "." || value == ",") {
+        val indexDot = editable.indexOf(".")
+        val usingDot = indexDot != -1
+        val indexComa = editable.indexOf(",")
+        val usingComa = indexComa != -1
+        if (usingDot && separator != ".") {
+            editable.replace(indexDot, indexDot + 1, separator)
+        } else if (usingComa && separator != ",") {
+            editable.replace(indexComa, indexComa + 1, separator)
+        } else if (editable.contains(" ")) {
+            editable.replace(editable.indexOf(" "), editable.indexOf(" ") + 1, "")
+        } else if (indexDot == 0 || indexComa == 0) {
             editable.insert(0, "0")
-        } else if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
+        } else if (editable.length > 1 && editable.startsWith("0") && !editable.startsWith("0${separator}")) {
             editable.delete(0, 1)
+        } else if (editable.length == 1 && editable.equals(separator)) {
+            editable.insert(0, "0")
         }
-        /*if (editable.length > 1 && editable.startsWith("0") && !editable.startsWith("0.")) {
-            editable.delete(0, 1)
-        } else if (editable.length == 1 && editable.toString() == ".") {
-            editable.insert(0, "0")
-        }*/
     }
 
     fun setMaxLength(maxLength: Int) {

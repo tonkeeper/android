@@ -64,7 +64,7 @@ class NameFragment: BaseFragment(R.layout.fragment_name), BaseFragment.BottomShe
             nameInput.text = it.name
         }.launchIn(lifecycleScope)
 
-        view.doKeyboardAnimation { offset, _ ->
+        view.doKeyboardAnimation { offset, _, _ ->
             saveButton.translationY = -offset.toFloat()
         }
     }

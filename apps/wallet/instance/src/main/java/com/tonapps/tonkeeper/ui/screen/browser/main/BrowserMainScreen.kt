@@ -3,9 +3,12 @@ package com.tonapps.tonkeeper.ui.screen.browser.main
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import com.tonapps.tonkeeper.extensions.flagEmoji
+import com.tonapps.tonkeeper.fragment.country.CountryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchScreen
@@ -30,6 +33,7 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
     private lateinit var headerView: View
     private lateinit var exploreView: View
     private lateinit var connectedView: View
+    private lateinit var countryView: AppCompatTextView
 
     private lateinit var footerDrawable: FooterDrawable
     private lateinit var containerView: View
@@ -41,6 +45,13 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
             Tab(exploreScreen, exploreView),
             Tab(connectedScreen, connectedView)
         )
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        navigation?.setFragmentResultListener(COUNTRY_REQUEST_KEY) { bundle ->
+
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -55,6 +66,11 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
 
         connectedView = view.findViewById(R.id.connected)
         connectedView.setOnClickListener { setTab(tabs.last()) }
+
+        countryView = view.findViewById(R.id.country)
+        countryView.setOnClickListener {
+            navigation?.add(CountryScreen.newInstance(COUNTRY_REQUEST_KEY))
+        }
 
         footerDrawable = FooterDrawable(requireContext())
 
@@ -73,6 +89,9 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
 
         collectFlow(mainViewModel.childTopScrolled, headerDrawable::setDivider)
         collectFlow(mainViewModel.childBottomScrolled, footerDrawable::setDivider)
+        collectFlow(mainViewModel.countryFlow) { country ->
+            countryView.text = country.flagEmoji
+        }
     }
 
     private fun onApplyWindowInsets(view: View, insets: WindowInsetsCompat): WindowInsetsCompat {
@@ -118,6 +137,8 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
     }
 
     companion object {
+
+        private const val COUNTRY_REQUEST_KEY = "country_request"
 
         private val CONTAINER_ID = R.id.browser_fragment_container
 

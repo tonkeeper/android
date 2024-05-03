@@ -10,27 +10,34 @@
         android:paddingHorizontal="@dimen/offsetMedium">
 
         <androidx.appcompat.widget.AppCompatTextView
+            style="@style/Widget.App.TextTab"
             android:id="@+id/explore"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
             android:layout_gravity="center"
-            android:textAppearance="@style/TextAppearance.Label2"
-            android:textColor="?attr/textPrimaryColor"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
             android:text="@string/explore"
             android:background="@drawable/bg_button_secondary"/>
 
         <androidx.appcompat.widget.AppCompatTextView
+            style="@style/Widget.App.TextTab"
             android:id="@+id/connected"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
             android:layout_gravity="center"
-            android:textAppearance="@style/TextAppearance.Label2"
-            android:textColor="?attr/textPrimaryColor"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
             android:text="@string/connected"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_weight="1"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/Widget.App.TextTab"
+            android:id="@+id/country"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_button_secondary"/>
     </uikit.widget.RowLayout>
 
     <androidx.fragment.app.FragmentContainerView

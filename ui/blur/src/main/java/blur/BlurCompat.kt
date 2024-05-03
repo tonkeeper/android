@@ -14,8 +14,8 @@ class BlurCompat(context: Context) {
 
     private val impl = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Impl31(context)
-    /*} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Impl26(context)*/
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Impl26(context)
     } else {
         Impl(context)
     }
@@ -81,11 +81,15 @@ class BlurCompat(context: Context) {
 
         private val contentNode = ContentNodeLegacy()
         private val blurNode = BlurNodeLegacy(context)
+        private var index = 0
 
         override fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
             contentNode.draw(canvas, callback)
-            blurNode.setSnapshot(contentNode.capture(callback))
+            if (index % 2 != 0) {
+                blurNode.setSnapshot(contentNode.capture(callback))
+            }
             blurNode.draw(canvas, callback)
+            index++
         }
 
         override fun setBounds(rect: RectF) {

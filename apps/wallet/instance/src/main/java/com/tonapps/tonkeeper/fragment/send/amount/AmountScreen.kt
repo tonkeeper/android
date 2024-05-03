@@ -1,11 +1,14 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
 import android.os.Bundle
+import android.text.Editable
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
+import com.tonapps.blockchain.Coin
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
@@ -90,7 +93,9 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     private fun getValue(): Float {
-        return valueView.text.toString().toFloatOrNull() ?: 0f
+        val text = Coin.prepareValue(valueView.text.toString())
+        return text.toFloatOrNull() ?: 0f
+        // return valueView.text.toString().toFloatOrNull() ?: 0f
     }
 
     private fun next() {

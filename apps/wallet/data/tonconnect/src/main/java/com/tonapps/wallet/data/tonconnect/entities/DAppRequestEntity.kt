@@ -8,7 +8,7 @@ import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
 @Parcelize
-class DAppRequestEntity(
+data class DAppRequestEntity(
     val v: Int = 2,
     val id: String,
     val r: String,

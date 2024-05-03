@@ -2,6 +2,7 @@ package com.tonapps.extensions
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Build
 import androidx.annotation.RawRes
@@ -16,6 +17,9 @@ val Context.locale: Locale
             resources.configuration.locale
         }
     }
+
+val Context.isDebug: Boolean
+    get() = 0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE
 
 fun Context.cacheFolder(name: String): File {
     return cacheDir.folder(name)

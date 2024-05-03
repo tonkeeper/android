@@ -9,8 +9,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.IBinder
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider
+import com.tonapps.tonkeeper.core.widget.rate.WidgetRateProvider
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
-import com.tonapps.wallet.data.core.WalletCurrency
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 
@@ -24,17 +25,17 @@ abstract class Widget: AppWidgetProvider() {
         }
 
         private val defaultIntent: Intent by lazy {
-            val intent = Intent(com.tonapps.tonkeeper.App.instance, RootActivity::class.java)
+            val intent = Intent(App.instance, RootActivity::class.java)
             intent
         }
 
         val defaultPendingIntent: PendingIntent by lazy {
             val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-            PendingIntent.getActivity(com.tonapps.tonkeeper.App.instance, 0, defaultIntent, flags)
+            PendingIntent.getActivity(App.instance, 0, defaultIntent, flags)
         }
 
         fun update(
-            context: Context = com.tonapps.tonkeeper.App.instance,
+            context: Context = App.instance,
             cls: Class<*>
         ) {
             val ids = getWidgetIds(context, cls)
@@ -55,11 +56,6 @@ abstract class Widget: AppWidgetProvider() {
 
     @OptIn(DelicateCoroutinesApi::class)
     val scope = GlobalScope
-
-    // val currencyManager = CurrencyManager.getInstance()
-
-    val currency: WalletCurrency
-        get() = App.settings.currency
 
     abstract fun update(context: Context, manager: AppWidgetManager, id: Int)
 

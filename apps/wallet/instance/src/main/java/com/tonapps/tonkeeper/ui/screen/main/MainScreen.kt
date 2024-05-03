@@ -14,6 +14,7 @@ import com.tonapps.tonkeeper.ui.screen.root.RootEvent
 import com.tonapps.tonkeeper.ui.screen.wallet.WalletScreen
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
+import com.tonapps.wallet.data.account.WalletType
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
@@ -38,17 +39,17 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
 
         private val scrollListener = object : RecyclerVerticalScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
-                getHeaderDividerOwner().setDivider(verticalScrollOffset > 0)
+                getHeaderDividerOwner()?.setDivider(verticalScrollOffset > 0)
                 mainViewModel.setBottomScrolled(!recyclerView.isMaxScrollReached)
             }
         }
 
         abstract fun getRecyclerView(): RecyclerView?
 
-        abstract fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner
+        abstract fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner?
 
-        fun scrollUp() {
-            getRecyclerView()?.smoothScrollToPosition(0)
+        open fun scrollUp() {
+            getRecyclerView()?.scrollToPosition(0)
         }
 
         override fun onResume() {
@@ -101,7 +102,7 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
         super.onViewCreated(view, savedInstanceState)
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
         bottomTabsView.doOnClick = { itemId ->
-            setFragment(itemId)
+            setFragment(itemId, false)
         }
         bottomTabsView.doOnLongClick = { itemId ->
             if (itemId == R.id.wallet) {
@@ -110,8 +111,18 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
         }
         collectFlow(mainViewModel.childBottomScrolled, bottomTabsView::setDivider)
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().map { mainDeepLinks[it.link] }.filterNotNull(), this::forceSelectTab)
+        collectFlow(mainViewModel.browserTabEnabled) { enabled ->
+            if (enabled) {
+                bottomTabsView.showItem(R.id.browser)
+            } else {
+                bottomTabsView.hideItem(R.id.browser)
+                if (currentFragment is BrowserMainScreen) {
+                    forceSelectTab(R.id.wallet)
+                }
+            }
+        }
 
-        setFragment(R.id.wallet)
+        setFragment(R.id.wallet, false)
     }
 
     private fun fragmentByItemId(itemId: Int): BaseFragment {
@@ -120,10 +131,10 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
 
     fun forceSelectTab(itemId: Int) {
         bottomTabsView.setItemChecked(itemId)
-        setFragment(itemId)
+        setFragment(itemId, true)
     }
 
-    private fun setFragment(itemId: Int) {
+    private fun setFragment(itemId: Int, force: Boolean) {
         val tag = itemId.toString()
         val isAlreadyFragment = childFragmentManager.findFragmentByTag(tag) != null
 
@@ -139,6 +150,11 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
             transaction.show(newFragment)
         } else {
             transaction.add(R.id.child_fragment, newFragment, tag)
+        }
+        transaction.runOnCommit {
+            if (force && newFragment is Child) {
+                newFragment.scrollUp()
+            }
         }
         transaction.commitNowAllowingStateLoss()
         bottomTabsView.setDivider(false)

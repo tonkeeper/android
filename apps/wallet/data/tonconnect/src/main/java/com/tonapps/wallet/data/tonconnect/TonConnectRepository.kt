@@ -62,8 +62,7 @@ class TonConnectRepository(
 
     val eventsFlow = events.flow(appsFlow).onEach {
         if (it.method == "disconnect") {
-            localDataSource.deleteApp(it.app.clientId, it.app.accountId, it.app.testnet)
-            _appsFlow.value = _appsFlow.value?.filter { app -> app.clientId != it.app.clientId }
+            disconnect(it.app)
         }
     }.filterNotNull().flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
 
@@ -73,13 +72,20 @@ class TonConnectRepository(
         }
     }
 
-    fun getApps(urls: List<String>): List<DAppEntity> {
-        return urls.mapNotNull { getApp(it) }.distinctBy { it.publicKeyHex }
+    fun disconnect(app: DAppEntity) {
+        localDataSource.deleteApp(app.clientId, app.accountId, app.testnet)
+        _appsFlow.value = _appsFlow.value?.filter { app.clientId != it.clientId }
     }
 
-    fun getApp(url: String): DAppEntity? {
+    fun getApps(urls: List<String>, wallet: WalletEntity): List<DAppEntity> {
+        return urls.mapNotNull { getApp(it, wallet) }.distinctBy { it.publicKeyHex }
+    }
+
+    fun getApp(url: String, wallet: WalletEntity): DAppEntity? {
         val apps = localDataSource.getApps()
-        return apps.find { it.url.startsWith(url) }
+        return apps.find {
+            it.url.startsWith(url) && it.walletId == wallet.id
+        }
     }
 
     suspend fun getManifest(sourceUrl: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
@@ -117,7 +123,8 @@ class TonConnectRepository(
             manifest = manifest,
         )
         localDataSource.addApp(app)
-        _appsFlow.value = _appsFlow.value?.plus(app)
+        val oldValue = _appsFlow.value ?: emptyList()
+        _appsFlow.value = oldValue.plus(app)
         app
     }
 
@@ -200,7 +207,7 @@ class TonConnectRepository(
         clientId: String,
         requestItems: List<DAppItemEntity>,
         firebaseToken: String?,
-    ) = withContext(Dispatchers.IO) {
+    ): DAppEventSuccessEntity = withContext(Dispatchers.IO) {
         val enablePush = firebaseToken != null
         val app = newApp(manifest, wallet.accountId, wallet.testnet, clientId, wallet.id, enablePush)
         val items = createItems(app, wallet, privateKey, requestItems)
@@ -209,6 +216,20 @@ class TonConnectRepository(
         firebaseToken?.let {
             subscribePush(wallet, app, it)
         }
+        res.copy()
+    }
+
+    suspend fun autoConnect(
+        wallet: WalletEntity,
+    ): DAppEventSuccessEntity = withContext(Dispatchers.IO) {
+        val items = mutableListOf<DAppReply>()
+        items.add(createAddressItem(
+            accountId = wallet.accountId,
+            testnet = wallet.testnet,
+            publicKey = wallet.publicKey,
+            stateInit = wallet.contract.stateInit
+        ))
+        DAppEventSuccessEntity(items)
     }
 
     private fun createItems(

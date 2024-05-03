@@ -20,19 +20,19 @@ object Coin {
     ): Float {
         val bigDecimal = safeBigDecimal(v)
         val divisor = BigDecimal.TEN.pow(decimals)
-        val result = bigDecimal.divide(divisor, decimals, RoundingMode.HALF_DOWN)
+        val result = bigDecimal.divide(divisor, decimals, RoundingMode.DOWN)
         return result.toFloat()
     }
 
-    fun parseFloat(
+    /*fun parseFloat(
         value: String,
         decimals: Int = TON_DECIMALS
     ): Float {
-        val floatValue = value.toFloatOrNull() ?: return 0f
+        val floatValue = prepareValue(value).toFloatOrNull() ?: return 0f
         val formatString = "%.${decimals}f"
         val formattedString = formatString.format(floatValue)
-        return formattedString.toFloat()
-    }
+        return formattedString.toFloatOrNull() ?: 0f
+    }*/
 
     fun bigDecimal(
         value: String,
@@ -49,18 +49,47 @@ object Coin {
         value: String
     ): BigDecimal {
         return try {
-            BigDecimal(value)
+            val string = prepareValue(value)
+            BigDecimal(string)
         } catch (e: Throwable) {
             BigDecimal.ZERO
         }
     }
 
-    fun toNano(value: Float): Long {
-        return (value * BASE).toLong()
+    fun prepareValue(value: String): String {
+        var v = value.trim()
+        if (v.endsWith(".") || v.startsWith(",")) {
+            v = v.dropLast(1)
+        }
+        if (v.startsWith("0")) {
+            v = v.dropWhile { it == '0' }
+        }
+        if (v.startsWith(".") || v.startsWith(",")) {
+            v = "0$v"
+        }
+        if (v.contains(",")) {
+            v = v.replace(",", ".")
+        }
+        if (v.isEmpty()) {
+            v = "0"
+        }
+        return v
     }
 
-    fun toCoins(value: Long): Float {
-        return value / BASE.toFloat()
+    fun toNano(
+        value: Float,
+        decimals: Int = TON_DECIMALS
+    ): Long {
+        // old return (value * BASE).toLong()
+        return (value * 10.0.pow(decimals)).toLong()
+    }
+
+    fun toCoins(
+        value: Long,
+        decimals: Int = TON_DECIMALS
+    ): Float {
+        // old return value / BASE.toFloat()
+        return value / 10.0.pow(decimals).toFloat()
     }
 
 }

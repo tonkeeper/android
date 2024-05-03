@@ -24,6 +24,7 @@ import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.data.settings.SettingsRepository
 import uikit.HapticHelper
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
@@ -32,7 +33,7 @@ import uikit.widget.LoaderView
 
 class BalanceHolder(
     parent: ViewGroup,
-    private val onClickBalance: () -> Unit
+    private val settingsRepository: SettingsRepository
 ): Holder<Item.Balance>(parent, R.layout.view_wallet_data) {
 
     private val balanceView = itemView.findViewById<AppCompatTextView>(R.id.wallet_balance)
@@ -42,7 +43,7 @@ class BalanceHolder(
 
     init {
         balanceView.setOnClickListener {
-            onClickBalance()
+            settingsRepository.hiddenBalances = !settingsRepository.hiddenBalances
             HapticHelper.impactLight(context)
         }
         walletLoaderView.setColor(context.iconSecondaryColor)

@@ -21,6 +21,7 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 
+@Deprecated("Need refactoring")
 class JettonScreenFeature(
     private val historyHelper: HistoryHelper,
     private val ratesRepository: RatesRepository,
@@ -77,6 +78,7 @@ class JettonScreenFeature(
 
                 updateUiState {
                     it.copy(
+                        walletAddress = wallet.address,
                         walletType = wallet.type,
                         asyncState = AsyncState.Default,
                         jetton = jetton,

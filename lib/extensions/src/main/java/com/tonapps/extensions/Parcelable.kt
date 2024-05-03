@@ -39,7 +39,6 @@ inline fun <reified T: Parcelable> ByteArray.toParcel(): T? {
         parcel.recycle()
         value
     } catch (e: Throwable) {
-        Log.e("TonConnectNewLog", "toParcel: ${e.message}", e)
         null
     }
 }
@@ -59,3 +58,16 @@ inline fun <reified T: Parcelable> ByteArray.toListParcel(): List<T>? {
     }
 }
 
+inline fun <reified T: Parcelable> ByteArray.toListParcel(block: (parcel: Parcel) -> T): List<T>? {
+    return try {
+        val parcel = createParcel()
+        val list = mutableListOf<T>()
+        while (parcel.dataAvail() > 0) {
+            list.add(block(parcel))
+        }
+        parcel.recycle()
+        list
+    } catch (e: Throwable) {
+        null
+    }
+}

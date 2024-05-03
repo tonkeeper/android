@@ -7,7 +7,10 @@ import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.imagepipeline.core.ImagePipelineConfig
+import com.facebook.imagepipeline.core.ImageTranscoderType
+import com.facebook.imagepipeline.core.MemoryChunkType
 import com.tonapps.tonkeeper.core.fiat.Fiat
+import com.tonapps.tonkeeper.koin.koinModel
 import com.tonapps.wallet.api.apiModule
 import com.tonapps.wallet.data.account.accountModule
 import com.tonapps.wallet.data.rates.ratesModule
@@ -18,12 +21,13 @@ import org.koin.core.context.startKoin
 import com.tonapps.wallet.data.account.legacy.WalletManager
 import com.tonapps.wallet.data.browser.browserModule
 import com.tonapps.wallet.data.collectibles.collectiblesModule
+import com.tonapps.wallet.data.core.dataModule
 import com.tonapps.wallet.data.events.eventsModule
 import com.tonapps.wallet.data.push.pushModule
 import com.tonapps.wallet.data.tonconnect.tonConnectModule
-import uikit.widget.webview.bridge.BridgeWebView
+import org.koin.core.component.KoinComponent
 
-class App: Application(), CameraXConfig.Provider {
+class App: Application(), CameraXConfig.Provider, KoinComponent {
 
     companion object {
 
@@ -37,7 +41,6 @@ class App: Application(), CameraXConfig.Provider {
 
         lateinit var db: AppDatabase
         lateinit var instance: App
-        lateinit var bridgeWebView: BridgeWebView
     }
 
     override fun onCreate() {
@@ -47,11 +50,10 @@ class App: Application(), CameraXConfig.Provider {
         walletManager = WalletManager(this)
         fiat = Fiat(this)
         settings = SettingsRepository(this)
-        bridgeWebView = BridgeWebView(this)
 
         startKoin {
             androidContext(this@App)
-            modules(koinModel, browserModule, pushModule, tonConnectModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, dataModule, browserModule, pushModule, tonConnectModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
@@ -60,6 +62,8 @@ class App: Application(), CameraXConfig.Provider {
 
     private fun initFresco() {
         val configBuilder = ImagePipelineConfig.newBuilder(this)
+        configBuilder.setMemoryChunkType(MemoryChunkType.BUFFER_MEMORY)
+        configBuilder.setImageTranscoderType(ImageTranscoderType.JAVA_TRANSCODER)
         configBuilder.experiment().setNativeCodeDisabled(true)
         configBuilder.setDownsampleEnabled(false)
 

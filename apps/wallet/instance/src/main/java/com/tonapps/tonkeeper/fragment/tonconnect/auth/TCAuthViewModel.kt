@@ -10,6 +10,7 @@ import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
+import com.tonapps.wallet.data.tonconnect.entities.reply.DAppEventSuccessEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,7 +64,7 @@ class TCAuthViewModel(
     fun connect(
         context: Context,
         allowPush: Boolean
-    ): Flow<Unit> = wallet(context).combine(dataState) { wallet, data ->
+    ): Flow<DAppEventSuccessEntity> = wallet(context).combine(dataState) { wallet, data ->
         val privateKey = walletRepository.getPrivateKey(wallet.id)
         val firebaseToken = if (allowPush) {
             GooglePushService.requestToken()
@@ -71,7 +72,6 @@ class TCAuthViewModel(
             null
         }
         tonConnectRepository.connect(wallet, privateKey, data.manifest, data.clientId, data.items, firebaseToken)
-        Unit
     }.take(1).flowOn(Dispatchers.IO)
 
 

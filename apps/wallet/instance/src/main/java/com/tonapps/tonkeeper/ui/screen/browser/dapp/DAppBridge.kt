@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
 import android.util.Log
 import com.tonapps.tonkeeper.sign.SignRequestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppDeviceEntity
 import org.json.JSONArray
@@ -13,24 +15,28 @@ class DAppBridge(
     val deviceInfo: DAppDeviceEntity = DAppDeviceEntity(),
     val isWalletBrowser: Boolean = true,
     val protocolVersion: Int = 2,
-    val sendTransaction: suspend (request: SignRequestEntity) -> String?,
-    val connect: suspend (protocolVersion: Int, request: DAppRequestEntity) -> String?,
+    val send: suspend (array: JSONArray) -> String?,
+    val connect: suspend (protocolVersion: Int, request: DAppPayloadEntity) -> String?,
     val restoreConnection: suspend () -> String?,
     val disconnect: suspend () -> Unit,
 ): JsBridge("tonkeeper") {
 
-    override val availableFunctions = arrayOf("sendTransaction", "connect", "restoreConnection", "disconnect")
+    override val availableFunctions = arrayOf("send", "connect", "restoreConnection", "disconnect")
 
     init {
         keys["deviceInfo"] = deviceInfo.toJSON()
-        keys["isWalletBrowser"] = isWalletBrowser
         keys["protocolVersion"] = protocolVersion
+        keys["isWalletBrowser"] = isWalletBrowser
     }
 
     override suspend fun invokeFunction(name: String, args: JSONArray): Any? {
-
-        Log.d("DAppBridgeLog", "invokeFunction: $name, $args")
-        return null
+        return when (name) {
+            "connect" -> connect(protocolVersion, DAppPayloadEntity(args.getJSONObject(1)))
+            "send" -> send(args)
+            "restoreConnection" -> restoreConnection()
+            "disconnect" -> disconnect()
+            else -> null
+        }
     }
 
     override fun jsInjection(): String {
@@ -42,7 +48,7 @@ class DAppBridge(
 
         return """
             (() => {
-                if (!window.${windowKey}) {
+                if (!window.tonkeeper) {
                     window.rnPromises = {};
                     window.rnEventListeners = [];
                     window.invokeRnFunc = (name, args, resolve, reject) => {
@@ -61,6 +67,7 @@ class DAppBridge(
                     window.addEventListener('message', ({ data }) => {
                         try {
                             const message = data;
+                            console.log('message bridge', JSON.stringify(message));
                             if (message.type === '${BridgeMessage.Type.FunctionResponse.value}') {
                                 const promise = window.rnPromises[message.invocationId];
                                 
@@ -73,7 +80,7 @@ class DAppBridge(
                                 }
                                 
                                 if (message.status === 'fulfilled') {
-                                    promise.resolve(message.data);
+                                    promise.resolve(JSON.parse(message.data));
                                 } else {
                                     promise.reject(new Error(message.data));
                                 }
@@ -98,7 +105,7 @@ class DAppBridge(
                     };
                 };
                 
-                window.tonkeeper = {
+                window.${windowKey} = {
                     tonconnect: Object.assign(${JSONObject(keys)},{ $funcs },{ listen }),
                 }
             })();

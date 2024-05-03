@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.send.pager
 
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.tonapps.tonkeeper.fragment.send.amount.AmountScreen
 import com.tonapps.tonkeeper.fragment.send.confirm.ConfirmScreen
@@ -47,5 +48,10 @@ class SendScreenAdapter(
             POSITION_CONFIRM -> ConfirmScreen.newInstance()
             else -> throw IllegalStateException("Unknown position: $position")
         }
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerView.isNestedScrollingEnabled = true
     }
 }

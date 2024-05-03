@@ -30,13 +30,15 @@ import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import io.tonapi.models.MessageConsequences
 
 // TODO request refactoring
 class HistoryHelper(
-    private val ratesRepository: RatesRepository
+    private val ratesRepository: RatesRepository,
+    private val collectiblesRepository: CollectiblesRepository,
 ) {
 
     companion object {
@@ -207,6 +209,7 @@ class HistoryHelper(
     ): HistoryItem.Event {
         val currency = App.settings.currency
 
+        action.status
         val simplePreview = action.simplePreview
         val date = formatDate(timestamp)
 
@@ -252,6 +255,7 @@ class HistoryHelper(
                 date = date,
                 isOut = isOut,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.jettonTransfer != null) {
             val jettonTransfer = action.jettonTransfer!!
@@ -298,6 +302,7 @@ class HistoryHelper(
                 ),
                 addressName = accountAddress?.name,
                 currency = CurrencyFormatter.format(currency.code, inCurrency),
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.tonTransfer != null) {
             val tonTransfer = action.tonTransfer!!
@@ -343,6 +348,7 @@ class HistoryHelper(
                 ),
                 addressName = accountAddress.name,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!
@@ -363,6 +369,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 date = date,
                 isOut = true,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.nftItemTransfer != null) {
             val nftItemTransfer = action.nftItemTransfer!!
@@ -382,7 +389,11 @@ class HistoryHelper(
                 subtitle = nftItemTransfer.sender?.getNameOrAddress(wallet.testnet) ?: ""
             }
 
-            // val nftItem = nftRepository.getItem(nftItemTransfer.nft, wallet.testnet)
+            val nftItem = collectiblesRepository.getNft(
+                accountId = wallet.accountId,
+                testnet = wallet.testnet,
+                address = nftItemTransfer.nft
+            )
 
             return HistoryItem.Event(
                 index = index,
@@ -392,14 +403,15 @@ class HistoryHelper(
                 title = simplePreview.name,
                 subtitle = subtitle,
                 value = "NFT",
-                /*nftImageURL = nftItem?.imageURL,
-                nftTitle = nftItem?.title,
+                nftImageURL = nftItem?.thumbUri?.toString(),
+                nftTitle = nftItem?.name,
                 nftCollection = nftItem?.description,
-                nftAddress = nftItem?.address,*/
+                nftAddress = nftItem?.address,
                 tokenCode = "NFT",
                 timestamp = timestamp,
                 date = date,
                 isOut = isOut,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.contractDeploy != null) {
             return HistoryItem.Event(
@@ -414,6 +426,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.depositStake != null) {
             val depositStake = action.depositStake!!
@@ -434,6 +447,7 @@ class HistoryHelper(
                 coinIconUrl = depositStake.implementation.iconURL,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.jettonMint != null) {
             val jettonMint = action.jettonMint!!
@@ -454,6 +468,7 @@ class HistoryHelper(
                 coinIconUrl = jettonMint.jetton.image,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.withdrawStakeRequest != null) {
             val withdrawStakeRequest = action.withdrawStakeRequest!!
@@ -474,6 +489,7 @@ class HistoryHelper(
                 coinIconUrl = withdrawStakeRequest.implementation.iconURL,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.domainRenew != null) {
             val domainRenew = action.domainRenew!!
@@ -489,6 +505,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.auctionBid != null) {
             val auctionBid = action.auctionBid!!
@@ -510,6 +527,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.type == Action.Type.unknown) {
             return createUnknown(index, txId, action, date, timestamp, simplePreview)
@@ -532,6 +550,7 @@ class HistoryHelper(
                 coinIconUrl = withdrawStake.implementation.iconURL,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.nftPurchase != null) {
             val nftPurchase = action.nftPurchase!!
@@ -555,6 +574,7 @@ class HistoryHelper(
                 nftAddress = nftItem.address,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.jettonBurn != null) {
             val jettonBurn = action.jettonBurn!!
@@ -574,6 +594,7 @@ class HistoryHelper(
                 coinIconUrl = jettonBurn.jetton.image,
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.unSubscribe != null) {
             val unsubscribe = action.unSubscribe!!
@@ -590,6 +611,7 @@ class HistoryHelper(
                 coinIconUrl = unsubscribe.beneficiary.iconURL ?: "",
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else if (action.subscribe != null) {
             val subscribe = action.subscribe!!
@@ -609,6 +631,7 @@ class HistoryHelper(
                 coinIconUrl = subscribe.beneficiary.iconURL ?: "",
                 date = date,
                 isOut = false,
+                failed = action.status == Action.Status.failed,
             )
         } else {
             return createUnknown(index, txId, action, date, timestamp, simplePreview)
@@ -633,5 +656,6 @@ class HistoryHelper(
         timestamp = timestamp,
         date = date,
         isOut = false,
+        failed = action.status == Action.Status.failed,
     )
 }

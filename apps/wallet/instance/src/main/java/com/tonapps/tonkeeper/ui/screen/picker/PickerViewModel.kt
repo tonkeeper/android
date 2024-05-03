@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.picker
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.ui.screen.picker.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.WalletRepository
@@ -14,84 +15,23 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.delayFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PickerViewModel(
-    private val walletRepository: WalletRepository,
-    private val tokenRepository: TokenRepository,
-    private val settings: SettingsRepository,
+    private val walletRepository: WalletRepository
 ): ViewModel() {
 
-    private val currency: WalletCurrency
-        get() = settings.currency
+    val walletChangedFlow = walletRepository.activeWalletFlow.drop(1).take(1)
 
-    private val _itemsFlow = MutableStateFlow<List<Item>?>(null)
-    val itemsFlow = _itemsFlow.asStateFlow().filterNotNull()
-
-    private val job: Job
-
-    init {
-        job = walletRepository.walletsFlow.take(1).combine(walletRepository.activeWalletFlow.take(1)) { wallets, activeWallet ->
-            setWallets(wallets, activeWallet)
-        }.launchIn(viewModelScope)
-    }
-
-    private suspend fun setWallets(
-        wallets: List<WalletEntity>,
-        activeWallet: WalletEntity
-    ) = withContext(Dispatchers.IO) {
-        val balances = getBalances(wallets)
-        val uiItems = mutableListOf<Item>()
-        for ((index, wallet) in wallets.withIndex()) {
-            val item = Item.Wallet(
-                accountId = wallet.accountId,
-                walletId = wallet.id,
-                walletLabel = wallet.label,
-                walletType = wallet.type,
-                selected = wallet.id == activeWallet.id,
-                position = ListCell.getPosition(wallets.size, index),
-                balance = balances[index].await(),
-            )
-            uiItems.add(item)
-        }
-        uiItems.add(Item.AddWallet)
-        _itemsFlow.value = uiItems
-    }
-
-    fun setActiveWallet(id: Long) {
-        job.cancel()
-        viewModelScope.launch(Dispatchers.IO) {
-            walletRepository.setActiveWallet(id)
-        }
-    }
-
-    private suspend fun getBalances(
-        wallets: List<WalletEntity>
-    ): List<Deferred<CharSequence>> = withContext(Dispatchers.IO) {
-        val list = mutableListOf<Deferred<CharSequence>>()
-        for (wallet in wallets) {
-            list.add(async { getBalance(wallet.accountId, wallet.testnet) })
-        }
-        list
-    }
-
-    private suspend fun getBalance(
-        accountId: String,
-        testnet: Boolean
-    ): CharSequence {
-        val currency = if (testnet) {
-            WalletCurrency.TON
-        } else {
-            currency
-        }
-        val totalBalance = tokenRepository.getTotalBalances(currency, accountId, testnet)
-        return CurrencyFormatter.formatFiat(currency.code, totalBalance)
-    }
 }

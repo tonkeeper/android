@@ -28,6 +28,7 @@ import org.ton.block.StateInit
 import uikit.mvi.UiFeature
 import uikit.widget.ProcessTaskView
 
+@Deprecated("Need refactoring")
 class ConfirmScreenFeature(
     private val passcodeRepository: PasscodeRepository,
     private val ratesRepository: RatesRepository,
@@ -178,10 +179,9 @@ class ConfirmScreenFeature(
 
     fun setAmount(amountRaw: String, decimals: Int, tokenAddress: String, symbol: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val value = Coin.parseFloat(amountRaw, decimals)
+            val value = Coin.prepareValue(amountRaw).toFloatOrNull() ?: 0f
             val rates = ratesRepository.getRates(currency, tokenAddress)
             val fiat = rates.convert(tokenAddress, value)
-
 
             updateUiState {
                 it.copy(

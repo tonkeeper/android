@@ -61,6 +61,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             is Item.Contact -> navigation?.openURL(item.url, true)
             is Item.Logout -> signOut()
             is Item.SearchEngine -> searchPicker(item)
+            is Item.DeleteWatchAccount -> deleteWatchAccount()
             else -> return
         }
     }
@@ -111,6 +112,18 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
         builder.setTitle(Localization.sign_out_title)
         builder.setMessage(Localization.sign_out_description)
         builder.setNegativeButton(Localization.sign_out) {
+            settingsViewModel.signOut()
+            finish()
+        }
+        builder.setPositiveButton(Localization.cancel)
+        builder.setColoredButtons()
+        builder.show()
+    }
+
+    private fun deleteWatchAccount() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setMessage(Localization.delete_watch_account_alert)
+        builder.setNegativeButton(Localization.delete) {
             settingsViewModel.signOut()
             finish()
         }

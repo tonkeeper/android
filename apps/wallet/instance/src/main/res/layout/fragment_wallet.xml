@@ -11,7 +11,7 @@
         android:paddingHorizontal="@dimen/offsetMedium"
         android:clipToPadding="false"/>
 
-    <com.tonapps.tonkeeper.ui.component.WalletHeaderView
+    <com.tonapps.tonkeeper.ui.component.wallet.WalletHeaderView
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>

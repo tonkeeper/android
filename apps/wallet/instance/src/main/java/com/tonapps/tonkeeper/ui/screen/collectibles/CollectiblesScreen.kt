@@ -5,7 +5,6 @@ import android.view.View
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
@@ -14,14 +13,10 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.localization.Localization
-import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import uikit.base.BaseFragment
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
-import uikit.extensions.isMaxScrollReached
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 

@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.component.MainRecyclerView
-import com.tonapps.tonkeeper.ui.component.WalletHeaderView
+import com.tonapps.tonkeeper.ui.component.wallet.WalletHeaderView
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
@@ -35,6 +35,13 @@ class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
         headerView = view.findViewById(R.id.header)
         headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance()) }
         headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance()) }
+        headerView.doWalletSwipe = { right ->
+            if (right) {
+                walletViewModel.prevWallet()
+            } else {
+                walletViewModel.nextWallet()
+            }
+        }
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter

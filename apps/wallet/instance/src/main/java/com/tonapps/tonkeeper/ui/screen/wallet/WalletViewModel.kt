@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.wallet
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
@@ -32,6 +31,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -84,14 +84,16 @@ class WalletViewModel(
         }.launchIn(viewModelScope)
 
         collectFlow(settings.hiddenBalancesFlow.drop(1)) { hiddenBalance ->
-            _uiItemsFlow.value = _uiItemsFlow.value.map {
+            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@collectFlow
+            val items = _uiItemsFlow.value.map {
                 when (it) {
                     is Item.Balance -> it.copy(hiddenBalance = hiddenBalance)
                     is Item.Token -> it.copy(hiddenBalance = hiddenBalance)
                     else -> it
                 }
             }
-            // setCached(wallet, items)
+            _uiItemsFlow.value = items
+            setCached(wallet, items)
         }
 
         collectFlow(walletRepository.realtimeEventsFlow) { event ->
@@ -147,6 +149,26 @@ class WalletViewModel(
             }
             setItems(tokens.wallet, balanceFormat, uiItems, actualStatus, tokens.push, tokens.apps)
         }.launchIn(viewModelScope)
+    }
+
+    fun nextWallet() {
+        viewModelScope.launch {
+            val wallets = walletRepository.walletsFlow.firstOrNull() ?: return@launch
+            val activeWallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch
+            val index = wallets.indexOf(activeWallet)
+            val nextIndex = if (index == wallets.size - 1) 0 else index + 1
+            walletRepository.setActiveWallet(wallets[nextIndex].id)
+        }
+    }
+
+    fun prevWallet() {
+        viewModelScope.launch {
+            val wallets = walletRepository.walletsFlow.firstOrNull() ?: return@launch
+            val activeWallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch
+            val index = wallets.indexOf(activeWallet)
+            val prevIndex = if (index == 0) wallets.size - 1 else index - 1
+            walletRepository.setActiveWallet(wallets[prevIndex].id)
+        }
     }
 
     private fun setStatus(status: Item.Status) {
@@ -243,6 +265,7 @@ class WalletViewModel(
             token = TokenEntity.TON,
             walletType = wallet.type,
             swapUri = api.config.swapUri,
+            disableSwap = api.config.flags.disableSwap
         ))
         if (push.isNotEmpty()) {
             items.add(Item.Push(push, apps))

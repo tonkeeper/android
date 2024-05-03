@@ -52,7 +52,12 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
     private val args: DAppArgs by lazy { DAppArgs(requireArguments()) }
     private val webViewCallback = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-            return rootViewModel.processDeepLink(request.url, false)
+            val url = request.url
+            if (url.scheme != "https") {
+                navigation?.openURL(url.toString(), true)
+                return true
+            }
+            return rootViewModel.processDeepLink(url, false)
         }
 
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
@@ -92,12 +97,6 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
         webView.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
             headerDrawable.setDivider(scrollY > 0)
         }
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                // Log.d("DAppBridgeLog", "onConsoleMessage: ${consoleMessage?.message()}")
-                return super.onConsoleMessage(consoleMessage)
-            }
-        }
         webView.jsBridge = DAppBridge(
             send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
             connect = { _, request -> tonConnectAuth(request) },
@@ -129,9 +128,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
         val id = UUID.randomUUID().toString()
         navigation?.setFragmentResultListener(id) { bundle ->
             if (bundle.containsKey(TCAuthFragment.REPLY_ARG)) {
-                val authS = bundle.getString(TCAuthFragment.REPLY_ARG)
-                Log.d("DAppBridgeLog", "authS: $authS")
-                continuation.resume(authS)
+                continuation.resume(bundle.getString(TCAuthFragment.REPLY_ARG))
             } else {
                 continuation.resume(null)
             }

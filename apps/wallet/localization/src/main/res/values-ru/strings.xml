@@ -3,6 +3,8 @@
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
 
+    <string name="delete_watch_account_alert">Удалить аккаунт для просмотра?</string>
+    <string name="delete">Удалить</string>
     <string name="failed">Ошибка</string>
     <string name="remove_dapp_confirm">Удалить %1$s?</string>
     <string name="sending_transaction">Отправка транзакции</string>
@@ -36,7 +38,7 @@
     <string name="unverified_token">Непроверенный токен</string>
     <string name="authorization_required">Требуется авторизация</string>
     <string name="sign_out">Выйти</string>
-    <string name="delete_watch_account">Удалить аккаунт для наблюдения</string>
+    <string name="delete_watch_account">Удалить аккаунт для просмотра</string>
     <string name="continue_action">Продолжить</string>
     <string name="get_started">Начать</string>
     <string name="updating">Обновление</string>
@@ -241,7 +243,7 @@
     <string name="import_wallet">Импортировать кошелек</string>
     <string name="import_wallet_subtitle">Выберите один из вариантов ниже.</string>
     <string name="import_wallet_words">Импортируйте кошелек с 24 секретными словами восстановления.</string>
-    <string name="watch_wallet">Наблюдать за аккаунтом</string>
+    <string name="watch_wallet">Просмотр аккаунта</string>
     <string name="watch_wallet_subtitle">Для мониторинга активности кошелька без фразы восстановления</string>
     <string name="testnet_wallet">Testnet аккаунт</string>
     <string name="testnet_wallet_subtitle">Импортируйте кошелек с 24 секретными словами восстановления в Testnet.</string>

@@ -10,6 +10,7 @@ import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
 import com.tonapps.tonkeeper.core.fiat.Fiat
+import com.tonapps.tonkeeper.koin.koinModel
 import com.tonapps.wallet.api.apiModule
 import com.tonapps.wallet.data.account.accountModule
 import com.tonapps.wallet.data.rates.ratesModule
@@ -25,7 +26,6 @@ import com.tonapps.wallet.data.events.eventsModule
 import com.tonapps.wallet.data.push.pushModule
 import com.tonapps.wallet.data.tonconnect.tonConnectModule
 import org.koin.core.component.KoinComponent
-import uikit.widget.webview.bridge.BridgeWebView
 
 class App: Application(), CameraXConfig.Provider, KoinComponent {
 

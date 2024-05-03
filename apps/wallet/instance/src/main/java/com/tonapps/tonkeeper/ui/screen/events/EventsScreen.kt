@@ -1,36 +1,23 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
-import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
-import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
-import com.tonapps.tonkeeper.ui.component.WalletHeaderView
-import com.tonapps.tonkeeper.ui.screen.events.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
-import com.tonapps.uikit.list.ListCell
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.onEach
-import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import uikit.base.BaseFragment
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
-import uikit.extensions.dp
-import uikit.extensions.getDimensionPixelSize
-import uikit.extensions.isMaxScrollReached
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 

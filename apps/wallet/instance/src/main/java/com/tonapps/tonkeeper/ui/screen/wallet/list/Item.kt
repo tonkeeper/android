@@ -100,13 +100,15 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val token: TokenEntity,
         val walletType: WalletType,
         val swapUri: Uri,
+        val disableSwap: Boolean
     ): Item(TYPE_ACTIONS) {
 
         constructor(parcel: Parcel) : this(
             parcel.readString()!!,
             parcel.readParcelableCompat()!!,
             parcel.readEnum(WalletType::class.java)!!,
-            parcel.readParcelableCompat()!!
+            parcel.readParcelableCompat()!!,
+            parcel.readBooleanCompat()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -114,6 +116,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeParcelable(token, flags)
             dest.writeEnum(walletType)
             dest.writeParcelable(swapUri, flags)
+            dest.writeBooleanCompat(disableSwap)
         }
 
         companion object CREATOR : Parcelable.Creator<Actions> {

@@ -8,23 +8,41 @@ import androidx.annotation.LayoutRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.emoji.ui.EmojiView
+import com.tonapps.tonkeeper.koin.walletRepository
+import com.tonapps.tonkeeper.ui.screen.add.AddScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.data.account.WalletType
 import uikit.extensions.drawable
+import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
 
 abstract class Holder<I: Item>(
     parent: ViewGroup,
-    @LayoutRes resId: Int,
-    val onClick: (item: Item) -> Unit
+    @LayoutRes resId: Int
 ): BaseListHolder<I>(parent, resId) {
 
+    val navigation: Navigation?
+        get() = context.navigation
+
+    class Skeleton(
+        parent: ViewGroup
+    ): Holder<Item.Skeleton>(parent, R.layout.view_wallet_item) {
+
+        init {
+            findViewById<View>(R.id.wallet_color).visibility = View.GONE
+        }
+
+        override fun onBind(item: Item.Skeleton) {
+            itemView.background = item.position.drawable(context)
+        }
+    }
+
     class Wallet(
-        parent: ViewGroup,
-        onClick: (item: Item) -> Unit
-    ): Holder<Item.Wallet>(parent, R.layout.view_wallet_item, onClick) {
+        parent: ViewGroup
+    ): Holder<Item.Wallet>(parent, R.layout.view_wallet_item) {
 
         private val colorView = findViewById<View>(R.id.wallet_color)
         private val emojiView = findViewById<EmojiView>(R.id.wallet_emoji)
@@ -35,7 +53,9 @@ abstract class Holder<I: Item>(
 
         override fun onBind(item: Item.Wallet) {
             itemView.background = item.position.drawable(context)
-            itemView.setOnClickListener { onClick(item) }
+            itemView.setOnClickListener {
+                context.walletRepository?.chooseWallet(item.walletId)
+            }
 
             colorView.backgroundTintList = ColorStateList.valueOf(item.color)
             emojiView.setEmoji(item.emoji)
@@ -67,14 +87,15 @@ abstract class Holder<I: Item>(
     }
 
     class AddWallet(
-        parent: ViewGroup,
-        onClick: (item: Item) -> Unit
-    ): Holder<Item.AddWallet>(parent, R.layout.view_wallet_add_item, onClick) {
+        parent: ViewGroup
+    ): Holder<Item.AddWallet>(parent, R.layout.view_wallet_add_item) {
 
         private val addButton = findViewById<View>(R.id.add)
 
         init {
-            addButton.setOnClickListener { onClick(Item.AddWallet) }
+            addButton.setOnClickListener {
+                navigation?.add(AddScreen.newInstance())
+            }
         }
 
         override fun onBind(item: Item.AddWallet) {

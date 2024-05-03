@@ -26,7 +26,9 @@ sealed class ChartItem(
     data class Actions(
         val swapUri: Uri,
         val address: String,
-        val walletType: WalletType
+        val walletType: WalletType,
+        val disableSwap: Boolean,
+        val disableBuyOrSell: Boolean,
     ): ChartItem(TYPE_ACTIONS)
 
     data object Period: ChartItem(TYPE_PERIOD)

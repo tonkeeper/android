@@ -65,11 +65,14 @@
                 android:id="@+id/signer_wallet"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="@dimen/offsetMedium"
+                android:layout_marginTop="@dimen/offsetMedium"
                 android:icon="@drawable/ic_globe_28"
                 android:title="@string/signer_wallet"
                 android:subtitle="@string/signer_wallet_subtitle"/>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/offsetMedium"/>
         </uikit.widget.ColumnLayout>
     </androidx.core.widget.NestedScrollView>
 

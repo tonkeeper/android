@@ -24,6 +24,7 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import uikit.mvi.AsyncState
 import uikit.mvi.UiFeature
 
+@Deprecated("Need refactoring")
 class ChartScreenFeature(
     private val historyHelper: HistoryHelper,
     private val ratesRepository: RatesRepository,
@@ -61,6 +62,8 @@ class ChartScreenFeature(
 
             updateUiState {
                 it.copy(
+                    disableSwap = api.config.flags.disableSwap,
+                    disableBuyOrSell = api.config.flags.disableExchangeMethods,
                     swapUri = api.config.swapUri,
                     address = wallet.address,
                     walletType = wallet.type,

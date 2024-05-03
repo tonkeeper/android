@@ -25,6 +25,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
@@ -61,6 +62,7 @@ open class BaseFragment(
     }
 
     interface BottomSheet {
+
         fun onEndShowingAnimation() {
 
         }
@@ -80,6 +82,9 @@ open class BaseFragment(
 
         val behavior: BottomSheetBehavior<FrameLayout>
             get() = view.behavior
+
+        val scaleBackground: Boolean
+            get() = false
 
         fun onEndShowingAnimation() {
 
@@ -141,10 +146,12 @@ open class BaseFragment(
         this as Modal
 
         val modalView = ModalView(context)
+        modalView.scaleBackground = scaleBackground
         modalView.setContentView(view)
         modalView.doOnHide = { finishInternal() }
+        modalView.fragment = this
         if (savedInstanceState == null && !disableShowAnimation) {
-            modalView.startShowAnimation()
+            onEndShowingAnimation()
         } else {
             modalView.doOnLayout { onEndShowingAnimation() }
         }
@@ -214,7 +221,6 @@ open class BaseFragment(
         if (secure) {
             window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
-        (view as? ModalView)?.show()
         (view as? BottomSheetLayout)?.show()
     }
 

@@ -9,14 +9,13 @@ import android.widget.RemoteViews
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.extensions.getDiffColor
-import com.tonapps.tonkeeper.extensions.getKoin
+import com.tonapps.tonkeeper.koin.koin
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,7 +33,7 @@ class WidgetRateProvider: Widget() {
     }
 
     override fun update(context: Context, manager: AppWidgetManager, id: Int) {
-        val koin = context.getKoin() ?: return
+        val koin = context.koin ?: return
         val scope = koin.get<CoroutineScope>()
         val ratesRepository = koin.get<RatesRepository>()
         val settingsRepository = koin.get<SettingsRepository>()

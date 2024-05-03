@@ -1,6 +1,7 @@
-package com.tonapps.tonkeeper
+package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.account.AccountRepository
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.fragment.chart.ChartScreenFeature
@@ -29,6 +30,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.picker.PickerViewModel
+import com.tonapps.tonkeeper.ui.screen.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
@@ -52,17 +54,17 @@ val koinModel = module {
     single { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get()) }
-    single { WalletAdapter(get()) }
+
+    uiAdapter { WalletAdapter(get()) }
+    uiAdapter { WalletPickerAdapter() }
 
     viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get()) }
     viewModel { parameters -> InitViewModel(parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { MainViewModel(get()) }
-    viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { MainViewModel(get(), get()) }
+    viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecipientScreenFeature(get()) }
-    viewModel { AmountScreenFeature(get(), get()) }
-    viewModel { PickerViewModel(get(), get(), get()) }
+    viewModel { PickerViewModel(get()) }
     viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { ConfirmScreenFeature(get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
     viewModel { EditNameViewModel(get()) }
@@ -74,10 +76,13 @@ val koinModel = module {
     viewModel { CollectiblesViewModel(get(), get(), get()) }
     viewModel { parameters -> ActionViewModel(args = parameters.get(), get(), get()) }
     viewModel { BrowserExploreViewModel(get(), get(), get(), get()) }
-    viewModel { ChartScreenFeature(get(), get(), get()) }
-    viewModel { JettonScreenFeature(get(), get()) }
     viewModel { BrowserConnectedViewModel(get(), get()) }
     viewModel { BrowserMainViewModel(get()) }
     viewModel { BrowserSearchViewModel(get(), get(), get(), get()) }
     viewModel { DAppViewModel(get(), get()) }
+
+    viewModel { ConfirmScreenFeature(get(), get(), get(), get()) }
+    viewModel { ChartScreenFeature(get(), get(), get()) }
+    viewModel { JettonScreenFeature(get(), get()) }
+    viewModel { AmountScreenFeature(get(), get()) }
 }

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.core.history.list
 
 import android.graphics.Rect
 import android.view.View
+import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.uikit.list.BaseListHolder
@@ -18,6 +19,12 @@ object HistoryItemDecoration: RecyclerView.ItemDecoration() {
     ) {
         super.getItemOffsets(outRect, view, parent, state)
         val position = parent.getChildAdapterPosition(view)
+        if (parent.isLayoutRequested) {
+            parent.doOnLayout {
+                getItemOffsets(outRect, view, parent, state)
+            }
+            return
+        }
         if (position == 0) {
             return
         }

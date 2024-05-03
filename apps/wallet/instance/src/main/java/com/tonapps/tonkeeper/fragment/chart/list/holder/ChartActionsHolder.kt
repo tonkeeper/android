@@ -43,10 +43,10 @@ class ChartActionsHolder(
             navigation?.add(SwapScreen.newInstance(item.swapUri, item.address, "TON"))
         }
 
-        swapView.isEnabled = item.walletType == WalletType.Default
+        swapView.isEnabled = item.walletType == WalletType.Default && !item.disableSwap
         sendView.isEnabled = item.walletType != WalletType.Watch
         scanView.isEnabled = item.walletType != WalletType.Watch
-        buyOrSellView.isEnabled = item.walletType != WalletType.Testnet
+        buyOrSellView.isEnabled = item.walletType != WalletType.Testnet && !item.disableBuyOrSell
     }
 
 }

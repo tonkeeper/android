@@ -28,6 +28,7 @@ import org.ton.block.StateInit
 import uikit.mvi.UiFeature
 import uikit.widget.ProcessTaskView
 
+@Deprecated("Need refactoring")
 class ConfirmScreenFeature(
     private val passcodeRepository: PasscodeRepository,
     private val ratesRepository: RatesRepository,

@@ -8,6 +8,8 @@
     <string name="remove_dapp_confirm">Remove %1$s?</string>
 
     <string name="sign_out">Sign out</string>
+    <string name="delete_watch_account_alert">Delete watch account?</string>
+    <string name="delete">Delete</string>
     <string name="delete_watch_account">Delete watch account</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nSign Out of All Wallets?</string>
     <string name="sign_out_all_description">This will erase keys to all wallets. Make sure you have backed up your recovery phrases.</string>

@@ -111,20 +111,18 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
         }
         collectFlow(mainViewModel.childBottomScrolled, bottomTabsView::setDivider)
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().map { mainDeepLinks[it.link] }.filterNotNull(), this::forceSelectTab)
-        collectFlow(mainViewModel.walletTypeFlow, ::setWalletType)
+        collectFlow(mainViewModel.browserTabEnabled) { enabled ->
+            if (enabled) {
+                bottomTabsView.showItem(R.id.browser)
+            } else {
+                bottomTabsView.hideItem(R.id.browser)
+                if (currentFragment is BrowserMainScreen) {
+                    forceSelectTab(R.id.wallet)
+                }
+            }
+        }
 
         setFragment(R.id.wallet, false)
-    }
-
-    private fun setWalletType(walletType: WalletType) {
-        if (walletType == WalletType.Watch || walletType == WalletType.Testnet) {
-            bottomTabsView.hideItem(R.id.browser)
-            post {
-                forceSelectTab(R.id.wallet)
-            }
-        } else {
-            bottomTabsView.showItem(R.id.browser)
-        }
     }
 
     private fun fragmentByItemId(itemId: Int): BaseFragment {

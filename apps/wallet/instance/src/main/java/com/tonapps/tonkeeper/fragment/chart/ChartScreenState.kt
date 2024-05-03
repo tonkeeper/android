@@ -10,6 +10,8 @@ import uikit.mvi.AsyncState
 import uikit.mvi.UiState
 
 data class ChartScreenState(
+    val disableSwap: Boolean = false,
+    val disableBuyOrSell: Boolean = false,
     val swapUri: Uri = Uri.EMPTY,
     val address: String = "",
     val walletType: WalletType = WalletType.Default,
@@ -29,7 +31,7 @@ data class ChartScreenState(
         val items = mutableListOf<ChartItem>()
         items.add(ChartItem.Header(balance, currencyBalance))
         // items.add(ChartItem.Divider)
-        items.add(ChartItem.Actions(swapUri, address, walletType))
+        items.add(ChartItem.Actions(swapUri, address, walletType, disableSwap, disableBuyOrSell))
         // items.add(ChartItem.Divider)
         items.add(ChartItem.Price(rateFormat, rate24h))
         items.add(ChartItem.Chart(chartPeriod, chart))

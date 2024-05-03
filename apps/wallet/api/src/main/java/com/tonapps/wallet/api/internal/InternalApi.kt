@@ -3,6 +3,7 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.packageInfo
 import com.tonapps.network.get
@@ -40,7 +41,7 @@ internal class InternalApi(
     fun downloadConfig(): ConfigEntity? {
         return try {
             val json = request("keys")
-            ConfigEntity(json)
+            ConfigEntity(json, context.isDebug)
         } catch (e: Throwable) {
             null
         }

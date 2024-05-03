@@ -90,7 +90,3 @@ fun Context.buildRateString(rate: CharSequence, diff24h: String): SpannableStrin
     )
     return span
 }
-
-fun Context.getKoin(): Koin? {
-    return (applicationContext as? KoinComponent)?.getKoin()
-}

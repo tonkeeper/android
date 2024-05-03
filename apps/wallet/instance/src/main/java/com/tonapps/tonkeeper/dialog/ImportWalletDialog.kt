@@ -4,8 +4,10 @@ import android.content.Context
 import android.view.View
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.signer.add.SignerAddFragment
+import com.tonapps.tonkeeper.koin.api
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.wallet.api.API
 import uikit.base.BaseSheetDialog
 import uikit.navigation.Navigation.Companion.navigation
 
@@ -20,15 +22,23 @@ class ImportWalletDialog(context: Context): BaseSheetDialog(context), View.OnCli
         )
     }
 
+    private val disableSigner = context.api?.config?.flags?.disableSigner ?: false
+
     init {
         setContentView(R.layout.dialog_import_wallet)
 
         findViewById<View>(R.id.import_wallet)!!.setOnClickListener(this)
         findViewById<View>(R.id.watch_wallet)!!.setOnClickListener(this)
         findViewById<View>(R.id.testnet_wallet)!!.setOnClickListener(this)
-        findViewById<View>(R.id.signer_wallet)!!.setOnClickListener {
+
+        val signerView = findViewById<View>(R.id.signer_wallet)!!
+        signerView.setOnClickListener {
             navigation?.add(SignerAddFragment.newInstance())
             dismiss()
+        }
+
+        if (disableSigner) {
+            signerView.visibility = View.GONE
         }
     }
 

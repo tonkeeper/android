@@ -7,6 +7,8 @@ import com.tonapps.tonkeeper.fragment.signer.add.SignerAddFragment
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.API
+import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.topScrolled
@@ -14,6 +16,10 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ModalHeader
 
 class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal {
+
+    private val api: API by inject()
+
+    private lateinit var signerWallet: View
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -28,8 +34,13 @@ class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal 
         openByClick(R.id.watch_wallet, InitArgs.Type.Watch)
         openByClick(R.id.testnet_wallet, InitArgs.Type.Testnet)
 
-        view.findViewById<View>(R.id.signer_wallet).setOnClickListener {
+        signerWallet = view.findViewById(R.id.signer_wallet)
+        signerWallet.setOnClickListener {
             navigation?.add(SignerAddFragment.newInstance())
+        }
+
+        if (api.config.flags.disableSigner) {
+            signerWallet.visibility = View.GONE
         }
     }
 

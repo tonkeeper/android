@@ -2,22 +2,17 @@ package com.tonapps.tonkeeper.core.widget.balance
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.util.Log
 import android.widget.RemoteViews
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.api.account.AccountRepository
-import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.widget.Widget
-import com.tonapps.tonkeeper.extensions.getKoin
+import com.tonapps.tonkeeper.koin.koin
 import com.tonapps.wallet.data.account.WalletRepository
-import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -32,7 +27,7 @@ class WidgetBalanceProvider: Widget() {
     }
 
     override fun update(context: Context, manager: AppWidgetManager, id: Int) {
-        val koin = context.getKoin() ?: return displayPlaceholderData(context, manager, id)
+        val koin = context.koin ?: return displayPlaceholderData(context, manager, id)
         val scope = koin.get<CoroutineScope>()
         val walletRepository = koin.get<WalletRepository>()
         val settingsRepository = koin.get<SettingsRepository>()
@@ -41,7 +36,7 @@ class WidgetBalanceProvider: Widget() {
             val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch displayPlaceholder(context, manager, id)
             val tokens = tokenRepository.get(settingsRepository.currency, wallet.address, wallet.testnet)
             val token = tokens.firstOrNull { it.isTon } ?: return@launch displayPlaceholder(context, manager, id)
-            val balanceFormat = CurrencyFormatter.format(value = token.balance.value)
+            val balanceFormat = CurrencyFormatter.format("TON", token.balance.value)
             val fiatBalance = CurrencyFormatter.formatFiat(settingsRepository.currency.code, token.fiat)
             val entity = WidgetBalanceEntity(
                 tonBalance = balanceFormat,

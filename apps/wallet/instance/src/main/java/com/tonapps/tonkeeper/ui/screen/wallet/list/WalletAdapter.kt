@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.list
 
+import android.util.Log
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.ActionsHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.list.holder.BalanceHolder

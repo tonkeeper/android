@@ -9,7 +9,12 @@ sealed class Item(type: Int): BaseListItem(type) {
     companion object {
         const val TYPE_WALLET = 0
         const val TYPE_ADD_WALLET = 1
+        const val TYPE_SKELETON = 2
     }
+
+    data class Skeleton(
+        val position: ListCell.Position
+    ): Item(TYPE_SKELETON)
 
     data class Wallet(
         val accountId: String,

@@ -120,6 +120,12 @@ class WalletRepository(
         return WalletEntity(legacyWallet)
     }
 
+    fun chooseWallet(id: Long) {
+        scope.launch {
+            setActiveWallet(id)
+        }
+    }
+
     suspend fun setActiveWallet(id: Long) = withContext(Dispatchers.IO) {
         val activeWalletId = legacyManager.getActiveWallet()
         if (activeWalletId == id) {

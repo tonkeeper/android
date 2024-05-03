@@ -54,18 +54,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         tokenView.setOnClickListener { selectTokenPopup.show(it) }
 
         valueView = view.findViewById(R.id.value)
-        valueView.doOnTextChanged { text, _, _, _ ->
-            val editable = text as? Editable ?: return@doOnTextChanged
-            if (editable.contains(".") && CurrencyFormatter.monetaryDecimalSeparator != ".") {
-                editable.replace(editable.indexOf("."), editable.indexOf(".") + 1, CurrencyFormatter.monetaryDecimalSeparator)
-                return@doOnTextChanged
-            } else if (editable.contains(",") && CurrencyFormatter.monetaryDecimalSeparator != ",") {
-                editable.replace(editable.indexOf(","), editable.indexOf(",") + 1, CurrencyFormatter.monetaryDecimalSeparator)
-                return@doOnTextChanged
-            } else if (editable.contains(" ")) {
-                editable.replace(editable.indexOf(" "), editable.indexOf(" ") + 1, "")
-                return@doOnTextChanged
-            }
+        valueView.doOnTextChanged { _, _, _, _ ->
             feature.setValue(getValue())
         }
 

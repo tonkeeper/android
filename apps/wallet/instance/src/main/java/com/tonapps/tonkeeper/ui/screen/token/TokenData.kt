@@ -33,7 +33,7 @@ data class TokenData(
     val iconUri: Uri
         get() = token.imageUri
 
-    val balance: Float
+    val balance: Double
         get() = token.balance.value
 
     val fiat: Float

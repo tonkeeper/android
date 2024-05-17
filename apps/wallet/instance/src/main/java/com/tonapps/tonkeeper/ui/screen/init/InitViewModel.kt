@@ -182,7 +182,7 @@ class InitViewModel(
             it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
         }.sortedByDescending { it.walletVersion.index }.toMutableList()
 
-        if (accounts.size == 0) {
+        if (accounts.size == 0 && type == InitArgs.Type.Import) {
             throw IllegalStateException("No valid accounts found")
         }
 

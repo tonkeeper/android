@@ -9,9 +9,11 @@ import com.tonapps.signer.R
 import com.tonapps.signer.extensions.fromClipboard
 import com.tonapps.signer.screen.create.CreateViewModel
 import com.tonapps.signer.screen.create.pager.PageType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
@@ -59,7 +61,7 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
 
         wordFormView.doOnChange = { fill, empty ->
             visibleParse(fill == 0)
-            nextButton.isEnabled = empty == 0
+            checkWords(fill, empty)
             if (empty == 0) {
                 scrollView.scrollDown(true)
             }
@@ -77,6 +79,21 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
 
         collectFlow(createViewModel.uiTopOffset) {
             scrollView.setPaddingTop(it)
+        }
+    }
+
+    private fun checkWords(fill: Int, empty: Int) {
+        if (empty != 0) {
+            nextButton.isEnabled = false
+            return
+        }
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            val words = wordFormView.getWords()
+            val isValid = withContext(Dispatchers.IO) {
+                Mnemonic.isValid(words)
+            }
+            nextButton.isEnabled = isValid
         }
     }
 

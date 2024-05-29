@@ -70,7 +70,7 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
             toToken: String? = null
         ): SwapScreen {
             val fragment = SwapScreen()
-            fragment.arguments = SwapArgs(uri, address, fromToken, toToken).toBundle()
+            fragment.setArgs(SwapArgs(uri, address, fromToken, toToken))
             return fragment
         }
     }

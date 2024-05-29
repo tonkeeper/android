@@ -9,6 +9,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.Coin
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.localization.Localization
@@ -20,9 +21,14 @@ import com.tonapps.uikit.color.buttonPrimaryBackgroundColor
 import com.tonapps.uikit.color.buttonSecondaryBackgroundColor
 import com.tonapps.uikit.color.constantRedColor
 import com.tonapps.uikit.color.textSecondaryColor
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.extensions.collectFlow
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
+import uikit.extensions.pinToBottomInsets
 
 class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScreenFeature>(R.layout.fragment_send_amount) {
 
@@ -36,7 +42,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         val popup = SelectTokenPopup(requireContext())
         popup.doOnSelectJetton = { token ->
             feature.selectToken(token)
-            forceSetAmount(0f)
+            forceSetAmount(0.0)
         }
         popup
     }
@@ -70,6 +76,8 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
         valueCurrencyView = view.findViewById(R.id.value_currency)
 
         rateView = view.findViewById(R.id.rate)
+        rateView.setOnClickListener { feature.toggleCurrency() }
+
         availableView = view.findViewById(R.id.available)
 
         maxButton = view.findViewById(R.id.max)
@@ -77,23 +85,22 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
             if (maxButton.isActivated) {
                 clearValue()
             } else {
-                setMaxValue()
+                feature.setMaxValue()
             }
         }
 
         continueButton = view.findViewById(R.id.continue_action)
         continueButton.setOnClickListener { next() }
+        continueButton.pinToBottomInsets()
 
-        post {
-            feature.setValue(0.0)
-        }
+        collectFlow(feature.inputValueFlow, ::forceSetAmount)
     }
 
     fun forceSetJetton(address: String?) {
         address?.let { feature.selectToken(it) }
     }
 
-    fun forceSetAmount(amount: Float) {
+    fun forceSetAmount(amount: Double) {
         val text = if (0f >= amount) {
             ""
         } else {
@@ -104,19 +111,14 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     private fun next() {
-        sendFeature.setAmount(valueView.text.toString())
-        sendFeature.nextPage()
-    }
-
-    private fun setMaxValue() {
-        val maxValue = feature.currentBalance
-        val text = valueView.text ?: return
-        val format = maxValue.toString() // CurrencyFormatter.format(value = maxValue.toFloat(), decimals = feature.decimals)
-        text.replace(0, text.length, format)
+        feature.getAmountFlow(valueView.getValue()).filter { it > 0 }.onEach {
+            sendFeature.setAmount(it.toString())
+            sendFeature.nextPage()
+        }.launchIn(lifecycleScope)
     }
 
     private fun clearValue() {
-        forceSetAmount(0f)
+        forceSetAmount(0.0)
     }
 
     override fun newUiState(state: AmountScreenState) {
@@ -134,7 +136,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
 
         sendFeature.setJetton(state.selectedToken)
 
-        valueCurrencyView.text = state.selectedTokenCode
+        valueCurrencyView.text = state.selectedCurrencyCode
 
         if (state.insufficientBalance) {
             availableView.setText(Localization.insufficient_balance)

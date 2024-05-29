@@ -4,6 +4,20 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
 
+    <string name="manual">Manual</string>
+    <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>
+    <string name="manual_backup_done">Manual Backup Done</string>
+    <string name="manual_backup_date">Last backup %1$s</string>
+    <string name="manual_start_button">Back Up Manually</string>
+    <string name="backup_attention_title">Attention</string>
+    <string name="backup_attention_description">Please read the following carefully before viewing your recovery phrase.</string>
+    <string name="backup_attention_line_1">Never enter your recovery phrase any other place than Tonkeeper to access your wallet.</string>
+    <string name="backup_attention_line_2">Tonkeeper Support never asks for a recovery phrase.</string>
+    <string name="backup_attention_line_3">Everybody with your recovery phrase can access your wallet.</string>
+    <string name="manual_backup_check">Check Backup</string>
+    <string name="backup_check">Backup Check</string>
+    <string name="backup_check_subtitle">Let\'s see if you\'ve got everything right. Enter words %1$d, %2$d, and %3$d.</string>
+
     <string name="refresh">Refresh</string>
     <string name="mute">Mute</string>
     <string name="disconnect">Disconnect</string>
@@ -60,6 +74,8 @@
     <string name="unsubscribed">Unsubscribed</string>
     <string name="subscribed">Subscribed</string>
     <string name="received">Received</string>
+    <string name="nft_transfer">NFT Transfer</string>
+    <string name="nft_disabled_transfer">NFT is on sale at the marketplace now. For transfer, you should remove it from sale first.</string>
 
     <string name="continue_action">Continue</string>
     <string name="get_started">Get started</string>
@@ -179,6 +195,7 @@
     <string name="receive">Receive</string>
     <string name="log_out">Log out</string>
     <string name="amount">Amount</string>
+    <string name="backup">Backup</string>
 
     <string name="recipient">Recipient</string>
     <string name="recipient_address">Recipient address</string>

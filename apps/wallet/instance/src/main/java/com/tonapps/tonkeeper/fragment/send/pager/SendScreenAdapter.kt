@@ -8,33 +8,36 @@ import com.tonapps.tonkeeper.fragment.send.confirm.ConfirmScreen
 import com.tonapps.tonkeeper.fragment.send.recipient.RecipientScreen
 
 class SendScreenAdapter(
-    private val fragment: Fragment
-): FragmentStateAdapter(fragment) {
+    private val parentFragment: Fragment,
+    private val items: List<Item>
+): FragmentStateAdapter(parentFragment) {
 
-    private companion object {
-
-        private var COUNT = 0
-
-        private val POSITION_RECIPIENT = COUNT++
-        private val POSITION_AMOUNT = COUNT++
-        private val POSITION_CONFIRM = COUNT++
+    enum class Item {
+        Recipient, Amount, Confirm
     }
 
     val recipientScreen: RecipientScreen?
-        get() = findFragmentByPosition(POSITION_RECIPIENT) as? RecipientScreen
+        get() = findFragment(Item.Recipient) as? RecipientScreen
 
     val amountScreen: AmountScreen?
-        get() = findFragmentByPosition(POSITION_AMOUNT) as? AmountScreen
+        get() = findFragment(Item.Amount) as? AmountScreen
 
     val confirmScreen: ConfirmScreen?
-        get() = findFragmentByPosition(POSITION_CONFIRM) as? ConfirmScreen
+        get() = findFragment(Item.Confirm) as? ConfirmScreen
 
-    override fun getItemCount(): Int {
-        return COUNT
-    }
+    override fun getItemCount() = items.size
 
     fun findFragmentByPosition(position: Int): Fragment? {
-        return fragment.childFragmentManager.findFragmentByTag("f$position")
+        return findFragment(items[position])
+    }
+
+    fun findFragment(item: Item): Fragment? {
+        val fragments = parentFragment.childFragmentManager.fragments
+        return fragments.find {
+            it is RecipientScreen && item == Item.Recipient ||
+            it is AmountScreen && item == Item.Amount ||
+            it is ConfirmScreen && item == Item.Confirm
+        }
     }
 
     override fun getItemId(position: Int): Long {
@@ -42,11 +45,10 @@ class SendScreenAdapter(
     }
 
     override fun createFragment(position: Int): Fragment {
-        return when (position) {
-            POSITION_RECIPIENT -> RecipientScreen.newInstance()
-            POSITION_AMOUNT -> AmountScreen.newInstance()
-            POSITION_CONFIRM -> ConfirmScreen.newInstance()
-            else -> throw IllegalStateException("Unknown position: $position")
+        return when (items[position]) {
+            Item.Recipient -> RecipientScreen.newInstance()
+            Item.Amount -> AmountScreen.newInstance()
+            Item.Confirm -> ConfirmScreen.newInstance()
         }
     }
 

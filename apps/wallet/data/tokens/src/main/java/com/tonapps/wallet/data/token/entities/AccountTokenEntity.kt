@@ -32,8 +32,8 @@ data class AccountTokenEntity(
     val isTon: Boolean
         get() = address == "TON"
 
-    val fiat: Float
-        get() = rate?.fiat ?: 0f
+    val fiat: Double
+        get() = rate?.fiat ?: 0.0
 
     val rateNow: Float
         get() = rate?.rate ?: 0f

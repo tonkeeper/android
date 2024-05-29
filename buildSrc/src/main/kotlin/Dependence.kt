@@ -132,6 +132,7 @@ object Dependence {
             const val tonconnect = ":apps:wallet:data:tonconnect"
             const val push = ":apps:wallet:data:push"
             const val browser = ":apps:wallet:data:browser"
+            const val backup = ":apps:wallet:data:backup"
         }
     }
 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import com.tonapps.wallet.data.account.legacy.WalletManager
+import uikit.extensions.context
 
 class NameViewModel(
     mode: NameMode,
@@ -56,7 +57,7 @@ class NameViewModel(
     fun loadEmojiPack() {
         if (_emojisFlow.value.isNullOrEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {
-                val emojis = Emoji.get(getApplication())
+                val emojis = Emoji.get(context)
                 _emojisFlow.value = emojis.map { emoji -> emoji.value }.toTypedArray()
 
                 if (savedState.emoji.isEmpty()) {

@@ -60,7 +60,7 @@ abstract class BaseWalletContract(
                 createdAt = 0u
             )
             val init = Maybe.of(gift.stateInit?.let {
-                Either.of<StateInit, CellRef<StateInit>>(null, CellRef(it))
+                Either.of<StateInit, CellRef<StateInit>>(it, null)
             })
             val body = if (gift.body == null) {
                 Either.of<Cell, CellRef<Cell>>(Cell.empty(), null)

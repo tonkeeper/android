@@ -101,6 +101,27 @@
 
             </uikit.widget.ColumnLayout>
 
+            <Button
+                style="@style/Widget.App.Button"
+                android:id="@+id/transfer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:text="@string/transfer"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/transfer_disabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:visibility="gone"
+                android:text="@string/nft_disabled_transfer"
+                android:textColor="?attr/textSecondaryColor"
+                android:textAppearance="@style/TextAppearance.Body2"/>
+
             <uikit.widget.RowLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

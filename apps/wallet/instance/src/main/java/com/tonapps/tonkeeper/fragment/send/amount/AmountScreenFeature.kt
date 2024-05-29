@@ -1,17 +1,20 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
-import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
-import core.QueueScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.mvi.UiFeature
@@ -32,16 +35,63 @@ class AmountScreenFeature(
     private val currentTokenCode: String
         get() = uiState.value.selectedTokenCode
 
-    val currentBalance: Double
+    val currentTokenBalance: Double
         get() = currentToken?.balance?.value ?: 0.0
 
     val decimals: Int
         get() = currentToken?.decimals ?: 9
 
+    private val _inputValueFlow = MutableEffectFlow<Double>()
+    val inputValueFlow = _inputValueFlow.asSharedFlow()
+
     init {
         viewModelScope.launch {
             loadData()
         }
+        setInputValue(0.0)
+    }
+
+    fun toggleCurrency() {
+        val state = uiState.value
+        val fiat = !state.fiat
+        settingsRepository.sendCurrencyFiat = fiat
+        updateUiState {
+            it.copy(
+                fiat = settingsRepository.sendCurrencyFiat,
+                currency = settingsRepository.currency
+            )
+        }
+        setInputValue(0.0)
+    }
+
+    fun getAmountFlow(value: Double) = flow {
+        val state = uiState.value
+        val currentTokenAddress = getCurrentTokenAddress()
+        val rates = ratesRepository.getRates(currency, currentTokenAddress)
+        val balanceInRates = if (state.fiat) {
+            rates.convertFromFiat(currentTokenAddress, value)
+        } else {
+            value
+        }
+        emit(balanceInRates)
+    }.take(1).flowOn(Dispatchers.IO)
+
+    fun setMaxValue() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val state = uiState.value
+            if (!state.fiat) {
+                setInputValue(currentTokenBalance)
+            } else {
+                val currentTokenAddress = getCurrentTokenAddress()
+                val rates = ratesRepository.getRates(currency, currentTokenAddress)
+                val fiat = rates.convert(currentTokenAddress, currentTokenBalance)
+                setInputValue(fiat)
+            }
+        }
+    }
+
+    private fun setInputValue(value: Double) {
+        _inputValueFlow.tryEmit(value)
     }
 
     private fun getCurrentTokenAddress(): String {
@@ -58,8 +108,13 @@ class AmountScreenFeature(
                 wallet = wallet,
                 tokens = tokens,
                 selectedTokenAddress = WalletCurrency.TON.code,
+                fiat = settingsRepository.sendCurrencyFiat,
+                currency = settingsRepository.currency
             )
         }
+
+        delay(100)
+        setInputValue(0.0)
     }
 
     fun selectToken(tokenAddress: String) {
@@ -80,30 +135,48 @@ class AmountScreenFeature(
     }
 
     private suspend fun updateValue(newValue: Double) = withContext(Dispatchers.IO) {
+        val state = uiState.value
         val currentTokenAddress = getCurrentTokenAddress()
 
         val rates = ratesRepository.getRates(currency, currentTokenAddress)
-        val balanceInCurrency = rates.convert(currentTokenAddress, newValue)
+        val balanceInRates = if (state.fiat) {
+            rates.convertFromFiat(currentTokenAddress, newValue)
+        } else {
+            rates.convert(currentTokenAddress, newValue)
+        }
 
-        val insufficientBalance = newValue > currentBalance
-        val remaining = if (newValue > 0) {
-            val value = currentBalance - newValue
-            CurrencyFormatter.format(currentTokenCode, value)
+        val valueInToken = if (state.fiat) {
+            balanceInRates
+        } else {
+            newValue
+        }
+
+        val insufficientBalance = valueInToken > currentTokenBalance
+        val remainingValue = currentTokenBalance - valueInToken
+        val remaining = if (valueInToken> 0) {
+            CurrencyFormatter.format(currentTokenCode, remainingValue)
         } else {
             ""
         }
 
-        val rate = CurrencyFormatter.formatFiat(currency.code, balanceInCurrency)
-        val available = CurrencyFormatter.format(currentTokenCode, currentBalance)
+        val rate = if (state.fiat) {
+            CurrencyFormatter.format(currentTokenCode, balanceInRates)
+        } else {
+            CurrencyFormatter.formatFiat(currency.code, balanceInRates)
+        }
+
+        val available = CurrencyFormatter.format(currentTokenCode, currentTokenBalance)
 
         updateUiState { currentState ->
             currentState.copy(
                 rate = rate,
                 insufficientBalance = insufficientBalance,
                 remaining = remaining,
-                canContinue = !insufficientBalance && currentBalance > 0 && newValue > 0,
-                maxActive = currentBalance == newValue,
-                available = available
+                canContinue = !insufficientBalance && currentTokenBalance > 0 && valueInToken > 0,
+                maxActive = currentTokenBalance == valueInToken,
+                available = available,
+                currency = settingsRepository.currency,
+                fiat = settingsRepository.sendCurrencyFiat
             )
         }
     }
@@ -111,7 +184,9 @@ class AmountScreenFeature(
     fun setValue(value: Double) {
         updateUiState { currentState ->
             currentState.copy(
-                canContinue = false
+                canContinue = false,
+                currency = settingsRepository.currency,
+                fiat = settingsRepository.sendCurrencyFiat
             )
         }
 

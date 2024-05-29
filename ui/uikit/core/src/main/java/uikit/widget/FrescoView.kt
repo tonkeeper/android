@@ -11,16 +11,20 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.drawee.drawable.RoundedCornersDrawable
+import com.facebook.drawee.generic.RoundingParams
 import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.request.ImageRequest
 import uikit.extensions.getDrawable
-
 
 class FrescoView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
 ) : SimpleDraweeView(context, attrs, defStyle) {
+
+    fun setRound(radius: Float) {
+        hierarchy.roundingParams = RoundingParams.fromCornersRadius(radius)
+    }
 
     override fun setImageURI(uri: Uri, callerContext: Any?) {
         if (UriUtil.isLocalResourceUri(uri)) {

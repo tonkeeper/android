@@ -54,15 +54,6 @@ sealed class Item(type: Int): BaseListItem(type) {
         position = position
     )
 
-    class Language(
-        data: String,
-        position: ListCell.Position
-    ): Text(
-        titleRes = Localization.language,
-        value = data,
-        position = position
-    )
-
     open class Icon(
         val titleRes: Int,
         val iconRes: Int,
@@ -84,6 +75,15 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Icon(
         titleRes = Localization.widget,
         iconRes = R.drawable.ic_widget_28,
+        position = position,
+        secondaryIcon = false
+    )
+
+    class Backup(
+        position: ListCell.Position
+    ): Icon(
+        titleRes = Localization.backup,
+        iconRes = UIKitIcon.ic_key_28,
         position = position,
         secondaryIcon = false
     )
@@ -179,6 +179,15 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Text(
         titleRes = Localization.search,
         value = engine.title,
+        position = position
+    )
+
+    class Language(
+        data: String,
+        position: ListCell.Position
+    ): Text(
+        titleRes = Localization.language,
+        value = data,
         position = position
     )
 

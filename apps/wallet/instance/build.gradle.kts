@@ -17,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = 27 // Build.minSdkVersion
         targetSdk = 34
-        versionCode = 43
-        versionName = "0.0.43"
+        versionCode = 46
+        versionName = "0.0.46"
     }
 
     buildFeatures {
@@ -69,6 +69,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.tonconnect))
     implementation(project(Dependence.Wallet.Data.push))
     implementation(project(Dependence.Wallet.Data.browser))
+    implementation(project(Dependence.Wallet.Data.backup))
 
     implementation(project(Dependence.UIKit.core))
 

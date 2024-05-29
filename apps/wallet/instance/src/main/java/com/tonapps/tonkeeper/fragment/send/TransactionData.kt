@@ -22,6 +22,7 @@ import java.math.BigInteger
 import java.nio.ByteBuffer
 
 data class TransactionData(
+    val walletAddress: String? = null,
     val address: String? = null,
     val name: String? = null,
     val comment: String? = null,
@@ -29,7 +30,8 @@ data class TransactionData(
     val max: Boolean = false,
     val token: AccountTokenEntity? = null,
     val bounce: Boolean = false,
-    val encryptComment: Boolean = false
+    val encryptComment: Boolean = false,
+    val nftAddress: String? = null
 ) {
 
     private val t: TokenEntity
@@ -50,8 +52,14 @@ data class TransactionData(
     val isTon: Boolean
         get() = t.isTon
 
+    val isNft: Boolean
+        get() = nftAddress != null
+
     val destination: AddrStd
         get() {
+            if (isNft) {
+                return AddrStd.parse(nftAddress!!)
+            }
             if (isTon) {
                 return AddrStd.parse(address!!)
             }
@@ -68,6 +76,9 @@ data class TransactionData(
 
     val coins: Coins
         get() {
+            if (isNft) {
+                return Coins.ofNano(Coin.toNano(0.064f))
+            }
             if (isTon) {
                 return amount
             }
@@ -101,7 +112,14 @@ data class TransactionData(
     private fun buildWalletTransferBody(
         responseAddress: MsgAddressInt,
     ): Cell? {
-        if (isTon) {
+        if (isNft) {
+            return Transfer.nft(
+                newOwnerAddress = MsgAddressInt.parse(address!!),
+                excessesAddress = MsgAddressInt.parse(walletAddress!!),
+                queryId = newWalletQueryId(),
+                body = comment,
+            )
+        } else if (isTon) {
             return Transfer.text(comment)
         }
         return Transfer.jetton(

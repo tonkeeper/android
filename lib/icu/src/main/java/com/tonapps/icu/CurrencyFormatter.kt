@@ -86,12 +86,31 @@ object CurrencyFormatter {
         return getFormat(decimals).format(value)
     }
 
+    private fun formatDouble(
+        value: Double,
+        decimals: Int,
+    ): String {
+        if (0f >= value) {
+            return "0"
+        }
+        return getFormat(decimals).format(value)
+    }
+
     fun format(
         currency: String = "",
         value: Float,
         decimals: Int,
     ): CharSequence {
         val amount = formatFloat(value, decimals)
+        return format(currency, amount)
+    }
+
+    fun format(
+        currency: String = "",
+        value: Double,
+        decimals: Int,
+    ): CharSequence {
+        val amount = formatDouble(value, decimals)
         return format(currency, amount)
     }
 
@@ -152,6 +171,19 @@ object CurrencyFormatter {
         value: Float
     ): CharSequence {
         return format(currency, value, 4)
+    }
+
+    fun formatFiat(
+        currency: String,
+        value: Double
+    ): CharSequence {
+        var decimals = 2
+        if (0.0001f > value) {
+            decimals = 8
+        } else if (0.01f > value) {
+            decimals = 4
+        }
+        return format(currency, value, decimals)
     }
 
     fun formatFiat(

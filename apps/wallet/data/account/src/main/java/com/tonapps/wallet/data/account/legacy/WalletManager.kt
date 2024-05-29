@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.account.legacy
 import android.app.Application
 import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.WalletType
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,9 @@ class WalletManager(
 
     suspend fun getPrivateKey(id: Long): PrivateKeyEd25519 {
         val seed = getSeed(id)
+        if (seed.isEmpty()) {
+            return EmptyPrivateKeyEd25519
+        }
         return PrivateKeyEd25519(seed)
     }
 

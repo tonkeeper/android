@@ -17,19 +17,19 @@
     <string name="emulation_qr">Scan the QR code to open the transaction emulation</string>
     <string name="close">Close</string>
     <string name="continue_text">Continue</string>
-    <string name="name_your_key">Name Your Key</string>
+    <string name="name_your_key">Name your Key</string>
     <string name="name_your_key_subtitle">It will simplify the search for the necessary key in the list of keys.</string>
     <string name="name">Name</string>
     <string name="scan">Scan</string>
-    <string name="sign_out">Sign out</string>
-    <string name="sign_out_question">Sign Out of All Wallets??</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="sign_out_question">Sign Out of All Wallets?</string>
     <string name="sign_out_subtitle">This will erase keys to all wallets. Make sure you have backed up your secret recovery phrases.</string>
     <string name="authorization_required">Authorization required</string>
-    <string name="change_password">Change password</string>
-    <string name="enter_current_password">Enter current password</string>
-    <string name="enter_new_password">Enter new password</string>
+    <string name="change_password">Change Password</string>
+    <string name="enter_current_password">Enter current Password</string>
+    <string name="enter_new_password">Enter new Password</string>
     <string name="password_changed">Password changed</string>
-    <string name="add_key">Add key</string>
+    <string name="add_key">Add Key</string>
     <string name="settings">Settings</string>
     <string name="wrong_url">Invalid URL</string>
 
@@ -50,8 +50,8 @@
 
     <string name="copied">Copied</string>
     <string name="copy">Copy</string>
-    <string name="delete_key_question">Delete key?</string>
-    <string name="delete_key_question_subtitle">This will erase keys to the wallet. Make sure you have backed up your secret recovery phrase.</string>
+    <string name="delete_key_question">Delete Key?</string>
+    <string name="delete_key_question_subtitle">This will erase key to the wallet. Make sure you have backed up your secret recovery phrase.</string>
     <string name="sign_transaction">Sign transaction</string>
     <string name="audit_transaction">Audit transaction</string>
     <string name="slide_to_sign">Slide to sign</string>

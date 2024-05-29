@@ -38,7 +38,20 @@
             android:layout_marginHorizontal="@dimen/offsetLarge"
             android:layout_marginTop="@dimen/offsetLarge"
             android:layout_marginBottom="@dimen/offsetMedium"
+            android:visibility="gone"
             android:text="@string/copy"
+            android:textAppearance="@style/TextAppearance.Label1"/>
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:layout_marginBottom="@dimen/offsetMedium"
+            android:visibility="gone"
+            android:text="@string/manual_backup_check"
             android:textAppearance="@style/TextAppearance.Label1"/>
 
     </uikit.widget.ColumnLayout>

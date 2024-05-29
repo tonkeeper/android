@@ -3,12 +3,14 @@ package com.tonapps.tonkeeper.ui.screen.nft
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.NestedScrollView
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.fragment.send.SendScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.textSecondaryColor
@@ -71,6 +73,18 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
         } else {
             descriptionView.visibility = View.VISIBLE
             descriptionView.text = nftEntity.description
+        }
+
+        val transferButton = view.findViewById<Button>(R.id.transfer)
+        transferButton.setOnClickListener {
+            navigation?.add(SendScreen.newInstance(nftAddress = nftEntity.address))
+        }
+
+        val transferDisabled = view.findViewById<View>(R.id.transfer_disabled)
+
+        if (nftEntity.inSale) {
+            transferButton.isEnabled = false
+            transferDisabled.visibility = View.VISIBLE
         }
 
         val aboutView = view.findViewById<View>(R.id.about)

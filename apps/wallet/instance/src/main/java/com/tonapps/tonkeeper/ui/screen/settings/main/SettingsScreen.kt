@@ -10,6 +10,7 @@ import android.view.View
 import androidx.core.net.toUri
 import com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
@@ -51,6 +52,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
 
     private fun onClickItem(item: Item) {
         when (item) {
+            is Item.Backup -> navigation?.add(BackupScreen.newInstance())
             is Item.Currency -> navigation?.add(CurrencyScreen.newInstance())
             is Item.Language -> navigation?.add(LanguageScreen.newInstance())
             is Item.Account -> navigation?.add(EditNameScreen.newInstance())
@@ -131,7 +133,6 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             finish()
         }
         builder.setPositiveButton(Localization.cancel)
-        builder.setColoredButtons()
         builder.show()
     }
 
@@ -143,7 +144,6 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             finish()
         }
         builder.setPositiveButton(Localization.cancel)
-        builder.setColoredButtons()
         builder.show()
     }
 

@@ -46,10 +46,10 @@ data class WalletEntity(
     )
 
     val contract: BaseWalletContract = when (version) {
-        WalletVersion.V4R2 -> WalletV4R2Contract(WORKCHAIN, publicKey)
         WalletVersion.V3R2 -> WalletV3R2Contract(WORKCHAIN, publicKey)
         WalletVersion.V3R1 -> WalletV3R1Contract(WORKCHAIN, publicKey)
         WalletVersion.V4R1 -> WalletV4R1Contract(WORKCHAIN, publicKey)
+        WalletVersion.V4R2 -> WalletV4R2Contract(WORKCHAIN, publicKey)
         else -> throw IllegalArgumentException("Unsupported wallet version: $version")
     }
 

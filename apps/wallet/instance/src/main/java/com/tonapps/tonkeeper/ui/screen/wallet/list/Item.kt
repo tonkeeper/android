@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.list
 
+import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
@@ -28,6 +29,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         const val TYPE_SPACE = 3
         const val TYPE_SKELETON = 4
         const val TYPE_PUSH = 5
+        const val TYPE_TITLE = 6
 
         fun createFromParcel(parcel: Parcel): Item {
             return when (parcel.readInt()) {
@@ -136,7 +138,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val name: String,
         val balance: Double,
         val balanceFormat: CharSequence,
-        val fiat: Float,
+        val fiat: Double,
         val fiatFormat: CharSequence,
         val rate: CharSequence,
         val rateDiff24h: String,
@@ -155,7 +157,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readString()!!,
             parcel.readDouble(),
             parcel.readCharSequenceCompat()!!,
-            parcel.readFloat(),
+            parcel.readDouble(),
             parcel.readCharSequenceCompat()!!,
             parcel.readCharSequenceCompat()!!,
             parcel.readString()!!,
@@ -172,7 +174,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeString(name)
             dest.writeDouble(balance)
             dest.writeCharSequenceCompat(balanceFormat)
-            dest.writeFloat(fiat)
+            dest.writeDouble(fiat)
             dest.writeCharSequenceCompat(fiatFormat)
             dest.writeCharSequenceCompat(rate)
             dest.writeString(rateDiff24h)
@@ -253,6 +255,31 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             override fun createFromParcel(parcel: Parcel) = Push(parcel)
 
             override fun newArray(size: Int): Array<Push?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
+    data class Title(
+        val title: CharSequence
+    ): Item(TYPE_TITLE) {
+
+        constructor(context: Context, resId: Int) : this(
+            context.getText(resId)
+        )
+
+        constructor(parcel: Parcel) : this(
+            parcel.readCharSequenceCompat()!!
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeCharSequenceCompat(title)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Title> {
+            override fun createFromParcel(parcel: Parcel) = Title(parcel)
+
+            override fun newArray(size: Int): Array<Title?> {
                 return arrayOfNulls(size)
             }
         }

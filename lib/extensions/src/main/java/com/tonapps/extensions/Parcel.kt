@@ -2,6 +2,7 @@ package com.tonapps.extensions
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.text.TextUtils
 import androidx.core.os.ParcelCompat
 import java.io.Serializable
 
@@ -38,11 +39,11 @@ fun Parcel.writeBooleanCompat(value: Boolean) {
 }
 
 fun Parcel.writeCharSequenceCompat(value: CharSequence?) {
-    writeString(value?.toString())
+    TextUtils.writeToParcel(value, this, 0)
 }
 
 fun Parcel.readCharSequenceCompat(): CharSequence? {
-    return readString()
+    return TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(this)
 }
 
 fun <T: Parcelable> Parcel.readArrayCompat(clazz: Class<T>): Array<T>? {

@@ -50,6 +50,10 @@ open class BaseListFragment: BaseFragment(R.layout.fragment_list) {
         headerView.title = title
     }
 
+    fun setListPadding(left: Int, top: Int, right: Int, bottom: Int) {
+        listView.setPadding(left, top, right, bottom)
+    }
+
     fun setActionIcon(@DrawableRes resId: Int, onClick: (view: View) -> Unit) {
         headerView.setAction(resId)
         headerView.doOnActionClick = onClick

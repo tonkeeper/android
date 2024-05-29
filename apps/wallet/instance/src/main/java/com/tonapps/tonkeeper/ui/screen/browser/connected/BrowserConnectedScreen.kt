@@ -66,7 +66,6 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
         val message = getString(Localization.remove_dapp_confirm, app.manifest.name)
         AlertDialog.Builder(requireContext())
             .setMessage(message)
-            .setColoredButtons()
             .setNegativeButton(Localization.confirm) {
                 connectedViewModel.deleteApp(app)
             }

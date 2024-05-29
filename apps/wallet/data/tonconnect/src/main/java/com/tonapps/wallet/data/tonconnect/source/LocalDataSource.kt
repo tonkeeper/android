@@ -3,12 +3,10 @@ package com.tonapps.wallet.data.tonconnect.source
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.util.Log
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.sqlite.query
-import com.tonapps.wallet.data.core.accountId
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 

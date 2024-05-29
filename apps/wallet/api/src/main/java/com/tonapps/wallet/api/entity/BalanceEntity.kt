@@ -24,6 +24,5 @@ data class BalanceEntity(
         walletAddress = jettonBalance.walletAddress.address,
     ) {
         rates = jettonBalance.price
-        Log.d("ConfirmScreenFeatureLog", "jettonBalance = $jettonBalance")
     }
 }

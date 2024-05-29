@@ -29,6 +29,8 @@ import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletLabel
+import com.tonapps.wallet.data.backup.BackupRepository
+import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -55,6 +57,7 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.crypto.hex
 import org.ton.mnemonic.Mnemonic
+import uikit.extensions.context
 
 @OptIn(FlowPreview::class)
 class InitViewModel(
@@ -66,6 +69,7 @@ class InitViewModel(
     private val collectiblesRepository: CollectiblesRepository,
     private val settingsRepository: SettingsRepository,
     private val api: API,
+    private val backupRepository: BackupRepository,
     savedStateHandle: SavedStateHandle
 ): AndroidViewModel(application) {
 
@@ -100,7 +104,7 @@ class InitViewModel(
         get() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 return ContextCompat.checkSelfPermission(
-                    getApplication(),
+                    context,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
             }
@@ -182,9 +186,9 @@ class InitViewModel(
             it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
         }.sortedByDescending { it.walletVersion.index }.toMutableList()
 
-        if (accounts.size == 0 && type == InitArgs.Type.Import) {
+        /*if (accounts.size == 0 && type == InitArgs.Type.Import) {
             throw IllegalStateException("No valid accounts found")
-        }
+        }*/
 
         if (accounts.count { it.walletVersion == WalletVersion.V4R2 } == 0) {
             val contract = WalletV4R2Contract(publicKey = publicKey)
@@ -333,6 +337,12 @@ class InitViewModel(
                     InitArgs.Type.New -> wallets.add(createNewWallet())
                     InitArgs.Type.Import, InitArgs.Type.Testnet -> wallets.addAll(importWallet())
                     InitArgs.Type.Signer -> wallets.add(signerWallet())
+                }
+
+                if (type != InitArgs.Type.New) {
+                    for (wallet in wallets) {
+                        backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)
+                    }
                 }
 
                 for (wallet in wallets) {

@@ -381,8 +381,12 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToWallet(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: kotlin.String? = "en") : MessageConsequences {
-        val localVarResponse = emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToWallet(
+        emulateMessageToWalletRequest: EmulateMessageToWalletRequest,
+        ignoreSignatureCheck: kotlin.Boolean? = null,
+        acceptLanguage: kotlin.String? = "en"
+    ) : MessageConsequences {
+        val localVarResponse = emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest = emulateMessageToWalletRequest, ignoreSignatureCheck = ignoreSignatureCheck, acceptLanguage = acceptLanguage)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as MessageConsequences
@@ -410,8 +414,12 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: kotlin.String?) : ApiResponse<MessageConsequences?> {
-        val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage)
+    fun emulateMessageToWalletWithHttpInfo(
+        emulateMessageToWalletRequest: EmulateMessageToWalletRequest,
+        ignoreSignatureCheck: kotlin.Boolean? = null,
+        acceptLanguage: kotlin.String?,
+    ) : ApiResponse<MessageConsequences?> {
+        val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest = emulateMessageToWalletRequest, ignoreSignatureCheck = ignoreSignatureCheck, acceptLanguage = acceptLanguage)
         return request<EmulateMessageToWalletRequest, MessageConsequences>(
             localVariableConfig
         )
@@ -424,9 +432,18 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      * @param acceptLanguage  (optional, default to "en")
      * @return RequestConfig
      */
-    fun emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: kotlin.String?) : RequestConfig<EmulateMessageToWalletRequest> {
+    fun emulateMessageToWalletRequestConfig(
+        emulateMessageToWalletRequest: EmulateMessageToWalletRequest,
+        ignoreSignatureCheck: kotlin.Boolean? = null,
+        acceptLanguage: kotlin.String?,
+    ) : RequestConfig<EmulateMessageToWalletRequest> {
         val localVariableBody = emulateMessageToWalletRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ignoreSignatureCheck != null) {
+                    put("ignore_signature_check", listOf(ignoreSignatureCheck.toString()))
+                }
+            }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"

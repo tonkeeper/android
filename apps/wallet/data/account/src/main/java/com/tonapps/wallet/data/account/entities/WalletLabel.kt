@@ -17,5 +17,11 @@ data class WalletLabel(
         get() = accountName.ifBlank { "Wallet" }
 
     val title: CharSequence?
-        get() = if (isEmpty) null else String.format("%s %s", emoji, name)
+        get() = if (isEmpty) {
+            null
+        } else if (emoji.startsWith("custom_")) {
+            name
+        } else {
+            String.format("%s %s", emoji, name)
+        }
 }

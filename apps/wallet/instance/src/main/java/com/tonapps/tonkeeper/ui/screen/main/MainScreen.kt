@@ -90,7 +90,6 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
     private val mainViewModel: MainViewModel by viewModel()
     private val rootViewModel: RootViewModel by activityViewModel()
 
-
     private var currentFragment: BaseFragment? = null
 
     private lateinit var fragments: Map<Int, BaseFragment>

@@ -73,7 +73,8 @@ class SignManager(
         currency: WalletCurrency = settingsRepository.currency,
     ): HistoryHelper.Details? {
         val rates = ratesRepository.getRates(currency, "TON")
-        val cell = walletRepository.createSignedMessage(wallet, EmptyPrivateKeyEd25519, request.validUntil, request.transfers)
+        val seqno = walletRepository.getSeqno(wallet)
+        val cell = walletRepository.createSignedMessage(wallet, seqno, EmptyPrivateKeyEd25519, request.validUntil, request.transfers)
         return try {
             val emulated = api.emulate(cell, wallet.testnet)
             historyHelper.create(wallet, emulated, rates)

@@ -42,7 +42,8 @@ class ActionViewModel(
     fun sign(context: Context) = passcodeRepository.confirmationFlow(context).combine(walletFlow) { _, wallet ->
         val request = args.request
         val secretKey = walletRepository.getPrivateKey(wallet.id)
-        val message = walletRepository.createSignedMessage(wallet, secretKey, request.validUntil, request.transfers)
+        val seqno = walletRepository.getSeqno(wallet)
+        val message = walletRepository.createSignedMessage(wallet, seqno, secretKey, request.validUntil, request.transfers)
         message.base64()
     }.flowOn(Dispatchers.IO).take(1)
 

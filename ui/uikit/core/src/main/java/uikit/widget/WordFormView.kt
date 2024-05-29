@@ -75,7 +75,9 @@ class WordFormView @JvmOverloads constructor(
         if (!isValidValue(word)) {
             return false
         }
-        for (i in 0 until count) {
+        val repeatCount = getWords().count { it == word }
+        return 3 >= repeatCount
+        /*for (i in 0 until count) {
             if (i == index) {
                 continue
             }
@@ -84,7 +86,7 @@ class WordFormView @JvmOverloads constructor(
                 return false
             }
         }
-        return true
+        return true*/
     }
 
     private suspend fun checkWords(text: String) {

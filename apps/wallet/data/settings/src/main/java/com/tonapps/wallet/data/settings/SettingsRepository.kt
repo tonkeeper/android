@@ -35,6 +35,7 @@ class SettingsRepository(
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
         private const val PUSH_WALLET_PREFIX = "push_wallet_"
+        private const val SEND_CURRENCY_FIAT_KEY = "send_currency_fiat"
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -70,6 +71,14 @@ class SettingsRepository(
             val id = java.util.UUID.randomUUID().toString()
             prefs.edit().putString(INSTALL_ID_KEY, id).apply()
             id
+        }
+
+    var sendCurrencyFiat: Boolean = prefs.getBoolean(SEND_CURRENCY_FIAT_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(SEND_CURRENCY_FIAT_KEY, value).apply()
+                field = value
+            }
         }
 
     var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)

@@ -18,7 +18,7 @@ object SignerApp {
 
     fun openAppOrInstall(context: Context) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("tonsign://"))
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("tonsign://v1/"))
             open(context, intent)
         } catch (e: Throwable) {
             openStore(context)

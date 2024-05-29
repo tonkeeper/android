@@ -192,45 +192,44 @@ class TokenViewModel(
     private suspend fun loadChart(
         token: String,
         startDateSeconds: Long,
-        endDateSeconds: Long,
-        points: Int
+        endDateSeconds: Long
     ) = withContext(Dispatchers.IO) {
-        _chartFlow.value = api.loadChart(token, settingsRepository.currency.code, startDateSeconds, endDateSeconds, points)
+        _chartFlow.value = api.loadChart(token, settingsRepository.currency.code, startDateSeconds, endDateSeconds)
     }
 
     private suspend fun loadHourChart(token: String) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60
-        loadChart(token, startDateSeconds, endDateSeconds, 60)
+        loadChart(token, startDateSeconds, endDateSeconds)
     }
 
     private suspend fun loadDayChart(token: String) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24
-        loadChart(token, startDateSeconds, endDateSeconds, 24)
+        loadChart(token, startDateSeconds, endDateSeconds)
     }
 
     private suspend fun loadWeekChart(token: String) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 7
-        loadChart(token, startDateSeconds, endDateSeconds, 7)
+        loadChart(token, startDateSeconds, endDateSeconds)
     }
 
     private suspend fun loadMonthChart(token: String) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 30
-        loadChart(token, startDateSeconds, endDateSeconds, 30)
+        loadChart(token, startDateSeconds, endDateSeconds)
     }
 
     private suspend fun load6MonthChart(token: String) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 30 * 6
-        loadChart(token, startDateSeconds, endDateSeconds, 6)
+        loadChart(token, startDateSeconds, endDateSeconds)
     }
 
     private suspend fun loadYearChart(token: String) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 365
-        loadChart(token, startDateSeconds, endDateSeconds, 12)
+        loadChart(token, startDateSeconds, endDateSeconds)
     }
 }

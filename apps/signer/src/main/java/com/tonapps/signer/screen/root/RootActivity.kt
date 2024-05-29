@@ -22,6 +22,8 @@ import com.tonapps.signer.screen.main.MainFragment
 import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.signer.screen.sign.SignFragment
 import com.tonapps.signer.screen.update.UpdateFragment
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentRedColor
 import kotlinx.coroutines.Job
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.ton.api.pub.PublicKeyEd25519
@@ -129,11 +131,10 @@ class RootActivity: NavigationActivity() {
 
     private fun signOut() {
         val builder = AlertDialog.Builder(this)
-        builder.setColoredButtons()
         builder.setTitle(R.string.sign_out_question)
         builder.setMessage(R.string.sign_out_subtitle)
-        builder.setPositiveButton(R.string.cancel)
-        builder.setNegativeButton(R.string.sign_out) {
+        builder.setNegativeButton(R.string.cancel, accentBlueColor)
+        builder.setPositiveButton(R.string.sign_out, accentRedColor) {
             rootViewModel.signOut()
         }
         builder.show()

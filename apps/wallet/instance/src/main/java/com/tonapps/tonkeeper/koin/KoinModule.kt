@@ -4,6 +4,7 @@ import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.fragment.country.CountryScreenFeature
+import com.tonapps.tonkeeper.fragment.send.SendScreenFeature
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.fragment.send.amount.AmountScreenFeature
@@ -15,6 +16,9 @@ import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
+import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
+import com.tonapps.tonkeeper.ui.screen.backup.attention.BackupAttentionViewModel
+import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreViewModel
@@ -61,17 +65,17 @@ val koinModel = module {
     uiAdapter { WalletPickerAdapter() }
 
     viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get()) }
-    viewModel { parameters -> InitViewModel(parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> InitViewModel(parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecipientScreenFeature(get()) }
     viewModel { PickerViewModel(get()) }
-    viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
-    viewModel { SettingsViewModel(get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get()) }
     viewModel { EditNameViewModel(get()) }
     viewModel { LanguageViewModel(get()) }
-    viewModel { SecurityViewModel(get(), get(), get()) }
+    viewModel { SecurityViewModel(get()) }
     viewModel { ThemeViewModel(get()) }
     viewModel { EventsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(request = parameters.get(), get(), get(), get()) }
@@ -86,8 +90,12 @@ val koinModel = module {
     viewModel { EncryptedCommentViewModel(get(), get()) }
     viewModel { NotificationsViewModel(get(), get(), get()) }
     viewModel { parameters -> TokenViewModel(get(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { BackupViewModel(get(), get(), get()) }
+    viewModel { BackupCheckViewModel(get(), get()) }
+    viewModel { BackupAttentionViewModel(get(), get()) }
 
-    viewModel { ConfirmScreenFeature(get(), get(), get(), get(), get()) }
+    viewModel { ConfirmScreenFeature(get(), get(), get(), get(), get(), get()) }
     viewModel { AmountScreenFeature(get(), get(), get()) }
     viewModel { CountryScreenFeature(get()) }
+    viewModel { SendScreenFeature(get(), get()) }
 }

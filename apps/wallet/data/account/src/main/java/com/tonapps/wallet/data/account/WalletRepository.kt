@@ -279,14 +279,29 @@ class WalletRepository(
         legacyManager.getPrivateKey(id)
     }
 
-    suspend fun messageBody(
+    suspend fun getSeqno(
+        wallet: WalletEntity
+    ): Int = withContext(Dispatchers.IO) {
+        try {
+            api.getAccountSeqno(wallet.accountId, wallet.testnet)
+        } catch (e: Throwable) {
+            0
+        }
+    }
+
+    suspend fun getValidUntil(testnet: Boolean): Long {
+        val seconds = api.getServerTime(testnet)
+        return seconds + (5 * 30L) // 5 minutes
+    }
+
+    fun messageBody(
         wallet: WalletEntity,
+        seqno: Int,
         validUntil: Long,
         transfers: List<WalletTransfer>
     ): MessageBodyEntity {
-        val seqno = api.getAccountSeqno(wallet.accountId, wallet.testnet)
         val body = wallet.createBody(seqno, validUntil, transfers)
-        return MessageBodyEntity(seqno, body)
+        return MessageBodyEntity(seqno, body, validUntil)
     }
 
     suspend fun clear() {
@@ -295,13 +310,14 @@ class WalletRepository(
         _activeWalletFlow.value = null
     }
 
-    suspend fun createSignedMessage(
+    fun createSignedMessage(
         wallet: WalletEntity,
+        seqno: Int,
         privateKeyEd25519: PrivateKeyEd25519,
         validUntil: Long,
         transfers: List<WalletTransfer>
     ): Cell {
-        val data = messageBody(wallet, validUntil, transfers)
+        val data = messageBody(wallet, seqno, validUntil, transfers)
         return wallet.sign(privateKeyEd25519, data.seqno, data.body)
     }
 

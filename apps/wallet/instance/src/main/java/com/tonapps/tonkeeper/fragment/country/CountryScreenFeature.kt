@@ -1,11 +1,8 @@
 package com.tonapps.tonkeeper.fragment.country
 
 import androidx.lifecycle.viewModelScope
-import com.tonapps.tonkeeper.event.ChangeCountryEvent
 import com.tonapps.tonkeeper.extensions.flagEmoji
-import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
-import core.EventBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,7 +40,6 @@ class CountryScreenFeature(
 
     fun setSelection(code: String) {
         settingsRepository.country = code
-        EventBus.post(ChangeCountryEvent(code))
 
         updateUiState { currentState ->
             currentState.copy(

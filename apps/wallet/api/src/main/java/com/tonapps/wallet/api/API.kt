@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
+import android.os.SystemClock
 import android.util.ArrayMap
 import android.util.Log
 import com.tonapps.blockchain.Coin
@@ -44,6 +45,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
+import org.ton.crypto.base64
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -250,10 +252,10 @@ class API(
 
     suspend fun emulate(
         boc: String,
-        testnet: Boolean
+        testnet: Boolean,
     ): MessageConsequences = withContext(Dispatchers.IO) {
         val request = EmulateMessageToWalletRequest(boc)
-        emulation(testnet).emulateMessageToWallet(request)
+        emulation(testnet).emulateMessageToWallet(request, ignoreSignatureCheck = true)
     }
 
     suspend fun emulate(
@@ -399,13 +401,16 @@ class API(
         token: String,
         currency: String,
         startDate: Long,
-        endDate: Long,
-        points: Int
+        endDate: Long
     ): List<ChartEntity> {
-        val url = "${config.tonapiMainnetHost}/v2/rates/chart?token=$token&currency=$currency&end_date=$endDate&start_date=$startDate&points_count=$points"
-        val array = JSONObject(tonAPIHttpClient.get(url)).getJSONArray("points")
-        return (0 until array.length()).map { index ->
-            ChartEntity(array.getJSONArray(index))
+        try {
+            val url = "${config.tonapiMainnetHost}/v2/rates/chart?token=$token&currency=$currency&end_date=$endDate&start_date=$startDate"
+            val array = JSONObject(tonAPIHttpClient.get(url)).getJSONArray("points")
+            return (0 until array.length()).map { index ->
+                ChartEntity(array.getJSONArray(index))
+            }
+        } catch (e: Throwable) {
+            return listOf(ChartEntity(0, 0f))
         }
     }
 
@@ -413,7 +418,7 @@ class API(
         try {
             liteServer(testnet).getRawTime().time
         } catch (e: Throwable) {
-            0
+            (System.currentTimeMillis() / 1000).toInt()
         }
     }
 

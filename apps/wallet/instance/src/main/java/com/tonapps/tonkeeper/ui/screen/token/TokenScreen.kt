@@ -1,16 +1,22 @@
 package com.tonapps.tonkeeper.ui.screen.token
 
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.ConcatAdapter
+import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
+import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.token.list.TokenAdapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.uikit.list.BaseListHolder
+import com.tonapps.uikit.list.ListCell
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
@@ -19,6 +25,8 @@ import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
+import uikit.extensions.getDimensionPixelSize
 import uikit.navigation.Navigation.Companion.navigation
 
 class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
@@ -35,10 +43,37 @@ class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val padding = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+        setListPadding(0, padding, 0, padding)
         setTitle(args.symbol)
         setAdapter(ConcatAdapter(tokenAdapter, historyAdapter))
         addItemDecoration(HistoryItemDecoration)
+        addItemDecoration(object : RecyclerView.ItemDecoration() {
+
+            override fun getItemOffsets(
+                outRect: Rect,
+                view: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                val position = parent.getChildAdapterPosition(view)
+                if (parent.isLayoutRequested) {
+                    parent.doOnLayout { getItemOffsets(outRect, view, parent, state) }
+                    return
+                }
+                if (position == 0) {
+                    return
+                }
+                val holder = parent.findViewHolderForAdapterPosition(position) ?: return
+                val item = (holder as? BaseListHolder<*>)?.item ?: return
+                if (item is HistoryItem) {
+                    outRect.left = padding
+                    outRect.right = padding
+                }
+            }
+        })
         addScrollListener(paginationListener)
+
         collectFlow(tokenViewModel.tokenFlow, ::applyToken)
         collectFlow(tokenViewModel.uiItemsFlow, tokenAdapter::submitList)
         collectFlow(tokenViewModel.uiHistoryFlow, historyAdapter::submitList)

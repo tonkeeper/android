@@ -29,7 +29,6 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
     private lateinit var biometricView: ItemSwitchView
     private lateinit var lockScreenView: ItemSwitchView
     private lateinit var changePasscodeView: ItemIconView
-    private lateinit var recoveryPhraseView: ItemIconView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -55,36 +54,6 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
 
         changePasscodeView = view.findViewById(R.id.change_passcode)
         changePasscodeView.setOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }
-
-        recoveryPhraseView = view.findViewById(R.id.recovery_phrase)
-        recoveryPhraseView.setOnClickListener { openRecoveryPhrase() }
-
-        collectFlow(securityViewModel.hasMnemonicFlow) { hasMnemonic ->
-            if (hasMnemonic) {
-                actionsWithPhrase()
-            } else {
-                actionsWithoutPhrase()
-            }
-        }
-    }
-
-    private fun actionsWithPhrase() {
-        changePasscodeView.position = ListCell.Position.FIRST
-        recoveryPhraseView.position = ListCell.Position.LAST
-        recoveryPhraseView.visibility = View.VISIBLE
-    }
-
-    private fun actionsWithoutPhrase() {
-        changePasscodeView.position = ListCell.Position.SINGLE
-        recoveryPhraseView.visibility = View.GONE
-    }
-
-    private fun openRecoveryPhrase() {
-        securityViewModel.getRecoveryPhrase(requireContext()).catch {
-            navigation?.toast(Localization.authorization_required)
-        }.onEach {
-            navigation?.add(PhraseScreen.newInstance(it))
-        }.launchIn(lifecycleScope)
     }
 
     companion object {

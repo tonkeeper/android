@@ -2,6 +2,7 @@ package uikit.dialog.alert
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Color
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -65,15 +66,6 @@ class AlertDialog private constructor(
 
         positiveButton = findViewById(R.id.alert_positive_button)
         applyButton(positiveButton, params.positiveButton)
-
-        if (params.coloredButtons) {
-            setColoredButton()
-        }
-    }
-
-    private fun setColoredButton() {
-        negativeButton.setTextColor(context.accentRedColor)
-        positiveButton.setTextColor(context.accentBlueColor)
     }
 
     override fun onAnimationUpdate(animation: ValueAnimator) {
@@ -89,6 +81,9 @@ class AlertDialog private constructor(
         if (button == null) {
             view.visibility = View.GONE
             return
+        }
+        if (button.color != Color.TRANSPARENT) {
+            view.setTextColor(button.color)
         }
         view.visibility = View.VISIBLE
         view.text = button.title
@@ -112,14 +107,17 @@ class AlertDialog private constructor(
         animator.reverse()
     }
 
-    private data class ParamButton(val title: CharSequence, val action: ((dialog: AlertDialog) -> Unit)?)
+    private data class ParamButton(
+        val title: CharSequence,
+        val color: Int,
+        val action: ((dialog: AlertDialog) -> Unit)?
+    )
 
     private data class Params(
         val title: CharSequence?,
         val message: CharSequence?,
         val negativeButton: ParamButton?,
-        val positiveButton: ParamButton?,
-        val coloredButtons: Boolean
+        val positiveButton: ParamButton?
     )
 
     class Builder(private val context: Context) {
@@ -128,14 +126,9 @@ class AlertDialog private constructor(
         private var message: CharSequence? = null
         private var negativeButton: ParamButton? = null
         private var positiveButton: ParamButton? = null
-        private var coloredButtons: Boolean = false
 
         fun setTitle(title: CharSequence) = apply {
             this.title = title
-        }
-
-        fun setColoredButtons() = apply {
-            this.coloredButtons = true
         }
 
         fun setTitle(resId: Int) = setTitle(context.getString(resId))
@@ -146,19 +139,35 @@ class AlertDialog private constructor(
 
         fun setMessage(resId: Int) = setMessage(context.getString(resId))
 
-        fun setNegativeButton(title: CharSequence, action: (dialog: AlertDialog) -> Unit) = apply {
-            this.negativeButton = ParamButton(title, action)
+        fun setNegativeButton(
+            title: CharSequence,
+            color: Int = Color.TRANSPARENT,
+            action: ((dialog: AlertDialog) -> Unit)? = null
+        ) = apply {
+            this.negativeButton = ParamButton(title, color, action)
         }
 
-        fun setNegativeButton(resId: Int, action: (dialog: AlertDialog) -> Unit) = setNegativeButton(context.getString(resId), action)
+        fun setNegativeButton(
+            resId: Int,
+            color: Int = Color.TRANSPARENT,
+            action: ((dialog: AlertDialog) -> Unit)? = null
+        ) = setNegativeButton(context.getString(resId), color, action)
 
-        fun setPositiveButton(title: CharSequence, action: ((dialog: AlertDialog) -> Unit)? = null) = apply {
-            this.positiveButton = ParamButton(title, action)
+        fun setPositiveButton(
+            title: CharSequence,
+            color: Int = Color.TRANSPARENT,
+            action: ((dialog: AlertDialog) -> Unit)? = null,
+        ) = apply {
+            this.positiveButton = ParamButton(title, color, action)
         }
 
-        fun setPositiveButton(resId: Int, action: ((dialog: AlertDialog) -> Unit)? = null) = setPositiveButton(context.getString(resId), action)
+        fun setPositiveButton(
+            resId: Int,
+            color: Int = Color.TRANSPARENT,
+            action: ((dialog: AlertDialog) -> Unit)? = null
+        ) = setPositiveButton(context.getString(resId), color, action)
 
-        fun build() = AlertDialog(context, Params(title, message, negativeButton, positiveButton, coloredButtons))
+        fun build() = AlertDialog(context, Params(title, message, negativeButton, positiveButton))
 
         fun show() = build().show()
     }

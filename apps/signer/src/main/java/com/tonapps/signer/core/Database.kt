@@ -12,7 +12,7 @@ import org.ton.api.pub.PublicKeyEd25519
 
 class Database(
     private val context: Context
-): SQLiteOpenHelper(context, NAME_DATABASE, null, 1) {
+): SQLiteOpenHelper(context, NAME_DATABASE, null, 2) {
 
     private companion object {
         private const val NAME_DATABASE = "db"
@@ -20,6 +20,7 @@ class Database(
         private const val ID_COLUMN = "id"
         private const val NAME_COLUMN = "name"
         private const val PK_COLUMN = "pk"
+        private const val DATE_COLUMN = "date"
     }
 
     override fun onConfigure(db: SQLiteDatabase) {
@@ -31,11 +32,13 @@ class Database(
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("CREATE TABLE $KEYS_TABLE (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pk BLOB);")
+        db.execSQL("CREATE TABLE $KEYS_TABLE (id INTEGER PRIMARY KEY AUTOINCREMENT, $NAME_COLUMN TEXT, $PK_COLUMN BLOB, $DATE_COLUMN INTEGER);")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-
+        if (oldVersion == 1 && newVersion == 2) {
+            db.execSQL("ALTER TABLE $KEYS_TABLE ADD COLUMN $DATE_COLUMN INTEGER;")
+        }
     }
 
     fun clearAll() {
@@ -100,6 +103,7 @@ class Database(
             val values = ContentValues()
             values.put(NAME_COLUMN, name)
             values.put(PK_COLUMN, publicKey)
+            values.put(DATE_COLUMN, System.currentTimeMillis())
             insert(KEYS_TABLE, null, values)
         }
         if (id == -1L) {

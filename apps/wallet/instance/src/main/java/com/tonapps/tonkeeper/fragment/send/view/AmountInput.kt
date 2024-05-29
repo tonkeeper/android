@@ -109,8 +109,15 @@ class AmountInput @JvmOverloads constructor(
     }
 
     private fun updateValue(editable: Editable) {
+        doAfterValueChanged?.invoke(getValue(editable))
+    }
+
+    fun getValue(editable: Editable? = text): Double {
+        if (editable == null) {
+            return 0.0
+        }
         val text = Coin.prepareValue(editable.toString())
-        doAfterValueChanged?.invoke(text.toDoubleOrNull() ?: 0.0)
+        return text.toDoubleOrNull() ?: 0.0
     }
 
     fun setDecimalCount(count: Int) {

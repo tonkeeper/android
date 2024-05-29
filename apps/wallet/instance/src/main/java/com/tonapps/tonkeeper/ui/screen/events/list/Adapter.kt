@@ -17,7 +17,6 @@ class Adapter: BaseListAdapter() {
             Item.TYPE_SPACE -> SpaceHolder(parent)
             else -> throw IllegalArgumentException("Unknown viewType: $viewType")
         }
-
     }
 
 }

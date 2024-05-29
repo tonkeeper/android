@@ -64,7 +64,7 @@ object Transfer {
     fun nft(
         newOwnerAddress: MsgAddressInt,
         excessesAddress: MsgAddressInt,
-        queryId: Long = 0L,
+        queryId: BigInteger = BigInteger.ZERO,
         forwardAmount: Long = 1L,
         body: Any? = null,
     ): Cell {
@@ -83,5 +83,4 @@ object Transfer {
             }
         }
     }
-
 }

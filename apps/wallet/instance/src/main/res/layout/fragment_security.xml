@@ -62,17 +62,9 @@
                 android:id="@+id/change_passcode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:position="first"
+                app:position="single"
                 android:text="@string/change_passcode"
                 android:icon="@drawable/ic_lock_28"/>
-
-            <uikit.widget.item.ItemIconView
-                android:id="@+id/recovery_phrase"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:position="last"
-                android:text="@string/recovery_phrase"
-                android:icon="@drawable/ic_key_28"/>
 
         </uikit.widget.ColumnLayout>
 

@@ -9,6 +9,7 @@ import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.Shader
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import com.tonapps.uikit.color.accentBlueColor
@@ -28,10 +29,7 @@ class ChartView @JvmOverloads constructor(
     fun setData(data: List<ChartEntity>, square: Boolean) {
         this.data = data
         this.square = square
-        doOnLayout {
-            buildPath()
-            invalidate()
-        }
+        doOnLayout { buildPath() }
     }
 
     private val accentColor = context.accentBlueColor
@@ -51,6 +49,7 @@ class ChartView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        Log.d("ChartViewLog", "draw chart")
         val lineWidthPart = linePaint.strokeWidth / 2f
         canvas.translate(-lineWidthPart, lineWidthPart)
         canvas.drawPath(path, linePaint)
@@ -58,41 +57,39 @@ class ChartView @JvmOverloads constructor(
     }
 
     private fun buildPath() {
+        path.reset()
+
         if (data.isEmpty()) {
             return
         }
 
-        val minX = data.minOf { it.x }
-        val maxX = data.maxOf { it.x }
-        val minY = data.minOf { it.y }
-        val maxY = data.maxOf { it.y }
+        val maxPrice = data.maxOf { it.price }
 
         val viewWidth = width - 2 * linePaint.strokeWidth
         val viewHeight = height - 2 * linePaint.strokeWidth
+        val stepWidth = viewWidth / data.size
+        val points = mutableListOf<PointF>()
 
-        val widthScale = viewWidth / (maxX - minX)
-        val heightScale = viewHeight / (maxY - minY)
-
-        val points = data.map { point ->
-            val x = ((point.x - minX) * widthScale) + linePaint.strokeWidth
-            val y = ((maxY - point.y) * heightScale) + linePaint.strokeWidth
-            PointF(x, y)
-        }.toMutableList()
-
-        if (square) {
-            buildSquarePath(points, viewHeight)
-        } else {
-            buildDefaultPath(points, viewHeight)
+        for ((index, item) in data.withIndex()) {
+            val x = index * stepWidth
+            val y = viewHeight - (item.price / maxPrice) * viewHeight
+            points.add(PointF(x, y))
         }
 
         gradientPaint.shader = LinearGradient(
             0f, 0f, 0f, viewHeight,
             accentColor.withAlpha(.3f), Color.TRANSPARENT, Shader.TileMode.CLAMP
         )
+
+        if (square) {
+            buildSquarePath(points, viewHeight)
+        } else {
+            buildDefaultPath(points, viewHeight)
+        }
+        invalidate()
     }
 
     private fun buildDefaultPath(points: MutableList<PointF>, viewHeight: Float) {
-        path.reset()
         val firstPoint = points.removeFirst()
         val lastPoint = points.removeLast()
 
@@ -102,14 +99,12 @@ class ChartView @JvmOverloads constructor(
         }
 
         path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), lastPoint.y)
-        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), viewHeight + (linePaint.strokeWidth * 2))
-        path.lineTo(0f, viewHeight + (linePaint.strokeWidth * 2))
+        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 12f.dp), viewHeight + (linePaint.strokeWidth * 2))
+        path.lineTo(0f, viewHeight + 12f.dp)
         path.close()
     }
 
     private fun buildSquarePath(points: MutableList<PointF>, viewHeight: Float) {
-        path.reset()
-
         val firstPoint = points.first()
         val lastPoint = points.last()
         path.moveTo(firstPoint.x - linePaint.strokeWidth, firstPoint.y)
@@ -124,7 +119,7 @@ class ChartView @JvmOverloads constructor(
         }
 
         path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), lastPoint.y)
-        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 2f), viewHeight + (linePaint.strokeWidth * 2))
+        path.lineTo(lastPoint.x + (linePaint.strokeWidth * 12f.dp), viewHeight + (linePaint.strokeWidth * 2))
         path.lineTo(0f, viewHeight + (linePaint.strokeWidth * 2))
         path.close()
     }

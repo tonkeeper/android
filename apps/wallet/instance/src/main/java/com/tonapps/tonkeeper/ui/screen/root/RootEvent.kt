@@ -39,7 +39,7 @@ sealed class RootEvent {
 
     data class Transfer(
         val address: String,
-        val amount: Float?,
+        val amount: Double?,
         val text: String?,
         val jettonAddress: String?
     ): RootEvent()

@@ -9,6 +9,8 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.tonkeeper.extensions.openCamera
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.fragment.send.pager.SendScreenAdapter
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.hideKeyboard
 import uikit.mvi.UiScreen
@@ -23,19 +25,22 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         private const val COMMENT_KEY = "text"
         private const val AMOUNT_KEY = "amount"
         private const val JETTON_ADDRESS_KEY = "jetton_address"
+        private const val NFT_ADDRESS_KEY = "nft_address"
 
         fun newInstance(
             address: String? = null,
             comment: String? = null,
-            amount: Float = 0f,
-            jettonAddress: String? = null
+            amount: Double = 0.0,
+            jettonAddress: String? = null,
+            nftAddress: String? = null
         ): SendScreen {
             val fragment = SendScreen()
             fragment.arguments = Bundle().apply {
                 putString(ADDRESS_KEY, address)
                 putString(COMMENT_KEY, comment)
-                putFloat(AMOUNT_KEY, amount)
+                putDouble(AMOUNT_KEY, amount)
                 putString(JETTON_ADDRESS_KEY, jettonAddress)
+                putString(NFT_ADDRESS_KEY, nftAddress)
             }
             return fragment
         }
@@ -43,13 +48,14 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
 
     private val startAddress: String by lazy { arguments?.getString(ADDRESS_KEY) ?: "" }
     private val startComment: String by lazy { arguments?.getString(COMMENT_KEY) ?: "" }
-    private val startAmount: Float by lazy { arguments?.getFloat(AMOUNT_KEY) ?: 0f }
+    private val startAmount: Double by lazy { arguments?.getDouble(AMOUNT_KEY) ?: 0.0 }
     private val startJettonAddress: String? by lazy { arguments?.getString(JETTON_ADDRESS_KEY) }
+    private val startNftAddress: String? by lazy { arguments?.getString(NFT_ADDRESS_KEY) }
 
     private val hasStartValues: Boolean
         get() = startAddress.isNotEmpty() || startComment.isNotEmpty() || startAmount > 0f || startJettonAddress != null
 
-    override val feature: SendScreenFeature by viewModels()
+    override val feature: SendScreenFeature by viewModel()
 
     private lateinit var pageAdapter: SendScreenAdapter
 
@@ -73,20 +79,18 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
     private lateinit var headerView: HeaderView
     private lateinit var pagerView: ViewPager2
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        pageAdapter = SendScreenAdapter(this)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        pageAdapter = SendScreenAdapter(this, feature.getPagerItems(startNftAddress != null))
+        feature.setNftAddress(startNftAddress)
+
         headerView = view.findViewById(R.id.header)
         headerView.contentMatchParent()
         headerView.doOnActionClick = { finish() }
         headerView.doOnCloseClick = { feature.prevPage() }
 
         pagerView = view.findViewById(R.id.pager)
-        pagerView.offscreenPageLimit = 3
+        pagerView.offscreenPageLimit = pageAdapter.itemCount
         pagerView.isUserInputEnabled = false
         pagerView.adapter = pageAdapter
         pagerView.registerOnPageChangeCallback(pageChangeCallback)
@@ -149,7 +153,7 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         pageAdapter.recipientScreen?.setComment(text)
     }
 
-    fun forceSetAmount(amount: Float) {
+    fun forceSetAmount(amount: Double) {
         pageAdapter.amountScreen?.forceSetAmount(amount)
     }
 

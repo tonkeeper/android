@@ -36,6 +36,6 @@ data class TokenData(
     val balance: Double
         get() = token.balance.value
 
-    val fiat: Float
+    val fiat: Double
         get() = token.fiat
 }

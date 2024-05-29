@@ -15,11 +15,14 @@ import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.ton.crypto.base64
 import org.ton.crypto.hex
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.pinToBottomInsets
 import uikit.navigation.Navigation.Companion.navigation
@@ -46,6 +49,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
     private lateinit var actionView: View
     private lateinit var sendButton: Button
     private lateinit var processView: ProcessTaskView
+    private lateinit var actionTitle: AppCompatTextView
 
     private val signerLauncher = registerForActivityResult(SingerResultContract()) {
         if (it == null) {
@@ -60,6 +64,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         iconView = view.findViewById(R.id.icon)
 
         titleView = view.findViewById(R.id.title)
+        actionTitle = view.findViewById(R.id.action_title)
 
         walletView = view.findViewById(R.id.wallet)
         walletView.title = getString(Localization.wallet)
@@ -95,13 +100,17 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
         sendFeature.transaction.observe(viewLifecycleOwner) { transaction ->
             setRecipient(transaction.address!!, transaction.name)
             setComment(transaction.comment)
-            feature.setAmount(transaction.amountRaw, transaction.decimals, transaction.tokenAddress, transaction.tokenSymbol)
-            iconView.setImageURI(transaction.icon)
-
-            if (transaction.isTon) {
-                titleView.setText(Localization.transfer)
+            if (transaction.isNft) {
+                titleView.setText(Localization.nft_transfer)
+                amountView.visibility = View.GONE
             } else {
-                titleView.text = getString(Localization.jetton_transfer, transaction.tokenName)
+                feature.setAmount(transaction.amountRaw, transaction.decimals, transaction.tokenAddress, transaction.tokenSymbol)
+                iconView.setImageURI(transaction.icon)
+                if (transaction.isTon) {
+                    titleView.setText(Localization.transfer)
+                } else {
+                    titleView.text = getString(Localization.jetton_transfer, transaction.tokenName)
+                }
             }
         }
 
@@ -114,6 +123,17 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
                 commentView.setTitleRightDrawable(null)
             }
         }
+
+        collectFlow(sendFeature.nftItemFlow.filterNotNull(), ::applyNft)
+    }
+
+    private fun applyNft(nftEntity: NftEntity) {
+        iconView.setRound(20f.dp)
+        iconView.setImageURI(nftEntity.mediumUri)
+        actionTitle.text = String.format("%s · %s", nftEntity.name, nftEntity.collectionName.ifEmpty {
+            getString(Localization.unnamed_collection)
+        })
+        titleView.setText(Localization.nft_transfer)
     }
 
     private fun sign() {

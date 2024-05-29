@@ -3,6 +3,8 @@ package com.tonapps.emoji
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
+import androidx.annotation.DrawableRes
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.collection.LruCache
 import com.tonapps.emoji.compat.EmojiCompatHelper
 import com.tonapps.emoji.ui.drawable.PictogramDrawable
@@ -13,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
 object Emoji {
 
@@ -20,6 +23,7 @@ object Emoji {
 
     private val all = Collections.synchronizedList(mutableListOf<EmojiEntity>())
     private val simpleEmojiTypeface = DefaultStyle()
+    private val customIcons = CustomIcons()
 
     suspend fun get(context: Context): Array<EmojiEntity> {
         if (all.isEmpty()) {
@@ -39,6 +43,31 @@ object Emoji {
     }
 
     private suspend fun createDrawable(context: Context, emoji: CharSequence): PictogramDrawable = withContext(Dispatchers.IO) {
+        val customIcon = customIcons[emoji]
+        if (customIcon == null) {
+            drawEmoji(context, emoji)
+        } else {
+            drawCustomIcon(context, emoji, customIcon)
+        }
+    }
+
+    private fun drawCustomIcon(
+        context: Context,
+        emoji: CharSequence,
+        @DrawableRes resId: Int
+    ): PictogramDrawable {
+        val drawable = AppCompatResources.getDrawable(context, resId)!!
+        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return PictogramDrawable(emoji, context, bitmap)
+    }
+
+    private fun drawEmoji(
+        context: Context,
+        emoji: CharSequence,
+    ): PictogramDrawable {
         val tmpBitmap = simpleEmojiTypeface.draw(emoji)
         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             tmpBitmap.copy(Bitmap.Config.HARDWARE, false)
@@ -47,11 +76,14 @@ object Emoji {
         }
         val drawable = PictogramDrawable(emoji, context, bitmap)
         drawable.alpha = 0
-        drawable
+        return drawable
     }
 
     private fun getAll(context: Context): List<EmojiEntity> {
         val list = mutableListOf<EmojiEntity>()
+        list.addAll(customIcons.getAll().map {
+            EmojiEntity(value = it, variants = emptyList(), custom = true)
+        })
         val resId = if (EmojiCompatHelper.is12Supported()) {
             R.array.emoji_by_category_raw_resources_gender_inclusive
         } else {
@@ -76,6 +108,6 @@ object Emoji {
             .useLines { it.toList() }
             .map { EmojiCompatHelper.filterAvailable(it.split(",")) }
             .filter { it.isNotEmpty() }
-            .map { EmojiEntity(it.first(), it.drop(1)) }
+            .map { EmojiEntity(value = it.first(), variants = it.drop(1), custom = false) }
     }
 }

@@ -82,6 +82,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import uikit.extensions.collectFlow
+import uikit.extensions.context
 import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
@@ -164,7 +165,6 @@ class RootViewModel(
         currentWallet: WalletEntity,
         wallets: List<WalletEntity>
     ) {
-        val context = getApplication<App>()
         val list = mutableListOf<ShortcutInfoCompat>()
         if (!currentWallet.testnet) {
             list.add(ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "ton://"))
@@ -177,7 +177,6 @@ class RootViewModel(
         currentWallet: WalletEntity,
         wallets: List<WalletEntity>
     ): List<ShortcutInfoCompat> {
-        val context = getApplication<App>()
         val list = mutableListOf<ShortcutInfoCompat>()
         if (1 >= wallets.size) {
             return list
@@ -337,7 +336,7 @@ class RootViewModel(
         } else if (uri.path?.startsWith("/transfer/") == true) {
             _eventFlow.tryEmit(RootEvent.Transfer(
                 address = uri.pathSegments.last(),
-                amount = uri.getQueryLong("amount")?.let { Coin.toCoins(it) },
+                amount = uri.getQueryLong("amount")?.let { Coin.toCoinsDouble(it) },
                 text = uri.getQueryParameter("text"),
                 jettonAddress = uri.getQueryParameter("jetton"),
             ))

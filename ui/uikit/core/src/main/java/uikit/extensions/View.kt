@@ -141,6 +141,10 @@ fun View.round(radius: Int) {
     }
 }
 
+fun View.round(radius: Float) {
+    round(radius.toInt())
+}
+
 fun View.getDrawable(@DrawableRes resId: Int): Drawable {
     return AppCompatResources.getDrawable(context, resId)!!
 }

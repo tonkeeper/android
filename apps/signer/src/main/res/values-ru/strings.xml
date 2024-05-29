@@ -31,10 +31,10 @@
     <string name="settings">Настройки</string>
     <string name="wrong_url">Неверный URL</string>
     <string name="unknown_error">Неизвестная ошибка</string>
-    <string name="key_export_qr_title">Добавить на другое устройство</string>
+    <string name="key_export_qr_title">Подключить на другом устройстве</string>
     <string name="key_export_qr_subtitle">Откройте Tonkeeper » Добавить кошелёк » Подключить Signer</string>
-    <string name="key_export_tonkeeper">Добавить в Tonkeeper</string>
-    <string name="key_export_tonkeeper_web">Добавить в Tonkeeper Web</string>
+    <string name="key_export_tonkeeper">Подключить к Tonkeeper</string>
+    <string name="key_export_tonkeeper_web">Подключить к Tonkeeper Web</string>
     <string name="open_settings">Открыть настройки</string>
     <string name="camera_permission">Включите доступ к камере, чтобы можно было сканировать QR-коды.</string>
     <string name="add_key_dialog">Добавить ключ</string>

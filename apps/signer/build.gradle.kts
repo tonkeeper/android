@@ -12,8 +12,8 @@ android {
         applicationId = Build.namespacePrefix("signer")
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 12
-        versionName = "0.1.2"
+        versionCode = 13
+        versionName = "0.1.3"
     }
 
     lint {
@@ -59,9 +59,6 @@ android {
 }
 
 dependencies {
-    implementation(Dependence.AndroidX.profileinstaller)
-    "baselineProfile"(project(":baselineprofile:signer"))
-
     implementation(Dependence.AndroidX.core)
     implementation(Dependence.AndroidX.appCompat)
     implementation(Dependence.AndroidX.activity)

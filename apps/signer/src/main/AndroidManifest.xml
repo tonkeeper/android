@@ -24,7 +24,6 @@
     </queries>
 
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.NFC" />
 
     <application
         android:allowBackup="false"
@@ -80,5 +79,12 @@
         <service
             android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
             tools:node="remove" />
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            tools:node="remove" />
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="com.tonapps.signer.androidx-startup"
+            tools:node="remove"/>
     </application>
 </manifest>

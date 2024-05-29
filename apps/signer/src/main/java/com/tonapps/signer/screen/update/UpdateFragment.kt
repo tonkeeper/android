@@ -9,6 +9,7 @@ import android.view.View
 import androidx.core.graphics.toRectF
 import androidx.core.net.toUri
 import com.tonapps.signer.R
+import com.tonapps.signer.drawable.IconBackgroundDrawable
 import com.tonapps.uikit.color.backgroundContentColor
 import com.tonapps.uikit.color.separatorCommonColor
 import uikit.base.BaseDrawable
@@ -25,9 +26,10 @@ class UpdateFragment: BaseFragment(R.layout.fragment_update), BaseFragment.Modal
         view.findViewById<View>(R.id.update).setOnClickListener { openGooglePlay() }
         view.findViewById<View>(R.id.later).setOnClickListener { finish() }
 
+        val radius = 24f.dp
         val icon = view.findViewById<View>(R.id.icon)
-        icon.background = IconBackgroundDrawable(requireContext())
-        icon.round(24.dp)
+        icon.background = IconBackgroundDrawable(requireContext(), radius)
+        icon.round(radius)
     }
 
     private fun openGooglePlay() {
@@ -38,38 +40,6 @@ class UpdateFragment: BaseFragment(R.layout.fragment_update), BaseFragment.Modal
 
     companion object {
         fun newInstance() = UpdateFragment()
-    }
-
-    private class IconBackgroundDrawable(context: Context): BaseDrawable() {
-
-        private val radius = 24f.dp
-        private val borderSize = 1f.dp
-        private val borderSizeHalf = borderSize / 2f
-
-        private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = context.backgroundContentColor
-        }
-
-        private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = context.separatorCommonColor
-            strokeWidth = borderSize
-            style = Paint.Style.STROKE
-        }
-
-        override fun draw(canvas: Canvas) {
-            val rect = bounds.toRectF()
-            canvas.drawRoundRect(rect, radius, radius, backgroundPaint)
-            canvas.drawRoundRect(
-                rect.left + borderSizeHalf,
-                rect.top + borderSizeHalf,
-                rect.right - borderSizeHalf,
-                rect.bottom - borderSizeHalf,
-                radius,
-                radius,
-                borderPaint
-            )
-        }
-
     }
 
 }

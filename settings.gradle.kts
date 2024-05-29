@@ -19,7 +19,6 @@ include(":apps:signer")
 
 
 include(":baselineprofile:x")
-include(":baselineprofile:signer")
 
 
 include(":ton")

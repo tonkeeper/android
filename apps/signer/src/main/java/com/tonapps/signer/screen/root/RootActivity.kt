@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.tonapps.blockchain.ton.extensions.base64
@@ -13,6 +14,7 @@ import com.tonapps.signer.BuildConfig
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.SimpleState
+import com.tonapps.signer.drawable.IconBackgroundDrawable
 import com.tonapps.signer.extensions.toast
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.password.ui.PasswordView
@@ -30,7 +32,9 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.crypto.hex
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
 import uikit.extensions.primaryFragment
+import uikit.extensions.round
 import uikit.extensions.setPaddingTop
 import uikit.navigation.NavigationActivity
 
@@ -67,6 +71,11 @@ class RootActivity: NavigationActivity() {
 
         lockPasswordView = findViewById(R.id.lock_password)
         lockPasswordView.doOnPassword = ::checkPassword
+
+        val passcodeIconRadius = 8f.dp
+        val passcodeIconView = findViewById<AppCompatImageView>(R.id.passcode_icon)
+        passcodeIconView.background = IconBackgroundDrawable(this, passcodeIconRadius)
+        passcodeIconView.round(passcodeIconRadius)
 
         ViewCompat.setOnApplyWindowInsetsListener(lockView) { _, insets ->
             val topInset = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top

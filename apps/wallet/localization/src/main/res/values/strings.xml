@@ -151,7 +151,7 @@
     <string name="watch_wallet_add">Monitor wallet activity without recovery phrase. You will be notified of any transactions from this wallet.</string>
     <string name="testnet_wallet">Testnet Account</string>
     <string name="testnet_wallet_subtitle">Import wallet with a 24 secret recovery words to Testnet</string>
-    <string name="signer_wallet">Pair Signer</string>
+    <string name="signer_wallet">Pair with Signer</string>
     <string name="signer_wallet_subtitle">A higher level of control and security</string>
     <string name="cancel">Cancel</string>
     <string name="fee">Fee</string>

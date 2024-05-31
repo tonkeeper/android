@@ -4,13 +4,11 @@ import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.Coins
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -220,14 +218,14 @@ class InitViewModel(
 
         val items = mutableListOf<AccountItem>()
         for ((index, account) in accounts.withIndex()) {
-            val balance = Coin.toCoins(account.balance)
+            val balance = Coins.of(account.balance)
             val hasTokens = deferredTokens[index].await().size > 1
             val hasCollectibles = deferredCollectibles[index].await().isNotEmpty()
             val item = AccountItem(
                 address = AddrStd(account.address).toWalletAddress(testnet),
                 name = account.name,
                 walletVersion = account.walletVersion,
-                balanceFormat = CurrencyFormatter.format("TON", balance),
+                balanceFormat = CurrencyFormatter.format("TON", balance.value),
                 tokens = hasTokens,
                 collectibles = hasCollectibles,
                 selected = account.walletVersion == WalletVersion.V4R2 || (account.balance > 0 || hasTokens || hasCollectibles),

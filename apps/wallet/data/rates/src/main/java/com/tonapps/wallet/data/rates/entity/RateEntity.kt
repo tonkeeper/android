@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.rates.entity
 
 import android.os.Parcelable
+import com.tonapps.blockchain.Coins
 import com.tonapps.wallet.data.core.WalletCurrency
 import io.tonapi.models.TokenRates
 import kotlinx.parcelize.Parcelize
@@ -9,18 +10,6 @@ import kotlinx.parcelize.Parcelize
 data class RateEntity(
     val tokenCode: String,
     val currency: WalletCurrency,
-    val value: Float,
+    val value: Coins,
     val diff: RateDiffEntity
-): Parcelable {
-
-    constructor(
-        currency: WalletCurrency,
-        token: String,
-        rates: TokenRates
-    ) : this(
-        tokenCode = token,
-        currency = currency,
-        value = rates.prices?.get(currency.code)?.toFloat() ?: 0f,
-        diff = RateDiffEntity(currency, rates)
-    )
-}
+): Parcelable

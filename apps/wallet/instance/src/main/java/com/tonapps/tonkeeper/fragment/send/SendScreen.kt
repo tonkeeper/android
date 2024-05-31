@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
+import com.tonapps.blockchain.Coins
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.tonkeeper.extensions.openCamera
@@ -30,7 +31,7 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         fun newInstance(
             address: String? = null,
             comment: String? = null,
-            amount: Double = 0.0,
+            amount: String? = null,
             jettonAddress: String? = null,
             nftAddress: String? = null
         ): SendScreen {
@@ -38,7 +39,7 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
             fragment.arguments = Bundle().apply {
                 putString(ADDRESS_KEY, address)
                 putString(COMMENT_KEY, comment)
-                putDouble(AMOUNT_KEY, amount)
+                putString(AMOUNT_KEY, amount)
                 putString(JETTON_ADDRESS_KEY, jettonAddress)
                 putString(NFT_ADDRESS_KEY, nftAddress)
             }
@@ -48,12 +49,12 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
 
     private val startAddress: String by lazy { arguments?.getString(ADDRESS_KEY) ?: "" }
     private val startComment: String by lazy { arguments?.getString(COMMENT_KEY) ?: "" }
-    private val startAmount: Double by lazy { arguments?.getDouble(AMOUNT_KEY) ?: 0.0 }
+    private val startAmount: String by lazy { arguments?.getString(AMOUNT_KEY) ?: "" }
     private val startJettonAddress: String? by lazy { arguments?.getString(JETTON_ADDRESS_KEY) }
     private val startNftAddress: String? by lazy { arguments?.getString(NFT_ADDRESS_KEY) }
 
     private val hasStartValues: Boolean
-        get() = startAddress.isNotEmpty() || startComment.isNotEmpty() || startAmount > 0f || startJettonAddress != null
+        get() = startAddress.isNotEmpty() || startComment.isNotEmpty() || startAmount.isNotEmpty() || startJettonAddress != null
 
     override val feature: SendScreenFeature by viewModel()
 
@@ -153,8 +154,10 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
         pageAdapter.recipientScreen?.setComment(text)
     }
 
-    fun forceSetAmount(amount: Double) {
-        pageAdapter.amountScreen?.forceSetAmount(amount)
+    fun forceSetAmount(amount: String?) {
+        amount?.let {
+            pageAdapter.amountScreen?.forceSetAmount(Coins.of(amount).toDouble())
+        }
     }
 
     fun forceSetJetton(address: String?) {

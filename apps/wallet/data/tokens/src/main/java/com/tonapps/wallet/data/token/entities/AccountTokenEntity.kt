@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.token.entities
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.blockchain.Coins
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import kotlinx.parcelize.IgnoredOnParcel
@@ -30,13 +31,16 @@ data class AccountTokenEntity(
         get() = balance.token.symbol
 
     val isTon: Boolean
-        get() = address == "TON"
+        get() = address == TokenEntity.TON.address
 
-    val fiat: Double
-        get() = rate?.fiat ?: 0.0
+    val isUsdt: Boolean
+        get() = address == TokenEntity.USDT.address
 
-    val rateNow: Float
-        get() = rate?.rate ?: 0f
+    val fiat: Coins
+        get() = rate?.fiat ?: Coins.ZERO
+
+    val rateNow: Coins
+        get() = rate?.rate ?: Coins.ZERO
 
     val rateDiff24h: String
         get() = rate?.rateDiff24h ?: ""

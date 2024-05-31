@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.widget.Button
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatImageView
@@ -102,6 +103,10 @@ open class HeaderView @JvmOverloads constructor(
             val actionResId = it.getResourceId(R.styleable.HeaderView_android_action, 0)
             setAction(actionResId)
         }
+    }
+
+    fun setIgnoreSystemOffset(value: Boolean = true) {
+        ignoreSystemOffset = value
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {

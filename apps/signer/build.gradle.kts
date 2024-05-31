@@ -12,8 +12,8 @@ android {
         applicationId = Build.namespacePrefix("signer")
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 13
-        versionName = "0.1.3"
+        versionCode = 14
+        versionName = "0.1.4"
     }
 
     lint {

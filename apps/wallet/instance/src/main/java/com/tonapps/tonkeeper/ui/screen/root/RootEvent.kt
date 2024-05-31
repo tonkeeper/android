@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
+import com.tonapps.blockchain.Coins
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.WalletSource
@@ -39,7 +40,7 @@ sealed class RootEvent {
 
     data class Transfer(
         val address: String,
-        val amount: Double?,
+        val amount: String?,
         val text: String?,
         val jettonAddress: String?
     ): RootEvent()

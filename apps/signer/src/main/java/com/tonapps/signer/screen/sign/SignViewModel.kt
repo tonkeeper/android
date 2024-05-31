@@ -41,6 +41,7 @@ import com.tonapps.security.vault.safeArea
 import com.tonapps.uikit.list.ListCell
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import java.math.BigDecimal
 
 class SignViewModel(
     private val id: Long,
@@ -201,8 +202,8 @@ class SignViewModel(
     }
 
     private fun formatCoins(coins: Coins): String {
-        val value = coins.amount.toLong() / 1000000000L.toFloat()
-        return CurrencyFormatter.format("TON", value).toString()
+        val value = coins.amount.toLong() / 1000000000L.toDouble()
+        return CurrencyFormatter.format("TON", BigDecimal(value)).toString()
     }
 
     private fun parseAddress(address: MsgAddressInt, bounceable: Boolean = true): String {

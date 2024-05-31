@@ -79,12 +79,12 @@
         <service
             android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
             tools:node="remove" />
-        <receiver
+        <!--receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"
             tools:node="remove" />
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.tonapps.signer.androidx-startup"
-            tools:node="remove"/>
+            tools:node="remove"/-->
     </application>
 </manifest>

@@ -3,6 +3,14 @@ package com.tonapps.extensions
 import android.content.SharedPreferences
 import androidx.core.content.edit
 
+fun SharedPreferences.getByteArray(key: String): ByteArray? {
+    val bytes = getString(key, null)?.base64 ?: return null
+    if (bytes.isEmpty()) {
+        return null
+    }
+    return bytes
+}
+
 inline fun <reified T : Enum<T>> SharedPreferences.getEnum(key: String, default: T): T {
     val value = this.getInt(key, -1)
     return if (value >= 0) {

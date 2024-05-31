@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.Coins
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
@@ -35,8 +37,8 @@ class AmountScreenFeature(
     private val currentTokenCode: String
         get() = uiState.value.selectedTokenCode
 
-    val currentTokenBalance: Double
-        get() = currentToken?.balance?.value ?: 0.0
+    val currentTokenBalance: Coins
+        get() = currentToken?.balance?.value ?: Coins.ZERO
 
     val decimals: Int
         get() = currentToken?.decimals ?: 9
@@ -65,11 +67,12 @@ class AmountScreenFeature(
     }
 
     fun getAmountFlow(value: Double) = flow {
+        val coins = Coins.of(value)
         val state = uiState.value
         val currentTokenAddress = getCurrentTokenAddress()
         val rates = ratesRepository.getRates(currency, currentTokenAddress)
         val balanceInRates = if (state.fiat) {
-            rates.convertFromFiat(currentTokenAddress, value)
+            rates.convertFromFiat(currentTokenAddress, coins).toDouble()
         } else {
             value
         }
@@ -80,12 +83,12 @@ class AmountScreenFeature(
         viewModelScope.launch(Dispatchers.IO) {
             val state = uiState.value
             if (!state.fiat) {
-                setInputValue(currentTokenBalance)
+                setInputValue(currentTokenBalance.toDouble())
             } else {
                 val currentTokenAddress = getCurrentTokenAddress()
                 val rates = ratesRepository.getRates(currency, currentTokenAddress)
                 val fiat = rates.convert(currentTokenAddress, currentTokenBalance)
-                setInputValue(fiat)
+                setInputValue(fiat.toDouble())
             }
         }
     }
@@ -130,20 +133,22 @@ class AmountScreenFeature(
         selectToken(token.address)
 
         viewModelScope.launch {
-            updateValue(uiState.value.amount)
+            updateValue(uiState.value.amount.toDouble())
         }
     }
 
     private suspend fun updateValue(newValue: Double) = withContext(Dispatchers.IO) {
+        val valueCoins = Coins.of(newValue)
+        val currentTokenValue = currentTokenBalance.toDouble()
         val state = uiState.value
         val currentTokenAddress = getCurrentTokenAddress()
 
         val rates = ratesRepository.getRates(currency, currentTokenAddress)
-        val balanceInRates = if (state.fiat) {
-            rates.convertFromFiat(currentTokenAddress, newValue)
+        val balanceInRates = (if (state.fiat) {
+            rates.convertFromFiat(currentTokenAddress, valueCoins)
         } else {
-            rates.convert(currentTokenAddress, newValue)
-        }
+            rates.convert(currentTokenAddress, valueCoins)
+        }).toDouble()
 
         val valueInToken = if (state.fiat) {
             balanceInRates
@@ -151,29 +156,32 @@ class AmountScreenFeature(
             newValue
         }
 
-        val insufficientBalance = valueInToken > currentTokenBalance
-        val remainingValue = currentTokenBalance - valueInToken
-        val remaining = if (valueInToken> 0) {
-            CurrencyFormatter.format(currentTokenCode, remainingValue)
+        Log.d("AmountScreenFeature", "updateValue: $newValue ; currentTokenValue: $currentTokenValue")
+
+        val insufficientBalance = valueInToken > currentTokenValue
+        val remainingValue = currentTokenValue - valueInToken
+        Log.d("AmountScreenFeature", "remainingValue: $remainingValue")
+        val remaining = if (valueInToken > 0) {
+            CurrencyFormatter.format(currentTokenCode, Coins.of(remainingValue).value)
         } else {
             ""
         }
 
         val rate = if (state.fiat) {
-            CurrencyFormatter.format(currentTokenCode, balanceInRates)
+            CurrencyFormatter.format(currentTokenCode, Coins.of(balanceInRates).value)
         } else {
-            CurrencyFormatter.formatFiat(currency.code, balanceInRates)
+            CurrencyFormatter.formatFiat(currency.code, Coins.of(balanceInRates).value)
         }
 
-        val available = CurrencyFormatter.format(currentTokenCode, currentTokenBalance)
+        val available = CurrencyFormatter.format(currentTokenCode, currentTokenBalance.value)
 
         updateUiState { currentState ->
             currentState.copy(
                 rate = rate,
                 insufficientBalance = insufficientBalance,
                 remaining = remaining,
-                canContinue = !insufficientBalance && currentTokenBalance > 0 && valueInToken > 0,
-                maxActive = currentTokenBalance == valueInToken,
+                canContinue = !insufficientBalance && currentTokenBalance.isPositive && valueInToken > 0,
+                maxActive = currentTokenValue == valueInToken,
                 available = available,
                 currency = settingsRepository.currency,
                 fiat = settingsRepository.sendCurrencyFiat

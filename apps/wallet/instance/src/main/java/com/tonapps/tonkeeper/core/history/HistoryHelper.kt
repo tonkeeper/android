@@ -1,17 +1,14 @@
 package com.tonapps.tonkeeper.core.history
 
-import android.util.Log
-import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.withMinus
 import com.tonapps.extensions.withPlus
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.amount
-import com.tonapps.tonkeeper.api.description
 import com.tonapps.tonkeeper.api.fee
 import com.tonapps.tonkeeper.api.getNameOrAddress
 import com.tonapps.tonkeeper.api.iconURL
-import com.tonapps.tonkeeper.api.imageURL
 import com.tonapps.tonkeeper.api.jettonPreview
 import com.tonapps.tonkeeper.api.parsedAmount
 import com.tonapps.tonkeeper.api.shortAddress
@@ -25,7 +22,6 @@ import io.tonapi.models.Action
 import io.tonapi.models.ActionSimplePreview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -60,9 +56,9 @@ class HistoryHelper(
     data class Details(
         val accountId: String,
         val items: List<HistoryItem>,
-        val fee: Float,
+        val fee: Coins,
         val feeFormat: CharSequence,
-        val feeFiat: Float,
+        val feeFiat: Coins,
         val feeFiatFormat: CharSequence
     )
 
@@ -104,10 +100,10 @@ class HistoryHelper(
         rates: RatesEntity,
     ): Details {
         val items = mapping(wallet, response.event, true)
-        val fee = Coin.toCoins(response.totalFees)
-        val feeFormat = CurrencyFormatter.format("TON", fee)
+        val fee = Coins.of(response.totalFees)
+        val feeFormat = CurrencyFormatter.format("TON", fee.value)
         val feeFiat = rates.convert("TON", fee)
-        val feeFiatFormat = CurrencyFormatter.formatFiat(rates.currency.code, feeFiat)
+        val feeFiatFormat = CurrencyFormatter.formatFiat(rates.currency.code, feeFiat.value)
         return Details(
             accountId = wallet.accountId,
             items = items,
@@ -184,7 +180,7 @@ class HistoryHelper(
             val prevEvent = events.getOrNull(index - 1)
 
             val actions = event.actions
-            val fee = Coin.toCoins(event.fee)
+            val fee = Coins.of(event.fee)
             val currency = settingsRepository.currency
 
             val rates = ratesRepository.getRates(currency, TokenEntity.TON.symbol)
@@ -197,8 +193,8 @@ class HistoryHelper(
                 chunkItems.add(item.copy(
                     pending = pending,
                     position = com.tonapps.uikit.list.ListCell.getPosition(actions.size, actionIndex),
-                    fee = CurrencyFormatter.format("TON", fee),
-                    feeInCurrency = CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
+                    fee = CurrencyFormatter.format("TON", fee.value),
+                    feeInCurrency = CurrencyFormatter.formatFiat(currency.code, feeInCurrency.value),
                     lt = event.lt,
                     hiddenBalance = hiddenBalances
                 ))
@@ -228,8 +224,8 @@ class HistoryHelper(
             val jettonPreview = jettonSwap.jettonPreview!!
             val token = jettonSwap.jettonPreview!!.address
             val symbol = jettonPreview.symbol
-            val amount = Coin.parseJettonBalance(jettonSwap.amount, jettonPreview.decimals)
-            val tonFromJetton = Coin.toCoins(jettonSwap.ton)
+            val amount = Coins.of(jettonSwap.amount, jettonPreview.decimals)
+            val tonFromJetton = Coins.of(jettonSwap.ton)
 
             val isOut = jettonSwap.amountOut != ""
             val value: CharSequence
@@ -238,12 +234,12 @@ class HistoryHelper(
 
             if (!isOut) {
                 tokenCode = "TON"
-                value = CurrencyFormatter.format("TON", tonFromJetton)
-                value2 = CurrencyFormatter.format(symbol, amount)
+                value = CurrencyFormatter.format("TON", tonFromJetton.value)
+                value2 = CurrencyFormatter.format(symbol, amount.value)
             } else {
                 tokenCode = symbol
-                value = CurrencyFormatter.format(symbol, amount)
-                value2 = CurrencyFormatter.format("TON", tonFromJetton)
+                value = CurrencyFormatter.format(symbol, amount.value)
+                value2 = CurrencyFormatter.format("TON", tonFromJetton.value)
             }
 
             val rates = ratesRepository.getRates(currency, token)
@@ -264,7 +260,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 date = date,
                 isOut = isOut,
-                currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
+                currency = CurrencyFormatter.formatFiat(currency.code, inCurrency.value),
                 failed = action.status == Action.Status.failed,
             )
         } else if (action.jettonTransfer != null) {
@@ -273,8 +269,8 @@ class HistoryHelper(
             val symbol = jettonTransfer.jetton.symbol
             val isOut = !wallet.isMyAddress(jettonTransfer.recipient?.address ?: "")
 
-            val amount = Coin.parseJettonBalance(jettonTransfer.amount, jettonTransfer.jetton.decimals)
-            var value = CurrencyFormatter.format(symbol, amount)
+            val amount = Coins.of(jettonTransfer.amount, jettonTransfer.jetton.decimals)
+            var value = CurrencyFormatter.format(symbol, amount.value)
 
             val itemAction: ActionType
             val accountAddress: AccountAddress?
@@ -311,7 +307,7 @@ class HistoryHelper(
                     testnet = wallet.testnet
                 ),
                 addressName = accountAddress?.name,
-                currency = CurrencyFormatter.format(currency.code, inCurrency),
+                currency = CurrencyFormatter.format(currency.code, inCurrency.value),
                 failed = action.status == Action.Status.failed,
                 cipherText = action.tonTransfer?.encryptedComment?.cipherText
             )
@@ -323,8 +319,8 @@ class HistoryHelper(
             val itemAction: ActionType
             val accountAddress: AccountAddress
 
-            val amount = Coin.toCoins(tonTransfer.amount)
-            var value = CurrencyFormatter.format("TON", amount)
+            val amount = Coins.of(tonTransfer.amount)
+            var value = CurrencyFormatter.format("TON", amount.value)
 
             if (isOut) {
                 itemAction = ActionType.Send
@@ -358,7 +354,7 @@ class HistoryHelper(
                     testnet = wallet.testnet
                 ),
                 addressName = accountAddress.name,
-                currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
+                currency = CurrencyFormatter.formatFiat(currency.code, inCurrency.value),
                 failed = action.status == Action.Status.failed,
                 cipherText = action.tonTransfer?.encryptedComment?.cipherText
             )
@@ -366,8 +362,8 @@ class HistoryHelper(
             val smartContractExec = action.smartContractExec!!
             val executor = smartContractExec.executor
 
-            val amount = Coin.toCoins(smartContractExec.tonAttached)
-            val value = CurrencyFormatter.format("TON", amount)
+            val amount = Coins.of(smartContractExec.tonAttached)
+            val value = CurrencyFormatter.format("TON", amount.value)
 
             return HistoryItem.Event(
                 index = index,
@@ -440,8 +436,8 @@ class HistoryHelper(
         } else if (action.depositStake != null) {
             val depositStake = action.depositStake!!
 
-            val amount = Coin.toCoins(depositStake.amount)
-            val value = CurrencyFormatter.format("TON", amount)
+            val amount = Coins.of(depositStake.amount)
+            val value = CurrencyFormatter.format("TON", amount.value)
 
             return HistoryItem.Event(
                 index = index,
@@ -463,7 +459,7 @@ class HistoryHelper(
 
             val amount = jettonMint.parsedAmount
 
-            val value = CurrencyFormatter.format(jettonMint.jetton.symbol, amount)
+            val value = CurrencyFormatter.format(jettonMint.jetton.symbol, amount.value)
 
             return HistoryItem.Event(
                 index = index,
@@ -482,8 +478,8 @@ class HistoryHelper(
         } else if (action.withdrawStakeRequest != null) {
             val withdrawStakeRequest = action.withdrawStakeRequest!!
 
-            val amount = Coin.toCoins(withdrawStakeRequest.amount ?: 0L)
-            val value = CurrencyFormatter.format("TON", amount)
+            val amount = Coins.of(withdrawStakeRequest.amount ?: 0L)
+            val value = CurrencyFormatter.format("TON", amount.value)
 
             return HistoryItem.Event(
                 index = index,
@@ -520,10 +516,10 @@ class HistoryHelper(
             val auctionBid = action.auctionBid!!
             val subtitle = auctionBid.nft?.title ?: auctionBid.bidder.getNameOrAddress(wallet.testnet)
 
-            val amount = Coin.toCoins(auctionBid.amount.value.toLong())
+            val amount = Coins.of(auctionBid.amount.value)
             val tokenCode = auctionBid.amount.tokenName
 
-            val value = CurrencyFormatter.format(auctionBid.amount.tokenName, amount)
+            val value = CurrencyFormatter.format(auctionBid.amount.tokenName, amount.value)
 
             return HistoryItem.Event(
                 index = index,
@@ -543,8 +539,8 @@ class HistoryHelper(
         } else if (action.withdrawStake != null) {
             val withdrawStake = action.withdrawStake!!
 
-            val amount = Coin.toCoins(withdrawStake.amount)
-            val value = CurrencyFormatter.format("TON", amount)
+            val amount = Coins.of(withdrawStake.amount)
+            val value = CurrencyFormatter.format("TON", amount.value)
 
             return HistoryItem.Event(
                 index = index,
@@ -564,8 +560,8 @@ class HistoryHelper(
         } else if (action.nftPurchase != null) {
             val nftPurchase = action.nftPurchase!!
 
-            val amount = Coin.toCoins(nftPurchase.amount.value.toLong())
-            val value = CurrencyFormatter.format(nftPurchase.amount.tokenName, amount)
+            val amount = Coins.of(nftPurchase.amount.value.toLong())
+            val value = CurrencyFormatter.format(nftPurchase.amount.tokenName, amount.value)
 
             val nftItem = collectiblesRepository.getNft(
                 accountId = wallet.accountId,
@@ -591,7 +587,7 @@ class HistoryHelper(
             val jettonBurn = action.jettonBurn!!
 
             val amount = jettonBurn.parsedAmount
-            val value = CurrencyFormatter.format(jettonBurn.jetton.symbol, amount)
+            val value = CurrencyFormatter.format(jettonBurn.jetton.symbol, amount.value)
 
             return HistoryItem.Event(
                 index = index,
@@ -627,8 +623,8 @@ class HistoryHelper(
         } else if (action.subscribe != null) {
             val subscribe = action.subscribe!!
 
-            val amount = Coin.toCoins(subscribe.amount)
-            val value = CurrencyFormatter.format("TON", amount)
+            val amount = Coins.of(subscribe.amount)
+            val value = CurrencyFormatter.format("TON", amount.value)
 
             return HistoryItem.Event(
                 index = index,

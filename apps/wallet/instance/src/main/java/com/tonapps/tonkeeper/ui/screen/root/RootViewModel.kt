@@ -2,25 +2,19 @@ package com.tonapps.tonkeeper.ui.screen.root
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.core.app.Person
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
-import com.tonapps.blockchain.Coin
-import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.getQueryLong
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
+import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
@@ -28,17 +22,14 @@ import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.push.GooglePushService
-import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.sign.SignRequestEntity
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
-import com.tonapps.tonkeeper.ui.screen.picker.list.WalletPickerAdapter
-import com.tonapps.tonkeeper.ui.screen.wallet.WalletViewModel.Companion.getWalletScreen
-import com.tonapps.tonkeeper.ui.screen.wallet.list.Item
-import com.tonapps.tonkeeper.ui.screen.wallet.list.WalletAdapter
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
+import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel.Companion.getWalletScreen
+import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
+import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.accentBlueColor
-import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.WalletSource
@@ -65,9 +56,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -149,7 +138,13 @@ class RootViewModel(
             settingsRepository.hiddenBalancesFlow,
         ) { wallets, wallet, hiddenBalance ->
             val balances = getBalances(wallets)
-            walletPickerAdapter.submitList(WalletPickerAdapter.map(wallets, wallet, balances, hiddenBalance))
+            val entities = wallets.map {
+                WalletExtendedEntity(
+                    raw = it,
+                    prefs = settingsRepository.getWalletPrefs(it.id)
+                )
+            }.sortedBy { it.index }
+            walletPickerAdapter.submitList(WalletPickerAdapter.map(entities.map { it.raw }, wallet, balances, hiddenBalance))
         }.launchIn(viewModelScope)
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -336,7 +331,7 @@ class RootViewModel(
         } else if (uri.path?.startsWith("/transfer/") == true) {
             _eventFlow.tryEmit(RootEvent.Transfer(
                 address = uri.pathSegments.last(),
-                amount = uri.getQueryLong("amount")?.let { Coin.toCoinsDouble(it) },
+                amount = uri.getQueryParameter("amount"),
                 text = uri.getQueryParameter("text"),
                 jettonAddress = uri.getQueryParameter("jetton"),
             ))
@@ -413,6 +408,6 @@ class RootViewModel(
             settingsRepository.currency
         }
         val totalBalance = tokenRepository.getTotalBalances(currency, accountId, testnet)
-        return CurrencyFormatter.formatFiat(currency.code, totalBalance.toFloat())
+        return CurrencyFormatter.formatFiat(currency.code, totalBalance.value)
     }
 }

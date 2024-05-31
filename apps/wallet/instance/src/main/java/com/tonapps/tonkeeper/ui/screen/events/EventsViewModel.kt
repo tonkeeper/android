@@ -2,17 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.events
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.helper.DateFormat
 import com.tonapps.tonkeeper.helper.DateHelper
-import com.tonapps.tonkeeper.ui.screen.wallet.WalletViewModel
-import com.tonapps.tonkeeper.ui.screen.wallet.list.Item
 import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -21,10 +16,8 @@ import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,8 +32,6 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
-import java.util.Calendar
-import java.util.Date
 
 class EventsViewModel(
     private val application: Application,

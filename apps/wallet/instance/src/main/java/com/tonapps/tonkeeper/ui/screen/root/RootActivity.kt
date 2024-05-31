@@ -148,7 +148,7 @@ class RootActivity: NavigationActivity() {
             is RootEvent.Singer -> add(InitScreen.newInstance(InitArgs.Type.Signer, event.publicKey, event.name, event.walletSource))
             is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebFragment.newInstance(event.uri))
-            is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount ?: 0.0, event.jettonAddress))
+            is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))
             is RootEvent.Transaction -> TransactionDialog.open(this, event.event)
             is RootEvent.BuyOrSell -> fiatDialog.show()
             is RootEvent.BuyOrSellDirect -> fiatDialog.openDirect(event.name)

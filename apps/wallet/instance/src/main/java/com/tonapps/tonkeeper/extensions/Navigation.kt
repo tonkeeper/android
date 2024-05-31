@@ -38,7 +38,7 @@ fun Navigation.openCamera() {
 fun Navigation.sendCoin(
     address: String? = null,
     text: String? = null,
-    amount: Double = 0.0,
+    amount: String? = null,
     jettonAddress: String? = null
 ) {
     if (this !is RootActivity) return

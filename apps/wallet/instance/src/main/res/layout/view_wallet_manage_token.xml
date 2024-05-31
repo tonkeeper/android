@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="76dp"
+    android:padding="@dimen/offsetMedium"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <uikit.widget.FrescoView
+        android:id="@+id/icon"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        app:roundAsCircle="true"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraExtraSmall"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/pinned"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_pin_28"/>
+
+    <View
+        android:layout_width="@dimen/offsetMedium"
+        android:layout_height="0dp"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/hidden"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/reorder"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:tint="?attr/iconSecondaryColor"
+        android:src="@drawable/ic_reorder_28"/>
+
+</uikit.widget.RowLayout>

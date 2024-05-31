@@ -21,7 +21,6 @@ android {
     }
 }
 
-
 dependencies {
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.Koin.core)

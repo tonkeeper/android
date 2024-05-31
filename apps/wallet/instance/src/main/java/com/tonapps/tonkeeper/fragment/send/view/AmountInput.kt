@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.fragment.send.view
 
 import android.content.Context
 import android.graphics.Rect
-import android.text.DynamicLayout
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
@@ -13,7 +12,7 @@ import android.view.Gravity
 import android.view.View
 import androidx.appcompat.R
 import androidx.appcompat.widget.AppCompatEditText
-import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.Coins
 import com.tonapps.icu.CurrencyFormatter
 import uikit.extensions.dp
 
@@ -116,8 +115,8 @@ class AmountInput @JvmOverloads constructor(
         if (editable == null) {
             return 0.0
         }
-        val text = Coin.prepareValue(editable.toString())
-        return text.toDoubleOrNull() ?: 0.0
+        val value = Coins.prepareValue(editable.toString())
+        return value.toDoubleOrNull() ?: 0.0
     }
 
     fun setDecimalCount(count: Int) {

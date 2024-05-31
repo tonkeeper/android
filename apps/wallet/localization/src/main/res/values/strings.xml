@@ -4,6 +4,11 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
 
+    <string name="edit">Edit</string>
+    <string name="pinned">Pinned</string>
+    <string name="all_assets">All Assets</string>
+    <string name="sorted_by_price">Sorted by Price</string>
+
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>
     <string name="manual_backup_done">Manual Backup Done</string>

@@ -3,6 +3,10 @@
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
 
+    <string name="edit">Редактировать</string>
+    <string name="pinned">Закреплённые</string>
+    <string name="all_assets">Все активы</string>
+    <string name="sorted_by_price">По стоимости</string>
     <string name="manual">Вручную</string>
     <string name="manual_description">Создайте резервную копию своего кошелька вручную, записав секретный ключ.</string>
     <string name="manual_backup_done">Резервная копия сделана</string>

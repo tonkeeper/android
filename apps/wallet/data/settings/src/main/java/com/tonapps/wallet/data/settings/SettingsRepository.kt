@@ -1,19 +1,25 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
+import androidx.collection.ArrayMap
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
+import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
+import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
 import com.tonapps.wallet.localization.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -65,6 +71,11 @@ class SettingsRepository(
     val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+    private val tokenPrefsFolder = TokenPrefsFolder(context)
+    private val walletPrefsFolder = WalletPrefsFolder(context)
+
+    val tokenPrefsChangedFlow: Flow<Unit>
+        get() = tokenPrefsFolder.changedFlow
 
     val installId: String
         get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
@@ -170,6 +181,28 @@ class SettingsRepository(
         val map = (_walletPush.value ?: mapOf()).toMutableMap()
         map[walletId] = value
         _walletPush.tryEmit(map)
+    }
+
+    fun setTokenHidden(walletId: Long, tokenAddress: String, hidden: Boolean) {
+        tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
+    }
+
+    fun setTokenPinned(walletId: Long, tokenAddress: String, pinned: Boolean) {
+        tokenPrefsFolder.setPinned(walletId, tokenAddress, pinned)
+    }
+
+    fun setTokensSort(walletId: Long, tokensAddress: List<String>) {
+        tokenPrefsFolder.setSort(walletId, tokensAddress)
+    }
+
+    fun setWalletsSort(walletIds: List<Long>) {
+        walletPrefsFolder.setSort(walletIds)
+    }
+
+    fun getWalletPrefs(walletId: Long) = walletPrefsFolder.get(walletId)
+
+    fun getTokenPrefs(walletId: Long, tokenAddress: String): TokenPrefsEntity {
+        return tokenPrefsFolder.get(walletId, tokenAddress)
     }
 
     init {

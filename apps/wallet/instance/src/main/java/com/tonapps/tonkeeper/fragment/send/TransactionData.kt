@@ -1,16 +1,13 @@
 package com.tonapps.tonkeeper.fragment.send
 
 import android.net.Uri
-import android.util.Log
-import com.tonapps.blockchain.Coin
-import com.tonapps.blockchain.ton.tlb.JettonTransfer
+import com.tonapps.blockchain.Coins
 import com.tonapps.extensions.toByteArray
 import com.tonapps.security.Security
 import com.tonapps.security.hex
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import org.ton.block.AddrStd
-import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
@@ -19,7 +16,6 @@ import org.ton.contract.wallet.WalletTransferBuilder
 import ton.SendMode
 import ton.transfer.Transfer
 import java.math.BigInteger
-import java.nio.ByteBuffer
 
 data class TransactionData(
     val walletAddress: String? = null,
@@ -77,12 +73,12 @@ data class TransactionData(
     val coins: Coins
         get() {
             if (isNft) {
-                return Coins.ofNano(Coin.toNano(0.064f))
+                return Coins.of(0.064)
             }
             if (isTon) {
                 return amount
             }
-            return Coins.ofNano(Coin.toNano(0.064f))
+            return Coins.of(0.064)
         }
 
     val decimals: Int
@@ -90,9 +86,7 @@ data class TransactionData(
 
     val amount: Coins
         get() {
-            val value = Coin.prepareValue(amountRaw).toDoubleOrNull() ?: 0.0
-            val nano = Coin.toNanoDouble(value, decimals)
-            return Coins.ofNano(nano)
+            return Coins.of(amountRaw, decimals)
         }
 
     fun buildWalletTransfer(
@@ -104,7 +98,7 @@ data class TransactionData(
         builder.destination = destination
         builder.body = buildWalletTransferBody(responseAddress)
         builder.sendMode = sendMode
-        builder.coins = coins
+        builder.coins = coins.toTonLibCoin()
         builder.stateInit = stateInit
         return builder.build()
     }
@@ -123,7 +117,7 @@ data class TransactionData(
             return Transfer.text(comment)
         }
         return Transfer.jetton(
-            coins = amount,
+            coins = amount.toTonLibCoin(),
             toAddress = MsgAddressInt.parse(address!!),
             responseAddress = responseAddress,
             queryId = newWalletQueryId(),

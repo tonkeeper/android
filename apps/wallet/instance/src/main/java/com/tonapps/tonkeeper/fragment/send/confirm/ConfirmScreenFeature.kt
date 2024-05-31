@@ -1,14 +1,12 @@
 package com.tonapps.tonkeeper.fragment.send.confirm
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.totalFees
-import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.Coins
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
-import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.label
 import com.tonapps.tonkeeper.fragment.send.TransactionData
@@ -21,14 +19,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ton.cell.Cell
-import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -39,7 +34,6 @@ import kotlinx.coroutines.withContext
 import org.ton.bitstring.BitString
 import org.ton.block.StateInit
 import org.ton.contract.wallet.WalletTransfer
-import uikit.extensions.collectFlow
 import uikit.mvi.UiFeature
 import uikit.widget.ProcessTaskView
 
@@ -172,14 +166,14 @@ class ConfirmScreenFeature(
 
     fun setAmount(amountRaw: String, decimals: Int, tokenAddress: String, symbol: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val value = Coin.prepareValue(amountRaw).toFloatOrNull() ?: 0f
+            val value = Coins.of(amountRaw, decimals) // CoinHelper.prepareValue(amountRaw).toFloatOrNull() ?: 0f
             val rates = ratesRepository.getRates(currency, tokenAddress)
             val fiat = rates.convert(tokenAddress, value)
 
             updateUiState {
                 it.copy(
-                    amount = CurrencyFormatter.format(symbol, value),
-                    amountInCurrency = "≈ " + CurrencyFormatter.format(currency.code, fiat)
+                    amount = CurrencyFormatter.format(symbol, value.value),
+                    amountInCurrency = "≈ " + CurrencyFormatter.format(currency.code, fiat.value)
                 )
             }
         }
@@ -205,19 +199,18 @@ class ConfirmScreenFeature(
                 transfers = listOf(message.transfer)
             )
             val emulated = api.emulate(bodyCell, message.wallet.testnet)
-            val feeInTon = emulated.totalFees
+            val feeInTon = Coins.of(emulated.totalFees)
             val actions = historyHelper.mapping(message.wallet, emulated.event, false)
             val tokenAddress = tx.tokenAddress
 
             val rates = ratesRepository.getRates(currency, tokenAddress)
-            val feeInCurrency = rates.convert(tokenAddress, Coin.toCoins(feeInTon))
+            val feeInCurrency = rates.convert(tokenAddress, feeInTon)
 
-            val amount = Coin.toCoins(feeInTon)
             updateUiState {
                 it.copy(
                     feeValue = feeInTon,
-                    fee = "≈ " + CurrencyFormatter.format("TON", amount),
-                    feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
+                    fee = "≈ " + CurrencyFormatter.format("TON", feeInTon.value),
+                    feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(currency.code, feeInCurrency.value),
                     buttonEnabled = true,
                     emulatedEventItems = actions
                 )
@@ -225,7 +218,7 @@ class ConfirmScreenFeature(
         }.catch {
             updateUiState {
                 it.copy(
-                    feeValue = 0,
+                    feeValue = Coins.ZERO,
                     fee = "unknown",
                     buttonEnabled = true,
                 )

@@ -33,15 +33,16 @@ import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsViewModel
-import com.tonapps.tonkeeper.ui.screen.picker.PickerViewModel
-import com.tonapps.tonkeeper.ui.screen.picker.list.WalletPickerAdapter
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
 import com.tonapps.tonkeeper.ui.screen.token.TokenViewModel
-import com.tonapps.tonkeeper.ui.screen.wallet.WalletViewModel
-import com.tonapps.tonkeeper.ui.screen.wallet.list.WalletAdapter
+import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
+import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
+import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageViewModel
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +70,7 @@ val koinModel = module {
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecipientScreenFeature(get()) }
-    viewModel { PickerViewModel(get()) }
+    viewModel { PickerViewModel(get(), get()) }
     viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get(), get()) }
@@ -93,6 +94,7 @@ val koinModel = module {
     viewModel { BackupViewModel(get(), get(), get()) }
     viewModel { BackupCheckViewModel(get(), get()) }
     viewModel { BackupAttentionViewModel(get(), get()) }
+    viewModel { TokensManageViewModel(get(), get(), get()) }
 
     viewModel { ConfirmScreenFeature(get(), get(), get(), get(), get(), get()) }
     viewModel { AmountScreenFeature(get(), get(), get()) }

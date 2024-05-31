@@ -1,17 +1,12 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
 import android.os.Bundle
-import android.text.Editable
-import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.widget.doOnTextChanged
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.Coin
-import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.blockchain.Coins
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
@@ -101,7 +96,7 @@ class AmountScreen: PagerScreen<AmountScreenState, AmountScreenEffect, AmountScr
     }
 
     fun forceSetAmount(amount: Double) {
-        val text = if (0f >= amount) {
+        val text = if (0 >= amount) {
             ""
         } else {
             amount.toString()

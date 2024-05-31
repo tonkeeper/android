@@ -2,12 +2,11 @@ package com.tonapps.tonkeeper.api
 
 import android.util.Log
 import com.squareup.moshi.adapter
-import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.tonkeeperx.R
 import io.tonapi.infrastructure.Serializer
-import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.Action
@@ -17,7 +16,6 @@ import io.tonapi.models.JettonBurnAction
 import io.tonapi.models.JettonMintAction
 import io.tonapi.models.JettonPreview
 import io.tonapi.models.JettonSwapAction
-import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.PoolImplementationType
@@ -170,11 +168,11 @@ fun JettonBalance.getAddress(testnet: Boolean): String {
 val JettonBalance.symbol: String
     get() = jetton.symbol
 
-val JettonMintAction.parsedAmount: Double
-    get() = Coin.parseJettonBalance(amount, jetton.decimals)
+val JettonMintAction.parsedAmount: Coins
+    get() = Coins.of(amount, jetton.decimals)
 
-val JettonBurnAction.parsedAmount: Double
-    get() = Coin.parseJettonBalance(amount, jetton.decimals)
+val JettonBurnAction.parsedAmount: Coins
+    get() = Coins.of(amount, jetton.decimals)
 
 fun NftItem.imageBySize(size: String): ImagePreview? {
     return previews?.firstOrNull { it.resolution == size }

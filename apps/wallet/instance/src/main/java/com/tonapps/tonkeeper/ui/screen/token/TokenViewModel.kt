@@ -96,8 +96,8 @@ class TokenViewModel(
     private fun buildItems(token: TokenData, charts: List<ChartEntity>) {
         val items = mutableListOf<Item>()
         items.add(Item.Balance(
-            balance = CurrencyFormatter.format(token.symbol, token.balance),
-            fiat = CurrencyFormatter.format(settingsRepository.currency.code, token.fiat),
+            balance = CurrencyFormatter.format(token.symbol, token.balance.value, token.token.decimals),
+            fiat = CurrencyFormatter.format(settingsRepository.currency.code, token.fiat.value),
             iconUri = token.iconUri,
         ))
         items.add(Item.Actions(
@@ -111,7 +111,7 @@ class TokenViewModel(
         ))
         if (token.verified) {
             items.add(Item.Price(
-                fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.token.rateNow),
+                fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.token.rateNow.value),
                 rateDiff24h = token.token.rateDiff24h
             ))
             items.add(Item.Chart(

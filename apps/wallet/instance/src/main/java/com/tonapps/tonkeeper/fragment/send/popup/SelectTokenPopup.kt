@@ -37,7 +37,7 @@ class SelectTokenPopup(context: Context): ActionSheet(context) {
     private fun updateTokens() {
         clearItems()
         for ((index, token) in tokens.withIndex()) {
-            val format = CurrencyFormatter.format(value = token.balance.value)
+            val format = CurrencyFormatter.format(value = token.balance.value.value)
             val title = context.textWithLabel(token.symbol, format)
             val selected = token == selectedToken
             addItem(

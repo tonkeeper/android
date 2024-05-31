@@ -1,13 +1,10 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
-import android.os.SystemClock
 import android.util.ArrayMap
-import android.util.Log
-import com.tonapps.blockchain.Coin
+import com.tonapps.blockchain.Coins
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValid
-import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.network.SSEvent
@@ -45,7 +42,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
-import org.ton.crypto.base64
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -118,7 +114,7 @@ class API(
         testnet: Boolean
     ): BalanceEntity {
         val account = accounts(testnet).getAccount(accountId)
-        return BalanceEntity(TokenEntity.TON, Coin.toCoinsDouble(account.balance), accountId)
+        return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
     }
 
     fun getJettonsBalances(
@@ -131,7 +127,7 @@ class API(
                 accountId = accountId,
                 currencies = currency
             ).balances
-            return jettonsBalances.map { BalanceEntity(it) }.filter { it.value > 0 }
+            return jettonsBalances.map { BalanceEntity(it) }.filter { !it.value.isZero }
         } catch (e: Throwable) {
             return emptyList()
         }

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.token
 
 import android.net.Uri
+import com.tonapps.blockchain.Coins
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
@@ -33,9 +34,9 @@ data class TokenData(
     val iconUri: Uri
         get() = token.imageUri
 
-    val balance: Double
+    val balance: Coins
         get() = token.balance.value
 
-    val fiat: Double
+    val fiat: Coins
         get() = token.fiat
 }

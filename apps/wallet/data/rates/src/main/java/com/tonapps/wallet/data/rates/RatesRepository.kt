@@ -1,12 +1,15 @@
 package com.tonapps.wallet.data.rates
 
 import android.content.Context
+import com.tonapps.blockchain.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.rates.entity.RateDiffEntity
 import com.tonapps.wallet.data.rates.entity.RateEntity
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.rates.source.BlobDataSource
 import io.tonapi.models.TokenRates
+import java.math.BigDecimal
 
 class RatesRepository(
     context: Context,
@@ -37,7 +40,14 @@ class RatesRepository(
         }
         val entities = mutableListOf<RateEntity>()
         for (rate in rates) {
-            entities.add(RateEntity(currency, rate.key, rate.value))
+            val value = rate.value
+            val bigDecimal = value.prices?.get(currency.code) ?: BigDecimal.ZERO
+            entities.add(RateEntity(
+                tokenCode = rate.key,
+                currency = currency,
+                value = Coins(bigDecimal),
+                diff = RateDiffEntity(currency, value),
+            ))
         }
         localDataSource.add(currency, entities)
     }

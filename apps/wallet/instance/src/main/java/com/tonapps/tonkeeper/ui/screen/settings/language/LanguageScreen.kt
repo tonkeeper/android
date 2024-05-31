@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.settings.language
 import android.os.Bundle
 import android.view.View
 import com.tonapps.tonkeeper.ui.screen.settings.language.list.Adapter
-import com.tonapps.tonkeeper.ui.screen.wallet.WalletViewModel
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment

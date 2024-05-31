@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
+import com.tonapps.blockchain.Coins
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -7,7 +8,7 @@ import uikit.mvi.UiState
 
 data class AmountScreenState(
     val wallet: WalletLegacy? = null,
-    val amount: Double = 0.0,
+    val amount: Coins = Coins.ZERO,
     val currency: WalletCurrency = WalletCurrency.TON,
     val available: CharSequence = "",
     val rate: CharSequence = "0",

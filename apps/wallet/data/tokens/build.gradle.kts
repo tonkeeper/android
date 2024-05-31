@@ -25,6 +25,7 @@ android {
 dependencies {
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.Koin.core)
+    implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Wallet.Data.core))
     implementation(project(Dependence.Wallet.Data.rates))

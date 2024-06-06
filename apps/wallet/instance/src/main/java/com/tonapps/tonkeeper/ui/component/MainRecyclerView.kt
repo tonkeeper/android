@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import blur.BlurCompat
 import com.tonapps.tonkeeper.isBlurDisabled
+import com.tonapps.tonkeeper.isLowDevice
 import com.tonapps.tonkeeper.koin.api
 import com.tonapps.wallet.api.entity.FlagsEntity
 import uikit.extensions.getDimensionPixelSize
@@ -41,6 +42,7 @@ class MainRecyclerView @JvmOverloads constructor(
         if (bottomBlur?.hasBlur == true) {
             overScrollMode = OVER_SCROLL_NEVER
         }
+        context.isLowDevice
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {

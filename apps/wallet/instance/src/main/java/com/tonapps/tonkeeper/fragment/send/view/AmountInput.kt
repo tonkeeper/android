@@ -12,7 +12,7 @@ import android.view.Gravity
 import android.view.View
 import androidx.appcompat.R
 import androidx.appcompat.widget.AppCompatEditText
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import uikit.extensions.dp
 
@@ -115,8 +115,8 @@ class AmountInput @JvmOverloads constructor(
         if (editable == null) {
             return 0.0
         }
-        val value = Coins.prepareValue(editable.toString())
-        return value.toDoubleOrNull() ?: 0.0
+        val text = Coins.prepareValue(editable.toString())
+        return text.toDoubleOrNull() ?: 0.0
     }
 
     fun setDecimalCount(count: Int) {

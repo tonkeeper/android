@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.dialog.fiat.list.MethodAdapter
+import com.tonapps.tonkeeper.koin.fiat
 import com.tonapps.tonkeeper.koin.settingsRepository
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
@@ -44,7 +45,7 @@ class FiatModalFragment: BaseFragment(R.layout.dialog_fiat), BaseFragment.Modal 
 
     private suspend fun requestItems() {
         val country = context?.settingsRepository?.country!!
-        val items = com.tonapps.tonkeeper.App.fiat.getMethods(country)
+        val items = context?.fiat!!.getMethods(country)
 
         adapter.submit(items)
     }

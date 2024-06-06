@@ -31,4 +31,5 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.rates))
     implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Lib.extensions))
+    implementation(project(Dependence.Lib.icu))
 }

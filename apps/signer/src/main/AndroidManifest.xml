@@ -27,19 +27,20 @@
 
     <application
         android:allowBackup="false"
-        android:fullBackupContent="false"
+        android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:name="com.tonapps.signer.App"
+        android:name=".App"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:manageSpaceActivity=".screen.storage.StorageActivity"
         android:supportsRtl="false"
         android:theme="@style/Theme.Signer.Starting"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:localeConfig="@xml/locales_config">
         <activity
-            android:name="com.tonapps.signer.screen.root.RootActivity"
+            android:name=".screen.root.RootActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"
@@ -54,7 +55,6 @@
                 <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
             <intent-filter android:priority="1">
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <action android:name="android.intent.action.SEND"/>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -64,9 +64,22 @@
         </activity>
         <activity
             android:theme="@style/Theme.Signer"
-            android:name="com.tonapps.signer.screen.crash.CrashActivity"
+            android:name=".screen.crash.CrashActivity"
             android:process=":crash_activity"
             android:exported="false"/>
+        <activity
+            android:theme="@style/Theme.Signer"
+            android:name=".screen.storage.StorageActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustPan"
+            android:exported="true">
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round">
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
         <service
             android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
             tools:node="remove" />

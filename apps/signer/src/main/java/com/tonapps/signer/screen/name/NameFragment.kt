@@ -19,8 +19,6 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.doKeyboardAnimation
-import uikit.extensions.pinToBottomInsets
-import uikit.insets.KeyboardAnimationCallback
 import uikit.widget.HeaderView
 import uikit.widget.InputView
 
@@ -70,7 +68,7 @@ class NameFragment: BaseFragment(R.layout.fragment_name), BaseFragment.BottomShe
     }
 
     private fun save() {
-        val name = nameInput.text
+        val name = nameInput.text.trim()
         if (name.isEmpty()) {
             nameInput.error = true
             return

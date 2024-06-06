@@ -62,7 +62,7 @@ class WalletRepository(
                 WalletEvent.Transaction(wallet, event.json)
             }
         }
-    }.catch { }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
+    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
 
     init {
         scope.launch(Dispatchers.IO) {
@@ -291,7 +291,7 @@ class WalletRepository(
 
     suspend fun getValidUntil(testnet: Boolean): Long {
         val seconds = api.getServerTime(testnet)
-        return seconds + (5 * 30L) // 5 minutes
+        return seconds + 1800L // (5 * 30L) // 5 minutes
     }
 
     fun messageBody(

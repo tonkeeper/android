@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.fragment.send.confirm
 
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import uikit.mvi.UiState

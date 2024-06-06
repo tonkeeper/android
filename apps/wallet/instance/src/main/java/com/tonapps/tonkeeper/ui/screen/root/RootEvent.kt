@@ -1,9 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
-import com.tonapps.blockchain.Coins
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import org.ton.api.pub.PublicKeyEd25519

@@ -45,7 +45,12 @@ internal class InternalApi(
     }
 
     fun getBrowserApps(testnet: Boolean): JSONObject {
-        val data = request("apps/popular", testnet, "mobile", "4.4.0")
+        val data = request("apps/popular", testnet)
+        return data.getJSONObject("data")
+    }
+
+    fun getFiatMethods(): JSONObject {
+        val data = request("fiat/methods", false, "mobile", "4.4.0")
         return data.getJSONObject("data")
     }
 

@@ -104,7 +104,7 @@ class ConfirmScreen: PagerScreen<ConfirmScreenState, ConfirmScreenEffect, Confir
                 titleView.setText(Localization.nft_transfer)
                 amountView.visibility = View.GONE
             } else {
-                feature.setAmount(transaction.amountRaw, transaction.decimals, transaction.tokenAddress, transaction.tokenSymbol)
+                feature.setAmount(transaction.amount, transaction.decimals, transaction.tokenAddress, transaction.tokenSymbol)
                 iconView.setImageURI(transaction.icon)
                 if (transaction.isTon) {
                     titleView.setText(Localization.transfer)

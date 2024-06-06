@@ -8,12 +8,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.password.PasscodeRepository
@@ -225,7 +226,7 @@ class InitViewModel(
                 address = AddrStd(account.address).toWalletAddress(testnet),
                 name = account.name,
                 walletVersion = account.walletVersion,
-                balanceFormat = CurrencyFormatter.format("TON", balance.value),
+                balanceFormat = CurrencyFormatter.format("TON", balance),
                 tokens = hasTokens,
                 collectibles = hasCollectibles,
                 selected = account.walletVersion == WalletVersion.V4R2 || (account.balance > 0 || hasTokens || hasCollectibles),
@@ -282,12 +283,21 @@ class InitViewModel(
     }
 
     fun getLabel(): WalletLabel {
-        return savedState.label ?: WalletLabel("","\uD83D\uDE00", WalletColor.all.first())
+        return savedState.label ?: WalletLabel(
+            accountName = "",
+            emoji = Emoji.WALLET_ICON,
+            color = WalletColor.all.first()
+        )
     }
 
     fun setLabelName(name: String) {
         val oldLabel = getLabel()
-        setLabel(oldLabel.copy(accountName = name))
+        val emoji = Emoji.getEmojiFromPrefix(name) ?: oldLabel.emoji
+
+        setLabel(oldLabel.copy(
+            accountName = name.replace(emoji.toString(), "").trim(),
+            emoji = emoji
+        ))
     }
 
     fun setPush() {

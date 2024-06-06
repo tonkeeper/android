@@ -1,6 +1,6 @@
 package com.tonapps.wallet.data.token.source
 
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.TokenEntity

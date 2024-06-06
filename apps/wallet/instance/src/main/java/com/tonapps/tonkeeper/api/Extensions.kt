@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.api
 
 import android.util.Log
 import com.squareup.moshi.adapter
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.tonkeeperx.R

@@ -31,4 +31,6 @@ sealed class RootAction {
     data class ResponseKey(val publicKey: PublicKeyEd25519, val name: String): RootAction()
 
     data object UpdateApp: RootAction()
+
+    data object ClearKeys: RootAction()
 }

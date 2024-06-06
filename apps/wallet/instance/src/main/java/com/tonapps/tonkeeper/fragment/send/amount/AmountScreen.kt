@@ -1,12 +1,12 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.Coins
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen

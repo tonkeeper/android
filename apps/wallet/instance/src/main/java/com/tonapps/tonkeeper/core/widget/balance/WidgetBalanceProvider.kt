@@ -36,8 +36,8 @@ class WidgetBalanceProvider: Widget() {
             val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch displayPlaceholder(context, manager, id)
             val tokens = tokenRepository.get(settingsRepository.currency, wallet.address, wallet.testnet)
             val token = tokens.firstOrNull { it.isTon } ?: return@launch displayPlaceholder(context, manager, id)
-            val balanceFormat = CurrencyFormatter.format("TON", token.balance.value.value)
-            val fiatBalance = CurrencyFormatter.formatFiat(settingsRepository.currency.code, token.fiat.value)
+            val balanceFormat = CurrencyFormatter.format("TON", token.balance.value)
+            val fiatBalance = CurrencyFormatter.formatFiat(settingsRepository.currency.code, token.fiat)
             val entity = WidgetBalanceEntity(
                 tonBalance = balanceFormat,
                 currencyBalance = fiatBalance,

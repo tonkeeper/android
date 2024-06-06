@@ -114,3 +114,7 @@ fun Context.getCurrentFocus(): View? {
 fun Context.getCurrentFocusEditText(): EditText? {
     return getCurrentFocus() as? EditText
 }
+
+fun Context.hideKeyboard() {
+    (activity?.currentFocus as? EditText)?.hideKeyboard()
+}

@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import com.tonapps.tonkeeper.dialog.fiat.list.MethodAdapter
 import com.tonapps.tonkeeper.fragment.country.CountryScreen
 import com.tonapps.tonkeeper.fragment.fiat.web.FiatWebFragment
+import com.tonapps.tonkeeper.koin.fiat
 import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +63,7 @@ class FiatDialog(
     override fun show() {
         scope.launch {
             val country = context.settingsRepository?.country!!
-            val items = App.fiat.getMethods(country)
+            val items = context.fiat.getMethods(country)
             showWithData(items)
         }
     }
@@ -70,7 +71,7 @@ class FiatDialog(
     fun openDirect(name: String) {
         scope.launch {
             val country = context.settingsRepository?.country!!
-            val items = App.fiat.getData(country) ?: return@launch
+            val items = context.fiat.getData(country) ?: return@launch
             val method = items.getBuyItemsByMethods(listOf(name)).firstOrNull() ?: return@launch
             openItem(method)
         }
@@ -96,12 +97,12 @@ class FiatDialog(
     private suspend fun isShowConfirmation(
         id: String
     ): Boolean {
-        return com.tonapps.tonkeeper.App.fiat.isShowConfirmation(id)
+        return context.fiat.isShowConfirmation(id)
     }
 
     private fun disableShowConfirmation(id: String) {
         scope.launch {
-            com.tonapps.tonkeeper.App.fiat.disableShowConfirmation(id)
+            context.fiat.disableShowConfirmation(id)
         }
     }
 

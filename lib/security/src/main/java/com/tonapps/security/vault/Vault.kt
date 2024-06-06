@@ -2,9 +2,7 @@ package com.tonapps.security.vault
 
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
-import android.util.Log
 import com.tonapps.security.clear
-import com.tonapps.security.hex
 import com.tonapps.security.safeDestroy
 import com.tonapps.security.tryCallGC
 import javax.crypto.SecretKey

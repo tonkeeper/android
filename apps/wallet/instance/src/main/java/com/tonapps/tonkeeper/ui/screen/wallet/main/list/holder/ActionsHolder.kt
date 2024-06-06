@@ -4,8 +4,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.openCamera
-import com.tonapps.tonkeeper.extensions.sendCoin
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
+import com.tonapps.tonkeeper.ui.screen.send.SendScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
@@ -23,7 +23,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     private val navigation = Navigation.from(context)
 
     init {
-        sendView.setOnClickListener { navigation?.sendCoin() }
+        sendView.setOnClickListener { navigation?.add(SendScreen.newInstance()) }
         buyOrSellView.setOnClickListener { FiatDialog.open(context) }
         scanView.setOnClickListener { navigation?.openCamera() }
     }

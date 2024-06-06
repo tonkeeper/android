@@ -17,8 +17,8 @@ android {
         applicationId = "com.tonapps.tonkeeperx"
         minSdk = 27 // Build.minSdkVersion
         targetSdk = 34
-        versionCode = 47
-        versionName = "0.0.47"
+        versionCode = 49
+        versionName = "0.0.49"
     }
 
     buildFeatures {
@@ -83,6 +83,7 @@ dependencies {
     implementation(Dependence.AndroidX.workManager)
     implementation(Dependence.AndroidX.biometric)
     implementation(Dependence.AndroidX.swiperefreshlayout)
+    implementation(Dependence.AndroidX.lifecycle)
 
     implementation(Dependence.guava)
 

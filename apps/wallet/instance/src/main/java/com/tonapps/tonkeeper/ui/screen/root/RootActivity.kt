@@ -1,11 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
-import android.animation.ObjectAnimator
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import android.view.animation.AnticipateInterpolator
 import androidx.biometric.BiometricPrompt
@@ -18,7 +18,6 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.fragment.send.SendScreen
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.fragment.web.WebFragment
 import com.tonapps.tonkeeper.password.PasscodeBiometric
@@ -27,6 +26,7 @@ import com.tonapps.tonkeeper.ui.component.PasscodeView
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.tonkeeper.ui.screen.send.SendScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
@@ -117,9 +117,12 @@ class RootActivity: NavigationActivity() {
             return
         }
 
+        Log.d("TonConnectBridge", "onDAppEvent: $event")
+
         val params = event.params
         for (i in 0 until params.length()) {
             val param = DAppEventEntity.parseParam(params.get(i))
+            Log.d("TonConnectBridge", "param: $param")
             val request = SignRequestEntity(param)
             try {
                 val boc = rootViewModel.requestSign(this, event.wallet, request)
@@ -148,7 +151,7 @@ class RootActivity: NavigationActivity() {
             is RootEvent.Singer -> add(InitScreen.newInstance(InitArgs.Type.Signer, event.publicKey, event.name, event.walletSource))
             is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebFragment.newInstance(event.uri))
-            is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))
+            // is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))
             is RootEvent.Transaction -> TransactionDialog.open(this, event.event)
             is RootEvent.BuyOrSell -> fiatDialog.show()
             is RootEvent.BuyOrSellDirect -> fiatDialog.openDirect(event.name)

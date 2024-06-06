@@ -2,7 +2,7 @@ package com.tonapps.wallet.data.token.entities
 
 import android.net.Uri
 import android.os.Parcelable
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import kotlinx.parcelize.IgnoredOnParcel
@@ -14,6 +14,17 @@ data class AccountTokenEntity(
     @IgnoredOnParcel
     var rate: TokenRateEntity? = null,
 ): Parcelable {
+
+    companion object {
+
+        val EMPTY = AccountTokenEntity(
+            BalanceEntity(
+                TokenEntity.TON,
+                Coins.ZERO,
+                ""
+            )
+        )
+    }
 
     val imageUri: Uri
         get() = balance.token.imageUri

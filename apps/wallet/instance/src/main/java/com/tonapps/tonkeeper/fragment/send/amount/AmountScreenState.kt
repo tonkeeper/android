@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.fragment.send.amount
 
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity

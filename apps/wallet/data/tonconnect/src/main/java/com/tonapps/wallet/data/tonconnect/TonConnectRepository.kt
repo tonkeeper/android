@@ -106,6 +106,7 @@ class TonConnectRepository(
     }
 
     suspend fun getManifest(sourceUrl: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
+        Log.d("TonConnectBridge", "getManifest: sourceUrl = $sourceUrl")
         try {
             val local = localDataSource.getManifest(sourceUrl)
             if (local == null) {
@@ -116,6 +117,7 @@ class TonConnectRepository(
                 local
             }
         } catch (e: Throwable) {
+            Log.e("TonConnectBridge", "getManifest: error = $e", e)
             null
         }
     }
@@ -149,6 +151,7 @@ class TonConnectRepository(
         app: DAppEntity,
         body: String,
     ) = withContext(Dispatchers.IO) {
+        Log.d("TonConnectBridge", "send: body = ${body}")
         val encrypted = app.encrypt(body)
         api.tonconnectSend(app.publicKeyHex, app.clientId, base64(encrypted))
     }

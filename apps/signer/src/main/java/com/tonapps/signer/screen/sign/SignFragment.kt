@@ -83,7 +83,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         super.onViewCreated(view, savedInstanceState)
 
         closeView = view.findViewById(R.id.close)
-        closeView.setOnClickListener { finish() }
+        closeView.setOnClickListener { reject() }
 
         subtitleView = view.findViewById(R.id.subtitle)
 
@@ -96,12 +96,16 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         showAuditView.setOnClickListener { showDetails() }
 
         rawView = view.findViewById(R.id.raw)
+        rawView.setOnLongClickListener {
+            copyBody()
+            true
+        }
 
         bocRawView = view.findViewById(R.id.boc_raw)
         bocRawView.text = args.bodyHex
         bocRawView.movementMethod = ScrollingMovementMethod()
         bocRawView.setOnLongClickListener {
-            copyBody()
+            hideDetails()
             true
         }
 
@@ -133,6 +137,11 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
     private fun copyBody() {
         requireContext().copyToClipboard(args.bodyHex)
+    }
+
+    private fun reject() {
+        finish()
+        // activity?.finish()
     }
 
     private fun emulateBody(qr: Boolean) {
@@ -194,6 +203,11 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
     private fun showDetails() {
         showAuditView.visibility = View.GONE
         rawView.visibility = View.VISIBLE
+    }
+
+    private fun hideDetails() {
+        showAuditView.visibility = View.VISIBLE
+        rawView.visibility = View.GONE
     }
 
     private fun applyLoading() {

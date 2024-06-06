@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.events.entities
 
 import android.os.Parcelable
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.AccountEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity

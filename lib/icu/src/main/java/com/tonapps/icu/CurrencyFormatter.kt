@@ -1,17 +1,7 @@
 package com.tonapps.icu
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
-import android.text.SpannableString
-import android.text.SpannableStringBuilder
-import android.text.style.ImageSpan
 import android.util.ArrayMap
-import android.util.Log
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.NumberFormat
@@ -62,8 +52,10 @@ object CurrencyFormatter {
     }
 
     private val thresholds = listOf(
-        BigDecimal("0.0001") to 8,
-        BigDecimal("0.01") to 2
+        0.0000000001 to 18,
+        0.00000001 to 16,
+        0.0001 to 8,
+        0.01 to 2
     )
 
     private fun isTON(currency: String): Boolean {
@@ -74,7 +66,6 @@ object CurrencyFormatter {
         return isTON(currency) || currency == "BTC"
     }
 
-    private val roundingMode = RoundingMode.DOWN
     private val format = NumberFormat.getCurrencyInstance() as DecimalFormat
     private val pattern = format.toPattern().replace(CURRENCY_SIGN, "").trim()
     private val cache = ConcurrentHashMap<String, DecimalFormat>(symbols.size, 1.0f, 2)
@@ -84,37 +75,44 @@ object CurrencyFormatter {
 
     fun format(
         currency: String = "",
-        value: BigDecimal,
+        value: Double,
         scale: Int = 0,
+        roundingMode: RoundingMode = RoundingMode.DOWN
     ): CharSequence {
-        var bigDecimal = value.stripTrailingZeros()
+        var bigDecimal = Coins.safeBigDecimal(value).stripTrailingZeros()
         if (scale > 0) {
             bigDecimal = bigDecimal.setScale(scale, roundingMode)
         } else if (bigDecimal.scale() > 0) {
-            bigDecimal = bigDecimal.setScale(getScale(bigDecimal), roundingMode)
+            bigDecimal = bigDecimal.setScale(getScale(value), roundingMode)
         }
-        val decimals = bigDecimal.stripTrailingZeros().scale()
-        var amount = getFormat(decimals).format(value)
-        amount = amount.removeSuffix("0")
-        amount = amount.removeSuffix(monetaryDecimalSeparator)
-        if (amount.isBlank()) {
-            amount = "0"
-        }
+        bigDecimal = bigDecimal.stripTrailingZeros()
+        val decimals = bigDecimal.scale()
+        val amount = getFormat(decimals).format(bigDecimal)
         return format(currency, amount)
+    }
+
+    fun format(
+        currency: String = "",
+        value: Coins,
+        scale: Int = 0,
+        roundingMode: RoundingMode = RoundingMode.DOWN
+    ): CharSequence {
+        return format(currency, value.value, scale, roundingMode)
     }
 
     fun formatFiat(
         currency: String,
-        value: BigDecimal,
+        value: Coins,
         scale: Int = 2,
+        roundingMode: RoundingMode = RoundingMode.DOWN
     ): CharSequence {
-        return format(currency, value, scale)
+        return format(currency, value, scale, roundingMode)
     }
 
-    private fun getScale(value: BigDecimal): Int {
-        if (value == BigDecimal.ZERO) {
+    private fun getScale(value: Double): Int {
+        if (value == 0.0) {
             return 0
-        } else if (value <= BigDecimal.ZERO) {
+        } else if (value <= 0.0) {
             return 2
         }
 

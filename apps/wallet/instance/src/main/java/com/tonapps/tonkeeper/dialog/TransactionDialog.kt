@@ -99,7 +99,6 @@ class TransactionDialog(
             navigation?.openURL("https://tonviewer.com/transaction/${action.txId}", true)
         }
 
-
         updateDataView()
     }
 

@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.api.internal.repositories.FiatMethodsRepository
+import com.tonapps.tonkeeper.core.fiat.Fiat
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.fragment.country.CountryScreenFeature
 import com.tonapps.tonkeeper.fragment.send.SendScreenFeature
@@ -33,13 +35,15 @@ import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsViewModel
+import com.tonapps.tonkeeper.ui.screen.send.SendViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
-import com.tonapps.tonkeeper.ui.screen.token.TokenViewModel
+import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
+import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageViewModel
@@ -54,13 +58,15 @@ val koinModel = module {
     factory { Dispatchers.Default }
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
     single { App.walletManager }
-    single { SettingsRepository(get()) }
+    single { SettingsRepository(get(), get()) }
     single { PasscodeDataStore(get()) }
     single { PasscodeRepository(get(), get()) }
     single { NetworkMonitor(get(), get()) }
     single { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get(), get(), get()) }
+    single { FiatMethodsRepository(get(), get()) }
+    single { Fiat(get(), get(), get()) }
 
     uiAdapter { WalletAdapter(get()) }
     uiAdapter { WalletPickerAdapter() }
@@ -95,6 +101,8 @@ val koinModel = module {
     viewModel { BackupCheckViewModel(get(), get()) }
     viewModel { BackupAttentionViewModel(get(), get()) }
     viewModel { TokensManageViewModel(get(), get(), get()) }
+    viewModel { SendViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { TokenPickerViewModel(get(), get(), get()) }
 
     viewModel { ConfirmScreenFeature(get(), get(), get(), get(), get(), get()) }
     viewModel { AmountScreenFeature(get(), get(), get()) }

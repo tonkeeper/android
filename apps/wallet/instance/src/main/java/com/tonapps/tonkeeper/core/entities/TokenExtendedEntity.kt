@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.core.entities
 
 import android.net.Uri
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -10,6 +10,16 @@ data class TokenExtendedEntity(
     val raw: AccountTokenEntity,
     val prefs: TokenPrefsEntity,
 ) {
+
+    companion object {
+        val comparator = compareBy<TokenExtendedEntity> {
+            !it.isTon
+        }.thenBy {
+            !it.pinned
+        }.thenBy {
+            it.index
+        }
+    }
 
     val imageUri: Uri
         get() = raw.imageUri

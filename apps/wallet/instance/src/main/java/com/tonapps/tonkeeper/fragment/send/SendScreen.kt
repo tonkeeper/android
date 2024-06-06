@@ -2,16 +2,14 @@ package com.tonapps.tonkeeper.fragment.send
 
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.tonkeeper.extensions.openCamera
 import com.tonapps.tonkeeper.fragment.send.pager.PagerScreen
 import com.tonapps.tonkeeper.fragment.send.pager.SendScreenAdapter
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.hideKeyboard
 import uikit.mvi.UiScreen
@@ -156,7 +154,7 @@ class SendScreen: UiScreen<SendScreenState, SendScreenEffect, SendScreenFeature>
 
     fun forceSetAmount(amount: String?) {
         amount?.let {
-            pageAdapter.amountScreen?.forceSetAmount(Coins.of(amount).toDouble())
+            pageAdapter.amountScreen?.forceSetAmount(Coins.of(amount).value)
         }
     }
 

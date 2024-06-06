@@ -37,8 +37,6 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         @Deprecated("Use injection")
         lateinit var walletManager: WalletManager
 
-        lateinit var fiat: Fiat
-
         lateinit var instance: App
     }
 
@@ -50,7 +48,6 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
 
         instance = this
         walletManager = WalletManager(this)
-        fiat = Fiat(this)
 
         startKoin {
             androidContext(this@App)

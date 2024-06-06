@@ -1,8 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.entities.TokenExtendedEntity
@@ -161,18 +162,12 @@ class WalletViewModel(
                     raw = it,
                     prefs = settingsRepository.getTokenPrefs(wallet.id, it.address)
                 )
-            }.filter { !it.hidden }.sortedWith(compareBy<TokenExtendedEntity> {
-                !it.isTon
-            }.thenBy {
-                !it.pinned
-            }.thenBy {
-                it.index
-            }))
+            }.filter { !it.hidden }.sortedWith(TokenExtendedEntity.comparator))
 
             val balanceFormat = if (tokens.wallet.testnet) {
-                CurrencyFormatter.formatFiat(TokenEntity.TON.symbol, fiatBalance.value)
+                CurrencyFormatter.formatFiat(TokenEntity.TON.symbol, fiatBalance)
             } else {
-                CurrencyFormatter.formatFiat(tokens.currency.code, fiatBalance.value)
+                CurrencyFormatter.formatFiat(tokens.currency.code, fiatBalance)
             }
 
             val actualStatus = if (tokens.isOnline) {
@@ -203,7 +198,6 @@ class WalletViewModel(
             walletRepository.setActiveWallet(wallets[prevIndex].id)
         }
     }
-
 
     private fun setStatus(status: Item.Status) {
         _statusFlow.tryEmit(status)
@@ -254,8 +248,8 @@ class WalletViewModel(
         for ((index, token) in tokens.withIndex()) {
             fiatBalance += token.fiat
 
-            val balanceFormat = CurrencyFormatter.format(value = token.balance.value.value)
-            val fiatFormat = CurrencyFormatter.formatFiat(currency.code, token.fiat.value)
+            val balanceFormat = CurrencyFormatter.format(value = token.balance.value)
+            val fiatFormat = CurrencyFormatter.formatFiat(currency.code, token.fiat)
 
             val item = Item.Token(
                 position = ListCell.getPosition(tokens.size, index),
@@ -267,7 +261,7 @@ class WalletViewModel(
                 balanceFormat = balanceFormat,
                 fiat = token.fiat,
                 fiatFormat = fiatFormat,
-                rate = CurrencyFormatter.formatFiat(currency.code, token.rateNow.value),
+                rate = CurrencyFormatter.formatFiat(currency.code, token.rateNow),
                 rateDiff24h = token.rateDiff24h,
                 verified = token.verified,
                 testnet = testnet,

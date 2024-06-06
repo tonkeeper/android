@@ -15,6 +15,7 @@ import com.tonapps.uikit.color.buttonSecondaryForegroundColor
 import com.tonapps.wallet.localization.Localization
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
@@ -65,6 +66,7 @@ class PickerScreen: BaseListFragment(), BaseFragment.Modal {
                 val item = (viewHolder as? Holder<*>)?.item ?: return false
                 if (item is Item.Wallet && item.editMode) {
                     adapter.moveItem(viewHolder.bindingAdapterPosition, target.bindingAdapterPosition)
+                    HapticHelper.impactLight(requireContext())
                     return true
                 }
                 return false

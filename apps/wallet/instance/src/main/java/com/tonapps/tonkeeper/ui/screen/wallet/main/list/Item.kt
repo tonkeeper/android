@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.extensions.readArrayCompat
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat

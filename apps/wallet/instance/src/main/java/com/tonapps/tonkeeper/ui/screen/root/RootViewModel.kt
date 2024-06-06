@@ -137,14 +137,15 @@ class RootViewModel(
             walletRepository.activeWalletFlow,
             settingsRepository.hiddenBalancesFlow,
         ) { wallets, wallet, hiddenBalance ->
-            val balances = getBalances(wallets)
             val entities = wallets.map {
                 WalletExtendedEntity(
                     raw = it,
                     prefs = settingsRepository.getWalletPrefs(it.id)
                 )
             }.sortedBy { it.index }
-            walletPickerAdapter.submitList(WalletPickerAdapter.map(entities.map { it.raw }, wallet, balances, hiddenBalance))
+            val sortedWallets = entities.map { it.raw }
+            val balances = getBalances(sortedWallets)
+            walletPickerAdapter.submitList(WalletPickerAdapter.map(sortedWallets, wallet, balances, hiddenBalance))
         }.launchIn(viewModelScope)
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -378,6 +379,7 @@ class RootViewModel(
                 return
             }
             val request = DAppRequestEntity(uri)
+            Log.d("TonConnectBridge", "resolveTonConnect: $request")
             _eventFlow.tryEmit(RootEvent.TonConnect(request))
         } catch (e: Throwable) {
             toast(Localization.invalid_link)
@@ -408,6 +410,6 @@ class RootViewModel(
             settingsRepository.currency
         }
         val totalBalance = tokenRepository.getTotalBalances(currency, accountId, testnet)
-        return CurrencyFormatter.formatFiat(currency.code, totalBalance.value)
+        return CurrencyFormatter.formatFiat(currency.code, totalBalance)
     }
 }

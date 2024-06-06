@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
+import com.tonapps.tonkeeper.koin.fiat
 import com.tonapps.tonkeeper.koin.settingsRepository
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
@@ -90,7 +91,7 @@ class FiatWebFragment: BaseFragment(R.layout.fragment_web_fiat) {
             val wallet = App.walletManager.getWalletInfo() ?: return@launch
             val address = wallet.address
 
-            val replacedUrl = App.fiat.replaceUrl(url, address, context?.settingsRepository?.currency!!.code)
+            val replacedUrl = requireContext().fiat.replaceUrl(url, address, context?.settingsRepository?.currency!!.code)
             loadUrl(replacedUrl)
         }
     }

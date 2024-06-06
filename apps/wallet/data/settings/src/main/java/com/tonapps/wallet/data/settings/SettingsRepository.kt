@@ -24,7 +24,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+// TODO need to be refactored
 class SettingsRepository(
+    private val scope: CoroutineScope,
     private val context: Context
 ) {
 
@@ -41,10 +43,8 @@ class SettingsRepository(
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
         private const val PUSH_WALLET_PREFIX = "push_wallet_"
-        private const val SEND_CURRENCY_FIAT_KEY = "send_currency_fiat"
+        private const val AMOUNT_INPUT_CURRENCY_KEY = "amount_input_currency"
     }
-
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
     val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
@@ -70,6 +70,9 @@ class SettingsRepository(
     private val _walletPush = MutableStateFlow<Map<Long, Boolean>?>(null)
     val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
+    private val _amountInputCurrencyFlow = MutableStateFlow<Boolean?>(null)
+    val amountInputCurrencyFlow = _amountInputCurrencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context)
     private val walletPrefsFolder = WalletPrefsFolder(context)
@@ -84,11 +87,12 @@ class SettingsRepository(
             id
         }
 
-    var sendCurrencyFiat: Boolean = prefs.getBoolean(SEND_CURRENCY_FIAT_KEY, false)
+    var amountInputCurrency: Boolean = prefs.getBoolean(AMOUNT_INPUT_CURRENCY_KEY, false)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(SEND_CURRENCY_FIAT_KEY, value).apply()
+                prefs.edit().putBoolean(AMOUNT_INPUT_CURRENCY_KEY, value).apply()
                 field = value
+                _amountInputCurrencyFlow.tryEmit(value)
             }
         }
 
@@ -215,6 +219,7 @@ class SettingsRepository(
             _countryFlow.tryEmit(country)
             _searchEngineFlow.tryEmit(searchEngine)
             _walletPush.tryEmit(mapOf())
+            _amountInputCurrencyFlow.tryEmit(amountInputCurrency)
         }
     }
 }

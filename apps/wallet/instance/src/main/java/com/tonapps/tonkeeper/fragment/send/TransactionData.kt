@@ -1,7 +1,8 @@
 package com.tonapps.tonkeeper.fragment.send
 
 import android.net.Uri
-import com.tonapps.blockchain.Coins
+import android.util.Log
+import com.tonapps.icu.Coins
 import com.tonapps.extensions.toByteArray
 import com.tonapps.security.Security
 import com.tonapps.security.hex
@@ -16,6 +17,7 @@ import org.ton.contract.wallet.WalletTransferBuilder
 import ton.SendMode
 import ton.transfer.Transfer
 import java.math.BigInteger
+import kotlin.math.pow
 
 data class TransactionData(
     val walletAddress: String? = null,
@@ -70,24 +72,26 @@ data class TransactionData(
             return SendMode.PAY_GAS_SEPARATELY.value + SendMode.IGNORE_ERRORS.value
         }
 
-    val coins: Coins
+    val tonCoins: Double
         get() {
-            if (isNft) {
-                return Coins.of(0.064)
-            }
             if (isTon) {
-                return amount
+                val v = Coins.prepareValue(amountRaw)
+                val a = v.toDoubleOrNull() ?: 0.0
+                return a
             }
-            return Coins.of(0.064)
+            return 0.064
+        }
+
+    val amount: Double
+        get() {
+            if (isTon) {
+                return tonCoins
+            }
+            return Coins.prepareValue(amountRaw).toDoubleOrNull() ?: 0.0
         }
 
     val decimals: Int
         get() = t.decimals
-
-    val amount: Coins
-        get() {
-            return Coins.of(amountRaw, decimals)
-        }
 
     fun buildWalletTransfer(
         responseAddress: MsgAddressInt,
@@ -98,9 +102,17 @@ data class TransactionData(
         builder.destination = destination
         builder.body = buildWalletTransferBody(responseAddress)
         builder.sendMode = sendMode
-        builder.coins = coins.toTonLibCoin()
+        builder.coins = org.ton.block.Coins.ofNano(toNano(tonCoins, decimals))
         builder.stateInit = stateInit
         return builder.build()
+    }
+
+    fun toNano(
+        value: Double,
+        decimals: Int
+    ): Long {
+        // old return (value * BASE).toLong()
+        return (value * 10.0.pow(decimals)).toLong()
     }
 
     private fun buildWalletTransferBody(
@@ -116,8 +128,11 @@ data class TransactionData(
         } else if (isTon) {
             return Transfer.text(comment)
         }
+
+        val nano = toNano(tonCoins, decimals)
+        val jettonCoins = org.ton.block.Coins.ofNano(nano)
         return Transfer.jetton(
-            coins = amount.toTonLibCoin(),
+            coins = jettonCoins,
             toAddress = MsgAddressInt.parse(address!!),
             responseAddress = responseAddress,
             queryId = newWalletQueryId(),

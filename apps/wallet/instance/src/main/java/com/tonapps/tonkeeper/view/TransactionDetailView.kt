@@ -13,6 +13,7 @@ import uikit.extensions.setPaddingHorizontal
 import com.tonapps.uikit.list.ListCell
 import uikit.extensions.drawable
 import uikit.extensions.setRightDrawable
+import uikit.extensions.useAttributes
 import uikit.widget.LoaderView
 
 class TransactionDetailView @JvmOverloads constructor(
@@ -65,6 +66,11 @@ class TransactionDetailView @JvmOverloads constructor(
         valueView = findViewById(R.id.value)
         descriptionView = findViewById(R.id.description)
         loaderView = findViewById(R.id.loader)
+
+        context.useAttributes(attrs, R.styleable.TransactionDetailView) {
+            titleView.text = it.getString(R.styleable.TransactionDetailView_android_title)
+            // position = ListCell.from(it.getString(R.styleable.TransactionDetailView_position))
+        }
     }
 
     fun setTitleRightDrawable(drawable: Drawable?) {

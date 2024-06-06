@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.sign
 
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.blockchain.ton.extensions.safeParseCell
 import com.tonapps.blockchain.ton.extensions.toTlb
@@ -32,7 +33,7 @@ data class RawMessageEntity(
         get() = stateInitValue?.toTlb()
 
     val payload: Cell
-        get() = payloadValue.parseCell()
+        get() = payloadValue.safeParseCell() ?: Cell()
 
     val walletTransfer: WalletTransfer by lazy {
         val builder = WalletTransferBuilder()
@@ -50,6 +51,10 @@ data class RawMessageEntity(
         json.optString("stateInit"),
         json.optString("payload")
     )
+
+    init {
+        Log.d("TonConnectBridge", "raw: $payload")
+    }
 
     private companion object {
 

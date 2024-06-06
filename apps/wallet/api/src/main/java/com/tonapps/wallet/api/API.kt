@@ -2,12 +2,15 @@ package com.tonapps.wallet.api
 
 import android.content.Context
 import android.util.ArrayMap
-import com.tonapps.blockchain.Coins
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.isValid
+import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.unicodeToPunycode
+import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
+import com.tonapps.network.SSLSocketFactoryTcpNoDelay
+import com.tonapps.network.SocketFactoryTcpNoDelay
 import com.tonapps.network.get
 import com.tonapps.network.interceptor.AcceptLanguageInterceptor
 import com.tonapps.network.interceptor.AuthorizationInterceptor
@@ -213,6 +216,7 @@ class API(
         if (lastEventId != null) {
             url += "&last_event_id=$lastEventId"
         }
+        Log.d("TonConnectBridge", "tonconnectEvents: sse = $url")
         return tonAPIHttpClient.sse(url)
     }
 
@@ -241,6 +245,7 @@ class API(
         val mimeType = "text/plain".toMediaType()
         val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
         val response = tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
+        Log.d("TonConnectBridge", "tonconnectSend: ${response.code}")
         if (!response.isSuccessful) {
             throw Exception("Failed sending event: ${response.code}")
         }
@@ -290,7 +295,7 @@ class API(
         value: String,
         testnet: Boolean,
     ): Account? = withContext(Dispatchers.IO) {
-        if (value.isValid()) {
+        if (value.isValidTonAddress()) {
             return@withContext getAccount(value, testnet)
         }
         return@withContext resolveDomain(value.lowercase().trim(), testnet)
@@ -385,6 +390,10 @@ class API(
         return internalApi.getBrowserApps(testnet)
     }
 
+    fun getFiatMethods(): JSONObject {
+        return internalApi.getFiatMethods()
+    }
+
     fun getTransactionEvents(accountId: String, testnet: Boolean, eventId: String): AccountEvent? {
         return try {
             accounts(testnet).getAccountEvent(accountId, eventId)
@@ -424,6 +433,8 @@ class API(
 
         val JSON = Json { prettyPrint = true }
 
+        private val socketFactoryTcpNoDelay = SSLSocketFactoryTcpNoDelay()
+
         private fun baseOkHttpClientBuilder(): OkHttpClient.Builder {
             return OkHttpClient().newBuilder()
                 .retryOnConnectionFailure(false)
@@ -431,6 +442,11 @@ class API(
                 .readTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
                 .callTimeout(10, TimeUnit.SECONDS)
+                .pingInterval(5, TimeUnit.SECONDS)
+                .followSslRedirects(true)
+                .followRedirects(true)
+                // .sslSocketFactory(socketFactoryTcpNoDelay.sslSocketFactory, socketFactoryTcpNoDelay.trustManager)
+                // .socketFactory(SocketFactoryTcpNoDelay())
         }
 
         private fun createTonAPIHttpClient(

@@ -34,22 +34,3 @@ fun Navigation.toastLoading(loading: Boolean) {
 fun Navigation.openCamera() {
     add(CameraFragment.newInstance())
 }
-
-fun Navigation.sendCoin(
-    address: String? = null,
-    text: String? = null,
-    amount: String? = null,
-    jettonAddress: String? = null
-) {
-    if (this !is RootActivity) return
-
-    val currentFragment = supportFragmentManager.findFragment<SendScreen>()
-    if (currentFragment is SendScreen) {
-        currentFragment.forceSetAddress(address)
-        currentFragment.forceSetComment(text)
-        currentFragment.forceSetAmount(amount)
-        currentFragment.forceSetJetton(jettonAddress)
-    } else {
-        add(SendScreen.newInstance(address, text, amount, jettonAddress))
-    }
-}

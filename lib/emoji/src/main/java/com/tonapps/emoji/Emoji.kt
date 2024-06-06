@@ -21,9 +21,17 @@ object Emoji {
 
     val scope = CoroutineScope(Dispatchers.Main)
 
+    const val WALLET_ICON = "custom_wallet"
+
     private val all = Collections.synchronizedList(mutableListOf<EmojiEntity>())
     private val simpleEmojiTypeface = DefaultStyle()
     private val customIcons = CustomIcons()
+    private val emojiPattern = """^(\p{So})""".toRegex()
+
+    fun getEmojiFromPrefix(text: String): String? {
+        val matchResult = emojiPattern.find(text)
+        return matchResult?.value
+    }
 
     suspend fun get(context: Context): Array<EmojiEntity> {
         if (all.isEmpty()) {

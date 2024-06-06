@@ -1,11 +1,12 @@
 package com.tonapps.tonkeeper.fragment.send.confirm
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.totalFees
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.label
@@ -164,16 +165,16 @@ class ConfirmScreenFeature(
         sendEffect(ConfirmScreenEffect.CloseScreen(true))
     }
 
-    fun setAmount(amountRaw: String, decimals: Int, tokenAddress: String, symbol: String) {
+    fun setAmount(amount: Double, decimals: Int, tokenAddress: String, symbol: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val value = Coins.of(amountRaw, decimals) // CoinHelper.prepareValue(amountRaw).toFloatOrNull() ?: 0f
+            val value = Coins.of(amount) // CoinHelper.prepareValue(amountRaw).toFloatOrNull() ?: 0f
             val rates = ratesRepository.getRates(currency, tokenAddress)
             val fiat = rates.convert(tokenAddress, value)
 
             updateUiState {
                 it.copy(
-                    amount = CurrencyFormatter.format(symbol, value.value),
-                    amountInCurrency = "≈ " + CurrencyFormatter.format(currency.code, fiat.value)
+                    amount = CurrencyFormatter.format(symbol, value),
+                    amountInCurrency = "≈ " + CurrencyFormatter.format(currency.code, fiat)
                 )
             }
         }
@@ -209,8 +210,8 @@ class ConfirmScreenFeature(
             updateUiState {
                 it.copy(
                     feeValue = feeInTon,
-                    fee = "≈ " + CurrencyFormatter.format("TON", feeInTon.value),
-                    feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(currency.code, feeInCurrency.value),
+                    fee = "≈ " + CurrencyFormatter.format("TON", feeInTon),
+                    feeInCurrency = "≈ " + CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
                     buttonEnabled = true,
                     emulatedEventItems = actions
                 )

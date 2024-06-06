@@ -4,7 +4,7 @@ import android.app.Application
 import com.tonapps.tonkeeper.core.fiat.models.FiatData
 import com.tonapps.tonkeeper.core.fiat.models.FiatItem
 import com.tonapps.tonkeeper.api.internal.repositories.FiatMethodsRepository
-import com.tonapps.tonkeeper.api.internal.repositories.KeysRepository
+import com.tonapps.wallet.api.API
 import core.keyvalue.KeyValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,16 +12,17 @@ import org.ton.crypto.digest.sha512
 import org.ton.crypto.hex
 import java.util.UUID
 
+@Deprecated("Need refactorings")
 class Fiat(
-    app: Application
+    app: Application,
+    private val fiatMethodsRepository: FiatMethodsRepository,
+    private val api: API
 ) {
 
     private companion object {
         private const val SHOW_CONFIRMATION = "show_confirmation"
     }
 
-    private val fiatMethodsRepository = FiatMethodsRepository(app)
-    private val keysRepository = KeysRepository(app)
     private val keyValue = KeyValue(app,"fiat")
 
     suspend fun replaceUrl(
@@ -34,7 +35,7 @@ class Fiat(
         replacedUrl = replacedUrl.replace("{CUR_TO}", "TON")
 
         if (replacedUrl.contains("TX_ID")) {
-            val mercuryoSecret = keysRepository.getValue("mercuryoSecret") ?: ""
+            val mercuryoSecret = api.config.mercuryoSecret
             val signature = hex(sha512((address+mercuryoSecret).toByteArray()))
             val tx = "mercuryo_" + UUID.randomUUID().toString()
             replacedUrl = replacedUrl.replace("{TX_ID}", tx)

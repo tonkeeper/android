@@ -1,7 +1,7 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.TokenRates
 import kotlinx.parcelize.IgnoredOnParcel
@@ -16,6 +16,9 @@ data class BalanceEntity(
 
     @IgnoredOnParcel
     var rates: TokenRates? = null
+
+    val isTon: Boolean
+        get() = token.isTon
 
     constructor(jettonBalance: JettonBalance) : this(
         token = TokenEntity(jettonBalance.jetton),

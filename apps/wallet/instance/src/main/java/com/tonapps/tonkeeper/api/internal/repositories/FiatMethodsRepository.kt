@@ -1,14 +1,17 @@
 package com.tonapps.tonkeeper.api.internal.repositories
 
 import android.content.Context
-import com.tonapps.tonkeeper.api.internal.Tonkeeper
 import com.tonapps.tonkeeper.api.base.BaseBlobRepository
-import com.tonapps.tonkeeper.api.withRetry
 import com.tonapps.tonkeeper.core.fiat.models.FiatData
+import com.tonapps.wallet.api.API
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class FiatMethodsRepository(context: Context): BaseBlobRepository<FiatData>("fiat", context) {
+@Deprecated("Need refactorings")
+class FiatMethodsRepository(
+    context: Context,
+    private val api: API
+): BaseBlobRepository<FiatData>("fiat", context) {
 
     suspend fun get(
         countryCode: String
@@ -23,9 +26,7 @@ class FiatMethodsRepository(context: Context): BaseBlobRepository<FiatData>("fia
     private suspend fun fromCloud(
         countryCode: String
     ): FiatData? = withContext(Dispatchers.IO) {
-        val response = withRetry {
-            Tonkeeper.get("fiat/methods")
-        } ?: return@withContext null
+        val response = runCatching { api.getFiatMethods() }.getOrNull() ?: return@withContext null
         val json = response.getJSONObject("data")
         saveCache(
             accountId = countryCode,

@@ -1,8 +1,9 @@
 package com.tonapps.wallet.data.rates
 
 import android.content.Context
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.entity.RateDiffEntity
 import com.tonapps.wallet.data.rates.entity.RateEntity
@@ -42,10 +43,11 @@ class RatesRepository(
         for (rate in rates) {
             val value = rate.value
             val bigDecimal = value.prices?.get(currency.code) ?: BigDecimal.ZERO
+
             entities.add(RateEntity(
                 tokenCode = rate.key,
                 currency = currency,
-                value = Coins(bigDecimal),
+                value = Coins.of(bigDecimal, currency.decimals),
                 diff = RateDiffEntity(currency, value),
             ))
         }
@@ -53,6 +55,16 @@ class RatesRepository(
     }
 
     fun getRates(currency: WalletCurrency, token: String): RatesEntity {
+        if (token == TokenEntity.USDT.address) {
+            return RatesEntity(currency, hashMapOf<String, RateEntity>().apply {
+                put(token, RateEntity(
+                    tokenCode = token,
+                    currency = currency,
+                    value = Coins.ONE,
+                    diff = RateDiffEntity("", "", ""),
+                ))
+            })
+        }
         return getRates(currency, listOf(token))
     }
 

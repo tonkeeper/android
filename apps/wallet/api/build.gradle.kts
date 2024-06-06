@@ -28,6 +28,7 @@ dependencies {
     implementation(project(Dependence.Lib.network))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
+    implementation(project(Dependence.Lib.icu))
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)
     implementation(Dependence.Squareup.moshi)

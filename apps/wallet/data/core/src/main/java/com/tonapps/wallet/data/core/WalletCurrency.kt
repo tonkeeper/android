@@ -55,4 +55,11 @@ data class WalletCurrency(
     }
 
     constructor(code: String) : this(code, code in FIAT)
+
+    val decimals: Int
+        get() = when (code) {
+            "TON" -> 9
+            "BTC" -> 8
+            else -> 6
+        }
 }

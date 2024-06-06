@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.widget.AppCompatImageView
@@ -155,6 +156,7 @@ class RootActivity: NavigationActivity() {
             is RootAction.ResponseSignature -> responseSignature(action.signature)
             is RootAction.ResponseKey -> responseKey(action.publicKey, action.name)
             is RootAction.UpdateApp -> updateDialog()
+            is RootAction.ClearKeys -> signOut()
         }
     }
 
@@ -209,8 +211,12 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val uri = intent.data ?: return
+        if (intent.action == Intent.ACTION_MANAGE_PACKAGE_STORAGE) {
+            signOut()
+            return
+        }
 
+        val uri = intent.data ?: return
         handleUri(uri, intent.action == Intent.ACTION_SEND)
     }
 
@@ -247,7 +253,6 @@ class RootActivity: NavigationActivity() {
         if (BuildConfig.DEBUG) {
             return
         }
-
         if (hasFocus) {
             baseContainer.visibility = View.VISIBLE
         } else {

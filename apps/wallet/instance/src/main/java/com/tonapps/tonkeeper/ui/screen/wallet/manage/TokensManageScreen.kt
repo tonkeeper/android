@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.Holder
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
@@ -45,6 +46,7 @@ class TokensManageScreen: BaseListFragment(), BaseFragment.BottomSheet {
                 val item = (viewHolder as? Holder<*>)?.item ?: return false
                 if (item is Item.Token && item.pinned) {
                     adapter.moveItem(viewHolder.bindingAdapterPosition, target.bindingAdapterPosition)
+                    HapticHelper.impactLight(requireContext())
                     return true
                 }
                 return false

@@ -124,7 +124,7 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()
-            fragment.arguments = args.toBundle()
+            fragment.setArgs(args)
             return fragment
         }
     }

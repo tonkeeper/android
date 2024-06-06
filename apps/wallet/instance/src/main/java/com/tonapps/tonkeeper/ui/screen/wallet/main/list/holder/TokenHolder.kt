@@ -4,7 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.extensions.buildRateString
-import com.tonapps.tonkeeper.ui.screen.token.TokenScreen
+import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor

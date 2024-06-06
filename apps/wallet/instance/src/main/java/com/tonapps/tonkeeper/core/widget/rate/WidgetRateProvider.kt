@@ -41,7 +41,7 @@ class WidgetRateProvider: Widget() {
             val date = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Calendar.getInstance().time)
             val tokenCode = TokenEntity.TON.symbol
             val rates = ratesRepository.getRates(settingsRepository.currency, tokenCode)
-            val priceFormat = CurrencyFormatter.formatFiat(settingsRepository.currency.code, rates.getRate(tokenCode).value)
+            val priceFormat = CurrencyFormatter.formatFiat(settingsRepository.currency.code, rates.getRate(tokenCode))
             val entity = WidgetRateEntity(
                 diff24h = rates.getDiff24h(tokenCode),
                 diff7d = rates.getDiff7d(tokenCode),

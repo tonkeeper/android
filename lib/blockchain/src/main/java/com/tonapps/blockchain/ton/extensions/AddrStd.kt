@@ -16,7 +16,6 @@ fun AddrStd.toAccountId(): String {
     ).lowercase()
 }
 
-
 fun String.toUserFriendly(
     wallet: Boolean = true,
     testnet: Boolean
@@ -41,7 +40,7 @@ fun String.toRawAddress(): String {
     }
 }
 
-fun String.isValid(): Boolean {
+fun String.isValidTonAddress(): Boolean {
     return try {
         AddrStd(this)
         true

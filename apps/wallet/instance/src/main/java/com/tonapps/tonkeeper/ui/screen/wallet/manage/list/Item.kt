@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.manage.list
 
 import android.net.Uri
 import androidx.annotation.StringRes
-import com.tonapps.blockchain.Coins
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.TokenExtendedEntity
 import com.tonapps.uikit.list.BaseListItem
@@ -41,7 +41,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             address = token.address,
             symbol = token.symbol,
             balance = token.balance.value,
-            balanceFormat = CurrencyFormatter.format(token.symbol, token.balance.value.value),
+            balanceFormat = CurrencyFormatter.format(token.symbol, token.balance.value),
             pinned = token.pinned,
             hidden = token.hidden
         )

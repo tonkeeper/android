@@ -1,13 +1,10 @@
 package com.tonapps.tonkeeper.extensions
 
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
-import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletLabel
-import io.tonapi.models.MessageConsequences
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
-import ton.extensions.base64
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 
 val WalletLegacy.label: WalletLabel

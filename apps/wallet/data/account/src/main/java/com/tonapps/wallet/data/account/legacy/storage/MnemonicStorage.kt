@@ -1,7 +1,14 @@
 package com.tonapps.wallet.data.account.legacy.storage
 
 import android.content.Context
-import core.keyvalue.EncryptedKeyValue
+import com.tonapps.extensions.clear
+import com.tonapps.extensions.getByteArray
+import com.tonapps.extensions.prefsEncrypted
+import com.tonapps.extensions.putByteArray
+import com.tonapps.extensions.putString
+import com.tonapps.extensions.remove
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class MnemonicStorage(context: Context) {
 
@@ -10,37 +17,37 @@ internal class MnemonicStorage(context: Context) {
         private const val SEED_KEY = "seed"
     }
 
-    private val encryptedKeyValue = EncryptedKeyValue(context, "tonkeeper")
+    private val encryptedKeyValue = context.prefsEncrypted("tonkeeper")
 
-    suspend fun getSeed(id: Long): ByteArray? {
+    suspend fun getSeed(id: Long): ByteArray? = withContext(Dispatchers.IO) {
         val key = keySeed(id)
-        return encryptedKeyValue.getByteArray(key, null)
+        encryptedKeyValue.getByteArray(key)
     }
 
-    suspend fun setSeed(id: Long, seed: ByteArray) {
+    suspend fun setSeed(id: Long, seed: ByteArray) = withContext(Dispatchers.IO) {
         val key = keySeed(id)
         encryptedKeyValue.putByteArray(key, seed)
     }
 
-    suspend fun add(id: Long, mnemonic: List<String>) {
+    suspend fun add(id: Long, mnemonic: List<String>) = withContext(Dispatchers.IO) {
         val key = keyWords(id)
         if (mnemonic.isNotEmpty()) {
             encryptedKeyValue.putString(key, mnemonic.joinToString(","))
         }
     }
 
-    suspend fun get(id: Long): List<String> {
+    suspend fun get(id: Long): List<String> = withContext(Dispatchers.IO) {
         val key = keyWords(id)
         val words = encryptedKeyValue.getString(key, null)?.split(",")
-        return words ?: emptyList()
+        words ?: emptyList()
     }
 
-    suspend fun delete(id: Long) {
+    suspend fun delete(id: Long) = withContext(Dispatchers.IO) {
         val key = keyWords(id)
         encryptedKeyValue.remove(key)
     }
 
-    suspend fun clearAll() {
+    suspend fun clearAll() = withContext(Dispatchers.IO) {
         encryptedKeyValue.clear()
     }
 

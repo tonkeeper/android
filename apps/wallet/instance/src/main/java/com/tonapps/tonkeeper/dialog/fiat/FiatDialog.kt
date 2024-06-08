@@ -2,17 +2,15 @@ package com.tonapps.tonkeeper.dialog.fiat
 
 import android.content.Context
 import android.graphics.Color
-import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.fiat.models.FiatItem
 import com.tonapps.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import com.tonapps.tonkeeper.dialog.fiat.list.MethodAdapter
-import com.tonapps.tonkeeper.fragment.country.CountryScreen
 import com.tonapps.tonkeeper.fragment.fiat.web.FiatWebFragment
 import com.tonapps.tonkeeper.koin.fiat
 import com.tonapps.tonkeeper.koin.settingsRepository
+import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -125,6 +123,6 @@ class FiatDialog(
 
     private fun pickCountry() {
         dismiss()
-        navigation?.add(CountryScreen.newInstance(FIAT_DIALOG_REQUEST))
+        navigation?.add(CountryPickerScreen.newInstance(FIAT_DIALOG_REQUEST))
     }
 }

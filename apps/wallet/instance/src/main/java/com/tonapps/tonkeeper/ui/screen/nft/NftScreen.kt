@@ -6,14 +6,12 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.NestedScrollView
-import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
-import com.tonapps.tonkeeper.fragment.send.SendScreen
+import com.tonapps.tonkeeper.ui.screen.send.SendScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
-import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API

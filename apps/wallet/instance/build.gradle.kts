@@ -97,7 +97,6 @@ dependencies {
     implementation(Dependence.Firebase.crashlytics)
     implementation(Dependence.Firebase.messaging)
 
-    implementation(project(Dependence.Module.core))
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Module.blur))
 
@@ -108,7 +107,6 @@ dependencies {
     implementation(project(Dependence.Lib.security))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
-    implementation(project(Dependence.Module.ton))
 
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)
@@ -128,12 +126,4 @@ dependencies {
         exclude(group = "com.facebook.fresco", module = "memory-type-native")
         exclude(group = "com.facebook.fresco", module = "imagepipeline-native")
     }
-
-
-    implementation(Dependence.AndroidX.Room.base)
-    implementation(Dependence.AndroidX.Room.runtime)
-    annotationProcessor(Dependence.AndroidX.Room.compiler)
-    kapt(Dependence.AndroidX.Room.compiler)
-
-
 }

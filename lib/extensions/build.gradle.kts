@@ -26,6 +26,7 @@ dependencies {
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.Koin.core)
     implementation(Dependence.AndroidX.core)
+    implementation(Dependence.AndroidX.security)
     implementation(project(Dependence.UIKit.core))
     implementation(project(Dependence.Lib.icu))
 }

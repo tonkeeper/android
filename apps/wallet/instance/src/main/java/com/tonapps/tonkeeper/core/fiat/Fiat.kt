@@ -1,11 +1,12 @@
 package com.tonapps.tonkeeper.core.fiat
 
 import android.app.Application
+import com.tonapps.extensions.prefs
+import com.tonapps.extensions.putBoolean
 import com.tonapps.tonkeeper.core.fiat.models.FiatData
 import com.tonapps.tonkeeper.core.fiat.models.FiatItem
 import com.tonapps.tonkeeper.api.internal.repositories.FiatMethodsRepository
 import com.tonapps.wallet.api.API
-import core.keyvalue.KeyValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.crypto.digest.sha512
@@ -23,7 +24,7 @@ class Fiat(
         private const val SHOW_CONFIRMATION = "show_confirmation"
     }
 
-    private val keyValue = KeyValue(app,"fiat")
+    private val keyValue = app.prefs("fiat")
 
     suspend fun replaceUrl(
         url: String,

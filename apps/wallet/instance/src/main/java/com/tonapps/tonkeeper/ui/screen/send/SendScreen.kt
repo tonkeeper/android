@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
@@ -46,7 +47,7 @@ import uikit.widget.SlideBetweenView
 class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomSheet {
 
     private val args: SendArgs by lazy { SendArgs(requireArguments()) }
-    private val sendViewModel: SendViewModel by viewModel()
+    private val sendViewModel: SendViewModel by viewModel { parametersOf(args.nftAddress) }
 
     private val signerLauncher = registerForActivityResult(SingerResultContract()) {
         if (it == null) {
@@ -77,6 +78,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private lateinit var reviewRecipientFeeView: TransactionDetailView
     private lateinit var reviewRecipientCommentView: TransactionDetailView
     private lateinit var reviewSubtitleView: AppCompatTextView
+    private lateinit var convertedContainerView: View
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -132,6 +134,13 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         confirmButton.setOnClickListener { confirm() }
 
         processTaskView = view.findViewById(R.id.process_task)
+
+        convertedContainerView = view.findViewById(R.id.converted_container)
+
+        if (args.isNft) {
+            amountView.visibility = View.GONE
+            convertedContainerView.visibility = View.GONE
+        }
 
         view.doKeyboardAnimation { offset, _, _ ->
             button.translationY = -offset.toFloat()
@@ -279,16 +288,32 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         context?.hideKeyboard()
     }
 
+    /*
+
+    titleView.setText(Localization.nft_transfer)
+                amountView.visibility = View.GONE
+
+    private fun applyNft(nftEntity: NftEntity) {
+        iconView.setRound(20f.dp)
+        iconView.setImageURI(nftEntity.mediumUri)
+        actionTitle.text = String.format("%s · %s", nftEntity.name, nftEntity.collectionName.ifEmpty {
+            getString(Localization.unnamed_collection)
+        })
+        titleView.setText(Localization.nft_transfer)
+    }
+     */
+
     companion object {
 
         fun newInstance(
             targetAddress: String? = null,
             tokenAddress: String = TokenEntity.TON.address,
             amountNano: Long = 0,
-            text: String? = null
+            text: String? = null,
+            nftAddress: String? = null
         ): SendScreen {
             val screen = SendScreen()
-            screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text))
+            screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text, nftAddress))
             return screen
         }
     }

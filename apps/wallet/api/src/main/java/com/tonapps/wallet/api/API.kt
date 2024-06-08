@@ -427,6 +427,10 @@ class API(
         }
     }
 
+    suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
+        internalApi.resolveCountry()
+    }
+
     companion object {
 
         const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"

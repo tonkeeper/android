@@ -21,7 +21,7 @@
         android:button="@string/cancel"
         android:hint="@string/search"/>
 
-    <androidx.recyclerview.widget.RecyclerView
+    <uikit.widget.SimpleRecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

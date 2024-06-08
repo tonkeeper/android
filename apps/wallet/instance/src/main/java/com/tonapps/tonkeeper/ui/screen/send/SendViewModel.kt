@@ -53,6 +53,7 @@ import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
+    private val nftAddress: String?,
     private val walletRepository: WalletRepository,
     private val api: API,
     private val settingsRepository: SettingsRepository,
@@ -226,6 +227,7 @@ class SendViewModel(
         builder.setValidUntil(sendMetadata.validUntil)
         builder.setBounceable(isBounce(userInputAddress, transaction.targetAccount))
         builder.setMax(transaction.amount.value == token.balance.value)
+        nftAddress?.let { builder.setNftAddress(it) }
         builder.build()
     }.flowOn(Dispatchers.IO).shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 

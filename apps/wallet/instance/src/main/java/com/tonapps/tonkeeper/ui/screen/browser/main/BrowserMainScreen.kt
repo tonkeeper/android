@@ -8,10 +8,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import com.tonapps.tonkeeper.extensions.flagEmoji
-import com.tonapps.tonkeeper.fragment.country.CountryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchScreen
+import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeperx.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -69,7 +69,7 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
 
         countryView = view.findViewById(R.id.country)
         countryView.setOnClickListener {
-            navigation?.add(CountryScreen.newInstance(COUNTRY_REQUEST_KEY))
+            navigation?.add(CountryPickerScreen.newInstance(COUNTRY_REQUEST_KEY))
         }
 
         footerDrawable = FooterDrawable(requireContext())

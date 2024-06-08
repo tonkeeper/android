@@ -4,12 +4,8 @@ import android.content.Context
 import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
 import com.tonapps.tonkeeper.fragment.camera.CameraFragment
-import com.tonapps.tonkeeper.ui.screen.root.RootActivity
-import com.tonapps.tonkeeper.fragment.send.SendScreen
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.wallet.localization.Localization
-import io.tonapi.models.JettonBalance
-import uikit.extensions.findFragment
 import uikit.navigation.Navigation
 
 fun Navigation.toast(@StringRes resId: Int) {

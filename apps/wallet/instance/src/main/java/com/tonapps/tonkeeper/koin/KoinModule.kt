@@ -5,13 +5,8 @@ import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.internal.repositories.FiatMethodsRepository
 import com.tonapps.tonkeeper.core.fiat.Fiat
 import com.tonapps.tonkeeper.core.history.HistoryHelper
-import com.tonapps.tonkeeper.fragment.country.CountryScreenFeature
-import com.tonapps.tonkeeper.fragment.send.SendScreenFeature
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.fragment.send.amount.AmountScreenFeature
-import com.tonapps.tonkeeper.fragment.send.confirm.ConfirmScreenFeature
-import com.tonapps.tonkeeper.fragment.send.recipient.RecipientScreenFeature
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthViewModel
 import com.tonapps.tonkeeper.password.PasscodeDataStore
 import com.tonapps.tonkeeper.password.PasscodeRepository
@@ -27,6 +22,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
+import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
@@ -75,7 +71,6 @@ val koinModel = module {
     viewModel { parameters -> InitViewModel(parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { RecipientScreenFeature(get()) }
     viewModel { PickerViewModel(get(), get()) }
     viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
@@ -101,11 +96,7 @@ val koinModel = module {
     viewModel { BackupCheckViewModel(get(), get()) }
     viewModel { BackupAttentionViewModel(get(), get()) }
     viewModel { TokensManageViewModel(get(), get(), get()) }
-    viewModel { SendViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
-
-    viewModel { ConfirmScreenFeature(get(), get(), get(), get(), get(), get()) }
-    viewModel { AmountScreenFeature(get(), get(), get()) }
-    viewModel { CountryScreenFeature(get()) }
-    viewModel { SendScreenFeature(get(), get()) }
+    viewModel { CountryPickerViewModel(get(), get(), get()) }
 }

@@ -1,23 +1,22 @@
 package com.tonapps.tonkeeper.core.entities
 
-import android.util.Log
+import com.tonapps.blockchain.ton.TonSendMode
+import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.extensions.toByteArray
 import com.tonapps.icu.Coins
 import com.tonapps.security.Security
 import com.tonapps.security.hex
 import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
+import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
-import ton.SendMode
-import ton.transfer.Transfer
 import java.math.BigInteger
 
 data class TransferEntity(
@@ -29,7 +28,8 @@ data class TransferEntity(
     val seqno: Int,
     val validUntil: Long,
     val bounceable: Boolean,
-    val comment: String?
+    val comment: String?,
+    val nftAddress: String? = null
 ) {
 
     val contract: BaseWalletContract
@@ -38,12 +38,15 @@ data class TransferEntity(
     val isTon: Boolean
         get() = token.isTon
 
+    val isNft: Boolean
+        get() = nftAddress != null
+
     val stateInit: StateInit?
         get() = if (seqno == 0) contract.stateInit else null
 
     val sendMode: Int
         get() {
-            return if (max && isTon) SendMode.CARRY_ALL_REMAINING_BALANCE.value else (SendMode.PAY_GAS_SEPARATELY.value + SendMode.IGNORE_ERRORS.value)
+            return if (max && isTon) TonSendMode.CARRY_ALL_REMAINING_BALANCE.value else (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
         }
 
     private val coins: org.ton.block.Coins
@@ -55,12 +58,15 @@ data class TransferEntity(
         builder.bounceable = bounceable
         builder.body = body()
         builder.sendMode = sendMode
-        if (isTon) {
+        if (isNft) {
             builder.coins = coins
-            builder.destination = destination
-        } else {
+            builder.destination = AddrStd.parse(nftAddress!!)
+        } else if (!isTon) {
             builder.coins = TRANSFER_PRICE
             builder.destination = AddrStd.parse(token.walletAddress)
+        } else {
+            builder.coins = coins
+            builder.destination = destination
         }
         builder.stateInit = stateInit
         builder.build()
@@ -92,14 +98,16 @@ data class TransferEntity(
     }
 
     private fun body(): Cell? {
-        if (isTon) {
-            return Transfer.text(comment)
+        if (isNft) {
+            return nftBody()
+        } else if (!isTon) {
+            return jettonBody()
         }
-        return jettonBody()
+        return TonTransferHelper.text(comment)
     }
 
     private fun jettonBody(): Cell {
-        return Transfer.jetton(
+        return TonTransferHelper.jetton(
             coins = coins,
             toAddress = destination,
             responseAddress = contract.address,
@@ -107,6 +115,24 @@ data class TransferEntity(
             body = comment,
         )
     }
+
+    private fun nftBody(): Cell {
+        return TonTransferHelper.nft(
+            newOwnerAddress = destination,
+            excessesAddress = contract.address,
+            queryId = newWalletQueryId(),
+            body = comment,
+        )
+    }
+
+    /*
+    TonTransferHelper.nft(
+                newOwnerAddress = MsgAddressInt.parse(address!!),
+                excessesAddress = MsgAddressInt.parse(walletAddress!!),
+                queryId = newWalletQueryId(),
+                body = comment,
+            )
+     */
 
     fun toSignedMessage(privateKeyEd25519: PrivateKeyEd25519): Cell {
         return contract.createTransferMessageCell(
@@ -126,6 +152,9 @@ data class TransferEntity(
         private var validUntil: Long? = null
         private var bounceable: Boolean = false
         private var comment: String? = null
+        private var nftAddress: String? = null
+
+        fun setNftAddress(nftAddress: String) = apply { this.nftAddress = nftAddress }
 
         fun setToken(token: BalanceEntity) = apply { this.token = token }
 
@@ -160,7 +189,8 @@ data class TransferEntity(
                 seqno = seqno,
                 validUntil = validUntil,
                 bounceable = bounceable,
-                comment = comment
+                comment = comment,
+                nftAddress = nftAddress
             )
         }
     }

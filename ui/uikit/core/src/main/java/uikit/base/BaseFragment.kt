@@ -31,6 +31,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.navigation.ScreenResultContract
 import uikit.widget.BottomSheetLayout
 import uikit.widget.ModalView
 import uikit.widget.SwipeBackLayout

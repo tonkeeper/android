@@ -3,11 +3,10 @@ package com.tonapps.tonkeeper.dialog
 import android.content.Context
 import android.view.View
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.fragment.signer.add.SignerAddFragment
 import com.tonapps.tonkeeper.koin.api
+import com.tonapps.tonkeeper.ui.screen.add.signer.AddSignerScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
-import com.tonapps.wallet.api.API
 import uikit.base.BaseSheetDialog
 import uikit.navigation.Navigation.Companion.navigation
 
@@ -33,7 +32,7 @@ class ImportWalletDialog(context: Context): BaseSheetDialog(context), View.OnCli
 
         val signerView = findViewById<View>(R.id.signer_wallet)!!
         signerView.setOnClickListener {
-            navigation?.add(SignerAddFragment.newInstance())
+            navigation?.add(AddSignerScreen.newInstance())
             dismiss()
         }
 

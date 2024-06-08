@@ -6,6 +6,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Build
 import androidx.annotation.RawRes
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import java.io.File
 import java.util.Locale
 
@@ -38,4 +40,14 @@ val Context.packageInfo: PackageInfo
 
 fun Context.prefs(name: String): SharedPreferences {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
+}
+
+fun Context.prefsEncrypted(name: String): SharedPreferences {
+    return EncryptedSharedPreferences.create(
+        name,
+        MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
+        this,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
 }

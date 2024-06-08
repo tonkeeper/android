@@ -53,4 +53,8 @@ interface Navigation {
     fun openURL(url: String, external: Boolean = false)
 
     fun toast(message: String, loading: Boolean, color: Int)
+
+    fun run(fragment: BaseFragment) {
+
+    }
 }

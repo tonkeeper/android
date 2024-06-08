@@ -21,8 +21,6 @@ include(":apps:signer")
 include(":baselineprofile:x")
 
 
-include(":ton")
-include(":core")
 include(":tonapi")
 
 

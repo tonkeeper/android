@@ -63,4 +63,12 @@ internal class InternalApi(
         }
     }
 
+    fun resolveCountry(): String? {
+        return try {
+            JSONObject(okHttpClient.get("https://api.country.is/")).getString("country")
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
 }

@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.password
 
 import android.content.Context
-import core.keyvalue.EncryptedKeyValue
+import com.tonapps.extensions.prefsEncrypted
+import com.tonapps.extensions.putString
+import com.tonapps.extensions.remove
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -14,16 +16,16 @@ class PasscodeDataStore(context: Context) {
         private const val CODE_KEY = "code"
     }
 
-    private val keyValue = EncryptedKeyValue(context, NAME)
+    private val keyValue = context.prefsEncrypted(NAME)
 
     val hasPinCode: Boolean
         get() = keyValue.contains(CODE_KEY)
 
-    suspend fun setPinCode(code: String) {
+    suspend fun setPinCode(code: String) = withContext(Dispatchers.IO) {
         keyValue.putString(CODE_KEY, code)
     }
 
-    suspend fun clearPinCode() {
+    suspend fun clearPinCode() = withContext(Dispatchers.IO) {
         keyValue.remove(CODE_KEY)
     }
 
@@ -36,7 +38,7 @@ class PasscodeDataStore(context: Context) {
     }
 
     suspend fun compare(code: String): Boolean = withContext(Dispatchers.IO) {
-        val savedCode = keyValue.getString(CODE_KEY)
+        val savedCode = keyValue.getString(CODE_KEY, null)
         savedCode == code
     }
 }

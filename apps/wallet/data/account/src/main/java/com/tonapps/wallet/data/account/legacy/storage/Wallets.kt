@@ -1,15 +1,23 @@
 package com.tonapps.wallet.data.account.legacy.storage
 
+import android.content.SharedPreferences
 import android.graphics.Color
+import androidx.core.content.edit
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.extensions.getByteArray
+import com.tonapps.extensions.getLongArray
+import com.tonapps.extensions.putByteArray
+import com.tonapps.extensions.putInt
+import com.tonapps.extensions.putLongArray
+import com.tonapps.extensions.putString
+import com.tonapps.extensions.remove
 import com.tonapps.wallet.data.account.WalletSource
 import org.ton.api.pub.PublicKeyEd25519
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.account.WalletType
-import core.keyvalue.KeyValue
 
 internal class Wallets(
-    private val keyValue: KeyValue
+    private val prefs: SharedPreferences
 ) {
 
     companion object {
@@ -53,26 +61,26 @@ internal class Wallets(
     suspend fun setName(id: Long, name: String?) {
         val key = key(WALLET_NAME, id)
         if (!name.isNullOrBlank()) {
-            keyValue.putString(key, name)
+            prefs.putString(key, name)
         }
     }
 
     suspend fun setVersion(id: Long, version: WalletVersion) {
         val key = key(WALLET_VERSION, id)
-        keyValue.putString(key, version.name)
+        prefs.putString(key, version.name)
     }
 
     private suspend fun getVersion(id: Long): WalletVersion {
-        val type = keyValue.getString(key(WALLET_VERSION, id))?.let { WalletVersion.valueOf(it) }
+        val type = prefs.getString(key(WALLET_VERSION, id), null)?.let { WalletVersion.valueOf(it) }
         return type ?: WalletVersion.V4R2
     }
 
     private suspend fun setType(id: Long, type: WalletType) {
-        keyValue.putString(key(WALLET_TYPE, id), type.name)
+        prefs.putString(key(WALLET_TYPE, id), type.name)
     }
 
     private suspend fun getName(id: Long): String {
-        val name = keyValue.getString(key(WALLET_NAME, id))
+        val name = prefs.getString(key(WALLET_NAME, id), null)
         if (name.isNullOrBlank()) {
             return "Wallet"
         }
@@ -80,67 +88,68 @@ internal class Wallets(
     }
 
     private suspend fun getType(id: Long): WalletType {
-        val type = keyValue.getString(key(WALLET_TYPE, id))?.let { WalletType.valueOf(it) }
+        val type = prefs.getString(key(WALLET_TYPE, id), null)?.let { WalletType.valueOf(it) }
         return type ?: WalletType.Default
     }
 
     private suspend fun getPublicKey(id: Long): PublicKeyEd25519? {
         val key = key(WALLET_PUBLIC_KEY, id)
-        return keyValue.getByteArray(key)?.let { PublicKeyEd25519(it) }
+        return prefs.getByteArray(key)?.let { PublicKeyEd25519(it) }
     }
 
     private suspend fun setPublicKey(id: Long, publicKey: PublicKeyEd25519) {
         val key = key(WALLET_PUBLIC_KEY, id)
-        keyValue.putByteArray(key, publicKey.key.toByteArray())
+        prefs.putByteArray(key, publicKey.key.toByteArray())
     }
 
     suspend fun setEmoji(id: Long, emoji: CharSequence) {
         val key = key(WALLET_EMOJI, id)
-        keyValue.putString(key, emoji.toString())
+        prefs.putString(key, emoji.toString())
     }
 
-    private suspend fun getEmoji(id: Long): String {
-        val value = keyValue.getString(key(WALLET_EMOJI, id))
+    private fun getEmoji(id: Long): String {
+        val value = prefs.getString(key(WALLET_EMOJI, id), null)
         if (value.isNullOrBlank()) {
             return "\uD83D\uDE00"
         }
         return value
     }
 
-    suspend fun setColor(id: Long, color: Int) {
-        keyValue.putInt(key(WALLET_COLOR, id), color)
+    fun setColor(id: Long, color: Int) {
+        prefs.putInt(key(WALLET_COLOR, id), color)
     }
 
-    private suspend fun getColor(id: Long): Int {
-        val value = keyValue.getInt(key(WALLET_COLOR, id))
+    private fun getColor(id: Long): Int {
+        val value = prefs.getInt(key(WALLET_COLOR, id), 0)
         if (value == 0) {
             return Color.parseColor("#2E3847")
         }
         return value
     }
 
-    private suspend fun setSource(id: Long, source: WalletSource) {
-        keyValue.putString(key(WALLET_SOURCE, id), source.name)
+    private fun setSource(id: Long, source: WalletSource) {
+        prefs.putString(key(WALLET_SOURCE, id), source.name)
     }
 
-    private suspend fun getSource(id: Long): WalletSource {
-        val value = keyValue.getString(key(WALLET_SOURCE, id))
+    private fun getSource(id: Long): WalletSource {
+        val value = prefs.getString(key(WALLET_SOURCE, id), null)
         return WalletSource.valueOf(value ?: WalletSource.Default.name)
     }
 
     fun hasWallet(): Boolean {
-        return keyValue.contains(WALLET_IDS_KEY)
+        return prefs.contains(WALLET_IDS_KEY)
     }
 
     suspend fun delete(id: Long) {
-        keyValue.remove(key(WALLET_NAME, id))
-        keyValue.remove(key(WALLET_PUBLIC_KEY, id))
-        keyValue.remove(key(WALLET_TYPE, id))
-        keyValue.remove(key(WALLET_EMOJI, id))
-        keyValue.remove(key(WALLET_COLOR, id))
-        keyValue.remove(key(WALLET_VERSION, id))
-        keyValue.remove(key(WALLET_SOURCE, id))
-
+        prefs.edit {
+            remove(key(WALLET_NAME, id))
+            remove(key(WALLET_PUBLIC_KEY, id))
+            remove(key(WALLET_TYPE, id))
+            remove(key(WALLET_EMOJI, id))
+            remove(key(WALLET_COLOR, id))
+            remove(key(WALLET_VERSION, id))
+            remove(key(WALLET_SOURCE, id))
+        }
         deleteId(id)
     }
 
@@ -148,8 +157,8 @@ internal class Wallets(
         return "${prefix}_$id"
     }
 
-    suspend fun getIds(): LongArray {
-        return keyValue.getLongArray(WALLET_IDS_KEY)
+    fun getIds(): LongArray {
+        return prefs.getLongArray(WALLET_IDS_KEY)
     }
 
     private suspend fun addId(id: Long) {
@@ -166,9 +175,9 @@ internal class Wallets(
 
     private suspend fun setIds(ids: LongArray) {
         if (ids.isEmpty()) {
-            keyValue.remove(WALLET_IDS_KEY)
+            prefs.remove(WALLET_IDS_KEY)
         } else {
-            keyValue.putLongArray(WALLET_IDS_KEY, ids)
+            prefs.putLongArray(WALLET_IDS_KEY, ids)
         }
     }
 }

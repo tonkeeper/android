@@ -3,14 +3,11 @@ package com.tonapps.tonkeeper.core.signer
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.hex
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
-import org.ton.crypto.base64
 import org.ton.crypto.hex
-import ton.extensions.base64
 
 object SignerApp {
 

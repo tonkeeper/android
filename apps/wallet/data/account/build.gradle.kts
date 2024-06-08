@@ -37,6 +37,4 @@ dependencies {
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.sqlite))
-
-    implementation(project(Dependence.Module.core))
 }

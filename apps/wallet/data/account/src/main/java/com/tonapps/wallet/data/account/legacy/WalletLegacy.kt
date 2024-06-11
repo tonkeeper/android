@@ -17,7 +17,7 @@ import org.ton.block.StateInit
 import org.ton.cell.Cell
 
 data class WalletLegacy(
-    val id: Long,
+    val id: String,
     val name: String,
     val publicKey: PublicKeyEd25519,
     val type: WalletType,

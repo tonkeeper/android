@@ -5,6 +5,7 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.extensions.clear
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putLong
+import com.tonapps.extensions.putString
 import com.tonapps.wallet.data.account.legacy.DebugWallet
 import com.tonapps.wallet.data.account.legacy.IsDebug
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
@@ -19,11 +20,11 @@ internal class WalletStorage(context: Context) {
     private val keyValue = context.prefs("tonkeeper_def")
     private val wallets = Wallets(keyValue)
 
-    suspend fun getSeed(id: Long): ByteArray? {
+    suspend fun getSeed(id: String): ByteArray? {
         return mnemonicStorage.getSeed(id)
     }
 
-    suspend fun setSeed(id: Long, seed: ByteArray) {
+    suspend fun setSeed(id: String, seed: ByteArray) {
         mnemonicStorage.setSeed(id, seed)
     }
 
@@ -40,20 +41,20 @@ internal class WalletStorage(context: Context) {
         return wallets.hasWallet()
     }
 
-    suspend fun setWalletName(createDate: Long, name: String?) {
-        wallets.setName(createDate, name)
+    suspend fun setWalletName(id: String, name: String?) {
+        wallets.setName(id, name)
     }
 
-    suspend fun setWalletEmoji(createDate: Long, emoji: CharSequence) {
-        wallets.setEmoji(createDate, emoji)
+    suspend fun setWalletEmoji(id: String, emoji: CharSequence) {
+        wallets.setEmoji(id, emoji)
     }
 
-    suspend fun setWalletColor(createDate: Long, color: Int) {
-        wallets.setColor(createDate, color)
+    suspend fun setWalletColor(id: String, color: Int) {
+        wallets.setColor(id, color)
     }
 
-    suspend fun setWalletVersion(createDate: Long, version: WalletVersion) {
-        wallets.setVersion(createDate, version)
+    suspend fun setWalletVersion(id: String, version: WalletVersion) {
+        wallets.setVersion(id, version)
     }
 
     suspend fun clearAll() {
@@ -61,9 +62,9 @@ internal class WalletStorage(context: Context) {
         keyValue.clear()
     }
 
-    suspend fun deleteWallet(createDate: Long) {
-        mnemonicStorage.delete(createDate)
-        wallets.delete(createDate)
+    suspend fun deleteWallet(id: String) {
+        mnemonicStorage.delete(id)
+        wallets.delete(id)
         wallets.getIds().firstOrNull()?.let {
             setSelectedWallet(it)
         }
@@ -73,12 +74,12 @@ internal class WalletStorage(context: Context) {
         return keyValue.getLong(CURRENT_WALLET_KEY, 0)
     }
 
-    suspend fun setSelectedWallet(walletId: Long) {
-        keyValue.putLong(CURRENT_WALLET_KEY, walletId)
+    suspend fun setSelectedWallet(id: String) {
+        keyValue.putString(CURRENT_WALLET_KEY, id)
     }
 
     suspend fun getWallet(
-        id: Long = 0,
+        id: String = "0",
     ): WalletLegacy? {
         return wallets.get(id)
     }
@@ -100,7 +101,7 @@ internal class WalletStorage(context: Context) {
         return wallets.values.toList()
     }
 
-    suspend fun getMnemonic(id: Long): List<String> {
+    suspend fun getMnemonic(id: String): List<String> {
         return mnemonicStorage.get(id)
     }
 }

@@ -38,11 +38,23 @@ fun Context.rawText(@RawRes id: Int): String {
 val Context.packageInfo: PackageInfo
     get() = packageManager.getPackageInfo(packageName, 0)
 
+val Context.appVersionName: String
+    get() = packageInfo.versionName
+
+val Context.appVersionCode: Long
+    get() = packageInfo.versionCodeCompat
+
+val Context.isMainVersion: Boolean
+    get() = packageInfo.packageName == "com.ton_keeper"
+
 fun Context.prefs(name: String): SharedPreferences {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
 
 fun Context.prefsEncrypted(name: String): SharedPreferences {
+    if (isMainVersion) {
+        return prefs(name)
+    }
     return EncryptedSharedPreferences.create(
         name,
         MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),

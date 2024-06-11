@@ -19,30 +19,30 @@ internal class MnemonicStorage(context: Context) {
 
     private val encryptedKeyValue = context.prefsEncrypted("tonkeeper")
 
-    suspend fun getSeed(id: Long): ByteArray? = withContext(Dispatchers.IO) {
+    suspend fun getSeed(id: String): ByteArray? = withContext(Dispatchers.IO) {
         val key = keySeed(id)
         encryptedKeyValue.getByteArray(key)
     }
 
-    suspend fun setSeed(id: Long, seed: ByteArray) = withContext(Dispatchers.IO) {
+    suspend fun setSeed(id: String, seed: ByteArray) = withContext(Dispatchers.IO) {
         val key = keySeed(id)
         encryptedKeyValue.putByteArray(key, seed)
     }
 
-    suspend fun add(id: Long, mnemonic: List<String>) = withContext(Dispatchers.IO) {
+    suspend fun add(id: String, mnemonic: List<String>) = withContext(Dispatchers.IO) {
         val key = keyWords(id)
         if (mnemonic.isNotEmpty()) {
             encryptedKeyValue.putString(key, mnemonic.joinToString(","))
         }
     }
 
-    suspend fun get(id: Long): List<String> = withContext(Dispatchers.IO) {
+    suspend fun get(id: String): List<String> = withContext(Dispatchers.IO) {
         val key = keyWords(id)
         val words = encryptedKeyValue.getString(key, null)?.split(",")
         words ?: emptyList()
     }
 
-    suspend fun delete(id: Long) = withContext(Dispatchers.IO) {
+    suspend fun delete(id: String) = withContext(Dispatchers.IO) {
         val key = keyWords(id)
         encryptedKeyValue.remove(key)
     }
@@ -51,15 +51,15 @@ internal class MnemonicStorage(context: Context) {
         encryptedKeyValue.clear()
     }
 
-    private fun keyWords(id: Long): String {
-        if (id == 0L) {
+    private fun keyWords(id: String): String {
+        if (id == "0" || id.isBlank()) {
             return WORDS_KEY
         }
         return "${WORDS_KEY}_$id"
     }
 
-    private fun keySeed(id: Long): String {
-        if (id == 0L) {
+    private fun keySeed(id: String): String {
+        if (id == "0" || id.isBlank()) {
             return SEED_KEY
         }
         return "${SEED_KEY}_$id"

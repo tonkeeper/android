@@ -37,11 +37,13 @@
             <option value="$PROJECT_DIR$/apps/wallet/data/tokens" />
             <option value="$PROJECT_DIR$/apps/wallet/data/tonconnect" />
             <option value="$PROJECT_DIR$/apps/wallet/instance" />
+            <option value="$PROJECT_DIR$/apps/wallet/instance/app" />
+            <option value="$PROJECT_DIR$/apps/wallet/instance/main" />
+            <option value="$PROJECT_DIR$/apps/wallet/instance/x" />
             <option value="$PROJECT_DIR$/apps/wallet/localization" />
             <option value="$PROJECT_DIR$/baselineprofile" />
             <option value="$PROJECT_DIR$/baselineprofile/x" />
             <option value="$PROJECT_DIR$/buildSrc" />
-            <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/lib" />
             <option value="$PROJECT_DIR$/lib/blockchain" />
             <option value="$PROJECT_DIR$/lib/emoji" />
@@ -51,7 +53,6 @@
             <option value="$PROJECT_DIR$/lib/qr" />
             <option value="$PROJECT_DIR$/lib/security" />
             <option value="$PROJECT_DIR$/lib/sqlite" />
-            <option value="$PROJECT_DIR$/ton" />
             <option value="$PROJECT_DIR$/tonapi" />
             <option value="$PROJECT_DIR$/ui" />
             <option value="$PROJECT_DIR$/ui/blur" />

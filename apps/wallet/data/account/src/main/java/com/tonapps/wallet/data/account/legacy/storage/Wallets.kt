@@ -5,11 +5,11 @@ import android.graphics.Color
 import androidx.core.content.edit
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.extensions.getByteArray
-import com.tonapps.extensions.getLongArray
+import com.tonapps.extensions.getStringArray
 import com.tonapps.extensions.putByteArray
 import com.tonapps.extensions.putInt
-import com.tonapps.extensions.putLongArray
 import com.tonapps.extensions.putString
+import com.tonapps.extensions.putStringArray
 import com.tonapps.extensions.remove
 import com.tonapps.wallet.data.account.WalletSource
 import org.ton.api.pub.PublicKeyEd25519
@@ -31,7 +31,7 @@ internal class Wallets(
         private const val WALLET_SOURCE = "source"
     }
 
-    suspend fun get(id: Long): WalletLegacy? {
+    suspend fun get(id: String): WalletLegacy? {
         val publicKey = getPublicKey(id) ?: return null
         val name = getName(id)
         return WalletLegacy(
@@ -58,28 +58,28 @@ internal class Wallets(
         addId(wallet.id)
     }
 
-    suspend fun setName(id: Long, name: String?) {
+    suspend fun setName(id: String, name: String?) {
         val key = key(WALLET_NAME, id)
         if (!name.isNullOrBlank()) {
             prefs.putString(key, name)
         }
     }
 
-    suspend fun setVersion(id: Long, version: WalletVersion) {
+    suspend fun setVersion(id: String, version: WalletVersion) {
         val key = key(WALLET_VERSION, id)
         prefs.putString(key, version.name)
     }
 
-    private suspend fun getVersion(id: Long): WalletVersion {
+    private suspend fun getVersion(id: String): WalletVersion {
         val type = prefs.getString(key(WALLET_VERSION, id), null)?.let { WalletVersion.valueOf(it) }
         return type ?: WalletVersion.V4R2
     }
 
-    private suspend fun setType(id: Long, type: WalletType) {
+    private suspend fun setType(id: String, type: WalletType) {
         prefs.putString(key(WALLET_TYPE, id), type.name)
     }
 
-    private suspend fun getName(id: Long): String {
+    private suspend fun getName(id: String): String {
         val name = prefs.getString(key(WALLET_NAME, id), null)
         if (name.isNullOrBlank()) {
             return "Wallet"
@@ -87,27 +87,27 @@ internal class Wallets(
         return name
     }
 
-    private suspend fun getType(id: Long): WalletType {
+    private suspend fun getType(id: String): WalletType {
         val type = prefs.getString(key(WALLET_TYPE, id), null)?.let { WalletType.valueOf(it) }
         return type ?: WalletType.Default
     }
 
-    private suspend fun getPublicKey(id: Long): PublicKeyEd25519? {
+    private suspend fun getPublicKey(id: String): PublicKeyEd25519? {
         val key = key(WALLET_PUBLIC_KEY, id)
         return prefs.getByteArray(key)?.let { PublicKeyEd25519(it) }
     }
 
-    private suspend fun setPublicKey(id: Long, publicKey: PublicKeyEd25519) {
+    private suspend fun setPublicKey(id: String, publicKey: PublicKeyEd25519) {
         val key = key(WALLET_PUBLIC_KEY, id)
         prefs.putByteArray(key, publicKey.key.toByteArray())
     }
 
-    suspend fun setEmoji(id: Long, emoji: CharSequence) {
+    suspend fun setEmoji(id: String, emoji: CharSequence) {
         val key = key(WALLET_EMOJI, id)
         prefs.putString(key, emoji.toString())
     }
 
-    private fun getEmoji(id: Long): String {
+    private fun getEmoji(id: String): String {
         val value = prefs.getString(key(WALLET_EMOJI, id), null)
         if (value.isNullOrBlank()) {
             return "\uD83D\uDE00"
@@ -115,11 +115,11 @@ internal class Wallets(
         return value
     }
 
-    fun setColor(id: Long, color: Int) {
+    fun setColor(id: String, color: Int) {
         prefs.putInt(key(WALLET_COLOR, id), color)
     }
 
-    private fun getColor(id: Long): Int {
+    private fun getColor(id: String): Int {
         val value = prefs.getInt(key(WALLET_COLOR, id), 0)
         if (value == 0) {
             return Color.parseColor("#2E3847")
@@ -127,11 +127,11 @@ internal class Wallets(
         return value
     }
 
-    private fun setSource(id: Long, source: WalletSource) {
+    private fun setSource(id: String, source: WalletSource) {
         prefs.putString(key(WALLET_SOURCE, id), source.name)
     }
 
-    private fun getSource(id: Long): WalletSource {
+    private fun getSource(id: String): WalletSource {
         val value = prefs.getString(key(WALLET_SOURCE, id), null)
         return WalletSource.valueOf(value ?: WalletSource.Default.name)
     }
@@ -140,7 +140,7 @@ internal class Wallets(
         return prefs.contains(WALLET_IDS_KEY)
     }
 
-    suspend fun delete(id: Long) {
+    suspend fun delete(id: String) {
         prefs.edit {
             remove(key(WALLET_NAME, id))
             remove(key(WALLET_PUBLIC_KEY, id))
@@ -153,31 +153,31 @@ internal class Wallets(
         deleteId(id)
     }
 
-    private fun key(prefix: String, id: Long): String {
+    private fun key(prefix: String, id: String): String {
         return "${prefix}_$id"
     }
 
-    fun getIds(): LongArray {
-        return prefs.getLongArray(WALLET_IDS_KEY)
+    fun getIds(): Array<String> {
+        return prefs.getStringArray(WALLET_IDS_KEY)
     }
 
-    private suspend fun addId(id: Long) {
+    private suspend fun addId(id: String) {
         val ids = getIds().toMutableList()
         ids.add(id)
-        setIds(ids.distinct().toLongArray())
+        setIds(ids.distinct().toTypedArray())
     }
 
-    private suspend fun deleteId(id: Long) {
+    private suspend fun deleteId(id: String) {
         val ids = getIds().toMutableList()
         ids.remove(id)
-        setIds(ids.toLongArray())
+        setIds(ids.distinct().toTypedArray())
     }
 
-    private suspend fun setIds(ids: LongArray) {
+    private suspend fun setIds(ids: Array<String>) {
         if (ids.isEmpty()) {
             prefs.remove(WALLET_IDS_KEY)
         } else {
-            prefs.putLongArray(WALLET_IDS_KEY, ids)
+            prefs.putStringArray(WALLET_IDS_KEY, ids)
         }
     }
 }

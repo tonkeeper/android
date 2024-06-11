@@ -11,7 +11,11 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.backport.data.RNWallet
+import com.tonapps.wallet.data.account.backport.data.RNWallet.Companion.originalType
+import com.tonapps.wallet.data.account.backport.data.RNWallets
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import io.ktor.util.hex
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
@@ -20,7 +24,7 @@ import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 
 data class WalletEntity(
-    val id: Long,
+    val id: String,
     val publicKey: PublicKeyEd25519,
     val type: WalletType,
     val version: WalletVersion = WalletVersion.V4R2,
@@ -43,6 +47,19 @@ data class WalletEntity(
             color = legacy.color
         ),
         source = legacy.source
+    )
+
+    constructor(rn: RNWallet) : this(
+        id = rn.identifier,
+        publicKey = PublicKeyEd25519(hex(rn.pubkey)),
+        type = if (rn.network == RNWallet.Network.Testnet) WalletType.Testnet else rn.type.originalType,
+        version = rn.version.originalType,
+        label = WalletLabel(rn),
+        source = when (rn.type) {
+            RNWallet.Type.Signer -> WalletSource.SingerQR
+            RNWallet.Type.SignerDeeplink -> WalletSource.SingerApp
+            else -> WalletSource.Default
+        }
     )
 
     val contract: BaseWalletContract = when (version) {

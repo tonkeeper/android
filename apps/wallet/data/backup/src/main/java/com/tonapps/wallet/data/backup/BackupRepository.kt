@@ -36,7 +36,7 @@ class BackupRepository(
         return entity
     }
 
-    fun addBackup(walletId: Long, source: BackupEntity.Source): BackupEntity {
+    fun addBackup(walletId: String, source: BackupEntity.Source): BackupEntity {
         val entity = localDataSource.addBackup(walletId, source)
         _stream.value = _stream.value?.plus(entity) ?: listOf(entity)
         return entity

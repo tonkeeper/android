@@ -67,7 +67,7 @@ class SettingsRepository(
     private val _searchEngineFlow = MutableEffectFlow<SearchEngine>()
     val searchEngineFlow = _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _walletPush = MutableStateFlow<Map<Long, Boolean>?>(null)
+    private val _walletPush = MutableStateFlow<Map<String, Boolean>?>(null)
     val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _amountInputCurrencyFlow = MutableStateFlow<Boolean?>(null)
@@ -175,11 +175,11 @@ class SettingsRepository(
             }
         }
 
-    private fun pushWalletKey(walletId: Long) = "$PUSH_WALLET_PREFIX$walletId"
+    private fun pushWalletKey(walletId: String) = "$PUSH_WALLET_PREFIX$walletId"
 
-    fun getPushWallet(walletId: Long): Boolean = prefs.getBoolean(pushWalletKey(walletId), false)
+    fun getPushWallet(walletId: String): Boolean = prefs.getBoolean(pushWalletKey(walletId), false)
 
-    fun setPushWallet(walletId: Long, value: Boolean) {
+    fun setPushWallet(walletId: String, value: Boolean) {
         prefs.edit().putBoolean(pushWalletKey(walletId), value).apply()
 
         val map = (_walletPush.value ?: mapOf()).toMutableMap()
@@ -187,25 +187,25 @@ class SettingsRepository(
         _walletPush.tryEmit(map)
     }
 
-    fun setTokenHidden(walletId: Long, tokenAddress: String, hidden: Boolean) {
+    fun setTokenHidden(walletId: String, tokenAddress: String, hidden: Boolean) {
         tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
     }
 
-    fun setTokenPinned(walletId: Long, tokenAddress: String, pinned: Boolean) {
+    fun setTokenPinned(walletId: String, tokenAddress: String, pinned: Boolean) {
         tokenPrefsFolder.setPinned(walletId, tokenAddress, pinned)
     }
 
-    fun setTokensSort(walletId: Long, tokensAddress: List<String>) {
+    fun setTokensSort(walletId: String, tokensAddress: List<String>) {
         tokenPrefsFolder.setSort(walletId, tokensAddress)
     }
 
-    fun setWalletsSort(walletIds: List<Long>) {
+    fun setWalletsSort(walletIds: List<String>) {
         walletPrefsFolder.setSort(walletIds)
     }
 
-    fun getWalletPrefs(walletId: Long) = walletPrefsFolder.get(walletId)
+    fun getWalletPrefs(walletId: String) = walletPrefsFolder.get(walletId)
 
-    fun getTokenPrefs(walletId: Long, tokenAddress: String): TokenPrefsEntity {
+    fun getTokenPrefs(walletId: String, tokenAddress: String): TokenPrefsEntity {
         return tokenPrefsFolder.get(walletId, tokenAddress)
     }
 

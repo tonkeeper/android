@@ -36,7 +36,7 @@ abstract class BaseWalletContract(
         const val DEFAULT_WALLET_ID: Int = 698983191
 
         fun create(publicKey: PublicKeyEd25519, v: String): BaseWalletContract {
-            return when(v) {
+            return when(v.lowercase()) {
                 "v3r1" -> WalletV3R1Contract(publicKey = publicKey)
                 "v3r2" -> WalletV3R2Contract(publicKey = publicKey)
                 "v4r1" -> WalletV4R1Contract(publicKey = publicKey)

@@ -9,14 +9,14 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
         private const val SORT_PREFIX = "sort_"
     }
 
-    fun get(walletId: Long): WalletPrefsEntity {
+    fun get(walletId: String): WalletPrefsEntity {
         val index = getInt(keySort(walletId))
         return WalletPrefsEntity(
             index = index
         )
     }
 
-    fun setSort(walletIds: List<Long>) {
+    fun setSort(walletIds: List<String>) {
         edit {
             for ((index, walletId) in walletIds.withIndex()) {
                 putInt(keySort(walletId), index)
@@ -24,11 +24,11 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
         }
     }
 
-    private fun keySort(walletId: Long): String {
+    private fun keySort(walletId: String): String {
         return key(SORT_PREFIX, walletId)
     }
 
-    private fun key(prefix: String, walletId: Long): String {
+    private fun key(prefix: String, walletId: String): String {
         return "$prefix$walletId"
     }
 }

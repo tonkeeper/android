@@ -20,7 +20,7 @@ class ScreenCacheSource(
 
     inline fun <reified T: Parcelable> get(
         name: String,
-        walletId: Long,
+        walletId: String,
         block: (parcel: Parcel) -> T
     ): List<T> {
         val bytes = getData(name, walletId)
@@ -33,7 +33,7 @@ class ScreenCacheSource(
 
     fun getData(
         name: String,
-        walletId: Long,
+        walletId: String,
     ): ByteArray {
         val file = getFile(name, walletId)
         if (!file.exists() || file.length() == 0L) {
@@ -44,7 +44,7 @@ class ScreenCacheSource(
 
     fun set(
         name: String,
-        walletId: Long,
+        walletId: String,
         list: List<Parcelable>
     ) {
         val file = getFile(name, walletId)
@@ -62,7 +62,7 @@ class ScreenCacheSource(
         return rootFolder.folder(name)
     }
 
-    private fun getFile(name: String, walletId: Long): File {
+    private fun getFile(name: String, walletId: String): File {
         val folder = getFolder(name)
         val filename = "$walletId.dat"
         return folder.file(filename)

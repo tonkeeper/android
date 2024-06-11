@@ -4,15 +4,14 @@ import android.content.Context
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.prefs
 import com.tonapps.security.CryptoBox
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletProof
-import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.ProofDomainEntity
 import org.ton.crypto.base64
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.account.repository.BaseWalletRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppItemEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
@@ -28,17 +27,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
@@ -49,7 +43,7 @@ class TonConnectRepository(
     private val scope: CoroutineScope,
     private val context: Context,
     private val api: API,
-    private val walletRepository: WalletRepository,
+    private val walletRepository: BaseWalletRepository,
 ) {
 
     private val localDataSource = LocalDataSource(context)
@@ -72,7 +66,7 @@ class TonConnectRepository(
         }
     }
 
-    fun setPushEnabled(walletId: Long, url: String, enabled: Boolean) {
+    fun setPushEnabled(walletId: String, url: String, enabled: Boolean) {
         val app = localDataSource.getApp(walletId, url) ?: return
         if (app.enablePush != enabled) {
             setPushEnabled(app, enabled)
@@ -127,7 +121,7 @@ class TonConnectRepository(
         accountId: String,
         testnet: Boolean,
         clientId: String,
-        walletId: Long,
+        walletId: String,
         enablePush: Boolean,
     ): DAppEntity = withContext(Dispatchers.IO) {
         val keyPair = CryptoBox.keyPair()
@@ -209,7 +203,7 @@ class TonConnectRepository(
         app: DAppEntity,
         firebaseToken: String
     ) {
-        val wallet = walletRepository.getWallet(app.walletId) ?: return
+        val wallet = walletRepository.getWalletById(app.walletId) ?: return
         subscribePush(wallet, app, firebaseToken)
     }
 

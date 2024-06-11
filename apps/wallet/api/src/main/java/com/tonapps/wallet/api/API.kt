@@ -116,7 +116,11 @@ class API(
         accountId: String,
         testnet: Boolean
     ): BalanceEntity {
-        val account = accounts(testnet).getAccount(accountId)
+        val account = getAccount(accountId, testnet) ?: return BalanceEntity(
+            token = TokenEntity.TON,
+            value = Coins.ZERO,
+            walletAddress = accountId
+        )
         return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
     }
 
@@ -141,7 +145,7 @@ class API(
         testnet: Boolean
     ): AccountDetailsEntity? {
         return try {
-            val account = accounts(testnet).getAccount(query)
+            val account = getAccount(query, testnet) ?: return null
             AccountDetailsEntity(query, account, testnet)
         } catch (e: Throwable) {
             null

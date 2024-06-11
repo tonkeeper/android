@@ -41,7 +41,9 @@ include(":lib:emoji")
 include(":lib:blockchain")
 include(":lib:sqlite")
 
-include(":apps:wallet:instance")
+include(":apps:wallet:instance:app")
+include(":apps:wallet:instance:main")
+include(":apps:wallet:instance:x")
 include(":apps:wallet:localization")
 include(":apps:wallet:api")
 

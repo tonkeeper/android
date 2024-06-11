@@ -11,17 +11,17 @@ internal class Extras(
 
     private val prefs = context.securePrefs("wallet_extras")
 
-    fun getTonProofToken(walletId: Long): String? {
+    fun getTonProofToken(walletId: String): String? {
         return prefs.getString(tonProofToken(walletId), null)
     }
 
-    fun setTonProofToken(walletId: Long, token: String) {
+    fun setTonProofToken(walletId: String, token: String) {
         prefs.edit().putString(tonProofToken(walletId), token).apply()
     }
 
     private companion object {
 
-        private fun tonProofToken(walletId: Long): String {
+        private fun tonProofToken(walletId: String): String {
             return "ton_proof_token:$walletId"
         }
     }

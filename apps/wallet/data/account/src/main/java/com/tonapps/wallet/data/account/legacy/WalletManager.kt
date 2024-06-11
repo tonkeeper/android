@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account.legacy
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
@@ -19,7 +20,7 @@ import org.ton.crypto.hex
 
 // TODO refactor WalletManager
 class WalletManager(
-    application: Application
+    application: Context
 ) {
 
     companion object {
@@ -35,11 +36,11 @@ class WalletManager(
         return storage.hasWallet()
     }
 
-    suspend fun getMnemonic(id: Long): List<String> {
+    suspend fun getMnemonic(id: String): List<String> {
         return storage.getMnemonic(id)
     }
 
-    suspend fun getPrivateKey(id: Long): PrivateKeyEd25519 {
+    suspend fun getPrivateKey(id: String): PrivateKeyEd25519 {
         val seed = getSeed(id)
         if (seed.isEmpty()) {
             return EmptyPrivateKeyEd25519
@@ -47,7 +48,7 @@ class WalletManager(
         return PrivateKeyEd25519(seed)
     }
 
-    private suspend fun getSeed(id: Long): ByteArray {
+    private suspend fun getSeed(id: String): ByteArray {
         val seed = storage.getSeed(id)
         if (seed != null) {
             return seed
@@ -55,7 +56,7 @@ class WalletManager(
         return createSeed(id)
     }
 
-    private suspend fun createSeed(id: Long): ByteArray {
+    private suspend fun createSeed(id: String): ByteArray {
         val mnemonic = getMnemonic(id)
         if (mnemonic.isEmpty()) {
             return ByteArray(0)
@@ -66,7 +67,7 @@ class WalletManager(
     }
 
     suspend fun edit(
-        id: Long,
+        id: String,
         name: String,
         emoji: CharSequence,
         color: Int
@@ -79,7 +80,7 @@ class WalletManager(
         getWalletInfo()
     }
 
-    suspend fun setWalletVersion(id: Long, version: WalletVersion) {
+    suspend fun setWalletVersion(id: String, version: WalletVersion) {
         storage.setWalletVersion(id, version)
         cacheWallets = mutableListOf()
         cacheWallet = null
@@ -87,34 +88,34 @@ class WalletManager(
 
     private suspend fun getIdAddress(
         address: String
-    ): Long {
+    ): String {
         val wallets = getWallets()
         val wallet = wallets.find { it.address == address || it.accountId == address }
-        return wallet?.id ?: 0
+        return wallet?.id ?: "0"
     }
 
     suspend fun logout() {
-        logout(getActiveWallet())
+        logoutById(getActiveWallet())
     }
 
-    suspend fun logout(address: String? = null) {
+    suspend fun logoutByAddress(address: String? = null) {
         if (address == null) {
             logout()
             return
         }
 
-        val createDate = getIdAddress(address)
-        logout(createDate)
+        val id = getIdAddress(address)
+        logoutById(id)
     }
 
-    suspend fun logout(
-        createDate: Long
+    suspend fun logoutById(
+        id: String
     ) = withContext(Dispatchers.IO) {
         val currentWallets = getWallets()
         if (1 >= currentWallets.size) {
             clearAll()
         } else {
-            val wallet = currentWallets.find { it.id == createDate } ?: return@withContext
+            val wallet = currentWallets.find { it.id == id } ?: return@withContext
 
             storage.deleteWallet(wallet.id)
             cacheWallets.remove(wallet)
@@ -125,7 +126,7 @@ class WalletManager(
         }
     }
 
-    suspend fun clear(walletId: Long) {
+    suspend fun clear(walletId: String) {
         storage.deleteWallet(walletId)
         cacheWallets.clear()
         cacheWallet = null
@@ -168,14 +169,14 @@ class WalletManager(
         cacheWallets.toList()
     }
 
-    suspend fun getActiveWallet(): Long {
+    suspend fun getActiveWallet(): String {
         if (IsDebug) {
-            return DebugWallet.id
+            return DebugWallet.id.toString()
         }
-        return storage.getSelectedWallet()
+        return storage.getSelectedWallet().toString()
     }
 
-    suspend fun setActiveWallet(walletId: Long): WalletLegacy? {
+    suspend fun setActiveWallet(walletId: String): WalletLegacy? {
         storage.setSelectedWallet(walletId)
         cacheWallet = null
 
@@ -192,7 +193,7 @@ class WalletManager(
         source: WalletSource = WalletSource.Default
     ): WalletLegacy = withContext(Dispatchers.IO) {
         val wallet = WalletLegacy(
-            id = System.currentTimeMillis(),
+            id = System.currentTimeMillis().toString(),
             name = name,
             publicKey = publicKey,
             type = if (singer) {
@@ -225,7 +226,7 @@ class WalletManager(
         val publicKey = privateKey.publicKey()
 
         val wallet = WalletLegacy(
-            id = System.currentTimeMillis(),
+            id = System.currentTimeMillis().toString(),
             name = name,
             publicKey = publicKey,
             type = if (testnet) WalletType.Testnet else WalletType.Default,
@@ -251,7 +252,7 @@ class WalletManager(
         source: WalletSource,
     ): WalletLegacy = withContext(Dispatchers.IO) {
         val wallet = WalletLegacy(
-            id = System.currentTimeMillis(),
+            id = System.currentTimeMillis().toString(),
             name = name,
             publicKey = publicKey,
             type = if (testnet) WalletType.Testnet else WalletType.Default,

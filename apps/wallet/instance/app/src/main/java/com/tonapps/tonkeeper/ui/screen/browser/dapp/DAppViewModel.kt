@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
 import androidx.lifecycle.ViewModel
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import kotlinx.coroutines.Dispatchers
@@ -16,12 +16,12 @@ import uikit.extensions.collectFlow
 
 class DAppViewModel(
     private val url: String,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val tonConnectRepository: TonConnectRepository
 ): ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getApp() = walletRepository.activeWalletFlow.mapLatest {
+    fun getApp() = accountRepository.selectedWalletFlow.mapLatest {
         tonConnectRepository.getApp(url, it)
     }.flowOn(Dispatchers.IO).take(1)
 
@@ -44,7 +44,7 @@ class DAppViewModel(
     }
 
     private suspend fun get(url: String): Pair<WalletEntity, DAppEntity> {
-        val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
+        val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
         val app = tonConnectRepository.getApp(url, wallet) ?: throw IllegalStateException("No app")
         return wallet to app
     }

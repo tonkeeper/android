@@ -9,7 +9,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.push.PushManager
@@ -35,7 +35,7 @@ import uikit.extensions.collectFlow
 
 class EventsViewModel(
     private val application: Application,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val networkMonitor: NetworkMonitor,
     private val tonConnectRepository: TonConnectRepository,
@@ -52,30 +52,30 @@ class EventsViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
-        collectFlow(walletRepository.activeWalletFlow.map { getCached(it) }.flowOn(Dispatchers.IO)) { items ->
+        collectFlow(accountRepository.selectedWalletFlow.map { getCached(it) }.flowOn(Dispatchers.IO)) { items ->
             if (!items.isNullOrEmpty()) {
                 _uiItemsFlow.value = items
             }
         }
 
         combine(
-            walletRepository.activeWalletFlow,
+            accountRepository.selectedWalletFlow,
             networkMonitor.isOnlineFlow
         ) { wallet, isOnline ->
             loadEvents(wallet, isOnline)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
-        collectFlow(walletRepository.realtimeEventsFlow.map { it.wallet }) { wallet ->
+        collectFlow(accountRepository.realtimeEventsFlow.map { it.wallet }) { wallet ->
             loadEvents(wallet, true)
         }
 
         collectFlow(pushManager.dAppPushFlow.filterNotNull()) {
-            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@collectFlow
+            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
             loadEvents(wallet, true)
         }
 
         collectFlow(settingsRepository.hiddenBalancesFlow.drop(1)) {
-            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@collectFlow
+            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
             val uiItems = _uiItemsFlow.value?.map {
                 if (it is HistoryItem.Event) {
                     it.copy(hiddenBalance = settingsRepository.hiddenBalances)
@@ -89,11 +89,11 @@ class EventsViewModel(
         }
     }
 
-    fun openQRCode() = walletRepository.activeWalletFlow.take(1)
+    fun openQRCode() = accountRepository.selectedWalletFlow.take(1)
 
     fun update() {
         viewModelScope.launch(Dispatchers.IO) {
-            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch
+            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
             loadLast(wallet, true)
         }
     }
@@ -166,7 +166,7 @@ class EventsViewModel(
         }
         val lastLt = lastLt() ?: return
         withUpdating {
-            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@withUpdating
+            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@withUpdating
             val oldValues = _uiItemsFlow.value ?: emptyList()
             _uiItemsFlow.value = historyHelper.withLoadingItem(oldValues)
             loadRemote(wallet, lastLt)

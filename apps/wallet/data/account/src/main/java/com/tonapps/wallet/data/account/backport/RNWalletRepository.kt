@@ -7,7 +7,6 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.backport.data.RNWallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletLabel
@@ -113,8 +112,7 @@ class RNWalletRepository(
     override suspend fun addWatchWallet(
         publicKey: PublicKeyEd25519,
         label: WalletLabel,
-        version: WalletVersion,
-        source: WalletSource
+        version: WalletVersion
     ): WalletEntity = withContext(Dispatchers.IO) {
         val contract = BaseWalletContract.create(publicKey, version.title)
 
@@ -184,8 +182,8 @@ class RNWalletRepository(
         name: String,
         emoji: CharSequence,
         color: Int,
-        source: WalletSource,
-        versions: List<WalletVersion>
+        versions: List<WalletVersion>,
+        qr: Boolean
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
         for (version in versions) {

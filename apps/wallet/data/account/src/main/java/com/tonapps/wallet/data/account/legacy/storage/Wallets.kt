@@ -11,7 +11,6 @@ import com.tonapps.extensions.putInt
 import com.tonapps.extensions.putString
 import com.tonapps.extensions.putStringArray
 import com.tonapps.extensions.remove
-import com.tonapps.wallet.data.account.WalletSource
 import org.ton.api.pub.PublicKeyEd25519
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.account.WalletType
@@ -28,7 +27,6 @@ internal class Wallets(
         private const val WALLET_VERSION = "version"
         private const val WALLET_EMOJI = "emoji"
         private const val WALLET_COLOR = "color"
-        private const val WALLET_SOURCE = "source"
     }
 
     suspend fun get(id: String): WalletLegacy? {
@@ -41,8 +39,7 @@ internal class Wallets(
             type = getType(id),
             version = getVersion(id),
             emoji = getEmoji(id),
-            color = getColor(id),
-            source = getSource(id)
+            color = getColor(id)
         )
     }
 
@@ -53,7 +50,6 @@ internal class Wallets(
         setEmoji(wallet.id, wallet.emoji)
         setColor(wallet.id, wallet.color)
         setVersion(wallet.id, wallet.version)
-        setSource(wallet.id, wallet.source)
 
         addId(wallet.id)
     }
@@ -127,15 +123,6 @@ internal class Wallets(
         return value
     }
 
-    private fun setSource(id: String, source: WalletSource) {
-        prefs.putString(key(WALLET_SOURCE, id), source.name)
-    }
-
-    private fun getSource(id: String): WalletSource {
-        val value = prefs.getString(key(WALLET_SOURCE, id), null)
-        return WalletSource.valueOf(value ?: WalletSource.Default.name)
-    }
-
     fun hasWallet(): Boolean {
         return prefs.contains(WALLET_IDS_KEY)
     }
@@ -148,7 +135,6 @@ internal class Wallets(
             remove(key(WALLET_EMOJI, id))
             remove(key(WALLET_COLOR, id))
             remove(key(WALLET_VERSION, id))
-            remove(key(WALLET_SOURCE, id))
         }
         deleteId(id)
     }

@@ -7,7 +7,7 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.Extras
 import com.tonapps.wallet.data.account.WalletProof
-import com.tonapps.wallet.data.account.WalletSource
+import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import com.tonapps.wallet.data.account.repository.BaseWalletRepository
@@ -67,7 +67,7 @@ class LegacyWalletRepository(
         val secretKey = getPrivateKey(wallet.id)
         val contract = wallet.contract
         val address = contract.address
-        val payload = api.tonconnectPayload()
+        val payload = api.tonconnectPayload() ?: return ""
         val proof = WalletProof.signTonkeeper(
             address = address,
             secretKey = secretKey,
@@ -125,7 +125,6 @@ class LegacyWalletRepository(
             emoji = label.emoji,
             color = label.color,
             testnet = false,
-            source = WalletSource.Default,
             version = WalletVersion.V4R2
         )
 
@@ -136,17 +135,15 @@ class LegacyWalletRepository(
     override suspend fun addWatchWallet(
         publicKey: PublicKeyEd25519,
         label: WalletLabel,
-        version: WalletVersion,
-        source: WalletSource
+        version: WalletVersion
     ): WalletEntity {
         val legacy = legacyManager.addWatchWallet(
             publicKey = publicKey,
             name = label.name,
             emoji = label.emoji,
             color = label.color,
-            singer = false,
-            version = version,
-            source = source
+            type = WalletType.Watch,
+            version = version
         )
 
         updateWallets()
@@ -176,8 +173,7 @@ class LegacyWalletRepository(
                 name = nameWithVersion ?: "Wallet",
                 emoji = emoji,
                 color = color,
-                testnet = testnet,
-                source = WalletSource.Default
+                testnet = testnet
             )
             list.add(WalletEntity(legacy))
         }
@@ -191,8 +187,8 @@ class LegacyWalletRepository(
         name: String,
         emoji: CharSequence,
         color: Int,
-        source: WalletSource,
-        versions: List<WalletVersion>
+        versions: List<WalletVersion>,
+        qr: Boolean
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
         for (version in versions) {
@@ -207,9 +203,8 @@ class LegacyWalletRepository(
                 name = nameWithVersion,
                 emoji = emoji,
                 color = color,
-                singer = true,
-                version = WalletVersion.V4R2,
-                source = source
+                type = if (qr) WalletType.SignerQR else WalletType.Signer,
+                version = WalletVersion.V4R2
             )
             list.add(WalletEntity(legacy))
         }

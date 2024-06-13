@@ -11,7 +11,7 @@ import com.tonapps.wallet.data.account.WalletProof
 import com.tonapps.wallet.data.account.entities.ProofDomainEntity
 import org.ton.crypto.base64
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppItemEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
@@ -43,13 +43,13 @@ class TonConnectRepository(
     private val scope: CoroutineScope,
     private val context: Context,
     private val api: API,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
 ) {
 
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
     private val prefs = context.prefs("tonconnect")
-    private val events = EventsHelper(prefs, walletRepository, api)
+    private val events = EventsHelper(prefs, accountRepository, api)
 
     private val _appsFlow = MutableStateFlow<List<DAppEntity>?>(null)
     val appsFlow = _appsFlow.asStateFlow().filterNotNull()
@@ -186,7 +186,7 @@ class TonConnectRepository(
         app: DAppEntity,
         firebaseToken: String
     ) {
-        val proofToken = walletRepository.getTonProofToken(wallet.id) ?: return
+        val proofToken = accountRepository.requestTonProofToken(wallet.id) ?: return
         val url = app.url.removeSuffix("/")
         api.pushTonconnectSubscribe(
             token = proofToken,
@@ -203,7 +203,7 @@ class TonConnectRepository(
         app: DAppEntity,
         firebaseToken: String
     ) {
-        val wallet = walletRepository.getWalletById(app.walletId) ?: return
+        val wallet = accountRepository.getWalletById(app.walletId) ?: return
         subscribePush(wallet, app, firebaseToken)
     }
 

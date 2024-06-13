@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -24,10 +25,9 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.api.entity.AccountEntity
 import com.tonapps.wallet.data.account.WalletColor
-import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletLabel
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
@@ -65,7 +65,7 @@ class InitViewModel(
     private val type: InitArgs.Type,
     application: Application,
     private val passcodeRepository: PasscodeRepository,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val tokenRepository: TokenRepository,
     private val collectiblesRepository: CollectiblesRepository,
     private val settingsRepository: SettingsRepository,
@@ -173,8 +173,8 @@ class InitViewModel(
     }
 
     suspend fun setMnemonic(words: List<String>) {
-        resolveWallets(words)
         savedState.mnemonic = words
+        resolveWallets(words)
     }
 
     fun setPublicKey(publicKey: PublicKeyEd25519?) {
@@ -182,18 +182,20 @@ class InitViewModel(
     }
 
     private suspend fun resolveWallets(mnemonic: List<String>) = withContext(Dispatchers.IO) {
-        val seed = Mnemonic.toSeed(mnemonic)
-        savedState.seed = seed
-        val privateKey = PrivateKeyEd25519(seed)
-        val publicKey = privateKey.publicKey()
-        resolveWallets(publicKey)
+        try {
+            val seed = Mnemonic.toSeed(mnemonic)
+            val privateKey = PrivateKeyEd25519(seed)
+            val publicKey = privateKey.publicKey()
+            resolveWallets(publicKey)
+        } catch (e: Throwable) {
+            Log.e("InitViewModelLog", "resolveWallets error", e)
+        }
     }
 
     private suspend fun resolveWallets(publicKey: PublicKeyEd25519) = withContext(Dispatchers.IO) {
         val accounts = api.resolvePublicKey(publicKey, testnet).filter {
             it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
         }.sortedByDescending { it.walletVersion.index }.toMutableList()
-
 
         if (accounts.count { it.walletVersion == WalletVersion.V4R2 } == 0) {
             val contract = WalletV4R2Contract(publicKey = publicKey)
@@ -240,6 +242,7 @@ class InitViewModel(
             )
             items.add(item)
         }
+
         setAccounts(items)
 
         if (items.size > 1) {
@@ -348,9 +351,10 @@ class InitViewModel(
                 val wallets = mutableListOf<WalletEntity>()
                 when (type) {
                     InitArgs.Type.Watch -> wallets.add(saveWatchWallet())
-                    InitArgs.Type.New -> wallets.add(createNewWallet())
+                    InitArgs.Type.New -> wallets.add(accountRepository.addNewWallet(getLabel()))
                     InitArgs.Type.Import, InitArgs.Type.Testnet -> wallets.addAll(importWallet())
-                    InitArgs.Type.Signer -> wallets.addAll(signerWallets())
+                    InitArgs.Type.Signer -> wallets.addAll(signerWallets(false))
+                    InitArgs.Type.SignerQR -> wallets.addAll(signerWallets(true))
                 }
 
                 if (type != InitArgs.Type.New) {
@@ -369,36 +373,28 @@ class InitViewModel(
         }
     }
 
-    private suspend fun createNewWallet(): WalletEntity {
-        return walletRepository.createNewWallet(getLabel())
-    }
-
     private suspend fun saveWatchWallet(): WalletEntity {
         val account = getWatchAccount() ?: throw IllegalStateException("Account is not set")
         val label = getLabel()
         val publicKey = getPublicKey(account.address)
 
-        return walletRepository.addWatchWallet(publicKey, label, account.walletVersion, WalletSource.Default)
+        return accountRepository.addWatchWallet(label, publicKey, account.walletVersion)
     }
 
     private suspend fun importWallet(): List<WalletEntity> {
         val versions = getSelectedAccounts().map { it.walletVersion }
         val mnemonic = savedState.mnemonic ?: throw IllegalStateException("Mnemonic is not set")
-        val seed = savedState.seed ?: throw IllegalStateException("Seed is not set")
         val label = getLabel()
-        val privateKey = PrivateKeyEd25519(seed)
-        val publicKey = privateKey.publicKey()
 
-        return walletRepository.addWallets(mnemonic, publicKey, versions, label.name, label.emoji, label.color, testnet)
+        return accountRepository.importWallet(label, mnemonic, versions, testnet)
     }
 
-    private suspend fun signerWallets(): List<WalletEntity> {
+    private suspend fun signerWallets(qr: Boolean): List<WalletEntity> {
         val versions = getSelectedAccounts().map { it.walletVersion }
         val label = getLabel()
         val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
-        val walletSource = savedState.walletSource ?: throw IllegalStateException("Wallet source is not set")
 
-        return walletRepository.addSignerWallet(publicKey, label.name, label.emoji, label.color, walletSource, versions)
+        return accountRepository.pairSigner(label, publicKey, versions, qr)
     }
 
     private fun getPublicKey(

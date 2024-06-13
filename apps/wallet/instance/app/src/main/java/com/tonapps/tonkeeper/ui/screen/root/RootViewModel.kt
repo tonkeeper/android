@@ -31,9 +31,8 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
@@ -57,6 +56,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -78,7 +78,7 @@ class RootViewModel(
     application: Application,
     private val passcodeRepository: PasscodeRepository,
     private val settingsRepository: SettingsRepository,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val signManager: SignManager,
     private val tonConnectRepository: TonConnectRepository,
     private val api: API,
@@ -116,13 +116,12 @@ class RootViewModel(
             biometric = settingsRepository.biometric
         )
 
-        walletRepository.walletsFlow.onEach { wallets ->
-            if (wallets.isEmpty()) {
-                ShortcutManagerCompat.removeAllDynamicShortcuts(application)
+        accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }.onEach { state ->
+            if (state is AccountRepository.SelectedState.Empty) {
                 _hasWalletFlow.tryEmit(false)
-            } else {
-                val wallet = walletRepository.activeWalletFlow.first()
-                val items = screenCacheSource.getWalletScreen(wallet)
+                ShortcutManagerCompat.removeAllDynamicShortcuts(application)
+            } else if (state is AccountRepository.SelectedState.Wallet) {
+                val items = screenCacheSource.getWalletScreen(state.wallet)
                 if (items.isNullOrEmpty()) {
                     _hasWalletFlow.tryEmit(true)
                 } else {
@@ -130,13 +129,17 @@ class RootViewModel(
                 }
             }
             Widget.updateAll()
+
+            val wallets = accountRepository.getWallets()
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
         combine(
-            walletRepository.walletsFlow,
-            walletRepository.activeWalletFlow,
-            settingsRepository.hiddenBalancesFlow,
-        ) { wallets, wallet, hiddenBalance ->
+            accountRepository.selectedWalletFlow,
+            settingsRepository.hiddenBalancesFlow
+        ) { wallet, hiddenBalance ->
+
+            val wallets = accountRepository.getWallets()
+
             val entities = wallets.map {
                 WalletExtendedEntity(
                     raw = it,
@@ -148,19 +151,21 @@ class RootViewModel(
             walletPickerAdapter.submitList(WalletPickerAdapter.map(sortedWallets, wallet, balances, hiddenBalance))
         }.launchIn(viewModelScope)
 
+
+
+
         viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.firebaseToken = GooglePushService.requestToken()
         }
 
-        collectFlow(walletRepository.activeWalletFlow, ::applyAnalyticsKeys)
-
-        combine(walletRepository.activeWalletFlow, walletRepository.walletsFlow, ::initShortcuts).flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        collectFlow(accountRepository.selectedWalletFlow, ::applyAnalyticsKeys)
+        collectFlow(accountRepository.selectedWalletFlow, ::initShortcuts)
     }
 
     private suspend fun initShortcuts(
-        currentWallet: WalletEntity,
-        wallets: List<WalletEntity>
-    ) {
+        currentWallet: WalletEntity
+    ) = withContext(Dispatchers.IO) {
+        val wallets = accountRepository.getWallets()
         val list = mutableListOf<ShortcutInfoCompat>()
         if (!currentWallet.testnet) {
             list.add(ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "ton://"))
@@ -203,7 +208,7 @@ class RootViewModel(
 
     fun signOut() {
         viewModelScope.launch {
-            walletRepository.clear()
+            accountRepository.logout()
             passcodeRepository.clear()
             hidePasscode()
         }
@@ -229,7 +234,7 @@ class RootViewModel(
         context: Context,
         request: SignRequestEntity
     ): String {
-        val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: throw Exception("wallet is null")
+        val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: throw Exception("wallet is null")
         return requestSign(context, wallet, request)
     }
 
@@ -258,7 +263,7 @@ class RootViewModel(
         url: String,
         json: JSONObject
     ): String? {
-        val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
+        val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
         val app = tonConnectRepository.getApp(url, wallet) ?: throw IllegalStateException("No app")
         val event = DAppEventEntity(wallet.copy(), app.copy(), json)
         if (event.method != "sendTransaction") {
@@ -302,7 +307,7 @@ class RootViewModel(
             }
             return
         }
-        walletRepository.activeWalletFlow.take(1).onEach { wallet ->
+        accountRepository.selectedWalletFlow.take(1).onEach { wallet ->
             delay(1000)
             resolveOther(uri, wallet)
         }.launchIn(viewModelScope)
@@ -311,12 +316,7 @@ class RootViewModel(
     private fun resolveSignerLink(uri: Uri, fromQR: Boolean) {
         try {
             val args = SingerArgs(uri)
-            val walletSource = if (fromQR) {
-                WalletSource.SingerQR
-            } else {
-                WalletSource.SingerApp
-            }
-            _eventFlow.tryEmit(RootEvent.Singer(args.publicKeyEd25519, args.name, walletSource))
+            _eventFlow.tryEmit(RootEvent.Singer(args.publicKeyEd25519, args.name, fromQR))
         } catch (e: Throwable) {
             toast(Localization.invalid_link)
         }
@@ -342,7 +342,7 @@ class RootViewModel(
             showTransaction(account, hash)
         } else if (uri.path?.startsWith("/pick/") == true) {
             val walletId = uri.pathSegments.lastOrNull() ?: return
-            viewModelScope.launch { walletRepository.setActiveWallet(walletId) }
+            viewModelScope.launch { accountRepository.setSelectedWallet(walletId) }
         } else if (uri.path?.startsWith("/swap") == true) {
             val ft = uri.getQueryParameter("ft") ?: "TON"
             val tt = uri.getQueryParameter("tt")
@@ -359,7 +359,7 @@ class RootViewModel(
 
     private fun showTransaction(accountId: String, hash: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val wallet = walletRepository.getWalletByAccountId(accountId) ?: return@launch
+            val wallet = accountRepository.getWalletByAccountId(accountId) ?: return@launch
             val event = api.getTransactionEvents(wallet.accountId, wallet.testnet, hash) ?: return@launch
             val item = historyHelper.mapping(wallet, event).find { it is HistoryItem.Event } as? HistoryItem.Event ?: return@launch
             _eventFlow.tryEmit(RootEvent.Transaction(item))
@@ -376,7 +376,6 @@ class RootViewModel(
                 return
             }
             val request = DAppRequestEntity(uri)
-            Log.d("TonConnectBridge", "resolveTonConnect: $request")
             _eventFlow.tryEmit(RootEvent.TonConnect(request))
         } catch (e: Throwable) {
             toast(Localization.invalid_link)

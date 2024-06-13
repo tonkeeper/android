@@ -143,7 +143,7 @@ class RootActivity: NavigationActivity() {
     fun event(event: RootEvent) {
         when (event) {
             is RootEvent.Toast -> toast(event.resId)
-            is RootEvent.Singer -> add(InitScreen.newInstance(InitArgs.Type.Signer, event.publicKey, event.name, event.walletSource))
+            is RootEvent.Singer -> add(InitScreen.newInstance(if (event.qr) InitArgs.Type.SignerQR else InitArgs.Type.Signer, event.publicKey, event.name))
             is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
             // is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))

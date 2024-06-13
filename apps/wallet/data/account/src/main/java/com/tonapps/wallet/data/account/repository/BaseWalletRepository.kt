@@ -2,8 +2,6 @@ package com.tonapps.wallet.data.account.repository
 
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.Extras
-import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletEvent
@@ -93,8 +91,7 @@ abstract class BaseWalletRepository(
     abstract suspend fun addWatchWallet(
         publicKey: PublicKeyEd25519,
         label: WalletLabel,
-        version: WalletVersion,
-        source: WalletSource
+        version: WalletVersion
     ): WalletEntity
 
     abstract suspend fun addWallets(
@@ -112,8 +109,8 @@ abstract class BaseWalletRepository(
         name: String,
         emoji: CharSequence,
         color: Int,
-        source: WalletSource,
-        versions: List<WalletVersion>
+        versions: List<WalletVersion>,
+        qr: Boolean
     ): List<WalletEntity>
 
     abstract suspend fun getMnemonic(id: String): Array<String>

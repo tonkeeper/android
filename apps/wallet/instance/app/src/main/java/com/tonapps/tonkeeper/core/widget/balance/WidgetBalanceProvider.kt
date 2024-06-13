@@ -8,11 +8,9 @@ import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.widget.Widget
+import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.koin.koin
 import com.tonapps.tonkeeper.koin.settingsRepository
-import com.tonapps.tonkeeper.koin.walletRepository
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
-import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,11 +29,11 @@ class WidgetBalanceProvider: Widget() {
     override fun update(context: Context, manager: AppWidgetManager, id: Int) {
         val koin = context.koin ?: return displayPlaceholderData(context, manager, id)
         val scope = koin.get<CoroutineScope>()
-        val walletRepository = context.walletRepository!!
+        val accountRepository = context.accountRepository!!
         val settingsRepository = context.settingsRepository!!
         val tokenRepository = koin.get<TokenRepository>()
         scope.launch(Dispatchers.IO) {
-            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch displayPlaceholder(context, manager, id)
+            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch displayPlaceholder(context, manager, id)
             val tokens = tokenRepository.get(settingsRepository.currency, wallet.address, wallet.testnet)
             val token = tokens.firstOrNull { it.isTon } ?: return@launch displayPlaceholder(context, manager, id)
             val balanceFormat = CurrencyFormatter.format("TON", token.balance.value)

@@ -6,20 +6,15 @@ import com.tonapps.blockchain.ton.contract.WalletV3R2Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R1Contract
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
-import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.backport.data.RNWallet
 import com.tonapps.wallet.data.account.backport.data.RNWallet.Companion.originalType
-import com.tonapps.wallet.data.account.backport.data.RNWallets
 import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import io.ktor.util.hex
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.block.AddrStd
-import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 
@@ -28,8 +23,7 @@ data class WalletEntity(
     val publicKey: PublicKeyEd25519,
     val type: WalletType,
     val version: WalletVersion = WalletVersion.V4R2,
-    val label: WalletLabel,
-    val source: WalletSource = WalletSource.Default
+    val label: WalletLabel
 ) {
 
     companion object {
@@ -45,8 +39,7 @@ data class WalletEntity(
             accountName = legacy.name,
             emoji = legacy.emoji.toString(),
             color = legacy.color
-        ),
-        source = legacy.source
+        )
     )
 
     constructor(rn: RNWallet) : this(
@@ -54,12 +47,7 @@ data class WalletEntity(
         publicKey = PublicKeyEd25519(hex(rn.pubkey)),
         type = if (rn.network == RNWallet.Network.Testnet) WalletType.Testnet else rn.type.originalType,
         version = rn.version.originalType,
-        label = WalletLabel(rn),
-        source = when (rn.type) {
-            RNWallet.Type.Signer -> WalletSource.SingerQR
-            RNWallet.Type.SignerDeeplink -> WalletSource.SingerApp
-            else -> WalletSource.Default
-        }
+        label = WalletLabel(rn)
     )
 
     val contract: BaseWalletContract = when (version) {

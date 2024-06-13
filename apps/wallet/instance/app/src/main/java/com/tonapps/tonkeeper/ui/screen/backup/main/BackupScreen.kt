@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -46,7 +47,7 @@ class BackupScreen: BaseListFragment(), BaseFragment.SwipeBack {
     private fun openRecoveryPhrase() {
         backupViewModel.getRecoveryPhrase(requireContext()).catch {
             navigation?.toast(Localization.authorization_required)
-        }.onEach {
+        }.filterNotNull().onEach {
             navigation?.add(PhraseScreen.newInstance(it))
         }.launchIn(lifecycleScope)
     }

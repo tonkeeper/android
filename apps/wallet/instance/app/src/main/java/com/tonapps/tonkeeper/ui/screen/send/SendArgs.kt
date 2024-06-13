@@ -9,7 +9,7 @@ data class SendArgs(
     val tokenAddress: String,
     val amountNano: Long,
     val text: String?,
-    val nftAddress: String?
+    val nftAddress: String
 ): BaseArgs() {
 
     private companion object {
@@ -21,22 +21,24 @@ data class SendArgs(
     }
 
     val isNft: Boolean
-        get() = nftAddress != null
+        get() = nftAddress.isNotEmpty()
 
     constructor(bundle: Bundle) : this(
         targetAddress = bundle.getString(ARG_TARGET_ADDRESS),
         tokenAddress = bundle.getString(ARG_TOKEN_ADDRESS) ?: TokenEntity.TON.address,
         amountNano = bundle.getLong(ARG_AMOUNT_NANO),
         text = bundle.getString(ARG_TEXT),
-        nftAddress = bundle.getString(ARG_NFT_ADDRESS)
+        nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: ""
     )
 
     override fun toBundle(): Bundle {
         val bundle = Bundle()
-        bundle.putString(ARG_TARGET_ADDRESS, targetAddress)
+        targetAddress?.let { bundle.putString(ARG_TARGET_ADDRESS, it) }
         bundle.putString(ARG_TOKEN_ADDRESS, tokenAddress)
-        bundle.putLong(ARG_AMOUNT_NANO, amountNano)
-        bundle.putString(ARG_TEXT, text)
+        if (amountNano > 0) {
+            bundle.putLong(ARG_AMOUNT_NANO, amountNano)
+        }
+        text?.let { bundle.putString(ARG_TEXT, it) }
         bundle.putString(ARG_NFT_ADDRESS, nftAddress)
         return bundle
     }

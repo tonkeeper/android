@@ -313,7 +313,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             nftAddress: String? = null
         ): SendScreen {
             val screen = SendScreen()
-            screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text, nftAddress))
+            screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""))
             return screen
         }
     }

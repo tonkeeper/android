@@ -10,7 +10,7 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -25,7 +25,7 @@ import uikit.extensions.getString
 
 class SettingsViewModel(
     application: Application,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val settings: SettingsRepository,
     private val api: API
 ): AndroidViewModel(application) {
@@ -35,7 +35,7 @@ class SettingsViewModel(
 
     init {
         combine(
-            walletRepository.activeWalletFlow,
+            accountRepository.selectedWalletFlow,
             settings.currencyFlow,
             settings.languageFlow,
             settings.searchEngineFlow
@@ -49,7 +49,7 @@ class SettingsViewModel(
     }
 
     fun signOut() {
-        walletRepository.removeCurrent()
+        accountRepository.deleteSelected()
     }
 
     private fun buildUiItems(

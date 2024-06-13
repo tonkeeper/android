@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.core.entities.TokenExtendedEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
@@ -21,13 +21,13 @@ import kotlinx.coroutines.flow.take
 import uikit.extensions.collectFlow
 
 class TokensManageViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
 ): ViewModel() {
 
     private val tokensFlow = combine(
-        walletRepository.activeWalletFlow,
+        accountRepository.selectedWalletFlow,
         settingsRepository.tokenPrefsChangedFlow,
     ) { wallet, _ ->
         tokenRepository.getLocal(settingsRepository.currency, wallet.accountId, wallet.testnet).map { token ->
@@ -88,7 +88,7 @@ class TokensManageViewModel(
 
         _uiItemsFlow.value = uiItems
 
-        collectFlow(walletRepository.activeWalletFlow.take(1)) { wallet ->
+        collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
             settingsRepository.setTokensSort(wallet.id, newPinnedUiItems.map {
                 it.address
             })
@@ -96,13 +96,13 @@ class TokensManageViewModel(
     }
 
     fun onPinChange(tokenAddress: String, pin: Boolean) {
-        collectFlow(walletRepository.activeWalletFlow.take(1)) { wallet ->
+        collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
             settingsRepository.setTokenPinned(wallet.id, tokenAddress, pin)
         }
     }
 
     fun onHiddenChange(tokenAddress: String, hidden: Boolean) {
-        collectFlow(walletRepository.activeWalletFlow.take(1)) { wallet ->
+        collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
             settingsRepository.setTokenHidden(wallet.id, tokenAddress, hidden)
         }
     }

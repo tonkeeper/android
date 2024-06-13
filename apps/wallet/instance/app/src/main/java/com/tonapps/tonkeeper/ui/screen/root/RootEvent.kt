@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.wallet.data.account.WalletSource
+import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -25,7 +25,7 @@ sealed class RootEvent {
     data class Singer(
         val publicKey: PublicKeyEd25519,
         val name: String?,
-        val walletSource: WalletSource
+        val qr: Boolean
     ): RootEvent()
 
     data class TonConnect(

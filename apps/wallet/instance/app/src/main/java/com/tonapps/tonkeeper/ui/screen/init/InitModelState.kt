@@ -5,7 +5,6 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.safePublicKey
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
-import com.tonapps.wallet.data.account.WalletSource
 import com.tonapps.wallet.data.account.entities.WalletLabel
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -17,9 +16,7 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         private const val WATCH_ACCOUNT_KEY = "watch_account"
         private const val MNEMONIC_KEY = "mnemonic"
         private const val ACCOUNTS = "accounts"
-        private const val SEED = "seed"
         private const val PUBLIC_KEY = "public_key"
-        private const val WALLET_SOURCE = "wallet_source"
     }
 
     var passcode: String?
@@ -42,18 +39,10 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         get() = savedStateHandle[ACCOUNTS]
         set(value) = savedStateHandle.set(ACCOUNTS, value)
 
-    var seed: ByteArray?
-        get() = savedStateHandle[SEED]
-        set(value) = savedStateHandle.set(SEED, value)
-
     var publicKey: PublicKeyEd25519?
         get() {
             val value = savedStateHandle.get<String>(PUBLIC_KEY) ?: return null
             return value.safePublicKey()
         }
         set(value) = savedStateHandle.set(PUBLIC_KEY, value?.base64())
-
-    var walletSource: WalletSource?
-        get() = savedStateHandle[WALLET_SOURCE]
-        set(value) = savedStateHandle.set(WALLET_SOURCE, value)
 }

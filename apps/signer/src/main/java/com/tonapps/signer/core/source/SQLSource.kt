@@ -40,7 +40,7 @@ class SQLSource(
         db.execSQL("CREATE TABLE $TON_KEYS_TABLE_NAME ($TON_KEYS_ID_COLUMN INTEGER PRIMARY KEY AUTOINCREMENT, $TON_KEYS_NAME_COLUMN TEXT, $TON_KEYS_PK_COLUMN BLOB, $TON_KEYS_TIMESTAMP_COLUMN INTEGER);")
     }
 
-    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) { }
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) { }
 
     fun deleteAll() {
         context.deleteDatabase(DATABASE_NAME)

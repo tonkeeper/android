@@ -11,7 +11,6 @@ import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
-import com.tonapps.wallet.data.account.WalletSource
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.api.pub.PublicKeyEd25519
@@ -119,8 +118,7 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
             type: InitArgs.Type,
             publicKeyEd25519: PublicKeyEd25519? = null,
             name: String? = null,
-            walletSource: WalletSource? = null
-        ) = newInstance(InitArgs(type, name, publicKeyEd25519, walletSource))
+        ) = newInstance(InitArgs(type, name, publicKeyEd25519))
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()

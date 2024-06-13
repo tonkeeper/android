@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.emoji.ui.EmojiView
-import com.tonapps.tonkeeper.koin.walletRepository
+import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
@@ -15,7 +15,6 @@ import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
-import uikit.navigation.Navigation
 
 class WalletHolder(
     parent: ViewGroup
@@ -40,7 +39,7 @@ class WalletHolder(
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
             if (!item.editMode) {
-                context.walletRepository?.chooseWallet(item.walletId)
+                context.accountRepository?.safeSetSelectedWallet(item.walletId)
             }
         }
 

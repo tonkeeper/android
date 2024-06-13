@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletType
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import uikit.extensions.collectFlow
 
 class MainViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val api: API,
 ): ViewModel() {
 
@@ -23,7 +23,7 @@ class MainViewModel(
     val childBottomScrolled = _childBottomScrolled.asSharedFlow()
 
     init {
-        collectFlow(walletRepository.activeWalletFlow) { wallet ->
+        collectFlow(accountRepository.selectedWalletFlow) { wallet ->
             _browserTabEnabledFlow.value = !api.config.flags.disableDApps && (wallet.type == WalletType.Default || wallet.type == WalletType.Signer)
         }
     }

@@ -6,7 +6,7 @@ import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 
 class CollectiblesViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val repository: CollectiblesRepository,
     private val networkMonitor: NetworkMonitor,
     private val settingsRepository: SettingsRepository
@@ -35,7 +35,7 @@ class CollectiblesViewModel(
 
     init {
         combine(
-            walletRepository.activeWalletFlow,
+            accountRepository.selectedWalletFlow,
             networkMonitor.isOnlineFlow,
             settingsRepository.hiddenBalancesFlow
         ) { wallet, isOnline, hiddenBalances ->
@@ -43,7 +43,7 @@ class CollectiblesViewModel(
         }.launchIn(viewModelScope)
     }
 
-    fun openQRCode() = walletRepository.activeWalletFlow.take(1)
+    fun openQRCode() = accountRepository.selectedWalletFlow.take(1)
 
     private suspend fun loadItems(
         wallet: WalletEntity,

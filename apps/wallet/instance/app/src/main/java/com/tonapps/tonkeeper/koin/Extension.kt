@@ -5,7 +5,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.fiat.Fiat
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import org.koin.core.Koin
@@ -23,8 +23,8 @@ inline fun <reified T: RecyclerView.Adapter<*>> Module.uiAdapter(
 val Context.koin: Koin?
     get() = (applicationContext as? KoinComponent)?.getKoin()
 
-val Context.walletRepository: BaseWalletRepository?
-    get() = koin?.get<BaseWalletRepository>()
+val Context.accountRepository: AccountRepository?
+    get() = koin?.get()
 
 val Context.api: API?
     get() = koin?.get<API>()

@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
@@ -13,7 +12,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.entities.WalletEvent
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -44,7 +43,7 @@ import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 
 class WalletViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
     private val api: API,
@@ -76,10 +75,10 @@ class WalletViewModel(
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }
 
-    val uiLabelFlow = walletRepository.activeWalletFlow.map { it.label }
+    val uiLabelFlow = accountRepository.selectedWalletFlow.map { it.label }
 
     init {
-        collectFlow(walletRepository.activeWalletFlow.map { screenCacheSource.getWalletScreen(it) }.flowOn(Dispatchers.IO)) { items ->
+        collectFlow(accountRepository.selectedWalletFlow.map { screenCacheSource.getWalletScreen(it) }.flowOn(Dispatchers.IO)) { items ->
             if (items.isNullOrEmpty()) {
                 _uiItemsFlow.value = listOf(Item.Skeleton(true))
             } else {
@@ -98,7 +97,7 @@ class WalletViewModel(
         }
 
         collectFlow(settingsRepository.hiddenBalancesFlow.drop(1)) { hiddenBalance ->
-            val wallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@collectFlow
+            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
             val items = _uiItemsFlow.value.map {
                 when (it) {
                     is Item.Balance -> it.copy(hiddenBalance = hiddenBalance)
@@ -110,7 +109,7 @@ class WalletViewModel(
             setCached(wallet, items)
         }
 
-        collectFlow(walletRepository.realtimeEventsFlow) { event ->
+        /*collectFlow(walletRepository.realtimeEventsFlow) { event ->
             if (event is WalletEvent.Boc) {
                 setStatus(Item.Status.SendingTransaction)
             } else if (event is WalletEvent.Transaction) {
@@ -119,10 +118,10 @@ class WalletViewModel(
                 setStatus(Item.Status.Default)
                 _lastLtFlow.value = event.lt
             }
-        }
+        }*/
 
         combine(
-            walletRepository.activeWalletFlow,
+            accountRepository.selectedWalletFlow,
             settingsRepository.currencyFlow,
             networkMonitor.isOnlineFlow,
             lastLtFlow,
@@ -143,7 +142,7 @@ class WalletViewModel(
         }.launchIn(viewModelScope)
 
         combine(
-            walletRepository.activeWalletFlow,
+            accountRepository.selectedWalletFlow,
             backupRepository.stream,
             pushManager.dAppPushFlow,
         ) { wallet, backups, push ->
@@ -152,7 +151,7 @@ class WalletViewModel(
         }.launchIn(viewModelScope)
 
         combine(
-            walletRepository.activeWalletFlow,
+            accountRepository.selectedWalletFlow,
             dataFlow,
             statusFlow,
             settingsRepository.tokenPrefsChangedFlow,
@@ -181,21 +180,21 @@ class WalletViewModel(
 
     fun nextWallet() {
         viewModelScope.launch {
-            val wallets = walletRepository.walletsFlow.firstOrNull() ?: return@launch
-            val activeWallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch
+            val wallets = accountRepository.getWallets()
+            val activeWallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
             val index = wallets.indexOf(activeWallet)
             val nextIndex = if (index == wallets.size - 1) 0 else index + 1
-            walletRepository.setActiveWallet(wallets[nextIndex].id)
+            accountRepository.setSelectedWallet(wallets[nextIndex].id)
         }
     }
 
     fun prevWallet() {
         viewModelScope.launch {
-            val wallets = walletRepository.walletsFlow.firstOrNull() ?: return@launch
-            val activeWallet = walletRepository.activeWalletFlow.firstOrNull() ?: return@launch
+            val wallets = accountRepository.getWallets()
+            val activeWallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
             val index = wallets.indexOf(activeWallet)
             val prevIndex = if (index == 0) wallets.size - 1 else index - 1
-            walletRepository.setActiveWallet(wallets[prevIndex].id)
+            accountRepository.setSelectedWallet(wallets[prevIndex].id)
         }
     }
 

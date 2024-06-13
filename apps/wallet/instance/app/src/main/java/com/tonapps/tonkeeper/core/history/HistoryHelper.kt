@@ -71,8 +71,7 @@ class HistoryHelper(
             type = wallet.type,
             emoji = wallet.label.emoji,
             color = wallet.label.color,
-            version = wallet.version,
-            source = wallet.source
+            version = wallet.version
         )
     }
 

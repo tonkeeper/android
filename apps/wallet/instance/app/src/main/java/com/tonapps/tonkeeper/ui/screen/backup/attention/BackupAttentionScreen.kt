@@ -9,6 +9,7 @@ import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -33,7 +34,7 @@ class BackupAttentionScreen: BaseFragment(R.layout.fragment_backup_attention), B
     private fun startBackup() {
         backupAttentionViewModel.getRecoveryPhrase(requireContext()).catch {
             navigation?.toast(Localization.authorization_required)
-        }.onEach {
+        }.filterNotNull().onEach {
             navigation?.add(PhraseScreen.newInstance(it, true, backupId))
             finish()
         }.launchIn(lifecycleScope)

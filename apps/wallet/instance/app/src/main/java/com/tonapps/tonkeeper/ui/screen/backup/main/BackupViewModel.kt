@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -14,12 +14,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 
 class BackupViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val backupRepository: BackupRepository,
     private val passcodeRepository: PasscodeRepository
 ): ViewModel() {
 
-    val uiItemsFlow = combine(backupRepository.stream, walletRepository.activeWalletFlow) { backups, wallet ->
+    val uiItemsFlow = combine(backupRepository.stream, accountRepository.selectedWalletFlow) { backups, wallet ->
         backups.filter { it.walletId == wallet.id }
     }.map {
         val backupsCount = it.size
@@ -42,7 +42,7 @@ class BackupViewModel(
 
     fun getRecoveryPhrase(
         context: Context
-    ) = walletRepository.activeWalletFlow.combine(passcodeRepository.confirmationFlow(context)) { wallet, _ ->
-        walletRepository.getMnemonic(wallet.id)
+    ) = accountRepository.selectedWalletFlow.combine(passcodeRepository.confirmationFlow(context)) { wallet, _ ->
+        accountRepository.getMnemonic(wallet.id)
     }.take(1)
 }

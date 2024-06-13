@@ -20,8 +20,8 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $KV_TABLE_NAME ($KV_TABLE_KEY_COLUMN TEXT PRIMARY KEY, $KV_TABLE_VALUE_COLUMN TEXT NOT NULL);")
-        db.execSQL("CREATE TABLE $METADATA_TABLE_NAME ($METADATA_TABLE_LOCALE_COLUMN TEXT NOT NULL);")
-        db.execSQL("INSERT INTO $METADATA_TABLE_NAME ($METADATA_TABLE_LOCALE_COLUMN) VALUES ('en_US');")
+        // db.execSQL("CREATE TABLE $METADATA_TABLE_NAME ($METADATA_TABLE_LOCALE_COLUMN TEXT NOT NULL);")
+        // db.execSQL("INSERT INTO $METADATA_TABLE_NAME ($METADATA_TABLE_LOCALE_COLUMN) VALUES ('en_US');")
     }
 
     override fun onConfigure(db: SQLiteDatabase) {

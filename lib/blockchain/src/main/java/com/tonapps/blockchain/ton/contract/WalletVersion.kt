@@ -7,3 +7,7 @@ enum class WalletVersion(val id: Int, val title: String, val index: Int) {
     V3R1(2, "v3R1", 1),
     UNKNOWN(-1, "unknown", 0)
 }
+
+fun walletVersion(id: Int): WalletVersion {
+    return WalletVersion.entries.find { it.id == id } ?: WalletVersion.UNKNOWN
+}

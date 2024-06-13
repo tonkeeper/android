@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.take
 
 class NotificationsViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val tonConnectRepository: TonConnectRepository,
     private val settingsRepository: SettingsRepository,
 ): ViewModel() {
@@ -27,7 +27,7 @@ class NotificationsViewModel(
 
     init {
         combine(
-            walletRepository.activeWalletFlow,
+            accountRepository.selectedWalletFlow,
             tonConnectRepository.appsFlow.take(1)
         ) { wallet, apps ->
             val myApps = apps.filter { it.walletId == wallet.id }

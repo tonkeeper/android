@@ -7,7 +7,7 @@ import com.tonapps.tonkeeper.core.tonconnect.models.TCData
 import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppEventSuccessEntity
@@ -18,14 +18,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import uikit.extensions.collectFlow
 
 class TCAuthViewModel(
     private val request: DAppRequestEntity,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val passcodeRepository: PasscodeRepository,
     private val tonConnectRepository: TonConnectRepository,
 ): ViewModel() {
@@ -34,9 +33,7 @@ class TCAuthViewModel(
     val dataState = _dataState.asStateFlow().filterNotNull()
 
     init {
-        walletRepository.activeWalletFlow.onEach {
-            requestData(it)
-        }.launchIn(viewModelScope)
+        collectFlow(accountRepository.selectedWalletFlow, ::requestData)
     }
 
     private fun requestData(wallet: WalletEntity) {
@@ -57,7 +54,7 @@ class TCAuthViewModel(
 
     private fun passcode(context: Context) = passcodeRepository.confirmationFlow(context)
 
-    private fun wallet(context: Context) = passcode(context).combine(walletRepository.activeWalletFlow) { _, wallet ->
+    private fun wallet(context: Context) = passcode(context).combine(accountRepository.selectedWalletFlow) { _, wallet ->
         wallet
     }.take(1)
 
@@ -65,7 +62,7 @@ class TCAuthViewModel(
         context: Context,
         allowPush: Boolean
     ): Flow<DAppEventSuccessEntity> = wallet(context).combine(dataState) { wallet, data ->
-        val privateKey = walletRepository.getPrivateKey(wallet.id)
+        val privateKey = accountRepository.getPrivateKey(wallet.id)
         val firebaseToken = if (allowPush) {
             GooglePushService.requestToken()
         } else {

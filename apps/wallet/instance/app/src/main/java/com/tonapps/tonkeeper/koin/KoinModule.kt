@@ -96,7 +96,7 @@ val koinModel = module {
     viewModel { BackupCheckViewModel(get(), get()) }
     viewModel { BackupAttentionViewModel(get(), get()) }
     viewModel { TokensManageViewModel(get(), get(), get()) }
-    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), accountRepository = get(), api = get(), settingsRepository = get(), tokenRepository = get(), ratesRepository = get(), passcodeRepository = get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
 }

@@ -20,7 +20,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
@@ -52,14 +52,17 @@ import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
-    private val nftAddress: String?,
-    private val walletRepository: BaseWalletRepository,
+    private val nftAddress: String,
+    private val accountRepository: AccountRepository,
     private val api: API,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
     private val ratesRepository: RatesRepository,
     private val passcodeRepository: PasscodeRepository
 ): ViewModel() {
+
+    private val isNft: Boolean
+        get() = nftAddress.isNotBlank()
 
     data class UserInput(
         val address: String = "",
@@ -83,7 +86,7 @@ class SendViewModel(
         .debounce { if (it.isEmpty()) 0 else 600 }
 
     val recipientFlow = combine(
-        walletRepository.activeWalletFlow,
+        accountRepository.selectedWalletFlow,
         userInputAddressFlow,
     ) { wallet, address ->
         if (address.isEmpty()) {
@@ -94,7 +97,7 @@ class SendViewModel(
     }.state(viewModelScope)
 
     val tokensFlow = combine(
-        walletRepository.activeWalletFlow,
+        accountRepository.selectedWalletFlow,
         settingsRepository.currencyFlow
     ) { wallet, currency ->
         tokenRepository.get(currency, wallet.accountId, wallet.testnet)
@@ -194,7 +197,7 @@ class SendViewModel(
     }
 
     val uiTransactionFlow = combine(
-        walletRepository.activeWalletFlow,
+        accountRepository.selectedWalletFlow,
         recipientFlow.filter { it is Recipient.Data }.map { (it as Recipient.Data).raw },
         selectedTokenFlow,
         uiTransferAmountFlow,
@@ -210,7 +213,7 @@ class SendViewModel(
     }
 
     private val transferFlow = combine(
-        walletRepository.activeWalletFlow.distinctUntilChanged(),
+        accountRepository.selectedWalletFlow.distinctUntilChanged(),
         uiTransactionFlow.distinctUntilChanged().debounce(600),
         userInputFlow.map { it.address }.distinctUntilChanged(),
         userInputFlow.map { it.comment }.distinctUntilChanged().debounce(600),
@@ -226,12 +229,14 @@ class SendViewModel(
         builder.setValidUntil(sendMetadata.validUntil)
         builder.setBounceable(isBounce(userInputAddress, transaction.targetAccount))
         builder.setMax(transaction.amount.value == token.balance.value)
-        nftAddress?.let { builder.setNftAddress(it) }
+        if (isNft) {
+            builder.setNftAddress(nftAddress)
+        }
         builder.build()
     }.flowOn(Dispatchers.IO).shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     val feeFlow = combine(
-        walletRepository.activeWalletFlow,
+        accountRepository.selectedWalletFlow,
         transferFlow.map { it.toSignedMessage(EmptyPrivateKeyEd25519) },
         settingsRepository.currencyFlow,
     ) { wallet, message, currency ->
@@ -291,8 +296,8 @@ class SendViewModel(
     private suspend fun getSendParams(
         wallet: WalletEntity,
     ): SendMetadataEntity = withContext(Dispatchers.IO) {
-        val seqnoDeferred = async { walletRepository.getSeqno(wallet) }
-        val validUntilDeferred = async { walletRepository.getValidUntil(wallet.testnet) }
+        val seqnoDeferred = async { accountRepository.getSeqno(wallet) }
+        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.testnet) }
 
         SendMetadataEntity(
             seqno = seqnoDeferred.await(),
@@ -326,7 +331,7 @@ class SendViewModel(
                     if (!isValidPasscode) {
                         throw SendException.WrongPasscode()
                     }
-                    val privateKey = walletRepository.getPrivateKey(wallet.id)
+                    val privateKey = accountRepository.getPrivateKey(wallet.id)
                     val signature = transfer.signedHash(privateKey)
                     send(signature, transfer)
                 }

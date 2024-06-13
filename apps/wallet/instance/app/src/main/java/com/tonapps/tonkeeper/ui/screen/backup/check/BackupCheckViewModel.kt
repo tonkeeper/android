@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.backup.check
 
 import androidx.lifecycle.ViewModel
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import kotlinx.coroutines.Dispatchers
@@ -10,11 +10,11 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 
 class BackupCheckViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val backupRepository: BackupRepository
 ): ViewModel() {
 
-    fun saveBackup(backupId: Long) = walletRepository.activeWalletFlow.onEach {
+    fun saveBackup(backupId: Long) = accountRepository.selectedWalletFlow.onEach {
         if (backupId != 0L) {
             backupRepository.updateBackup(backupId)
         } else {

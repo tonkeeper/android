@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 
 class BrowserExploreViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val browserRepository: BrowserRepository,
     private val api: API,
     private val settings: SettingsRepository
@@ -24,7 +24,7 @@ class BrowserExploreViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow()
 
     init {
-        combine(settings.countryFlow, walletRepository.activeWalletFlow) { code, wallet ->
+        combine(settings.countryFlow, accountRepository.selectedWalletFlow) { code, wallet ->
             _uiItemsFlow.value = emptyList()
             browserRepository.load(code, wallet.testnet)?.let { setData(it) }
             browserRepository.loadRemote(code, wallet.testnet)?.let { setData(it) }

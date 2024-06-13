@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.password.PasscodeRepository
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
@@ -21,7 +21,7 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.experimental.xor
 
 class EncryptedCommentViewModel(
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val passcodeRepository: PasscodeRepository
 ): ViewModel() {
 
@@ -30,9 +30,8 @@ class EncryptedCommentViewModel(
         cipherText: String,
         senderAddress: String
     ) {
-        Log.d("EncryptedCommentViewModel", "decrypt")
-        walletRepository.activeWalletFlow.combine(passcodeRepository.confirmationFlow(context)) { wallet, _ ->
-            val privateKey = walletRepository.getPrivateKey(wallet.id)
+        accountRepository.selectedWalletFlow.combine(passcodeRepository.confirmationFlow(context)) { wallet, _ ->
+            val privateKey = accountRepository.getPrivateKey(wallet.id)
             decryptMessageComment(privateKey, wallet.publicKey, hex(cipherText), senderAddress)
             privateKey
         }.catch {

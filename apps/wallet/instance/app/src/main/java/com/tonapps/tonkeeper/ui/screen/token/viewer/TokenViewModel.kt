@@ -12,7 +12,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.repository.BaseWalletRepository
+import com.tonapps.wallet.data.account.n.AccountRepository
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
@@ -34,7 +34,7 @@ class TokenViewModel(
     private val tokenAddress: String,
     private val tokenRepository: TokenRepository,
     private val settingsRepository: SettingsRepository,
-    private val walletRepository: BaseWalletRepository,
+    private val accountRepository: AccountRepository,
     private val api: API,
     private val eventsRepository: EventsRepository,
     private val historyHelper: HistoryHelper,
@@ -53,7 +53,7 @@ class TokenViewModel(
     private val chartFlow = _chartFlow.asStateFlow().filterNotNull()
 
     init {
-        collectFlow(walletRepository.activeWalletFlow) { wallet ->
+        collectFlow(accountRepository.selectedWalletFlow) { wallet ->
             val list = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
             val token = list.firstOrNull { it.address == tokenAddress } ?: return@collectFlow
             val data = TokenData(token, wallet)

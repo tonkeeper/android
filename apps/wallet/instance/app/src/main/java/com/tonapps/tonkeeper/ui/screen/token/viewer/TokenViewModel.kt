@@ -10,9 +10,9 @@ import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ChartEntity
-import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
@@ -101,8 +101,8 @@ class TokenViewModel(
         items.add(
             Item.Actions(
             swapUri = api.config.swapUri,
-            swap = token.verified && (token.wallet.type == WalletType.Default || token.wallet.type == WalletType.Signer),
-            send = token.wallet.hasPrivateKey || token.wallet.type == WalletType.Signer,
+            swap = token.verified && (token.wallet.type == Wallet.Type.Default || token.wallet.type == Wallet.Type.Signer),
+            send = token.wallet.hasPrivateKey || token.wallet.type == Wallet.Type.Signer,
             walletAddress = token.walletAddress,
             tokenAddress = token.address,
             token = token.token.balance.token,

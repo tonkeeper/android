@@ -53,10 +53,9 @@ import org.koin.dsl.module
 val koinModel = module {
     factory { Dispatchers.Default }
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
-    single { App.walletManager }
-    single { SettingsRepository(get(), get()) }
+    single { SettingsRepository(get(), get(), get()) }
     single { PasscodeDataStore(get()) }
-    single { PasscodeRepository(get(), get()) }
+    single { PasscodeRepository(get(), get(), get()) }
     single { NetworkMonitor(get(), get()) }
     single { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
@@ -67,7 +66,7 @@ val koinModel = module {
     uiAdapter { WalletAdapter(get()) }
     uiAdapter { WalletPickerAdapter() }
 
-    viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get()) }
+    viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> InitViewModel(get(), parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }

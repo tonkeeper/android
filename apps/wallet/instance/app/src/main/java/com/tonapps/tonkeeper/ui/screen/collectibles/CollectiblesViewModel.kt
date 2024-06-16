@@ -6,7 +6,7 @@ import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.settings.SettingsRepository

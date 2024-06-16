@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine

@@ -4,7 +4,7 @@ import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.Wallet
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -28,7 +28,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val walletAddress: String,
         val tokenAddress: String,
         val token: TokenEntity,
-        val walletType: WalletType,
+        val walletType: Wallet.Type,
     ): Item(TYPE_ACTIONS)
 
     data class Price(

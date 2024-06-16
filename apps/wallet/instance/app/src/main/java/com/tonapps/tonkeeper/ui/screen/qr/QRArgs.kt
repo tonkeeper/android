@@ -2,14 +2,17 @@ package com.tonapps.tonkeeper.ui.screen.qr
 
 import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.getEnum
+import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.extensions.putEnum
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.Wallet
 import uikit.base.BaseArgs
 
 data class QRArgs(
     val address: String,
     val token: TokenEntity,
-    val walletType: WalletType
+    val walletType: Wallet.Type
 ): BaseArgs() {
 
     private companion object {
@@ -20,8 +23,8 @@ data class QRArgs(
 
     constructor(bundle: Bundle) : this(
         address = bundle.getString(ARG_ADDRESS)!!,
-        token = bundle.getParcelable(ARG_TOKEN)!!,
-        walletType = bundle.getSerializable(ARG_WALLET_TYPE) as WalletType
+        token = bundle.getParcelableCompat(ARG_TOKEN)!!,
+        walletType = bundle.getEnum<Wallet.Type>(ARG_WALLET_TYPE, Wallet.Type.Default)
     )
 
     fun getDeepLink(): String {
@@ -29,7 +32,7 @@ data class QRArgs(
         if (!token.isTon) {
             deepLink += "?token=${token.address.toUserFriendly(
                 wallet = false, 
-                testnet = walletType == WalletType.Testnet
+                testnet = walletType == Wallet.Type.Testnet
             )}"
         }
         return deepLink
@@ -39,7 +42,7 @@ data class QRArgs(
         val bundle = Bundle()
         bundle.putString(ARG_ADDRESS, address)
         bundle.putParcelable(ARG_TOKEN, token)
-        bundle.putSerializable(ARG_WALLET_TYPE, walletType)
+        bundle.putEnum(ARG_WALLET_TYPE, walletType)
         return bundle
     }
 }

@@ -5,29 +5,28 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.emoji.Emoji
-import com.tonapps.tonkeeper.App
-import com.tonapps.wallet.data.account.entities.WalletLabel
+import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.Wallet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import com.tonapps.wallet.data.account.legacy.WalletManager
 import uikit.extensions.context
 
 class NameViewModel(
     mode: NameMode,
     application: Application,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val accountRepository: AccountRepository,
 ): AndroidViewModel(application) {
 
-    private val walletManager: WalletManager = App.walletManager
     private val savedState = NameSavedState(savedStateHandle)
 
     private val _emojisFlow = MutableStateFlow<Array<CharSequence>?>(null)
     val emojiFlow = _emojisFlow.asStateFlow().filterNotNull()
 
-    private val _walletLabelFlow = MutableStateFlow<WalletLabel?>(null)
+    private val _walletLabelFlow = MutableStateFlow<Wallet.Label?>(null)
     val walletLabelFlow = _walletLabelFlow.asStateFlow().filterNotNull()
 
     init {
@@ -47,7 +46,7 @@ class NameViewModel(
     }
 
     private fun updateWalletLabel() {
-        _walletLabelFlow.value = WalletLabel(
+        _walletLabelFlow.value = Wallet.Label(
             accountName = savedState.name,
             emoji = savedState.emoji,
             color = savedState.color,
@@ -69,7 +68,7 @@ class NameViewModel(
 
     private fun loadCurrentWallet() {
         viewModelScope.launch {
-            val wallet = walletManager.getWalletInfo() ?: return@launch
+            val wallet = accountRepository.getSelectedWallet()?.label ?: return@launch
             savedState.name = wallet.name
             savedState.emoji = wallet.emoji
             savedState.color = wallet.color

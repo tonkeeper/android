@@ -1,8 +1,10 @@
 package com.tonapps.wallet.data.backup
 
 import android.content.Context
+import com.tonapps.extensions.isMainVersion
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.backup.source.LocalDataSource
+import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class BackupRepository(
     scope: CoroutineScope,
-    context: Context
+    context: Context,
+    private val rnLegacy: RNLegacy,
 ) {
 
     private val localDataSource = LocalDataSource(context)
@@ -26,8 +29,27 @@ class BackupRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
-            _stream.value = localDataSource.getAllBackups()
+            val allBackups = localDataSource.getAllBackups()
+            if (context.isMainVersion && allBackups.isEmpty()) {
+                migrationFromRN()
+            } else {
+                _stream.value = allBackups
+            }
         }
+    }
+
+    private suspend fun migrationFromRN() {
+        val backups = mutableListOf<BackupEntity>()
+        val wallets = rnLegacy.getWallets().wallets
+        for (wallet in wallets) {
+            val key = "${wallet.identifier}/setup"
+            val value = rnLegacy.getJSONValue(key) ?: continue
+            val lastBackupAt = value.optLong("lastBackupAt", 0)
+            if (lastBackupAt > 0) {
+                backups.add(addBackup(wallet.identifier, BackupEntity.Source.LOCAL, lastBackupAt))
+            }
+        }
+        _stream.value = backups
     }
 
     fun updateBackup(id: Long): BackupEntity? {
@@ -36,8 +58,12 @@ class BackupRepository(
         return entity
     }
 
-    fun addBackup(walletId: String, source: BackupEntity.Source): BackupEntity {
-        val entity = localDataSource.addBackup(walletId, source)
+    fun addBackup(
+        walletId: String,
+        source: BackupEntity.Source,
+        date: Long = System.currentTimeMillis()
+    ): BackupEntity {
+        val entity = localDataSource.addBackup(walletId, source, date)
         _stream.value = _stream.value?.plus(entity) ?: listOf(entity)
         return entity
     }

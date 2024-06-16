@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.password.PasscodeRepository
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn

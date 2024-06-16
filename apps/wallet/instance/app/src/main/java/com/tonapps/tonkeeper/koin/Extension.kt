@@ -5,7 +5,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.fiat.Fiat
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import org.koin.core.Koin

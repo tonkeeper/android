@@ -26,5 +26,7 @@ dependencies {
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.Koin.core)
     implementation(project(Dependence.Lib.sqlite))
+    implementation(project(Dependence.Lib.extensions))
+    implementation(project(Dependence.Wallet.Data.rn))
 }
 

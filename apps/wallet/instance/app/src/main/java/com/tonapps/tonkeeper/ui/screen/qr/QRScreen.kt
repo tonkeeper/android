@@ -14,7 +14,7 @@ import com.tonapps.uikit.color.accentPurpleColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
@@ -57,17 +57,17 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
         addressView.text = args.address
 
         walletTypeView = view.findViewById(R.id.wallet_type)
-        if (args.walletType == WalletType.Default) {
+        if (args.walletType == Wallet.Type.Default) {
             walletTypeView.visibility = View.GONE
         } else {
             walletTypeView.visibility = View.VISIBLE
-            if (args.walletType == WalletType.Watch) {
+            if (args.walletType == Wallet.Type.Watch) {
                 walletTypeView.setText(Localization.watch_only)
                 walletTypeView.backgroundTintList = requireContext().accentPurpleColor.stateList
-            } else if (args.walletType == WalletType.Testnet) {
+            } else if (args.walletType == Wallet.Type.Testnet) {
                 walletTypeView.setText(Localization.testnet)
                 walletTypeView.backgroundTintList = requireContext().accentPurpleColor.stateList
-            } else if (args.walletType == WalletType.Signer) {
+            } else if (args.walletType == Wallet.Type.Signer) {
                 walletTypeView.setText(Localization.signer)
                 walletTypeView.backgroundTintList = requireContext().accentPurpleColor.stateList
             }
@@ -87,8 +87,8 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
 
     private fun copy() {
         val color = when (args.walletType) {
-            WalletType.Default -> requireContext().backgroundContentTintColor
-            WalletType.Signer -> requireContext().accentPurpleColor
+            Wallet.Type.Default -> requireContext().backgroundContentTintColor
+            Wallet.Type.Signer -> requireContext().accentPurpleColor
             else -> requireContext().accentOrangeColor
         }
         navigation?.toast(getString(Localization.copied), color)
@@ -97,7 +97,7 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
 
     companion object {
 
-        fun newInstance(address: String, token: TokenEntity, walletType: WalletType): QRScreen {
+        fun newInstance(address: String, token: TokenEntity, walletType: Wallet.Type): QRScreen {
             val screen = QRScreen()
             screen.setArgs(QRArgs(address, token, walletType))
             return screen

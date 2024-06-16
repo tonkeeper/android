@@ -24,11 +24,13 @@ import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
@@ -37,6 +39,7 @@ import uikit.navigation.NavigationActivity
 class RootActivity: NavigationActivity() {
 
     private val rootViewModel: RootViewModel by viewModel()
+    private val legacyRN: RNLegacy by inject()
 
     val fiatDialog: FiatDialog by lazy {
         FiatDialog(this, lifecycleScope)
@@ -55,6 +58,7 @@ class RootActivity: NavigationActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(rootViewModel.theme.resId)
         super.onCreate(savedInstanceState)
+        legacyRN.setActivity(this)
         windowInsetsController.isAppearanceLightStatusBars = rootViewModel.theme.light
         windowInsetsController.isAppearanceLightNavigationBars = rootViewModel.theme.light
         uiHandler = Handler(mainLooper)

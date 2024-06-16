@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.backup.check
 
 import androidx.lifecycle.ViewModel
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import kotlinx.coroutines.Dispatchers

@@ -41,4 +41,19 @@ object Sodium {
         salt: ByteArray,
         hashSize: Int
     ): ByteArray?
+
+    external fun scryptHash(
+        password: ByteArray,
+        salt: ByteArray,
+        n: Int,
+        r: Int,
+        p: Int,
+        dkLen: Int
+    ): ByteArray?
+
+    external fun cryptoSecretboxOpen(
+        box: ByteArray,
+        nonce: ByteArray,
+        key: ByteArray
+    ): ByteArray?
 }

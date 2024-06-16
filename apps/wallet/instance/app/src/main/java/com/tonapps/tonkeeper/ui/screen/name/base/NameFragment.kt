@@ -16,8 +16,8 @@ import com.tonapps.tonkeeper.ui.screen.name.adapter.ColorAdapter
 import com.tonapps.tonkeeper.ui.screen.name.adapter.EmojiAdapter
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.list.LinearLayoutManager
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.WalletColor
-import com.tonapps.wallet.data.account.entities.WalletLabel
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -137,7 +137,7 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
         }
     }
 
-    private fun applyWalletLabel(label: WalletLabel) {
+    private fun applyWalletLabel(label: Wallet.Label) {
         setName(label.name)
         setColor(label.color)
         setEmoji(label.emoji)

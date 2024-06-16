@@ -17,7 +17,7 @@ import com.tonapps.extensions.writeEnum
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 
@@ -70,7 +70,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
     data class Balance(
         val balance: CharSequence,
         val address: String,
-        val walletType: WalletType,
+        val walletType: Wallet.Type,
         val status: Status,
         val hiddenBalance: Boolean
     ): Item(TYPE_BALANCE) {
@@ -78,7 +78,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         constructor(parcel: Parcel) : this(
             parcel.readString()!!,
             parcel.readString()!!,
-            parcel.readEnum(WalletType::class.java)!!,
+            parcel.readEnum(Wallet.Type::class.java)!!,
             parcel.readEnum(Status::class.java)!!,
             parcel.readBooleanCompat()
         )
@@ -101,7 +101,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
     data class Actions(
         val address: String,
         val token: TokenEntity,
-        val walletType: WalletType,
+        val walletType: Wallet.Type,
         val swapUri: Uri,
         val disableSwap: Boolean
     ): Item(TYPE_ACTIONS) {
@@ -109,7 +109,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         constructor(parcel: Parcel) : this(
             parcel.readString()!!,
             parcel.readParcelableCompat()!!,
-            parcel.readEnum(WalletType::class.java)!!,
+            parcel.readEnum(Wallet.Type::class.java)!!,
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat()
         )

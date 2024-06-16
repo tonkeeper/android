@@ -30,6 +30,7 @@ dependencies {
     implementation(Dependence.ton)
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Wallet.Data.core))
+    implementation(project(Dependence.Wallet.Data.rn))
     implementation(project(Dependence.Wallet.Data.rates))
     implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Lib.security))

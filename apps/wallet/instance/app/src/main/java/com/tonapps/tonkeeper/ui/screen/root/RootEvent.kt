@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import org.ton.api.pub.PublicKeyEd25519
 

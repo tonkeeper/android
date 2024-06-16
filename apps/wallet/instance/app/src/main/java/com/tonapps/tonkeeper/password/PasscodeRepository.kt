@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.password
 
 import android.content.Context
 import androidx.biometric.BiometricPrompt
+import com.tonapps.extensions.isMainVersion
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
@@ -12,6 +14,7 @@ import kotlin.coroutines.resume
 class PasscodeRepository(
     private val dataStore: PasscodeDataStore,
     private val settingsRepository: SettingsRepository,
+    private val accountRepository: AccountRepository,
 ) {
 
     val hasPinCode: Boolean
@@ -30,6 +33,10 @@ class PasscodeRepository(
     suspend fun compare(code: String) = dataStore.compare(code)
 
     suspend fun confirmation(context: Context): Boolean = withContext(Dispatchers.Main) {
+        if (context.isMainVersion && !settingsRepository.importLegacyPasscode) {
+            return@withContext dialog(context)
+        }
+
         if (!settingsRepository.biometric || !PasscodeBiometric.isAvailableOnDevice(context)) {
             return@withContext dialog(context)
         }

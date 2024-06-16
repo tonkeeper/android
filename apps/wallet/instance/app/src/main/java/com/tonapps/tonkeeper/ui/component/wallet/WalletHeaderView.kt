@@ -15,7 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
-import com.tonapps.wallet.data.account.entities.WalletLabel
+import com.tonapps.wallet.data.account.Wallet
 import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.getDimensionPixelSize
@@ -107,7 +107,7 @@ class WalletHeaderView @JvmOverloads constructor(
         drawable.setDivider(value)
     }
 
-    fun setWallet(walletLabel: WalletLabel) {
+    fun setWallet(walletLabel: Wallet.Label) {
         if (walletLabel.isEmpty) {
             walletView.visibility = View.GONE
             return

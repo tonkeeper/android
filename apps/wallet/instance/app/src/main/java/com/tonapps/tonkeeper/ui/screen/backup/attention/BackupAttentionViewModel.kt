@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.backup.attention
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.tonapps.tonkeeper.password.PasscodeRepository
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.take
 

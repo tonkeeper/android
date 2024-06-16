@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import androidx.lifecycle.ViewModel
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

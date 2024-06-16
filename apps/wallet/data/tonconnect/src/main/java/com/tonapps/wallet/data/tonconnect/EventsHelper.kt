@@ -5,7 +5,7 @@ import com.tonapps.extensions.base64
 import com.tonapps.extensions.string
 import com.tonapps.network.SSEvent
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi

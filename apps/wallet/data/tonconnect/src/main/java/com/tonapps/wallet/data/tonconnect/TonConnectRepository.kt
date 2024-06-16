@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.prefs
 import com.tonapps.security.CryptoBox
 import com.tonapps.wallet.api.API
@@ -11,7 +13,9 @@ import com.tonapps.wallet.data.account.WalletProof
 import com.tonapps.wallet.data.account.entities.ProofDomainEntity
 import org.ton.crypto.base64
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppItemEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
@@ -44,6 +48,7 @@ class TonConnectRepository(
     private val context: Context,
     private val api: API,
     private val accountRepository: AccountRepository,
+    private val rnLegacy: RNLegacy,
 ) {
 
     private val localDataSource = LocalDataSource(context)
@@ -62,8 +67,42 @@ class TonConnectRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
-            _appsFlow.value = localDataSource.getApps()
+            val apps = localDataSource.getApps()
+            if (context.isMainVersion && apps.isEmpty()) {
+                migrationFromRN()
+            } else {
+                _appsFlow.value = apps
+            }
         }
+    }
+
+    private suspend fun migrationFromRN() {
+        val wallets = rnLegacy.getWallets().wallets
+        val value = rnLegacy.getJSONState("TCApps")?.getJSONObject("connectedApps") ?: return
+        val mainnet = value.optJSONObject("mainnet") ?: return
+        for (key in mainnet.keys()) {
+            val address = key.toRawAddress()
+            val json = mainnet.getJSONObject(key)
+            Log.d("TonConnectLog", "address: $address; json: $json")
+        }
+    }
+
+    private suspend fun migrationRNApp(
+        wallets: List<RNWallet>,
+        address: String,
+        json: JSONObject
+    ) {
+        val manifest = DAppManifestEntity(
+            url = json.getString("url"),
+            name = json.getString("name"),
+            iconUrl = json.getString("icon"),
+            termsOfUseUrl = "",
+            privacyPolicyUrl = "",
+        )
+
+        val notificationsEnabled = json.optBoolean("notificationsEnabled", false)
+        Log.d("TonConnectLog", "address: $address")
+        Log.d("TonConnectLog", "json: $json")
     }
 
     fun setPushEnabled(walletId: String, url: String, enabled: Boolean) {

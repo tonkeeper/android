@@ -8,7 +8,7 @@ import com.tonapps.extensions.locale
 import com.tonapps.network.getBitmap
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.push.entities.WalletPushEntity

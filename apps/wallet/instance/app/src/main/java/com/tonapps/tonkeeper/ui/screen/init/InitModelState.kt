@@ -5,7 +5,7 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.safePublicKey
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
-import com.tonapps.wallet.data.account.entities.WalletLabel
+import com.tonapps.wallet.data.account.Wallet
 import org.ton.api.pub.PublicKeyEd25519
 
 class InitModelState(private val savedStateHandle: SavedStateHandle) {
@@ -23,7 +23,7 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         get() = savedStateHandle[PASSCODE_KEY]
         set(value) = savedStateHandle.set(PASSCODE_KEY, value)
 
-    var label: WalletLabel?
+    var label: Wallet.Label?
         get() = savedStateHandle[LABEL_KEY]
         set(value) = savedStateHandle.set(LABEL_KEY, value)
 

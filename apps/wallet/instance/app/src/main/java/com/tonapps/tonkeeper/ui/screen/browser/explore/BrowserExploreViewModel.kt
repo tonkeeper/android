@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
 import com.tonapps.wallet.data.settings.SettingsRepository

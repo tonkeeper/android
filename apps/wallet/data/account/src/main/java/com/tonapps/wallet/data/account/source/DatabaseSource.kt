@@ -12,9 +12,8 @@ import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.sqlite.withTransaction
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.entities.WalletLabel
-import com.tonapps.wallet.data.account.walletType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
@@ -76,7 +75,7 @@ internal class DatabaseSource(
         }
     }
 
-    suspend fun editAccount(id: String, label: WalletLabel) = withContext(scope.coroutineContext) {
+    suspend fun editAccount(id: String, label: Wallet.Label) = withContext(scope.coroutineContext) {
         val values = ContentValues()
         values.put(WALLET_TABLE_LABEL, label.toByteArray())
         val count = writableDatabase.update(WALLET_TABLE_NAME, values, "$WALLET_TABLE_ID_COLUMN = ?", arrayOf(id))
@@ -133,9 +132,9 @@ internal class DatabaseSource(
             val wallet = WalletEntity(
                 id = cursor.getString(idIndex),
                 publicKey = PublicKeyEd25519(cursor.getBlob(publicKeyIndex)),
-                type = walletType(cursor.getInt(typeIndex)),
+                type = Wallet.typeOf(cursor.getInt(typeIndex)),
                 version = walletVersion(cursor.getInt(versionIndex)),
-                label = cursor.getBlob(labelIndex).toParcel<WalletLabel>()!!
+                label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!
             )
             accounts.add(wallet)
         }

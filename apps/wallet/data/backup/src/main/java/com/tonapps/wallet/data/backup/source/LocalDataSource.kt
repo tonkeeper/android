@@ -70,9 +70,9 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup"
 
     fun addBackup(
         walletId: String,
-        source: BackupEntity.Source
+        source: BackupEntity.Source,
+        date: Long = System.currentTimeMillis(),
     ): BackupEntity {
-        val date = System.currentTimeMillis()
         val values = ContentValues()
         values.put(BACKUP_COLUMN_WALLET_ID, walletId)
         values.put(BACKUP_COLUMN_SOURCE, source.name)

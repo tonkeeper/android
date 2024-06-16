@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.name.edit
 
 import androidx.lifecycle.ViewModel
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 

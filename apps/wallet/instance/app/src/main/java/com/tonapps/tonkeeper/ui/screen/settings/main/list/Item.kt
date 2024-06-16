@@ -1,13 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list
 
-import android.net.Uri
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -24,7 +22,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val title: String,
         val emoji: String,
         val color: Int,
-        val walletType: WalletType
+        val walletType: Wallet.Type
     ): Item(TYPE_ACCOUNT) {
 
         constructor(wallet: WalletEntity) : this(

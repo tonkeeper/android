@@ -3,8 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.main
 import androidx.lifecycle.ViewModel
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.WalletType
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.Wallet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +24,7 @@ class MainViewModel(
 
     init {
         collectFlow(accountRepository.selectedWalletFlow) { wallet ->
-            _browserTabEnabledFlow.value = !api.config.flags.disableDApps && (wallet.type == WalletType.Default || wallet.type == WalletType.Signer)
+            _browserTabEnabledFlow.value = !api.config.flags.disableDApps && (wallet.type == Wallet.Type.Default || wallet.type == Wallet.Type.Signer)
         }
     }
 

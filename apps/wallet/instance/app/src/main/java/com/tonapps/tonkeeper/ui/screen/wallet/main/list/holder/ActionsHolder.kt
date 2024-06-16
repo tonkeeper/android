@@ -10,7 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.Wallet
 import uikit.navigation.Navigation
 
 class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.view_wallet_actions) {
@@ -36,10 +36,10 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(SwapScreen.newInstance(item.swapUri, item.address, TokenEntity.TON.address))
         }
 
-        swapView.isEnabled = item.walletType == WalletType.Default && !item.disableSwap
-        sendView.isEnabled = item.walletType != WalletType.Watch
-        scanView.isEnabled = item.walletType != WalletType.Watch
-        buyOrSellView.isEnabled = item.walletType != WalletType.Testnet && !item.disableSwap
+        swapView.isEnabled = item.walletType == Wallet.Type.Default && !item.disableSwap
+        sendView.isEnabled = item.walletType != Wallet.Type.Watch
+        scanView.isEnabled = item.walletType != Wallet.Type.Watch
+        buyOrSellView.isEnabled = item.walletType != Wallet.Type.Testnet && !item.disableSwap
     }
 
 }

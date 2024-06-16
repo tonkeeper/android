@@ -17,7 +17,6 @@ import com.tonapps.tonkeeper.api.ton
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
-import io.tonapi.models.AccountEvents
 import io.tonapi.models.Action
 import io.tonapi.models.ActionSimplePreview
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +26,6 @@ import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.legacy.WalletLegacy
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.events.EventsRepository
@@ -63,39 +61,8 @@ class HistoryHelper(
         val feeFiatFormat: CharSequence
     )
 
-    private fun createWalletLegacy(wallet: WalletEntity): WalletLegacy {
-        return WalletLegacy(
-            id = wallet.id,
-            name = wallet.label.name,
-            publicKey = wallet.publicKey,
-            type = wallet.type,
-            emoji = wallet.label.emoji,
-            color = wallet.label.color,
-            version = wallet.version
-        )
-    }
-
     suspend fun create(
         wallet: WalletEntity,
-        response: MessageConsequences,
-        rates: RatesEntity,
-    ): Details {
-        val legacy = createWalletLegacy(wallet)
-        return create(legacy, response, rates)
-    }
-
-    suspend fun mapping(
-        wallet: WalletEntity,
-        events: List<AccountEvent>,
-        removeDate: Boolean = false,
-        hiddenBalances: Boolean = false
-    ): List<HistoryItem> {
-        val legacy = createWalletLegacy(wallet)
-        return mapping(legacy, events, removeDate, hiddenBalances)
-    }
-
-    suspend fun create(
-        wallet: WalletLegacy,
         response: MessageConsequences,
         rates: RatesEntity,
     ): Details {
@@ -135,29 +102,6 @@ class HistoryHelper(
         return items
     }
 
-    suspend fun mapping(
-        wallet: WalletEntity,
-        event: AccountEvent,
-        removeDate: Boolean = false,
-    ): List<HistoryItem> {
-        return mapping(createWalletLegacy(wallet), arrayListOf(event), removeDate)
-    }
-
-    suspend fun mapping(
-        wallet: WalletLegacy,
-        event: AccountEvent,
-        removeDate: Boolean = false,
-    ): List<HistoryItem> {
-        return mapping(wallet, arrayListOf(event), removeDate)
-    }
-
-    suspend fun mapping(
-        wallet: WalletLegacy,
-        events: AccountEvents,
-        removeDate: Boolean = false,
-    ): List<HistoryItem> {
-        return mapping(wallet, events.events, removeDate)
-    }
 
     fun formatDate(timestamp: Long): String {
         if (timestamp == 0L) {
@@ -167,7 +111,16 @@ class HistoryHelper(
     }
 
     suspend fun mapping(
-        wallet: WalletLegacy,
+        wallet: WalletEntity,
+        event: AccountEvent,
+        removeDate: Boolean = false,
+        hiddenBalances: Boolean = false
+    ): List<HistoryItem> {
+        return mapping(wallet, listOf(event), removeDate, hiddenBalances)
+    }
+
+    suspend fun mapping(
+        wallet: WalletEntity,
         events: List<AccountEvent>,
         removeDate: Boolean = false,
         hiddenBalances: Boolean = false
@@ -211,7 +164,7 @@ class HistoryHelper(
     private fun action(
         index: Int,
         txId: String,
-        wallet: WalletLegacy,
+        wallet: WalletEntity,
         action: Action,
         timestamp: Long
     ): HistoryItem.Event {

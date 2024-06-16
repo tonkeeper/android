@@ -21,8 +21,8 @@ import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
-import com.tonapps.wallet.data.account.WalletType
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.settings.SettingsRepository
 import uikit.HapticHelper
@@ -66,7 +66,7 @@ class BalanceHolder(
         setWalletState(item.status, item.address, item.walletType)
     }
 
-    private fun setWalletState(state: Item.Status, address: String, walletType: WalletType) {
+    private fun setWalletState(state: Item.Status, address: String, walletType: Wallet.Type) {
         if (state == Item.Status.Updating) {
             walletLoaderView.visibility = View.VISIBLE
             walletAddressView.setText(Localization.updating)
@@ -88,7 +88,7 @@ class BalanceHolder(
             walletAddressView.text = address.shortAddress
             walletAddressView.setTextColor(context.textSecondaryColor)
             walletAddressView.setOnClickListener {
-                if (walletType == WalletType.Default) {
+                if (walletType == Wallet.Type.Default) {
                     context.copyWithToast(address)
                 } else {
                     context.copyWithToast(address, getTypeColor(walletType))
@@ -97,11 +97,11 @@ class BalanceHolder(
         }
     }
 
-    private fun setWalletType(type: WalletType) {
+    private fun setWalletType(type: Wallet.Type) {
         val resId = when (type) {
-            WalletType.Watch -> Localization.watch_only
-            WalletType.Testnet -> Localization.testnet
-            WalletType.Signer -> Localization.signer
+            Wallet.Type.Watch -> Localization.watch_only
+            Wallet.Type.Testnet -> Localization.testnet
+            Wallet.Type.Signer -> Localization.signer
             else -> {
                 walletTypeView.visibility = View.GONE
                 return
@@ -115,9 +115,9 @@ class BalanceHolder(
         walletTypeView.setText(resId)
     }
 
-    private fun getTypeColor(type: WalletType): Int {
+    private fun getTypeColor(type: Wallet.Type): Int {
         return when (type) {
-            WalletType.Signer -> context.accentPurpleColor
+            Wallet.Type.Signer -> context.accentPurpleColor
             else -> context.accentOrangeColor
         }
     }

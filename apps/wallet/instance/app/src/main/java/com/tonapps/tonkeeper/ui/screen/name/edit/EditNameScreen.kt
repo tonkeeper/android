@@ -6,7 +6,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.component.label.LabelEditorView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletLabel
+import com.tonapps.wallet.data.account.Wallet
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -44,7 +44,7 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
         super.onPause()
     }
 
-    private fun setLabel(label: WalletLabel) {
+    private fun setLabel(label: Wallet.Label) {
         with(editorView) {
             name = label.name
             emoji = label.emoji

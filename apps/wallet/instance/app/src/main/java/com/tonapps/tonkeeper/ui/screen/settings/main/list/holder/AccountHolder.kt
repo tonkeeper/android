@@ -10,7 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.WalletType
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 
@@ -38,16 +38,16 @@ class AccountHolder(
         setType(item.walletType)
     }
 
-    private fun setType(type: WalletType) {
-        if (type == WalletType.Default) {
+    private fun setType(type: Wallet.Type) {
+        if (type == Wallet.Type.Default) {
             typeView.visibility = View.GONE
             return
         }
         typeView.visibility = View.VISIBLE
         val resId = when (type) {
-            WalletType.Watch -> Localization.watch_only
-            WalletType.Testnet -> Localization.testnet
-            WalletType.Signer -> Localization.signer
+            Wallet.Type.Watch -> Localization.watch_only
+            Wallet.Type.Testnet -> Localization.testnet
+            Wallet.Type.Signer -> Localization.signer
             else -> throw IllegalArgumentException("Unknown wallet type: $type")
         }
         typeView.setText(resId)

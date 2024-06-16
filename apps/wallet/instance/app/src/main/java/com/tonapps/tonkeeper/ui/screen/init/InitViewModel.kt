@@ -26,8 +26,8 @@ import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.api.entity.AccountEntity
 import com.tonapps.wallet.data.account.WalletColor
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.entities.WalletLabel
-import com.tonapps.wallet.data.account.n.AccountRepository
+import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
@@ -284,15 +284,15 @@ class InitViewModel(
     }
 
     fun setLabel(name: String, emoji: String, color: Int) {
-        setLabel(WalletLabel(name, emoji, color))
+        setLabel(Wallet.Label(name, emoji, color))
     }
 
-    fun setLabel(label: WalletLabel) {
+    fun setLabel(label: Wallet.Label) {
         savedState.label = label
     }
 
-    fun getLabel(): WalletLabel {
-        return savedState.label ?: WalletLabel(
+    fun getLabel(): Wallet.Label {
+        return savedState.label ?: Wallet.Label(
             accountName = "",
             emoji = Emoji.WALLET_ICON,
             color = WalletColor.all.first()

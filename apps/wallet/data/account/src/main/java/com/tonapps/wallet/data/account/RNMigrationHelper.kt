@@ -1,6 +1,6 @@
 package com.tonapps.wallet.data.account
 
-import android.util.Log
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -20,16 +20,25 @@ internal class RNMigrationHelper(
 
     suspend fun loadLegacy(): Pair<String, List<WalletEntity>> {
         val legacyWallets = rnLegacy.getWallets()
+        var selectedIdentifier = legacyWallets.selectedIdentifier
         if (legacyWallets.wallets.isEmpty()) {
             return Pair("", emptyList())
         }
         val list = mutableListOf<WalletEntity>()
         for (legacyWallet in legacyWallets.wallets) {
+            val version = walletVersion(legacyWallet.version)
+            if (version == WalletVersion.UNKNOWN || version == WalletVersion.V5R1) {
+                if (selectedIdentifier == legacyWallet.identifier) {
+                    selectedIdentifier = ""
+                }
+                continue
+            }
+
             var emoji = legacyWallet.emoji
             if (emoji.startsWith("ic-")) {
                 emoji = emoji.replace("ic-", "custom_")
             }
-            emoji = emoji.removeSuffix("-32")
+            emoji = emoji.removeSuffix("-32").replace("-", "_")
 
             val label = Wallet.Label(
                 accountName = legacyWallet.name,
@@ -58,11 +67,15 @@ internal class RNMigrationHelper(
                 id = legacyWallet.identifier,
                 publicKey = PublicKeyEd25519(hex(legacyWallet.pubkey)),
                 type = type,
-                version = walletVersion(legacyWallet.version),
+                version = version,
                 label = label
             )
             list.add(entity)
         }
-        return Pair(legacyWallets.selectedIdentifier, list)
+        if (selectedIdentifier.isEmpty()) {
+            val wallet = list.firstOrNull() ?: return Pair("", emptyList())
+            selectedIdentifier = wallet.id
+        }
+        return Pair(selectedIdentifier, list)
     }
 }

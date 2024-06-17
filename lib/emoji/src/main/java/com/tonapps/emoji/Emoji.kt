@@ -42,6 +42,17 @@ object Emoji {
         return all.toTypedArray()
     }
 
+    suspend fun isValid(
+        context: Context,
+        value: CharSequence
+    ): Boolean {
+        if (customIcons.contains(value)) {
+            return true
+        }
+        val emojis = get(context)
+        return emojis.any { it.value == value }
+    }
+
     suspend fun getBitmap(context: Context, emoji: CharSequence): Bitmap {
         return getDrawable(context, emoji).bitmap
     }

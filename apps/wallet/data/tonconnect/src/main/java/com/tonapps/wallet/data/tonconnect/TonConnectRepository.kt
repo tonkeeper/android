@@ -8,6 +8,7 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.prefs
 import com.tonapps.security.CryptoBox
+import com.tonapps.security.hex
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletProof
 import com.tonapps.wallet.data.account.entities.ProofDomainEntity
@@ -70,6 +71,7 @@ class TonConnectRepository(
             val apps = localDataSource.getApps()
             if (context.isMainVersion && apps.isEmpty()) {
                 migrationFromRN()
+                _appsFlow.value = localDataSource.getApps()
             } else {
                 _appsFlow.value = apps
             }
@@ -77,19 +79,24 @@ class TonConnectRepository(
     }
 
     private suspend fun migrationFromRN() {
-        val wallets = rnLegacy.getWallets().wallets
         val value = rnLegacy.getJSONState("TCApps")?.getJSONObject("connectedApps") ?: return
-        val mainnet = value.optJSONObject("mainnet") ?: return
-        for (key in mainnet.keys()) {
+        value.optJSONObject("mainnet")?.let { migrationRN(it, false) }
+        value.optJSONObject("testnet")?.let { migrationRN(it, true) }
+    }
+
+    private suspend fun migrationRN(value: JSONObject, testnet: Boolean) {
+        for (key in value.keys()) {
             val address = key.toRawAddress()
-            val json = mainnet.getJSONObject(key)
-            Log.d("TonConnectLog", "address: $address; json: $json")
+            val wallet = accountRepository.getWalletByAccountId(address, testnet) ?: continue
+            val json = value.getJSONObject(key)
+            for (clientId in json.keys()) {
+                migrationRNApp(wallet, json.getJSONObject(clientId))
+            }
         }
     }
 
-    private suspend fun migrationRNApp(
-        wallets: List<RNWallet>,
-        address: String,
+    private fun migrationRNApp(
+        wallet: WalletEntity,
         json: JSONObject
     ) {
         val manifest = DAppManifestEntity(
@@ -101,8 +108,28 @@ class TonConnectRepository(
         )
 
         val notificationsEnabled = json.optBoolean("notificationsEnabled", false)
-        Log.d("TonConnectLog", "address: $address")
-        Log.d("TonConnectLog", "json: $json")
+        val connections = json.optJSONArray("connections") ?: return
+        if (connections.length() == 0) {
+            return
+        }
+        val connection = connections.getJSONObject(connections.length() - 1)
+        val sessionKeyPair = connection.getJSONObject("sessionKeyPair")
+
+        val app = DAppEntity(
+            url = manifest.url,
+            walletId = wallet.id,
+            accountId = wallet.accountId,
+            testnet = wallet.testnet,
+            clientId = connection.getString("clientSessionId"),
+            keyPair = CryptoBox.KeyPair(
+                publicKey = sessionKeyPair.getString("publicKey").hex(),
+                privateKey = sessionKeyPair.getString("secretKey").hex(),
+            ),
+            enablePush = notificationsEnabled,
+            manifest = manifest,
+        )
+
+        localDataSource.addApp(app)
     }
 
     fun setPushEnabled(walletId: String, url: String, enabled: Boolean) {
@@ -139,7 +166,6 @@ class TonConnectRepository(
     }
 
     suspend fun getManifest(sourceUrl: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
-        Log.d("TonConnectBridge", "getManifest: sourceUrl = $sourceUrl")
         try {
             val local = localDataSource.getManifest(sourceUrl)
             if (local == null) {
@@ -150,7 +176,6 @@ class TonConnectRepository(
                 local
             }
         } catch (e: Throwable) {
-            Log.e("TonConnectBridge", "getManifest: error = $e", e)
             null
         }
     }
@@ -184,7 +209,6 @@ class TonConnectRepository(
         app: DAppEntity,
         body: String,
     ) = withContext(Dispatchers.IO) {
-        Log.d("TonConnectBridge", "send: body = ${body}")
         val encrypted = app.encrypt(body)
         api.tonconnectSend(app.publicKeyHex, app.clientId, base64(encrypted))
     }

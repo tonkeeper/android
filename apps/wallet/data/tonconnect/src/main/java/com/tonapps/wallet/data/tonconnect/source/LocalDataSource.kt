@@ -62,7 +62,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         writableDatabase.delete(
             APP_TABLE_NAME,
             "$APP_COLUMN_URL = ? AND $APP_COLUMN_WALLET_ID = ?",
-            arrayOf(app.url, app.walletId.toString())
+            arrayOf(app.url, app.walletId)
         )
 
         val value = ContentValues()

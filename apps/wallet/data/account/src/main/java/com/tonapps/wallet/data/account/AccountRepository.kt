@@ -4,6 +4,7 @@ import android.content.Context
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.isMainVersion
 import com.tonapps.wallet.api.API
@@ -14,6 +15,7 @@ import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.rn.data.RNWallet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,7 +43,7 @@ import java.util.UUID
 class AccountRepository(
     context: Context,
     private val api: API,
-    rnLegacy: RNLegacy,
+    private val rnLegacy: RNLegacy,
 ) {
 
     private companion object {
@@ -113,12 +115,41 @@ class AccountRepository(
         }
     }
 
+    private suspend fun addWalletToRN(wallet: WalletEntity) {
+        val type = when (wallet.type) {
+            Wallet.Type.Default -> RNWallet.Type.Regular
+            Wallet.Type.Watch -> RNWallet.Type.WatchOnly
+            Wallet.Type.Lockup -> RNWallet.Type.Lockup
+            Wallet.Type.SignerQR -> RNWallet.Type.Signer
+            Wallet.Type.Signer -> RNWallet.Type.SignerDeeplink
+            Wallet.Type.Ledger -> RNWallet.Type.Ledger
+            else -> return
+        }
+
+        val rnWallet = RNWallet(
+            name = wallet.label.accountName,
+            color = RNWallet.resolveColor(wallet.label.color),
+            emoji = wallet.label.emoji.toString(),
+            identifier = wallet.id,
+            pubkey = wallet.publicKey.hex(),
+            network = if (wallet.testnet) RNWallet.Network.Testnet else RNWallet.Network.Mainnet,
+            type = type,
+            version = wallet.version.title,
+            workchain = wallet.contract.workchain,
+            allowedDestinations = null,
+            configPubKey = null,
+            ledger = null,
+        )
+        rnLegacy.addWallet(rnWallet)
+    }
+
     fun editLabel(name: String, emoji: CharSequence, color: Int) {
         scope.launch(scope.coroutineContext) {
             val wallet = getSelectedWallet() ?: return@launch
             val newLabel = Wallet.Label(name, emoji, color)
             _selectedStateFlow.value = SelectedState.Wallet(wallet.copy(label = newLabel))
             database.editAccount(wallet.id, Wallet.Label(name, emoji, color))
+            rnLegacy.edit(wallet.id, name, emoji.toString(), color)
         }
     }
 
@@ -232,6 +263,9 @@ class AccountRepository(
     private suspend fun insertWallets(list: List<WalletEntity>) {
         database.insertAccounts(list)
         setSelectedWallet(list.first().id)
+        for (wallet in list) {
+            addWalletToRN(wallet)
+        }
     }
 
     private fun createTonProofToken(wallet: WalletEntity): String? {
@@ -287,9 +321,15 @@ class AccountRepository(
         setSelectedWallet(null)
     }
 
-    suspend fun getWalletByAccountId(accountId: String): WalletEntity? {
+    suspend fun getWalletByAccountId(accountId: String, testnet: Boolean = false): WalletEntity? {
         val wallets = database.getAccounts()
-        return wallets.firstOrNull { it.accountId.equals(accountId, ignoreCase = true) }
+        val wallet = wallets.firstOrNull {
+            it.accountId.equals(accountId, ignoreCase = true)
+        } ?: return null
+        if (wallet.testnet == testnet) {
+            return wallet
+        }
+        return null
     }
 
     suspend fun getWalletById(id: String): WalletEntity? {

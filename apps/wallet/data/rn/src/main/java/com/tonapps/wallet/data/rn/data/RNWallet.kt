@@ -128,6 +128,7 @@ data class RNWallet(
         FireOrange("FireOrange"),
     }
 
+
     constructor(json: JSONObject) : this(
         json.getString("name"),
         enumColor(json.getString("color")),

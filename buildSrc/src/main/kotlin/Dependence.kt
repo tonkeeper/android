@@ -36,7 +36,7 @@ object Dependence {
         const val shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
         const val appCompat = "androidx.appcompat:appcompat:1.7.0"
         const val activity = "androidx.activity:activity-ktx:1.9.0"
-        const val fragment = "androidx.fragment:fragment-ktx:1.7.1"
+        const val fragment = "androidx.fragment:fragment-ktx:1.8.0"
         const val recyclerView = "androidx.recyclerview:recyclerview:1.3.2"
         const val viewPager2 = "androidx.viewpager2:viewpager2:1.1.0"
         const val security = "androidx.security:security-crypto:1.0.0"
@@ -48,8 +48,8 @@ object Dependence {
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"
 
-        const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.1"
-        const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.1"
+        const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.2"
+        const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.2"
 
         object Camera {
             private const val version = "1.4.0-alpha04"
@@ -60,18 +60,8 @@ object Dependence {
             const val view = "androidx.camera:camera-view:$version"
         }
 
-        object Room {
-            private const val version = "2.6.1"
-
-            const val base = "androidx.room:room-ktx:$version"
-            const val runtime = "androidx.room:room-runtime:$version"
-            const val compiler = "androidx.room:room-compiler:$version"
-        }
-
         object Emoji {
-            private const val version = "1.4.0"
-
-            const val core = "androidx.emoji2:emoji2:$version"
+            const val core = "androidx.emoji2:emoji2:1.4.0"
         }
     }
 

@@ -1,6 +1,5 @@
 package com.tonapps.blockchain.ton.contract
 
-import android.util.Log
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.MessageRelaxed
 import org.ton.boc.BagOfCells

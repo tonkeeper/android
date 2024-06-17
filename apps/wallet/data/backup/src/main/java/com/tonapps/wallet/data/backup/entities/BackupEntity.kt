@@ -7,7 +7,7 @@ import kotlinx.parcelize.Parcelize
 data class BackupEntity(
     val id: Long,
     val source: Source = Source.LOCAL,
-    val walletId: Long,
+    val walletId: String,
     val date: Long,
 ): Parcelable {
 

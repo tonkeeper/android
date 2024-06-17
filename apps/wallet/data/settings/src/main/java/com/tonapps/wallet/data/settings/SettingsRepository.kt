@@ -1,13 +1,18 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
+import android.util.Log
 import androidx.collection.ArrayMap
+import androidx.core.content.edit
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
+import com.tonapps.wallet.data.settings.folder.ImportLegacyFolder
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
 import com.tonapps.wallet.localization.Language
@@ -27,7 +32,8 @@ import kotlinx.coroutines.launch
 // TODO need to be refactored
 class SettingsRepository(
     private val scope: CoroutineScope,
-    private val context: Context
+    private val context: Context,
+    private val rnLegacy: RNLegacy,
 ) {
 
     private companion object {
@@ -42,7 +48,6 @@ class SettingsRepository(
         private const val FIREBASE_TOKEN_KEY = "firebase_token"
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
-        private const val PUSH_WALLET_PREFIX = "push_wallet_"
         private const val AMOUNT_INPUT_CURRENCY_KEY = "amount_input_currency"
     }
 
@@ -67,7 +72,7 @@ class SettingsRepository(
     private val _searchEngineFlow = MutableEffectFlow<SearchEngine>()
     val searchEngineFlow = _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _walletPush = MutableStateFlow<Map<Long, Boolean>?>(null)
+    private val _walletPush = MutableStateFlow<Map<String, Boolean>?>(null)
     val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _amountInputCurrencyFlow = MutableStateFlow<Boolean?>(null)
@@ -76,6 +81,7 @@ class SettingsRepository(
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context)
     private val walletPrefsFolder = WalletPrefsFolder(context)
+    private val importLegacyFolder = ImportLegacyFolder(context)
 
     val tokenPrefsChangedFlow: Flow<Unit>
         get() = tokenPrefsFolder.changedFlow
@@ -175,42 +181,51 @@ class SettingsRepository(
             }
         }
 
-    private fun pushWalletKey(walletId: Long) = "$PUSH_WALLET_PREFIX$walletId"
+    var importLegacyPasscode: Boolean
+        get() = importLegacyFolder.passcode
+        set(value) {
+            importLegacyFolder.passcode = value
+        }
 
-    fun getPushWallet(walletId: Long): Boolean = prefs.getBoolean(pushWalletKey(walletId), false)
+    fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
-    fun setPushWallet(walletId: Long, value: Boolean) {
-        prefs.edit().putBoolean(pushWalletKey(walletId), value).apply()
+    fun setPushWallet(walletId: String, value: Boolean) {
+        walletPrefsFolder.setPushEnabled(walletId, value)
 
         val map = (_walletPush.value ?: mapOf()).toMutableMap()
         map[walletId] = value
         _walletPush.tryEmit(map)
     }
 
-    fun setTokenHidden(walletId: Long, tokenAddress: String, hidden: Boolean) {
+    fun setTokenHidden(walletId: String, tokenAddress: String, hidden: Boolean) {
         tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
     }
 
-    fun setTokenPinned(walletId: Long, tokenAddress: String, pinned: Boolean) {
+    fun setTokenPinned(walletId: String, tokenAddress: String, pinned: Boolean) {
         tokenPrefsFolder.setPinned(walletId, tokenAddress, pinned)
     }
 
-    fun setTokensSort(walletId: Long, tokensAddress: List<String>) {
+    fun setTokensSort(walletId: String, tokensAddress: List<String>) {
         tokenPrefsFolder.setSort(walletId, tokensAddress)
     }
 
-    fun setWalletsSort(walletIds: List<Long>) {
+    fun setWalletsSort(walletIds: List<String>) {
         walletPrefsFolder.setSort(walletIds)
     }
 
-    fun getWalletPrefs(walletId: Long) = walletPrefsFolder.get(walletId)
+    fun getWalletPrefs(walletId: String) = walletPrefsFolder.get(walletId)
 
-    fun getTokenPrefs(walletId: Long, tokenAddress: String): TokenPrefsEntity {
+    fun getTokenPrefs(walletId: String, tokenAddress: String): TokenPrefsEntity {
         return tokenPrefsFolder.get(walletId, tokenAddress)
     }
 
     init {
         scope.launch(Dispatchers.IO) {
+            if (context.isMainVersion && !importLegacyFolder.settings) {
+                importFromLegacy()
+                importLegacyFolder.settings = true
+            }
+
             _currencyFlow.tryEmit(currency)
             _themeFlow.tryEmit(theme)
             _languageFlow.tryEmit(language)
@@ -221,5 +236,69 @@ class SettingsRepository(
             _walletPush.tryEmit(mapOf())
             _amountInputCurrencyFlow.tryEmit(amountInputCurrency)
         }
+    }
+
+    private suspend fun importFromLegacy() {
+        currency = legacyCurrency()
+        language = legacyLanguage()
+        searchEngine = legacySearchEngine()
+        theme = legacyTheme()
+        hiddenBalances = rnLegacy.getJSONState("privacy")?.getBoolean("hiddenAmounts") ?: false
+        importLegacyWallets()
+    }
+
+    private suspend fun importLegacyWallets() {
+        val data = rnLegacy.getWallets()
+        lockScreen = data.lockScreenEnabled
+        biometric = data.biometryEnabled
+
+        val wallets = data.wallets
+        for (wallet in wallets) {
+            val key = "${wallet.identifier}/notifications"
+            val isSubscribed = rnLegacy.getJSONValue(key)?.getBoolean("isSubscribed") ?: false
+            walletPrefsFolder.setPushEnabled(wallet.identifier, isSubscribed)
+        }
+    }
+
+    private fun legacyCurrency(): WalletCurrency {
+        try {
+            val value = rnLegacy.getJSONValue("ton_price")?.getString("currency") ?: "USD"
+            return WalletCurrency(value.uppercase())
+        } catch (e: Exception) {
+            return WalletCurrency(WalletCurrency.FIAT.first())
+        }
+    }
+
+    private fun legacyLanguage(): Language {
+        try {
+            val value = rnLegacy.getJSONState("in-app-language")?.getString("selectedLanguage")?.lowercase() ?: "system"
+            return when (value) {
+                "ru" -> Language("ru")
+                "en" -> Language("en")
+                else -> Language()
+            }
+        } catch (ignored: Exception) {}
+        return Language()
+    }
+
+    private fun legacySearchEngine(): SearchEngine {
+        try {
+            val searchEngine = (rnLegacy.getJSONState("browser")?.getString("searchEngine") ?: "DuckDuckGo").lowercase()
+            if (searchEngine == "google") {
+                return SearchEngine.GOOGLE
+            }
+        } catch (ignored: Exception) {}
+        return SearchEngine.DUCKDUCKGO
+    }
+
+    private fun legacyTheme(): Theme {
+        try {
+            val theme = rnLegacy.getJSONState("app-theme")?.getString("selectedTheme") ?: "blue"
+            if (theme == "system") {
+                return Theme.getByKey("blue")
+            }
+            return Theme.getByKey(theme)
+        } catch (ignored: Exception) {}
+        return Theme.getByKey("blue")
     }
 }

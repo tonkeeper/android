@@ -1,7 +1,5 @@
 package com.tonapps.blockchain.ton.contract
 
-import android.util.Log
-import kotlinx.datetime.Clock
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
@@ -24,7 +22,6 @@ import org.ton.contract.wallet.WalletTransfer
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeTlb
-import kotlin.time.Duration.Companion.seconds
 
 abstract class BaseWalletContract(
     val workchain: Int = DEFAULT_WORKCHAIN,
@@ -36,13 +33,13 @@ abstract class BaseWalletContract(
         const val DEFAULT_WALLET_ID: Int = 698983191
 
         fun create(publicKey: PublicKeyEd25519, v: String): BaseWalletContract {
-            return when(v) {
+            return when(v.lowercase()) {
                 "v3r1" -> WalletV3R1Contract(publicKey = publicKey)
                 "v3r2" -> WalletV3R2Contract(publicKey = publicKey)
                 "v4r1" -> WalletV4R1Contract(publicKey = publicKey)
                 "v4r2" -> WalletV4R2Contract(publicKey = publicKey)
-                "v5" -> WalletV5Contract(publicKey = publicKey)
-                else -> WalletV4R2Contract(publicKey = publicKey)
+                "v5r1" -> WalletV5R1Contract(publicKey = publicKey)
+                else -> throw IllegalArgumentException("Unsupported contract version: $v")
             }
         }
 

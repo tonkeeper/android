@@ -1,28 +1,22 @@
 package com.tonapps.wallet.data.tonconnect
 
 import android.content.SharedPreferences
-import android.util.Log
 import com.tonapps.extensions.base64
 import com.tonapps.extensions.string
 import com.tonapps.network.SSEvent
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.WalletRepository
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 
 internal class EventsHelper(
     private val prefs: SharedPreferences,
-    private val walletRepository: WalletRepository,
+    private val accountRepository: AccountRepository,
     private val api: API
 ) {
 
@@ -44,7 +38,7 @@ internal class EventsHelper(
         val from = event.json.getString("from")
         val message = event.json.getString("message")
         val app = apps.find { it.clientId == from } ?: return null
-        val wallet = walletRepository.getWallet(app.walletId) ?: return null
+        val wallet = accountRepository.getWalletById(app.walletId) ?: return null
         return DAppEventEntity(wallet, app, message.base64)
     }
 

@@ -55,12 +55,13 @@ fun SharedPreferences.putInt(key: String, value: Int) {
     }
 }
 
-fun SharedPreferences.getLongArray(key: String): LongArray {
-    val string = getString(key, null) ?: return LongArray(0)
-    return string.split(",").map { it.toLong() }.toLongArray()
+fun SharedPreferences.getStringArray(key: String): Array<String> {
+    val string = getString(key, null) ?: return emptyArray()
+    return string.split(",").toTypedArray()
 }
 
-fun SharedPreferences.putLongArray(key: String, value: LongArray) {
+
+fun SharedPreferences.putStringArray(key: String, value: Array<String>) {
     putString(key, value.joinToString(","))
 }
 

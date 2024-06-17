@@ -44,6 +44,10 @@ internal class CustomIcons {
         store[emoji] = resId
     }
 
+    fun contains(emoji: CharSequence): Boolean {
+        return store.containsKey(emoji)
+    }
+
     fun getAll(): List<CharSequence> = list.toList()
 
     operator fun get(emoji: CharSequence): Int? {

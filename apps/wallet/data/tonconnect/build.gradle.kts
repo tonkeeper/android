@@ -32,6 +32,7 @@ dependencies {
     implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Wallet.Data.core))
     implementation(project(Dependence.Wallet.Data.account))
+    implementation(project(Dependence.Wallet.Data.rn))
 
     implementation(project(Dependence.Lib.network))
     implementation(project(Dependence.Lib.extensions))

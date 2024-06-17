@@ -37,7 +37,7 @@ internal class InternalApi(
         path: String,
         testnet: Boolean,
         platform: String = "android_x",
-        build: String = context.packageInfo.versionName.removeSuffix("-debug")
+        build: String = "4.6.3", //context.packageInfo.versionName.removeSuffix("-debug")
     ): JSONObject {
         val url = endpoint(path, testnet, platform, build)
         val body = okHttpClient.get(url)

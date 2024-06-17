@@ -21,7 +21,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup"
         db.execSQL("CREATE TABLE $BACKUP_TABLE_NAME (" +
                 "$BACKUP_COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "$BACKUP_COLUMN_DATE INTEGER, " +
-                "$BACKUP_COLUMN_WALLET_ID INTEGER," +
+                "$BACKUP_COLUMN_WALLET_ID TEXT," +
                 "$BACKUP_COLUMN_SOURCE TEXT NOT NULL" +
                 ");")
         db.execSQL("CREATE INDEX idx_walletId ON $BACKUP_TABLE_NAME($BACKUP_COLUMN_WALLET_ID);")
@@ -53,7 +53,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup"
             backups.add(BackupEntity(
                 id = cursor.getLong(idIndex),
                 source = BackupEntity.Source.valueOf(cursor.getString(sourceIndex)),
-                walletId = cursor.getLong(walletIdIndex),
+                walletId = cursor.getString(walletIdIndex),
                 date = cursor.getLong(dateIndex)
             ))
         }
@@ -69,10 +69,10 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup"
     }
 
     fun addBackup(
-        walletId: Long,
-        source: BackupEntity.Source
+        walletId: String,
+        source: BackupEntity.Source,
+        date: Long = System.currentTimeMillis(),
     ): BackupEntity {
-        val date = System.currentTimeMillis()
         val values = ContentValues()
         values.put(BACKUP_COLUMN_WALLET_ID, walletId)
         values.put(BACKUP_COLUMN_SOURCE, source.name)

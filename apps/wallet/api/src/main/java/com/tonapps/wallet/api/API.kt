@@ -116,7 +116,11 @@ class API(
         accountId: String,
         testnet: Boolean
     ): BalanceEntity {
-        val account = accounts(testnet).getAccount(accountId)
+        val account = getAccount(accountId, testnet) ?: return BalanceEntity(
+            token = TokenEntity.TON,
+            value = Coins.ZERO,
+            walletAddress = accountId
+        )
         return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
     }
 
@@ -141,7 +145,7 @@ class API(
         testnet: Boolean
     ): AccountDetailsEntity? {
         return try {
-            val account = accounts(testnet).getAccount(query)
+            val account = getAccount(query, testnet) ?: return null
             AccountDetailsEntity(query, account, testnet)
         } catch (e: Throwable) {
             null
@@ -178,11 +182,15 @@ class API(
     }
 
     fun getNftItems(address: String, testnet: Boolean): List<NftItem> {
-        return accounts(testnet).getAccountNftItems(
-            accountId = address,
-            limit = 1000,
-            indirectOwnership = true,
-        ).nftItems
+        return try {
+            accounts(testnet).getAccountNftItems(
+                accountId = address,
+                limit = 1000,
+                indirectOwnership = true,
+            ).nftItems
+        } catch (e: Throwable) {
+            emptyList()
+        }
     }
 
     fun getPublicKey(
@@ -220,10 +228,14 @@ class API(
         return tonAPIHttpClient.sse(url)
     }
 
-    fun tonconnectPayload(): String {
-        val url = "${config.tonapiMainnetHost}/v2/tonconnect/payload"
-        val json = JSONObject(tonAPIHttpClient.get(url))
-        return json.getString("payload")
+    fun tonconnectPayload(): String? {
+        try {
+            val url = "${config.tonapiMainnetHost}/v2/tonconnect/payload"
+            val json = JSONObject(tonAPIHttpClient.get(url))
+            return json.getString("payload")
+        } catch (e: Throwable) {
+            return null
+        }
     }
 
     fun tonconnectProof(address: String, proof: String): String {

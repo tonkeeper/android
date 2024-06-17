@@ -37,7 +37,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
 
     private fun createAppTable(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $APP_TABLE_NAME (" +
-                "$APP_COLUMN_WALLET_ID INTEGER," +
+                "$APP_COLUMN_WALLET_ID TEXT," +
                 "$APP_COLUMN_OBJECT BLOB," +
                 "$APP_COLUMN_URL TEXT" +
                 ");")
@@ -62,7 +62,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         writableDatabase.delete(
             APP_TABLE_NAME,
             "$APP_COLUMN_URL = ? AND $APP_COLUMN_WALLET_ID = ?",
-            arrayOf(app.url, app.walletId.toString())
+            arrayOf(app.url, app.walletId)
         )
 
         val value = ContentValues()
@@ -76,9 +76,9 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         addApp(app)
     }
 
-    fun getApp(walletId: Long, url: String): DAppEntity? {
+    fun getApp(walletId: String, url: String): DAppEntity? {
         val query = "SELECT $APP_COLUMN_OBJECT FROM $APP_TABLE_NAME WHERE $APP_COLUMN_URL = ? AND $APP_COLUMN_WALLET_ID = ? LIMIT 1;"
-        val bytes = readableDatabase.query(query, arrayOf(url, walletId.toString())) ?: return null
+        val bytes = readableDatabase.query(query, arrayOf(url, walletId)) ?: return null
         return bytes.toParcel<DAppEntity>()
     }
 
@@ -94,11 +94,11 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         return uniqueApps(list)
     }
 
-    fun deleteApp(walletId: Long, url: String) {
+    fun deleteApp(walletId: String, url: String) {
         writableDatabase.delete(
             APP_TABLE_NAME,
             "$APP_COLUMN_URL = ? AND $APP_COLUMN_WALLET_ID = ?",
-            arrayOf(url, walletId.toString())
+            arrayOf(url, walletId)
         )
     }
 

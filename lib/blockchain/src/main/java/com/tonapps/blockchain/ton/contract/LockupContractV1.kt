@@ -14,6 +14,10 @@ class LockupContractV1(
     private val allowedDestinations: Boolean
 ): BaseWalletContract(publicKey = publicKey) {
 
+    override fun getSignaturePosition(): SignaturePosition {
+        return SignaturePosition.Front
+    }
+
     override fun getStateCell(): Cell {
         return CellBuilder.createCell {
             storeUInt(0, 32)
@@ -44,6 +48,7 @@ class LockupContractV1(
     override fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
+        messageType: MessageType,
         vararg gifts: WalletTransfer
     ): Cell {
         TODO("Not yet implemented")

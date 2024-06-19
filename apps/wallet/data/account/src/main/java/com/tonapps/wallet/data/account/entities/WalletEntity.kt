@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.account.entities
 
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -24,7 +25,9 @@ data class WalletEntity(
     }
 
     val contract: BaseWalletContract by lazy {
-        BaseWalletContract.create(publicKey, version.title)
+        val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value
+
+        BaseWalletContract.create(publicKey, version.title, network)
     }
 
     val testnet: Boolean

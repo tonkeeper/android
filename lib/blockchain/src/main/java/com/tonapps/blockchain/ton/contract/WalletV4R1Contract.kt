@@ -16,6 +16,10 @@ open class WalletV4R1Contract(
     publicKey: PublicKeyEd25519,
 ) : BaseWalletContract(workchain, publicKey) {
 
+    override fun getSignaturePosition(): SignaturePosition {
+        return SignaturePosition.Front
+    }
+
     override fun getStateCell(): Cell {
         return CellBuilder.createCell {
             storeUInt(0, 32)
@@ -32,6 +36,7 @@ open class WalletV4R1Contract(
     override fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
+        messageType: MessageType,
         vararg gifts: WalletTransfer
     ): Cell {
         if (gifts.size > 4) {

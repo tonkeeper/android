@@ -1,10 +1,12 @@
 package com.tonapps.extensions
 
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Build
+import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
@@ -50,6 +52,18 @@ val Context.isMainVersion: Boolean
 fun Context.prefs(name: String): SharedPreferences {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
+
+val Context.activity: ComponentActivity?
+    get() {
+        var context = this
+        while (context is ContextWrapper) {
+            if (context is ComponentActivity) {
+                return context
+            }
+            context = context.baseContext
+        }
+        return null
+    }
 
 fun Context.prefsEncrypted(name: String): SharedPreferences {
     if (isMainVersion) {

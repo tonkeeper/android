@@ -43,6 +43,7 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import org.koin.androidx.viewmodel.lazyResolveViewModel
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import java.util.Locale
@@ -63,7 +64,15 @@ class API(
     private val configRepository = ConfigRepository(context, scope, internalApi)
 
     val config: ConfigEntity
-        get() = configRepository.configEntity
+        get() {
+            while (configRepository.configEntity == null) {
+                Thread.sleep(32)
+            }
+            return configRepository.configEntity!!
+        }
+
+    val configFlow: Flow<ConfigEntity>
+        get() = configRepository.stream
 
     private val provider: Provider by lazy {
         Provider(config.tonapiMainnetHost, config.tonapiTestnetHost, tonAPIHttpClient)

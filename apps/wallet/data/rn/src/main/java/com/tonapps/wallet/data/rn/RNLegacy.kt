@@ -70,8 +70,18 @@ class RNLegacy(context: Context) {
         return sql.getJSONObject(key)
     }
 
+    fun setJSONValue(key: String, value: JSONObject) {
+        sql.setJSONObject(key, value)
+    }
+
     fun getJSONState(key: String): JSONObject? {
         return getJSONValue(key)?.getJSONObject("state")
+    }
+
+    fun setJSONState(key: String, value: JSONObject) {
+        val state = JSONObject()
+        state.put("state", value)
+        setJSONValue(key, state)
     }
 
     fun setActivity(activity: FragmentActivity) {

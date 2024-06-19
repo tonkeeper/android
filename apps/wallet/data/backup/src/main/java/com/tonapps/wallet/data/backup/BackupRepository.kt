@@ -16,9 +16,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class BackupRepository(
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
     context: Context,
     private val rnLegacy: RNLegacy,
 ) {
@@ -52,9 +53,24 @@ class BackupRepository(
         _stream.value = backups
     }
 
+    private fun backportToRN(entities: List<BackupEntity>?) {
+        scope.launch(Dispatchers.IO) {
+            val wallets = rnLegacy.getWallets().wallets
+            for (wallet in wallets) {
+                val entity = entities?.find { it.walletId == wallet.identifier }
+                val lastBackupAt = entity?.date ?: 0
+                val key = "${wallet.identifier}/setup"
+                val json = JSONObject()
+                json.put("lastBackupAt", lastBackupAt)
+                rnLegacy.setJSONValue(key, json)
+            }
+        }
+    }
+
     fun updateBackup(id: Long): BackupEntity? {
         val entity = localDataSource.updateBackup(id) ?: return null
         _stream.value = _stream.value?.map { if (it.id == id) entity else it } ?: listOf(entity)
+        backportToRN(_stream.value)
         return entity
     }
 
@@ -65,6 +81,7 @@ class BackupRepository(
     ): BackupEntity {
         val entity = localDataSource.addBackup(walletId, source, date)
         _stream.value = _stream.value?.plus(entity) ?: listOf(entity)
+        backportToRN(_stream.value)
         return entity
     }
 }

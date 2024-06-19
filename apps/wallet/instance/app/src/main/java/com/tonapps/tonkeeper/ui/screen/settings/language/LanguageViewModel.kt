@@ -35,13 +35,6 @@ class LanguageViewModel(
         _uiItemsFlow.value = _uiItemsFlow.value.map { item ->
             item.copy(selected = item.code == code)
         }
-
-        val locale = if (code == Language.DEFAULT) {
-            LocaleListCompat.getEmptyLocaleList()
-        } else {
-            LocaleListCompat.forLanguageTags(code)
-        }
-        AppCompatDelegate.setApplicationLocales(locale)
     }
 
     private fun getItems(): List<Item> {

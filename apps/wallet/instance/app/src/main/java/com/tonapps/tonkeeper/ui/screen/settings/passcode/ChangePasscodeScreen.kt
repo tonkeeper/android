@@ -1,10 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.settings.passcode
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import com.tonapps.tonkeeper.ui.component.PasscodeView
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -41,7 +40,7 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         passcodeView.clear()
         passcodeView.setTitle(Localization.passcode_current)
         passcodeView.doOnCheck = {
-            changePasscodeViewModel.checkCurrent(it)
+            changePasscodeViewModel.checkCurrent(requireContext(), it)
         }
     }
 
@@ -57,7 +56,7 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         passcodeView.clear()
         passcodeView.setTitle(Localization.passcode_re_enter)
         passcodeView.doOnCheck = {
-            changePasscodeViewModel.save(it)
+            changePasscodeViewModel.save(requireContext(), it)
         }
     }
 

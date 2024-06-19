@@ -18,7 +18,7 @@ android {
         minSdk = 27 // Build.minSdkVersion
         targetSdk = 34
         versionCode = 600
-        versionName = "4.6.3-x"
+        versionName = "4.7.0-x"
     }
 
     signingConfigs {

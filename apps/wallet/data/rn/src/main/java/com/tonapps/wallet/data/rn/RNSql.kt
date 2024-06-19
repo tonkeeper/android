@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.rn
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.os.SystemClock
 import com.tonapps.sqlite.SQLiteHelper
 import org.json.JSONObject
 
@@ -26,13 +27,26 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
     }
 
     fun getValue(key: String): String? {
-        val db = readableDatabase
-        val cursor = db.query(KV_TABLE_NAME, arrayOf(KV_TABLE_VALUE_COLUMN), "$KV_TABLE_KEY_COLUMN = ?", arrayOf(key), null, null, null)
-        val value = if (cursor.moveToFirst()) cursor.getString(0) else null
-        cursor.close()
-        db.close()
-        return value
+        return getValue(key, 0)
     }
+
+    private fun getValue(key: String, attempt: Int = 0): String? {
+        try {
+            val db = readableDatabase
+            val cursor = db.query(KV_TABLE_NAME, arrayOf(KV_TABLE_VALUE_COLUMN), "$KV_TABLE_KEY_COLUMN = ?", arrayOf(key), null, null, null)
+            val value = if (cursor.moveToFirst()) cursor.getString(0) else null
+            cursor.close()
+            db.close()
+            return value
+        } catch (e: Throwable) {
+            if (attempt > 3) {
+                return null
+            }
+            SystemClock.sleep(100)
+            return getValue(key, attempt + 1)
+        }
+    }
+
 
     fun setValue(key: String, value: String) {
         val values = ContentValues().apply {

@@ -12,7 +12,6 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
-import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendFeeState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendTransaction
@@ -21,10 +20,12 @@ import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -58,7 +59,7 @@ class SendViewModel(
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
     private val ratesRepository: RatesRepository,
-    private val passcodeRepository: PasscodeRepository
+    private val passcodeManager: PasscodeManager
 ): ViewModel() {
 
     private val isNft: Boolean
@@ -327,7 +328,7 @@ class SendViewModel(
                 Wallet.Type.Signer -> _uiEventFlow.tryEmit(SendEvent.Signer(unsignedBody, wallet.publicKey))
                 Wallet.Type.Watch -> throw SendException.UnableSendTransaction()
                 else -> {
-                    val isValidPasscode = passcodeRepository.confirmation(context)
+                    val isValidPasscode = passcodeManager.confirmation(context, context.getString(Localization.app_name))
                     if (!isValidPasscode) {
                         throw SendException.WrongPasscode()
                     }

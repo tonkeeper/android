@@ -15,7 +15,6 @@ class LanguageScreen: BaseListFragment(), BaseFragment.SwipeBack {
 
     private val adapter = Adapter {
         languageViewModel.setLanguage(it.code)
-        finish()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

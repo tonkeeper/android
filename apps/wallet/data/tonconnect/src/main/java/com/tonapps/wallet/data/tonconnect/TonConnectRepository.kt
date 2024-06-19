@@ -113,7 +113,7 @@ class TonConnectRepository(
             return
         }
         val connection = connections.getJSONObject(connections.length() - 1)
-        val sessionKeyPair = connection.getJSONObject("sessionKeyPair")
+        val sessionKeyPair = connection.optJSONObject("sessionKeyPair") ?: return
 
         val app = DAppEntity(
             url = manifest.url,

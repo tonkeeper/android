@@ -50,6 +50,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.browser))
     implementation(project(Dependence.Wallet.Data.backup))
     implementation(project(Dependence.Wallet.Data.rn))
+    implementation(project(Dependence.Wallet.Data.passcode))
 
     implementation(project(Dependence.UIKit.core))
 

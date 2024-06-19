@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
@@ -15,15 +14,15 @@ import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
-import com.tonapps.tonkeeper.password.PasscodeBiometric
 import com.tonapps.tonkeeper.sign.SignRequestEntity
-import com.tonapps.tonkeeper.ui.component.PasscodeView
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.passcode.PasscodeBiometric
+import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.localization.Localization
@@ -96,7 +95,7 @@ class RootActivity: NavigationActivity() {
         }
         lockView.visibility = View.VISIBLE
         if (config.biometric) {
-            PasscodeBiometric.showPrompt(this, object : BiometricPrompt.AuthenticationCallback() {
+            PasscodeBiometric.showPrompt(this, getString(Localization.app_name), object : BiometricPrompt.AuthenticationCallback() {
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
@@ -116,12 +115,9 @@ class RootActivity: NavigationActivity() {
             return
         }
 
-        Log.d("TonConnectBridge", "onDAppEvent: $event")
-
         val params = event.params
         for (i in 0 until params.length()) {
             val param = DAppEventEntity.parseParam(params.get(i))
-            Log.d("TonConnectBridge", "param: $param")
             val request = SignRequestEntity(param)
             try {
                 val boc = rootViewModel.requestSign(this, event.wallet, request)
@@ -133,7 +129,7 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun checkPasscode(code: String) {
-        rootViewModel.checkPasscode(code).catch {
+        rootViewModel.checkPasscode(this, code).catch {
             lockPasscodeView.setError()
         }.onEach {
             lockPasscodeView.setSuccess()

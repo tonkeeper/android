@@ -123,6 +123,7 @@ object Dependence {
             const val browser = ":apps:wallet:data:browser"
             const val backup = ":apps:wallet:data:backup"
             const val rn = ":apps:wallet:data:rn"
+            const val passcode = ":apps:wallet:data:passcode"
         }
 
     }

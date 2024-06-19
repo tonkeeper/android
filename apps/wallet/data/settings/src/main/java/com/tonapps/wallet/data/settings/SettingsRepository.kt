@@ -2,8 +2,10 @@ package com.tonapps.wallet.data.settings
 
 import android.content.Context
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.collection.ArrayMap
 import androidx.core.content.edit
+import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.locale
@@ -26,6 +28,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -82,6 +86,7 @@ class SettingsRepository(
     private val tokenPrefsFolder = TokenPrefsFolder(context)
     private val walletPrefsFolder = WalletPrefsFolder(context)
     private val importLegacyFolder = ImportLegacyFolder(context)
+    private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)
 
     val tokenPrefsChangedFlow: Flow<Unit>
         get() = tokenPrefsFolder.changedFlow
@@ -108,6 +113,7 @@ class SettingsRepository(
                 prefs.edit().putString(SEARCH_ENGINE_KEY, value.title).apply()
                 field = value
                 _searchEngineFlow.tryEmit(value)
+                migrationHelper.setLegacySearchEngine(value)
             }
         }
 
@@ -117,6 +123,7 @@ class SettingsRepository(
                 prefs.edit().putString(THEME_KEY, value.key).apply()
                 field = value
                 _themeFlow.tryEmit(value)
+                migrationHelper.setLegacyTheme(value)
             }
         }
 
@@ -135,6 +142,7 @@ class SettingsRepository(
                 prefs.edit().putString(CURRENCY_CODE_KEY, value.code).apply()
                 field = value
                 _currencyFlow.tryEmit(value)
+                migrationHelper.setLegacyCurrency(value)
             }
         }
 
@@ -144,6 +152,7 @@ class SettingsRepository(
                 field = value
                 prefs.edit().putString(LANGUAGE_CODE_KEY, field.code).apply()
                 _languageFlow.tryEmit(field)
+                migrationHelper.setLegacyLanguage(value)
             }
         }
 
@@ -152,6 +161,7 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putBoolean(LOCK_SCREEN_KEY, value).apply()
                 field = value
+                migrationHelper.setLockScreenEnabled(value)
             }
         }
 
@@ -160,6 +170,7 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putBoolean(BIOMETRIC_KEY, value).apply()
                 field = value
+                migrationHelper.setBiometryEnabled(value)
             }
         }
 
@@ -169,6 +180,7 @@ class SettingsRepository(
                 prefs.edit().putString(COUNTRY_KEY, value).apply()
                 field = value
                 _countryFlow.tryEmit(value)
+                migrationHelper.setLegacySelectedCountry(value)
             }
         }
 
@@ -178,6 +190,7 @@ class SettingsRepository(
                 prefs.edit().putBoolean(HIDDEN_BALANCES_KEY, value).apply()
                 field = value
                 _hiddenBalancesFlow.tryEmit(value)
+                migrationHelper.setHiddenBalance(value)
             }
         }
 
@@ -220,11 +233,12 @@ class SettingsRepository(
     }
 
     init {
+        languageFlow.onEach {
+            AppCompatDelegate.setApplicationLocales(getLocales())
+        }.launchIn(scope)
+
         scope.launch(Dispatchers.IO) {
-            if (context.isMainVersion && !importLegacyFolder.settings) {
-                importFromLegacy()
-                importLegacyFolder.settings = true
-            }
+            importFromLegacy()
 
             _currencyFlow.tryEmit(currency)
             _themeFlow.tryEmit(theme)
@@ -239,18 +253,19 @@ class SettingsRepository(
     }
 
     private suspend fun importFromLegacy() {
-        currency = legacyCurrency()
-        language = legacyLanguage()
-        searchEngine = legacySearchEngine()
-        theme = legacyTheme()
-        hiddenBalances = rnLegacy.getJSONState("privacy")?.getBoolean("hiddenAmounts") ?: false
+        currency = migrationHelper.getLegacyCurrency()
+        language = migrationHelper.getLegacyLanguage()
+        searchEngine = migrationHelper.getLegacySearchEngine()
+        theme = migrationHelper.getLegacyTheme()
+        hiddenBalances = migrationHelper.getHiddenBalances()
+        country = migrationHelper.getLegacySelectedCountry()
+        lockScreen = migrationHelper.getLockScreenEnabled()
+        biometric = migrationHelper.getBiometryEnabled()
         importLegacyWallets()
     }
 
     private suspend fun importLegacyWallets() {
         val data = rnLegacy.getWallets()
-        lockScreen = data.lockScreenEnabled
-        biometric = data.biometryEnabled
 
         val wallets = data.wallets
         for (wallet in wallets) {
@@ -260,45 +275,13 @@ class SettingsRepository(
         }
     }
 
-    private fun legacyCurrency(): WalletCurrency {
-        try {
-            val value = rnLegacy.getJSONValue("ton_price")?.getString("currency") ?: "USD"
-            return WalletCurrency(value.uppercase())
-        } catch (e: Exception) {
-            return WalletCurrency(WalletCurrency.FIAT.first())
+    private fun getLocales(): LocaleListCompat {
+        val code = language.code
+        return if (code == Language.DEFAULT) {
+            LocaleListCompat.getEmptyLocaleList()
+        } else {
+            LocaleListCompat.forLanguageTags(code)
         }
     }
 
-    private fun legacyLanguage(): Language {
-        try {
-            val value = rnLegacy.getJSONState("in-app-language")?.getString("selectedLanguage")?.lowercase() ?: "system"
-            return when (value) {
-                "ru" -> Language("ru")
-                "en" -> Language("en")
-                else -> Language()
-            }
-        } catch (ignored: Exception) {}
-        return Language()
-    }
-
-    private fun legacySearchEngine(): SearchEngine {
-        try {
-            val searchEngine = (rnLegacy.getJSONState("browser")?.getString("searchEngine") ?: "DuckDuckGo").lowercase()
-            if (searchEngine == "google") {
-                return SearchEngine.GOOGLE
-            }
-        } catch (ignored: Exception) {}
-        return SearchEngine.DUCKDUCKGO
-    }
-
-    private fun legacyTheme(): Theme {
-        try {
-            val theme = rnLegacy.getJSONState("app-theme")?.getString("selectedTheme") ?: "blue"
-            if (theme == "system") {
-                return Theme.getByKey("blue")
-            }
-            return Theme.getByKey(theme)
-        } catch (ignored: Exception) {}
-        return Theme.getByKey("blue")
-    }
 }

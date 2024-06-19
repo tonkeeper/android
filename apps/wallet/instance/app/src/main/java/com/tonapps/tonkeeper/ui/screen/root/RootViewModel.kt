@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
@@ -11,6 +12,7 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.isMainVersion
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
@@ -19,7 +21,6 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
 import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.helper.ShortcutHelper
-import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.sign.SignRequestEntity
@@ -35,6 +36,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
@@ -74,7 +76,7 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
     application: Application,
-    private val passcodeRepository: PasscodeRepository,
+    private val passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
     private val signManager: SignManager,
@@ -110,11 +112,14 @@ class RootViewModel(
 
     init {
         _passcodeFlow.value = Passcode(
-            show = settingsRepository.lockScreen && passcodeRepository.hasPinCode,
+            show = settingsRepository.lockScreen, //  && (!context.isMainVersion && passcodeRepository.hasPinCode)
             biometric = settingsRepository.biometric
         )
 
-        accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }.onEach { state ->
+        combine(
+            accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization },
+            api.configFlow,
+        ) { state, _ ->
             if (state is AccountRepository.SelectedState.Empty) {
                 _hasWalletFlow.tryEmit(false)
                 ShortcutManagerCompat.removeAllDynamicShortcuts(application)
@@ -127,8 +132,6 @@ class RootViewModel(
                 }
             }
             Widget.updateAll()
-
-            val wallets = accountRepository.getWallets()
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
         combine(
@@ -148,9 +151,6 @@ class RootViewModel(
             val balances = getBalances(sortedWallets)
             walletPickerAdapter.submitList(WalletPickerAdapter.map(sortedWallets, wallet, balances, hiddenBalance))
         }.launchIn(viewModelScope)
-
-
-
 
         viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.firebaseToken = GooglePushService.requestToken()
@@ -207,7 +207,7 @@ class RootViewModel(
     fun signOut() {
         viewModelScope.launch {
             accountRepository.logout()
-            passcodeRepository.clear()
+            passcodeManager.reset()
             hidePasscode()
         }
     }
@@ -279,8 +279,8 @@ class RootViewModel(
         return data.toJSON().toString()
     }
 
-    fun checkPasscode(code: String): Flow<Unit> = flow {
-        val valid = passcodeRepository.compare(code)
+    fun checkPasscode(context: Context, code: String): Flow<Unit> = flow {
+        val valid = passcodeManager.isValid(context, code)
         if (valid) {
             hidePasscode()
             emit(Unit)

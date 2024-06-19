@@ -18,7 +18,6 @@ import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -32,6 +31,7 @@ import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -64,7 +64,7 @@ class InitViewModel(
     private val scope: CoroutineScope,
     private val type: InitArgs.Type,
     application: Application,
-    private val passcodeRepository: PasscodeRepository,
+    private val passcodeManager: PasscodeManager,
     private val accountRepository: AccountRepository,
     private val tokenRepository: TokenRepository,
     private val collectiblesRepository: CollectiblesRepository,
@@ -115,7 +115,7 @@ class InitViewModel(
     init {
         if (passcodeAfterSeed) {
             _eventFlow.tryEmit(InitEvent.Step.ImportWords)
-        } else  if (!passcodeRepository.hasPinCode) {
+        } else  if (!passcodeManager.hasPinCode) {
             _eventFlow.tryEmit(InitEvent.Step.CreatePasscode)
         } else {
             startWalletFlow()
@@ -344,8 +344,8 @@ class InitViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (!passcodeRepository.hasPinCode) {
-                    passcodeRepository.set(savedState.passcode!!)
+                if (!passcodeManager.hasPinCode) {
+                    passcodeManager.save(savedState.passcode!!)
                 }
 
                 val wallets = mutableListOf<WalletEntity>()

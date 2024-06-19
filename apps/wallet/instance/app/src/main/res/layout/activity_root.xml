@@ -36,7 +36,7 @@
             android:paddingBottom="6dp"
             android:text="@string/sign_out"/>
 
-        <com.tonapps.tonkeeper.ui.component.PasscodeView
+        <com.tonapps.wallet.data.passcode.ui.PasscodeView
             android:id="@+id/lock_passcode"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

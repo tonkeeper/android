@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.password
+package com.tonapps.wallet.data.passcode.source
 
 import android.content.Context
 import com.tonapps.extensions.prefsEncrypted
@@ -7,7 +7,7 @@ import com.tonapps.extensions.remove
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class PasscodeDataStore(context: Context) {
+internal class PasscodeStore(context: Context) {
 
     companion object {
         const val CODE_LENGTH = 4
@@ -41,4 +41,5 @@ class PasscodeDataStore(context: Context) {
         val savedCode = keyValue.getString(CODE_KEY, null)
         savedCode == code
     }
+
 }

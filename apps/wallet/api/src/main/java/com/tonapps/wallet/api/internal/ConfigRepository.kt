@@ -8,6 +8,9 @@ import com.tonapps.extensions.toParcel
 import com.tonapps.wallet.api.entity.ConfigEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -18,9 +21,15 @@ internal class ConfigRepository(
 ) {
 
     private val configFile = context.cacheDir.file("config")
+    private val _stream = MutableStateFlow<ConfigEntity?>(null)
 
-    var configEntity: ConfigEntity = ConfigEntity.default
-        private set
+    val stream = _stream.asStateFlow().filterNotNull()
+
+    var configEntity: ConfigEntity? = null
+        private set (value) {
+            field = value
+            _stream.value = value
+        }
 
     init {
         readCache()?.let {
@@ -34,7 +43,10 @@ internal class ConfigRepository(
     }
 
     private fun readCache(): ConfigEntity? {
-        return configFile.readBytes().toParcel()
+        if (configFile.exists() && configFile.length() > 0) {
+            return configFile.readBytes().toParcel()
+        }
+        return null
     }
 
     private suspend fun remote(testnet: Boolean): ConfigEntity? = withContext(Dispatchers.IO) {

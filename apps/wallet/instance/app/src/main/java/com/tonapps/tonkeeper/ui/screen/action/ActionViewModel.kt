@@ -4,9 +4,10 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 class ActionViewModel(
     private val args: ActionArgs,
     private val accountRepository: AccountRepository,
-    private val passcodeRepository: PasscodeRepository
+    private val passcodeManager: PasscodeManager
 ): ViewModel() {
 
     private val _walletFlow = MutableStateFlow<WalletEntity?>(null)
@@ -31,7 +32,7 @@ class ActionViewModel(
         }
     }
 
-    fun sign(context: Context) = passcodeRepository.confirmationFlow(context).combine(walletFlow) { _, wallet ->
+    fun sign(context: Context) = passcodeManager.confirmationFlow(context, context.getString(Localization.app_name)).combine(walletFlow) { _, wallet ->
         val request = args.request
         val secretKey = accountRepository.getPrivateKey(wallet.id)
         val seqno = accountRepository.getSeqno(wallet)

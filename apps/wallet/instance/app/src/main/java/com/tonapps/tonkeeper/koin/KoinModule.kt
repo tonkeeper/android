@@ -1,15 +1,12 @@
 package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
-import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.api.internal.repositories.FiatMethodsRepository
 import com.tonapps.tonkeeper.core.fiat.Fiat
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthViewModel
-import com.tonapps.tonkeeper.password.PasscodeDataStore
-import com.tonapps.tonkeeper.password.PasscodeRepository
 import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
@@ -54,8 +51,6 @@ val koinModel = module {
     factory { Dispatchers.Default }
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
     single { SettingsRepository(get(), get(), get()) }
-    single { PasscodeDataStore(get()) }
-    single { PasscodeRepository(get(), get(), get()) }
     single { NetworkMonitor(get(), get()) }
     single { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
@@ -95,7 +90,7 @@ val koinModel = module {
     viewModel { BackupCheckViewModel(get(), get()) }
     viewModel { BackupAttentionViewModel(get(), get()) }
     viewModel { TokensManageViewModel(get(), get(), get()) }
-    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), accountRepository = get(), api = get(), settingsRepository = get(), tokenRepository = get(), ratesRepository = get(), passcodeRepository = get()) }
+    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
 }

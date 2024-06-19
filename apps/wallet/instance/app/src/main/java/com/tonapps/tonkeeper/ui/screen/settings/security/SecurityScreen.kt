@@ -2,20 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.lifecycleScope
-import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.password.PasscodeBiometric
-import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
-import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView

@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:icon="@drawable/ic_close_16"/>
 
-    <com.tonapps.tonkeeper.ui.component.PasscodeView
+    <com.tonapps.wallet.data.passcode.ui.PasscodeView
         android:id="@+id/passcode"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

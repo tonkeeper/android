@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.view
+package com.tonapps.wallet.data.passcode.ui
 
 import android.content.Context
 import android.graphics.drawable.ShapeDrawable
@@ -17,7 +17,7 @@ import uikit.extensions.hapticReject
 import uikit.extensions.scale
 import uikit.interpolator.ReverseInterpolator
 
-class PasscodeView @JvmOverloads constructor(
+class PasscodeLegacyView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,

@@ -1,13 +1,13 @@
-package com.tonapps.tonkeeper.password
+package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.util.Log
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import com.tonapps.wallet.localization.Localization
-import uikit.extensions.activity
+import com.tonapps.extensions.activity
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 object PasscodeBiometric {
 
@@ -18,7 +18,26 @@ object PasscodeBiometric {
         return authStatus == BiometricManager.BIOMETRIC_SUCCESS || authStatus == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
     }
 
-    fun showPrompt(context: Context, callback: BiometricPrompt.AuthenticationCallback) {
+    suspend fun showPrompt(
+        context: Context,
+        title: String
+    ): Boolean = suspendCancellableCoroutine { continuation ->
+        showPrompt(context, title, object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                continuation.resume(false)
+            }
+
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                continuation.resume(true)
+            }
+        })
+    }
+
+    fun showPrompt(
+        context: Context,
+        title: String,
+        callback: BiometricPrompt.AuthenticationCallback
+    ) {
         val activity = context.activity as? FragmentActivity
         if (activity == null) {
             callback.onAuthenticationError(BiometricPrompt.ERROR_HW_NOT_PRESENT, "Activity not found")
@@ -28,7 +47,7 @@ object PasscodeBiometric {
             val mainExecutor = ContextCompat.getMainExecutor(activity)
             val biometricPrompt = BiometricPrompt(activity, mainExecutor, callback)
             val builder = BiometricPrompt.PromptInfo.Builder()
-                .setTitle(context.getString(Localization.app_name))
+                .setTitle(title)
                 .setAllowedAuthenticators(authenticators)
                 .setConfirmationRequired(false)
 

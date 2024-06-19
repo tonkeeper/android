@@ -1,10 +1,9 @@
-package com.tonapps.tonkeeper.ui.component
+package com.tonapps.wallet.data.passcode.ui
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.passcode.R
 import uikit.widget.ColumnLayout
 import uikit.widget.NumPadView
 import uikit.widget.PinInputView

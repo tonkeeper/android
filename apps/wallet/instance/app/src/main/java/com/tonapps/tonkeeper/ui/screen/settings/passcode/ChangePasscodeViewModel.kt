@@ -1,16 +1,17 @@
 package com.tonapps.tonkeeper.ui.screen.settings.passcode
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.tonkeeper.password.PasscodeRepository
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class ChangePasscodeViewModel(
-    private val passcodeRepository: PasscodeRepository,
+    private val passcodeManager: PasscodeManager,
     savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
@@ -30,10 +31,10 @@ class ChangePasscodeViewModel(
         setStep(Step.Current)
     }
 
-    fun checkCurrent(pin: String) {
+    fun checkCurrent(context: Context, pin: String) {
         savedState.oldPasscode = ""
         viewModelScope.launch {
-            val isValid = passcodeRepository.compare(pin)
+            val isValid = passcodeManager.isValid(context, pin)
             if (isValid) {
                 savedState.oldPasscode = pin
                 setStep(Step.New)
@@ -48,12 +49,12 @@ class ChangePasscodeViewModel(
         setStep(Step.Confirm)
     }
 
-    fun save(pin: String) {
+    fun save(context: Context, pin: String) {
         savedState.reEnterPasscode = pin
-        checkAndSave()
+        checkAndSave(context)
     }
 
-    private fun checkAndSave() {
+    private fun checkAndSave(context: Context) {
         viewModelScope.launch {
             val oldPasscode = savedState.oldPasscode ?: return@launch
             val passcode = savedState.passcode ?: return@launch
@@ -65,7 +66,7 @@ class ChangePasscodeViewModel(
                 return@launch
             }
 
-            val saved = passcodeRepository.change(oldPasscode, passcode)
+            val saved = passcodeManager.change(context, oldPasscode, passcode)
             if (!saved) {
                 setError()
                 delay(400)

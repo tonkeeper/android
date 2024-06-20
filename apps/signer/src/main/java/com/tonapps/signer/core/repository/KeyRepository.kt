@@ -20,22 +20,15 @@ class KeyRepository(
 ) {
 
     private val _keysEntityFlow = MutableStateFlow<List<KeyEntity>?>(null)
-
     val stream = _keysEntityFlow.asStateFlow().filterNotNull()
 
     init {
         scope.launch(Dispatchers.IO) {
-            /*val testKey = KeyEntity(
-                id = 1,
-                name = "Test",
-                publicKey = PublicKeyEd25519(hex("db642e022c80911fe61f19eb4f22d7fb95c1ea0b589c0f74ecf0cbf6db746c13"))
-            )
-            _keysEntityFlow.value = listOf(testKey)*/
             _keysEntityFlow.value = dataSource.getEntities()
         }
     }
 
-    suspend fun clear() = withContext(Dispatchers.IO) {
+    suspend fun deleteAll() = withContext(Dispatchers.IO) {
         dataSource.deleteAll()
         _keysEntityFlow.value = emptyList()
     }
@@ -47,7 +40,7 @@ class KeyRepository(
         _keysEntityFlow.value?.size ?: 0
     }
 
-    fun findIdByPublicKey(publicKey: PublicKeyEd25519): Long? {
+    suspend fun findIdByPublicKey(publicKey: PublicKeyEd25519): Long? {
         val id = dataSource.findIdByPublicKey(publicKey) ?: return null
         if (0 >= id) {
             return null
@@ -85,6 +78,10 @@ class KeyRepository(
         _keysEntityFlow.value = currentList + entity
 
         entity
+    }
+
+    fun closeDatabase() {
+        dataSource.close()
     }
 
 }

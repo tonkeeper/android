@@ -8,6 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper
 import com.tonapps.signer.core.entities.KeyEntity
 import com.tonapps.signer.extensions.emptyRawQuery
 import com.tonapps.signer.extensions.withTransaction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
 
 class SQLSource(
@@ -25,6 +28,7 @@ class SQLSource(
         private const val TON_KEYS_ID_COLUMN = "ton_key_id"
     }
 
+    private val coroutineContext = Dispatchers.IO + SupervisorJob()
     private val backup = BackupSource(context)
 
     override fun onConfigure(db: SQLiteDatabase) {
@@ -42,44 +46,44 @@ class SQLSource(
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) { }
 
-    fun deleteAll() {
+    suspend fun deleteAll() = withContext(coroutineContext) {
         context.deleteDatabase(DATABASE_NAME)
         backup.deleteAll()
     }
 
-    fun deleteKey(id: Long) {
+    suspend fun deleteKey(id: Long) = withContext(coroutineContext) {
         writableDatabase.delete(TON_KEYS_TABLE_NAME, "$TON_KEYS_ID_COLUMN = ?", arrayOf(id.toString()))
         backup.delete(id)
     }
 
-    fun findIdByPublicKey(publicKey: PublicKeyEd25519): Long? {
-        return getEntities().find { it.publicKey == publicKey }?.id
+    suspend fun findIdByPublicKey(publicKey: PublicKeyEd25519): Long? = withContext(coroutineContext) {
+        getEntities().find { it.publicKey == publicKey }?.id
     }
 
-    fun setName(id: Long, name: String) {
+    suspend fun setName(id: Long, name: String) = withContext(coroutineContext) {
         val values = ContentValues()
         values.put(TON_KEYS_NAME_COLUMN, name)
         writableDatabase.update(TON_KEYS_TABLE_NAME, values, "$TON_KEYS_ID_COLUMN = ?", arrayOf(id.toString()))
     }
 
-    fun get(id: Long): KeyEntity? {
+    suspend fun get(id: Long): KeyEntity? = withContext(coroutineContext) {
         val cursor = readableDatabase.query(TON_KEYS_TABLE_NAME, null, "$TON_KEYS_ID_COLUMN = ?", arrayOf(id.toString()), null, null, null)
         val result = cursor?.let { readCursor(it) } ?: emptyList()
-        return result.firstOrNull()
+        result.firstOrNull()
     }
 
-    fun getEntities(): List<KeyEntity> {
+    suspend fun getEntities(): List<KeyEntity> = withContext(coroutineContext) {
         val cursor = readableDatabase.query(TON_KEYS_TABLE_NAME, null, null, null, null, null, null)
         val list = cursor?.let { readCursor(it) } ?: emptyList()
         if (list.isNotEmpty()) {
-            return list
+            return@withContext list
         }
-        val keys = backup.get() ?: return emptyList()
+        val keys = backup.get() ?: return@withContext emptyList()
         restoreFromBackup(keys.keys)
-        return keys.keys
+        keys.keys
     }
 
-    private fun restoreFromBackup(keys: List<KeyEntity>) {
+    private suspend fun restoreFromBackup(keys: List<KeyEntity>) = withContext(coroutineContext) {
         keys.forEach { add(it.name, it.publicKey) }
     }
 
@@ -101,10 +105,10 @@ class SQLSource(
         return result
     }
 
-    fun add(
+    suspend fun add(
         name: String,
         publicKey: PublicKeyEd25519
-    ): Long {
+    ): Long = withContext(coroutineContext) {
         val id = writableDatabase.withTransaction {
             val values = ContentValues()
             values.put(TON_KEYS_NAME_COLUMN, name)
@@ -116,8 +120,7 @@ class SQLSource(
             throw IllegalStateException("Can't insert key")
         }
         backup.add(KeyEntity(id, name, publicKey))
-        return id
+        id
     }
-
 
 }

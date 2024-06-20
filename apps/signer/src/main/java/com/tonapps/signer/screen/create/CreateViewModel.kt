@@ -11,7 +11,6 @@ import com.tonapps.signer.screen.crash.CrashActivity
 import com.tonapps.signer.screen.create.pager.PageType
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -32,6 +31,7 @@ import com.tonapps.security.tryCallGC
 import com.tonapps.signer.extensions.authorizationRequiredError
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.withContext
 import javax.crypto.SecretKey
 
@@ -44,18 +44,11 @@ class CreateViewModel(
 
     private val args = CreateArgs(savedStateHandle)
 
-    private val requestPasswordCreate: Boolean
-        get() = !vault.hasPassword()
+    private val _pagesFlow = MutableStateFlow<List<PageType>?>(null)
+    val pagesFlow = _pagesFlow.asStateFlow().filterNotNull()
 
-    val pages = mutableListOf<PageType>().apply {
-        if (import) {
-            add(PageType.Phrase)
-        }
-        if (requestPasswordCreate) {
-            add(PageType.Password)
-            add(PageType.RepeatPassword)
-        }
-        add(PageType.Name)
+    private suspend fun requestPasswordCreate(): Boolean {
+        return !vault.hasPassword()
     }
 
     private val _onReady = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -68,7 +61,19 @@ class CreateViewModel(
     val uiTopOffset = _uiTopOffset.asStateFlow()
 
     init {
-        _currentPage.tryEmit(pages.first())
+        viewModelScope.launch {
+            val pages = mutableListOf<PageType>()
+            if (import) {
+                pages.add(PageType.Phrase)
+            }
+            if (requestPasswordCreate()) {
+                pages.add(PageType.Password)
+                pages.add(PageType.RepeatPassword)
+            }
+            pages.add(PageType.Name)
+            _pagesFlow.value = pages
+            _currentPage.tryEmit(pages.first())
+        }
     }
 
     fun pageIndex() = currentPage.map { pageIndex(it) }
@@ -82,10 +87,12 @@ class CreateViewModel(
     fun setMnemonic(mnemonic: List<String>) {
         args.mnemonic = mnemonic
 
-        if (requestPasswordCreate) {
-            _currentPage.tryEmit(PageType.Password)
-        } else {
-            _currentPage.tryEmit(PageType.Name)
+        viewModelScope.launch {
+            if (requestPasswordCreate()) {
+                _currentPage.tryEmit(PageType.Password)
+            } else {
+                _currentPage.tryEmit(PageType.Name)
+            }
         }
     }
 
@@ -128,13 +135,15 @@ class CreateViewModel(
                 context.authorizationRequiredError()
             } else {
                 CrashActivity.open(e, context)
-                _currentPage.tryEmit(pages.first())
+                _pagesFlow.value?.let {
+                    _currentPage.tryEmit(it.first())
+                }
             }
         }
     }
 
-    private fun masterSecret(context: Context): Flow<SecretKey> {
-        return if (requestPasswordCreate) {
+    private suspend fun masterSecret(context: Context): Flow<SecretKey> {
+        return if (requestPasswordCreate()) {
             val password = args.password ?: throw IllegalStateException("password is required")
             createMasterSecret(password)
         } else {
@@ -174,11 +183,12 @@ class CreateViewModel(
         if (index == 0) {
             return false
         }
+        val pages = _pagesFlow.value ?: return false
         _currentPage.tryEmit(pages[index - 1])
         return true
     }
 
     private fun pageIndex(page: PageType): Int {
-        return pages.indexOf(page)
+        return _pagesFlow.value?.indexOf(page) ?: -1
     }
 }

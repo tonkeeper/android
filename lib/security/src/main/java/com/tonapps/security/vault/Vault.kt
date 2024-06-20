@@ -1,70 +1,75 @@
 package com.tonapps.security.vault
 
-import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import com.tonapps.security.clear
 import com.tonapps.security.safeDestroy
 import com.tonapps.security.tryCallGC
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
 import javax.crypto.SecretKey
 
 open class Vault(
     private val prefs: SharedPreferences
 ) {
 
+    private val coroutineContext = Dispatchers.IO + SupervisorJob()
     private val passwordKey = PasswordKey(prefs)
     private val masterKey = MasterKey(prefs)
     private val storage = Storage(prefs)
 
-    @SuppressLint("ApplySharedPref")
-    fun clear() {
-        prefs.edit().clear().commit()
+    suspend fun deleteAll() = withContext(coroutineContext) {
+        prefs.edit().clear().apply()
     }
 
-    fun hasPassword(): Boolean {
-        return !passwordKey.isEmpty()
+    suspend fun hasPassword(): Boolean = withContext(coroutineContext) {
+        !passwordKey.isEmpty()
     }
 
-    fun isValidPassword(password: CharArray): Boolean {
+    suspend fun isValidPassword(password: CharArray): Boolean = withContext(coroutineContext) {
         val valid = passwordKey.isValid(password)
         tryCallGC()
-        return valid
+        valid
     }
 
-    fun get(secret: SecretKey, id: Long): ByteArray {
-        return storage.get(id, secret)
+    suspend fun get(secret: SecretKey, id: Long): ByteArray = withContext(coroutineContext) {
+        storage.get(id, secret)
     }
 
-    fun put(secret: SecretKey, id: Long, data: ByteArray) {
+    suspend fun put(secret: SecretKey, id: Long, data: ByteArray) = withContext(coroutineContext) {
         storage.put(secret, id, data)
     }
 
-    fun delete(secret: SecretKey, id: Long) {
+    suspend fun delete(secret: SecretKey, id: Long) = withContext(coroutineContext) {
         storage.put(secret, id, ByteArray(0))
     }
 
-    fun getMasterSecret(password: CharArray): SecretKey {
+    suspend fun getMasterSecret(password: CharArray): SecretKey = withContext(coroutineContext) {
         val passwordSecret = passwordKey.create(password) ?: throw IllegalStateException("Password secret is null")
         val masterSecret = masterKey.getSecret(passwordSecret)
         passwordSecret.safeDestroy()
         tryCallGC()
 
-        return masterSecret ?: throw IllegalStateException("Master secret is null")
+        masterSecret ?: throw IllegalStateException("Master secret is null")
     }
 
-    fun createMasterSecret(password: CharArray): SecretKey {
+    suspend fun createMasterSecret(password: CharArray): SecretKey = withContext(coroutineContext) {
         val passwordSecret = passwordKey.set(password) ?: throw IllegalStateException("Password secret is null")
         val masterSecret = masterKey.newSecret(passwordSecret)
         passwordSecret.safeDestroy()
         tryCallGC()
 
-        return masterSecret ?: throw IllegalStateException("Master secret is null")
+        masterSecret ?: throw IllegalStateException("Master secret is null")
     }
 
-    fun changePassword(newPassword: CharArray, oldPassword: CharArray): Boolean {
+    suspend fun changePassword(
+        newPassword: CharArray,
+        oldPassword: CharArray
+    ): Boolean = withContext(coroutineContext) {
         val oldPasswordSecret = passwordKey.create(oldPassword)
         if (oldPasswordSecret == null) {
             newPassword.clear()
-            return false
+            return@withContext false
         }
 
         val newPasswordSalt = PasswordKey.generateSalt()
@@ -73,7 +78,7 @@ open class Vault(
         if (newPasswordSecret == null) {
             oldPasswordSecret.safeDestroy()
             newPasswordSalt.clear()
-            return false
+            return@withContext false
         }
 
         val newPasswordVerification = PasswordKey.calcVerification(newPasswordSecret.encoded)
@@ -87,6 +92,6 @@ open class Vault(
         clear(newPasswordSalt, newPasswordVerification)
 
         tryCallGC()
-        return reEncrypted
+        return@withContext reEncrypted
     }
 }

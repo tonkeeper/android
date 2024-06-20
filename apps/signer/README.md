@@ -34,5 +34,23 @@ Our developers cannot access your data.
 - If your device supports [StrongBox](https://developer.android.com/privacy-and-security/keystore#HardwareSecurityModule), SignerApp using it to enhance security.
 
 
+## Verify build
+
+Build APK from source code and verify it with the APK from the [Google Play Store](https://play.google.com/store/apps/details?id=com.tonapps.signer).
+
+```shell
+$ python apkfrombundle.py signer_from_source.aab signer_from_googleplay.apk
+```
+
+or
+
+```shell
+$ python apkdiff.py signer_from_source.apk signer_from_googleplay.apk
+```
+
+If you have any issues or questions, please contact us at [@help_tonkeeper_bot](https://t.me/help_tonkeeper_bot).
+
+
+
 
 

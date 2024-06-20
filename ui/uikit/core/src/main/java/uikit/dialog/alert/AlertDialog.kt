@@ -9,8 +9,6 @@ import android.view.animation.OvershootInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
-import com.tonapps.uikit.color.accentBlueColor
-import com.tonapps.uikit.color.accentRedColor
 import uikit.R
 import uikit.base.BaseDialog
 import uikit.extensions.dp
@@ -88,8 +86,10 @@ class AlertDialog private constructor(
         view.visibility = View.VISIBLE
         view.text = button.title
         view.setOnClickListener {
-            button.action?.invoke(this)
-            dismiss()
+            if (isShowing) {
+                button.action?.invoke(this)
+                dismiss()
+            }
         }
     }
 

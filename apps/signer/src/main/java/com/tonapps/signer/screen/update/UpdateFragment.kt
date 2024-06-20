@@ -1,18 +1,11 @@
 package com.tonapps.signer.screen.update
 
-import android.content.Context
 import android.content.Intent
-import android.graphics.Canvas
-import android.graphics.Paint
 import android.os.Bundle
 import android.view.View
-import androidx.core.graphics.toRectF
 import androidx.core.net.toUri
 import com.tonapps.signer.R
 import com.tonapps.signer.drawable.IconBackgroundDrawable
-import com.tonapps.uikit.color.backgroundContentColor
-import com.tonapps.uikit.color.separatorCommonColor
-import uikit.base.BaseDrawable
 import uikit.base.BaseFragment
 import uikit.extensions.dp
 import uikit.extensions.round

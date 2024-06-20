@@ -19,18 +19,18 @@ class SignerVault(
 
     constructor(context: Context): this(context, "signer")
 
-    fun setMnemonic(secret: SecretKey, id: Long, mnemonic: List<String>) {
+    suspend fun setMnemonic(secret: SecretKey, id: Long, mnemonic: List<String>) {
         putString(secret, id, mnemonic.joinToString(","))
         secret.safeDestroy()
     }
 
-    fun getMnemonic(secret: SecretKey, id: Long): List<String> {
+    suspend fun getMnemonic(secret: SecretKey, id: Long): List<String> {
         val list = getString(secret, id).split(",")
         secret.safeDestroy()
         return list
     }
 
-    fun getPrivateKey(secret: SecretKey, id: Long): PrivateKeyEd25519 {
+    suspend fun getPrivateKey(secret: SecretKey, id: Long): PrivateKeyEd25519 {
         val mnemonic = getMnemonic(secret, id)
         val seed = Mnemonic.toSeed(mnemonic)
         val privateKey = PrivateKeyEd25519(seed)

@@ -1,9 +1,9 @@
 package com.tonapps.signer.screen.root
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.signer.Key
 import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
@@ -13,20 +13,15 @@ import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.ton.cell.Cell
-import uikit.extensions.collectFlow
 
 class RootViewModel(
     private val vault: SignerVault,
@@ -50,8 +45,8 @@ class RootViewModel(
 
     fun signOut() {
         viewModelScope.launch(Dispatchers.IO) {
-            keyRepository.clear()
-            vault.clear()
+            keyRepository.deleteAll()
+            vault.deleteAll()
         }
     }
 
@@ -81,12 +76,29 @@ class RootViewModel(
 
     private fun signRequest(signRequest: SignRequestEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            val id = keyRepository.findIdByPublicKey(signRequest.publicKey) ?: return@launch
-            sign(id, signRequest.body, signRequest.v, signRequest.returnResult)
+            val id = keyRepository.findIdByPublicKey(signRequest.publicKey) ?: return@launch notFoundKey()
+
+            sign(id, signRequest.body, signRequest.v, signRequest.returnResult, signRequest.seqno, signRequest.network)
         }
     }
 
-    private fun sign(id: Long, body: Cell, v: String, returnResult: ReturnResultEntity) {
-        _action.tryEmit(RootAction.RequestBodySign(id, body, v, returnResult))
+    private fun sign(
+        id: Long,
+        body: Cell,
+        v: String,
+        returnResult: ReturnResultEntity,
+        seqno: Int,
+        network: TonNetwork,
+    ) {
+        _action.tryEmit(RootAction.RequestBodySign(id, body, v, returnResult, seqno, network))
+    }
+
+    private fun notFoundKey() {
+        _action.tryEmit(RootAction.NotFoundKey)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        keyRepository.closeDatabase()
     }
 }

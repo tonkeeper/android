@@ -10,4 +10,6 @@ object Key {
     const val V = "v"
     const val SCHEME = "tonsign"
     const val SIGN = "sign"
+    const val SEQNO = "seqno"
+    const val NETWORK = "network"
 }

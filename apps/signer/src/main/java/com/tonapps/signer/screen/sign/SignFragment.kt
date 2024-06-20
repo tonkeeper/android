@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.security.hex
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
@@ -51,16 +52,18 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
             id: Long,
             body: Cell,
             v: String,
-            returnResult: ReturnResultEntity
+            returnResult: ReturnResultEntity,
+            seqno: Int,
+            network: TonNetwork,
         ): SignFragment {
             val fragment = SignFragment()
-            fragment.arguments = SignArgs.bundle(id, body, v, returnResult)
+            fragment.arguments = SignArgs.bundle(id, body, v, returnResult, seqno, network)
             return fragment
         }
     }
 
     private val args: SignArgs by lazy { SignArgs(requireArguments()) }
-    private val signViewModel: SignViewModel by viewModel { parametersOf(args.id, args.body, args.v) }
+    private val signViewModel: SignViewModel by viewModel { parametersOf(args.id, args.body, args.v, args.network) }
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private val adapter = SignAdapter()

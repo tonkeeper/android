@@ -78,4 +78,8 @@
     <string name="enter_recovery_phrase_subtitle">When you created this wallet, you got a 24-word recovery phrase. Enter it to restore access to your wallet.</string>
 
     <string name="import_key_wrong">It\'s safer to create a new key in Signer. Your old key may have been compromised by you previously.</string>
+
+    <string name="notfound_title">No signing key</string>
+    <string name="notfound_description">Add the necessary key and try again.</string>
+    <string name="ok">OK</string>
 </resources>

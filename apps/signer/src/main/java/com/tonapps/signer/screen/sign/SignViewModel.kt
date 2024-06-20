@@ -1,27 +1,23 @@
 package com.tonapps.signer.screen.sign
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.security.base64
-import com.tonapps.security.hex
 import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.screen.sign.list.SignItem
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.ton.api.pk.PrivateKeyEd25519
@@ -38,15 +34,17 @@ import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.loadTlb
 import com.tonapps.security.vault.safeArea
+import com.tonapps.signer.extensions.isValidUTF8
 import com.tonapps.uikit.list.ListCell
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
-import java.math.BigDecimal
 
 class SignViewModel(
     private val id: Long,
     private val unsignedBody: Cell,
     private val v: String,
+    private val seqno: Int,
+    private val network: TonNetwork,
     private val repository: KeyRepository,
     private val vault: SignerVault,
 ): ViewModel() {
@@ -77,8 +75,8 @@ class SignViewModel(
     }.flowOn(Dispatchers.IO).take(1)
 
     fun openEmulate() = keyEntity.map {
-        val contract = BaseWalletContract.create(it.publicKey, v)
-        val cell = contract.createTransferMessageCell(contract.address, EmptyPrivateKeyEd25519, 1, unsignedBody)
+        val contract = BaseWalletContract.create(it.publicKey, v, network.value)
+        val cell = contract.createTransferMessageCell(contract.address, EmptyPrivateKeyEd25519, seqno, unsignedBody)
         cell.hex()
     }.flowOn(Dispatchers.IO).take(1)
 
@@ -188,13 +186,17 @@ class SignViewModel(
         jettonTransfer: com.tonapps.blockchain.ton.tlb.JettonTransfer?,
         nftTransfer: com.tonapps.blockchain.ton.tlb.NftTransfer?
     ): String? {
-        return if (jettonTransfer != null) {
+        val string = if (jettonTransfer != null) {
             jettonTransfer.comment
         } else if (nftTransfer != null) {
             nftTransfer.comment
         } else {
             cell?.parse { loadTlb(com.tonapps.blockchain.ton.tlb.StringTlbConstructor) }
         }
+        if (string != null && isValidUTF8(string)) {
+            return string
+        }
+        return null
     }
 
     private fun parseValue(value: CurrencyCollection): String {

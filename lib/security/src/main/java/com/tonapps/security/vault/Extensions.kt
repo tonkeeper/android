@@ -7,14 +7,14 @@ import com.tonapps.security.safeDestroy
 import com.tonapps.security.tryCallGC
 import javax.crypto.SecretKey
 
-fun Vault.getString(secret: SecretKey, id: Long): String {
+suspend fun Vault.getString(secret: SecretKey, id: Long): String {
     val data = get(secret, id)
     val string = String(data)
     data.clear()
     return string
 }
 
-fun Vault.putString(secret: SecretKey, id: Long, string: String) {
+suspend fun Vault.putString(secret: SecretKey, id: Long, string: String) {
     val data = string.toByteArray()
     put(secret, id, data)
 }

@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("androidx.baselineprofile")
 }
 
 android {
@@ -12,8 +11,8 @@ android {
         applicationId = Build.namespacePrefix("signer")
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 16
-        versionName = "0.1.6"
+        versionCode = 17
+        versionName = "0.1.7"
     }
 
     lint {

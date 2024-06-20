@@ -22,6 +22,7 @@ import com.tonapps.signer.password.ui.PasswordView
 import com.tonapps.signer.screen.crash.CrashActivity
 import com.tonapps.signer.screen.intro.IntroFragment
 import com.tonapps.signer.screen.main.MainFragment
+import com.tonapps.signer.screen.notfound.NoFoundFragment
 import com.tonapps.signer.screen.root.action.RootAction
 import com.tonapps.signer.screen.sign.SignFragment
 import com.tonapps.signer.screen.update.UpdateFragment
@@ -34,6 +35,8 @@ import org.ton.crypto.hex
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
+import uikit.extensions.findFragment
+import uikit.extensions.isFragmentExists
 import uikit.extensions.primaryFragment
 import uikit.extensions.round
 import uikit.extensions.setPaddingTop
@@ -140,6 +143,10 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun signOut() {
+        if (lockView.visibility != View.VISIBLE) {
+            return
+        }
+
         val builder = AlertDialog.Builder(this)
         builder.setTitle(R.string.sign_out_question)
         builder.setMessage(R.string.sign_out_subtitle)
@@ -156,13 +163,20 @@ class RootActivity: NavigationActivity() {
             is RootAction.ResponseSignature -> responseSignature(action.signature)
             is RootAction.ResponseKey -> responseKey(action.publicKey, action.name)
             is RootAction.UpdateApp -> updateDialog()
-            is RootAction.ClearKeys -> signOut()
+            is RootAction.NotFoundKey -> add(NoFoundFragment.newInstance())
         }
     }
 
     private fun requestSign(request: RootAction.RequestBodySign) {
         removeSignSheets {
-            add(SignFragment.newInstance(request.id, request.body, request.v, request.returnResult))
+            add(SignFragment.newInstance(
+                id = request.id,
+                body = request.body,
+                v = request.v,
+                returnResult = request.returnResult,
+                seqno = request.seqno,
+                network = request.network
+            ))
         }
     }
 
@@ -207,7 +221,9 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun updateDialog() {
-        add(UpdateFragment.newInstance())
+        if (!supportFragmentManager.isFragmentExists<UpdateFragment>()) {
+            add(UpdateFragment.newInstance())
+        }
     }
 
     private fun handleIntent(intent: Intent) {

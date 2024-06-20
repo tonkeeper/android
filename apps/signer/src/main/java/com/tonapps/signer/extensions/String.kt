@@ -1,6 +1,8 @@
 package com.tonapps.signer.extensions
 
 import android.net.Uri
+import java.nio.charset.Charset
+import java.nio.charset.CharsetEncoder
 
 val String.short8: String
     get() {
@@ -26,3 +28,8 @@ val String.uriOrNull: Uri?
             null
         }
     }
+
+fun isValidUTF8(input: String): Boolean {
+    val encoder: CharsetEncoder = Charset.forName("UTF-8").newEncoder()
+    return encoder.canEncode(input)
+}

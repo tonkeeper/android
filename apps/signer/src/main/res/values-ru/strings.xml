@@ -73,4 +73,8 @@
     <string name="enter_recovery_phrase">Введите секретный ключ</string>
     <string name="enter_recovery_phrase_subtitle">Чтобы восстановить доступ, введите 24 секретных слова, которые вы получили при создании кошелька.</string>
     <string name="import_key_wrong">Безопаснее создать новый ключ в Signer. Ваш старый ключ мог быть скомпрометирован вами ранее.</string>
+
+    <string name="notfound_title">Ключ для подписания отсутствует</string>
+    <string name="notfound_description">Добавьте необходимый ключ и повторите попытку.</string>
+    <string name="ok">Хорошо</string>
 </resources>

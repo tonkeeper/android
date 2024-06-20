@@ -1,15 +1,19 @@
 package com.tonapps.signer.screen.root.action
 
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 
 sealed class RootAction {
+
     data class RequestBodySign(
         val id: Long,
         val body: Cell,
         val v: String,
-        val returnResult: ReturnResultEntity
+        val returnResult: ReturnResultEntity,
+        val seqno: Int,
+        val network: TonNetwork,
     ): RootAction()
 
     data class ResponseSignature(val signature: ByteArray): RootAction() {
@@ -32,5 +36,5 @@ sealed class RootAction {
 
     data object UpdateApp: RootAction()
 
-    data object ClearKeys: RootAction()
+    data object NotFoundKey: RootAction()
 }

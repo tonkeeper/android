@@ -19,10 +19,7 @@ class KeyViewModel(
 
     fun delete(context: Context) = Password.authenticate(context).safeArea {
         vault.delete(it, id)
-        val size = keyRepository.deleteKey(id)
-        if (size == 0) {
-            vault.clear()
-        }
+        keyRepository.deleteKey(id)
     }.take(1)
 
     fun getRecoveryPhrase(context: Context) = Password.authenticate(context).safeArea {

@@ -31,7 +31,7 @@ class LabelScreen: BaseFragment(R.layout.fragment_init_label) {
         }
         editorView.doOnDone = { name, emoji, color ->
             initViewModel.setLabel(name, emoji, color)
-            initViewModel.nextStep(InitEvent.Step.LabelAccount)
+            initViewModel.nextStep(requireContext(), InitEvent.Step.LabelAccount)
         }
 
         view.doKeyboardAnimation { offset, progress, _ ->

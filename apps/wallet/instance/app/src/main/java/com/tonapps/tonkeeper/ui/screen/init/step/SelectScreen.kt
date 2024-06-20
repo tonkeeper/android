@@ -33,7 +33,7 @@ class SelectScreen: BaseFragment(R.layout.fragment_init_select) {
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener {
-            initViewModel.nextStep(InitEvent.Step.SelectAccount)
+            initViewModel.nextStep(requireContext(), InitEvent.Step.SelectAccount)
         }
 
         collectFlow(initViewModel.uiTopOffset) {

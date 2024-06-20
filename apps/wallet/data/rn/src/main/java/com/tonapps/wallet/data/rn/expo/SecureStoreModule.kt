@@ -112,7 +112,7 @@ internal class SecureStoreModule(
         }
     }
 
-    private suspend fun setItemImpl(key: String, value: String?, options: SecureStoreOptions, keyIsInvalidated: Boolean) {
+    suspend fun setItemImpl(key: String, value: String?, options: SecureStoreOptions = SecureStoreOptions(), keyIsInvalidated: Boolean = false) {
         val keychainAwareKey = createKeychainAwareKey(key, options.keychainService)
         val prefs: SharedPreferences = getSharedPreferences()
 

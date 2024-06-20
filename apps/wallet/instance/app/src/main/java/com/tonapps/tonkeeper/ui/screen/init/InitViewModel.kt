@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.Manifest
 import android.app.Application
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -32,6 +33,8 @@ import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -71,6 +74,7 @@ class InitViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val backupRepository: BackupRepository,
+    private val rnLegacy: RNLegacy,
     savedStateHandle: SavedStateHandle
 ): AndroidViewModel(application) {
 
@@ -309,24 +313,24 @@ class InitViewModel(
         ))
     }
 
-    fun setPush() {
-        nextStep(InitEvent.Step.Push)
+    fun setPush(context: Context) {
+        nextStep(context, InitEvent.Step.Push)
     }
 
-    fun nextStep(from: InitEvent.Step) {
+    fun nextStep(context: Context, from: InitEvent.Step) {
         if (from == InitEvent.Step.WatchAccount) {
             _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
         } else if (from == InitEvent.Step.SelectAccount) {
             applyNameFromSelectedAccounts()
             _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
         } else if (from == InitEvent.Step.Push) {
-            execute()
+            execute(context)
         } else if (!hasPushPermission) {
             _eventFlow.tryEmit(InitEvent.Step.Push)
         } else if (passcodeAfterSeed && from == InitEvent.Step.ImportWords) {
             _eventFlow.tryEmit(InitEvent.Step.CreatePasscode)
         } else {
-            execute()
+            execute(context)
         }
     }
 
@@ -339,7 +343,7 @@ class InitViewModel(
         setLabelName(name)
     }
 
-    private fun execute() {
+    private fun execute(context: Context) {
         _eventFlow.tryEmit(InitEvent.Loading(true))
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -351,8 +355,8 @@ class InitViewModel(
                 val wallets = mutableListOf<WalletEntity>()
                 when (type) {
                     InitArgs.Type.Watch -> wallets.add(saveWatchWallet())
-                    InitArgs.Type.New -> wallets.add(accountRepository.addNewWallet(getLabel()))
-                    InitArgs.Type.Import, InitArgs.Type.Testnet -> wallets.addAll(importWallet())
+                    InitArgs.Type.New -> wallets.add(newWallet(context))
+                    InitArgs.Type.Import, InitArgs.Type.Testnet -> wallets.addAll(importWallet(context))
                     InitArgs.Type.Signer -> wallets.addAll(signerWallets(false))
                     InitArgs.Type.SignerQR -> wallets.addAll(signerWallets(true))
                 }
@@ -368,6 +372,7 @@ class InitViewModel(
                 }
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {
+                Log.e("InitViewModel", "execute error", e)
                 _eventFlow.tryEmit(InitEvent.Loading(false))
             }
         }
@@ -381,12 +386,21 @@ class InitViewModel(
         return accountRepository.addWatchWallet(label, publicKey, account.walletVersion)
     }
 
-    private suspend fun importWallet(): List<WalletEntity> {
+    private suspend fun newWallet(context: Context): WalletEntity {
+        val mnemonic = Mnemonic.generate()
+        val label = getLabel()
+        val wallet = accountRepository.addNewWallet(label, mnemonic)
+        saveMnemonic(context, listOf(wallet.id), mnemonic)
+        return wallet
+    }
+
+    private suspend fun importWallet(context: Context): List<WalletEntity> {
         val versions = getSelectedAccounts().map { it.walletVersion }
         val mnemonic = savedState.mnemonic ?: throw IllegalStateException("Mnemonic is not set")
         val label = getLabel()
-
-        return accountRepository.importWallet(label, mnemonic, versions, testnet)
+        val wallets = accountRepository.importWallet(label, mnemonic, versions, testnet)
+        saveMnemonic(context, wallets.map { it.id }, mnemonic)
+        return wallets
     }
 
     private suspend fun signerWallets(qr: Boolean): List<WalletEntity> {
@@ -395,6 +409,27 @@ class InitViewModel(
         val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
 
         return accountRepository.pairSigner(label, publicKey, versions, qr)
+    }
+
+    private suspend fun saveMnemonic(
+        context: Context,
+        walletIds: List<String>,
+        list: List<String>
+    ) = withContext(Dispatchers.IO) {
+        Log.d("InitViewModel", "saveMnemonic #1")
+        var passcode = savedState.passcode
+        if (passcode == null) {
+            passcode = withContext(Dispatchers.Main) {
+                PasscodeDialog.request(context)
+            }
+        }
+        Log.d("InitViewModel", "saveMnemonic #2")
+        if (passcode.isNullOrBlank()) {
+            throw IllegalStateException("wrong passcode")
+        }
+        Log.d("InitViewModel", "saveMnemonic #3")
+        rnLegacy.addMnemonics(passcode, walletIds, list)
+        Log.d("InitViewModel", "saveMnemonic #4")
     }
 
     private fun getPublicKey(

@@ -6,11 +6,14 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import java.io.File
+import java.security.spec.AlgorithmParameterSpec
 import java.util.Locale
 
 val Context.locale: Locale
@@ -65,15 +68,3 @@ val Context.activity: ComponentActivity?
         return null
     }
 
-fun Context.prefsEncrypted(name: String): SharedPreferences {
-    if (isMainVersion) {
-        return prefs(name)
-    }
-    return EncryptedSharedPreferences.create(
-        name,
-        MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-        this,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
-}

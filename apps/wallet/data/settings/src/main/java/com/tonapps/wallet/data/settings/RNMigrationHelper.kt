@@ -28,7 +28,7 @@ internal class RNMigrationHelper(
     }
 
     fun getHiddenBalances(): Boolean {
-        return getPrivacy().getBoolean("hiddenAmounts")
+        return getPrivacy().optBoolean("hiddenAmounts", false)
     }
 
     fun setHiddenBalance(hiddenBalance: Boolean) {
@@ -48,7 +48,7 @@ internal class RNMigrationHelper(
     }
 
     fun getLegacyCurrency(): WalletCurrency {
-        val value = getTonPrice().getString("currency") ?: WalletCurrency.FIAT.first()
+        val value = getTonPrice().optString("currency") ?: WalletCurrency.FIAT.first()
         return WalletCurrency(value.uppercase())
     }
 
@@ -69,7 +69,9 @@ internal class RNMigrationHelper(
     }
 
     fun getLegacyLanguage(): Language {
-        val value = getInAppLanguage().getString("selectedLanguage").lowercase() ?: "system"
+        val value = getInAppLanguage().optString("selectedLanguage", "").lowercase().ifBlank {
+            "system"
+        }
         return when (value) {
             "ru" -> Language("ru")
             "en" -> Language("en")
@@ -95,7 +97,9 @@ internal class RNMigrationHelper(
 
     fun getLegacySearchEngine(): SearchEngine {
         try {
-            val searchEngine = getLegacyBrowser().getString("searchEngine").lowercase()
+            val searchEngine = getLegacyBrowser().optString("searchEngine").lowercase().ifBlank {
+                "DuckDuckGo"
+            }
             if (searchEngine == "google") {
                 return SearchEngine.GOOGLE
             }
@@ -125,7 +129,9 @@ internal class RNMigrationHelper(
 
     fun getLegacyTheme(): Theme {
         try {
-            val theme = getLegacyAppTheme().getString("selectedTheme").lowercase()
+            val theme = getLegacyAppTheme().optString("selectedTheme").lowercase().ifBlank {
+                "system"
+            }
             if (theme == "system") {
                 return Theme.getByKey("blue")
             }
@@ -152,7 +158,9 @@ internal class RNMigrationHelper(
 
     fun getLegacySelectedCountry(): String {
         try {
-            return getFiatMethods().getString("selectedCountry") ?: context.locale.country
+            return getFiatMethods().optString("selectedCountry", "").ifBlank {
+                context.locale.country
+            }
         } catch (ignored: Exception) {}
         return context.locale.country
     }

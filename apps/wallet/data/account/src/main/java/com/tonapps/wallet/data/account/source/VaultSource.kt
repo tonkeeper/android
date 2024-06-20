@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.getByteArray
-import com.tonapps.extensions.prefsEncrypted
+import com.tonapps.security.Security
 import com.tonapps.security.clear
 import com.tonapps.security.putByteArray
 import org.ton.api.pk.PrivateKeyEd25519
@@ -17,9 +17,10 @@ internal class VaultSource(context: Context) {
         private const val NAME = "vault"
         private const val PRIVATE_KEY_PREFIX = "private_key"
         private const val MNEMONIC_KEY_PREFIX = "mnemonic"
+        private const val KEY_ALIAS = "_com_tonapps_vault_master_key_"
     }
 
-    private val prefs = context.prefsEncrypted(NAME)
+    private val prefs = Security.pref(context, KEY_ALIAS, NAME)
 
     fun getMnemonic(publicKey: PublicKeyEd25519): Array<String>? {
         val value = prefs.getString(mnemonicKey(publicKey), null) ?: return null

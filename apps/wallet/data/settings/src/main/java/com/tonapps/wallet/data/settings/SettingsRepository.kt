@@ -136,9 +136,9 @@ class SettingsRepository(
             }
         }
 
-    var currency: WalletCurrency = WalletCurrency(prefs.getString(CURRENCY_CODE_KEY, WalletCurrency.FIAT.first())!!)
+    var currency: WalletCurrency = WalletCurrency.of(prefs.getString(CURRENCY_CODE_KEY, null))
         set(value) {
-            if (field != value) {
+            if (field != value && value.code.isNotEmpty()) {
                 prefs.edit().putString(CURRENCY_CODE_KEY, value.code).apply()
                 field = value
                 _currencyFlow.tryEmit(value)

@@ -129,10 +129,18 @@ class AccountRepository(
             else -> return
         }
 
+        var emoji = wallet.label.emoji.toString()
+        if (emoji.startsWith("custom_")) {
+            emoji = emoji.replace("custom_", "ic-")
+        }
+        emoji = emoji.replace("_", "-")
+        emoji = "$emoji-32"
+
+
         val rnWallet = RNWallet(
             name = wallet.label.accountName,
             color = RNWallet.resolveColor(wallet.label.color),
-            emoji = wallet.label.emoji.toString(),
+            emoji = emoji,
             identifier = wallet.id,
             pubkey = wallet.publicKey.hex(),
             network = if (wallet.testnet) RNWallet.Network.Testnet else RNWallet.Network.Mainnet,
@@ -239,8 +247,7 @@ class AccountRepository(
         return addWallet(label, publicKey, Wallet.Type.Watch, version)
     }
 
-    suspend fun addNewWallet(label: Wallet.Label): WalletEntity {
-        val mnemonic = Mnemonic.generate()
+    suspend fun addNewWallet(label: Wallet.Label, mnemonic: List<String>): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
         return addWallet(label, publicKey, Wallet.Type.Default, WalletVersion.V4R2)
     }
@@ -305,6 +312,7 @@ class AccountRepository(
             setSelectedWallet(null)
         } else {
             _selectedStateFlow.value = SelectedState.Wallet(entity)
+            rnLegacy.setSelectedWallet(id)
         }
     }
 

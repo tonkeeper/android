@@ -27,7 +27,7 @@ internal class RNMigrationHelper(
         val list = mutableListOf<WalletEntity>()
         for (legacyWallet in legacyWallets.wallets) {
             val version = walletVersion(legacyWallet.version)
-            if (version == WalletVersion.UNKNOWN || version == WalletVersion.V5R1) {
+            if (version == WalletVersion.UNKNOWN) {
                 if (selectedIdentifier == legacyWallet.identifier) {
                     selectedIdentifier = ""
                 }

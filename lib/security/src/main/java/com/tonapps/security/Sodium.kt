@@ -56,4 +56,10 @@ object Sodium {
         nonce: ByteArray,
         key: ByteArray
     ): ByteArray?
+
+    external fun cryptoSecretbox(
+        text: ByteArray,
+        nonce: ByteArray,
+        key: ByteArray
+    ): ByteArray?
 }

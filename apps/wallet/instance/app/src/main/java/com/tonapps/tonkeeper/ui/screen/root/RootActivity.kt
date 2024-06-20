@@ -129,7 +129,7 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun checkPasscode(code: String) {
-        rootViewModel.checkPasscode(this, code).catch {
+        rootViewModel.checkPasscode(code).catch {
             lockPasscodeView.setError()
         }.onEach {
             lockPasscodeView.setSuccess()

@@ -1,22 +1,23 @@
 package com.tonapps.wallet.data.passcode.source
 
 import android.content.Context
-import com.tonapps.extensions.prefsEncrypted
 import com.tonapps.extensions.putString
 import com.tonapps.extensions.remove
+import com.tonapps.security.Security
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class PasscodeStore(context: Context) {
+class PasscodeStore(context: Context) {
 
     companion object {
         const val CODE_LENGTH = 4
 
         private const val NAME = "passcode"
         private const val CODE_KEY = "code"
+        private const val KEY_ALIAS = "_com_tonapps_passcode_master_key_"
     }
 
-    private val keyValue = context.prefsEncrypted(NAME)
+    private val keyValue = Security.pref(context, KEY_ALIAS, NAME)
 
     val hasPinCode: Boolean
         get() = keyValue.contains(CODE_KEY)

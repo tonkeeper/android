@@ -62,7 +62,7 @@ val koinModel = module {
     uiAdapter { WalletPickerAdapter() }
 
     viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get(), get()) }
-    viewModel { parameters -> InitViewModel(get(), parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> InitViewModel(get(), parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(get(), get()) }

@@ -74,7 +74,7 @@ class WatchScreen: BaseFragment(R.layout.fragment_init_watch) {
     private fun next() {
         if (button.isEnabled) {
             inputView.hideKeyboard()
-            initViewModel.nextStep(InitEvent.Step.WatchAccount)
+            initViewModel.nextStep(requireContext(), InitEvent.Step.WatchAccount)
         }
     }
 

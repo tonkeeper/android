@@ -139,15 +139,3 @@ fun String.hex(): ByteArray {
     }
     return data
 }
-
-fun Context.securePrefs(name: String): SharedPreferences {
-    KeyHelper.createIfNotExists(name)
-
-    return EncryptedSharedPreferences.create(
-        name,
-        name,
-        this,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
-}

@@ -8,4 +8,11 @@ data class RNMnemonic(val identifier: String, val mnemonic: String) {
         json.getString("identifier"),
         json.getString("mnemonic")
     )
+
+    fun toJSON(): JSONObject {
+        return JSONObject().apply {
+            put("identifier", identifier)
+            put("mnemonic", mnemonic)
+        }
+    }
 }

@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.rn
 import android.content.Context
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.tonapps.security.Security
 import com.tonapps.security.Sodium
 import com.tonapps.security.hex
 import com.tonapps.wallet.data.rn.data.RNMnemonic
@@ -12,6 +13,7 @@ import com.tonapps.wallet.data.rn.expo.SecureStoreModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import kotlin.math.ceil
 
 class RNLegacy(context: Context) {
 
@@ -32,12 +34,70 @@ class RNLegacy(context: Context) {
     private val sql = RNSql(context)
     private var cacheWallets: RNWallets? = null
 
-    suspend fun loadSecureStore(passcode: String): List<RNMnemonic> {
+    suspend fun addMnemonics(passcode: String, walletIds: List<String>, mnemonic: List<String>) {
+        try {
+            val list = loadSecureStore(passcode).toMutableList()
+            for (walletId in walletIds) {
+                list.add(RNMnemonic(walletId, mnemonic.joinToString(" ")))
+            }
+            saveVault(passcode, list)
+        } catch (ignored: Throwable) {
+            Log.e("InitViewModel", "error legacy addMnemonics", ignored)
+        }
+    }
+
+    suspend fun saveVault(
+        passcode: String,
+        list: List<RNMnemonic>
+    ) = withContext(Dispatchers.IO) {
+        val value = JSONObject()
+        for (m in list) {
+            value.put(m.identifier, m.toJSON())
+        }
+
+        val password = passcode.toByteArray()
+        val N = 16384
+        val r = 8
+        val p = 1
+
+        val salt = Security.randomBytes(32)
+        val enckey = Sodium.scryptHash(password, salt, N, r, p, 32) ?: throw Exception("scryptHash failed")
+        val nonce = salt.slice(0 until 24).toByteArray()
+        val ct = Sodium.cryptoSecretbox(value.toString().toByteArray(), nonce, enckey) ?: throw Exception("cryptoSecretbox failed")
+
+        val encryptedString = JSONObject().apply {
+            put("kind", "encrypted-scrypt-tweetnacl")
+            put("N", N)
+            put("r", r)
+            put("p", p)
+            put("salt", hex(salt))
+            put("ct", hex(ct))
+        }.toString()
+
+        Log.d("InitViewModel", "saveVault: $encryptedString")
+
+        val chunkSize = 2048
+        var index = 0
+
+        while (index < encryptedString.length) {
+            val chunk = encryptedString.substring(index, (index + chunkSize).coerceAtMost(encryptedString.length))
+            val key = "${walletsKey}_chunk_${index / chunkSize}"
+            kv.setItemImpl(key, chunk)
+            index += chunkSize
+        }
+
+        val key = "${walletsKey}_chunks"
+        val count = ceil(encryptedString.length.toDouble() / chunkSize).toInt()
+        kv.setItemImpl(key, "$count")
+    }
+
+    suspend fun loadSecureStore(passcode: String): List<RNMnemonic> = withContext(Dispatchers.IO) {
         val password = passcode.toByteArray()
         val chunks = kv.getItemImpl("${walletsKey}_chunks")?.toIntOrNull() ?: 0
         if (0 >= chunks) {
-            throw Exception("Chunks is $chunks")
+            return@withContext emptyList()
         }
+
         var encryptedString = ""
         for (i in 0 until chunks) {
             val chunk = kv.getItemImpl("${walletsKey}_chunk_$i") ?: throw Exception("Chunk $i is null")
@@ -59,7 +119,7 @@ class RNLegacy(context: Context) {
         for (key in json.keys()) {
             list.add(RNMnemonic(json.getJSONObject(key)))
         }
-        return list
+        list
     }
 
     fun getValue(key: String): String? {
@@ -95,6 +155,15 @@ class RNLegacy(context: Context) {
     suspend fun setWallets(wallets: RNWallets) {
         cacheWallets = wallets.copy()
         saveWallets(wallets)
+    }
+
+    suspend fun setSelectedWallet(id: String) {
+        val wallets = getWallets()
+        if (wallets.selectedIdentifier != id) {
+            setWallets(wallets.copy(
+                selectedIdentifier = id
+            ))
+        }
     }
 
     suspend fun clear() {

@@ -18,7 +18,7 @@ class PushScreen: BaseFragment(R.layout.fragment_init_push)  {
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        initViewModel.setPush()
+        initViewModel.setPush(requireContext())
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -32,7 +32,7 @@ class PushScreen: BaseFragment(R.layout.fragment_init_push)  {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            initViewModel.setPush()
+            initViewModel.setPush(requireContext())
         }
     }
 

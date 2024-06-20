@@ -47,15 +47,26 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
         }
     }
 
-
     fun setValue(key: String, value: String) {
-        val values = ContentValues().apply {
-            put(KV_TABLE_KEY_COLUMN, key)
-            put(KV_TABLE_VALUE_COLUMN, value)
+        setValue(key, value, 0)
+    }
+
+    private fun setValue(key: String, value: String, attempt: Int = 0) {
+        try {
+            val values = ContentValues().apply {
+                put(KV_TABLE_KEY_COLUMN, key)
+                put(KV_TABLE_VALUE_COLUMN, value)
+            }
+            val db = writableDatabase
+            db.insertWithOnConflict(KV_TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            db.close()
+        } catch (e: Throwable) {
+            if (attempt > 3) {
+                return
+            }
+            SystemClock.sleep(100)
+            return setValue(key, value, attempt + 1)
         }
-        val db = writableDatabase
-        db.insertWithOnConflict(KV_TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
-        db.close()
     }
 
     fun getJSONObject(key: String): JSONObject? {

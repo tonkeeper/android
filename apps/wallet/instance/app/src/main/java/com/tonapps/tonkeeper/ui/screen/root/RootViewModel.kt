@@ -279,8 +279,8 @@ class RootViewModel(
         return data.toJSON().toString()
     }
 
-    fun checkPasscode(context: Context, code: String): Flow<Unit> = flow {
-        val valid = passcodeManager.isValid(context, code)
+    fun checkPasscode(code: String): Flow<Unit> = flow {
+        val valid = passcodeManager.isValid(code)
         if (valid) {
             hidePasscode()
             emit(Unit)

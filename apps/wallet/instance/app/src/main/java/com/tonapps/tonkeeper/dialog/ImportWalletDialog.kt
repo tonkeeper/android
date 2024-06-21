@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.koin.api
 import com.tonapps.tonkeeper.ui.screen.add.signer.AddSignerScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.ledger.pair.PairLedgerScreen
 import uikit.base.BaseSheetDialog
 import uikit.navigation.Navigation.Companion.navigation
 
@@ -38,6 +39,12 @@ class ImportWalletDialog(context: Context): BaseSheetDialog(context), View.OnCli
 
         if (disableSigner) {
             signerView.visibility = View.GONE
+        }
+
+        val ledgerView = findViewById<View>(R.id.ledger_wallet)!!
+        ledgerView.setOnClickListener {
+            navigation?.add(PairLedgerScreen.newInstance())
+            dismiss()
         }
     }
 

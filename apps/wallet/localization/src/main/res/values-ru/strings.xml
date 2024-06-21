@@ -312,4 +312,14 @@
     <string name="explore">Витрина</string>
     <string name="connected">Подключённые</string>
     <string name="browser_search_placeholder">Введите адрес или начните поиск</string>
+
+    <string name="ledger_title">Подключить Ledger</string>
+    <string name="ledger_subtitle">Аппаратный модуль, Bluetooth, ограниченные функции TON</string>
+    <string name="ledger_confirm_title">Подтвердить действие</string>
+    <string name="ledger_connect_title">Подключить Ledger</string>
+    <string name="ledger_connect">Подключите Ledger к своему устройству с помощью Bluetooth</string>
+    <string name="ledger_open_ton_app">Разблокируйте его и откройте приложение TON</string>
+    <string name="ledger_install_ton_app">Установить приложение</string>
+    <string name="ledger_confirm_tx">Подтвердите транзакцию в Ledger</string>
+    <string name="ledger_operation_not_supported">Операция недоступна для кошельков Ledger. Выберите другой кошелек и повторите попытку.</string>
 </resources>

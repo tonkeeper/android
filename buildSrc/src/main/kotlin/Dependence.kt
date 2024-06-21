@@ -127,4 +127,8 @@ object Dependence {
         }
 
     }
+
+    object LedgerHQ {
+        const val bleTransport = "com.ledger.live:android-transport-ble:1.0.0-rc14"
+    }
 }

@@ -315,4 +315,14 @@
     <string name="explore">Explore</string>
     <string name="connected">Connected</string>
     <string name="browser_search_placeholder">Enter an address or search the web</string>
+
+    <string name="ledger_title">Pair with Ledger</string>
+    <string name="ledger_subtitle">Hardware module, Bluetooth, limited TON features</string>
+    <string name="ledger_confirm_title">Confirm Action</string>
+    <string name="ledger_connect_title">Connect Ledger</string>
+    <string name="ledger_connect">Connect Ledger to your device via Bluetooth</string>
+    <string name="ledger_open_ton_app">Unlock it and open TON App</string>
+    <string name="ledger_install_ton_app">Install TON App</string>
+    <string name="ledger_confirm_tx">Confirm your transaction on Ledger</string>
+    <string name="ledger_operation_not_supported">The operation is not available for Ledger wallets. Select another wallet and try again.</string>
 </resources>

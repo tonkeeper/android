@@ -99,6 +99,8 @@ dependencies {
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)
 
+//    implementation(Dependence.LedgerHQ.bleTransport)
+
     implementation(Dependence.fresco) {
         exclude(group = "com.facebook.soloader", module = "soloader")
         exclude(group = "com.facebook.fresco", module = "soloader")

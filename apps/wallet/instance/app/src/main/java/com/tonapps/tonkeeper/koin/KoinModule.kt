@@ -24,7 +24,7 @@ import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentViewMode
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
-import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerStepsViewModel
+import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
@@ -94,5 +94,5 @@ val koinModel = module {
     viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
-    viewModel { LedgerStepsViewModel(get(), get()) }
+    viewModel { LedgerConnectionViewModel(get(), get()) }
 }

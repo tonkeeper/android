@@ -3,6 +3,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven("https://jitpack.io")
     }
 }
 dependencyResolutionManagement {
@@ -10,6 +11,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")
     }
 }
 
@@ -60,3 +62,4 @@ include(":apps:wallet:data:browser")
 include(":apps:wallet:data:backup")
 include(":apps:wallet:data:rn")
 include(":apps:wallet:data:passcode")
+include(":lib:ledger")

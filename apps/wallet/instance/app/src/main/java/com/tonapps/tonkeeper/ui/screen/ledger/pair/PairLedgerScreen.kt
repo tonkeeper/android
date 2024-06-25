@@ -2,9 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.ledger.pair
 
 import android.os.Bundle
 import android.view.View
-import com.tonapps.tonkeeper.dialog.ImportWalletDialog
-import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerStep
-import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerStepsFragment
+import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
 import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
 
@@ -16,8 +14,8 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_pair_ledger), BaseFragme
         }
     }
 
-    private val ledgerStepsFragment: LedgerStepsFragment by lazy {
-        LedgerStepsFragment.newInstance(true)
+    private val ledgerConnectionFragment: LedgerConnectionFragment by lazy {
+        LedgerConnectionFragment.newInstance(false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -29,14 +27,12 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_pair_ledger), BaseFragme
         view.findViewById<View>(R.id.continue_button).setOnClickListener { handleContinue() }
 
         if (savedInstanceState == null) {
-            childFragmentManager.beginTransaction()
-                .replace(R.id.steps, ledgerStepsFragment)
+            childFragmentManager.beginTransaction().replace(R.id.steps, ledgerConnectionFragment)
                 .commit()
         }
     }
 
     private fun handleContinue() {
-        ledgerStepsFragment.setCurrentStep(LedgerStep.DONE)
     }
 
     private fun reject() {

@@ -19,6 +19,7 @@ import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -38,6 +39,7 @@ import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import io.tonapi.models.Account
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -146,6 +148,10 @@ class InitViewModel(
                 resolveWallets(savedState.publicKey!!)
             }
             // _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
+        } else if (type == InitArgs.Type.Ledger) {
+            scope.launch(Dispatchers.IO) {
+                resolveWallets(savedState.ledgerConnectData!!)
+            }
         }
     }
 
@@ -183,6 +189,58 @@ class InitViewModel(
 
     fun setPublicKey(publicKey: PublicKeyEd25519?) {
         savedState.publicKey = publicKey
+    }
+
+    fun setLedgerConnectData(connectData: LedgerConnectData) {
+        savedState.ledgerConnectData = connectData
+        setLabelName(connectData.model.productName)
+    }
+
+    private suspend fun resolveWallets(ledgerData: LedgerConnectData) = withContext(Dispatchers.IO) {
+        val addedDeviceAccountIndexes = listOf(0, 1, 2)
+        val deferredAccounts = mutableListOf<Deferred<Account>>()
+        for (account in ledgerData.accounts) {
+            deferredAccounts.add(async {
+                api.resolveAccount(account.address.toAccountId(), testnet)
+                    ?: throw IllegalStateException("Account ${account.address.toAccountId()} not found")
+            })
+        }
+
+        val deferredTokens = mutableListOf<Deferred<List<AccountTokenEntity>>>()
+        for (account in ledgerData.accounts) {
+            deferredTokens.add(async { getTokens(account.address.toAccountId()) })
+        }
+
+        val deferredCollectibles = mutableListOf<Deferred<List<NftEntity>>>()
+        for (account in ledgerData.accounts) {
+            deferredCollectibles.add(async { collectiblesRepository.getRemoteNftItems(account.address.toAccountId(), testnet) })
+        }
+
+        val items = mutableListOf<AccountItem>()
+        for ((index, ledgerAccount) in ledgerData.accounts.withIndex()) {
+            val account = deferredAccounts[index].await()
+            val balance = Coins.of(account.balance)
+            val hasTokens = deferredTokens[index].await().size > 2
+            val hasCollectibles = deferredCollectibles[index].await().isNotEmpty()
+            val alreadyAdded = addedDeviceAccountIndexes.contains(ledgerAccount.path.index)
+            val item = AccountItem(
+                address = ledgerAccount.address.toWalletAddress(testnet),
+                name = account.name,
+                walletVersion = WalletVersion.V4R2,
+                balanceFormat = CurrencyFormatter.format("TON", balance),
+                tokens = hasTokens,
+                collectibles = hasCollectibles,
+                selected = !alreadyAdded && (account.balance > 0 || hasTokens || hasCollectibles),
+                position = ListCell.getPosition(ledgerData.accounts.size, index),
+                ledgerIndex = ledgerAccount.path.index,
+                ledgerAdded = alreadyAdded
+            )
+            items.add(item)
+        }
+
+        setAccounts(items)
+
+        _eventFlow.tryEmit(InitEvent.Step.SelectAccount)
     }
 
     private suspend fun resolveWallets(mnemonic: List<String>) = withContext(Dispatchers.IO) {
@@ -232,7 +290,7 @@ class InitViewModel(
         val items = mutableListOf<AccountItem>()
         for ((index, account) in accounts.withIndex()) {
             val balance = Coins.of(account.balance)
-            val hasTokens = deferredTokens[index].await().size > 1
+            val hasTokens = deferredTokens[index].await().size > 2
             val hasCollectibles = deferredCollectibles[index].await().isNotEmpty()
             val item = AccountItem(
                 address = AddrStd(account.address).toWalletAddress(testnet),
@@ -359,6 +417,7 @@ class InitViewModel(
                     InitArgs.Type.Import, InitArgs.Type.Testnet -> wallets.addAll(importWallet(context))
                     InitArgs.Type.Signer -> wallets.addAll(signerWallets(false))
                     InitArgs.Type.SignerQR -> wallets.addAll(signerWallets(true))
+                    InitArgs.Type.Ledger -> wallets.addAll(ledgerWallets())
                 }
 
                 if (type != InitArgs.Type.New) {
@@ -401,6 +460,18 @@ class InitViewModel(
         val wallets = accountRepository.importWallet(label, mnemonic, versions, testnet)
         saveMnemonic(context, wallets.map { it.id }, mnemonic)
         return wallets
+    }
+
+    private suspend fun ledgerWallets(): List<WalletEntity> {
+        val ledgerConnectData =
+            savedState.ledgerConnectData ?: throw IllegalStateException("Ledger connect data is not set")
+        val accounts = getSelectedAccounts().map { selectedAccount ->
+            ledgerConnectData.accounts.find { account -> account.path.index == selectedAccount.ledgerIndex }
+                ?: throw IllegalStateException("Ledger account is not found")
+        }
+        val label = getLabel()
+
+        return accountRepository.pairLedger(label, accounts, ledgerConnectData.deviceId)
     }
 
     private suspend fun signerWallets(qr: Boolean): List<WalletEntity> {

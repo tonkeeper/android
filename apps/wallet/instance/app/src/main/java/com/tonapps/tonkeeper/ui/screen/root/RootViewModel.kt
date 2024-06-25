@@ -14,6 +14,7 @@ import com.google.firebase.ktx.Firebase
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.isMainVersion
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -277,6 +278,10 @@ class RootViewModel(
         val boc = requestSign(context, event.wallet, request)
         val data = DAppSuccessEntity(event.id, boc)
         return data.toJSON().toString()
+    }
+
+    fun connectLedger(connectData: LedgerConnectData) {
+        _eventFlow.tryEmit(RootEvent.Ledger(connectData))
     }
 
     fun checkPasscode(code: String): Flow<Unit> = flow {

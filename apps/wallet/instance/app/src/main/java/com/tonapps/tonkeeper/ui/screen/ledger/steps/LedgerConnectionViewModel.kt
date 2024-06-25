@@ -24,16 +24,20 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import uikit.extensions.context
 
-class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep: Boolean) :
-    AndroidViewModel(app) {
+class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
     private val bleManager: BleManager = BleManagerFactory.newInstance(context)
     private var pollTonAppJob: Job? = null
     private var disconnectTimeoutJob: Job? = null
+
+    private var targetDeviceId: String? = null
 
     val permissions = arrayOf(
         Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT
@@ -41,20 +45,33 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
 
     private val _connectionState: MutableSharedFlow<ConnectionState> =
         MutableSharedFlow(replay = 1, extraBufferCapacity = 1)
-    val connectionState = _connectionState.asSharedFlow()
 
-    val currentStepFlow = connectionState.map { state ->
+    private val _connectedDevice = MutableStateFlow<ConnectedDevice?>(null)
+    private val _tonTransport = MutableStateFlow<TonTransport?>(null)
+    val tonTransport = _tonTransport.asSharedFlow()
+    val connectionData = combine(_connectedDevice, _tonTransport) { device, transport ->
+        device to transport
+    }
+
+    val currentStepFlow = _connectionState.map { state ->
         when (state) {
             ConnectionState.Idle -> LedgerStep.CONNECT
             ConnectionState.Scanning -> LedgerStep.CONNECT
             is ConnectionState.Connected -> LedgerStep.OPEN_TON_APP
-            is ConnectionState.TonAppOpened -> if (showConfirmTxStep) LedgerStep.CONFIRM_TX else LedgerStep.DONE
+            is ConnectionState.TonAppOpened -> if (targetDeviceId != null) LedgerStep.CONFIRM_TX else LedgerStep.DONE
             is ConnectionState.Disconnected -> LedgerStep.CONNECT
         }
     }
 
     val uiItemsFlow = currentStepFlow.map { step ->
         createList(step)
+    }
+
+    val displayTextFlow = currentStepFlow.map { state ->
+        when {
+            targetDeviceId != null && (state == LedgerStep.CONFIRM_TX || state == LedgerStep.DONE) -> "Review"
+            else -> "TON ready"
+        }
     }
 
     private val _bluetoothState = MutableSharedFlow<Int>(replay = 1, extraBufferCapacity = 1)
@@ -74,7 +91,8 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
         context.registerReceiver(bluetoothReceiver, filter)
 
         // Get BluetoothManager and BluetoothAdapter
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothManager =
+            context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
 
         // Emit initial state
@@ -86,6 +104,10 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
     override fun onCleared() {
         super.onCleared()
         context.unregisterReceiver(bluetoothReceiver)
+    }
+
+    fun setTargetDeviceId(deviceId: String) {
+        targetDeviceId = deviceId
     }
 
     fun isPermissionGranted(): Boolean {
@@ -102,7 +124,15 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
         }
     }
 
-    fun scan() {
+    fun scanOrConnect() {
+        if (targetDeviceId != null) {
+            connect(targetDeviceId!!)
+        } else {
+            scan()
+        }
+    }
+
+    private fun scan() {
         _connectionState.tryEmit(ConnectionState.Scanning)
         bleManager.startScanning {
             val device = it.first()
@@ -112,7 +142,7 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
         }
     }
 
-    fun connect(deviceId: String, scanOnFail: Boolean = false) {
+    private fun connect(deviceId: String, scanOnFail: Boolean = false) {
         bleManager.connect(address = deviceId, onConnectError = {
             pollTonAppJob?.cancel()
 
@@ -126,10 +156,17 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
             disconnectTimeoutJob = viewModelScope.launch {
                 delay(4000)
                 _connectionState.tryEmit(ConnectionState.Disconnected())
+                _connectedDevice.tryEmit(null)
+                _tonTransport.tryEmit(null)
             }
         }, onConnectSuccess = {
             disconnectTimeoutJob?.cancel()
-            _connectionState.tryEmit(ConnectionState.Connected(deviceId, Devices.fromServiceUuid(it.serviceId!!)))
+            _connectionState.tryEmit(ConnectionState.Connected)
+            _connectedDevice.tryEmit(
+                ConnectedDevice(
+                    deviceId, Devices.fromServiceUuid(it.serviceId!!)
+                )
+            )
 
             waitForTonAppOpen()
         })
@@ -140,6 +177,8 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
         pollTonAppJob?.cancel()
         bleManager.disconnect()
         _connectionState.tryEmit(ConnectionState.Disconnected())
+        _connectedDevice.tryEmit(null)
+        _tonTransport.tryEmit(null)
     }
 
     private fun waitForTonAppOpen() {
@@ -152,7 +191,8 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
                     delay(1000)
                 }
 
-                _connectionState.tryEmit(ConnectionState.TonAppOpened(tonTransport))
+                _connectionState.tryEmit(ConnectionState.TonAppOpened)
+                _tonTransport.tryEmit(tonTransport)
             } catch (_: Exception) {
             }
         }
@@ -177,7 +217,7 @@ class LedgerConnectionViewModel(app: Application, private val showConfirmTxStep:
             )
         )
 
-        if (showConfirmTxStep) {
+        if (targetDeviceId != null) {
             uiItems.add(
                 Item.Step(
                     context.getString(Localization.ledger_confirm_tx),

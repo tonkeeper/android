@@ -1,17 +1,20 @@
 package com.tonapps.ledger.ton
 
+import android.os.Parcelable
 import io.ktor.util.decodeBase64Bytes
+import kotlinx.parcelize.Parcelize
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.StateInit
 import org.ton.boc.BagOfCells
 import org.ton.cell.CellBuilder
 import java.nio.ByteBuffer
 
+@Parcelize
 data class AccountPath(
     val index: Int,
     val isTestnet: Boolean = false,
     val workchain: Int = 0
-) {
+): Parcelable {
     private fun getPath(): List<Int> {
         val network = if (isTestnet) 1 else 0
         val chain = if (workchain == -1) 255 else 0

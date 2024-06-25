@@ -1,12 +1,14 @@
 package com.tonapps.wallet.data.account
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.isMainVersion
+import com.tonapps.ledger.ton.LedgerAccount
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -188,6 +190,37 @@ class AccountRepository(
     suspend fun getPrivateKey(id: String): PrivateKeyEd25519 {
         val wallet = database.getAccount(id) ?: return EmptyPrivateKeyEd25519
         return vaultSource.getPrivateKey(wallet.publicKey) ?: EmptyPrivateKeyEd25519
+    }
+
+    suspend fun pairLedger(
+        label: Wallet.Label,
+        accounts: List<LedgerAccount>,
+        deviceId: String
+    ): List<WalletEntity> {
+        val list = mutableListOf<WalletEntity>()
+        for ((index, account) in accounts.withIndex()) {
+            val entity = WalletEntity(
+                id = newWalletId(),
+                publicKey = account.publicKey,
+                type = Wallet.Type.Ledger,
+                version = WalletVersion.V4R2,
+                label = if (accounts.size == 1) {
+                    label
+                } else {
+                    label.copy(
+                        accountName = "${label.accountName} $index",
+                    )
+                }
+            )
+            list.add(entity)
+        }
+
+        Log.d("AccountRepository", "pairLedger: $list")
+
+        throw Exception("Not implemented")
+
+        insertWallets(list)
+        return list.toList()
     }
 
     suspend fun pairSigner(

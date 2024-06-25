@@ -308,6 +308,7 @@
 
     <string name="choose_wallet_title">Выбери кошелек</string>
     <string name="choose_wallet_subtitle">Выберите кошельки, которые хотите добавить.</string>
+    <string name="choose_wallet_already_added">Уже добавлен</string>
     <string name="search_browser">Поиск</string>
     <string name="explore">Витрина</string>
     <string name="connected">Подключённые</string>

@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.ledger.steps
 
-
 import android.animation.ObjectAnimator
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -15,18 +14,16 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.SharedFlow
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
-import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 
-class LedgerConnectionFragment() : BaseFragment(R.layout.fragment_ledger_steps) {
+class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
     companion object {
 
         private const val WITH_CONFIRM_TX = "WITH_CONFIRM_TX"
@@ -47,7 +44,7 @@ class LedgerConnectionFragment() : BaseFragment(R.layout.fragment_ledger_steps) 
             it.value
         }
         if (allGranted) {
-            connectionViewModel.scan()
+            connectionViewModel.scanOrConnect()
         } else {
             showBluetoothPermissionsAlert()
         }
@@ -63,11 +60,7 @@ class LedgerConnectionFragment() : BaseFragment(R.layout.fragment_ledger_steps) 
 
     private val showConfirmTxStep: Boolean by lazy { requireArguments().getBoolean(WITH_CONFIRM_TX) }
 
-    private val connectionViewModel: LedgerConnectionViewModel by viewModel {
-        parametersOf(
-            showConfirmTxStep
-        )
-    }
+    private val connectionViewModel: LedgerConnectionViewModel by viewModels({ requireParentFragment() })
 
     private val adapter = Adapter()
 
@@ -95,6 +88,9 @@ class LedgerConnectionFragment() : BaseFragment(R.layout.fragment_ledger_steps) 
         listView.adapter = adapter
 
         collectFlow(connectionViewModel.currentStepFlow, ::animateView)
+        collectFlow(connectionViewModel.displayTextFlow) { text ->
+            ledgerDisplayText.text = text
+        }
 
         collectFlow(connectionViewModel.bluetoothState) { state ->
             when (state) {
@@ -115,7 +111,7 @@ class LedgerConnectionFragment() : BaseFragment(R.layout.fragment_ledger_steps) 
         builder.setTitle(Localization.bluetooth_permissions_alert_title)
         builder.setMessage(Localization.bluetooth_permissions_alert_message)
         builder.setPositiveButton(Localization.bluetooth_permissions_alert_open_settings) {
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, ).apply {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = Uri.fromParts("package", requireContext().packageName, null)
             }
             appSettingsLauncher.launch(intent)
@@ -134,7 +130,7 @@ class LedgerConnectionFragment() : BaseFragment(R.layout.fragment_ledger_steps) 
 
     private fun checkPermissionsAndScan() {
         if (connectionViewModel.isPermissionGranted()) {
-            connectionViewModel.scan()
+            connectionViewModel.scanOrConnect()
         } else {
             requestPermissionLauncher.launch(connectionViewModel.permissions)
         }
@@ -188,11 +184,6 @@ class LedgerConnectionFragment() : BaseFragment(R.layout.fragment_ledger_steps) 
             translationX.duration = 350
             translationX.interpolator = interpolator
             translationX.start()
-        }
-
-        ledgerDisplayText.text = when {
-            showConfirmTxStep && (currentStep == LedgerStep.CONFIRM_TX || currentStep == LedgerStep.DONE) -> "Review"
-            else -> "TON ready"
         }
     }
 }

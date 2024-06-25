@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.init
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.doOnLayout
+import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PushScreen
@@ -39,6 +40,9 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
         }
         args.publicKeyEd25519?.let {
             initViewModel.setPublicKey(it)
+        }
+        args.ledgerConnectData?.let {
+            initViewModel.setLedgerConnectData(it)
         }
     }
 
@@ -118,7 +122,8 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
             type: InitArgs.Type,
             publicKeyEd25519: PublicKeyEd25519? = null,
             name: String? = null,
-        ) = newInstance(InitArgs(type, name, publicKeyEd25519))
+            ledgerConnectData: LedgerConnectData? = null
+        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData))
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()

@@ -84,7 +84,7 @@ class TonTransport(private val transport: Transport) {
 
     suspend fun getAccount(
         path: AccountPath,
-    ): Account {
+    ): LedgerAccount {
         // Get public key
         val response = doRequest(INS_ADDRESS, 0x00, 0x00, path.toByteArray())
         if (response.size != 32) {
@@ -95,7 +95,7 @@ class TonTransport(private val transport: Transport) {
         val stateInit = path.getInit(publicKey)
         val address = SmartContract.address(path.workchain, stateInit)
 
-        return Account(address, publicKey)
+        return LedgerAccount(address, publicKey, path)
     }
 
     suspend fun signTransaction(

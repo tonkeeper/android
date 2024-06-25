@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.list.BaseListHolder
+import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.setColor
 import uikit.widget.CheckBoxView
@@ -26,15 +27,19 @@ class Holder(
     override fun onBind(item: AccountItem) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener { onClick(item) }
+        itemView.isEnabled = !item.ledgerAdded
         addressView.text = item.address.shortAddress
         selectedView.checked = item.selected
-        setDetails(item.walletVersion, item.balanceFormat, item.tokens, item.collectibles)
+        selectedView.isEnabled = !item.ledgerAdded
+        setDetails(item.walletVersion, item.balanceFormat, item.tokens, item.collectibles, item.ledgerIndex != null, item.ledgerAdded)
     }
 
-    private fun setDetails(walletVersion: WalletVersion, balance: CharSequence, tokens: Boolean, collectibles: Boolean) {
+    private fun setDetails(walletVersion: WalletVersion, balance: CharSequence, tokens: Boolean, collectibles: Boolean, isLedger: Boolean, ledgerAdded: Boolean) {
         val builder = StringBuilder()
-        builder.append(walletVersion.title)
-        builder.append(DOT)
+        if (!isLedger) {
+            builder.append(walletVersion.title)
+            builder.append(DOT)
+        }
         builder.append(balance)
         if (tokens) {
             builder.append(", ")
@@ -44,10 +49,18 @@ class Holder(
             builder.append(", ")
             builder.append("nft")
         }
+        if (ledgerAdded) {
+            builder.append(DOT)
+            builder.append(context.getString(Localization.choose_wallet_already_added))
+        }
 
-        val spannableString = SpannableString(builder)
-        spannableString.setColor(context.textTertiaryColor, walletVersion.title.length, walletVersion.title.length + DOT.length)
-        detailsView.text = spannableString
+        if (!isLedger) {
+            val spannableString = SpannableString(builder)
+            spannableString.setColor(context.textTertiaryColor, walletVersion.title.length, walletVersion.title.length + DOT.length)
+            detailsView.text = spannableString
+        } else {
+            detailsView.text = builder.toString()
+        }
     }
 
     private companion object {

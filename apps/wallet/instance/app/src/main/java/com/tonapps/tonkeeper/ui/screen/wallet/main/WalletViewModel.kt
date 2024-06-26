@@ -1,18 +1,22 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
+import com.tonapps.icu.Coins.Companion.DEFAULT_DECIMALS
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.entities.TokenExtendedEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
+import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.BalanceType
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
+import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
@@ -139,21 +143,22 @@ class WalletViewModel(
             }
         }.launchIn(viewModelScope)
 
-        combine(
+        /*combine(
             accountRepository.selectedWalletFlow,
             backupRepository.stream,
             pushManager.dAppPushFlow,
         ) { wallet, backups, push ->
             val backupEntities = backups.filter { it.walletId == wallet.id }
             val pushEntities = push?.distinctBy { it.dappUrl } ?: emptyList()
-        }.launchIn(viewModelScope)
+        }.launchIn(viewModelScope)*/
 
         combine(
             accountRepository.selectedWalletFlow,
             dataFlow,
             statusFlow,
             settingsRepository.tokenPrefsChangedFlow,
-        ) { wallet, tokens, status, _ ->
+            backupRepository.stream,
+        ) { wallet, tokens, status, _, backups ->
             val (fiatBalance, uiItems) = buildTokenUiItems(tokens.currency, tokens.wallet.testnet, tokens.list.map {
                 TokenExtendedEntity(
                     raw = it,
@@ -167,12 +172,20 @@ class WalletViewModel(
                 CurrencyFormatter.formatFiat(tokens.currency.code, fiatBalance)
             }
 
+            val tokenItem = uiItems.first()
+
+            val balanceType = when {
+                tokenItem.balance > Coins(20.0, DEFAULT_DECIMALS) -> BalanceType.Huge
+                tokenItem.balance > Coins(2.0, DEFAULT_DECIMALS) -> BalanceType.Positive
+                else -> BalanceType.Zero
+            }
+
             val actualStatus = if (tokens.isOnline) {
                 status
             } else {
                 Item.Status.NoInternet
             }
-            setItems(tokens.wallet, balanceFormat, uiItems, actualStatus, tokens.push, tokens.apps)
+            setItems(tokens.wallet, balanceFormat, uiItems, actualStatus, tokens.push, tokens.apps, backups, balanceType)
         }.launchIn(viewModelScope)
     }
 
@@ -276,18 +289,20 @@ class WalletViewModel(
         status: Item.Status,
         push: List<AppPushEntity>,
         apps: List<DAppEntity>,
+        backups: List<BackupEntity>,
+        balanceType: BalanceType,
     ) {
         val items = mutableListOf<Item>()
-        items.add(
-            Item.Balance(
+        items.add(Item.Balance(
             balance = balance,
             address = wallet.address,
             walletType = wallet.type,
             status = status,
-            hiddenBalance = settingsRepository.hiddenBalances
+            hiddenBalance = settingsRepository.hiddenBalances,
+            hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1,
+            balanceType = balanceType,
         ))
-        items.add(
-            Item.Actions(
+        items.add(Item.Actions(
             address = wallet.address,
             token = TokenEntity.TON,
             walletType = wallet.type,

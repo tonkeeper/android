@@ -5,21 +5,26 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.accentPurpleColor
+import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.stateList
+import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
@@ -29,6 +34,8 @@ import uikit.HapticHelper
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 import uikit.extensions.withAlpha
+import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.LoaderView
 
 class BalanceHolder(
@@ -40,6 +47,7 @@ class BalanceHolder(
     private val walletAddressView = itemView.findViewById<AppCompatTextView>(R.id.wallet_address)
     private val walletLoaderView = itemView.findViewById<LoaderView>(R.id.wallet_loader)
     private val walletTypeView = itemView.findViewById<AppCompatTextView>(R.id.wallet_type)
+    private val backupIconView = itemView.findViewById<AppCompatImageView>(R.id.backup_icon)
 
     init {
         balanceView.setOnClickListener {
@@ -49,6 +57,9 @@ class BalanceHolder(
         walletLoaderView.setColor(context.iconSecondaryColor)
         walletLoaderView.setTrackColor(context.iconSecondaryColor.withAlpha(.32f))
         walletTypeView.backgroundTintList = context.accentOrangeColor.withAlpha(.16f).stateList
+        backupIconView.setOnClickListener {
+            Navigation.from(context)?.add(BackupScreen.newInstance())
+        }
     }
 
     override fun onBind(item: Item.Balance) {
@@ -60,6 +71,21 @@ class BalanceHolder(
             balanceView.text = item.balance
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f)
             balanceView.background = null
+        }
+
+        val requestBackup = (item.walletType == Wallet.Type.Default || item.walletType == Wallet.Type.Testnet || item.walletType == Wallet.Type.Lockup) && !item.hasBackup
+
+        if (requestBackup && item.balanceType == Item.BalanceType.Huge) {
+            balanceView.setTextColor(context.accentRedColor)
+            backupIconView.imageTintList = context.accentRedColor.stateList
+            backupIconView.visibility = View.VISIBLE
+        } else if (requestBackup) {
+            balanceView.setTextColor(context.accentOrangeColor)
+            backupIconView.imageTintList = context.accentOrangeColor.stateList
+            backupIconView.visibility = View.VISIBLE
+        } else {
+            balanceView.setTextColor(context.textPrimaryColor)
+            backupIconView.visibility = View.GONE
         }
 
         setWalletType(item.walletType)
@@ -101,7 +127,7 @@ class BalanceHolder(
         val resId = when (type) {
             Wallet.Type.Watch -> Localization.watch_only
             Wallet.Type.Testnet -> Localization.testnet
-            Wallet.Type.Signer -> Localization.signer
+            Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
             else -> {
                 walletTypeView.visibility = View.GONE
                 return
@@ -117,7 +143,7 @@ class BalanceHolder(
 
     private fun getTypeColor(type: Wallet.Type): Int {
         return when (type) {
-            Wallet.Type.Signer -> context.accentPurpleColor
+            Wallet.Type.Signer, Wallet.Type.SignerQR -> context.accentPurpleColor
             else -> context.accentOrangeColor
         }
     }

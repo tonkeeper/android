@@ -3,10 +3,13 @@ package com.tonapps.signer.deeplink.entities
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonapps.extensions.readEnum
+import com.tonapps.extensions.writeEnum
+import com.tonapps.signer.deeplink.DeeplinkSource
 import com.tonapps.signer.extensions.uriOrNull
 
 data class ReturnResultEntity(
-    val toApp: Boolean,
+    val source: DeeplinkSource,
     val uri: Uri?
 ): Parcelable {
 
@@ -14,17 +17,17 @@ data class ReturnResultEntity(
         get() = uri?.host ?: "App"
 
     constructor(parcel: Parcel) : this(
-        parcel.readByte() != 0.toByte(),
+        parcel.readEnum(DeeplinkSource::class.java)!!,
         parcel.readString()?.uriOrNull
     )
 
-    constructor(toApp: Boolean, url: String?) : this(
-        toApp = toApp,
+    constructor(source: DeeplinkSource, url: String?) : this(
+        source = source,
         uri = url?.uriOrNull
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeByte(if (toApp) 1 else 0)
+        parcel.writeEnum(source)
         parcel.writeString(uri?.toString())
     }
 

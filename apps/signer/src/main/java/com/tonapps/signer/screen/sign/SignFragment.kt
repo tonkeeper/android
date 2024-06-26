@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
@@ -16,6 +15,7 @@ import com.tonapps.signer.Key
 import com.tonapps.signer.R
 import com.tonapps.signer.deeplink.TKDeepLink
 import com.tonapps.signer.core.entities.KeyEntity
+import com.tonapps.signer.deeplink.DeeplinkSource
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.extensions.authorizationRequiredError
 import com.tonapps.signer.extensions.copyToClipboard
@@ -40,7 +40,6 @@ import uikit.extensions.collectFlow
 import uikit.extensions.setColor
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.LoaderView
-import uikit.widget.ModalView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 
@@ -54,7 +53,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
             v: String,
             returnResult: ReturnResultEntity,
             seqno: Int,
-            network: TonNetwork,
+            network: TonNetwork
         ): SignFragment {
             val fragment = SignFragment()
             fragment.arguments = SignArgs.bundle(id, body, v, returnResult, seqno, network)
@@ -63,7 +62,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
     }
 
     private val args: SignArgs by lazy { SignArgs(requireArguments()) }
-    private val signViewModel: SignViewModel by viewModel { parametersOf(args.id, args.body, args.v, args.network) }
+    private val signViewModel: SignViewModel by viewModel { parametersOf(args.id, args.body, args.v, args.seqno, args.network) }
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private val adapter = SignAdapter()
@@ -130,7 +129,6 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
         collectFlow(signViewModel.actionsFlow, adapter::submitList)
         collectFlow(signViewModel.keyEntity, ::setKeyEntity)
-        collectFlow(signViewModel.openDetails) { showDetails() }
     }
 
     private fun showError() {
@@ -168,12 +166,10 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
     private fun sendSignature(signature: ByteArray) {
         val returnResult = args.returnResult
-        if (returnResult.toApp) {
-            rootViewModel.responseSignature(signature)
-        } else if (returnResult.uri != null) {
-            returnSignature(returnResult.uri, signature)
-        } else {
-            showQR(signature)
+        when (returnResult.source) {
+            DeeplinkSource.App -> rootViewModel.responseSignature(signature)
+            DeeplinkSource.Default -> returnSignature(returnResult.uri!!, signature)
+            else -> showQR(signature)
         }
     }
 

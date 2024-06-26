@@ -2,6 +2,8 @@ package com.tonapps.wallet.data.passcode
 
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class PasscodeHelper(
     private val store: PasscodeStore,
@@ -34,13 +36,13 @@ class PasscodeHelper(
         }
     }
 
-    private suspend fun isValidLegacy(code: String): Boolean {
+    private suspend fun isValidLegacy(code: String): Boolean = withContext(Dispatchers.IO) {
         try {
             accountRepository.importPrivateKeysFromRNLegacy(code)
             store.setPinCode(code)
-            return true
+            true
         } catch (e: Throwable) {
-            return false
+            false
         }
     }
 

@@ -9,17 +9,33 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center">
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/wallet_balance"
+        <uikit.widget.RowLayout
             android:layout_width="wrap_content"
             android:layout_height="56dp"
             android:layout_gravity="center"
-            android:paddingHorizontal="@dimen/offsetMedium"
-            android:singleLine="true"
-            android:textColor="?attr/textPrimaryColor"
-            android:textSize="44sp"
-            android:fontFamily="@font/montserrat_semi_bold"
-            android:gravity="center"/>
+            android:paddingHorizontal="@dimen/offsetMedium">
+            
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/wallet_balance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="?attr/textPrimaryColor"
+                android:textSize="44sp"
+                android:fontFamily="@font/montserrat_semi_bold"
+                android:gravity="center"/>
+            
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/backup_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="bottom"
+                android:layout_marginLeft="6dp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"
+                android:src="@drawable/ic_information_circle_24"/>
+            
+        </uikit.widget.RowLayout>
 
         <uikit.widget.RowLayout
             android:layout_width="wrap_content"

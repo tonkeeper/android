@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.signer.Key
 import com.tonapps.signer.core.repository.KeyRepository
+import com.tonapps.signer.deeplink.DeeplinkSource
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.deeplink.entities.SignRequestEntity
 import com.tonapps.signer.password.Password
@@ -54,7 +55,7 @@ class RootViewModel(
         _action.tryEmit(RootAction.ResponseSignature(signature))
     }
 
-    fun processDeepLink(uri: Uri, fromApp: Boolean): Boolean {
+    fun processDeepLink(uri: Uri, source: DeeplinkSource): Boolean {
         if (uri.scheme != Key.SCHEME) {
             return false
         }
@@ -66,7 +67,7 @@ class RootViewModel(
             return true
         }
 
-        val returnResult = ReturnResultEntity(fromApp, uri.getQueryParameter("return"))
+        val returnResult = ReturnResultEntity(source, uri.getQueryParameter("return"))
 
         val signRequest = SignRequestEntity.safe(uri, returnResult) ?: return false
 
@@ -78,7 +79,14 @@ class RootViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val id = keyRepository.findIdByPublicKey(signRequest.publicKey) ?: return@launch notFoundKey()
 
-            sign(id, signRequest.body, signRequest.v, signRequest.returnResult, signRequest.seqno, signRequest.network)
+            sign(
+                id = id,
+                body = signRequest.body,
+                v = signRequest.v,
+                returnResult = signRequest.returnResult,
+                seqno = signRequest.seqno,
+                network = signRequest.network,
+            )
         }
     }
 

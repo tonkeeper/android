@@ -78,7 +78,7 @@ class WalletHolder(
         val resId = when (type) {
             Wallet.Type.Watch -> Localization.watch_only
             Wallet.Type.Testnet -> Localization.testnet
-            Wallet.Type.Signer -> Localization.signer
+            Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
             else -> throw IllegalArgumentException("Unknown wallet type: $type")
         }
         typeView.setText(resId)

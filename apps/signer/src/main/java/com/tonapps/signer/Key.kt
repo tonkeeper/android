@@ -12,4 +12,5 @@ object Key {
     const val SIGN = "sign"
     const val SEQNO = "seqno"
     const val NETWORK = "network"
+    const val QR = "qr"
 }

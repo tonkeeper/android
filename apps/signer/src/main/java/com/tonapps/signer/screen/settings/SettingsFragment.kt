@@ -54,7 +54,7 @@ class SettingsFragment: BaseFragment(R.layout.fragment_settings), BaseFragment.S
     }
 
     private fun openSupport() {
-        val uri = Uri.parse("https://t.me/tonkeeper_supportbot")
+        val uri = Uri.parse("https://t.me/help_tonkeeper_bot")
         val intent = Intent(Intent.ACTION_VIEW, uri)
         startActivity(intent)
     }

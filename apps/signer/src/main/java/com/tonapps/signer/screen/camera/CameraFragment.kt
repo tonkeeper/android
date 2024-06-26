@@ -28,6 +28,7 @@ import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.tonapps.qr.QRImageAnalyzer
+import com.tonapps.signer.deeplink.DeeplinkSource
 import uikit.extensions.applyBottomInsets
 import uikit.widget.ModalView
 
@@ -111,7 +112,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         }
 
         val uri = chunks.joinToString("").uriOrNull ?: return
-        if (rootViewModel.processDeepLink(uri, false)) {
+        if (rootViewModel.processDeepLink(uri, DeeplinkSource.QR)) {
             isReady = true
             finishDelay()
         }

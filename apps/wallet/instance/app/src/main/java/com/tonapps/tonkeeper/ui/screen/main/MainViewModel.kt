@@ -24,7 +24,7 @@ class MainViewModel(
 
     init {
         collectFlow(accountRepository.selectedWalletFlow) { wallet ->
-            _browserTabEnabledFlow.value = !api.config.flags.disableDApps && (wallet.type == Wallet.Type.Default || wallet.type == Wallet.Type.Signer)
+            _browserTabEnabledFlow.value = !api.config.flags.disableDApps && (wallet.type == Wallet.Type.Default || wallet.signer)
         }
     }
 

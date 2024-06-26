@@ -102,7 +102,7 @@ class TokenViewModel(
             Item.Actions(
             swapUri = api.config.swapUri,
             swap = token.verified && (token.wallet.type == Wallet.Type.Default || token.wallet.type == Wallet.Type.Signer),
-            send = token.wallet.hasPrivateKey || token.wallet.type == Wallet.Type.Signer,
+            send = token.wallet.hasPrivateKey || token.wallet.signer,
             walletAddress = token.walletAddress,
             tokenAddress = token.address,
             token = token.token.balance.token,

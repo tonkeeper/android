@@ -132,10 +132,9 @@ class AccountRepository(
         var emoji = wallet.label.emoji.toString()
         if (emoji.startsWith("custom_")) {
             emoji = emoji.replace("custom_", "ic-")
+            emoji = emoji.replace("_", "-")
+            emoji = "$emoji-32"
         }
-        emoji = emoji.replace("_", "-")
-        emoji = "$emoji-32"
-
 
         val rnWallet = RNWallet(
             name = wallet.label.accountName,
@@ -272,7 +271,6 @@ class AccountRepository(
 
     private suspend fun insertWallets(list: List<WalletEntity>) {
         database.insertAccounts(list)
-        setSelectedWallet(list.first().id)
         for (wallet in list) {
             addWalletToRN(wallet)
         }

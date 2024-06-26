@@ -145,7 +145,6 @@ class InitViewModel(
             scope.launch(Dispatchers.IO) {
                 resolveWallets(savedState.publicKey!!)
             }
-            // _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
         }
     }
 
@@ -361,7 +360,7 @@ class InitViewModel(
                     InitArgs.Type.SignerQR -> wallets.addAll(signerWallets(true))
                 }
 
-                if (type != InitArgs.Type.New) {
+                if (type == InitArgs.Type.Import) {
                     for (wallet in wallets) {
                         backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)
                     }
@@ -370,9 +369,11 @@ class InitViewModel(
                 for (wallet in wallets) {
                     settingsRepository.setPushWallet(wallet.id, true)
                 }
+
+                accountRepository.setSelectedWallet(wallets.first().id)
+
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {
-                Log.e("InitViewModel", "execute error", e)
                 _eventFlow.tryEmit(InitEvent.Loading(false))
             }
         }

@@ -5,6 +5,9 @@ import org.ton.cell.CellBuilder
 import org.ton.cell.CellSlice
 import org.ton.cell.invoke
 import org.ton.tlb.TlbConstructor
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+import java.nio.charset.CharsetDecoder
 
 object StringTlbConstructor : TlbConstructor<String>(schema = "", id = null) {
 
@@ -22,7 +25,10 @@ object StringTlbConstructor : TlbConstructor<String>(schema = "", id = null) {
         if (bits.size >= 32) {
             try {
                 loadUInt32()
-                return String(loadRemainingBits().toByteArray())
+                val bytes = loadRemainingBits().toByteArray()
+                val encoder: CharsetDecoder = Charset.forName("UTF-8").newDecoder()
+                encoder.decode(ByteBuffer.wrap(bytes))
+                return String(bytes)
             } catch (ignored: Throwable) {}
         }
         return ""

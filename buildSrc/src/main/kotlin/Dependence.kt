@@ -21,6 +21,7 @@ object Dependence {
 
     object UI {
         const val material = "com.google.android.material:material:1.12.0"
+        const val flexbox = "com.google.android.flexbox:flexbox:3.0.0"
     }
 
     object Koin {
@@ -44,6 +45,7 @@ object Dependence {
         const val biometric = "androidx.biometric:biometric:1.1.0"
         const val annotation = "androidx.annotation:annotation:1.8.0"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.1"
+        const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.1.4"
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"

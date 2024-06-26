@@ -88,7 +88,7 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
     private fun copy() {
         val color = when (args.walletType) {
             Wallet.Type.Default -> requireContext().backgroundContentTintColor
-            Wallet.Type.Signer -> requireContext().accentPurpleColor
+            Wallet.Type.Signer, Wallet.Type.SignerQR -> requireContext().accentPurpleColor
             else -> requireContext().accentOrangeColor
         }
         navigation?.toast(getString(Localization.copied), color)

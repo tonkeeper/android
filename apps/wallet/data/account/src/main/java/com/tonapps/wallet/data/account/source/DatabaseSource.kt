@@ -104,14 +104,14 @@ internal class DatabaseSource(
     }
 
     suspend fun getAccounts(): List<WalletEntity> = withContext(scope.coroutineContext) {
-        val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL FROM $WALLET_TABLE_NAME LIMIT 100;"
+        val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX FROM $WALLET_TABLE_NAME LIMIT 100;"
         val cursor = readableDatabase.rawQuery(query, null)
         readAccounts(cursor)
     }
 
     suspend fun getAccount(id: String): WalletEntity? = withContext(scope.coroutineContext) {
         if (id.isNotBlank()) {
-            val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL FROM $WALLET_TABLE_NAME WHERE $WALLET_TABLE_ID_COLUMN = ?;"
+            val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX FROM $WALLET_TABLE_NAME WHERE $WALLET_TABLE_ID_COLUMN = ?;"
             val cursor = readableDatabase.rawQuery(query, arrayOf(id))
             readAccounts(cursor).firstOrNull()
         } else {

@@ -17,6 +17,7 @@ import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -162,7 +163,12 @@ class AccountRepository(
             workchain = wallet.contract.workchain,
             allowedDestinations = null,
             configPubKey = null,
-            ledger = null,
+            ledger = wallet.ledger?.let {
+                RNLedger(
+                    deviceId = it.deviceId,
+                    accountIndex = it.accountIndex
+                )
+            },
         )
         rnLegacy.addWallet(rnWallet)
     }

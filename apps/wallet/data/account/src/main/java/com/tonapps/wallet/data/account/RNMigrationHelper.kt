@@ -5,6 +5,7 @@ import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
+import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallet.Companion.int
 import org.ton.api.pub.PublicKeyEd25519
@@ -63,12 +64,19 @@ internal class RNMigrationHelper(
             } else {
                 continue
             }
+
             val entity = WalletEntity(
                 id = legacyWallet.identifier,
                 publicKey = PublicKeyEd25519(hex(legacyWallet.pubkey)),
                 type = type,
                 version = version,
-                label = label
+                label = label,
+                ledger = legacyWallet.ledger?.let {
+                    WalletEntity.Ledger(
+                        deviceId = it.deviceId,
+                        accountIndex = it.accountIndex
+                    )
+                }
             )
             list.add(entity)
         }

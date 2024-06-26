@@ -8,5 +8,7 @@ import kotlinx.parcelize.RawValue
 
 @Parcelize
 data class LedgerAccount(
-    val address: @RawValue AddrStd, val publicKey: @RawValue PublicKeyEd25519, val path: AccountPath
+    val address: @RawValue AddrStd,
+    val publicKey: @RawValue PublicKeyEd25519,
+    val path: AccountPath
 ): Parcelable

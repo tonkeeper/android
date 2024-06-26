@@ -27,4 +27,5 @@ dependencies {
     implementation(Dependence.AndroidX.core)
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.LedgerHQ.bleManager)
+    implementation(project(Dependence.Lib.blockchain))
 }

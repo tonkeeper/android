@@ -25,7 +25,7 @@ internal class DatabaseSource(
 
     private companion object {
         private const val DATABASE_NAME = "account"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         private const val WALLET_TABLE_NAME = "wallet"
         private const val WALLET_TABLE_ID_COLUMN = "id"
@@ -33,6 +33,8 @@ internal class DatabaseSource(
         private const val WALLET_TABLE_TYPE = "type"
         private const val WALLET_TABLE_VERSION = "version"
         private const val WALLET_TABLE_LABEL = "label"
+        private const val WALLET_TABLE_LEDGER_DEVICE_ID = "ledger_device_id"
+        private const val WALLET_TABLE_LEDGER_ACCOUNT_INDEX = "ledger_account_index"
 
         private fun WalletEntity.toValues(): ContentValues {
             val values = ContentValues()
@@ -41,6 +43,10 @@ internal class DatabaseSource(
             values.put(WALLET_TABLE_TYPE, type.id)
             values.put(WALLET_TABLE_VERSION, version.id)
             values.put(WALLET_TABLE_LABEL, label.toByteArray())
+            ledger?.let {
+                values.put(WALLET_TABLE_LEDGER_DEVICE_ID, it.deviceId)
+                values.put(WALLET_TABLE_LEDGER_ACCOUNT_INDEX, it.accountIndex)
+            }
             return values
         }
     }
@@ -51,7 +57,9 @@ internal class DatabaseSource(
                 "$WALLET_TABLE_ID_PUBLIC_KEY BLOB," +
                 "$WALLET_TABLE_TYPE INTEGER," +
                 "$WALLET_TABLE_VERSION TEXT," +
-                "$WALLET_TABLE_LABEL BLOB" +
+                "$WALLET_TABLE_LABEL BLOB," +
+                "$WALLET_TABLE_LEDGER_DEVICE_ID TEXT," +
+                "$WALLET_TABLE_LEDGER_ACCOUNT_INDEX INTEGER" +
                 ");")
 
         val walletIndexPrefix = "idx_$WALLET_TABLE_NAME"
@@ -61,7 +69,10 @@ internal class DatabaseSource(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-
+        if (oldVersion == 1 && newVersion == 2) {
+            db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_LEDGER_DEVICE_ID TEXT;")
+            db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_LEDGER_ACCOUNT_INDEX INTEGER;")
+        }
     }
 
     suspend fun clearAccounts() = withContext(scope.coroutineContext) {
@@ -127,6 +138,8 @@ internal class DatabaseSource(
         val typeIndex = cursor.getColumnIndex(WALLET_TABLE_TYPE)
         val versionIndex = cursor.getColumnIndex(WALLET_TABLE_VERSION)
         val labelIndex = cursor.getColumnIndex(WALLET_TABLE_LABEL)
+        val ledgerDeviceIdIndex = cursor.getColumnIndex(WALLET_TABLE_LEDGER_DEVICE_ID)
+        val ledgerAccountIndexIndex = cursor.getColumnIndex(WALLET_TABLE_LEDGER_ACCOUNT_INDEX)
         val accounts = mutableListOf<WalletEntity>()
         while (cursor.moveToNext()) {
             val wallet = WalletEntity(
@@ -136,7 +149,16 @@ internal class DatabaseSource(
                 version = walletVersion(cursor.getInt(versionIndex)),
                 label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!
             )
-            accounts.add(wallet)
+            if (wallet.type == Wallet.Type.Ledger) {
+                accounts.add(wallet.copy(
+                    ledger = WalletEntity.Ledger(
+                        deviceId = cursor.getString(ledgerDeviceIdIndex),
+                        accountIndex = cursor.getInt(ledgerAccountIndexIndex)
+                    )
+                ))
+            } else {
+                accounts.add(wallet)
+            }
         }
         cursor.close()
         return accounts

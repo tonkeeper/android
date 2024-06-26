@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.account.entities
 
+import android.os.Parcelable
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -7,6 +8,7 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.wallet.data.account.Wallet
+import kotlinx.parcelize.Parcelize
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
@@ -17,12 +19,19 @@ data class WalletEntity(
     val publicKey: PublicKeyEd25519,
     val type: Wallet.Type,
     val version: WalletVersion = WalletVersion.V4R2,
-    val label: Wallet.Label
+    val label: Wallet.Label,
+    val ledger: Ledger? = null,
 ) {
 
     companion object {
         const val WORKCHAIN = 0
     }
+
+    @Parcelize
+    data class Ledger(
+        val deviceId: String,
+        val accountIndex: Int
+    ): Parcelable
 
     val contract: BaseWalletContract by lazy {
         val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value

@@ -431,7 +431,6 @@ class InitViewModel(
                 }
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {
-                Log.e("InitViewModel", "execute error", e)
                 _eventFlow.tryEmit(InitEvent.Loading(false))
             }
         }
@@ -465,13 +464,18 @@ class InitViewModel(
     private suspend fun ledgerWallets(): List<WalletEntity> {
         val ledgerConnectData =
             savedState.ledgerConnectData ?: throw IllegalStateException("Ledger connect data is not set")
+
         val accounts = getSelectedAccounts().map { selectedAccount ->
             ledgerConnectData.accounts.find { account -> account.path.index == selectedAccount.ledgerIndex }
                 ?: throw IllegalStateException("Ledger account is not found")
         }
         val label = getLabel()
 
-        return accountRepository.pairLedger(label, accounts, ledgerConnectData.deviceId)
+        return accountRepository.pairLedger(
+            label = label,
+            ledgerAccounts = accounts,
+            deviceId = ledgerConnectData.deviceId,
+        )
     }
 
     private suspend fun signerWallets(qr: Boolean): List<WalletEntity> {
@@ -487,20 +491,16 @@ class InitViewModel(
         walletIds: List<String>,
         list: List<String>
     ) = withContext(Dispatchers.IO) {
-        Log.d("InitViewModel", "saveMnemonic #1")
         var passcode = savedState.passcode
         if (passcode == null) {
             passcode = withContext(Dispatchers.Main) {
                 PasscodeDialog.request(context)
             }
         }
-        Log.d("InitViewModel", "saveMnemonic #2")
         if (passcode.isNullOrBlank()) {
             throw IllegalStateException("wrong passcode")
         }
-        Log.d("InitViewModel", "saveMnemonic #3")
         rnLegacy.addMnemonics(passcode, walletIds, list)
-        Log.d("InitViewModel", "saveMnemonic #4")
     }
 
     private fun getPublicKey(

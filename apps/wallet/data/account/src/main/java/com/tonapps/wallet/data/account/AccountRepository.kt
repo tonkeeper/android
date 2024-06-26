@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.parcelize.RawValue
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.ton.api.pk.PrivateKeyEd25519
@@ -51,6 +52,17 @@ class AccountRepository(
     private companion object {
         private fun newWalletId(): String {
             return UUID.randomUUID().toString()
+        }
+
+        private fun createLabelName(
+            name: String,
+            suffix: String,
+            size: Int
+        ): String {
+            if (size == 1) {
+                return name
+            }
+            return "$name $suffix"
         }
     }
 
@@ -194,30 +206,26 @@ class AccountRepository(
 
     suspend fun pairLedger(
         label: Wallet.Label,
-        accounts: List<LedgerAccount>,
-        deviceId: String
+        ledgerAccounts: List<LedgerAccount>,
+        deviceId: String,
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
-        for ((index, account) in accounts.withIndex()) {
+        for ((index, account) in ledgerAccounts.withIndex()) {
             val entity = WalletEntity(
                 id = newWalletId(),
                 publicKey = account.publicKey,
                 type = Wallet.Type.Ledger,
                 version = WalletVersion.V4R2,
-                label = if (accounts.size == 1) {
-                    label
-                } else {
-                    label.copy(
-                        accountName = "${label.accountName} $index",
-                    )
-                }
+                label = label.copy(
+                    accountName = createLabelName(label.accountName, index.toString(), ledgerAccounts.size),
+                ),
+                ledger = WalletEntity.Ledger(
+                    deviceId = deviceId,
+                    accountIndex = account.path.index
+                )
             )
             list.add(entity)
         }
-
-        Log.d("AccountRepository", "pairLedger: $list")
-
-        throw Exception("Not implemented")
 
         insertWallets(list)
         return list.toList()
@@ -257,13 +265,11 @@ class AccountRepository(
                 publicKey = publicKey,
                 type = type,
                 version = version,
-                label = if (versions.size == 1) {
-                    label
-                } else {
-                    label.copy(
-                        accountName = "${label.accountName} ${version.title}",
+                label = label.copy(
+                    accountName = createLabelName(
+                        label.accountName, version.title, versions.size,
                     )
-                }
+                )
             )
             list.add(entity)
         }

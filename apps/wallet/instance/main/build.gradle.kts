@@ -17,8 +17,8 @@ android {
         applicationId = "com.ton_keeper"
         minSdk = 27 // Build.minSdkVersion
         targetSdk = 34
-        versionCode = 600
-        versionName = "4.7.0-x"
+        versionCode = 601
+        versionName = "4.7.1-x"
     }
 
     signingConfigs {

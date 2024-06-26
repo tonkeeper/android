@@ -56,6 +56,12 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         Unknown,
     }
 
+    enum class BalanceType {
+        Zero,
+        Positive,
+        Huge,
+    }
+
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(type)
         marshall(dest, flags)
@@ -72,7 +78,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val address: String,
         val walletType: Wallet.Type,
         val status: Status,
-        val hiddenBalance: Boolean
+        val hiddenBalance: Boolean,
+        val hasBackup: Boolean,
+        val balanceType: BalanceType,
     ): Item(TYPE_BALANCE) {
 
         constructor(parcel: Parcel) : this(
@@ -80,7 +88,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readString()!!,
             parcel.readEnum(Wallet.Type::class.java)!!,
             parcel.readEnum(Status::class.java)!!,
-            parcel.readBooleanCompat()
+            parcel.readBooleanCompat(),
+            parcel.readBooleanCompat(),
+            parcel.readEnum(BalanceType::class.java)!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -89,6 +99,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeEnum(walletType)
             dest.writeEnum(status)
             dest.writeBooleanCompat(hiddenBalance)
+            dest.writeBooleanCompat(hasBackup)
+            dest.writeEnum(balanceType)
         }
 
         companion object CREATOR : Parcelable.Creator<Balance> {

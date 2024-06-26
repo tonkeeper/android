@@ -25,3 +25,13 @@ fun Uri.getBitmap(): Bitmap? {
         null
     }
 }
+
+fun Uri.getMultipleQuery(vararg keys: String): String? {
+    for (key in keys) {
+        val value = getQueryParameter(key)
+        if (value != null) {
+            return value
+        }
+    }
+    return null
+}

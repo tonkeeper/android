@@ -307,7 +307,10 @@ class SendViewModel(
     }
 
     private fun isBounce(value: String, account: Account): Boolean {
-        val bounce = value.startsWith("EQ") || !value.startsWith("UQ")
+        if (account.status != "active" && value.startsWith("EQ")) {
+            return false
+        }
+        val bounce = value.startsWith("EQ") || !value.startsWith("U")
         if (!value.isValidTonAddress()) {
             return !account.isWallet
         }
@@ -325,7 +328,7 @@ class SendViewModel(
             val wallet = transfer.wallet
             val unsignedBody = transfer.unsignedBody
             when (wallet.type) {
-                Wallet.Type.Signer -> _uiEventFlow.tryEmit(SendEvent.Signer(unsignedBody, wallet.publicKey))
+                Wallet.Type.Signer, Wallet.Type.SignerQR -> _uiEventFlow.tryEmit(SendEvent.Signer(unsignedBody, wallet.publicKey))
                 Wallet.Type.Watch -> throw SendException.UnableSendTransaction()
                 else -> {
                     val isValidPasscode = passcodeManager.confirmation(context, context.getString(Localization.app_name))

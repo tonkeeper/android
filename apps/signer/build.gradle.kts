@@ -11,8 +11,8 @@ android {
         applicationId = Build.namespacePrefix("signer")
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 17
-        versionName = "0.1.7"
+        versionCode = 21
+        versionName = "0.2.1"
     }
 
     lint {
@@ -67,13 +67,16 @@ dependencies {
     implementation(Dependence.AndroidX.splashscreen)
 
     implementation(Dependence.UI.material)
+    implementation(Dependence.UI.flexbox)
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)
     implementation(Dependence.AndroidX.Camera.lifecycle)
     implementation(Dependence.AndroidX.Camera.view)
     implementation(Dependence.AndroidX.security)
+    implementation(Dependence.AndroidX.constraintlayout)
     implementation(Dependence.AndroidX.lifecycleSavedState)
-    api(project(Dependence.Lib.blockchain))
+    implementation(project(Dependence.Lib.blockchain))
+    implementation(project(Dependence.Lib.extensions))
 
 
     implementation(project(Dependence.UIKit.core)) {

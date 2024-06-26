@@ -42,6 +42,9 @@ data class WalletEntity(
     val testnet: Boolean
         get() = type == Wallet.Type.Testnet
 
+    val signer: Boolean
+        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR
+
     val hasPrivateKey: Boolean
         get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet
 

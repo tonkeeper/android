@@ -112,10 +112,14 @@ class RootViewModel(
     val tonConnectEventsFlow = tonConnectRepository.eventsFlow
 
     init {
-        _passcodeFlow.value = Passcode(
-            show = settingsRepository.lockScreen, //  && (!context.isMainVersion && passcodeRepository.hasPinCode)
-            biometric = settingsRepository.biometric
-        )
+        combine(
+            settingsRepository.biometricFlow,
+            settingsRepository.lockscreenFlow
+        ) { biometric, lockscreen ->
+            Passcode(lockscreen, biometric)
+        }.onEach {
+            _passcodeFlow.value = it
+        }.take(1).launchIn(viewModelScope)
 
         combine(
             accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization },

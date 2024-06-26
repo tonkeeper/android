@@ -5,6 +5,8 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.ton.extensions.publicKey
 import com.tonapps.signer.core.entities.KeyEntity
 import com.tonapps.signer.extensions.emptyRawQuery
 import com.tonapps.signer.extensions.withTransaction
@@ -41,7 +43,7 @@ class SQLSource(
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("CREATE TABLE $TON_KEYS_TABLE_NAME ($TON_KEYS_ID_COLUMN INTEGER PRIMARY KEY AUTOINCREMENT, $TON_KEYS_NAME_COLUMN TEXT, $TON_KEYS_PK_COLUMN BLOB, $TON_KEYS_TIMESTAMP_COLUMN INTEGER);")
+        db.execSQL("CREATE TABLE $TON_KEYS_TABLE_NAME ($TON_KEYS_ID_COLUMN INTEGER PRIMARY KEY AUTOINCREMENT, $TON_KEYS_NAME_COLUMN TEXT, $TON_KEYS_PK_COLUMN TEXT, $TON_KEYS_TIMESTAMP_COLUMN INTEGER);")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) { }
@@ -97,8 +99,8 @@ class SQLSource(
             do {
                 val id = cursor.getLong(idIndex)
                 val name = cursor.getString(nameIndex)
-                val pk = cursor.getBlob(pkIndex)
-                result.add(KeyEntity(id, name, PublicKeyEd25519(pk)))
+                val pk = cursor.getString(pkIndex)
+                result.add(KeyEntity(id, name, pk.publicKey()))
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -112,7 +114,7 @@ class SQLSource(
         val id = writableDatabase.withTransaction {
             val values = ContentValues()
             values.put(TON_KEYS_NAME_COLUMN, name)
-            values.put(TON_KEYS_PK_COLUMN, publicKey.key.toByteArray())
+            values.put(TON_KEYS_PK_COLUMN, publicKey.hex())
             values.put(TON_KEYS_TIMESTAMP_COLUMN, System.currentTimeMillis())
             insertOrThrow(TON_KEYS_TABLE_NAME, null, values)
         }

@@ -420,7 +420,7 @@ class InitViewModel(
                     InitArgs.Type.Ledger -> wallets.addAll(ledgerWallets())
                 }
 
-                if (type != InitArgs.Type.New) {
+                if (type == InitArgs.Type.Import) {
                     for (wallet in wallets) {
                         backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)
                     }
@@ -429,6 +429,9 @@ class InitViewModel(
                 for (wallet in wallets) {
                     settingsRepository.setPushWallet(wallet.id, true)
                 }
+
+                accountRepository.setSelectedWallet(wallets.first().id)
+
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {
                 _eventFlow.tryEmit(InitEvent.Loading(false))

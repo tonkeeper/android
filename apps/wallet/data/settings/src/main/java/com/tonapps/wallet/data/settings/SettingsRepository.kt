@@ -73,6 +73,12 @@ class SettingsRepository(
     private val _countryFlow = MutableEffectFlow<String>()
     val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
+    private val _biometricFlow = MutableStateFlow<Boolean?>(null)
+    val biometricFlow = _biometricFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
+    private val _lockscreenFlow = MutableStateFlow<Boolean?>(null)
+    val lockscreenFlow = _lockscreenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
     private val _searchEngineFlow = MutableEffectFlow<SearchEngine>()
     val searchEngineFlow = _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
@@ -85,7 +91,6 @@ class SettingsRepository(
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context)
     private val walletPrefsFolder = WalletPrefsFolder(context)
-    private val importLegacyFolder = ImportLegacyFolder(context)
     private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)
 
     val tokenPrefsChangedFlow: Flow<Unit>
@@ -161,6 +166,7 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putBoolean(LOCK_SCREEN_KEY, value).apply()
                 field = value
+                _lockscreenFlow.tryEmit(value)
                 migrationHelper.setLockScreenEnabled(value)
             }
         }
@@ -170,6 +176,7 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putBoolean(BIOMETRIC_KEY, value).apply()
                 field = value
+                _biometricFlow.tryEmit(value)
                 migrationHelper.setBiometryEnabled(value)
             }
         }
@@ -192,12 +199,6 @@ class SettingsRepository(
                 _hiddenBalancesFlow.tryEmit(value)
                 migrationHelper.setHiddenBalance(value)
             }
-        }
-
-    var importLegacyPasscode: Boolean
-        get() = importLegacyFolder.passcode
-        set(value) {
-            importLegacyFolder.passcode = value
         }
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
@@ -238,7 +239,21 @@ class SettingsRepository(
         }.launchIn(scope)
 
         scope.launch(Dispatchers.IO) {
-            importFromLegacy()
+            val legacyValues = importFromLegacy()
+
+
+            biometric = legacyValues.biometric
+            lockScreen = legacyValues.lockScreen
+            currency = if (legacyValues.currency.code.isBlank()) {
+                WalletCurrency.DEFAULT
+            } else {
+                legacyValues.currency
+            }
+            theme = legacyValues.theme
+            language = legacyValues.language
+            hiddenBalances = legacyValues.hiddenBalances
+            country = legacyValues.country
+            searchEngine = legacyValues.searchEngine
 
             _currencyFlow.tryEmit(currency)
             _themeFlow.tryEmit(theme)
@@ -247,21 +262,36 @@ class SettingsRepository(
             _firebaseTokenFlow.tryEmit(firebaseToken)
             _countryFlow.tryEmit(country)
             _searchEngineFlow.tryEmit(searchEngine)
-            _walletPush.tryEmit(mapOf())
             _amountInputCurrencyFlow.tryEmit(amountInputCurrency)
+            _biometricFlow.tryEmit(biometric)
+            _lockscreenFlow.tryEmit(lockScreen)
+            _walletPush.tryEmit(mapOf())
         }
     }
 
-    private suspend fun importFromLegacy() {
-        currency = migrationHelper.getLegacyCurrency()
-        language = migrationHelper.getLegacyLanguage()
-        searchEngine = migrationHelper.getLegacySearchEngine()
-        theme = migrationHelper.getLegacyTheme()
-        hiddenBalances = migrationHelper.getHiddenBalances()
-        country = migrationHelper.getLegacySelectedCountry()
-        lockScreen = migrationHelper.getLockScreenEnabled()
-        biometric = migrationHelper.getBiometryEnabled()
+    private data class LegacyValues(
+        val currency: WalletCurrency,
+        val language: Language,
+        val searchEngine: SearchEngine,
+        val theme: Theme,
+        val hiddenBalances: Boolean,
+        val country: String,
+        val lockScreen: Boolean,
+        val biometric: Boolean,
+    )
+
+    private suspend fun importFromLegacy(): LegacyValues {
         importLegacyWallets()
+        return LegacyValues(
+            currency = migrationHelper.getLegacyCurrency(),
+            language = migrationHelper.getLegacyLanguage(),
+            searchEngine = migrationHelper.getLegacySearchEngine(),
+            theme = migrationHelper.getLegacyTheme(),
+            hiddenBalances = migrationHelper.getHiddenBalances(),
+            country = migrationHelper.getLegacySelectedCountry(),
+            lockScreen = migrationHelper.getLockScreenEnabled(),
+            biometric = migrationHelper.getBiometryEnabled(),
+        )
     }
 
     private suspend fun importLegacyWallets() {

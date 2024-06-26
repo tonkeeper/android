@@ -140,7 +140,7 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         runnable?.let {
             transaction.runOnCommit(it)
         }
-        transaction.commitNowAllowingStateLoss()
+        transaction.commitAllowingStateLoss()
         return true
     }
 
@@ -155,7 +155,7 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         if (removeModals) {
             dismissModals(transaction)
         }
-        transaction.commitNowAllowingStateLoss()
+        transaction.commitAllowingStateLoss()
     }
 
     override fun remove(fragment: Fragment) {

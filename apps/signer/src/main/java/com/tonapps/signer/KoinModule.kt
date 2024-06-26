@@ -1,6 +1,7 @@
 package com.tonapps.signer
 
 import com.tonapps.signer.core.di.coreModule
+import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.screen.change.ChangeViewModel
 import com.tonapps.signer.screen.create.CreateViewModel
 import com.tonapps.signer.screen.key.KeyViewModel
@@ -27,8 +28,8 @@ val koinModel = module {
         v = parameters.get(),
         seqno = parameters.get(),
         network = parameters.get(),
-        get(),
-        get()
+        repository = get<KeyRepository>(),
+        vault = get<SignerVault>()
     ) }
     viewModel { ChangeViewModel(get(), get()) }
 }

@@ -62,8 +62,12 @@ class SettingsViewModel(
         uiItems.add(Item.Account(wallet))
 
         uiItems.add(Item.Space)
-        uiItems.add(Item.Backup(ListCell.Position.FIRST))
-        uiItems.add(Item.Security(ListCell.Position.LAST))
+        if (!wallet.isExternal && !wallet.isWatchOnly) {
+            uiItems.add(Item.Backup(ListCell.Position.FIRST))
+            uiItems.add(Item.Security(ListCell.Position.LAST))
+        } else {
+            uiItems.add(Item.Security(ListCell.Position.SINGLE))
+        }
 
         uiItems.add(Item.Space)
         uiItems.add(Item.Notifications(ListCell.Position.FIRST))

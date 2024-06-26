@@ -128,6 +128,7 @@ class BalanceHolder(
             Wallet.Type.Watch -> Localization.watch_only
             Wallet.Type.Testnet -> Localization.testnet
             Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
+            Wallet.Type.Ledger -> Localization.ledger
             else -> {
                 walletTypeView.visibility = View.GONE
                 return
@@ -144,6 +145,7 @@ class BalanceHolder(
     private fun getTypeColor(type: Wallet.Type): Int {
         return when (type) {
             Wallet.Type.Signer, Wallet.Type.SignerQR -> context.accentPurpleColor
+            Wallet.Type.Ledger -> context.accentGreenColor
             else -> context.accentOrangeColor
         }
     }

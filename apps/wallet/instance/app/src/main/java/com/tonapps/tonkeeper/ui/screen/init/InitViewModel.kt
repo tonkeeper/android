@@ -197,7 +197,9 @@ class InitViewModel(
     }
 
     private suspend fun resolveWallets(ledgerData: LedgerConnectData) = withContext(Dispatchers.IO) {
-        val addedDeviceAccountIndexes = listOf(0, 1, 2)
+        val addedDeviceAccountIndexes = accountRepository.getWallets()
+            .filter { wallet -> wallet.ledger?.deviceId == ledgerData.deviceId }
+            .map { it.ledger!!.accountIndex }
         val deferredAccounts = mutableListOf<Deferred<Account>>()
         for (account in ledgerData.accounts) {
             deferredAccounts.add(async {

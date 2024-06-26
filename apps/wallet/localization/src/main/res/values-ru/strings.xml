@@ -31,7 +31,7 @@
     <string name="decrypt_comment">Расшифровать</string>
     <string name="unnamed_collection">Безымянная коллекция</string>
     <string name="view_details">Подробнее</string>
-    <string name="backup">Бекап</string>
+    <string name="backup">Резервная копия</string>
     <string name="nft_transfer">Отправка NFT</string>
     <string name="nft_disabled_transfer">NFT сейчас продается на маркетплейсе. Для передачи следует сначала снять его с продажи.</string>
 

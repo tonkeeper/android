@@ -52,6 +52,12 @@ data class WalletEntity(
 
     val address: String = contract.address.toWalletAddress(testnet)
 
+    val isWatchOnly: Boolean
+        get() = type == Wallet.Type.Watch
+
+    val isExternal: Boolean
+        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR || type == Wallet.Type.Ledger
+
     fun isMyAddress(address: String): Boolean {
         return address.toRawAddress().equals(accountId, ignoreCase = true)
     }

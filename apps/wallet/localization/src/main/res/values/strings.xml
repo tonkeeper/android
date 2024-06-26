@@ -317,6 +317,7 @@
     <string name="connected">Connected</string>
     <string name="browser_search_placeholder">Enter an address or search the web</string>
 
+    <string name="ledger" translatable="false">Ledger</string>
     <string name="ledger_title">Pair with Ledger</string>
     <string name="ledger_subtitle">Hardware module, Bluetooth, limited TON features</string>
     <string name="ledger_confirm_title">Confirm Action</string>

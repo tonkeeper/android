@@ -4,12 +4,12 @@ import com.tonapps.ledger.transport.Transport
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.bitstring.BitString
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.contract.SmartContract
 import org.ton.crypto.hex
 import org.ton.tlb.storeTlb
 import kotlin.math.ceil
@@ -41,7 +41,7 @@ class TonTransport(private val transport: Transport) {
     private suspend fun doRequest(ins: Int, p1: Int, p2: Int, data: ByteArray): ByteArray {
         return lock.withLock {
             val r = transport.send(
-                LEDGER_CLA, ins, p1, p2, data, null
+                LEDGER_CLA, ins, p1, p2, data,
             )
             r.sliceArray(0 until r.size - 2)
         }
@@ -50,7 +50,7 @@ class TonTransport(private val transport: Transport) {
     private suspend fun getCurrentApp(): Pair<String, String> {
         return lock.withLock {
             val r = transport.send(
-                LEDGER_SYSTEM, 0x01, 0x00, 0x00, ByteArray(0), listOf(0x9000)
+                LEDGER_SYSTEM, 0x01, 0x00, 0x00, ByteArray(0)
             )
 
             val data = r.sliceArray(0 until r.size - 2)
@@ -105,10 +105,10 @@ class TonTransport(private val transport: Transport) {
         var pkg =
             LedgerWriter.putUint8(0) + LedgerWriter.putUint32(transaction.seqno) + LedgerWriter.putUint32(
                 transaction.timeout
-            ) + LedgerWriter.putVarUInt(transaction.amount.amount.toLong()) + LedgerWriter.putAddress(
-                transaction.to
+            ) + LedgerWriter.putVarUInt(transaction.coins.amount.toLong()) + LedgerWriter.putAddress(
+                transaction.destination
             ) + LedgerWriter.putUint8(
-                (if (transaction.bounce) 1 else 0)
+                (if (transaction.bounceable) 1 else 0)
             ) + LedgerWriter.putUint8(transaction.sendMode)
 
         var stateInit: Cell? = null
@@ -147,12 +147,12 @@ class TonTransport(private val transport: Transport) {
                     cell = cell.storeUInt(0, 64)
                 }
 
-                bytes += LedgerWriter.putVarUInt(transaction.payload.amount.amount.toLong()) + LedgerWriter.putAddress(
-                    transaction.payload.destination
-                ) + LedgerWriter.putAddress(transaction.payload.responseDestination)
-                cell = cell.storeTlb(Coins, transaction.payload.amount)
-                    .storeTlb(MsgAddressInt, transaction.payload.destination)
-                    .storeTlb(MsgAddressInt, transaction.payload.responseDestination)
+                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount.toLong()) + LedgerWriter.putAddress(
+                    transaction.payload.receiverAddress
+                ) + LedgerWriter.putAddress(transaction.payload.excessesAddress)
+                cell = cell.storeTlb(Coins, transaction.payload.coins)
+                    .storeTlb(MsgAddressInt, transaction.payload.receiverAddress)
+                    .storeTlb(MsgAddressInt, transaction.payload.excessesAddress)
 
                 if (transaction.payload.customPayload != null) {
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putCellRef(transaction.payload.customPayload)
@@ -190,11 +190,11 @@ class TonTransport(private val transport: Transport) {
                     cell = cell.storeUInt(0, 64)
                 }
 
-                bytes += LedgerWriter.putAddress(transaction.payload.newOwner) + LedgerWriter.putAddress(
-                    transaction.payload.responseDestination
+                bytes += LedgerWriter.putAddress(transaction.payload.newOwnerAddress) + LedgerWriter.putAddress(
+                    transaction.payload.excessesAddress
                 )
-                cell = cell.storeTlb(MsgAddressInt, transaction.payload.newOwner)
-                    .storeTlb(MsgAddressInt, transaction.payload.responseDestination)
+                cell = cell.storeTlb(MsgAddressInt, transaction.payload.newOwnerAddress)
+                    .storeTlb(MsgAddressInt, transaction.payload.excessesAddress)
 
                 if (transaction.payload.customPayload != null) {
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putCellRef(transaction.payload.customPayload)
@@ -219,7 +219,7 @@ class TonTransport(private val transport: Transport) {
                 hints += LedgerWriter.putUint16(bytes.size) + bytes
             }
 
-            null -> TODO()
+            null -> {}
         }
 
         pkg += if (!payload.isEmpty()) {
@@ -239,11 +239,11 @@ class TonTransport(private val transport: Transport) {
         val orderCell = CellBuilder.createCell {
             storeBit(false)
             storeBit(true)
-            storeBit(transaction.bounce)
+            storeBit(transaction.bounceable)
             storeBit(false)
             storeUInt(0, 2)
-            storeTlb(MsgAddressInt, transaction.to)
-            storeTlb(Coins, transaction.amount)
+            storeTlb(MsgAddressInt, transaction.destination)
+            storeTlb(Coins, transaction.coins)
             storeBit(false)
             storeTlb(Coins, Coins.ofNano(0))
             storeTlb(Coins, Coins.ofNano(0))

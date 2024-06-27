@@ -1,25 +1,25 @@
-package com.tonapps.tonkeeper.ui.screen.ledger.pair
+package com.tonapps.tonkeeper.ui.screen.ledger.sign
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.ton.extensions.toByteArray
+import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerEvent
-import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
 import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.ton.cell.Cell
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragment.Modal {
+class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragment.Modal {
 
-    private val rootViewModel: RootViewModel by activityViewModel()
+    private val args: LedgerSignArgs by lazy { LedgerSignArgs(requireArguments()) }
 
     private val connectionViewModel: LedgerConnectionViewModel by viewModel()
 
@@ -27,18 +27,20 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
         LedgerConnectionFragment.newInstance()
     }
 
-    private lateinit var continueButton: Button
+    private var isSuccessful: Boolean = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        connectionViewModel.setSignData(args.transaction, args.walletId)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        continueButton = view.findViewById(R.id.continue_button)
 
         view.findViewById<View>(R.id.close).setOnClickListener { finish() }
         view.findViewById<View>(R.id.cancel).setOnClickListener { finish() }
-        continueButton.setOnClickListener {
-            lifecycleScope.launch { connectionViewModel.getConnectData() }
-        }
 
         if (savedInstanceState == null) {
             childFragmentManager.beginTransaction().replace(R.id.steps, ledgerConnectionFragment)
@@ -48,29 +50,47 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
         collectFlow(connectionViewModel.eventFlow, ::onEvent)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (!requireActivity().isChangingConfigurations && !isSuccessful) {
+            navigation?.setFragmentResult(args.requestKey, Bundle())
+        }
+    }
+
     private fun onEvent(event: LedgerEvent) {
-        when(event) {
+        when (event) {
             is LedgerEvent.Ready -> {
-                continueButton.isEnabled = event.isReady
-            }
-            is LedgerEvent.Loading -> {
-                continueButton.isEnabled = !event.loading
+                lifecycleScope.launch { connectionViewModel.signTransaction() }
             }
             is LedgerEvent.Error -> {
                 navigation?.toast(event.message)
+                finish()
             }
-            is LedgerEvent.Next -> {
-                rootViewModel.connectLedger(event.connectData, event.accounts)
+            is LedgerEvent.SignedTransaction -> {
+                onSuccess(event.body)
+            }
+            is LedgerEvent.Rejected -> {
                 finish()
             }
             else -> null
         }
     }
 
+    private fun onSuccess(body: Cell) {
+        navigation?.setFragmentResult(args.requestKey, Bundle().apply {
+            putByteArray(SIGNED_MESSAGE, body.toByteArray())
+        })
+        isSuccessful = true
+        finish()
+    }
+
     companion object {
-        fun newInstance(
-        ): PairLedgerScreen {
-            return PairLedgerScreen()
+        const val SIGNED_MESSAGE = "signed_message"
+
+        fun newInstance(transaction: Transaction, walletId: String, requestKey: String): LedgerSignScreen {
+            return LedgerSignScreen().apply {
+                setArgs(LedgerSignArgs(transaction, walletId, requestKey))
+            }
         }
     }
 }

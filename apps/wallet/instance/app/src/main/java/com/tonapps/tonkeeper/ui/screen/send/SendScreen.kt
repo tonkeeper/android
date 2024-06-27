@@ -1,19 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.icu.Coins
+import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.signer.SingerResultContract
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
-import com.tonapps.tonkeeper.ui.screen.send.state.SendAddressState
+import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
-import com.tonapps.tonkeeper.ui.screen.send.state.SendConfig
 import com.tonapps.tonkeeper.ui.screen.send.state.SendFeeState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendTransaction
 import com.tonapps.tonkeeper.view.TransactionDetailView
@@ -23,16 +20,9 @@ import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import org.ton.boc.BagOfCells
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
@@ -166,10 +156,24 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private fun onEvent(event: SendEvent) {
         when (event) {
             is SendEvent.Signer -> signerLauncher.launch(SingerResultContract.Input(event.body, event.publicKey))
+            is SendEvent.Ledger -> requestLedgerSign(event.transaction, event.walletId)
             is SendEvent.Failed -> setFailed()
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> processTaskView.state = ProcessTaskView.State.LOADING
         }
+    }
+
+    private fun requestLedgerSign(transaction: Transaction, walletId: String) {
+        val requestKey = "ledger_sign_request"
+        navigation?.setFragmentResultListener(requestKey) { bundle ->
+            val result = bundle.getByteArray(LedgerSignScreen.SIGNED_MESSAGE)
+            if (result == null) {
+                setDefault()
+            } else {
+                sendViewModel.sendLedgerSignedMessage(BagOfCells(result).first())
+            }
+        }
+        navigation?.add(LedgerSignScreen.newInstance(transaction, walletId, requestKey))
     }
 
     private fun next() {

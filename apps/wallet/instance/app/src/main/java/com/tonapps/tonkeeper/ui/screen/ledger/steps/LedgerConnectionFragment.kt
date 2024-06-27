@@ -15,25 +15,18 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 
 class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
     companion object {
-
-        private const val WITH_CONFIRM_TX = "WITH_CONFIRM_TX"
-
-        fun newInstance(showConfirmTxStep: Boolean): LedgerConnectionFragment {
-            val fragment = LedgerConnectionFragment()
-            fragment.arguments = Bundle().apply {
-                putBoolean(WITH_CONFIRM_TX, showConfirmTxStep)
-            }
-            return fragment
+        fun newInstance(): LedgerConnectionFragment {
+            return LedgerConnectionFragment()
         }
     }
 
@@ -58,9 +51,7 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
         checkPermissionsAndScan()
     }
 
-    private val showConfirmTxStep: Boolean by lazy { requireArguments().getBoolean(WITH_CONFIRM_TX) }
-
-    private val connectionViewModel: LedgerConnectionViewModel by viewModels({ requireParentFragment() })
+    private val connectionViewModel: LedgerConnectionViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
     private val adapter = Adapter()
 

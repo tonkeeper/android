@@ -16,28 +16,65 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ledger.live.ble.BleManager
 import com.ledger.live.ble.BleManagerFactory
+import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.icu.Coins
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ble.BleTransport
 import com.tonapps.ledger.devices.Devices
+import com.tonapps.ledger.ton.AccountPath
+import com.tonapps.ledger.ton.LedgerAccount
+import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.ledger.ton.TonTransport
+import com.tonapps.ledger.ton.Transaction
+import com.tonapps.ledger.transport.TransportStatusException
+import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Item
+import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.collectibles.CollectiblesRepository
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
+import io.ktor.util.reflect.instanceOf
+import io.tonapi.models.Account
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uikit.extensions.context
 
-class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
+class LedgerConnectionViewModel(
+    app: Application,
+    private val scope: CoroutineScope,
+    private val accountRepository: AccountRepository,
+    private val tokenRepository: TokenRepository,
+    private val collectiblesRepository: CollectiblesRepository,
+    private val settingsRepository: SettingsRepository,
+    private val api: API,
+) : AndroidViewModel(app) {
     private val bleManager: BleManager = BleManagerFactory.newInstance(context)
     private var pollTonAppJob: Job? = null
     private var disconnectTimeoutJob: Job? = null
 
-    private var targetDeviceId: String? = null
+    private var _walletId: String? = null
+    private var _transaction: Transaction? = null
+    private var _connectedDevice: ConnectedDevice? = null
+    private var _tonTransport: TonTransport? = null
 
     val permissions = arrayOf(
         Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT
@@ -46,20 +83,18 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
     private val _connectionState: MutableSharedFlow<ConnectionState> =
         MutableSharedFlow(replay = 1, extraBufferCapacity = 1)
 
-    private val _connectedDevice = MutableStateFlow<ConnectedDevice?>(null)
-    private val _tonTransport = MutableStateFlow<TonTransport?>(null)
-    val tonTransport = _tonTransport.asSharedFlow()
-    val connectionData = combine(_connectedDevice, _tonTransport) { device, transport ->
-        device to transport
-    }
+    private val _eventFlow =
+        MutableSharedFlow<LedgerEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
     val currentStepFlow = _connectionState.map { state ->
         when (state) {
             ConnectionState.Idle -> LedgerStep.CONNECT
             ConnectionState.Scanning -> LedgerStep.CONNECT
             is ConnectionState.Connected -> LedgerStep.OPEN_TON_APP
-            is ConnectionState.TonAppOpened -> if (targetDeviceId != null) LedgerStep.CONFIRM_TX else LedgerStep.DONE
+            is ConnectionState.TonAppOpened -> if (_walletId != null) LedgerStep.CONFIRM_TX else LedgerStep.DONE
             is ConnectionState.Disconnected -> LedgerStep.CONNECT
+            ConnectionState.Signed -> LedgerStep.DONE
         }
     }
 
@@ -69,7 +104,7 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
 
     val displayTextFlow = currentStepFlow.map { state ->
         when {
-            targetDeviceId != null && (state == LedgerStep.CONFIRM_TX || state == LedgerStep.DONE) -> "Review"
+            _walletId != null && (state == LedgerStep.CONFIRM_TX || state == LedgerStep.DONE) -> "Review"
             else -> "TON ready"
         }
     }
@@ -106,8 +141,19 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
         context.unregisterReceiver(bluetoothReceiver)
     }
 
-    fun setTargetDeviceId(deviceId: String) {
-        targetDeviceId = deviceId
+    fun setSignData(transaction: Transaction, walletId: String) {
+        _transaction = transaction
+        _walletId = walletId
+    }
+
+    private fun setConnectedDevice(device: ConnectedDevice?) {
+        _connectedDevice = device
+    }
+
+    private fun setTonTransport(transport: TonTransport?) {
+        _tonTransport = transport
+
+        _eventFlow.tryEmit(LedgerEvent.Ready(_tonTransport != null))
     }
 
     fun isPermissionGranted(): Boolean {
@@ -125,8 +171,15 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun scanOrConnect() {
-        if (targetDeviceId != null) {
-            connect(targetDeviceId!!)
+        if (_walletId != null) {
+            viewModelScope.launch {
+                try {
+                    val ledgerConfig = getLedgerConfig()
+                    connect(ledgerConfig.deviceId)
+                } catch (e: Exception) {
+                    _eventFlow.tryEmit(LedgerEvent.Error(e.message ?: context.getString(Localization.error)))
+                }
+            }
         } else {
             scan()
         }
@@ -138,11 +191,11 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
             val device = it.first()
 
             bleManager.stopScanning()
-            connect(device.id, true)
+            connect(device.id)
         }
     }
 
-    private fun connect(deviceId: String, scanOnFail: Boolean = false) {
+    private fun connect(deviceId: String) {
         bleManager.connect(address = deviceId, onConnectError = {
             pollTonAppJob?.cancel()
 
@@ -155,18 +208,14 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
             disconnectTimeoutJob?.cancel()
             disconnectTimeoutJob = viewModelScope.launch {
                 delay(4000)
+                setTonTransport(null)
+                setConnectedDevice(null)
                 _connectionState.tryEmit(ConnectionState.Disconnected())
-                _connectedDevice.tryEmit(null)
-                _tonTransport.tryEmit(null)
             }
         }, onConnectSuccess = {
             disconnectTimeoutJob?.cancel()
+            setConnectedDevice(ConnectedDevice(deviceId, Devices.fromServiceUuid(it.serviceId!!)))
             _connectionState.tryEmit(ConnectionState.Connected)
-            _connectedDevice.tryEmit(
-                ConnectedDevice(
-                    deviceId, Devices.fromServiceUuid(it.serviceId!!)
-                )
-            )
 
             waitForTonAppOpen()
         })
@@ -176,10 +225,136 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
         disconnectTimeoutJob?.cancel()
         pollTonAppJob?.cancel()
         bleManager.disconnect()
+        setConnectedDevice(null)
+        setTonTransport(null)
         _connectionState.tryEmit(ConnectionState.Disconnected())
-        _connectedDevice.tryEmit(null)
-        _tonTransport.tryEmit(null)
     }
+
+    suspend fun getConnectData() {
+        if (_tonTransport == null || _connectedDevice == null) {
+            return
+        }
+        try {
+            _eventFlow.tryEmit(LedgerEvent.Loading(true))
+            val accounts = mutableListOf<LedgerAccount>()
+            for (i in 0 until 10) {
+                val account = _tonTransport!!.getAccount(AccountPath(i))
+                accounts.add(account)
+            }
+
+            val ledgerConnectData =
+                LedgerConnectData(accounts, _connectedDevice!!.deviceId, _connectedDevice!!.model)
+
+            scope.launch(Dispatchers.IO) {
+                try {
+                    resolveWallets(ledgerConnectData)
+                } catch (e: Exception) {
+                    _eventFlow.tryEmit(LedgerEvent.Loading(false))
+                }
+            }
+        } catch (e: Exception) {
+            _eventFlow.tryEmit(LedgerEvent.Error(context.getString(Localization.error)))
+            _eventFlow.tryEmit(LedgerEvent.Loading(false))
+        }
+    }
+
+    suspend fun signTransaction() {
+        viewModelScope.launch {
+            try {
+                if (_tonTransport == null || _connectedDevice == null || _walletId == null || _transaction == null) {
+                    throw IllegalStateException()
+                }
+
+                val ledgerConfig = getLedgerConfig()
+
+                val signedBody = _tonTransport!!.signTransaction(
+                    AccountPath(ledgerConfig.accountIndex),
+                    _transaction!!
+                )
+
+                _connectionState.tryEmit(ConnectionState.Signed)
+                _eventFlow.tryEmit(LedgerEvent.SignedTransaction(signedBody))
+            } catch (e: Exception) {
+                if (e.instanceOf(TransportStatusException.DeniedByUser::class)) {
+                    _eventFlow.tryEmit(LedgerEvent.Rejected)
+                } else {
+                    _eventFlow.tryEmit(
+                        LedgerEvent.Error(
+                            e.message ?: context.getString(Localization.error)
+                        )
+                    )
+                }
+
+            }
+        }
+    }
+
+    private suspend fun getLedgerConfig(): WalletEntity.Ledger {
+        val wallet = accountRepository.getWallets().find { it.id == _walletId }
+            ?: throw IllegalStateException("Wallet not found")
+        val ledgerConfig = wallet.ledger
+            ?: throw IllegalStateException("Ledger data not found")
+        return ledgerConfig
+    }
+
+    private suspend fun resolveWallets(ledgerData: LedgerConnectData) =
+        withContext(Dispatchers.IO) {
+            val addedDeviceAccountIndexes = accountRepository.getWallets()
+                .filter { wallet -> wallet.ledger?.deviceId == ledgerData.deviceId }
+                .map { it.ledger!!.accountIndex }
+
+            val deferredAccounts = mutableListOf<Deferred<Account?>>()
+            for (account in ledgerData.accounts) {
+                deferredAccounts.add(async {
+                    api.resolveAccount(account.address.toAccountId(), false)
+                })
+            }
+
+            val deferredTokens = mutableListOf<Deferred<List<AccountTokenEntity>>>()
+            for (account in ledgerData.accounts) {
+                deferredTokens.add(async {
+                    tokenRepository.getRemote(
+                        settingsRepository.currency,
+                        account.address.toAccountId(),
+                        false
+                    )
+                })
+            }
+
+            val deferredCollectibles = mutableListOf<Deferred<List<NftEntity>>>()
+            for (account in ledgerData.accounts) {
+                deferredCollectibles.add(async {
+                    collectiblesRepository.getRemoteNftItems(
+                        account.address.toAccountId(),
+                        false
+                    )
+                })
+            }
+
+            val items = mutableListOf<AccountItem>()
+            for ((index, ledgerAccount) in ledgerData.accounts.withIndex()) {
+                val account = deferredAccounts[index].await()
+                val balance = Coins.of(account.let { it?.balance } ?: 0)
+                val hasTokens = deferredTokens[index].await().size > 2
+                val hasCollectibles = deferredCollectibles[index].await().isNotEmpty()
+                val alreadyAdded = addedDeviceAccountIndexes.contains(ledgerAccount.path.index)
+                val item = AccountItem(
+                    address = ledgerAccount.address.toWalletAddress(false),
+                    name = account?.name,
+                    walletVersion = WalletVersion.V4R2,
+                    balanceFormat = CurrencyFormatter.format("TON", balance),
+                    tokens = hasTokens,
+                    collectibles = hasCollectibles,
+                    selected = !alreadyAdded && (!balance.isZero || hasTokens || hasCollectibles),
+                    position = ListCell.getPosition(ledgerData.accounts.size, index),
+                    ledgerIndex = ledgerAccount.path.index,
+                    ledgerAdded = alreadyAdded
+                )
+                items.add(item)
+            }
+
+            _eventFlow.tryEmit(LedgerEvent.Next(connectData = ledgerData, accounts = items))
+        }
 
     private fun waitForTonAppOpen() {
         pollTonAppJob?.cancel()
@@ -192,7 +367,7 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
                 }
 
                 _connectionState.tryEmit(ConnectionState.TonAppOpened)
-                _tonTransport.tryEmit(tonTransport)
+                setTonTransport(tonTransport)
             } catch (_: Exception) {
             }
         }
@@ -217,7 +392,7 @@ class LedgerConnectionViewModel(app: Application) : AndroidViewModel(app) {
             )
         )
 
-        if (targetDeviceId != null) {
+        if (_walletId != null) {
             uiItems.add(
                 Item.Step(
                     context.getString(Localization.ledger_confirm_tx),

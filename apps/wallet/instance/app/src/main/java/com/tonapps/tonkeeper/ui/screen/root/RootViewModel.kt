@@ -25,6 +25,7 @@ import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.sign.SignRequestEntity
+import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel.Companion.getWalletScreen
@@ -284,8 +285,8 @@ class RootViewModel(
         return data.toJSON().toString()
     }
 
-    fun connectLedger(connectData: LedgerConnectData) {
-        _eventFlow.tryEmit(RootEvent.Ledger(connectData))
+    fun connectLedger(connectData: LedgerConnectData, accounts: List<AccountItem>) {
+        _eventFlow.tryEmit(RootEvent.Ledger(connectData, accounts))
     }
 
     fun checkPasscode(code: String): Flow<Unit> = flow {

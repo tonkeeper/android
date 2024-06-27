@@ -48,11 +48,10 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/steps"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"/>
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/buttons"

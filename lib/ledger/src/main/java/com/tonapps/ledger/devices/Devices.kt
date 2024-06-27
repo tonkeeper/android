@@ -95,6 +95,6 @@ object Devices {
             deviceModel.bluetoothSpec?.any { it.serviceUuid == serviceUuid } ?: false
         }
 
-        return device ?: throw IllegalArgumentException("Device not found")
+        return device ?: devices[DeviceModelId.NANO_X]!!
     }
 }

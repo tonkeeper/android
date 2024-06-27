@@ -5,6 +5,9 @@ import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.extensions.toByteArray
 import com.tonapps.icu.Coins
+import com.tonapps.ledger.ton.TonPayloadFormat
+import com.tonapps.ledger.ton.Transaction
+import com.tonapps.ledger.ton.TransactionBuilder
 import com.tonapps.security.Security
 import com.tonapps.security.hex
 import com.tonapps.wallet.api.entity.BalanceEntity
@@ -12,7 +15,6 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
-import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
@@ -84,6 +86,50 @@ data class TransferEntity(
         )
     }
 
+    val ledgerTransaction: Transaction by lazy {
+        val builder = TransactionBuilder()
+        if (isNft) {
+            builder.setCoins(coins)
+            builder.setDestination(AddrStd.parse(nftAddress!!))
+            builder.setPayload(
+                TonPayloadFormat.NftTransfer(
+                    queryId = newWalletQueryId(),
+                    newOwnerAddress = destination,
+                    excessesAddress = contract.address,
+                    forwardPayload = TonTransferHelper.text(comment),
+                    forwardAmount = org.ton.block.Coins.ofNano(1L),
+                    customPayload = null
+                )
+            )
+        } else if (!isTon) {
+            builder.setCoins(TRANSFER_PRICE)
+            builder.setDestination(AddrStd.parse(token.walletAddress))
+            builder.setPayload(
+                TonPayloadFormat.JettonTransfer(
+                    queryId = newWalletQueryId(),
+                    coins = coins,
+                    receiverAddress = destination,
+                    excessesAddress = contract.address,
+                    forwardPayload = TonTransferHelper.text(comment),
+                    forwardAmount = org.ton.block.Coins.ofNano(1L),
+                    customPayload = null
+                )
+            )
+        } else {
+            builder.setCoins(coins)
+            builder.setDestination(destination)
+            if (comment != null) {
+                builder.setPayload(TonPayloadFormat.Comment(comment))
+            }
+        }
+        builder.setSendMode(sendMode)
+        builder.setSeqno(seqno)
+        builder.setTimeout(validUntil.toInt())
+        builder.setBounceable(bounceable)
+        builder.setStateInit(stateInit)
+        builder.build()
+    }
+
     fun signedHash(privateKey: PrivateKeyEd25519): BitString {
         return BitString(privateKey.sign(unsignedBody.hash()))
     }
@@ -94,6 +140,10 @@ data class TransferEntity(
 
     fun transferMessage(signature: BitString): Cell {
         val signedBody = messageBodyWithSign(signature)
+        return contract.createTransferMessageCell(contract.address, seqno, signedBody)
+    }
+
+    fun transferMessage(signedBody: Cell): Cell {
         return contract.createTransferMessageCell(contract.address, seqno, signedBody)
     }
 

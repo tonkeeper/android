@@ -3,6 +3,7 @@ package com.tonapps.ledger.ton
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
+import java.math.BigInteger
 import java.nio.ByteBuffer
 import kotlin.math.ceil
 
@@ -19,7 +20,7 @@ object LedgerWriter {
         }.array()
     }
 
-    fun putUint64(value: Long): ByteArray {
+    fun putUint64(value: BigInteger): ByteArray {
         return CellBuilder.createCell { storeUInt(value, 64) }.beginParse().bits.toByteArray()
     }
 

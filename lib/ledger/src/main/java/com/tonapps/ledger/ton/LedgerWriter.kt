@@ -41,9 +41,6 @@ object LedgerWriter {
     }
 
     fun putCellRef(ref: Cell): ByteArray {
-        return ByteBuffer.allocate(2 + ref.hash().size).apply {
-            putShort(ref.depth().toShort())
-            put(ref.hash())
-        }.array()
+        return putUint16(ref.depth()) + ref.hash()
     }
 }

@@ -76,9 +76,18 @@ class LedgerConnectionViewModel(
     private var _connectedDevice: ConnectedDevice? = null
     private var _tonTransport: TonTransport? = null
 
-    val permissions = arrayOf(
-        Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT
-    )
+    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT
+        )
+    } else {
+        arrayOf(
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    }
 
     private val _connectionState: MutableSharedFlow<ConnectionState> =
         MutableSharedFlow(replay = 1, extraBufferCapacity = 1)
@@ -177,7 +186,11 @@ class LedgerConnectionViewModel(
                     val ledgerConfig = getLedgerConfig()
                     connect(ledgerConfig.deviceId)
                 } catch (e: Exception) {
-                    _eventFlow.tryEmit(LedgerEvent.Error(e.message ?: context.getString(Localization.error)))
+                    _eventFlow.tryEmit(
+                        LedgerEvent.Error(
+                            e.message ?: context.getString(Localization.error)
+                        )
+                    )
                 }
             }
         } else {
@@ -275,6 +288,7 @@ class LedgerConnectionViewModel(
                 _connectionState.tryEmit(ConnectionState.Signed)
                 _eventFlow.tryEmit(LedgerEvent.SignedTransaction(signedBody))
             } catch (e: Exception) {
+                Log.d("LEDGER", "Error signing transaction", e)
                 if (e.instanceOf(TransportStatusException.DeniedByUser::class)) {
                     _eventFlow.tryEmit(LedgerEvent.Rejected)
                 } else {
@@ -359,17 +373,21 @@ class LedgerConnectionViewModel(
     private fun waitForTonAppOpen() {
         pollTonAppJob?.cancel()
         pollTonAppJob = viewModelScope.launch {
-            try {
-                val tonTransport = TonTransport(BleTransport(bleManager))
-                while (!tonTransport.isAppOpen()) {
-                    Log.d("LEDGER", "Waiting for app to open")
-                    delay(1000)
-                }
+            val tonTransport = TonTransport(BleTransport(bleManager))
 
-                _connectionState.tryEmit(ConnectionState.TonAppOpened)
-                setTonTransport(tonTransport)
+            suspend fun isAppOpen() = try {
+                tonTransport.isAppOpen()
             } catch (_: Exception) {
+                false
             }
+
+            while (!isAppOpen()) {
+                Log.d("LEDGER", "Waiting for app to open")
+                delay(1000)
+            }
+
+            _connectionState.tryEmit(ConnectionState.TonAppOpened)
+            setTonTransport(tonTransport)
         }
     }
 

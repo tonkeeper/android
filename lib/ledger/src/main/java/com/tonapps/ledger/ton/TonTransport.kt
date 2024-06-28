@@ -4,7 +4,6 @@ import com.tonapps.ledger.transport.Transport
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.bitstring.BitString
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
@@ -156,7 +155,7 @@ class TonTransport(private val transport: Transport) {
 
                 if (transaction.payload.customPayload != null) {
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putCellRef(transaction.payload.customPayload)
-                    cell = cell.storeRef(transaction.payload.customPayload)
+                    cell = cell.storeBit(true).storeRef(transaction.payload.customPayload)
                 } else {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeBit(false)
@@ -167,7 +166,7 @@ class TonTransport(private val transport: Transport) {
 
                 if (transaction.payload.forwardPayload != null) {
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putCellRef(transaction.payload.forwardPayload)
-                    cell = cell.storeRef(transaction.payload.forwardPayload)
+                    cell = cell.storeBit(true).storeRef(transaction.payload.forwardPayload)
                 } else {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeBit(false)
@@ -198,7 +197,7 @@ class TonTransport(private val transport: Transport) {
 
                 if (transaction.payload.customPayload != null) {
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putCellRef(transaction.payload.customPayload)
-                    cell = cell.storeRef(transaction.payload.customPayload)
+                    cell = cell.storeBit(true).storeRef(transaction.payload.customPayload)
                 } else {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeBit(false)
@@ -209,7 +208,7 @@ class TonTransport(private val transport: Transport) {
 
                 if (transaction.payload.forwardPayload != null) {
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putCellRef(transaction.payload.forwardPayload)
-                    cell = cell.storeRef(transaction.payload.forwardPayload)
+                    cell = cell.storeBit(true).storeRef(transaction.payload.forwardPayload)
                 } else {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeBit(false)

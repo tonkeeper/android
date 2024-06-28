@@ -7,10 +7,11 @@ import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
 
 class Adapter(
+    private val onInstallTonAppClick: () -> Unit
 ) : BaseListAdapter() {
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when (viewType) {
-            Item.TYPE_STEP -> StepHolder(parent)
+            Item.TYPE_STEP -> StepHolder(parent, onInstallTonAppClick)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

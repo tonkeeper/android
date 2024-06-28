@@ -13,6 +13,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val label: String,
         val isDone: Boolean,
         val isCurrent: Boolean,
+        val showInstallTon: Boolean = false
     ): Item(TYPE_STEP)
 
 }

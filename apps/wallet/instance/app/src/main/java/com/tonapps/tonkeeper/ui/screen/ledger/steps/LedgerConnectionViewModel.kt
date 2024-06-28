@@ -406,7 +406,8 @@ class LedgerConnectionViewModel(
             Item.Step(
                 context.getString(Localization.ledger_open_ton_app),
                 currentStep == LedgerStep.DONE || currentStep == LedgerStep.CONFIRM_TX,
-                currentStep == LedgerStep.OPEN_TON_APP
+                currentStep == LedgerStep.OPEN_TON_APP,
+                _walletId == null
             )
         )
 

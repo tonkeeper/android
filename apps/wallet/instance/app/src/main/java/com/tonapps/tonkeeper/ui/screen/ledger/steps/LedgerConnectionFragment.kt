@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.ledger.steps
 
 import android.animation.ObjectAnimator
 import android.bluetooth.BluetoothAdapter
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -24,11 +25,6 @@ import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 
 class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
-    companion object {
-        fun newInstance(): LedgerConnectionFragment {
-            return LedgerConnectionFragment()
-        }
-    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -53,7 +49,7 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
 
     private val connectionViewModel: LedgerConnectionViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
-    private val adapter = Adapter()
+    private val adapter = Adapter(::openInstallTonApp)
 
     private lateinit var listView: RecyclerView
     private lateinit var bluetoothIconView: AppCompatImageView
@@ -94,6 +90,23 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
                     checkPermissionsAndScan();
                 }
             }
+        }
+    }
+
+    private fun openInstallTonApp() {
+        val ledgerLiveUrl = "ledgerlive://myledger?installApp=TON"
+        val ledgerLiveStoreUrl = "https://play.google.com/store/apps/details?id=com.ledger.live"
+
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(ledgerLiveUrl)).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            val storeIntent = Intent(Intent.ACTION_VIEW, Uri.parse(ledgerLiveStoreUrl)).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(storeIntent)
         }
     }
 
@@ -175,6 +188,12 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
             translationX.duration = 350
             translationX.interpolator = interpolator
             translationX.start()
+        }
+    }
+
+    companion object {
+        fun newInstance(): LedgerConnectionFragment {
+            return LedgerConnectionFragment()
         }
     }
 }

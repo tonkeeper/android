@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.View
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.buttonPrimaryBackgroundColor
+import com.tonapps.uikit.color.iconTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.extensions.dp
 import uikit.extensions.getDrawable
@@ -41,7 +42,7 @@ class CheckBoxView @JvmOverloads constructor(
     }
 
     private val defaultPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.backgroundContentTintColor
+        color = context.iconTertiaryColor
         style = Paint.Style.STROKE
         strokeWidth = strokeSize
     }
@@ -71,6 +72,7 @@ class CheckBoxView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        alpha = if (isEnabled) 1f else 0.48f
         if (checked) {
             canvas.drawRoundRect(
                 0f,

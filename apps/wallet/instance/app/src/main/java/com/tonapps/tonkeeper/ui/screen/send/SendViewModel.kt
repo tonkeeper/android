@@ -27,6 +27,7 @@ import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
+import io.tonapi.models.AccountStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -307,7 +308,7 @@ class SendViewModel(
     }
 
     private fun isBounce(value: String, account: Account): Boolean {
-        if (account.status != "active" && value.startsWith("EQ")) {
+        if (account.status != AccountStatus.active && value.startsWith("EQ")) {
             return false
         }
         val bounce = value.startsWith("EQ") || !value.startsWith("U")

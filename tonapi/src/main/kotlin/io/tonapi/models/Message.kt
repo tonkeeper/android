@@ -34,6 +34,7 @@ import com.squareup.moshi.JsonClass
  * @param ihrFee 
  * @param importFee 
  * @param createdAt 
+ * @param hash 
  * @param destination 
  * @param source 
  * @param opCode 
@@ -75,6 +76,9 @@ data class Message (
 
     @Json(name = "created_at")
     val createdAt: kotlin.Long,
+
+    @Json(name = "hash")
+    val hash: kotlin.String,
 
     @Json(name = "destination")
     val destination: AccountAddress? = null,

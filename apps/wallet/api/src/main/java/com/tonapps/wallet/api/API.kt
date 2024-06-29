@@ -143,7 +143,7 @@ class API(
         try {
             val jettonsBalances = accounts(testnet).getAccountJettonsBalances(
                 accountId = accountId,
-                currencies = currency
+                currencies = listOf(currency)
             ).balances
             return jettonsBalances.map { BalanceEntity(it) }.filter { !it.value.isZero }
         } catch (e: Throwable) {
@@ -178,7 +178,10 @@ class API(
 
     fun getRates(currency: String, tokens: List<String>): Map<String, TokenRates> {
         return try {
-            rates().getRates(tokens.joinToString(","), currency).rates
+            rates().getRates(
+                tokens = tokens,
+                currencies = listOf(currency
+                )).rates
         } catch (e: Throwable) {
             mapOf()
         }
@@ -279,7 +282,7 @@ class API(
         testnet: Boolean,
     ): MessageConsequences = withContext(Dispatchers.IO) {
         val request = EmulateMessageToWalletRequest(boc)
-        emulation(testnet).emulateMessageToWallet(request, ignoreSignatureCheck = true)
+        emulation(testnet).emulateMessageToWallet(request)
     }
 
     suspend fun emulate(

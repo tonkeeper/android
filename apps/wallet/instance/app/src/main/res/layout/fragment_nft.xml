@@ -111,6 +111,11 @@
                 android:textAppearance="@style/TextAppearance.Label1"
                 android:text="@string/transfer"/>
 
+            <uikit.widget.ColumnLayout
+                android:id="@+id/buttons_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/transfer_disabled"
                 android:layout_width="match_parent"

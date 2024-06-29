@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_content"
+                android:paddingVertical="44dp">
+
+                <com.tonapps.tonkeeper.ui.component.coin.CoinEditText
+                    android:id="@+id/stake_amount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="6dp"
+                    android:background="@null"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:digits="0123456789.,"
+                    android:inputType="numberDecimal"
+                    android:textCursorDrawable="@drawable/cursor"
+                    android:textColor="?attr/textPrimaryColor"
+                    android:textColorHint="?attr/textSecondaryColor"
+                    android:textSize="40sp"
+                    android:fontFamily="@font/montserrat_semi_bold"
+                    android:hint="0"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/stake_currency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_gravity="center"
+                    android:paddingVertical="12dp"
+                    android:paddingHorizontal="@dimen/offsetMedium"
+                    android:background="@drawable/bg_island_border"
+                    android:textAppearance="@style/TextAppearance.Body1"
+                    android:textColor="?attr/textSecondaryColor"/>
+
+
+            </uikit.widget.ColumnLayout>
+
+            <uikit.widget.RowLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/tertiaryHeight"
+                android:layout_marginVertical="@dimen/offsetMedium">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/max"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_button_secondary_18"
+                    android:paddingHorizontal="@dimen/offsetMedium"
+                    android:gravity="center"
+                    android:text="@string/max"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:textColor="?attr/buttonSecondaryForegroundColor"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/available"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor"/>
+
+            </uikit.widget.RowLayout>
+
+            <uikit.widget.RowLayout
+                android:id="@+id/pool_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/offsetMedium"
+                android:background="@drawable/bg_content_tint_16">
+
+                <uikit.widget.FrescoView
+                    android:id="@+id/pool_icon"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp" />
+
+                <uikit.widget.ColumnLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingHorizontal="@dimen/offsetMedium">
+
+                    <uikit.widget.RowLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/pool_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:singleLine="true"
+                            android:textColor="?attr/textPrimaryColor"
+                            android:textAppearance="@style/TextAppearance.Label1"/>
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/pool_max_apy"
+                            android:layout_width="wrap_content"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:layout_marginHorizontal="6dp"
+                            android:paddingHorizontal="6dp"
+                            android:visibility="gone"
+                            android:text="@string/staking_max_apy"
+                            android:background="@drawable/bg_wallet_type"
+                            android:singleLine="true"
+                            android:textAllCaps="true"
+                            android:gravity="center"
+                            android:textAppearance="@style/TextAppearance.Body4CAPS"
+                            android:textColor="?attr/accentGreenColor"/>
+
+                    </uikit.widget.RowLayout>
+
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/pool_description"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textAppearance="@style/TextAppearance.Body2"
+                        android:singleLine="true"
+                        android:textColor="?attr/textSecondaryColor"/>
+
+                </uikit.widget.ColumnLayout>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="16dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_switch_16"
+                    android:tint="?attr/iconTertiaryColor"/>
+
+            </uikit.widget.RowLayout>
+
+        </uikit.widget.ColumnLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/next_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="?attr/textPrimaryColor"
+        android:enabled="false"
+        android:text="@string/continue_action"/>
+
+</FrameLayout>

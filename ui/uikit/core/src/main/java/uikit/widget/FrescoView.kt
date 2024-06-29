@@ -26,6 +26,14 @@ class FrescoView @JvmOverloads constructor(
         hierarchy.roundingParams = RoundingParams.fromCornersRadius(radius)
     }
 
+    fun setCircular() {
+        hierarchy.roundingParams = RoundingParams.asCircle()
+    }
+
+    fun setLocalRes(resId: Int) {
+        setImageURI(UriUtil.getUriForResourceId(resId))
+    }
+
     override fun setImageURI(uri: Uri, callerContext: Any?) {
         if (UriUtil.isLocalResourceUri(uri)) {
             loadLocalUri(uri, callerContext)

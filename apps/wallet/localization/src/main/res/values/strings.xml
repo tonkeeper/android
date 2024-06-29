@@ -4,10 +4,19 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
 
+
     <string name="edit">Edit</string>
     <string name="pinned">Pinned</string>
     <string name="all_assets">All Assets</string>
     <string name="sorted_by_price">Sorted by Price</string>
+    <string name="staking_max_apy" translatable="false">MAX APY</string>
+    <string name="staking_minimum_deposit">Minimum deposit %1$s.</string>
+    <string name="staking_options">Options</string>
+    <string name="staking_apy" translatable="false">APY</string>
+    <string name="staking_minimal_deposit">Minimal deposit</string>
+    <string name="staking_details_description">Staking is based on smart contracts by third parties. Tonkeeper is not responsible for staking experience.</string>
+    <string name="staking_links">Links</string>
+    <string name="staking_choose">Choose</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>

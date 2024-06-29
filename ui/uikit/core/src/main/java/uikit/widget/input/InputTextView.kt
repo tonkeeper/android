@@ -10,7 +10,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import com.tonapps.uikit.color.accentBlueColor
 import uikit.extensions.setCursorColor
 
-class InputTextView @JvmOverloads constructor(
+open class InputTextView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = R.attr.editTextStyle,

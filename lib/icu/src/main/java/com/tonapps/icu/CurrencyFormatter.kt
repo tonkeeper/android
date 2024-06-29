@@ -21,7 +21,7 @@ object CurrencyFormatter {
         put("AED", "د.إ")
         put("UAH", "₴")
         put("KZT", "₸")
-        put("UZS", "лв")
+        put("UZS", "UZS")
         put("GBP", "£")
         put("CHF", "₣")
         put("CNY", "¥")

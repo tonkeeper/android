@@ -3,6 +3,14 @@
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
 
+    <string name="staking_minimum_deposit">Минимальный депозит %1$s.</string>
+    <string name="staking_options">Опции</string>
+    <string name="staking_minimal_deposit">Минимальный депозит</string>
+    <string name="staking_details_description">Стейкинг основан на смарт-контрактах третьих сторон. Tonkeeper не несет ответственности за ставку опыта.</string>
+    <string name="staking_links">Ссылки</string>
+    <string name="staking_choose">Выбрать</string>
+
+
     <string name="edit">Редактировать</string>
     <string name="pinned">Закреплённые</string>
     <string name="all_assets">Все активы</string>

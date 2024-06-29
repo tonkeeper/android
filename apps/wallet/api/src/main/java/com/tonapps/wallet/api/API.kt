@@ -90,6 +90,8 @@ class API(
 
     fun liteServer(testnet: Boolean) = provider.liteServer.get(testnet)
 
+    fun staking(testnet: Boolean) = provider.staking.get(testnet)
+
     fun rates() = provider.rates.get(false)
 
     fun getEvents(

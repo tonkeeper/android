@@ -17,6 +17,7 @@
     <string name="staking_details_description">Staking is based on smart contracts by third parties. Tonkeeper is not responsible for staking experience.</string>
     <string name="staking_links">Links</string>
     <string name="staking_choose">Choose</string>
+    <string name="staking_confirm">Confirm and Stake</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>

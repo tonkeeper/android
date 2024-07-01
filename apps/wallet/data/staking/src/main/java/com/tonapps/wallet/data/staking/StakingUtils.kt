@@ -1,15 +1,47 @@
 package com.tonapps.wallet.data.staking
 
-import org.ton.bitstring.MutableBitString
+import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.core.entity.RawMessageEntity
+import com.tonapps.wallet.data.staking.entities.PoolDetailsEntity
+import com.tonapps.wallet.data.staking.entities.PoolEntity
+import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.cell.Cell
-import org.ton.cell.CellSlice
 import org.ton.cell.buildCell
 import org.ton.tlb.storeTlb
 import java.math.BigInteger
 
 object StakingUtils {
+
+    fun getWithdrawalFee(implementation: StakingPool.Implementation): Coins {
+        if (implementation == StakingPool.Implementation.Whales) {
+            return Coins.of(0.2)
+        }
+        if (implementation == StakingPool.Implementation.TF || implementation == StakingPool.Implementation.LiquidTF) {
+            return Coins.of(1)
+        }
+        return Coins.of(0)
+    }
+
+    fun getWithdrawalAlertFee(
+        implementation: StakingPool.Implementation,
+        forDisplay: Boolean = false
+    ): Coins {
+        if (implementation == StakingPool.Implementation.Whales) {
+            return Coins.of(0.4)
+        }
+        if (implementation == StakingPool.Implementation.TF) {
+            return Coins.of(1)
+        }
+        if (implementation == StakingPool.Implementation.LiquidTF) {
+            return Coins.of(if (forDisplay) 2 else 1)
+        }
+        return Coins.of(0)
+    }
 
     fun createWhalesAddStakeCommand(
         queryId: BigInteger
@@ -75,75 +107,3 @@ object StakingUtils {
         }
     }
 }
-
-/*
-export const getStakeSignRawMessage = async (
-  pool: PoolInfo,
-  amount: BN,
-  transactionType: StakingTransactionType,
-  responseAddress: string,
-  isSendAll?: boolean,
-  stakingJetton?: JettonBalanceModel,
-): Promise<SignRawMessage> => {
-  const withdrawalFee = getWithdrawalFee(pool);
-
-  const address = Address.parse(
-    stakingJetton && transactionType !== StakingTransactionType.DEPOSIT
-      ? stakingJetton.walletAddress
-      : pool.address,
-  ).toFriendly({ bounceable: true });
-
-  if (pool.implementation === PoolImplementationType.Whales) {
-    const payload =
-      transactionType === StakingTransactionType.DEPOSIT
-        ? await createWhalesAddStakeCommand()
-        : await createWhalesWithdrawStakeCell(isSendAll ? Ton.toNano(0) : amount);
-
-    return {
-      address,
-      amount: transactionType === StakingTransactionType.DEPOSIT ? amount : withdrawalFee,
-      payload,
-    };
-  }
-
-  if (pool.implementation === PoolImplementationType.LiquidTF) {
-    const payload =
-      transactionType === StakingTransactionType.DEPOSIT
-        ? await createLiquidTfAddStakeCommand()
-        : await createLiquidTfWithdrawStakeCell(amount, responseAddress);
-
-    const amountWithFee = Ton.toNano(
-      new BigNumber(Ton.fromNano(amount)).plus(Ton.fromNano(withdrawalFee)).toString(),
-    );
-
-    const depositAmount =
-      pool.implementation === PoolImplementationType.LiquidTF && !isSendAll
-        ? amountWithFee
-        : amount;
-
-    return {
-      address,
-      amount:
-        transactionType === StakingTransactionType.DEPOSIT
-          ? depositAmount
-          : withdrawalFee,
-      payload,
-    };
-  }
-
-  if (pool.implementation === PoolImplementationType.Tf) {
-    const payload =
-      transactionType === StakingTransactionType.DEPOSIT
-        ? await createTfAddStakeCommand()
-        : await createTfWithdrawStakeCell();
-
-    return {
-      address,
-      amount: transactionType === StakingTransactionType.DEPOSIT ? amount : withdrawalFee,
-      payload,
-    };
-  }
-
-  throw new Error('not implemented yet');
-};
- */

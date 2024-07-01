@@ -94,5 +94,5 @@ val koinModel = module {
     viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
-    viewModel { StakingViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { StakingViewModel(get(), get(), get(), get(), get(), get(), get()) }
 }

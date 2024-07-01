@@ -3,8 +3,6 @@ package com.tonapps.wallet.data.staking.entities
 import android.os.Parcelable
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.staking.StakingPool
-import io.tonapi.models.PoolImplementation
-import io.tonapi.models.PoolInfo
 import kotlinx.parcelize.Parcelize
 import java.math.BigDecimal
 import java.math.RoundingMode

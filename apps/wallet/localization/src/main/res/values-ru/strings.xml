@@ -9,6 +9,7 @@
     <string name="staking_details_description">Стейкинг основан на смарт-контрактах третьих сторон. Tonkeeper не несет ответственности за ставку опыта.</string>
     <string name="staking_links">Ссылки</string>
     <string name="staking_choose">Выбрать</string>
+    <string name="staking_confirm">Подтвердить и застейкить</string>
 
 
     <string name="edit">Редактировать</string>

@@ -34,4 +34,5 @@ dependencies {
 
     implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Wallet.Data.core))
+    implementation(project(Dependence.Wallet.Data.tokens))
 }

@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.sign
+package com.tonapps.wallet.data.core.entity
 
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.TonNetwork
@@ -68,4 +68,3 @@ data class SignRequestEntity(
         }
     }
 }
-

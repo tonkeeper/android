@@ -60,7 +60,7 @@ class StakeAmountFragment: StakeChildFragment(R.layout.fragment_stake_amount) {
         button = view.findViewById(R.id.next_button)
         button.setOnClickListener { stakeViewModel.confirm() }
 
-        collectFlow(stakeViewModel.selectedPoolFlow, ::applyPoolInfo)
+        collectFlow(stakeViewModel.selectedPoolInfoFlow, ::applyPoolInfo)
         collectFlow(stakeViewModel.availableUiStateFlow, ::applyAvailableState)
         collectFlow(stakeViewModel.fiatFormatFlow, ::applyFiat)
         collectFlow(stakeViewModel.apyFormatFlow, poolDescriptionView::setText)

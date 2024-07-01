@@ -28,7 +28,7 @@ class StakeDetailsFragment: StakeChildFragment(R.layout.fragment_stake_details) 
 
         val chooseButton = view.findViewById<Button>(R.id.choose_button)
         chooseButton.setOnClickListener {
-            stakeViewModel.selectPool(pool)
+            stakeViewModel.selectPoolInfo(pool)
             finish()
         }
     }

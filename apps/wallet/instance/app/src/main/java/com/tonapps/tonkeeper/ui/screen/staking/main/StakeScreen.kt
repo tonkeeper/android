@@ -16,6 +16,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class StakeScreen: BaseFragment(R.layout.fragment_stake), BaseFragment.BottomSheet {
@@ -46,7 +47,11 @@ class StakeScreen: BaseFragment(R.layout.fragment_stake), BaseFragment.BottomShe
         when(event) {
             is StakingEvent.OpenOptions -> addFragment(StakeOptionsFragment.newInstance())
             is StakingEvent.OpenDetails -> addFragment(StakeDetailsFragment.newInstance(event.pool))
-            is StakingEvent.OpenConfirm -> addFragment(StakeConfirmFragment.newInstance(event.pool, event.amount))
+            is StakingEvent.OpenConfirm -> addFragment(StakeConfirmFragment.newInstance())
+            is StakingEvent.Finish -> {
+                navigation?.openURL("tonkeeper://activity")
+                finish()
+            }
         }
     }
 

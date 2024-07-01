@@ -29,7 +29,7 @@ class StakeOptionsFragment: StakeChildFragment(R.layout.fragment_simple_list) {
         super.onCreate(savedInstanceState)
         combine(
             stakeViewModel.poolsFlow,
-            stakeViewModel.selectedPoolFlow
+            stakeViewModel.selectedPoolInfoFlow
         ) { pools, selectedPool ->
             val uniquePools = pools.distinctBy { it.implementation }
             Item.map(uniquePools, selectedPool)

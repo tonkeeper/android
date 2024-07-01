@@ -1,27 +1,130 @@
 package com.tonapps.tonkeeper.ui.screen.staking.confirm
 
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import androidx.lifecycle.lifecycleScope
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.Coins
+import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.ui.screen.staking.main.StakeChildFragment
+import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import uikit.extensions.collectFlow
+import uikit.widget.FrescoView
+import uikit.widget.ProcessTaskView
 
 class StakeConfirmFragment: StakeChildFragment(R.layout.fragment_stake_confirm) {
+
+    private lateinit var iconView: FrescoView
+    private lateinit var walletView: TransactionDetailView
+    private lateinit var recipientView: TransactionDetailView
+    private lateinit var amountView: TransactionDetailView
+    private lateinit var feeView: TransactionDetailView
+    private lateinit var apyView: TransactionDetailView
+    private lateinit var button: Button
+    private lateinit var taskView: ProcessTaskView
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        iconView = view.findViewById(R.id.icon)
+        iconView.setCircular()
+
+        walletView = view.findViewById(R.id.review_wallet)
+        recipientView = view.findViewById(R.id.review_recipient)
+        amountView = view.findViewById(R.id.review_amount)
+
+        feeView = view.findViewById(R.id.review_fee)
+        feeView.setLoading()
+
+        apyView = view.findViewById(R.id.review_apy)
+
+        button = view.findViewById(R.id.button)
+        taskView = view.findViewById(R.id.task)
+
+        button.setOnClickListener { stake() }
+
+        collectFlow(stakeViewModel.walletFlow) { wallet ->
+            walletView.value = wallet.label.title
+        }
+
+        collectFlow(stakeViewModel.fiatFormatFlow) { fiatFormat ->
+            amountView.description = fiatFormat
+        }
+
+        collectFlow(stakeViewModel.amountFormatFlow) { amountFormat ->
+            amountView.value = amountFormat
+        }
+
+        collectFlow(stakeViewModel.selectedPoolInfoFlow, ::applyPool)
+
+        collectFlow(stakeViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
+            feeView.setDefault()
+            feeView.value = feeFormat
+            feeView.description = feeFiatFormat
+            button.isEnabled = true
+        }
+
+        collectFlow(stakeViewModel.taskStateFlow, ::setTaskState)
+    }
+
+    private fun stake() {
+        collectFlow(stakeViewModel.stake(requireContext())) {
+
+        }
+    }
+
+    private fun setTaskState(state: ProcessTaskView.State) {
+        when(state) {
+            ProcessTaskView.State.LOADING -> setLoadingState()
+            ProcessTaskView.State.SUCCESS -> setSuccessState()
+            ProcessTaskView.State.FAILED -> setFailedState()
+        }
+    }
+
+    private fun setDefaultState() {
+        taskView.visibility = View.GONE
+        button.visibility = View.VISIBLE
+    }
+
+    private fun setLoadingState() {
+        taskView.visibility = View.VISIBLE
+        button.visibility = View.GONE
+        taskView.state = ProcessTaskView.State.LOADING
+    }
+
+    private fun setFailedState() {
+        taskView.state = ProcessTaskView.State.FAILED
+        lifecycleScope.launch {
+            delay(3000)
+            setDefaultState()
+        }
+    }
+
+    private fun setSuccessState() {
+        taskView.state = ProcessTaskView.State.SUCCESS
+    }
+
+    private fun applyPool(pool: PoolInfoEntity) {
+        iconView.setLocalRes(StakingPool.getIcon(pool.implementation))
+        recipientView.value = pool.details.name
+        apyView.value = "≈ ${pool.apyPercent}%"
+    }
+
+    override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {
+        super.onKeyboardAnimation(offset, progress, isShowing)
+        button.translationY = -offset.toFloat()
+        taskView.translationY = -offset.toFloat()
+    }
 
     override fun getTitle() = ""
 
     companion object {
 
-        private const val POOL_KEY = "pool"
-        private const val AMOUNT_KEY = "amount"
-
-        fun newInstance(pool: PoolInfoEntity, amount: Coins): StakeConfirmFragment {
-            val fragment = StakeConfirmFragment()
-            fragment.arguments = Bundle().apply {
-                putParcelable(POOL_KEY, pool)
-                putParcelable(AMOUNT_KEY, amount)
-            }
-            return fragment
-        }
+        fun newInstance() = StakeConfirmFragment()
     }
 }

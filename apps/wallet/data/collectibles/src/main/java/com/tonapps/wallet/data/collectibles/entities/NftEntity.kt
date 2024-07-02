@@ -17,7 +17,7 @@ data class NftEntity(
     val previews: List<NftPreviewEntity>,
     val testnet: Boolean,
     val verified: Boolean,
-    val inSale: Boolean,
+    val inSale: Boolean
 ): Parcelable {
 
     val id: String

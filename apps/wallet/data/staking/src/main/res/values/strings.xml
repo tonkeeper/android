@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stake_tonstakers" translatable="false">Tonstakers</string>
+    <string name="stake_whales" translatable="false">TON Whales</string>
+    <string name="stake_nominators" translatable="false">TON Nominators</string>
+</resources>

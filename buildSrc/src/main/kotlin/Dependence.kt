@@ -126,6 +126,7 @@ object Dependence {
             const val backup = ":apps:wallet:data:backup"
             const val rn = ":apps:wallet:data:rn"
             const val passcode = ":apps:wallet:data:passcode"
+            const val staking = ":apps:wallet:data:staking"
         }
 
     }

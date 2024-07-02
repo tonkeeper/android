@@ -1,8 +1,6 @@
-package com.tonapps.tonkeeper.sign
+package com.tonapps.wallet.data.core.entity
 
 import android.os.Parcelable
-import android.util.Log
-import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.blockchain.ton.extensions.safeParseCell
 import com.tonapps.blockchain.ton.extensions.toTlb
 import kotlinx.parcelize.Parcelize
@@ -13,7 +11,6 @@ import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
-import java.math.BigInteger
 
 @Parcelize
 data class RawMessageEntity(
@@ -51,10 +48,6 @@ data class RawMessageEntity(
         json.optString("stateInit"),
         json.optString("payload")
     )
-
-    init {
-        Log.d("TonConnectBridge", "raw: $payload")
-    }
 
     private companion object {
 

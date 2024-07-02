@@ -125,15 +125,6 @@ data class TransferEntity(
         )
     }
 
-    /*
-    TonTransferHelper.nft(
-                newOwnerAddress = MsgAddressInt.parse(address!!),
-                excessesAddress = MsgAddressInt.parse(walletAddress!!),
-                queryId = newWalletQueryId(),
-                body = comment,
-            )
-     */
-
     fun toSignedMessage(privateKeyEd25519: PrivateKeyEd25519): Cell {
         return contract.createTransferMessageCell(
             address = contract.address,

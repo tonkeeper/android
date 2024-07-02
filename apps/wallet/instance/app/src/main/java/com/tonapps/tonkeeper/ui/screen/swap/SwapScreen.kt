@@ -2,13 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.swap
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import com.tonapps.extensions.appVersionName
-import com.tonapps.tonkeeper.sign.SignRequestEntity
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding

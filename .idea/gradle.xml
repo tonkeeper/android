@@ -36,6 +36,7 @@
             <option value="$PROJECT_DIR$/apps/wallet/data/rates" />
             <option value="$PROJECT_DIR$/apps/wallet/data/rn" />
             <option value="$PROJECT_DIR$/apps/wallet/data/settings" />
+            <option value="$PROJECT_DIR$/apps/wallet/data/staking" />
             <option value="$PROJECT_DIR$/apps/wallet/data/tokens" />
             <option value="$PROJECT_DIR$/apps/wallet/data/tonconnect" />
             <option value="$PROJECT_DIR$/apps/wallet/instance" />

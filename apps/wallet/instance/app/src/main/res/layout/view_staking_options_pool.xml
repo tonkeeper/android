@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/offsetMedium">
+
+    <uikit.widget.FrescoView
+        android:id="@+id/icon"
+        android:layout_width="44dp"
+        android:layout_height="44dp"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <uikit.widget.RowLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="?attr/textPrimaryColor"
+                android:textAppearance="@style/TextAppearance.Label1"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/max_apy"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="6dp"
+                android:paddingHorizontal="6dp"
+                android:visibility="gone"
+                android:text="@string/staking_max_apy"
+                android:background="@drawable/bg_wallet_type"
+                android:singleLine="true"
+                android:textAllCaps="true"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.Body4CAPS"
+                android:textColor="?attr/accentGreenColor"/>
+
+        </uikit.widget.RowLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+    </uikit.widget.ColumnLayout>
+    
+    <uikit.widget.RadioView
+        android:id="@+id/radio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"/>
+
+</uikit.widget.RowLayout>

@@ -2,7 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.nft
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.NestedScrollView
@@ -10,8 +12,11 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.ui.screen.send.SendScreen
+import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.buttonGreenBackgroundColor
+import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -22,8 +27,12 @@ import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.extensions.drawable
+import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.inflate
+import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.widget.ColumnLayout
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
 
@@ -76,6 +85,26 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
         val transferButton = view.findViewById<Button>(R.id.transfer)
         transferButton.setOnClickListener {
             navigation?.add(SendScreen.newInstance(nftAddress = nftEntity.address))
+        }
+
+        val buttonsContainer = view.findViewById<ColumnLayout>(R.id.buttons_container)
+        if (nftEntity.metadata.buttons.isEmpty()) {
+            buttonsContainer.visibility = View.GONE
+        } else {
+            buttonsContainer.visibility = View.VISIBLE
+            for (button in nftEntity.metadata.buttons) {
+                val buttonView = context?.inflate(R.layout.view_nft_button, null) as Button
+                buttonView.text = button.label
+                buttonView.setOnClickListener {
+                    navigation?.add(WebScreen.newInstance(button.uri))
+                    finish()
+                }
+                buttonsContainer.addView(buttonView, ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    topMargin = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+                    leftMargin = topMargin
+                    rightMargin = topMargin
+                })
+            }
         }
 
         val transferDisabled = view.findViewById<View>(R.id.transfer_disabled)

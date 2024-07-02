@@ -39,6 +39,7 @@ import com.squareup.moshi.JsonClass
  * @param origStatus 
  * @param endStatus 
  * @param totalFees 
+ * @param endBalance 
  * @param transactionType 
  * @param stateUpdateOld 
  * @param stateUpdateNew 
@@ -46,6 +47,7 @@ import com.squareup.moshi.JsonClass
  * @param block 
  * @param aborted 
  * @param destroyed 
+ * @param raw hex encoded boc with raw transaction
  * @param inMsg 
  * @param prevTransHash 
  * @param prevTransLt 
@@ -83,6 +85,9 @@ data class Transaction (
     @Json(name = "total_fees")
     val totalFees: kotlin.Long,
 
+    @Json(name = "end_balance")
+    val endBalance: kotlin.Long,
+
     @Json(name = "transaction_type")
     val transactionType: TransactionType,
 
@@ -103,6 +108,10 @@ data class Transaction (
 
     @Json(name = "destroyed")
     val destroyed: kotlin.Boolean,
+
+    /* hex encoded boc with raw transaction */
+    @Json(name = "raw")
+    val raw: kotlin.String,
 
     @Json(name = "in_msg")
     val inMsg: Message? = null,

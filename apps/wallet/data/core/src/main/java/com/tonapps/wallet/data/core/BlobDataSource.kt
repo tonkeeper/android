@@ -1,16 +1,19 @@
 package com.tonapps.wallet.data.core
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.file
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 abstract class BlobDataSource<D>(
     context: Context,
     path: String,
-    lruInitialCapacity: Int = 100
+    lruInitialCapacity: Int = 5,
+    private val timeout: Long = TimeUnit.DAYS.toMillis(90)
 ) {
 
     private val lruCache = ConcurrentHashMap<String, D>(lruInitialCapacity, 1.0f, 2)
@@ -57,6 +60,16 @@ abstract class BlobDataSource<D>(
 
     private fun readDiskCache(key: String): ByteArray? {
         val file = diskFile(key)
+        val lastModified = file.lastModified()
+        if (file.length() == 0L || 0L >= lastModified) {
+            return null
+        }
+        val diff = System.currentTimeMillis() - lastModified
+        if (diff > timeout) {
+            file.delete()
+            return null
+        }
+
         return try {
             val bytes = file.readBytes()
             if (bytes.isEmpty()) null else bytes

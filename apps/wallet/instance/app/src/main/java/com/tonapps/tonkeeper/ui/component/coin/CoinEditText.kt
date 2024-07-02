@@ -43,7 +43,8 @@ class CoinEditText @JvmOverloads constructor(
 
     init {
         setMaxLength(24)
-        // setRightDrawable(suffixDrawable)
+        setRightDrawable(suffixDrawable)
+        compoundDrawablePadding = 38.dp
         val formattingConfig = CoinFormattingConfig(decimals = 9)
         setFormattingTextWatcher(CoinFormattingTextWatcher(formattingConfig))
         setFormattingInputFilter(CoinFormattingFilter(formattingConfig))
@@ -74,9 +75,9 @@ class CoinEditText @JvmOverloads constructor(
         text?.clear()
     }
 
-    /*override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         val width = measuredWidth + suffixDrawable.intrinsicWidth
         setMeasuredDimension(width, measuredHeight)
-    }*/
+    }
 }

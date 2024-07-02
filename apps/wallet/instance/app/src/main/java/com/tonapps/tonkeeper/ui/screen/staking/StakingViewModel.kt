@@ -207,7 +207,12 @@ class StakingViewModel(
         pool: PoolEntity,
         token: TokenEntity,
     ): WalletTransfer {
-        val coins = org.ton.block.Coins.ofNano(amount.nano())
+        val withdrawalFee = Coins.of(StakingUtils.getWithdrawalFee(pool.implementation))
+        val coins = if (pool.implementation == StakingPool.Implementation.LiquidTF) {
+            org.ton.block.Coins.ofNano(amount.nano() + withdrawalFee.nano())
+        } else {
+            org.ton.block.Coins.ofNano(amount.nano())
+        }
         val sendParams = getSendParams(wallet)
 
         val builder = WalletTransferBuilder()

@@ -42,9 +42,8 @@ class SuffixDrawable(
 
     override fun draw(canvas: Canvas) {
         val string = text ?: return
-        val x = 16f.dp
         val centerY = bounds.height() / 2f - textHeight / 2f
-        canvas.drawText(string, x, centerY, textPaint)
+        canvas.drawText(string, 0f, centerY, textPaint)
     }
 
     private fun calculateTextSize(text: String) {

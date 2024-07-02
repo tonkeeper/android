@@ -1,35 +1,40 @@
 package com.tonapps.wallet.data.staking
 
+import android.content.Context
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.staking.entities.PoolDetailsEntity
-import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.data.staking.source.LocalDataSource
+import com.tonapps.wallet.data.staking.source.RemoteDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class StakingRepository(
+    private val context: Context,
     private val api: API
 ) {
+
+    private val localDataSource = LocalDataSource(context)
+    private val remoteDataSource = RemoteDataSource(api)
 
     suspend fun pools(
         accountId: String,
         testnet: Boolean
     ): List<PoolInfoEntity> = withContext(Dispatchers.IO) {
-        val response = api.staking(testnet).getStakingPools(accountId, includeUnverified = false)
-        val pools = response.pools.map { PoolEntity(it) }
-        val implementations = pools.map { it.implementation }.distinct()
-
-        val list = mutableListOf<PoolInfoEntity>()
-        for (implementation in implementations) {
-            val details = response.implementations[implementation.title] ?: continue
-            list.add(PoolInfoEntity(
-                implementation = implementation,
-                pools = pools.filter { it.implementation == implementation },
-                details = PoolDetailsEntity(details)
-            ))
+        val cacheKey = cacheKey(accountId, testnet)
+        val local = localDataSource.getCache(cacheKey) ?: emptyList()
+        local.ifEmpty {
+            val remote = remoteDataSource.load(accountId, testnet)
+            localDataSource.setCache(cacheKey, remote)
+            remote
         }
+    }
 
-        list.sortedByDescending { it.apy }
+
+    private fun cacheKey(accountId: String, testnet: Boolean): String {
+        if (!testnet) {
+            return accountId
+        }
+        return "${accountId}_testnet_2"
     }
 
 }

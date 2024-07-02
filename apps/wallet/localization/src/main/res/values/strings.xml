@@ -18,6 +18,7 @@
     <string name="staking_links">Links</string>
     <string name="staking_choose">Choose</string>
     <string name="staking_confirm">Confirm and Stake</string>
+    <string name="unstake_confirm">Confirm and Unstake</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>

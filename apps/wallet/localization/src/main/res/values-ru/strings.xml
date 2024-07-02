@@ -10,6 +10,7 @@
     <string name="staking_links">Ссылки</string>
     <string name="staking_choose">Выбрать</string>
     <string name="staking_confirm">Подтвердить и застейкить</string>
+    <string name="unstake_confirm">Подтвердить и вывести</string>
 
 
     <string name="edit">Редактировать</string>

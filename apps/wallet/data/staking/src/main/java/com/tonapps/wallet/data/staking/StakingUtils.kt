@@ -1,13 +1,6 @@
 package com.tonapps.wallet.data.staking
 
-import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.toRawAddress
-import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.entity.RawMessageEntity
-import com.tonapps.wallet.data.staking.entities.PoolDetailsEntity
-import com.tonapps.wallet.data.staking.entities.PoolEntity
-import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import kotlinx.coroutines.flow.Flow
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.cell.Cell
@@ -17,30 +10,30 @@ import java.math.BigInteger
 
 object StakingUtils {
 
-    fun getWithdrawalFee(implementation: StakingPool.Implementation): Coins {
+    fun getWithdrawalFee(implementation: StakingPool.Implementation): Double {
         if (implementation == StakingPool.Implementation.Whales) {
-            return Coins.of(0.2)
+            return 0.2
         }
         if (implementation == StakingPool.Implementation.TF || implementation == StakingPool.Implementation.LiquidTF) {
-            return Coins.of(1)
+            return 1.0
         }
-        return Coins.of(0)
+        return 0.0
     }
 
     fun getWithdrawalAlertFee(
         implementation: StakingPool.Implementation,
         forDisplay: Boolean = false
-    ): Coins {
+    ): Double {
         if (implementation == StakingPool.Implementation.Whales) {
-            return Coins.of(0.4)
+            return 0.4
         }
         if (implementation == StakingPool.Implementation.TF) {
-            return Coins.of(1)
+            return 1.0
         }
         if (implementation == StakingPool.Implementation.LiquidTF) {
-            return Coins.of(if (forDisplay) 2 else 1)
+            return if (forDisplay) 2.0 else 1.0
         }
-        return Coins.of(0)
+        return 0.0
     }
 
     fun createWhalesAddStakeCommand(

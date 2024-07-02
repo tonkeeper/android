@@ -51,6 +51,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.backup))
     implementation(project(Dependence.Wallet.Data.rn))
     implementation(project(Dependence.Wallet.Data.passcode))
+    implementation(project(Dependence.Wallet.Data.staking))
 
     implementation(project(Dependence.UIKit.core))
 
@@ -69,6 +70,7 @@ dependencies {
     implementation(Dependence.guava)
 
     implementation(Dependence.UI.material)
+    implementation(Dependence.UI.flexbox)
 
     implementation(Dependence.Squareup.moshi)
     implementation(Dependence.Squareup.moshiAdapters)

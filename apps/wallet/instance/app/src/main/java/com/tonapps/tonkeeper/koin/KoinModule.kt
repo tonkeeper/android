@@ -36,6 +36,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
@@ -94,5 +95,6 @@ val koinModel = module {
     viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
+    viewModel { StakingViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get(), get()) }
 }

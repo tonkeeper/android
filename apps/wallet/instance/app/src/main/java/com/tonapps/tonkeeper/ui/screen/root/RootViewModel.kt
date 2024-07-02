@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
@@ -12,7 +11,6 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.isMainVersion
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
@@ -38,6 +36,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository

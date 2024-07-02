@@ -1,9 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.swap
 
 import android.util.Log
-import com.tonapps.tonkeeper.sign.SignRequestEntity
+import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import org.json.JSONArray
-import org.json.JSONObject
 import uikit.widget.webview.bridge.JsBridge
 
 class StonfiBridge2(

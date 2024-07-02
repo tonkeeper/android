@@ -1,10 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
-import android.util.Log
-import com.tonapps.tonkeeper.sign.SignRequestEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppDeviceEntity
 import org.json.JSONArray
 import org.json.JSONObject

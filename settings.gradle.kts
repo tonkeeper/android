@@ -63,5 +63,4 @@ include(":apps:wallet:data:browser")
 include(":apps:wallet:data:backup")
 include(":apps:wallet:data:rn")
 include(":apps:wallet:data:passcode")
-
-
+include(":apps:wallet:data:staking")

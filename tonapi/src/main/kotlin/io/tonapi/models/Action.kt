@@ -22,6 +22,8 @@ import io.tonapi.models.DepositStakeAction
 import io.tonapi.models.DomainRenewAction
 import io.tonapi.models.ElectionsDepositStakeAction
 import io.tonapi.models.ElectionsRecoverStakeAction
+import io.tonapi.models.InscriptionMintAction
+import io.tonapi.models.InscriptionTransferAction
 import io.tonapi.models.JettonBurnAction
 import io.tonapi.models.JettonMintAction
 import io.tonapi.models.JettonSwapAction
@@ -44,6 +46,7 @@ import com.squareup.moshi.JsonClass
  * @param type 
  * @param status 
  * @param simplePreview 
+ * @param baseTransactions 
  * @param tonTransfer 
  * @param contractDeploy 
  * @param jettonTransfer 
@@ -62,6 +65,8 @@ import com.squareup.moshi.JsonClass
  * @param jettonSwap 
  * @param smartContractExec 
  * @param domainRenew 
+ * @param inscriptionTransfer 
+ * @param inscriptionMint 
  */
 
 
@@ -75,6 +80,9 @@ data class Action (
 
     @Json(name = "simple_preview")
     val simplePreview: ActionSimplePreview,
+
+    @Json(name = "base_transactions")
+    val baseTransactions: kotlin.collections.List<kotlin.String>,
 
     @Json(name = "TonTransfer")
     val tonTransfer: TonTransferAction? = null,
@@ -128,14 +136,20 @@ data class Action (
     val smartContractExec: SmartContractAction? = null,
 
     @Json(name = "DomainRenew")
-    val domainRenew: DomainRenewAction? = null
+    val domainRenew: DomainRenewAction? = null,
+
+    @Json(name = "InscriptionTransfer")
+    val inscriptionTransfer: InscriptionTransferAction? = null,
+
+    @Json(name = "InscriptionMint")
+    val inscriptionMint: InscriptionMintAction? = null
 
 ) {
 
     /**
      * 
      *
-     * Values: tonTransfer,jettonTransfer,jettonBurn,jettonMint,nftItemTransfer,contractDeploy,subscribe,unSubscribe,auctionBid,nftPurchase,depositStake,withdrawStake,withdrawStakeRequest,jettonSwap,smartContractExec,electionsRecoverStake,electionsDepositStake,domainRenew,unknown
+     * Values: tonTransfer,jettonTransfer,jettonBurn,jettonMint,nftItemTransfer,contractDeploy,subscribe,unSubscribe,auctionBid,nftPurchase,depositStake,withdrawStake,withdrawStakeRequest,jettonSwap,smartContractExec,electionsRecoverStake,electionsDepositStake,domainRenew,inscriptionTransfer,inscriptionMint,unknown
      */
     @JsonClass(generateAdapter = false)
     enum class Type(val value: kotlin.String) {
@@ -157,6 +171,8 @@ data class Action (
         @Json(name = "ElectionsRecoverStake") electionsRecoverStake("ElectionsRecoverStake"),
         @Json(name = "ElectionsDepositStake") electionsDepositStake("ElectionsDepositStake"),
         @Json(name = "DomainRenew") domainRenew("DomainRenew"),
+        @Json(name = "InscriptionTransfer") inscriptionTransfer("InscriptionTransfer"),
+        @Json(name = "InscriptionMint") inscriptionMint("InscriptionMint"),
         @Json(name = "Unknown") unknown("Unknown");
     }
     /**

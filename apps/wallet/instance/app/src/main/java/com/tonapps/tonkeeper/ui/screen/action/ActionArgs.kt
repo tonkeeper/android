@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.action
 
 import android.os.Bundle
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.sign.SignRequestEntity
+import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import uikit.base.BaseArgs
 
 data class ActionArgs(

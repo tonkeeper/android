@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.bitstring.BitString
+import org.ton.cell.Cell
 import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
@@ -324,12 +325,20 @@ class SendViewModel(
         })
     }
 
+    fun sendLedgerSignedMessage(body: Cell) {
+        launchTransfer(transferFlow.onEach { transfer ->
+            send(body, transfer)
+        })
+    }
+
     fun send(context: Context) {
         launchTransfer(transferFlow.onEach { transfer ->
             val wallet = transfer.wallet
             val unsignedBody = transfer.unsignedBody
+            val ledgerTransaction = transfer.ledgerTransaction
             when (wallet.type) {
                 Wallet.Type.Signer, Wallet.Type.SignerQR -> _uiEventFlow.tryEmit(SendEvent.Signer(unsignedBody, wallet.publicKey))
+                Wallet.Type.Ledger -> _uiEventFlow.tryEmit(SendEvent.Ledger(ledgerTransaction, wallet.id))
                 Wallet.Type.Watch -> throw SendException.UnableSendTransaction()
                 else -> {
                     val isValidPasscode = passcodeManager.confirmation(context, context.getString(Localization.app_name))
@@ -349,6 +358,17 @@ class SendViewModel(
         transfer: TransferEntity
     ) {
         val message = transfer.transferMessage(signature)
+        if (!api.sendToBlockchain(message, transfer.wallet.testnet)) {
+            throw SendException.FailedToSendTransaction()
+        }
+        _uiEventFlow.tryEmit(SendEvent.Success)
+    }
+
+    private suspend fun send(
+        body: Cell,
+        transfer: TransferEntity,
+    ) {
+        val message = transfer.transferMessage(body)
         if (!api.sendToBlockchain(message, transfer.wallet.testnet)) {
             throw SendException.FailedToSendTransaction()
         }

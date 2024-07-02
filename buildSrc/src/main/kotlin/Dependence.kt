@@ -82,6 +82,10 @@ object Dependence {
         const val messaging = "com.google.firebase:firebase-messaging-ktx"
     }
 
+    object LedgerHQ {
+        const val bleManager = "com.github.cosmostation:hw-transport-android-ble:0.0.8"
+    }
+
     object Module {
         const val tonApi = ":tonapi"
 
@@ -98,6 +102,7 @@ object Dependence {
         const val blockchain = ":lib:blockchain"
         const val icu = ":lib:icu"
         const val sqlite = ":lib:sqlite"
+        const val ledger = ":lib:ledger"
     }
 
     object UIKit {

@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.PixelCopy
 import android.view.SurfaceView
+import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
@@ -172,6 +173,16 @@ fun View.withAnimation(duration: Long = 120, block: () -> Unit) {
 
     TransitionManager.beginDelayedTransition(this, transition)
     block()
+}
+
+fun View.expandTouchArea(extraPadding: Int) {
+    val parent = parent as? View ?: return
+    parent.post {
+        val rect = Rect()
+        getHitRect(rect)
+        rect.inset(-extraPadding, -extraPadding)
+        parent.touchDelegate = TouchDelegate(rect, this)
+    }
 }
 
 fun TextView.setEndDrawable(drawable: Drawable?) {

@@ -1,12 +1,14 @@
 package com.tonapps.wallet.data.account
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.isMainVersion
+import com.tonapps.ledger.ton.LedgerAccount
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -15,6 +17,7 @@ import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +34,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.parcelize.RawValue
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.ton.api.pk.PrivateKeyEd25519
@@ -49,6 +53,17 @@ class AccountRepository(
     private companion object {
         private fun newWalletId(): String {
             return UUID.randomUUID().toString()
+        }
+
+        private fun createLabelName(
+            name: String,
+            suffix: String,
+            size: Int
+        ): String {
+            if (size == 1) {
+                return name
+            }
+            return "$name $suffix"
         }
     }
 
@@ -148,7 +163,12 @@ class AccountRepository(
             workchain = wallet.contract.workchain,
             allowedDestinations = null,
             configPubKey = null,
-            ledger = null,
+            ledger = wallet.ledger?.let {
+                RNLedger(
+                    deviceId = it.deviceId,
+                    accountIndex = it.accountIndex
+                )
+            },
         )
         rnLegacy.addWallet(rnWallet)
     }
@@ -189,6 +209,33 @@ class AccountRepository(
         return vaultSource.getPrivateKey(wallet.publicKey) ?: EmptyPrivateKeyEd25519
     }
 
+    suspend fun pairLedger(
+        label: Wallet.Label,
+        ledgerAccounts: List<LedgerAccount>,
+        deviceId: String,
+    ): List<WalletEntity> {
+        val list = mutableListOf<WalletEntity>()
+        for ((index, account) in ledgerAccounts.withIndex()) {
+            val entity = WalletEntity(
+                id = newWalletId(),
+                publicKey = account.publicKey,
+                type = Wallet.Type.Ledger,
+                version = WalletVersion.V4R2,
+                label = label.copy(
+                    accountName = createLabelName(label.accountName, index.toString(), ledgerAccounts.size),
+                ),
+                ledger = WalletEntity.Ledger(
+                    deviceId = deviceId,
+                    accountIndex = account.path.index
+                )
+            )
+            list.add(entity)
+        }
+
+        insertWallets(list)
+        return list.toList()
+    }
+
     suspend fun pairSigner(
         label: Wallet.Label,
         publicKey: PublicKeyEd25519,
@@ -223,13 +270,11 @@ class AccountRepository(
                 publicKey = publicKey,
                 type = type,
                 version = version,
-                label = if (versions.size == 1) {
-                    label
-                } else {
-                    label.copy(
-                        accountName = "${label.accountName} ${version.title}",
+                label = label.copy(
+                    accountName = createLabelName(
+                        label.accountName, version.title, versions.size,
                     )
-                }
+                )
             )
             list.add(entity)
         }

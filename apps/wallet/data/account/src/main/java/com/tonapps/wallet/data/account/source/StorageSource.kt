@@ -2,9 +2,7 @@ package com.tonapps.wallet.data.account.source
 
 import android.content.Context
 import androidx.core.content.edit
-import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.prefs
-import org.ton.api.pub.PublicKeyEd25519
 
 internal class StorageSource(context: Context) {
 

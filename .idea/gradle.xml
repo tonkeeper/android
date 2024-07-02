@@ -52,6 +52,7 @@
             <option value="$PROJECT_DIR$/lib/emoji" />
             <option value="$PROJECT_DIR$/lib/extensions" />
             <option value="$PROJECT_DIR$/lib/icu" />
+            <option value="$PROJECT_DIR$/lib/ledger" />
             <option value="$PROJECT_DIR$/lib/network" />
             <option value="$PROJECT_DIR$/lib/qr" />
             <option value="$PROJECT_DIR$/lib/security" />

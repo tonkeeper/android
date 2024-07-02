@@ -3,9 +3,11 @@ package com.tonapps.tonkeeper.ui.screen.add.main
 import android.os.Bundle
 import android.view.View
 import androidx.core.widget.NestedScrollView
+import com.tonapps.tonkeeper.koin.api
 import com.tonapps.tonkeeper.ui.screen.add.signer.AddSignerScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.ledger.pair.PairLedgerScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
 import org.koin.android.ext.android.inject
@@ -18,8 +20,6 @@ import uikit.widget.ModalHeader
 class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal {
 
     private val api: API by inject()
-
-    private lateinit var signerWallet: View
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -34,13 +34,18 @@ class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal 
         openByClick(R.id.watch_wallet, InitArgs.Type.Watch)
         openByClick(R.id.testnet_wallet, InitArgs.Type.Testnet)
 
-        signerWallet = view.findViewById(R.id.signer_wallet)
-        signerWallet.setOnClickListener {
+        val signerView = view.findViewById<View>(R.id.signer_wallet)
+        signerView.setOnClickListener {
             navigation?.add(AddSignerScreen.newInstance())
         }
 
         if (api.config.flags.disableSigner) {
-            signerWallet.visibility = View.GONE
+            signerView.visibility = View.GONE
+        }
+
+        val ledgerView = view.findViewById<View>(R.id.ledger_wallet)
+        ledgerView.setOnClickListener {
+            navigation?.add(PairLedgerScreen.newInstance())
         }
     }
 

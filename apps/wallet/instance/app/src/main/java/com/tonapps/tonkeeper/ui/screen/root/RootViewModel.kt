@@ -12,6 +12,7 @@ import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -21,6 +22,7 @@ import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.tonkeeper.sign.SignManager
+import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel.Companion.getWalletScreen
@@ -279,6 +281,10 @@ class RootViewModel(
         val boc = requestSign(context, event.wallet, request)
         val data = DAppSuccessEntity(event.id, boc)
         return data.toJSON().toString()
+    }
+
+    fun connectLedger(connectData: LedgerConnectData, accounts: List<AccountItem>) {
+        _eventFlow.tryEmit(RootEvent.Ledger(connectData, accounts))
     }
 
     fun checkPasscode(code: String): Flow<Unit> = flow {

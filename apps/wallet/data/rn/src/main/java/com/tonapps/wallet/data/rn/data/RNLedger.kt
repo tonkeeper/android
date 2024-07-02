@@ -4,7 +4,7 @@ import org.json.JSONObject
 
 data class RNLedger(
     val deviceId: String,
-    val deviceModel: String,
+    val deviceModel: String = "unknown",
     val accountIndex: Int
 ): RNData() {
 

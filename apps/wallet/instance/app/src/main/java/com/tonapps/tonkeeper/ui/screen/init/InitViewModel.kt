@@ -10,7 +10,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -18,16 +17,18 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.api.entity.AccountEntity
-import com.tonapps.wallet.data.account.WalletColor
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.WalletColor
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
@@ -145,6 +146,9 @@ class InitViewModel(
             scope.launch(Dispatchers.IO) {
                 resolveWallets(savedState.publicKey!!)
             }
+            // _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
+        } else if (type == InitArgs.Type.Ledger) {
+            _eventFlow.tryEmit(InitEvent.Step.SelectAccount)
         }
     }
 
@@ -182,6 +186,11 @@ class InitViewModel(
 
     fun setPublicKey(publicKey: PublicKeyEd25519?) {
         savedState.publicKey = publicKey
+    }
+
+    fun setLedgerConnectData(connectData: LedgerConnectData) {
+        savedState.ledgerConnectData = connectData
+        setLabelName(connectData.model.productName)
     }
 
     private suspend fun resolveWallets(mnemonic: List<String>) = withContext(Dispatchers.IO) {
@@ -231,7 +240,7 @@ class InitViewModel(
         val items = mutableListOf<AccountItem>()
         for ((index, account) in accounts.withIndex()) {
             val balance = Coins.of(account.balance)
-            val hasTokens = deferredTokens[index].await().size > 1
+            val hasTokens = deferredTokens[index].await().size > 2
             val hasCollectibles = deferredCollectibles[index].await().isNotEmpty()
             val item = AccountItem(
                 address = AddrStd(account.address).toWalletAddress(testnet),
@@ -277,7 +286,7 @@ class InitViewModel(
         return savedState.accounts ?: emptyList()
     }
 
-    private fun setAccounts(accounts: List<AccountItem>) {
+    fun setAccounts(accounts: List<AccountItem>) {
         savedState.accounts = accounts
         _accountsFlow.tryEmit(accounts)
     }
@@ -358,6 +367,7 @@ class InitViewModel(
                     InitArgs.Type.Import, InitArgs.Type.Testnet -> wallets.addAll(importWallet(context))
                     InitArgs.Type.Signer -> wallets.addAll(signerWallets(false))
                     InitArgs.Type.SignerQR -> wallets.addAll(signerWallets(true))
+                    InitArgs.Type.Ledger -> wallets.addAll(ledgerWallets())
                 }
 
                 if (type == InitArgs.Type.Import) {
@@ -404,6 +414,23 @@ class InitViewModel(
         return wallets
     }
 
+    private suspend fun ledgerWallets(): List<WalletEntity> {
+        val ledgerConnectData =
+            savedState.ledgerConnectData ?: throw IllegalStateException("Ledger connect data is not set")
+
+        val accounts = getSelectedAccounts().map { selectedAccount ->
+            ledgerConnectData.accounts.find { account -> account.path.index == selectedAccount.ledgerIndex }
+                ?: throw IllegalStateException("Ledger account is not found")
+        }
+        val label = getLabel()
+
+        return accountRepository.pairLedger(
+            label = label,
+            ledgerAccounts = accounts,
+            deviceId = ledgerConnectData.deviceId,
+        )
+    }
+
     private suspend fun signerWallets(qr: Boolean): List<WalletEntity> {
         val versions = getSelectedAccounts().map { it.walletVersion }
         val label = getLabel()
@@ -417,20 +444,16 @@ class InitViewModel(
         walletIds: List<String>,
         list: List<String>
     ) = withContext(Dispatchers.IO) {
-        Log.d("InitViewModel", "saveMnemonic #1")
         var passcode = savedState.passcode
         if (passcode == null) {
             passcode = withContext(Dispatchers.Main) {
                 PasscodeDialog.request(context)
             }
         }
-        Log.d("InitViewModel", "saveMnemonic #2")
         if (passcode.isNullOrBlank()) {
             throw IllegalStateException("wrong passcode")
         }
-        Log.d("InitViewModel", "saveMnemonic #3")
         rnLegacy.addMnemonics(passcode, walletIds, list)
-        Log.d("InitViewModel", "saveMnemonic #4")
     }
 
     private fun getPublicKey(

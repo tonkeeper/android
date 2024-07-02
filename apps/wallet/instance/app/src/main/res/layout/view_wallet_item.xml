@@ -65,10 +65,10 @@
     
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/check"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
         android:layout_gravity="center"
-        android:tint="?attr/accentBlueColor"/>
+        android:tint="?attr/iconTertiaryColor"/>
 
     <uikit.widget.RowLayout
         android:id="@+id/edit"

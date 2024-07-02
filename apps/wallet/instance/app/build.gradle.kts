@@ -90,6 +90,7 @@ dependencies {
     implementation(project(Dependence.Lib.security))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
+    implementation(project(Dependence.Lib.ledger))
 
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)
@@ -100,6 +101,8 @@ dependencies {
 
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)
+
+    implementation(Dependence.LedgerHQ.bleManager)
 
     implementation(Dependence.fresco) {
         exclude(group = "com.facebook.soloader", module = "soloader")

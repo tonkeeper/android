@@ -2,13 +2,13 @@ package com.tonapps.tonkeeper.ui.screen.qr
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.qr.ui.QRView
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.accentPurpleColor
 import com.tonapps.uikit.color.backgroundContentTintColor
@@ -57,20 +57,12 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
         addressView.text = args.address
 
         walletTypeView = view.findViewById(R.id.wallet_type)
-        if (args.walletType == Wallet.Type.Default) {
-            walletTypeView.visibility = View.GONE
-        } else {
+        if (args.walletType == Wallet.Type.Watch) {
             walletTypeView.visibility = View.VISIBLE
-            if (args.walletType == Wallet.Type.Watch) {
-                walletTypeView.setText(Localization.watch_only)
-                walletTypeView.backgroundTintList = requireContext().accentPurpleColor.stateList
-            } else if (args.walletType == Wallet.Type.Testnet) {
-                walletTypeView.setText(Localization.testnet)
-                walletTypeView.backgroundTintList = requireContext().accentPurpleColor.stateList
-            } else if (args.walletType == Wallet.Type.Signer) {
-                walletTypeView.setText(Localization.signer)
-                walletTypeView.backgroundTintList = requireContext().accentPurpleColor.stateList
-            }
+            walletTypeView.setText(Localization.watch_only)
+            walletTypeView.backgroundTintList = requireContext().accentOrangeColor.stateList
+        } else {
+            walletTypeView.visibility = View.GONE
         }
 
         copyView = view.findViewById(R.id.copy)
@@ -87,9 +79,8 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
 
     private fun copy() {
         val color = when (args.walletType) {
-            Wallet.Type.Default -> requireContext().backgroundContentTintColor
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> requireContext().accentPurpleColor
-            else -> requireContext().accentOrangeColor
+            Wallet.Type.Watch -> requireContext().accentOrangeColor
+            else -> requireContext().backgroundContentTintColor
         }
         navigation?.toast(getString(Localization.copied), color)
         context?.copyToClipboard(args.address)

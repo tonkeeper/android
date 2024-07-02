@@ -3,6 +3,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven("https://jitpack.io")
     }
 }
 dependencyResolutionManagement {
@@ -10,6 +11,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")
     }
 }
 
@@ -40,6 +42,7 @@ include(":lib:icu")
 include(":lib:emoji")
 include(":lib:blockchain")
 include(":lib:sqlite")
+include(":lib:ledger")
 
 include(":apps:wallet:instance:app")
 include(":apps:wallet:instance:main")

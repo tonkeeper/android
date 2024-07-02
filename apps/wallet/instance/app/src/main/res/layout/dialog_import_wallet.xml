@@ -53,9 +53,20 @@
         android:id="@+id/signer_wallet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="@dimen/offsetMedium"
+        android:layout_marginTop="@dimen/offsetMedium"
         android:icon="@drawable/ic_globe_28"
         android:title="@string/signer_wallet"
-        android:subtitle="@string/signer_wallet_subtitle"/>
+        android:subtitle="@string/signer_wallet_subtitle">
+
+    </uikit.widget.ActionCellView>
+
+    <uikit.widget.ActionCellView
+        android:id="@+id/ledger_wallet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="@dimen/offsetMedium"
+        android:icon="@drawable/ic_ledger_28"
+        android:subtitle="@string/ledger_subtitle"
+        android:title="@string/ledger_title" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

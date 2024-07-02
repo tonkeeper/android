@@ -42,6 +42,7 @@ include(":lib:icu")
 include(":lib:emoji")
 include(":lib:blockchain")
 include(":lib:sqlite")
+include(":lib:ledger")
 
 include(":apps:wallet:instance:app")
 include(":apps:wallet:instance:main")
@@ -62,4 +63,5 @@ include(":apps:wallet:data:browser")
 include(":apps:wallet:data:backup")
 include(":apps:wallet:data:rn")
 include(":apps:wallet:data:passcode")
-include(":lib:ledger")
+
+

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/itemHeight">
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/loadable_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textAppearance="@style/TextAppearance.Label1"/>
+    
+    <uikit.widget.LoaderView
+        android:id="@+id/loadable_loader"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:color="@color/constantWhite"
+        android:visibility="gone"/>
+
+</FrameLayout>

@@ -73,7 +73,7 @@
             android:layout_width="8dp"
             android:layout_height="wrap_content" />
 
-        <Button
+        <uikit.widget.LoadableButton
             android:id="@+id/continue_button"
             style="@style/Widget.App.Button"
             android:layout_width="match_parent"

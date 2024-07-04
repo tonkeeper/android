@@ -19,6 +19,7 @@ import com.ledger.live.ble.BleManagerFactory
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ble.BleTransport
@@ -60,7 +61,6 @@ import uikit.extensions.context
 
 class LedgerConnectionViewModel(
     app: Application,
-    private val scope: CoroutineScope,
     private val accountRepository: AccountRepository,
     private val tokenRepository: TokenRepository,
     private val collectiblesRepository: CollectiblesRepository,
@@ -76,25 +76,10 @@ class LedgerConnectionViewModel(
     private var _connectedDevice: ConnectedDevice? = null
     private var _tonTransport: TonTransport? = null
 
-    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        arrayOf(
-            Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.BLUETOOTH_CONNECT
-        )
-    } else {
-        arrayOf(
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-    }
+    private val _connectionState = MutableEffectFlow<ConnectionState>()
 
-    private val _connectionState: MutableSharedFlow<ConnectionState> =
-        MutableSharedFlow(replay = 1, extraBufferCapacity = 1)
-
-    private val _eventFlow =
-        MutableSharedFlow<LedgerEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
+    private val _eventFlow = MutableEffectFlow<LedgerEvent>()
+    val eventFlow = _eventFlow.asSharedFlow()
 
     val currentStepFlow = _connectionState.map { state ->
         when (state) {
@@ -163,20 +148,6 @@ class LedgerConnectionViewModel(
         _tonTransport = transport
 
         _eventFlow.tryEmit(LedgerEvent.Ready(_tonTransport != null))
-    }
-
-    fun isPermissionGranted(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.BLUETOOTH_SCAN,
-            ) == PermissionChecker.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.BLUETOOTH_CONNECT,
-            ) == PermissionChecker.PERMISSION_GRANTED
-        } else {
-            true
-        }
     }
 
     fun scanOrConnect() {
@@ -255,15 +226,16 @@ class LedgerConnectionViewModel(
                 accounts.add(account)
             }
 
-            val ledgerConnectData =
-                LedgerConnectData(accounts, _connectedDevice!!.deviceId, _connectedDevice!!.model)
+            val ledgerConnectData = LedgerConnectData(
+                accounts = accounts,
+                deviceId = _connectedDevice!!.deviceId,
+                model = _connectedDevice!!.model
+            )
 
-            scope.launch(Dispatchers.IO) {
-                try {
-                    resolveWallets(ledgerConnectData)
-                } catch (e: Exception) {
-                    _eventFlow.tryEmit(LedgerEvent.Loading(false))
-                }
+            try {
+                resolveWallets(ledgerConnectData)
+            } catch (e: Exception) {
+                _eventFlow.tryEmit(LedgerEvent.Loading(false))
             }
         } catch (e: Exception) {
             _eventFlow.tryEmit(LedgerEvent.Error(context.getString(Localization.error)))

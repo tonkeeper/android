@@ -111,4 +111,8 @@
     <declare-styleable name="SimpleRecyclerView">
         <attr name="android:maxHeight" format="dimension|reference"/>
     </declare-styleable>
+
+    <declare-styleable name="LoadableButton">
+        <attr name="android:text" format="string|reference"/>
+    </declare-styleable>
 </resources>

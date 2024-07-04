@@ -1,10 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.ledger.steps
 
+import android.Manifest
 import android.animation.ObjectAnimator
 import android.bluetooth.BluetoothAdapter
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.TypedValue
@@ -15,6 +17,8 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Adapter
@@ -23,8 +27,11 @@ import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
+import uikit.extensions.context
+import uikit.extensions.dp
+import uikit.extensions.hasPermission
 
-class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
+class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -133,15 +140,19 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
     }
 
     private fun checkPermissionsAndScan() {
-        if (connectionViewModel.isPermissionGranted()) {
+        if (isPermissionGranted()) {
             connectionViewModel.scanOrConnect()
         } else {
-            requestPermissionLauncher.launch(connectionViewModel.permissions)
+            requestPermissionLauncher.launch(blePermissions)
         }
     }
 
-    private fun dpToPx(dp: Float): Float {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, resources.displayMetrics)
+    private fun isPermissionGranted(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            hasPermission(Manifest.permission.BLUETOOTH_SCAN) && hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            hasPermission(Manifest.permission.BLUETOOTH) && hasPermission(Manifest.permission.BLUETOOTH_ADMIN) && hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 
     private fun animateView(currentStep: LedgerStep) {
@@ -162,7 +173,7 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
             displayFadeAnim.start()
 
             val translationX = ObjectAnimator.ofFloat(
-                ledgerView, "translationX", ledgerView.translationX, dpToPx(24f)
+                ledgerView, "translationX", ledgerView.translationX, 24f.dp
             )
             translationX.duration = 300
             translationX.startDelay = 200
@@ -183,7 +194,7 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
             displayFadeAnim.start()
 
             val translationX = ObjectAnimator.ofFloat(
-                ledgerView, "translationX", ledgerView.translationX, dpToPx(-42f)
+                ledgerView, "translationX", ledgerView.translationX, (-42f).dp
             )
             translationX.duration = 350
             translationX.interpolator = interpolator
@@ -192,6 +203,20 @@ class LedgerConnectionFragment() : Fragment(R.layout.fragment_ledger_steps) {
     }
 
     companion object {
+
+        private val blePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT
+            )
+        } else {
+            arrayOf(
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        }
+
         fun newInstance(): LedgerConnectionFragment {
             return LedgerConnectionFragment()
         }

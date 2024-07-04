@@ -96,5 +96,5 @@ val koinModel = module {
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
     viewModel { StakingViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get()) }
 }

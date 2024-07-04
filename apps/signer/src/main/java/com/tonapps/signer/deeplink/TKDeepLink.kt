@@ -12,7 +12,7 @@ import org.ton.api.pub.PublicKeyEd25519
 
 object TKDeepLink {
 
-    private const val STORE_LINK = "https://play.google.com/store/apps/details?id=com.tonapps.tonkeeperx"
+    private const val STORE_LINK = "https://play.google.com/store/apps/details?id=com.ton_keeper"
     private const val APP_SCHEME = "tonkeeper"
 
     fun buildPublishUri(signature: ByteArray): Uri {
@@ -56,6 +56,7 @@ object TKDeepLink {
 
     private fun openUri(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.setPackage("com.ton_keeper")
         open(context, intent)
     }
 

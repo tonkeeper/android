@@ -10,12 +10,14 @@ import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerEvent
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.widget.LoadableButton
 
 class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragment.Modal {
 
@@ -27,7 +29,7 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
         LedgerConnectionFragment.newInstance()
     }
 
-    private lateinit var continueButton: Button
+    private lateinit var continueButton: LoadableButton
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -37,7 +39,7 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
         view.findViewById<View>(R.id.close).setOnClickListener { finish() }
         view.findViewById<View>(R.id.cancel).setOnClickListener { finish() }
         continueButton.setOnClickListener {
-            lifecycleScope.launch { connectionViewModel.getConnectData() }
+            lifecycleScope.launch(Dispatchers.IO) { connectionViewModel.getConnectData() }
         }
 
         if (savedInstanceState == null) {
@@ -54,7 +56,7 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
                 continueButton.isEnabled = event.isReady
             }
             is LedgerEvent.Loading -> {
-                continueButton.isEnabled = !event.loading
+                continueButton.isLoading = event.loading
             }
             is LedgerEvent.Error -> {
                 navigation?.toast(event.message)
@@ -63,13 +65,13 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
                 rootViewModel.connectLedger(event.connectData, event.accounts)
                 finish()
             }
-            else -> null
+            else -> { }
         }
     }
 
     companion object {
-        fun newInstance(
-        ): PairLedgerScreen {
+
+        fun newInstance(): PairLedgerScreen {
             return PairLedgerScreen()
         }
     }

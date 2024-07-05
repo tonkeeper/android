@@ -21,13 +21,21 @@
         android:title="@string/recovery_phrase"
         android:description="@string/recovery_phrase_subtitle"/>
 
-    <uikit.widget.PhraseWords
-        android:id="@+id/phrase_words"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginTop="@dimen/offsetMedium"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center">
+
+        <uikit.widget.PhraseWords
+            android:id="@+id/phrase_words"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:layout_gravity="center"/>
+    </androidx.core.widget.NestedScrollView>
 
     <Button
         style="@style/Widget.App.Button.Secondary"

@@ -5,4 +5,8 @@ import com.tonapps.ledger.devices.DeviceModel
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class LedgerConnectData(val accounts: List<LedgerAccount>, val deviceId: String, val model: DeviceModel): Parcelable
+data class LedgerConnectData(
+    val accounts: List<LedgerAccount>,
+    val deviceId: String,
+    val model: DeviceModel
+): Parcelable

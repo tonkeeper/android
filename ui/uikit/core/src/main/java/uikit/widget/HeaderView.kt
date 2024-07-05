@@ -48,7 +48,7 @@ open class HeaderView @JvmOverloads constructor(
 
     private val drawable = HeaderDrawable(context)
     private val subtitleContainerView: View
-    private val subtitleView: AppCompatTextView
+    val subtitleView: AppCompatTextView
     private val loaderView: LoaderView
     private val textView: View
 
@@ -158,12 +158,14 @@ open class HeaderView @JvmOverloads constructor(
 
     fun setUpdating(@StringRes textResId: Int) {
         setSubtitle(textResId)
+        loaderView.visibility = View.VISIBLE
         loaderView.startAnimation()
     }
 
     fun setDefault() {
         withAnimation(duration = ANIMATION_DURATION) {
             subtitleContainerView.visibility = View.GONE
+            loaderView.visibility = View.GONE
             loaderView.stopAnimation()
         }
     }

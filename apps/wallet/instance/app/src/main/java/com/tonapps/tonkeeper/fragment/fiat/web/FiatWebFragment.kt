@@ -7,6 +7,7 @@ import android.webkit.WebView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.fiat.models.FiatSuccessUrlPattern
 import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.koin.fiat
@@ -80,6 +81,7 @@ class FiatWebFragment: BaseFragment(R.layout.fragment_web_fiat) {
                 val regexp = Regex(successUrlPattern, RegexOption.IGNORE_CASE)
 
                 regexp.find(url ?: "")?.groupValues ?: return
+                AnalyticsHelper.trackEvent("buy_crypto")
                 finish()
             }
         }

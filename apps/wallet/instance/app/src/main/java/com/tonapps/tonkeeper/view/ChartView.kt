@@ -90,8 +90,8 @@ class ChartView @JvmOverloads constructor(
     }
 
     private fun buildDefaultPath(points: MutableList<PointF>, viewHeight: Float) {
-        val firstPoint = points.removeFirst()
-        val lastPoint = points.removeLast()
+        val firstPoint = points.removeFirstOrNull() ?: return
+        val lastPoint = points.removeLastOrNull() ?: return
 
         path.moveTo(firstPoint.x - linePaint.strokeWidth, firstPoint.y)
         for (point in points) {

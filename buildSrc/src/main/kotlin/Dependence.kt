@@ -5,6 +5,10 @@ object Dependence {
     const val guava = "com.google.guava:guava:33.1.0-android"
     const val zxing = "com.google.zxing:core:3.5.3"
 
+    object Analytics {
+        const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"
+    }
+
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
         const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.0"

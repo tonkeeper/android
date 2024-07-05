@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
@@ -88,7 +89,7 @@ class BalanceHolder(
             backupIconView.visibility = View.GONE
         }
 
-        setWalletType(item.walletType)
+        setWalletType(item.walletType, item.walletVersion == WalletVersion.V5R1)
         setWalletState(item.status, item.address, item.walletType)
     }
 
@@ -123,7 +124,16 @@ class BalanceHolder(
         }
     }
 
-    private fun setWalletType(type: Wallet.Type) {
+    private fun setWalletType(type: Wallet.Type, w5: Boolean) {
+        if (w5) {
+            val color = context.accentGreenColor
+            walletTypeView.visibility = View.VISIBLE
+            walletTypeView.setTextColor(color)
+            walletTypeView.backgroundTintList = color.withAlpha(.16f).stateList
+            walletTypeView.setText(Localization.w5beta)
+            return
+        }
+
         val resId = when (type) {
             Wallet.Type.Watch -> Localization.watch_only
             Wallet.Type.Testnet -> Localization.testnet

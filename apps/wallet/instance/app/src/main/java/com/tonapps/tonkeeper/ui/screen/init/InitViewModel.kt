@@ -20,6 +20,7 @@ import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -402,6 +403,8 @@ class InitViewModel(
         val label = getLabel()
         val wallet = accountRepository.addNewWallet(label, mnemonic)
         saveMnemonic(context, listOf(wallet.id), mnemonic)
+        AnalyticsHelper.trackEvent("generate_wallet")
+        AnalyticsHelper.trackEvent("create_wallet")
         return wallet
     }
 
@@ -411,6 +414,7 @@ class InitViewModel(
         val label = getLabel()
         val wallets = accountRepository.importWallet(label, mnemonic, versions, testnet)
         saveMnemonic(context, wallets.map { it.id }, mnemonic)
+        AnalyticsHelper.trackEvent("import_wallet")
         return wallets
     }
 

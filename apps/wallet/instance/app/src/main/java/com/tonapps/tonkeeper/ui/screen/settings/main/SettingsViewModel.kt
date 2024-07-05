@@ -4,6 +4,12 @@ import android.app.Application
 import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletV5R1Contract
+import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -49,15 +55,28 @@ class SettingsViewModel(
     }
 
     fun signOut() {
+        AnalyticsHelper.trackEvent("delete_wallet")
         accountRepository.deleteSelected()
     }
 
-    private fun buildUiItems(
+    private suspend fun hasW5(wallet: WalletEntity): Boolean {
+        if (wallet.version == WalletVersion.V5R1) {
+            return true
+        } else if (wallet.type == Wallet.Type.Watch || wallet.type == Wallet.Type.Lockup || wallet.type == Wallet.Type.Ledger) {
+            return true
+        }
+        val w5Contact = BaseWalletContract.create(wallet.publicKey, "v5r1", wallet.testnet)
+        val accountId = w5Contact.address.toAccountId()
+        return accountRepository.getWalletByAccountId(accountId, wallet.testnet) != null
+    }
+
+    private suspend fun buildUiItems(
         wallet: WalletEntity,
         currency: WalletCurrency,
         language: Language,
         searchEngine: SearchEngine
     ) {
+        val hasW5 = hasW5(wallet)
         val uiItems = mutableListOf<Item>()
         uiItems.add(Item.Account(wallet))
 
@@ -78,6 +97,9 @@ class SettingsViewModel(
         }.capitalized, ListCell.Position.MIDDLE))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             uiItems.add(Item.Widget(ListCell.Position.MIDDLE))
+        }
+        if (!hasW5) {
+            uiItems.add(Item.W5(ListCell.Position.MIDDLE))
         }
         uiItems.add(Item.Theme(ListCell.Position.LAST))
 

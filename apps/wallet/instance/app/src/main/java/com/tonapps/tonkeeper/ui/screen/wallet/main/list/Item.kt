@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.Coins
 import com.tonapps.extensions.readArrayCompat
 import com.tonapps.extensions.readBooleanCompat
@@ -32,6 +33,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         const val TYPE_PUSH = 5
         const val TYPE_TITLE = 6
         const val TYPE_MANAGE = 7
+        const val TYPE_ALERT = 8
 
         fun createFromParcel(parcel: Parcel): Item {
             return when (parcel.readInt()) {
@@ -73,10 +75,40 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         return 0
     }
 
+    data class Alert(
+        val title: String,
+        val message: String,
+        val buttonTitle: String?,
+        val buttonUrl: String?,
+    ): Item(TYPE_ALERT) {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readString()!!,
+            parcel.readString()!!,
+            parcel.readString(),
+            parcel.readString()
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeString(title)
+            dest.writeString(message)
+            dest.writeString(buttonTitle)
+            dest.writeString(buttonUrl)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Alert> {
+            override fun createFromParcel(parcel: Parcel) = Alert(parcel)
+
+            override fun newArray(size: Int): Array<Alert?> = arrayOfNulls(size)
+        }
+
+    }
+
     data class Balance(
         val balance: CharSequence,
         val address: String,
         val walletType: Wallet.Type,
+        val walletVersion: WalletVersion,
         val status: Status,
         val hiddenBalance: Boolean,
         val hasBackup: Boolean,
@@ -87,6 +119,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readString()!!,
             parcel.readString()!!,
             parcel.readEnum(Wallet.Type::class.java)!!,
+            parcel.readEnum(WalletVersion::class.java)!!,
             parcel.readEnum(Status::class.java)!!,
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
@@ -97,6 +130,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeString(balance.toString())
             dest.writeString(address)
             dest.writeEnum(walletType)
+            dest.writeEnum(walletVersion)
             dest.writeEnum(status)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(hasBackup)

@@ -32,6 +32,7 @@ import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
+import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
 
 // TODO request refactoring
@@ -215,6 +216,7 @@ class HistoryHelper(
                 isOut = isOut,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
+                unverifiedToken = jettonPreview.verification != JettonVerificationType.whitelist
             )
         } else if (action.jettonTransfer != null) {
             val jettonTransfer = action.jettonTransfer!!
@@ -262,7 +264,8 @@ class HistoryHelper(
                 addressName = accountAddress?.name,
                 currency = CurrencyFormatter.format(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                cipherText = action.tonTransfer?.encryptedComment?.cipherText
+                cipherText = action.tonTransfer?.encryptedComment?.cipherText,
+                unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist
             )
         } else if (action.tonTransfer != null) {
             val tonTransfer = action.tonTransfer!!
@@ -427,6 +430,7 @@ class HistoryHelper(
                 date = date,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
+                unverifiedToken = jettonMint.jetton.verification != JettonVerificationType.whitelist
             )
         } else if (action.withdrawStakeRequest != null) {
             val withdrawStakeRequest = action.withdrawStakeRequest!!
@@ -555,6 +559,7 @@ class HistoryHelper(
                 date = date,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
+                unverifiedToken = jettonBurn.jetton.verification != JettonVerificationType.whitelist
             )
         } else if (action.unSubscribe != null) {
             val unsubscribe = action.unSubscribe!!
@@ -616,6 +621,6 @@ class HistoryHelper(
         timestamp = timestamp,
         date = date,
         isOut = false,
-        failed = action.status == Action.Status.failed,
+        failed = action.status == Action.Status.failed
     )
 }

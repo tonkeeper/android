@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main.list
 
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.ActionsHolder
+import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.AlertHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.BalanceHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.ManageHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.PushHolder
@@ -31,6 +32,7 @@ class WalletAdapter(
             Item.TYPE_PUSH -> PushHolder(parent)
             Item.TYPE_TITLE -> TitleHolder(parent)
             Item.TYPE_MANAGE -> ManageHolder(parent)
+            Item.TYPE_ALERT -> AlertHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

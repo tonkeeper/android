@@ -53,6 +53,7 @@ class HistoryActionHolder(
     private val amount2View = findViewById<AppCompatTextView>(R.id.amount2)
     private val dateView = findViewById<AppCompatTextView>(R.id.date)
     private val warningView = findViewById<AppCompatTextView>(R.id.warning)
+    private val unverifiedTokenView = findViewById<AppCompatTextView>(R.id.unverified_token)
 
     private val nftView = findViewById<View>(R.id.nft)
     private val nftIconView = findViewById<FrescoView>(R.id.nft_icon)
@@ -66,6 +67,12 @@ class HistoryActionHolder(
 
     override fun onBind(item: HistoryItem.Event) {
         commentView.clearDrawables()
+
+        unverifiedTokenView.visibility = if (item.unverifiedToken) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         if (!disableOpenAction) {
             itemView.setOnClickListener { TransactionDialog.open(context, item) }

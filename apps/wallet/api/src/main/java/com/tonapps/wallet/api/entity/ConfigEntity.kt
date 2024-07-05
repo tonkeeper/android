@@ -23,7 +23,9 @@ data class ConfigEntity(
     val tonApiV2Key: String,
     val featuredPlayInterval: Int,
     val flags: FlagsEntity,
-    val faqUrl: String
+    val faqUrl: String,
+    val aptabaseEndpoint: String,
+    val aptabaseAppKey: String,
 ): Parcelable {
 
     val swapUri: Uri
@@ -49,7 +51,9 @@ data class ConfigEntity(
         } else {
             FlagsEntity(json.getJSONObject("flags"))
         },
-        faqUrl = json.getString("faq_url")
+        faqUrl = json.getString("faq_url"),
+        aptabaseEndpoint = json.getString("aptabaseEndpoint"),
+        aptabaseAppKey = json.getString("aptabaseAppKey")
     )
 
     constructor() : this(
@@ -68,7 +72,9 @@ data class ConfigEntity(
         tonApiV2Key = "",
         featuredPlayInterval = 3000,
         flags = FlagsEntity(),
-        faqUrl = "https://tonkeeper.helpscoutdocs.com/"
+        faqUrl = "https://tonkeeper.helpscoutdocs.com/",
+        aptabaseEndpoint = "https://anonymous-analytics.tonkeeper.com",
+        aptabaseAppKey = "A-SH-4314447490",
     )
 
     companion object {

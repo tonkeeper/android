@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeScreen
+import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.localization.Localization
@@ -63,6 +64,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             is Item.News -> navigation?.openURL(item.url, true)
             is Item.Support -> navigation?.openURL(item.url, true)
             is Item.Contact -> navigation?.openURL(item.url, true)
+            is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance())
             is Item.Logout -> signOut()
             is Item.SearchEngine -> searchPicker(item)
             is Item.DeleteWatchAccount -> deleteWatchAccount()

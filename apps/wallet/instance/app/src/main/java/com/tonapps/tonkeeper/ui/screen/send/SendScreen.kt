@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.signer.SingerResultContract
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
@@ -69,6 +70,11 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private lateinit var reviewRecipientCommentView: TransactionDetailView
     private lateinit var reviewSubtitleView: AppCompatTextView
     private lateinit var convertedContainerView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.trackEvent("send_open")
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

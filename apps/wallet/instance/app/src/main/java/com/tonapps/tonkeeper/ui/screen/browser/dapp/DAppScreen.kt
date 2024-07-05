@@ -14,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -72,6 +73,11 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             super.onPageFinished(view, url)
             refreshView.isRefreshing = false
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.trackEventClickDApp(args.url)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -18,6 +18,7 @@ import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
+import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.core.entity.SignRequestEntity

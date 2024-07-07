@@ -17,7 +17,7 @@ android {
         applicationId = "com.ton_keeper"
         minSdk = 27 // Build.minSdkVersion
         targetSdk = 34
-        versionCode = 602
+        versionCode = 600
         versionName = "4.7.2-x"
     }
 

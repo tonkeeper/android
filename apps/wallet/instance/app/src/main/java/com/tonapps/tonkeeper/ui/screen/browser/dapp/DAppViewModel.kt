@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository

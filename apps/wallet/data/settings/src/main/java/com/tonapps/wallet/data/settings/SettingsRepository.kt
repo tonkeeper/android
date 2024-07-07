@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // TODO need to be refactored
 class SettingsRepository(
@@ -201,6 +202,10 @@ class SettingsRepository(
             }
         }
 
+    fun isPurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.isPurchaseOpenConfirm(walletId, id)
+
+    fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
+
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
     fun setPushWallet(walletId: String, value: Boolean) {
@@ -211,8 +216,13 @@ class SettingsRepository(
         _walletPush.tryEmit(map)
     }
 
-    fun setTokenHidden(walletId: String, tokenAddress: String, hidden: Boolean) {
+    suspend fun setTokenHidden(
+        walletId: String,
+        tokenAddress: String,
+        hidden: Boolean
+    ) = withContext(Dispatchers.IO) {
         tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
+        rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
     }
 
     fun setTokenPinned(walletId: String, tokenAddress: String, pinned: Boolean) {
@@ -229,8 +239,14 @@ class SettingsRepository(
 
     fun getWalletPrefs(walletId: String) = walletPrefsFolder.get(walletId)
 
-    fun getTokenPrefs(walletId: String, tokenAddress: String): TokenPrefsEntity {
-        return tokenPrefsFolder.get(walletId, tokenAddress)
+    suspend fun getTokenPrefs(
+        walletId: String,
+        tokenAddress: String
+    ): TokenPrefsEntity = withContext(Dispatchers.IO) {
+        val token = tokenPrefsFolder.get(walletId, tokenAddress)
+        token.copy(
+            hidden = rnLegacy.isHiddenToken(walletId, tokenAddress)
+        )
     }
 
     init {

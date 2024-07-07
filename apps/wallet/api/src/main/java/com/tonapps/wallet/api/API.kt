@@ -416,8 +416,8 @@ class API(
         return internalApi.getBrowserApps(testnet)
     }
 
-    fun getFiatMethods(): JSONObject {
-        return internalApi.getFiatMethods()
+    fun getFiatMethods(testnet: Boolean): JSONObject {
+        return internalApi.getFiatMethods(testnet)
     }
 
     fun getTransactionEvents(accountId: String, testnet: Boolean, eventId: String): AccountEvent? {
@@ -461,7 +461,10 @@ class API(
 
         const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"
 
-        val JSON = Json { prettyPrint = true }
+        val JSON = Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+        }
 
         private val socketFactoryTcpNoDelay = SSLSocketFactoryTcpNoDelay()
 

@@ -2,11 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
 import android.view.View
 import android.view.ViewGroup
-import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.openCamera
+import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.SendScreen
-import com.tonapps.tonkeeper.ui.screen.staking.main.StakeScreen
+import com.tonapps.tonkeeper.ui.screen.staking.stake.main.StakeScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
@@ -26,7 +26,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
 
     init {
         sendView.setOnClickListener { navigation?.add(SendScreen.newInstance()) }
-        buyOrSellView.setOnClickListener { FiatDialog.open(context) }
+        buyOrSellView.setOnClickListener { navigation?.add(PurchaseScreen.newInstance()) }
         scanView.setOnClickListener { navigation?.openCamera() }
         stakeView.setOnClickListener { navigation?.add(StakeScreen.newInstance()) }
     }

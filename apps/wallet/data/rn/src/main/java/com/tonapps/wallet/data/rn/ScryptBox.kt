@@ -23,7 +23,7 @@ internal object ScryptBox {
     fun encrypt(passcode: String, value: String): SeedState {
         val salt = Security.randomBytes(32)
         val passcodeHash = passcodeHash(passcode, salt)
-        val nonce = salt.sliceArray(0 until 24)
+        val nonce = salt.copyOfRange(0, 24)
         val clearText = Sodium.cryptoSecretbox(
             text = value.toByteArray(),
             nonce = nonce,
@@ -42,7 +42,7 @@ internal object ScryptBox {
         }
         val salt = state.salt.hex()
         val passcodeHash = passcodeHash(passcode, salt)
-        val nonce = salt.sliceArray(0 until 24)
+        val nonce = salt.copyOfRange(0, 24)
         val clearText = state.ct.hex()
         val pt = Sodium.cryptoSecretboxOpen(clearText, nonce, passcodeHash) ?: throw Exception("cryptoSecretboxOpen failed")
         return pt.decodeToString()

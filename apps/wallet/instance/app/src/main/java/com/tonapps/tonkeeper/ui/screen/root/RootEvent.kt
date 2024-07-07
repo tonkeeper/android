@@ -4,6 +4,7 @@ import android.net.Uri
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
+import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -17,10 +18,8 @@ sealed class RootEvent {
         val to: String?
     ): RootEvent()
 
-    data object BuyOrSell: RootEvent()
-
-    data class BuyOrSellDirect(
-        val name: String
+    data class BuyOrSell(
+        val methodEntity: PurchaseMethodEntity? = null
     ): RootEvent()
 
     data class Singer(

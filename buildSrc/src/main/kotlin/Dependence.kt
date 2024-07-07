@@ -132,6 +132,7 @@ object Dependence {
             const val rn = ":apps:wallet:data:rn"
             const val passcode = ":apps:wallet:data:passcode"
             const val staking = ":apps:wallet:data:staking"
+            const val purchase = ":apps:wallet:data:purchase"
         }
 
     }

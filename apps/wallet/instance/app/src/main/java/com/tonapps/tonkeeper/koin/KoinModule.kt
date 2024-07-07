@@ -1,8 +1,6 @@
 package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
-import com.tonapps.tonkeeper.api.internal.repositories.FiatMethodsRepository
-import com.tonapps.tonkeeper.core.fiat.Fiat
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -18,6 +16,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
+import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentViewModel
@@ -36,7 +35,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
-import com.tonapps.tonkeeper.ui.screen.staking.StakingViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
@@ -57,8 +56,6 @@ val koinModel = module {
     single { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get(), get(), get()) }
-    single { FiatMethodsRepository(get(), get()) }
-    single { Fiat(get(), get(), get()) }
 
     uiAdapter { WalletAdapter(get()) }
     uiAdapter { WalletPickerAdapter() }
@@ -66,7 +63,7 @@ val koinModel = module {
     viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> InitViewModel(get(), parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
-    viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(get(), get()) }
     viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
@@ -97,4 +94,5 @@ val koinModel = module {
     viewModel { CountryPickerViewModel(get(), get(), get()) }
     viewModel { StakingViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { PurchaseViewModel(get(), get(), get()) }
 }

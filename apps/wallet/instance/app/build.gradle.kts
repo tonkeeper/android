@@ -52,6 +52,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.rn))
     implementation(project(Dependence.Wallet.Data.passcode))
     implementation(project(Dependence.Wallet.Data.staking))
+    implementation(project(Dependence.Wallet.Data.purchase))
 
     implementation(project(Dependence.UIKit.core))
 

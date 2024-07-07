@@ -65,6 +65,35 @@ class RNLegacy(context: Context) {
         seedStorage.setActivity(activity)
     }
 
+    fun setTokenHidden(
+        walletId: String,
+        tokenAddress: String,
+        hidden: Boolean
+    ) {
+        val key = "${walletId}/tokenApproval"
+        val json = sql.getJSONObject(key)?.getJSONObject("tokens") ?: JSONObject()
+        if (hidden) {
+            json.put(tokenAddress, JSONObject().apply {
+                put("current", "declined")
+                put("updated_at", System.currentTimeMillis())
+            })
+        } else {
+            json.remove(tokenAddress)
+        }
+        sql.setJSONObject(key, JSONObject().apply {
+            put("tokens", json)
+        })
+    }
+
+    fun isHiddenToken(walletId: String, tokenAddress: String): Boolean {
+        if (tokenAddress.equals("TON", ignoreCase = true)) {
+            return false
+        }
+        val tokens = sql.getJSONObject("${walletId}/tokenApproval")?.getJSONObject("tokens") ?: return false
+        val json = tokens.optJSONObject(tokenAddress) ?: return false
+        return json.optString("current") == "declined"
+    }
+
     suspend fun getWallets(): RNWallets {
         return cacheWallets?.copy() ?: loadWallets().also { cacheWallets = it.copy() }
     }

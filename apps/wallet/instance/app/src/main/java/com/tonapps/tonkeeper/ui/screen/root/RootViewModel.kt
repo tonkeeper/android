@@ -37,6 +37,7 @@ import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
@@ -86,7 +87,8 @@ class RootViewModel(
     private val screenCacheSource: ScreenCacheSource,
     private val walletAdapter: WalletAdapter,
     private val walletPickerAdapter: WalletPickerAdapter,
-    private val tokenRepository: TokenRepository
+    private val tokenRepository: TokenRepository,
+    private val purchaseRepository: PurchaseRepository
 ): AndroidViewModel(application) {
 
     data class Passcode(
@@ -354,10 +356,11 @@ class RootViewModel(
             val tt = uri.getQueryParameter("tt")
             _eventFlow.tryEmit(RootEvent.Swap(api.config.swapUri, wallet.address, ft, tt))
         } else if (uri.path?.startsWith("/buy-ton") == true || uri.path == "/exchange" || uri.path == "/exchange/") {
-            _eventFlow.tryEmit(RootEvent.BuyOrSell)
+            _eventFlow.tryEmit(RootEvent.BuyOrSell())
         } else if (uri.path?.startsWith("/exchange") == true) {
             val name = uri.pathSegments.lastOrNull() ?: return
-            _eventFlow.tryEmit(RootEvent.BuyOrSellDirect(name))
+            val method = purchaseRepository.getMethod(name, wallet.testnet)
+            _eventFlow.tryEmit(RootEvent.BuyOrSell(method))
         } else {
             toast(Localization.invalid_link)
         }

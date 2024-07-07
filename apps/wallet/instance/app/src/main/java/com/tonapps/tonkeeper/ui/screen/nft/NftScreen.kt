@@ -11,6 +11,7 @@ import androidx.core.widget.NestedScrollView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.send.SendScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
@@ -87,6 +88,23 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
             navigation?.add(SendScreen.newInstance(nftAddress = nftEntity.address))
         }
 
+        val domainLinkButton = view.findViewById<Button>(R.id.domain_link)
+        val domainRenewButton = view.findViewById<Button>(R.id.domain_renew)
+
+        if (nftEntity.isDomain) {
+            domainLinkButton.setOnClickListener {
+                navigation?.add(DAppScreen.newInstance(url = "https://dns.ton.org/"))
+                finish()
+            }
+            domainRenewButton.setOnClickListener {
+                navigation?.add(DAppScreen.newInstance(url = "https://dns.ton.org/"))
+                finish()
+            }
+        } else {
+            domainLinkButton.visibility = View.GONE
+            domainRenewButton.visibility = View.GONE
+        }
+
         val buttonsContainer = view.findViewById<ColumnLayout>(R.id.buttons_container)
         if (nftEntity.metadata.buttons.isEmpty()) {
             buttonsContainer.visibility = View.GONE
@@ -96,7 +114,7 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
                 val buttonView = context?.inflate(R.layout.view_nft_button, null) as Button
                 buttonView.text = button.label
                 buttonView.setOnClickListener {
-                    navigation?.add(WebScreen.newInstance(button.uri))
+                    navigation?.add(DAppScreen.newInstance(url = button.uri))
                     finish()
                 }
                 buttonsContainer.addView(buttonView, ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {

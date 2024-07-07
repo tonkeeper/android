@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.os.SystemClock
 import com.tonapps.sqlite.SQLiteHelper
 import org.json.JSONObject
+import java.util.concurrent.ConcurrentHashMap
 
 internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DATABASE_VERSION) {
 
@@ -17,6 +18,8 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
         private const val KV_TABLE_VALUE_COLUMN = "value"
     }
 
+    private val lruCache = ConcurrentHashMap<String, String>(10, 1.0f, 2)
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $KV_TABLE_NAME ($KV_TABLE_KEY_COLUMN TEXT PRIMARY KEY, $KV_TABLE_VALUE_COLUMN TEXT NOT NULL);")
     }
@@ -27,7 +30,15 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
     }
 
     fun getValue(key: String): String? {
-        return getValue(key, 0)
+        val memoryValue = lruCache[key]
+        if (memoryValue == null) {
+            val value = getValue(key, 0)
+            if (value != null) {
+                lruCache[key] = value
+            }
+            return value
+        }
+        return memoryValue
     }
 
     private fun getValue(key: String, attempt: Int = 0): String? {
@@ -49,6 +60,7 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
 
     fun setValue(key: String, value: String) {
         setValue(key, value, 0)
+        lruCache[key] = value
     }
 
     private fun setValue(key: String, value: String, attempt: Int = 0) {

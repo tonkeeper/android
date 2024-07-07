@@ -11,12 +11,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.dialog.TransactionDialog
-import com.tonapps.tonkeeper.dialog.fiat.FiatDialog
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
+import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
@@ -39,10 +40,6 @@ class RootActivity: NavigationActivity() {
 
     private val rootViewModel: RootViewModel by viewModel()
     private val legacyRN: RNLegacy by inject()
-
-    val fiatDialog: FiatDialog by lazy {
-        FiatDialog(this, lifecycleScope)
-    }
 
     val transactionDialog: TransactionDialog by lazy {
         TransactionDialog(this, lifecycleScope)
@@ -149,8 +146,13 @@ class RootActivity: NavigationActivity() {
             is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
             // is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))
             is RootEvent.Transaction -> TransactionDialog.open(this, event.event)
-            is RootEvent.BuyOrSell -> fiatDialog.show()
-            is RootEvent.BuyOrSellDirect -> fiatDialog.openDirect(event.name)
+            is RootEvent.BuyOrSell -> {
+                if (event.methodEntity == null) {
+                    add(PurchaseScreen.newInstance())
+                } else {
+                    add(PurchaseWebScreen.newInstance(event.methodEntity))
+                }
+            }
             else -> { }
         }
     }

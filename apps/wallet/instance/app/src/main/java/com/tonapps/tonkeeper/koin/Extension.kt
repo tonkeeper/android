@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.koin
 
 import android.content.Context
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.core.fiat.Fiat
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -37,6 +36,3 @@ val Context.settingsRepository: SettingsRepository?
 
 val Context.tonConnectRepository: TonConnectRepository?
     get() = koin?.get<TonConnectRepository>()
-
-val Context.fiat: Fiat
-    get() = koin?.get<Fiat>() ?: throw IllegalStateException("Fiat is not initialized")

@@ -49,8 +49,8 @@ internal class InternalApi(
         return data.getJSONObject("data")
     }
 
-    fun getFiatMethods(): JSONObject {
-        val data = request("fiat/methods", false, "mobile", "4.4.0")
+    fun getFiatMethods(testnet: Boolean = false): JSONObject {
+        val data = request("fiat/methods", testnet)
         return data.getJSONObject("data")
     }
 

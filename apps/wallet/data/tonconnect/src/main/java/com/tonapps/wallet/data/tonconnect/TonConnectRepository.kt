@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.tonconnect
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.base64
@@ -159,9 +160,9 @@ class TonConnectRepository(
     }
 
     fun getApp(url: String, wallet: WalletEntity): DAppEntity? {
-        val apps = localDataSource.getApps()
+        val apps = localDataSource.getApps().filter { it.walletId == wallet.id }
         return apps.find {
-            it.url.startsWith(url) && it.walletId == wallet.id
+            Uri.parse(it.url).host == Uri.parse(url).host
         }
     }
 

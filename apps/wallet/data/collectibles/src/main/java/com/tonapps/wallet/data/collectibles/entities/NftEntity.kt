@@ -17,7 +17,8 @@ data class NftEntity(
     val previews: List<NftPreviewEntity>,
     val testnet: Boolean,
     val verified: Boolean,
-    val inSale: Boolean
+    val inSale: Boolean,
+    val dns: String?,
 ): Parcelable {
 
     val id: String
@@ -37,6 +38,9 @@ data class NftEntity(
 
     val collectionDescription: String
         get() = collection?.description ?: ""
+
+    val isDomain: Boolean
+        get() = dns != null
 
     val thumbUri: Uri by lazy {
         getImageUri(64, 320) ?: previews.first().url.let { Uri.parse(it) }
@@ -74,6 +78,7 @@ data class NftEntity(
         previews = item.previews?.map { NftPreviewEntity(it) } ?: emptyList(),
         testnet = testnet,
         verified = item.approvedBy.isNotEmpty(),
-        inSale = item.sale != null
+        inSale = item.sale != null,
+        dns = item.dns
     )
 }

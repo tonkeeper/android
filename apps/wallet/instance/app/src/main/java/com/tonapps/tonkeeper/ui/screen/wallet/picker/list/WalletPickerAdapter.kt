@@ -35,7 +35,8 @@ class WalletPickerAdapter: RecyclerView.Adapter<Holder<*>>() {
                     selected = wallet.id == activeWallet.id,
                     position = ListCell.getPosition(wallets.size, index),
                     balance = balances[index],
-                    hiddenBalance = hiddenBalance
+                    hiddenBalance = hiddenBalance,
+                    walletVersion = wallet.version,
                 )
                 uiItems.add(item)
             }

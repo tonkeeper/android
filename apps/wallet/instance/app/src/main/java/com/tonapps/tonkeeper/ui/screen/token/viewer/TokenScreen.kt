@@ -10,8 +10,12 @@ import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
+import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.TokenAdapter
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.accentOrangeColor
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.localization.Localization
@@ -20,8 +24,12 @@ import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
+import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.setRightDrawable
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.widget.HeaderView
 
 class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
 
@@ -34,6 +42,8 @@ class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
             tokenViewModel.loadMore()
         }
     }
+
+    private lateinit var headerView: HeaderView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -71,10 +81,28 @@ class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
         collectFlow(tokenViewModel.tokenFlow, ::applyToken)
         collectFlow(tokenViewModel.uiItemsFlow, tokenAdapter::submitList)
         collectFlow(tokenViewModel.uiHistoryFlow, historyAdapter::submitList)
+
+        headerView = view.findViewById(R.id.header)
     }
 
     private fun applyToken(token: TokenData) {
         setActionIcon(R.drawable.ic_ellipsis_16) { actionMenu(it, token) }
+        if (!token.verified) {
+            applyUnverifiedToken()
+        }
+    }
+
+    private fun applyUnverifiedToken() {
+        val color = requireContext().accentOrangeColor
+        val icon = requireContext().drawable(UIKitIcon.ic_information_circle_16).apply {
+            setTint(color)
+        }
+
+        headerView.setSubtitle(Localization.unverified_token)
+        headerView.subtitleView.setTextColor(color)
+        headerView.subtitleView.compoundDrawablePadding = 8.dp
+        headerView.subtitleView.setRightDrawable(icon)
+        headerView.setOnClickListener { navigation?.add(TokenUnverifiedScreen.newInstance()) }
     }
 
     private fun actionMenu(view: View, token: TokenData) {

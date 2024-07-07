@@ -257,7 +257,7 @@ class AccountRepository(
         return addWallet(label, publicKey, versions, type)
     }
 
-    private suspend fun addWallet(
+    suspend fun addWallet(
         label: Wallet.Label,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,

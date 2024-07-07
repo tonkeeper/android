@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake.main
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.commit
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingEvent
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.amount.StakeAmountFragment
@@ -21,6 +22,11 @@ class StakeScreen: BaseFragment(R.layout.fragment_stake), BaseFragment.BottomShe
 
     private val stakeViewModel: StakingViewModel by viewModel()
     private lateinit var headerView: HeaderView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.trackEvent("staking_open")
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

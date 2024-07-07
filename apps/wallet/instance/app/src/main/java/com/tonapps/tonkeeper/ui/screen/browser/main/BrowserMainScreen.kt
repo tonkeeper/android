@@ -7,6 +7,8 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import com.aptabase.Aptabase
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.flagEmoji
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreScreen
@@ -49,6 +51,7 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AnalyticsHelper.trackEvent("browser_open")
         navigation?.setFragmentResultListener(COUNTRY_REQUEST_KEY) { bundle ->
 
         }

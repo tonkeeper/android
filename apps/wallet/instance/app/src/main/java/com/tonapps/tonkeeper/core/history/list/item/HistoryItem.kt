@@ -180,7 +180,8 @@ sealed class HistoryItem(
         val lt: Long = 0L,
         val failed: Boolean,
         val cipherText: String? = null,
-        val hiddenBalance: Boolean = false
+        val hiddenBalance: Boolean = false,
+        val unverifiedToken: Boolean = false
     ): HistoryItem(TYPE_ACTION) {
 
         val hasNft: Boolean
@@ -212,7 +213,8 @@ sealed class HistoryItem(
             lt = parcel.readLong(),
             failed = parcel.readBooleanCompat(),
             cipherText = parcel.readString(),
-            hiddenBalance = parcel.readBooleanCompat()
+            hiddenBalance = parcel.readBooleanCompat(),
+            unverifiedToken = parcel.readBooleanCompat()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -242,6 +244,7 @@ sealed class HistoryItem(
             dest.writeBooleanCompat(failed)
             dest.writeString(cipherText)
             dest.writeBooleanCompat(hiddenBalance)
+            dest.writeBooleanCompat(unverifiedToken)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

@@ -34,6 +34,18 @@
         android:textColor="?attr/textSecondaryColor"/>
 
     <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/unverified"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:gravity="center"
+        android:singleLine="true"
+        android:visibility="gone"
+        android:text="@string/unverified_token"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/accentOrangeColor"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/date"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

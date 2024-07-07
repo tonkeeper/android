@@ -38,6 +38,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenViewModel
+import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageViewModel
@@ -93,6 +94,7 @@ val koinModel = module {
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
     viewModel { StakingViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { W5StoriesViewModel(get(), get(), get()) }
     viewModel { PurchaseViewModel(get(), get(), get()) }
 }

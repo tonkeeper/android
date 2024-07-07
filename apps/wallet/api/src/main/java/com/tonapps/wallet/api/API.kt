@@ -94,6 +94,23 @@ class API(
 
     fun rates() = provider.rates.get(false)
 
+    fun getAlertNotifications() = internalApi.getNotifications()
+
+    fun isOkStatus(testnet: Boolean): Boolean {
+        try {
+            val status = provider.blockchain.get(testnet).status()
+            if (!status.restOnline) {
+                return false
+            }
+            if (status.indexingLatency > (5 * 60) - 30) {
+                return false
+            }
+            return true
+        } catch (e: Throwable) {
+            return false
+        }
+    }
+
     fun getEvents(
         accountId: String,
         testnet: Boolean,
@@ -296,6 +313,9 @@ class API(
         boc: String,
         testnet: Boolean
     ): Boolean = withContext(Dispatchers.IO) {
+        if (!isOkStatus(testnet)) {
+            return@withContext false
+        }
         try {
             val request = SendBlockchainMessageRequest(boc)
             blockchain(testnet).sendBlockchainMessage(request)

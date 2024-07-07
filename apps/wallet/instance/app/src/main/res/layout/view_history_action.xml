@@ -112,78 +112,97 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/amount2" />
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/body"
+    <FrameLayout
+        android:id="@+id/body_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="60dp"
-        android:paddingHorizontal="@dimen/offsetMedium"
-        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/date">
 
         <androidx.appcompat.widget.LinearLayoutCompat
-            android:id="@+id/nft"
-            android:layout_width="wrap_content"
-            android:layout_height="64dp"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:visibility="gone"
-            android:background="@drawable/bg_history_nft">
-
-            <uikit.widget.FrescoView
-                android:id="@+id/nft_icon"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                app:roundTopLeft="true"
-                app:roundBottomLeft="true"
-                app:roundTopRight="false"
-                app:roundBottomRight="false"
-                app:roundedCornerRadius="12dp"/>
+            android:id="@+id/body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="60dp"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:orientation="vertical">
 
             <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/nft"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:padding="12dp"
-                android:orientation="vertical">
+                android:layout_height="64dp"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:background="@drawable/bg_history_nft">
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/nft_name"
+                <uikit.widget.FrescoView
+                    android:id="@+id/nft_icon"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    app:roundTopLeft="true"
+                    app:roundBottomLeft="true"
+                    app:roundTopRight="false"
+                    app:roundBottomRight="false"
+                    app:roundedCornerRadius="12dp"/>
+
+                <androidx.appcompat.widget.LinearLayoutCompat
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:singleLine="true"
-                    android:textColor="?attr/textPrimaryColor"
-                    android:fontFamily="@font/montserrat_medium"/>
+                    android:layout_gravity="center"
+                    android:padding="12dp"
+                    android:orientation="vertical">
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/nft_collection"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:singleLine="true"
-                    android:textColor="?attr/textSecondaryColor"
-                    android:fontFamily="@font/montserrat_medium"/>
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/nft_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:singleLine="true"
+                        android:textColor="?attr/textPrimaryColor"
+                        android:fontFamily="@font/montserrat_medium"/>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/nft_collection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:singleLine="true"
+                        android:textColor="?attr/textSecondaryColor"
+                        android:fontFamily="@font/montserrat_medium"/>
+
+                </androidx.appcompat.widget.LinearLayoutCompat>
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:drawablePadding="4dp"
+                android:background="@drawable/bg_content_tint"
+                android:fontFamily="@font/montserrat_medium"
+                android:textColor="?attr/textPrimaryColor"
+                android:textSize="14sp"/>
+
         </androidx.appcompat.widget.LinearLayoutCompat>
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/comment"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="8dp"
-            android:drawablePadding="4dp"
-            android:background="@drawable/bg_content_tint"
-            android:fontFamily="@font/montserrat_medium"
-            android:textColor="?attr/textPrimaryColor"
-            android:textSize="14sp"/>
+    </FrameLayout>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/unverified_token"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/offsetMedium"
+        android:visibility="gone"
+        android:textAppearance="@style/TextAppearance.Body3"
+        android:textColor="?attr/accentOrangeColor"
+        android:text="@string/unverified_token"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/body_container"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

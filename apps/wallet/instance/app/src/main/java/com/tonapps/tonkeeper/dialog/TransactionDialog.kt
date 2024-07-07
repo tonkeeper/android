@@ -14,6 +14,7 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
+import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import kotlinx.coroutines.CoroutineScope
@@ -46,6 +47,7 @@ class TransactionDialog(
     private val accountAddressView: TransactionDetailView
     private val txView: TransactionDetailView
     private val explorerButton: View
+    private val unverifiedView: View
 
     init {
         setContentView(R.layout.dialog_transaction)
@@ -54,6 +56,10 @@ class TransactionDialog(
         amountView = findViewById(R.id.amount)!!
         currencyView = findViewById(R.id.currency)!!
         dateView = findViewById(R.id.date)!!
+        unverifiedView = findViewById(R.id.unverified)!!
+        unverifiedView.setOnClickListener {
+            navigation?.add(TokenUnverifiedScreen.newInstance())
+        }
 
         dataView = findViewById(R.id.data)!!
 
@@ -74,6 +80,12 @@ class TransactionDialog(
 
     fun show(action: HistoryItem.Event) {
         super.show()
+        unverifiedView.visibility = if (action.unverifiedToken) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+
         if (action.hiddenBalance) {
             amountView.text = HIDDEN_BALANCE
             feeView.setData(HIDDEN_BALANCE, HIDDEN_BALANCE)

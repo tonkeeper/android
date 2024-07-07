@@ -10,6 +10,7 @@ import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.totalFees
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
@@ -357,11 +358,13 @@ class SendViewModel(
         signature: BitString,
         transfer: TransferEntity
     ) {
+        AnalyticsHelper.trackEvent("send_transaction")
         val message = transfer.transferMessage(signature)
         if (!api.sendToBlockchain(message, transfer.wallet.testnet)) {
             throw SendException.FailedToSendTransaction()
         }
         _uiEventFlow.tryEmit(SendEvent.Success)
+        AnalyticsHelper.trackEvent("send_success")
     }
 
     private suspend fun send(

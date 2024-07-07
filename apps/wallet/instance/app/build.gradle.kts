@@ -102,6 +102,7 @@ dependencies {
 
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)
+    implementation(Dependence.Analytics.aptabase)
 
     implementation(Dependence.LedgerHQ.bleManager)
 

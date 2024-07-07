@@ -53,6 +53,10 @@ abstract class BaseWalletContract(
             }
         }
 
+        fun create(publicKey: PublicKeyEd25519, v: String, testnet: Boolean): BaseWalletContract {
+            return create(publicKey, v, if (testnet) -3 else -239)
+        }
+
         fun createIntMsg(gift: WalletTransfer): MessageRelaxed<Cell> {
             val info = CommonMsgInfoRelaxed.IntMsgInfoRelaxed(
                 ihrDisabled = true,

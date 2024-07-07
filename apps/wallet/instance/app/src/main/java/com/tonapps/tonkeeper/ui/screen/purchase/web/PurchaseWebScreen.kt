@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -66,6 +67,7 @@ class PurchaseWebScreen: BaseFragment(R.layout.fragment_purchase_web) {
                 val regexp = Regex(successUrlPattern, RegexOption.IGNORE_CASE)
 
                 regexp.find(url ?: "")?.groupValues ?: return
+                AnalyticsHelper.trackEvent("buy_crypto")
                 finish()
             }
         }

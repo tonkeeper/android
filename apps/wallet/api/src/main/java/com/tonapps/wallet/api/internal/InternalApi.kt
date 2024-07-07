@@ -8,6 +8,7 @@ import com.tonapps.extensions.locale
 import com.tonapps.extensions.packageInfo
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
+import com.tonapps.wallet.api.entity.NotificationEntity
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 
@@ -42,6 +43,16 @@ internal class InternalApi(
         val url = endpoint(path, testnet, platform, build)
         val body = okHttpClient.get(url)
         return JSONObject(body)
+    }
+
+    fun getNotifications(): List<NotificationEntity> {
+        val json = request("notifications", false)
+        val array = json.getJSONArray("notifications")
+        val list = mutableListOf<NotificationEntity>()
+        for (i in 0 until array.length()) {
+            list.add(NotificationEntity(array.getJSONObject(i)))
+        }
+        return list.toList()
     }
 
     fun getBrowserApps(testnet: Boolean): JSONObject {

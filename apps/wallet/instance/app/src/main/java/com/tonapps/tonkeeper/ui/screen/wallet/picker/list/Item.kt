@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker.list
 
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 
@@ -19,6 +20,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val walletId: String,
         val walletLabel: com.tonapps.wallet.data.account.Wallet.Label,
         val walletType: com.tonapps.wallet.data.account.Wallet.Type,
+        val walletVersion: WalletVersion,
         val selected: Boolean,
         val position: ListCell.Position,
         val balance: CharSequence,
@@ -37,6 +39,9 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         val testnet: Boolean
             get() = walletType == com.tonapps.wallet.data.account.Wallet.Type.Testnet
+
+        val w5: Boolean
+            get() = walletVersion == WalletVersion.V5R1
     }
 
     data object AddWallet: Item(TYPE_ADD_WALLET)

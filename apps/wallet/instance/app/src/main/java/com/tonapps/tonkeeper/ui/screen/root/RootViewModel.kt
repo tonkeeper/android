@@ -7,12 +7,16 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aptabase.Aptabase
+import com.aptabase.InitOptions
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -30,6 +34,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -164,6 +169,10 @@ class RootViewModel(
 
         collectFlow(accountRepository.selectedWalletFlow, ::applyAnalyticsKeys)
         collectFlow(accountRepository.selectedWalletFlow, ::initShortcuts)
+        collectFlow(api.configFlow.take(1)) { config ->
+            AnalyticsHelper.setConfig(context, config)
+            AnalyticsHelper.trackEvent("launch_app")
+        }
     }
 
     private suspend fun initShortcuts(
@@ -197,7 +206,7 @@ class RootViewModel(
 
     private fun applyAnalyticsKeys(wallet: WalletEntity) {
         val crashlytics = Firebase.crashlytics
-        crashlytics.setUserId(wallet.accountId)
+        // crashlytics.setUserId(wallet.accountId)
         crashlytics.setCustomKeys {
             key("testnet", wallet.testnet)
             key("walletType", wallet.type.name)

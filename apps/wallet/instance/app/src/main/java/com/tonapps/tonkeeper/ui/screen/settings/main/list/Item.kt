@@ -197,4 +197,13 @@ sealed class Item(type: Int): BaseListItem(type) {
         position = position,
         secondaryIcon = true
     )
+
+    class W5(
+        position: ListCell.Position
+    ): Icon(
+        titleRes = Localization.w5_wallet,
+        iconRes = UIKitIcon.ic_wallet_28,
+        position = position,
+        secondaryIcon = false
+    )
 }

@@ -10,11 +10,14 @@ import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
+import uikit.extensions.withAlpha
 
 class WalletHolder(
     parent: ViewGroup
@@ -66,10 +69,19 @@ class WalletHolder(
             checkView.visibility = View.VISIBLE
         }
 
-        setType(item.walletType)
+        setType(item.walletType, item.w5)
     }
 
-    private fun setType(type: Wallet.Type) {
+    private fun setType(type: Wallet.Type, w5: Boolean) {
+        if (w5) {
+            val color = context.accentGreenColor
+            typeView.visibility = View.VISIBLE
+            typeView.setText(Localization.w5beta)
+            typeView.setTextColor(color)
+            typeView.backgroundTintList = color.withAlpha(.16f).stateList
+            return
+        }
+
         if (type == Wallet.Type.Default) {
             typeView.visibility = View.GONE
             return

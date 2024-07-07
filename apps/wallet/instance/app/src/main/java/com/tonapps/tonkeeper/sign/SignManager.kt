@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.sign
 
 import android.os.CancellationSignal
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.toastLoading
@@ -43,8 +44,10 @@ class SignManager(
         }
 
         val boc = getBoc(navigation, wallet, request, details, canceller) ?: throw IllegalArgumentException("Failed boc")
-        api.sendToBlockchain(boc, false)
-
+        AnalyticsHelper.trackEvent("send_transaction")
+        if (api.sendToBlockchain(boc, wallet.testnet)) {
+            AnalyticsHelper.trackEvent("send_success")
+        }
         return boc
     }
 

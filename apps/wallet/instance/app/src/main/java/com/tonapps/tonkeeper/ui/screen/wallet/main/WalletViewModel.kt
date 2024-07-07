@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.BalanceType
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -67,8 +68,24 @@ class WalletViewModel(
         val apps: List<DAppEntity>,
     )
 
-    private val _dataFlow = MutableStateFlow<Tokens?>(null)
-    private val dataFlow = _dataFlow.asStateFlow().filterNotNull().filter { it.list.isNotEmpty() }
+    private data class Data(
+        val wallet: WalletEntity?,
+        val balance: CharSequence?,
+        val list: List<Item.Token>?,
+        val status: Item.Status?,
+        val push: List<AppPushEntity>?,
+        val apps: List<DAppEntity>?,
+        val backups: List<BackupEntity>?,
+        val balanceType: BalanceType?,
+        val notifications: List<NotificationEntity>?,
+    ) {
+
+        val isEmpty: Boolean
+            get() = wallet == null || balance == null || list == null || status == null || balanceType == null
+    }
+
+    private val _tokensFlow = MutableStateFlow<Tokens?>(null)
+    private val tokensFlow = _tokensFlow.asStateFlow().filterNotNull().filter { it.list.isNotEmpty() }
 
     private val _lastLtFlow = MutableStateFlow<Long>(0)
     private val lastLtFlow = _lastLtFlow.asStateFlow()
@@ -76,8 +93,10 @@ class WalletViewModel(
     private val _statusFlow = MutableSharedFlow<Item.Status>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val statusFlow = _statusFlow.asSharedFlow()
 
-    private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
-    val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }
+    private val _dataFlow = MutableStateFlow<Data?>(null)
+
+    private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
+    val uiItemsFlow = _uiItemsFlow.filterNotNull() // _dataFlow.filterNotNull().map { build(it) }
 
     val uiLabelFlow = accountRepository.selectedWalletFlow.map { it.label }
 
@@ -102,7 +121,8 @@ class WalletViewModel(
 
         collectFlow(settingsRepository.hiddenBalancesFlow.drop(1)) { hiddenBalance ->
             val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
-            val items = _uiItemsFlow.value.map {
+            val uiItems = _uiItemsFlow.value ?: return@collectFlow
+            val items = uiItems.map {
                 when (it) {
                     is Item.Balance -> it.copy(hiddenBalance = hiddenBalance)
                     is Item.Token -> it.copy(hiddenBalance = hiddenBalance)
@@ -132,7 +152,7 @@ class WalletViewModel(
         ) { wallet, currency, isOnline, lastLt ->
             if (lastLt == 0L) {
                 setStatus(Item.Status.Updating)
-                _dataFlow.value = getLocalTokens(wallet, currency, isOnline, emptyList())
+                _tokensFlow.value = getLocalTokens(wallet, currency, isOnline, emptyList())
             }
 
             if (!isOnline) {
@@ -141,7 +161,7 @@ class WalletViewModel(
 
             getRemoteTokens(wallet, currency, emptyList())?.let { tokens ->
                 setStatus(Item.Status.Default)
-                _dataFlow.value = tokens
+                _tokensFlow.value = tokens
             }
         }.launchIn(viewModelScope)
 
@@ -156,7 +176,7 @@ class WalletViewModel(
 
         combine(
             accountRepository.selectedWalletFlow,
-            dataFlow,
+            tokensFlow,
             statusFlow,
             settingsRepository.tokenPrefsChangedFlow,
             backupRepository.stream,
@@ -187,8 +207,29 @@ class WalletViewModel(
             } else {
                 Item.Status.NoInternet
             }
-            setItems(tokens.wallet, balanceFormat, uiItems, actualStatus, tokens.push, tokens.apps, backups, balanceType)
+
+            _dataFlow.value = Data(
+                wallet = tokens.wallet,
+                balance = balanceFormat,
+                list = uiItems,
+                status = actualStatus,
+                push = tokens.push,
+                apps = tokens.apps,
+                backups = backups,
+                balanceType = balanceType,
+                notifications = _dataFlow.value?.notifications ?: emptyList()
+            )
         }.launchIn(viewModelScope)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val notifications = api.getAlertNotifications()
+            val data = _dataFlow.value ?: return@launch
+            _dataFlow.value = data.copy(notifications = notifications)
+        }
+
+        collectFlow(_dataFlow.filterNotNull()) { data ->
+            _uiItemsFlow.value = build(data)
+        }
     }
 
     fun nextWallet() {
@@ -284,44 +325,58 @@ class WalletViewModel(
         return Pair(fiatBalance, uiItems)
     }
 
-    private fun setItems(
-        wallet: WalletEntity,
-        balance: CharSequence,
-        list: List<Item.Token>,
-        status: Item.Status,
-        push: List<AppPushEntity>,
-        apps: List<DAppEntity>,
-        backups: List<BackupEntity>,
-        balanceType: BalanceType,
-    ) {
+    private fun build(data: Data): List<Item> {
         val items = mutableListOf<Item>()
+        if (data.isEmpty) {
+            items.add(Item.Skeleton(true))
+            return items
+        }
+
+        val wallet = data.wallet!!
+        val notifications = data.notifications ?: emptyList()
+        val backups = data.backups ?: emptyList()
+
+        for (notification in notifications) {
+            items.add(Item.Alert(
+                title = notification.title,
+                message = notification.caption,
+                buttonTitle = notification.action?.label,
+                buttonUrl = notification.action?.url
+            ))
+            items.add(Item.Space(true))
+        }
+
         items.add(Item.Balance(
-            balance = balance,
+            balance = data.balance!!,
             address = wallet.address,
             walletType = wallet.type,
-            status = status,
+            walletVersion = wallet.version,
+            status = data.status!!,
             hiddenBalance = settingsRepository.hiddenBalances,
-            hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1,
-            balanceType = balanceType,
+            hasBackup = backups.indexOfFirst { it.walletId == data.wallet.id } > -1,
+            balanceType = data.balanceType!!,
         ))
         items.add(Item.Actions(
-            address = wallet.address,
+            address = data.wallet.address,
             token = TokenEntity.TON,
-            walletType = wallet.type,
+            walletType = data.wallet.type,
             swapUri = api.config.swapUri,
             disableSwap = api.config.flags.disableSwap
         ))
-        if (push.isNotEmpty()) {
-            items.add(Item.Push(push, apps))
+
+        if (!data.push.isNullOrEmpty() && !data.apps.isNullOrEmpty()) {
+            items.add(Item.Push(data.push, data.apps))
         }
+
         items.add(Item.Space(true))
-        items.addAll(list)
+        items.addAll(data.list!!)
         items.add(Item.Space(true))
-        if (list.size > 2) {
+        if (data.list.size > 2) {
             items.add(Item.Manage(true))
         }
         _uiItemsFlow.value = items.toList()
-        setCached(wallet, items)
+        setCached(data.wallet, items)
+        return items
     }
 
     private fun setCached(wallet: WalletEntity, items: List<Item>) {

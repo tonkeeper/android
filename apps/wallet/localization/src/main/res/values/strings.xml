@@ -3,7 +3,28 @@
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
+    <string name="w5beta" translatable="false">W5 Beta</string>
+    <string name="w5_wallet">Wallet W5</string>
 
+    <string name="w5_story_title_1">Gasless USDT Transfers</string>
+    <string name="w5_story_title_2">Reduced Blockchain Fees</string>
+    <string name="w5_story_title_3">Up to 255 Operations in One Transaction</string>
+    <string name="w5_story_title_4">Recovery Phrase Does Not Change</string>
+    <string name="w5_story_title_5">W5 is Beta</string>
+
+    <string name="unverified_token_description">This token looks suspicious for one or several reasons.</string>
+    <string name="unverified_token_reason_1">Low liquidity. Token may have some value, but it is extremely low.</string>
+    <string name="unverified_token_reason_2">Token is not listed on trading platforms and has limited demand.</string>
+    <string name="unverified_token_reason_3">Used for spam. Employed for sending unwanted and often irrelevant messages at scale.</string>
+    <string name="unverified_token_reason_4">Used for scam. Token\'s name or image can lead users into deception.</string>
+
+    <string name="w5_story_description_1">Send USDT without having TON – transaction fees will be covered by a few cents of USDT automatically.</string>
+    <string name="w5_story_description_2">W5 employs a more efficient transaction processing approach, which means up to 25% lower gas costs.</string>
+    <string name="w5_story_description_3">W5 increases the number of simultaneous operations from 4 to 255, which can save on fee costs.</string>
+    <string name="w5_story_description_4">Old accounts and W5 use the same recovery phrase – when restoring accounts on a new device, both old and new will appear automatically.</string>
+    <string name="w5_story_description_5">The W5 standard is in beta – gasless transactions are an experimental feature to test – do not move all assets to the W5 wallet until final release.</string>
+
+    <string name="w5_add_wallet">Add W5 Wallet</string>
 
     <string name="edit">Edit</string>
     <string name="pinned">Pinned</string>

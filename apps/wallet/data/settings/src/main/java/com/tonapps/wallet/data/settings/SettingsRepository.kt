@@ -13,8 +13,10 @@ import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.settings.entities.NftPrefsEntity
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.settings.folder.ImportLegacyFolder
+import com.tonapps.wallet.data.settings.folder.NftPrefsFolder
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
 import com.tonapps.wallet.localization.Language
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -57,7 +60,7 @@ class SettingsRepository(
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
-    val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull().distinctUntilChanged()
 
     private val _languageFlow = MutableEffectFlow<Language>()
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
@@ -92,10 +95,14 @@ class SettingsRepository(
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context)
     private val walletPrefsFolder = WalletPrefsFolder(context)
+    private val nftPrefsFolder = NftPrefsFolder(context)
     private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)
 
     val tokenPrefsChangedFlow: Flow<Unit>
         get() = tokenPrefsFolder.changedFlow
+
+    val nftPrefsChangedFlow: Flow<Unit>
+        get() = nftPrefsFolder.changedFlow
 
     val installId: String
         get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
@@ -216,6 +223,12 @@ class SettingsRepository(
         _walletPush.tryEmit(map)
     }
 
+    fun isSetupDone(walletId: String): Boolean = walletPrefsFolder.isSetupDone(walletId)
+
+    fun setSetupDone(walletId: String) {
+        walletPrefsFolder.setSetupDone(walletId)
+    }
+
     suspend fun setTokenHidden(
         walletId: String,
         tokenAddress: String,
@@ -223,6 +236,22 @@ class SettingsRepository(
     ) = withContext(Dispatchers.IO) {
         tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
         rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
+    }
+
+    suspend fun setNftHidden(
+        walletId: String,
+        nftAddress: String,
+        hidden: Boolean = true
+    ) = withContext(Dispatchers.IO) {
+        nftPrefsFolder.setHidden(walletId, nftAddress, hidden)
+    }
+
+    suspend fun setNftTrust(
+        walletId: String,
+        nftAddress: String,
+        trust: Boolean = true
+    ) = withContext(Dispatchers.IO) {
+        nftPrefsFolder.setTrust(walletId, nftAddress, trust)
     }
 
     fun setTokenPinned(walletId: String, tokenAddress: String, pinned: Boolean) {
@@ -247,6 +276,13 @@ class SettingsRepository(
         token.copy(
             hidden = rnLegacy.isHiddenToken(walletId, tokenAddress)
         )
+    }
+
+    suspend fun getNftPrefs(
+        walletId: String,
+        nftAddress: String
+    ): NftPrefsEntity = withContext(Dispatchers.IO) {
+        nftPrefsFolder.get(walletId, nftAddress)
     }
 
     init {

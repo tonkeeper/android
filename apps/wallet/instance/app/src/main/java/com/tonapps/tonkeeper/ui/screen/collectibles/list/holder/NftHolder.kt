@@ -13,8 +13,10 @@ import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.backgroundHighlightedColor
 import com.tonapps.uikit.color.stateList
+import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
@@ -46,14 +48,32 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
         loadImage(item.imageURI, item.hiddenBalance)
         if (item.hiddenBalance) {
             titleView.text = HIDDEN_BALANCE
-            collectionView.text = HIDDEN_BALANCE
         } else {
             titleView.text = item.title
-            collectionView.text = item.collectionName.ifEmpty {
-                getString(Localization.unnamed_collection)
-            }
         }
         saleBadgeView.visibility = if (item.sale) View.VISIBLE else View.GONE
+        setCollectionName(item.collectionName, item.isTrusted, item.hiddenBalance)
+    }
+
+    private fun setCollectionName(
+        collectionName: String?,
+        isTrusted: Boolean,
+        hiddenBalance: Boolean
+    ) {
+        if (isTrusted) {
+            collectionView.setTextColor(context.textSecondaryColor)
+        } else {
+            collectionView.setTextColor(context.accentOrangeColor)
+        }
+        if (isTrusted && hiddenBalance) {
+            collectionView.text = HIDDEN_BALANCE
+        } else if (isTrusted && collectionName.isNullOrBlank()) {
+            collectionView.text = getString(Localization.unnamed_collection)
+        } else if (isTrusted) {
+            collectionView.text = collectionName
+        } else {
+            collectionView.text = getString(Localization.unverified)
+        }
     }
 
     private fun loadImage(uri: Uri, blur: Boolean) {

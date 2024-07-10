@@ -119,14 +119,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private suspend fun checkWords() {
         val mnemonic = getMnemonic()
-        if (mnemonic.size != 24) {
-            button.isEnabled = false
-        } else {
-            val valid = withContext(Dispatchers.IO) {
-                TonMnemonic.isValid(mnemonic)
-            }
-            button.isEnabled = valid
-        }
+        button.isEnabled = mnemonic.size == 24
     }
 
     private suspend fun getMnemonic(): List<String> = withContext(Dispatchers.IO) {

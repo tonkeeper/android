@@ -90,8 +90,10 @@ class SettingsViewModel(
 
         uiItems.add(Item.Space)
         uiItems.add(Item.Notifications(ListCell.Position.FIRST))
-        uiItems.add(Item.Currency(currency.code, ListCell.Position.MIDDLE))
-        uiItems.add(Item.SearchEngine(searchEngine, ListCell.Position.MIDDLE))
+        if (!wallet.testnet) {
+            uiItems.add(Item.Currency(currency.code, ListCell.Position.MIDDLE))
+            uiItems.add(Item.SearchEngine(searchEngine, ListCell.Position.MIDDLE))
+        }
         uiItems.add(Item.Language(language.nameLocalized.ifEmpty {
             getString(Localization.system)
         }.capitalized, ListCell.Position.MIDDLE))

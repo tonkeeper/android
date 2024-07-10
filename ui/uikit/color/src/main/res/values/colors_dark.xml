@@ -40,6 +40,10 @@
     <color name="buttonGreenBackgroundDisabledDark">#2B9962</color>
     <color name="buttonGreenBackgroundHighlightedDark">#49CC8B</color>
 
+    <color name="buttonOrangeBackgroundDark">#F5A73B</color>
+    <color name="buttonOrangeBackgroundDisabledDark">#D68B2F</color>
+    <color name="buttonOrangeBackgroundHighlightedDark">#FFC25E</color>
+
     <color name="fieldBackgroundDark">#17171A</color>
     <color name="fieldActiveBorderDark">#45AEF5</color>
     <color name="fieldErrorBorderDark">#FF4766</color>

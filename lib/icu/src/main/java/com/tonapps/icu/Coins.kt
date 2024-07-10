@@ -97,6 +97,14 @@ data class Coins(
             }
             return v
         }
+
+        inline fun <T> Iterable<T>.sumOf(selector: (T) -> Coins): Coins {
+            var sum: Coins = ZERO
+            for (element in this) {
+                sum += selector(element)
+            }
+            return sum
+        }
     }
 
     val isZero: Boolean

@@ -20,7 +20,7 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_notif
 
     init {
         itemView.setOnClickListener {
-            pushView.toggle()
+            pushView.toggle(true)
         }
     }
 
@@ -28,9 +28,11 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_notif
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.icon, null)
         titleView.text = item.name
-        pushView.checked = item.pushEnabled
-        pushView.doCheckedChanged = { isChecked ->
-            tonConnectRepository?.setPushEnabled(item.walletId, item.url, isChecked)
+        pushView.setChecked(item.pushEnabled, false)
+        pushView.doCheckedChanged = { isChecked, byUser ->
+            if (byUser) {
+                tonConnectRepository?.setPushEnabled(item.walletId, item.url, isChecked)
+            }
         }
     }
 

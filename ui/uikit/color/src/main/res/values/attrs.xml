@@ -40,6 +40,10 @@
     <attr name="buttonGreenBackgroundDisabledColor" format="reference"/>
     <attr name="buttonGreenBackgroundHighlightedColor" format="reference"/>
 
+    <attr name="buttonOrangeBackgroundColor" format="reference"/>
+    <attr name="buttonOrangeBackgroundDisabledColor" format="reference"/>
+    <attr name="buttonOrangeBackgroundHighlightedColor" format="reference"/>
+
     <attr name="fieldBackgroundColor" format="reference"/>
     <attr name="fieldActiveBorderColor" format="reference"/>
     <attr name="fieldErrorBorderColor" format="reference"/>

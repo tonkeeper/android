@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -21,6 +22,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -63,6 +65,7 @@ import org.ton.block.AddrStd
 import org.ton.crypto.hex
 import org.ton.mnemonic.Mnemonic
 import uikit.extensions.context
+import uikit.navigation.Navigation
 
 @OptIn(FlowPreview::class)
 class InitViewModel(
@@ -386,6 +389,7 @@ class InitViewModel(
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {
                 _eventFlow.tryEmit(InitEvent.Loading(false))
+                Navigation.from(context)?.toast(e.message ?: "Error")
             }
         }
     }
@@ -408,14 +412,17 @@ class InitViewModel(
         return wallet
     }
 
-    private suspend fun importWallet(context: Context): List<WalletEntity> {
+    private suspend fun importWallet(context: Context): List<WalletEntity> = withContext(Dispatchers.IO) {
         val versions = getSelectedAccounts().map { it.walletVersion }
         val mnemonic = savedState.mnemonic ?: throw IllegalStateException("Mnemonic is not set")
+        if (!TonMnemonic.isValid(mnemonic)) {
+            throw IllegalStateException("Invalid mnemonic")
+        }
         val label = getLabel()
         val wallets = accountRepository.importWallet(label, mnemonic, versions, testnet)
         saveMnemonic(context, wallets.map { it.id }, mnemonic)
         AnalyticsHelper.trackEvent("import_wallet")
-        return wallets
+        wallets
     }
 
     private suspend fun ledgerWallets(): List<WalletEntity> {

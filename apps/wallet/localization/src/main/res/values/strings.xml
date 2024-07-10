@@ -5,6 +5,15 @@
     <string name="bitcoin" translatable="false">Bitcoin</string>
     <string name="w5beta" translatable="false">W5 Beta</string>
     <string name="w5_wallet">Wallet W5</string>
+    <string name="nft_unverified">Unverified NFT</string>
+    <string name="report_spam">Report spam</string>
+    <string name="not_spam">Not spam</string>
+    <string name="unverified">Unverified</string>
+    <string name="setup_finish_title">Finish setting up</string>
+    <string name="setup_finish_push">Enable transaction notifications</string>
+    <string name="setup_finish_biometry">Use biometry to approve transactions</string>
+    <string name="setup_finish_backup">Back up the wallet recovery phrase</string>
+    <string name="setup_finish_telegram">Join Tonkeeper channel</string>
 
     <string name="w5_story_title_1">Gasless USDT Transfers</string>
     <string name="w5_story_title_2">Reduced Blockchain Fees</string>

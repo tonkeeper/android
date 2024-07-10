@@ -15,11 +15,14 @@ import com.tonapps.extensions.writeArrayCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 
 sealed class Item(type: Int): BaseListItem(type), Parcelable {
@@ -34,6 +37,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         const val TYPE_TITLE = 6
         const val TYPE_MANAGE = 7
         const val TYPE_ALERT = 8
+        const val TYPE_SETUP_TITLE = 9
+        const val TYPE_SETUP_SWITCH = 10
+        const val TYPE_SETUP_LINK = 11
 
         fun createFromParcel(parcel: Parcel): Item {
             return when (parcel.readInt()) {
@@ -44,6 +50,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
                 TYPE_SKELETON -> Skeleton(parcel)
                 TYPE_PUSH -> Push(parcel)
                 TYPE_MANAGE -> Manage(parcel)
+                TYPE_SETUP_TITLE -> SetupTitle(parcel)
+                TYPE_SETUP_SWITCH -> SetupSwitch(parcel)
+                TYPE_SETUP_LINK -> SetupLink(parcel)
                 else -> throw IllegalArgumentException("Unknown type")
             }
         }
@@ -81,6 +90,13 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val buttonTitle: String?,
         val buttonUrl: String?,
     ): Item(TYPE_ALERT) {
+
+        constructor(entity: NotificationEntity) : this(
+            title = entity.title,
+            message = entity.caption,
+            buttonTitle = entity.action?.label,
+            buttonUrl = entity.action?.url
+        )
 
         constructor(parcel: Parcel) : this(
             parcel.readString()!!,
@@ -195,6 +211,29 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val isTON = symbol == TokenEntity.TON.symbol
 
         val isUSDT = symbol == TokenEntity.USDT.symbol
+
+        constructor(
+            position: ListCell.Position,
+            token: AccountTokenEntity,
+            hiddenBalance: Boolean,
+            testnet: Boolean,
+            currencyCode: String,
+        ) : this(
+            position = position,
+            iconUri = token.imageUri,
+            address = token.address,
+            symbol = token.symbol,
+            name = token.name,
+            balance = token.balance.value,
+            balanceFormat = CurrencyFormatter.format(value = token.balance.value),
+            fiat = token.fiat,
+            fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat),
+            rate = CurrencyFormatter.formatFiat(currencyCode, token.rateNow),
+            rateDiff24h = token.rateDiff24h,
+            verified = token.verified,
+            testnet = testnet,
+            hiddenBalance = hiddenBalance
+        )
 
         constructor(parcel: Parcel) : this(
             parcel.readEnum(ListCell.Position::class.java)!!,
@@ -338,4 +377,94 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             override fun newArray(size: Int): Array<Manage?> = arrayOfNulls(size)
         }
     }
+
+    data class SetupTitle(val showDone: Boolean): Item(TYPE_SETUP_TITLE) {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readBooleanCompat()
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeBooleanCompat(showDone)
+        }
+
+        companion object CREATOR : Parcelable.Creator<SetupTitle> {
+            override fun createFromParcel(parcel: Parcel) = SetupTitle(parcel)
+
+            override fun newArray(size: Int): Array<SetupTitle?> = arrayOfNulls(size)
+        }
+    }
+
+    data class SetupSwitch(
+        val position: ListCell.Position,
+        val iconRes: Int,
+        val textRes: Int,
+        val enabled: Boolean,
+        val isPush: Boolean,
+        val walletId: String,
+    ): Item(TYPE_SETUP_SWITCH) {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readEnum(ListCell.Position::class.java)!!,
+            parcel.readInt(),
+            parcel.readInt(),
+            parcel.readBooleanCompat(),
+            parcel.readBooleanCompat(),
+            parcel.readString()!!
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeEnum(position)
+            dest.writeInt(iconRes)
+            dest.writeInt(textRes)
+            dest.writeBooleanCompat(enabled)
+            dest.writeBooleanCompat(isPush)
+            dest.writeString(walletId)
+        }
+
+        companion object CREATOR : Parcelable.Creator<SetupSwitch> {
+            override fun createFromParcel(parcel: Parcel) = SetupSwitch(parcel)
+
+            override fun newArray(size: Int): Array<SetupSwitch?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
+    data class SetupLink(
+        val position: ListCell.Position,
+        val iconRes: Int,
+        val textRes: Int,
+        val link: String,
+        val external: Boolean,
+        val blue: Boolean,
+    ): Item(TYPE_SETUP_LINK) {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readEnum(ListCell.Position::class.java)!!,
+            parcel.readInt(),
+            parcel.readInt(),
+            parcel.readString()!!,
+            parcel.readBooleanCompat(),
+            parcel.readBooleanCompat()
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeEnum(position)
+            dest.writeInt(iconRes)
+            dest.writeInt(textRes)
+            dest.writeString(link)
+            dest.writeBooleanCompat(external)
+            dest.writeBooleanCompat(blue)
+        }
+
+        companion object CREATOR : Parcelable.Creator<SetupLink> {
+            override fun createFromParcel(parcel: Parcel) = SetupLink(parcel)
+
+            override fun newArray(size: Int): Array<SetupLink?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
 }

@@ -22,17 +22,25 @@
     <color name="buttonPrimaryBackgroundDisabledLight">#3D9AFF</color>
     <color name="buttonPrimaryBackgroundHighlightedLight">#1F8AFF</color>
     <color name="buttonPrimaryForegroundLight">#FFFFFF</color>
+
     <color name="buttonSecondaryBackgroundLight">#29818C99</color>
     <color name="buttonSecondaryBackgroundDisabledLight">#1F818C99</color>
     <color name="buttonSecondaryBackgroundHighlightedLight">#3D818C99</color>
     <color name="buttonSecondaryForegroundLight">#000000</color>
+
     <color name="buttonTertiaryBackgroundLight">#1F818C99</color>
     <color name="buttonTertiaryBackgroundDisabledLight">#14818C99</color>
     <color name="buttonTertiaryBackgroundHighlightedLight">#33818C99</color>
     <color name="buttonTertiaryForegroundLight">#000000</color>
+
     <color name="buttonGreenBackgroundLight">#25B86F</color>
     <color name="buttonGreenBackgroundDisabledLight">#2B9962</color>
     <color name="buttonGreenBackgroundHighlightedLight">#17C26D</color>
+
+    <color name="buttonOrangeBackgroundLight">#F5A73B</color>
+    <color name="buttonOrangeBackgroundDisabledLight">#D68B2F</color>
+    <color name="buttonOrangeBackgroundHighlightedLight">#FFC25E</color>
+
     <color name="fieldBackgroundLight">#1F818C99</color>
     <color name="fieldActiveBorderLight">#007AFF</color>
     <color name="fieldErrorBorderLight">#FF3B30</color>

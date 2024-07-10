@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
@@ -119,13 +120,13 @@ class RootViewModel(
 
     init {
         combine(
-            settingsRepository.biometricFlow,
-            settingsRepository.lockscreenFlow
+            settingsRepository.biometricFlow.take(1),
+            settingsRepository.lockscreenFlow.take(1)
         ) { biometric, lockscreen ->
             Passcode(lockscreen, biometric)
         }.onEach {
             _passcodeFlow.value = it
-        }.take(1).launchIn(viewModelScope)
+        }.launchIn(viewModelScope)
 
         combine(
             accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization },
@@ -135,12 +136,8 @@ class RootViewModel(
                 _hasWalletFlow.tryEmit(false)
                 ShortcutManagerCompat.removeAllDynamicShortcuts(application)
             } else if (state is AccountRepository.SelectedState.Wallet) {
-                val items = screenCacheSource.getWalletScreen(state.wallet)
-                if (items.isNullOrEmpty()) {
-                    _hasWalletFlow.tryEmit(true)
-                } else {
-                    submitWalletList(items)
-                }
+                val items = screenCacheSource.getWalletScreen(state.wallet) ?: listOf(Item.Skeleton(true))
+                submitWalletList(items)
             }
             Widget.updateAll()
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
@@ -149,18 +146,12 @@ class RootViewModel(
             accountRepository.selectedWalletFlow,
             settingsRepository.hiddenBalancesFlow
         ) { wallet, hiddenBalance ->
-
             val wallets = accountRepository.getWallets()
-
-            val entities = wallets.map {
-                WalletExtendedEntity(
-                    raw = it,
-                    prefs = settingsRepository.getWalletPrefs(it.id)
-                )
-            }.sortedBy { it.index }
-            val sortedWallets = entities.map { it.raw }
-            val balances = getBalances(sortedWallets)
-            walletPickerAdapter.submitList(WalletPickerAdapter.map(sortedWallets, wallet, balances, hiddenBalance))
+                .map { WalletExtendedEntity( it, settingsRepository.getWalletPrefs(it.id)) }
+                .sortedBy { it.index }
+                .map { it.raw }
+            val balances = getBalances(wallets)
+            walletPickerAdapter.submitList(WalletPickerAdapter.map(wallets, wallet, balances, hiddenBalance))
         }.launchIn(viewModelScope)
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -342,6 +333,7 @@ class RootViewModel(
     private fun resolveOther(_uri: Uri, wallet: WalletEntity) {
         val url = _uri.toString().replace("ton://", "https://app.tonkeeper.com/").replace("tonkeeper://", "https://app.tonkeeper.com/")
         val uri = Uri.parse(url)
+
         if (DeepLink.isTonConnectUri(uri)) {
             resolveTonConnect(uri, wallet)
         } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
@@ -370,6 +362,8 @@ class RootViewModel(
             val name = uri.pathSegments.lastOrNull() ?: return
             val method = purchaseRepository.getMethod(name, wallet.testnet)
             _eventFlow.tryEmit(RootEvent.BuyOrSell(method))
+        } else if (uri.path?.startsWith("/backups") == true) {
+            _eventFlow.tryEmit(RootEvent.OpenBackups)
         } else {
             toast(Localization.invalid_link)
         }

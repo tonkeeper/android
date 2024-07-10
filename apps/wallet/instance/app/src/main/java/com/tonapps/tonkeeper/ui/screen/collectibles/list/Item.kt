@@ -37,6 +37,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val sale: Boolean
             get() = entity.inSale
 
+        val isTrusted: Boolean
+            get() = entity.isTrusted
     }
 
     data class Skeleton(val value: Boolean = true): Item(TYPE_SKELETON)

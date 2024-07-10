@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.dialog.TransactionDialog
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
+import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
@@ -154,6 +155,7 @@ class RootActivity: NavigationActivity() {
                     add(PurchaseWebScreen.newInstance(event.methodEntity))
                 }
             }
+            is RootEvent.OpenBackups -> add(BackupScreen.newInstance())
             else -> { }
         }
     }

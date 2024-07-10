@@ -13,6 +13,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
@@ -57,11 +58,13 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
                 headerView.setSubtitle(Localization.updating)
             } else {
                 headerView.setSubtitle(null)
-                getRecyclerView()?.scrollToPosition(0)
             }
         }
 
         collectFlow(collectiblesViewModel.uiItemsFlow, ::setItems)
+        collectFlow(collectiblesViewModel.changeWalletFlow) {
+            getRecyclerView()?.scrollToPosition(0)
+        }
     }
 
     private fun openQRCode() {

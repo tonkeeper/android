@@ -27,6 +27,7 @@ import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
+import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
 import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsViewModel
 import com.tonapps.tonkeeper.ui.screen.send.SendViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
@@ -66,7 +67,7 @@ val koinModel = module {
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(get(), get()) }
-    viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get(), get()) }
     viewModel { EditNameViewModel(get()) }
@@ -97,4 +98,5 @@ val koinModel = module {
     viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { W5StoriesViewModel(get(), get(), get()) }
     viewModel { PurchaseViewModel(get(), get(), get()) }
+    viewModel { parameters -> NftViewModel(nft = parameters.get(), get(), get(), get()) }
 }

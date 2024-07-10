@@ -26,6 +26,7 @@ data class ConfigEntity(
     val faqUrl: String,
     val aptabaseEndpoint: String,
     val aptabaseAppKey: String,
+    val scamEndpoint: String
 ): Parcelable {
 
     val swapUri: Uri
@@ -53,8 +54,11 @@ data class ConfigEntity(
         },
         faqUrl = json.getString("faq_url"),
         aptabaseEndpoint = json.getString("aptabaseEndpoint"),
-        aptabaseAppKey = json.getString("aptabaseAppKey")
-    )
+        aptabaseAppKey = json.getString("aptabaseAppKey"),
+        scamEndpoint = json.optString("scamEndpoint", "https://scam.tonkeeper.com")
+    ) {
+        Log.d("ConfigLog", "ConfigEntity: $json")
+    }
 
     constructor() : this(
         supportLink = "mailto:support@tonkeeper.com",
@@ -75,6 +79,7 @@ data class ConfigEntity(
         faqUrl = "https://tonkeeper.helpscoutdocs.com/",
         aptabaseEndpoint = "https://anonymous-analytics.tonkeeper.com",
         aptabaseAppKey = "A-SH-4314447490",
+        scamEndpoint = "https://scam.tonkeeper.com",
     )
 
     companion object {

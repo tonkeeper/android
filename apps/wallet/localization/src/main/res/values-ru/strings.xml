@@ -4,6 +4,15 @@
     <string name="toncoin" translatable="false">Toncoin</string>
 
     <string name="w5_wallet">Кошелек W5</string>
+    <string name="nft_unverified">Непроверенный NFT</string>
+    <string name="report_spam">Пожаловаться на спам</string>
+    <string name="not_spam">Не спам</string>
+    <string name="unverified">Непроверенно</string>
+    <string name="setup_finish_title">Завершить настройку</string>
+    <string name="setup_finish_push">Включить уведомления о транзакциях</string>
+    <string name="setup_finish_biometry">Используйте биометрию для подтверждения транзакций</string>
+    <string name="setup_finish_backup">Создайте резервную копию фразы восстановления кошелька</string>
+    <string name="setup_finish_telegram">Присоединяйтесь к каналу Тонкипер</string>
 
     <string name="unverified_token_description">Токен выглядит подозрительно по одной или нескольким причинам.</string>
     <string name="unverified_token_reason_1">Низкая ликвидность. У токена может быть какая-то стоимость, но она крайне мала.</string>

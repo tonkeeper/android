@@ -288,7 +288,6 @@ class API(
         val mimeType = "text/plain".toMediaType()
         val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
         val response = tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
-        Log.d("TonConnectBridge", "tonconnectSend: ${response.code}")
         if (!response.isSuccessful) {
             throw Exception("Failed sending event: ${response.code}")
         }
@@ -475,6 +474,19 @@ class API(
 
     suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
         internalApi.resolveCountry()
+    }
+
+    suspend fun reportNtfSpam(
+        nftAddress: String,
+        scam: Boolean
+    ) = withContext(Dispatchers.IO) {
+        val url = config.scamEndpoint + "/v1/report/$nftAddress"
+        val data = "{\"is_scam\":$scam}"
+        val response = tonAPIHttpClient.postJSON(url, data)
+        if (!response.isSuccessful) {
+            throw Exception("Failed creating proof: ${response.code}")
+        }
+        response.body?.string() ?: throw Exception("Empty response")
     }
 
     companion object {

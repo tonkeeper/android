@@ -27,8 +27,12 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
         headerView.doOnCloseClick = { finish() }
 
         biometricView = view.findViewById(R.id.biometric)
-        biometricView.checked = securityViewModel.biometric
-        biometricView.doOnCheckedChanged = { securityViewModel.biometric = it }
+        biometricView.setChecked(securityViewModel.biometric, false)
+        biometricView.doOnCheckedChanged = { checked, byUser ->
+            if (byUser) {
+                securityViewModel.biometric = checked
+            }
+        }
 
         val biometricDescriptionView = view.findViewById<View>(R.id.biometric_description)
         val biometricVisibility = if (PasscodeBiometric.isAvailableOnDevice(requireContext())) {
@@ -40,8 +44,12 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
         biometricDescriptionView.visibility = biometricVisibility
 
         lockScreenView = view.findViewById(R.id.lock_screen)
-        lockScreenView.checked = securityViewModel.lockScreen
-        lockScreenView.doOnCheckedChanged = { securityViewModel.lockScreen = it }
+        lockScreenView.setChecked(securityViewModel.lockScreen, false)
+        lockScreenView.doOnCheckedChanged = { checked, byUser ->
+            if (byUser) {
+                securityViewModel.lockScreen = checked
+            }
+        }
 
         changePasscodeView = view.findViewById(R.id.change_passcode)
         changePasscodeView.setOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }

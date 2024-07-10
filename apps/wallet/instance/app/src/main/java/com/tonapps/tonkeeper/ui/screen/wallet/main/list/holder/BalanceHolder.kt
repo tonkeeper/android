@@ -80,7 +80,7 @@ class BalanceHolder(
             balanceView.setTextColor(context.accentRedColor)
             backupIconView.imageTintList = context.accentRedColor.stateList
             backupIconView.visibility = View.VISIBLE
-        } else if (requestBackup) {
+        } else if (requestBackup && item.balanceType == Item.BalanceType.Positive) {
             balanceView.setTextColor(context.accentOrangeColor)
             backupIconView.imageTintList = context.accentOrangeColor.stateList
             backupIconView.visibility = View.VISIBLE

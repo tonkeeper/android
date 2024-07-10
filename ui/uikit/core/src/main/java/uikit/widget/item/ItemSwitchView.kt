@@ -16,7 +16,7 @@ class ItemSwitchView @JvmOverloads constructor(
     private val textView: AppCompatTextView
     private val switchView: SwitchView
 
-    var doOnCheckedChanged: ((Boolean) -> Unit)?
+    var doOnCheckedChanged: ((checked: Boolean, byUser: Boolean) -> Unit)?
         get() = switchView.doCheckedChanged
         set(value) {
             switchView.doCheckedChanged = value
@@ -28,12 +28,6 @@ class ItemSwitchView @JvmOverloads constructor(
             textView.text = value
         }
 
-    var checked: Boolean
-        get() = switchView.checked
-        set(value) {
-            switchView.checked = value
-        }
-
     init {
         inflate(context, R.layout.view_item_switch, this)
 
@@ -41,14 +35,20 @@ class ItemSwitchView @JvmOverloads constructor(
         switchView = findViewById(R.id.check)
 
         setOnClickListener {
-            checked = !checked
+            setChecked(isChecked(), true)
         }
 
         context.useAttributes(attrs, R.styleable.ItemSwitchView) {
             text = it.getString(R.styleable.ItemSwitchView_android_text)
-            checked = it.getBoolean(R.styleable.ItemSwitchView_android_checked, false)
             position = com.tonapps.uikit.list.ListCell.from(it.getString(R.styleable.ItemSwitchView_position))
+            setChecked(it.getBoolean(R.styleable.ItemSwitchView_android_checked, false), false)
         }
+    }
+
+    fun isChecked() = switchView.isChecked()
+
+    fun setChecked(newChecked: Boolean, byUser: Boolean) {
+        switchView.setChecked(newChecked, byUser)
     }
 
 }

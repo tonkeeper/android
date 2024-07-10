@@ -51,4 +51,6 @@ sealed class RootEvent {
     data class Transaction(
         val event: HistoryItem.Event
     ): RootEvent()
+
+    data object OpenBackups: RootEvent()
 }

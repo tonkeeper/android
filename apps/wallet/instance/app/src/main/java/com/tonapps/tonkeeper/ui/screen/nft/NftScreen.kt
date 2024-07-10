@@ -11,22 +11,29 @@ import androidx.core.widget.NestedScrollView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.send.SendScreen
+import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.buttonGreenBackgroundColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.inflate
@@ -39,25 +46,33 @@ import uikit.widget.HeaderView
 
 class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
 
-    private val api: API by inject()
-
     private val nftEntity: NftEntity by lazy {
         requireArguments().getParcelableCompat(ARG_ENTITY)!!
     }
+
+    private val nftViewModel: NftViewModel by viewModel{ parametersOf(nftEntity) }
 
     private val verificationIcon: Drawable by lazy {
         getDrawable(UIKitIcon.ic_verification_16, requireContext().accentBlueColor)
     }
 
+    private lateinit var headerView: HeaderView
+    private lateinit var spamView: View
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val headerView = view.findViewById<HeaderView>(R.id.header)
+        headerView = view.findViewById(R.id.header)
         headerView.title = nftEntity.name
         headerView.doOnCloseClick = { finish() }
 
         val contentView = view.findViewById<NestedScrollView>(R.id.content)
         contentView.applyNavBottomPadding()
         collectFlow(contentView.topScrolled, headerView::setDivider)
+
+        spamView = view.findViewById(R.id.spam)
+
+        view.findViewById<Button>(R.id.report_spam).setOnClickListener { reportSpam(true) }
+        view.findViewById<Button>(R.id.not_spam).setOnClickListener { reportSpam(false) }
 
         val imageView = view.findViewById<FrescoView>(R.id.image)
         imageView.setImageURI(nftEntity.bigUri)
@@ -145,6 +160,39 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
             setOwner(view, it)
         }
         setAddress(view, nftEntity.userFriendlyAddress)
+
+        collectFlow(nftViewModel.trustFlow) {
+            if (it) {
+                showTrustState()
+            } else {
+                showUnverifiedState()
+            }
+        }
+    }
+
+    private fun showUnverifiedState() {
+        spamView.visibility = View.VISIBLE
+        val color = requireContext().accentOrangeColor
+        val icon = requireContext().drawable(UIKitIcon.ic_information_circle_16, color)
+
+        headerView.setSubtitle(Localization.nft_unverified)
+        with(headerView.subtitleView) {
+            visibility = View.VISIBLE
+            compoundDrawablePadding = 8.dp
+            setTextColor(color)
+            setRightDrawable(icon)
+        }
+    }
+
+    private fun showTrustState() {
+        spamView.visibility = View.GONE
+        headerView.setSubtitle(null)
+    }
+
+    private fun reportSpam(spam: Boolean) {
+        collectFlow(nftViewModel.reportSpam(spam)) {
+            finish()
+        }
     }
 
     private fun setOwner(view: View, address: String) {
@@ -161,7 +209,8 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
     private fun setAddress(view: View, address: String) {
         val explorerView = view.findViewById<AppCompatTextView>(R.id.open_explorer)
         explorerView.setOnClickListener {
-            val explorerUrl = api.config.nftExplorer.format(address)
+            val nftExplorer = context?.remoteConfig?.nftExplorer ?: return@setOnClickListener
+            val explorerUrl = nftExplorer.format(address)
             navigation?.openURL(explorerUrl, true)
         }
 

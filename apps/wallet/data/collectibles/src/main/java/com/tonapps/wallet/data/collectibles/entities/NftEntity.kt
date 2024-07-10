@@ -6,6 +6,7 @@ import android.util.Log
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.entity.AccountEntity
 import io.tonapi.models.NftItem
+import io.tonapi.models.TrustType
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -19,6 +20,7 @@ data class NftEntity(
     val verified: Boolean,
     val inSale: Boolean,
     val dns: String?,
+    val isTrusted: Boolean,
 ): Parcelable {
 
     val id: String
@@ -79,6 +81,7 @@ data class NftEntity(
         testnet = testnet,
         verified = item.approvedBy.isNotEmpty(),
         inSale = item.sale != null,
-        dns = item.dns
+        dns = item.dns,
+        isTrusted = item.trust == TrustType.whitelist
     )
 }

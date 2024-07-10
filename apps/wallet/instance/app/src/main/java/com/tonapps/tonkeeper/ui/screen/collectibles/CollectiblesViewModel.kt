@@ -33,12 +33,15 @@ class CollectiblesViewModel(
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
+    val changeWalletFlow = accountRepository.selectedWalletFlow
+
     init {
         combine(
             accountRepository.selectedWalletFlow,
             networkMonitor.isOnlineFlow,
-            settingsRepository.hiddenBalancesFlow
-        ) { wallet, isOnline, hiddenBalances ->
+            settingsRepository.hiddenBalancesFlow,
+            settingsRepository.nftPrefsChangedFlow
+        ) { wallet, isOnline, hiddenBalances, _ ->
             loadItems(wallet, isOnline, hiddenBalances)
         }.launchIn(viewModelScope)
     }
@@ -58,30 +61,39 @@ class CollectiblesViewModel(
         }
     }
 
-    private fun loadLocal(wallet: WalletEntity, hiddenBalances: Boolean) {
+    private suspend fun loadLocal(wallet: WalletEntity, hiddenBalances: Boolean) {
         val purchases = repository.getLocalNftItems(wallet.accountId, wallet.testnet)
-        val items = buildUiItems(purchases, hiddenBalances)
+        val items = buildUiItems(wallet, purchases, hiddenBalances)
         if (items.isNotEmpty()) {
             setUiItems(wallet, items)
         }
     }
 
-    private fun loadRemote(wallet: WalletEntity, hiddenBalances: Boolean) {
+    private suspend fun loadRemote(wallet: WalletEntity, hiddenBalances: Boolean) {
         try {
             val purchases = repository.getRemoteNftItems(wallet.accountId, wallet.testnet)
-            val items = buildUiItems(purchases, hiddenBalances)
+            val items = buildUiItems(wallet, purchases, hiddenBalances)
             setUiItems(wallet, items)
             _isUpdatingFlow.tryEmit(false)
         } catch (ignored: Throwable) { }
     }
 
-    private fun buildUiItems(
+    private suspend fun buildUiItems(
+        wallet: WalletEntity,
         list: List<NftEntity>,
         hiddenBalances: Boolean
     ): List<Item> {
         val items = mutableListOf<Item>()
         for (nft in list) {
-            items.add(Item.Nft(nft, hiddenBalances))
+            val nftPref = settingsRepository.getNftPrefs(wallet.id, nft.address)
+            if (nftPref.hidden) {
+                continue
+            }
+            if (!nft.isTrusted && nftPref.trust) {
+                items.add(Item.Nft(nft.copy(isTrusted = true), hiddenBalances))
+            } else {
+                items.add(Item.Nft(nft, hiddenBalances))
+            }
         }
         return items.toList()
     }

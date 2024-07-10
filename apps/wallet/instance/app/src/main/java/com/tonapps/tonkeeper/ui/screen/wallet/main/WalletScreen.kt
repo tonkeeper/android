@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
+import kotlinx.coroutines.flow.filterNotNull
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.drawable.BarDrawable
@@ -46,7 +47,7 @@ class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
 
-        collectFlow(walletViewModel.uiLabelFlow, headerView::setWallet)
+        collectFlow(walletViewModel.uiLabelFlow.filterNotNull(), headerView::setWallet)
     }
 
     override fun getRecyclerView(): RecyclerView? {

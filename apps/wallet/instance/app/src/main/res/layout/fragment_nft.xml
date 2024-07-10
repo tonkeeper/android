@@ -22,6 +22,37 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <uikit.widget.RowLayout
+                android:id="@+id/spam"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:paddingBottom="@dimen/offsetMedium"
+                android:visibility="gone">
+
+                <Button
+                    style="@style/Widget.App.Button.Orange"
+                    android:id="@+id/report_spam"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:text="@string/report_spam"/>
+
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="0dp"/>
+
+                <Button
+                    style="@style/Widget.App.Button.Secondary"
+                    android:id="@+id/not_spam"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:text="@string/not_spam"/>
+            </uikit.widget.RowLayout>
+
             <uikit.widget.ColumnLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

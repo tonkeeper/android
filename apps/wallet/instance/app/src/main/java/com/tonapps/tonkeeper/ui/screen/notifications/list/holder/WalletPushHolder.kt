@@ -17,12 +17,16 @@ class WalletPushHolder(parent: ViewGroup): Holder<Item.Wallet>(parent, R.layout.
     init {
         itemView.background = ListCell.Position.SINGLE.drawable(context)
         itemView.setOnClickListener {
-            switchView.toggle()
+            switchView.toggle(true)
         }
     }
 
     override fun onBind(item: Item.Wallet) {
-        switchView.checked = item.pushEnabled
-        switchView.doCheckedChanged = { settingsRepository?.setPushWallet(item.walletId, it) }
+        switchView.setChecked(item.pushEnabled, false)
+        switchView.doCheckedChanged = { checked, byUser ->
+            if (byUser) {
+                settingsRepository?.setPushWallet(item.walletId, checked)
+            }
+        }
     }
 }

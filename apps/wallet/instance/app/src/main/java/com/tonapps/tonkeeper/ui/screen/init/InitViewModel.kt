@@ -122,12 +122,14 @@ class InitViewModel(
         }
 
     init {
-        if (passcodeAfterSeed) {
-            _eventFlow.tryEmit(InitEvent.Step.ImportWords)
-        } else  if (!passcodeManager.hasPinCode) {
-            _eventFlow.tryEmit(InitEvent.Step.CreatePasscode)
-        } else {
-            startWalletFlow()
+        viewModelScope.launch {
+            if (passcodeAfterSeed) {
+                _eventFlow.tryEmit(InitEvent.Step.ImportWords)
+            } else  if (!passcodeManager.hasPinCode()) {
+                _eventFlow.tryEmit(InitEvent.Step.CreatePasscode)
+            } else {
+                startWalletFlow()
+            }
         }
     }
 
@@ -360,7 +362,7 @@ class InitViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (!passcodeManager.hasPinCode) {
+                if (!passcodeManager.hasPinCode()) {
                     passcodeManager.save(savedState.passcode!!)
                 }
 

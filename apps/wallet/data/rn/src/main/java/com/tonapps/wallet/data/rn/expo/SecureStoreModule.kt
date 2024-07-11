@@ -177,7 +177,7 @@ internal class SecureStoreModule(
         return prefs.edit().putString(key, encryptedItemString).commit()
     }
 
-    private fun deleteItemImpl(key: String, options: SecureStoreOptions) {
+    fun deleteItemImpl(key: String, options: SecureStoreOptions = SecureStoreOptions()) {
         var success = true
         val prefs = getSharedPreferences()
         val keychainAwareKey = createKeychainAwareKey(key, options.keychainService)

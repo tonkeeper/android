@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.fragment.app.FragmentActivity
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.expo.SecureStoreModule
+import com.tonapps.wallet.data.rn.expo.SecureStoreOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -12,13 +13,46 @@ import kotlin.math.ceil
 internal class RNSeedStorage(context: Context) {
 
     private companion object {
+        private const val keychainService = "TKProtected"
         private const val walletsKey = "wallets"
+        private const val biometryKey = "biometry_passcode"
     }
 
     private val kv = SecureStoreModule(context)
 
     fun setActivity(activity: FragmentActivity) {
         kv.setActivity(activity)
+    }
+
+    suspend fun exportPasscodeWithBiometry(): String = withContext(Dispatchers.IO) {
+        val passcode = kv.getItemImpl(biometryKey, SecureStoreOptions(
+            keychainService = keychainService
+        ))
+        if (passcode.isNullOrBlank()) {
+            throw Exception("Biometry passcode is null")
+        }
+        passcode
+    }
+
+    suspend fun setupBiometry(passcode: String) = withContext(Dispatchers.IO) {
+        kv.setItemImpl(biometryKey, passcode, SecureStoreOptions(
+            keychainService = keychainService,
+            requireAuthentication = true,
+        ))
+    }
+
+    suspend fun removeBiometry() = withContext(Dispatchers.IO) {
+        kv.deleteItemImpl(biometryKey, SecureStoreOptions(
+            keychainService = keychainService
+        ))
+    }
+
+    suspend fun hasPinCode(): Boolean {
+        return readState() != null
+    }
+
+    suspend fun removeAll() {
+        kv.getSharedPreferences().edit().clear().apply()
     }
 
     suspend fun save(passcode: String, state: RNVaultState) = withContext(Dispatchers.IO) {

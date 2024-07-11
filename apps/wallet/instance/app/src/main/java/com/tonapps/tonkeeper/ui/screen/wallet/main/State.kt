@@ -195,6 +195,7 @@ sealed class State {
             if (!dAppNotifications.isEmpty) {
                 uiItems.add(Item.Push(dAppNotifications.notifications, dAppNotifications.apps))
             }
+            uiItems.addAll(uiItemsTokens(hiddenBalance))
 
             val setupTypes = mutableListOf<SetupType>()
             if (!push) {
@@ -209,7 +210,6 @@ sealed class State {
             }
 
             uiItems.addAll(uiItemsSetup(config, setupTypes))
-            uiItems.addAll(uiItemsTokens(hiddenBalance))
             return uiItems.toList()
         }
     }

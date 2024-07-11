@@ -1,7 +1,6 @@
 package com.tonapps.wallet.data.rn
 
 import android.content.Context
-import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
 import com.tonapps.wallet.data.rn.data.RNVaultState
@@ -10,7 +9,6 @@ import com.tonapps.wallet.data.rn.data.RNWallets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import kotlin.math.ceil
 
 class RNLegacy(context: Context) {
 
@@ -22,6 +20,26 @@ class RNLegacy(context: Context) {
     private val seedStorage = RNSeedStorage(context)
     private var cacheWallets: RNWallets? = null
 
+    suspend fun exportPasscodeWithBiometry(): String {
+        return seedStorage.exportPasscodeWithBiometry()
+    }
+
+    suspend fun setupBiometry(passcode: String) {
+        seedStorage.setupBiometry(passcode)
+    }
+
+    suspend fun removeBiometry() {
+        seedStorage.removeBiometry()
+    }
+
+    suspend fun clearMnemonic() {
+        seedStorage.removeAll()
+    }
+
+    suspend fun hasPinCode(): Boolean {
+        return seedStorage.hasPinCode()
+    }
+
     suspend fun addMnemonics(passcode: String, walletIds: List<String>, mnemonic: List<String>) {
         val vaultState = getVaultState(passcode)
 
@@ -29,6 +47,11 @@ class RNLegacy(context: Context) {
             vaultState.keys[walletId] = RNDecryptedData(walletId, mnemonic.joinToString(" "))
         }
         seedStorage.save(passcode, vaultState)
+    }
+
+    suspend fun changePasscode(oldPasscode: String, newPasscode: String) {
+        val vaultState = getVaultState(oldPasscode)
+        seedStorage.save(newPasscode, vaultState)
     }
 
     suspend fun getVaultState(passcode: String): RNVaultState = withContext(Dispatchers.IO) {

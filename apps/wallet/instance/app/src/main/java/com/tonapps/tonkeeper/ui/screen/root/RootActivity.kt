@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
@@ -29,9 +30,11 @@ import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
@@ -128,7 +131,7 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun checkPasscode(code: String) {
-        rootViewModel.checkPasscode(code).catch {
+        rootViewModel.checkPasscode(this, code).catch {
             lockPasscodeView.setError()
         }.onEach {
             lockPasscodeView.setSuccess()

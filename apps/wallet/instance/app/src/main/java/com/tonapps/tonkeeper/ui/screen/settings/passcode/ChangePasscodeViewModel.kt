@@ -31,10 +31,10 @@ class ChangePasscodeViewModel(
         setStep(Step.Current)
     }
 
-    fun checkCurrent(pin: String) {
+    fun checkCurrent(context: Context, pin: String) {
         savedState.oldPasscode = ""
         viewModelScope.launch {
-            val isValid = passcodeManager.isValid(pin)
+            val isValid = passcodeManager.isValid(context, pin)
             if (isValid) {
                 savedState.oldPasscode = pin
                 setStep(Step.New)
@@ -49,12 +49,12 @@ class ChangePasscodeViewModel(
         setStep(Step.Confirm)
     }
 
-    fun save(pin: String) {
+    fun save(context: Context, pin: String) {
         savedState.reEnterPasscode = pin
-        checkAndSave()
+        checkAndSave(context)
     }
 
-    private fun checkAndSave() {
+    private fun checkAndSave(context: Context) {
         viewModelScope.launch {
             val oldPasscode = savedState.oldPasscode ?: return@launch
             val passcode = savedState.passcode ?: return@launch
@@ -66,7 +66,7 @@ class ChangePasscodeViewModel(
                 return@launch
             }
 
-            val saved = passcodeManager.change(oldPasscode, passcode)
+            val saved = passcodeManager.change(context, oldPasscode, passcode)
             if (!saved) {
                 setError()
                 delay(400)

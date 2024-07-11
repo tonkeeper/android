@@ -40,7 +40,7 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         passcodeView.clear()
         passcodeView.setTitle(Localization.passcode_current)
         passcodeView.doOnCheck = {
-            changePasscodeViewModel.checkCurrent(it)
+            changePasscodeViewModel.checkCurrent(requireContext(), it)
         }
     }
 
@@ -56,7 +56,7 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         passcodeView.clear()
         passcodeView.setTitle(Localization.passcode_re_enter)
         passcodeView.doOnCheck = {
-            changePasscodeViewModel.save(it)
+            changePasscodeViewModel.save(requireContext(), it)
         }
     }
 

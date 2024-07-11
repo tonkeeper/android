@@ -11,7 +11,11 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class AuthenticationPrompt(private val currentActivity: FragmentActivity, title: String) {
+class AuthenticationPrompt(
+    private val currentActivity: FragmentActivity,
+    title: String
+) {
+
     private val context = currentActivity
     private var executor: Executor = ContextCompat.getMainExecutor(context)
     private var promptInfo = PromptInfo.Builder()

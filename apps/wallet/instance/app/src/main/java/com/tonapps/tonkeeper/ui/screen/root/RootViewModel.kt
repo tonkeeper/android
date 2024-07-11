@@ -289,8 +289,8 @@ class RootViewModel(
         _eventFlow.tryEmit(RootEvent.Ledger(connectData, accounts))
     }
 
-    fun checkPasscode(code: String): Flow<Unit> = flow {
-        val valid = passcodeManager.isValid(code)
+    fun checkPasscode(context: Context, code: String): Flow<Unit> = flow {
+        val valid = passcodeManager.isValid(context, code)
         if (valid) {
             hidePasscode()
             emit(Unit)

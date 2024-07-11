@@ -81,13 +81,9 @@ class AESEncryptor : KeyBasedEncryptor<KeyStore.SecretKeyEntry> {
         authenticationPrompt: String,
         authenticationHelper: AuthenticationHelper
     ): JSONObject {
-        val secretKey = keyStoreEntry.secretKey
-        val cipher = Cipher.getInstance(AES_CIPHER)
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-
+        val cipher = createEncryptCipher(keyStoreEntry)
         val gcmSpec = cipher.parameters.getParameterSpec(GCMParameterSpec::class.java)
         val authenticatedCipher = authenticationHelper.authenticateCipher(cipher, requireAuthentication, authenticationPrompt)
-
         return createEncryptedItemWithCipher(plaintextValue, authenticatedCipher, gcmSpec)
     }
 
@@ -122,13 +118,14 @@ class AESEncryptor : KeyBasedEncryptor<KeyStore.SecretKeyEntry> {
         val ciphertextBytes = Base64.decode(ciphertext, Base64.DEFAULT)
         val ivBytes = Base64.decode(ivString, Base64.DEFAULT)
         val gcmSpec = GCMParameterSpec(authenticationTagLength, ivBytes)
-        val cipher = Cipher.getInstance(AES_CIPHER)
+
         val requiresAuthentication = encryptedItem.optBoolean(AuthenticationHelper.REQUIRE_AUTHENTICATION_PROPERTY)
 
         if (authenticationTagLength < MIN_GCM_AUTHENTICATION_TAG_LENGTH) {
             throw DecryptException("Authentication tag length must be at least $MIN_GCM_AUTHENTICATION_TAG_LENGTH bits long", key, options.keychainService)
         }
-        cipher.init(Cipher.DECRYPT_MODE, keyStoreEntry.secretKey, gcmSpec)
+
+        val cipher = createDecryptCipher(gcmSpec, keyStoreEntry)
         val unlockedCipher = authenticationHelper.authenticateCipher(cipher, requiresAuthentication, options.authenticationPrompt)
         return String(unlockedCipher.doFinal(ciphertextBytes), StandardCharsets.UTF_8)
     }
@@ -141,5 +138,18 @@ class AESEncryptor : KeyBasedEncryptor<KeyStore.SecretKeyEntry> {
         const val IV_PROPERTY = "iv"
         private const val GCM_AUTHENTICATION_TAG_LENGTH_PROPERTY = "tlen"
         private const val MIN_GCM_AUTHENTICATION_TAG_LENGTH = 96
+
+        fun createDecryptCipher(gcmSpec: GCMParameterSpec, keyStoreEntry: KeyStore.SecretKeyEntry): Cipher {
+            val cipher = Cipher.getInstance(AES_CIPHER)
+            cipher.init(Cipher.DECRYPT_MODE, keyStoreEntry.secretKey, gcmSpec)
+            return cipher
+        }
+
+        fun createEncryptCipher(keyStoreEntry: KeyStore.SecretKeyEntry): Cipher {
+            val secretKey = keyStoreEntry.secretKey
+            val cipher = Cipher.getInstance(AES_CIPHER)
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+            return cipher
+        }
     }
 }

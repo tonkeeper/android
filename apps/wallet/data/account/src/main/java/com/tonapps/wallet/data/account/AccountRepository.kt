@@ -114,7 +114,7 @@ class AccountRepository(
         }
     }
 
-    suspend fun importPrivateKeysFromRNLegacy(passcode: String) {
+    suspend fun importPrivateKeysFromRNLegacy(passcode: String) = withContext(Dispatchers.IO) {
         val list = migrationHelper.loadSecureStore(passcode)
         if (list.isEmpty()) {
             throw Exception("Empty list")

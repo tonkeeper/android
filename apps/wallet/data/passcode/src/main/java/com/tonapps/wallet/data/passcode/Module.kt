@@ -6,5 +6,5 @@ import org.koin.dsl.module
 val passcodeModule = module {
     single { PasscodeStore(get()) }
     single { PasscodeHelper(get(), get()) }
-    single { PasscodeManager(get(), get()) }
+    single { PasscodeManager(get(), get(), get(), get()) }
 }

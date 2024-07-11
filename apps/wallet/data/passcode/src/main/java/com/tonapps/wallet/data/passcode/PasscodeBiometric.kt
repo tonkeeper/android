@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import android.util.Log
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -11,7 +12,7 @@ import kotlin.coroutines.resume
 
 object PasscodeBiometric {
 
-    private const val authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL or BiometricManager.Authenticators.BIOMETRIC_STRONG
+    private const val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
 
     fun isAvailableOnDevice(context: Context): Boolean {
         val authStatus = BiometricManager.from(context).canAuthenticate(authenticators)
@@ -50,6 +51,7 @@ object PasscodeBiometric {
                 .setTitle(title)
                 .setAllowedAuthenticators(authenticators)
                 .setConfirmationRequired(false)
+                .setNegativeButtonText(context.getString(android.R.string.cancel))
 
             biometricPrompt.authenticate(builder.build())
         } catch (e: Throwable) {

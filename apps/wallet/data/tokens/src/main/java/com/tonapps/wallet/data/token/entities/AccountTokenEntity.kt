@@ -58,4 +58,7 @@ data class AccountTokenEntity(
 
     val verified: Boolean
         get() = balance.token.verification == TokenEntity.Verification.whitelist
+
+    val blacklist: Boolean
+        get() = balance.token.verification == TokenEntity.Verification.blacklist
 }

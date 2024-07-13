@@ -24,6 +24,8 @@ internal abstract class BaseSettingsFolder(
         _changedFlow.tryEmit(Unit)
     }
 
+    fun contains(key: String) = prefs.contains(key)
+
     fun getBoolean(key: String, defValue: Boolean = false) = prefs.getBoolean(key, defValue)
 
     fun getInt(key: String, defValue: Int = 0) = prefs.getInt(key, defValue)

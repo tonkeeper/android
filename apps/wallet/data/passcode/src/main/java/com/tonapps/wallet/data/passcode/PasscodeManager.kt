@@ -1,21 +1,14 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.util.Log
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.passcode.source.PasscodeStore
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable.isActive
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import uikit.navigation.Navigation
-import kotlin.coroutines.resume
 
 class PasscodeManager(
     private val accountRepository: AccountRepository,
@@ -36,15 +29,24 @@ class PasscodeManager(
         !helper.hasPinCode && rnLegacy.hasPinCode()
     }
 
-    suspend fun isValid(context: Context, code: String): Boolean {
-        if (!isRequestMigration()) {
-            return helper.isValid(code)
+    suspend fun requestValidPasscode(context: Context): String = withContext(Dispatchers.Main) {
+        val code = PasscodeDialog.request(context) ?: throw Exception("failed to request passcode")
+        if (!isValid(context, code)) {
+            throw Exception("invalid passcode")
         }
-        return try {
-            migration(context, code)
-            true
-        } catch (e: Throwable) {
-            false
+        code
+    }
+
+    suspend fun isValid(context: Context, code: String): Boolean = withContext(Dispatchers.IO) {
+        if (!isRequestMigration()) {
+            helper.isValid(code)
+        } else {
+            try {
+                migration(context, code)
+                true
+            } catch (e: Throwable) {
+                false
+            }
         }
     }
 

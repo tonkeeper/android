@@ -55,7 +55,7 @@ val koinModel = module {
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
     single { SettingsRepository(get(), get(), get()) }
     single { NetworkMonitor(get(), get()) }
-    single { PushManager(get(), get(), get(), get(), get(), get(), get()) }
+    single(createdAtStart = true) { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get(), get(), get()) }
 
@@ -72,7 +72,7 @@ val koinModel = module {
     viewModel { SettingsViewModel(get(), get(), get(), get()) }
     viewModel { EditNameViewModel(get()) }
     viewModel { LanguageViewModel(get()) }
-    viewModel { SecurityViewModel(get()) }
+    viewModel { SecurityViewModel(get(), get(), get()) }
     viewModel { ThemeViewModel(get()) }
     viewModel { EventsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(request = parameters.get(), get(), get(), get()) }

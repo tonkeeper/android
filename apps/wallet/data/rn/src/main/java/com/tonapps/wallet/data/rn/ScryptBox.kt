@@ -24,7 +24,7 @@ internal object ScryptBox {
         val salt = Security.randomBytes(32)
         val passcodeHash = passcodeHash(passcode, salt)
         val nonce = salt.copyOfRange(0, 24)
-        val clearText = Sodium.cryptoSecretbox(
+        val ciphertext = Sodium.cryptoSecretbox(
             text = value.toByteArray(),
             nonce = nonce,
             key = passcodeHash
@@ -32,7 +32,7 @@ internal object ScryptBox {
 
         return SeedState(
             salt = hex(salt),
-            ct = hex(clearText)
+            ciphertext = hex(ciphertext)
         )
     }
 
@@ -43,7 +43,7 @@ internal object ScryptBox {
         val salt = state.salt.hex()
         val passcodeHash = passcodeHash(passcode, salt)
         val nonce = salt.copyOfRange(0, 24)
-        val clearText = state.ct.hex()
+        val clearText = state.ciphertext.hex()
         val pt = Sodium.cryptoSecretboxOpen(clearText, nonce, passcodeHash) ?: throw Exception("cryptoSecretboxOpen failed")
         return pt.decodeToString()
     }

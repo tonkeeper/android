@@ -24,11 +24,11 @@ class RNLegacy(context: Context) {
         return seedStorage.exportPasscodeWithBiometry()
     }
 
-    suspend fun setupBiometry(passcode: String) {
+    suspend fun setupBiometry(passcode: String) = withContext(Dispatchers.IO) {
         seedStorage.setupBiometry(passcode)
     }
 
-    suspend fun removeBiometry() {
+    suspend fun removeBiometry() = withContext(Dispatchers.IO) {
         seedStorage.removeBiometry()
     }
 

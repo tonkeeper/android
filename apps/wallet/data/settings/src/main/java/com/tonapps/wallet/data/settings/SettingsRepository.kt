@@ -270,12 +270,17 @@ class SettingsRepository(
 
     suspend fun getTokenPrefs(
         walletId: String,
-        tokenAddress: String
+        tokenAddress: String,
+        blacklist: Boolean,
     ): TokenPrefsEntity = withContext(Dispatchers.IO) {
-        val token = tokenPrefsFolder.get(walletId, tokenAddress)
-        token.copy(
-            hidden = rnLegacy.isHiddenToken(walletId, tokenAddress)
-        )
+        val token = tokenPrefsFolder.get(walletId, tokenAddress, blacklist)
+        if (token.contains) {
+            token
+        } else {
+            token.copy(
+                hidden = !blacklist && rnLegacy.isHiddenToken(walletId, tokenAddress)
+            )
+        }
     }
 
     suspend fun getNftPrefs(

@@ -255,7 +255,6 @@ class API(
         if (lastEventId != null) {
             url += "&last_event_id=$lastEventId"
         }
-        Log.d("TonConnectBridge", "tonconnectEvents: sse = $url")
         return tonAPIHttpClient.sse(url)
     }
 

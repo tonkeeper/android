@@ -11,14 +11,19 @@ internal class TokenPrefsFolder(context: Context): BaseSettingsFolder(context, "
         private const val SORT_PREFIX = "sort_"
     }
 
-    fun get(walletId: String, tokenAddress: String): TokenPrefsEntity {
-        val hidden = getBoolean(keyHidden(walletId, tokenAddress))
+    fun get(walletId: String, tokenAddress: String, blacklist: Boolean): TokenPrefsEntity {
+        var hidden = getBoolean(keyHidden(walletId, tokenAddress))
         val pinned = if (hidden) false else getBoolean(keyPinned(walletId, tokenAddress), tokenAddress.equals("0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe", ignoreCase = true) || tokenAddress.equals("ton", ignoreCase = true))
         val index = if (pinned) getInt(keySort(walletId, tokenAddress)) else -1
+        if (blacklist && !hidden && !contains(keyHidden(walletId, tokenAddress))) {
+            hidden = true
+        }
+        val contains = contains(keySort(walletId, tokenAddress)) || contains(keyHidden(walletId, tokenAddress)) || contains(keyHidden(walletId, tokenAddress))
         return TokenPrefsEntity(
             pinned = pinned,
             hidden = hidden,
-            index = index
+            index = index,
+            contains = contains,
         )
     }
 

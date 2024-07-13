@@ -28,8 +28,14 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
         itemView.setOnClickListener {
             context.navigation?.add(TokenScreen.newInstance(item.address, item.name, item.symbol))
         }
-        iconView.setImageURI(item.iconUri, this)
-        titleView.text = item.symbol
+        if (item.blacklist) {
+            titleView.text = "FAKE"
+            iconView.clear(null)
+        } else {
+            titleView.text = item.symbol
+            iconView.setImageURI(item.iconUri, this)
+        }
+
         balanceView.text = if (item.hiddenBalance) {
             HIDDEN_BALANCE
         } else {

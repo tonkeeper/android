@@ -205,7 +205,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val rateDiff24h: String,
         val verified: Boolean,
         val testnet: Boolean,
-        val hiddenBalance: Boolean
+        val hiddenBalance: Boolean,
+        val blacklist: Boolean
     ): Item(TYPE_TOKEN) {
 
         val isTON = symbol == TokenEntity.TON.symbol
@@ -232,7 +233,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             rateDiff24h = token.rateDiff24h,
             verified = token.verified,
             testnet = testnet,
-            hiddenBalance = hiddenBalance
+            hiddenBalance = hiddenBalance,
+            blacklist = token.blacklist
         )
 
         constructor(parcel: Parcel) : this(
@@ -247,6 +249,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readCharSequenceCompat()!!,
             parcel.readCharSequenceCompat()!!,
             parcel.readString()!!,
+            parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat()
@@ -267,6 +270,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(verified)
             dest.writeBooleanCompat(testnet)
             dest.writeBooleanCompat(hiddenBalance)
+            dest.writeBooleanCompat(blacklist)
         }
 
         companion object CREATOR : Parcelable.Creator<Token> {

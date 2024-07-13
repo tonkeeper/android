@@ -6,12 +6,17 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.hasPushPermission
+import com.tonapps.tonkeeper.koin.passcodeManager
+import com.tonapps.tonkeeper.koin.rnLegacy
 import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.stateList
+import kotlinx.coroutines.launch
 import uikit.extensions.activity
 import uikit.extensions.drawable
 import uikit.extensions.withAlpha
@@ -20,6 +25,8 @@ import uikit.widget.SwitchView
 class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.layout.view_wallet_setup_switch) {
 
     private val settingsRepository = context.settingsRepository
+    private val passcodeManager = context.passcodeManager
+    private val rnLegacy = context.rnLegacy
 
     private val iconView = findViewById<AppCompatImageView>(R.id.icon)
     private val textView = findViewById<AppCompatTextView>(R.id.text)
@@ -60,8 +67,20 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
         }
     }
 
-    private fun toggleBiometric(enable: Boolean) {
-        settingsRepository?.biometric = enable
+    private fun toggleBiometric(value: Boolean) {
+        lifecycleScope?.launch {
+            try {
+                if (value) {
+                    val code = passcodeManager?.requestValidPasscode(context) ?: throw IllegalStateException()
+                    rnLegacy?.setupBiometry(code)
+                } else {
+                    rnLegacy?.removeBiometry()
+                }
+                settingsRepository?.biometric = value
+            } catch (e: Throwable) {
+                switchView.setChecked(!value, false)
+            }
+        }
     }
 
 }

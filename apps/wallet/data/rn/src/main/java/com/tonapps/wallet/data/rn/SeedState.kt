@@ -8,7 +8,7 @@ data class SeedState(
     val r: Int = SeedState.r, // scrypt "block size" parameter
     val p: Int = SeedState.p, // scrypt "parallelization" parameter,
     val salt: String, // hex-encoded nonce/salt
-    val ct: String // hex-encoded ciphertext
+    val ciphertext: String // hex-encoded ciphertext
 ) {
 
     companion object {
@@ -23,7 +23,7 @@ data class SeedState(
         r = json.getInt("r"),
         p = json.getInt("p"),
         salt = json.getString("salt"),
-        ct = json.getString("ct")
+        ciphertext = json.getString("ct")
     )
 
     fun toJSON(): JSONObject {
@@ -33,7 +33,7 @@ data class SeedState(
         json.put("r", r)
         json.put("p", p)
         json.put("salt", salt)
-        json.put("ct", ct)
+        json.put("ct", ciphertext)
         return json
     }
 

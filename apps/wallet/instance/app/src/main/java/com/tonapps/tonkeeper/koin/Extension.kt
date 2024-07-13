@@ -5,6 +5,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import org.koin.core.Koin
@@ -36,3 +38,9 @@ val Context.settingsRepository: SettingsRepository?
 
 val Context.tonConnectRepository: TonConnectRepository?
     get() = koin?.get<TonConnectRepository>()
+
+val Context.passcodeManager: PasscodeManager?
+    get() = koin?.get<PasscodeManager>()
+
+val Context.rnLegacy: RNLegacy?
+    get() = koin?.get<RNLegacy>()

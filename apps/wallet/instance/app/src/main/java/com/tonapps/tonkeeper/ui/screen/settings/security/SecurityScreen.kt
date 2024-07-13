@@ -2,9 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
 import android.view.View
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
@@ -30,7 +33,7 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
         biometricView.setChecked(securityViewModel.biometric, false)
         biometricView.doOnCheckedChanged = { checked, byUser ->
             if (byUser) {
-                securityViewModel.biometric = checked
+                enableBiometric(checked)
             }
         }
 
@@ -53,6 +56,12 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
 
         changePasscodeView = view.findViewById(R.id.change_passcode)
         changePasscodeView.setOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }
+    }
+
+    private fun enableBiometric(value: Boolean) {
+        securityViewModel.enableBiometric(requireContext(), value).catch {
+
+        }.launchIn(lifecycleScope)
     }
 
     companion object {

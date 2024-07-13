@@ -346,97 +346,57 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoS
 extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoSecretbox(
         JNIEnv *env,
         jobject,
-        jbyteArray box,
-        jbyteArray none,
+        jbyteArray message,
+        jbyteArray nonce,
         jbyteArray key
 ) {
-    jbyte *native_box = env->GetByteArrayElements(box, NULL);
-    jsize boxlen = env->GetArrayLength(box);
+    jbyte *native_message = env->GetByteArrayElements(message, NULL);
+    jsize messagelen = env->GetArrayLength(message);
 
-    if (sodium_mlock(native_box, boxlen) != 0) {
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        return NULL;
-    }
-
-    jbyte *native_none = env->GetByteArrayElements(none, NULL);
-    jsize nonelen = env->GetArrayLength(none);
-
-    if (sodium_mlock(native_none, nonelen) != 0) {
-        sodium_munlock(native_box, boxlen);
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-        return NULL;
-    }
+    jbyte *native_nonce = env->GetByteArrayElements(nonce, NULL);
+    jsize noncelen = env->GetArrayLength(nonce);
 
     jbyte *native_key = env->GetByteArrayElements(key, NULL);
     jsize keylen = env->GetArrayLength(key);
 
-    if (sodium_mlock(native_key, keylen) != 0) {
-        sodium_munlock(native_box, boxlen);
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        sodium_munlock(native_none, nonelen);
-        env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
+    if (noncelen != crypto_secretbox_NONCEBYTES || keylen != crypto_secretbox_KEYBYTES) {
+        env->ReleaseByteArrayElements(message, native_message, JNI_ABORT);
+        env->ReleaseByteArrayElements(nonce, native_nonce, JNI_ABORT);
         env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
         return NULL;
     }
 
-    char *out = (char *) malloc(boxlen);
+    jsize cipherlen = crypto_secretbox_MACBYTES + messagelen;
+    unsigned char *cipher = (unsigned char *) sodium_malloc(cipherlen);
 
-    if (out == NULL || sodium_mlock(out, boxlen) != 0) {
-        sodium_memzero(native_box, boxlen);
-        sodium_munlock(native_box, boxlen);
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        sodium_memzero(native_none, nonelen);
-        sodium_munlock(native_none, nonelen);
-        env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-        sodium_memzero(native_key, keylen);
-        sodium_munlock(native_key, keylen);
+    if (cipher == NULL) {
+        env->ReleaseByteArrayElements(message, native_message, JNI_ABORT);
+        env->ReleaseByteArrayElements(nonce, native_nonce, JNI_ABORT);
         env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        if (out != NULL) free(out);
         return NULL;
     }
 
     int result = crypto_secretbox_easy(
-            reinterpret_cast<unsigned char *const>(out),
-            reinterpret_cast<const unsigned char *const>(native_box),
-            boxlen,
-            reinterpret_cast<const unsigned char *const>(native_none),
-            reinterpret_cast<const unsigned char *const>(native_key)
-
+            cipher,
+            reinterpret_cast<const unsigned char *>(native_message),
+            messagelen,
+            reinterpret_cast<const unsigned char *>(native_nonce),
+            reinterpret_cast<const unsigned char *>(native_key)
     );
 
+    env->ReleaseByteArrayElements(message, native_message, JNI_ABORT);
+    env->ReleaseByteArrayElements(nonce, native_nonce, JNI_ABORT);
+    env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
+
     if (result != 0) {
-        sodium_memzero(out, boxlen);
-        sodium_munlock(out, boxlen);
-        free(out);
-        sodium_memzero(native_box, boxlen);
-        sodium_munlock(native_box, boxlen);
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        sodium_memzero(native_none, nonelen);
-        sodium_munlock(native_none, nonelen);
-        env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-        sodium_memzero(native_key, keylen);
-        sodium_munlock(native_key, keylen);
-        env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
+        sodium_free(cipher);
         return NULL;
     }
 
-    jbyteArray jcipher = env->NewByteArray(boxlen);
-    env->SetByteArrayRegion(jcipher, 0, boxlen, (jbyte *) out);
+    jbyteArray jcipher = env->NewByteArray(cipherlen);
+    env->SetByteArrayRegion(jcipher, 0, cipherlen, reinterpret_cast<jbyte *>(cipher));
 
-    sodium_memzero(out, boxlen);
-    sodium_munlock(out, boxlen);
-    free(out);
-    sodium_memzero(native_box, boxlen);
-    sodium_munlock(native_box, boxlen);
-    env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-    sodium_memzero(native_none, nonelen);
-    sodium_munlock(native_none, nonelen);
-    env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-    sodium_memzero(native_key, keylen);
-    sodium_munlock(native_key, keylen);
-    env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
+    sodium_free(cipher);
 
     return jcipher;
 }
-

@@ -33,7 +33,7 @@ class TokensManageViewModel(
         tokenRepository.getLocal(settingsRepository.currency, wallet.accountId, wallet.testnet).map { token ->
             TokenExtendedEntity(
                 raw = token,
-                prefs = settingsRepository.getTokenPrefs(wallet.id, token.address),
+                prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
             )
         }.filter { !it.raw.isTon }
     }

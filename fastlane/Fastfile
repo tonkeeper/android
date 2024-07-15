@@ -43,7 +43,7 @@ platform :android do
     end
 
     desc "Run tests"
-    lane :run_tests do |options|
+    lane :gradle_test do |options|
         gradle(
             task: "test",
             properties: {
@@ -99,7 +99,7 @@ platform :android do
     desc "Build and upload to GooglePlay"
     lane :beta do
         fetch_and_increment_build_number
-        run_tests
+        gradle_test
         build_release
         upload_release
     end
@@ -107,7 +107,7 @@ platform :android do
     desc "Build APK"
     lane :apk do
         fetch_and_increment_build_number
-        run_tests
+        gradle_test
         assemble_release
     end
 end

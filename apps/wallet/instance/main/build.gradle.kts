@@ -23,10 +23,10 @@ android {
 
     signingConfigs {
         getByName("release") {
-            storeFile = file(project.property("android.injected.signing.store.file"))
-            storePassword = project.property("android.injected.signing.store.password")
-            keyAlias = project.property("android.injected.signing.key.alias")
-            keyPassword = project.property("android.injected.signing.key.password")
+            storeFile = file(project.property("android.injected.signing.store.file").toString())
+            storePassword = project.property("android.injected.signing.store.password").toString()
+            keyAlias = project.property("android.injected.signing.key.alias").toString()
+            keyPassword = project.property("android.injected.signing.key.password").toString()
         }
         getByName("debug") {
             keyAlias = "androiddebugkey"

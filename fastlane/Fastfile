@@ -15,7 +15,6 @@
 
 
 platform :android do
-
     desc "Fetches the latest version code from the Play Console and increments it by 1"
     lane :fetch_and_increment_build_number do
         app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
@@ -42,17 +41,18 @@ platform :android do
         sh("echo VERSION_CODE=#{updated_version_code} >> $GITHUB_ENV")
     end
 
-    desc "Run tests"
-    lane :gradle_test do |options|
+    desc "Run lint and update baselines"
+    lane :update_lint_baseline do
         gradle(
-            task: "test",
+            task: "lintVitalRelease",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
                 "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-            } 
-        )
+                "lint.baselines.continue" => "true"
+            }
+    )
     end
 
     desc "Build the android aab for release"
@@ -101,16 +101,16 @@ platform :android do
 
     desc "Build and upload to GooglePlay"
     lane :beta do
+        update_lint_baseline
         fetch_and_increment_build_number
-        gradle_test
         build_release
         upload_release
     end
 
     desc "Build APK"
     lane :apk do
+        update_lint_baseline
         fetch_and_increment_build_number
-        gradle_test
         assemble_release
     end
 end

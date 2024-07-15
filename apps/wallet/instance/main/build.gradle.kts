@@ -22,7 +22,7 @@ android {
     }
 
     signingConfigs {
-        getByName("release") {
+        create("release") {
             storeFile = file(project.property("android.injected.signing.store.file").toString())
             storePassword = project.property("android.injected.signing.store.password").toString()
             keyAlias = project.property("android.injected.signing.key.alias").toString()
@@ -48,6 +48,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

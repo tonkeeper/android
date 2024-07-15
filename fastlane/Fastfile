@@ -42,6 +42,19 @@ platform :android do
         sh("echo VERSION_CODE=#{updated_version_code} >> $GITHUB_ENV")
     end
 
+    desc "Run tests"
+    lane :run_tests do |options|
+        gradle(
+            task: "test",
+            properties: {
+                "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
+                "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+                "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+                "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+            } 
+        )
+    end
+
     desc "Build the android aab for release"
     lane :build_release do |options|
         gradle(
@@ -86,6 +99,7 @@ platform :android do
     desc "Build and upload to GooglePlay"
     lane :beta do
         fetch_and_increment_build_number
+        run_tests
         build_release
         upload_release
     end
@@ -93,6 +107,7 @@ platform :android do
     desc "Build APK"
     lane :apk do
         fetch_and_increment_build_number
+        run_tests
         assemble_release
     end
 end

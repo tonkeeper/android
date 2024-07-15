@@ -1,7 +1,9 @@
 name: Android Mobile CD
 
 on:
-  # Allows you to run this workflow manually from the Actions a tab
+  push:
+    branches:
+      - 'feature/**'
   workflow_dispatch:
 
 jobs:
@@ -13,39 +15,36 @@ jobs:
       - name: Checkout to git repository
         uses: actions/checkout@v4
 
+      - name: Set up ruby env
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+          bundler-cache: true
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: ${{ matrix.java-version }}
+          java-version: 20.0.2+9
 
       - name: Decode signing certificate into a file
-        working-directory: './apps/wallet/instance/main'
         env:
          CERTIFICATE_BASE64: ${{ secrets.ANDROID_DIST_SIGNING_KEY }}
         run: |
          echo $CERTIFICATE_BASE64 | base64 --decode > google-release.keystore
 
-      - name: Decode service account into a file
-        working-directory: './apps/wallet/instance/main'
-        env:
-         CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
-        run: |
-         echo $CREDENTIALS > service-account.json
-
       - name: Build android apk
-        working-directory: './apps/wallet/instance/main'
         run: bundle exec fastlane android apk
         env:
-          KEYSTORE_FILE: ${{ github.workspace }}/apps/wallet/instance/main/google-release.keystore
+          KEYSTORE_FILE: ${{ github.workspace }}/google-release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.TONKEEPER_UPLOAD_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.TONKEEPER_UPLOAD_KEY_ALIAS}}
           KEY_PASSWORD: ${{ secrets.TONKEEPER_UPLOAD_KEY_PASSWORD }}
-          ANDROID_JSON_KEY_FILE: service-account.json
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
 
       - name: Upload android apk to artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: Tonkeeper apk ${{ env.VERSION_CODE }}
+          name: Tonkeeper X apk ${{ env.VERSION_CODE }}
           path: |
             ${{ github.workspace }}/apps/wallet/instance/main/build/outputs

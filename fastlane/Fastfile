@@ -23,19 +23,19 @@ platform :android do
         internal_version_codes = google_play_track_version_codes(
             package_name: app_identifier,
             track: "internal",
-            json_key: ENV["ANDROID_JSON_KEY_FILE"]
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
         )
 
         production_version_codes = google_play_track_version_codes(
             package_name: app_identifier,
-            json_key: ENV["ANDROID_JSON_KEY_FILE"]
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
         )
         
         max = internal_version_codes[0] > production_version_codes[0] ? internal_version_codes[0] : production_version_codes[0]
         updated_version_code = max + 1
         
         increment_version_code(
-            gradle_file_path: "./main/build.gradle.kts",
+            gradle_file_path: "./apps/wallet/instance/main/build.gradle.kts",
             version_code: updated_version_code
         )
         
@@ -77,7 +77,7 @@ platform :android do
 
         upload_to_play_store(
             track: "internal",
-            json_key: ENV["ANDROID_JSON_KEY_FILE"],
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"],
             aab: aab_path,
             package_name: app_identifier,
         )

@@ -18,3 +18,23 @@ fun SQLiteDatabase.emptyRawQuery(sql: String) {
     val cursor = rawQuery(sql, null)
     cursor?.close()
 }
+
+fun SQLiteDatabase.read(block: SQLiteDatabase.() -> Unit) {
+    beginTransaction()
+    try {
+        block()
+        setTransactionSuccessful()
+    } finally {
+        endTransaction()
+    }
+}
+
+fun SQLiteDatabase.write(block: SQLiteDatabase.() -> Unit) {
+    beginTransaction()
+    try {
+        block()
+        setTransactionSuccessful()
+    } finally {
+        endTransaction()
+    }
+}

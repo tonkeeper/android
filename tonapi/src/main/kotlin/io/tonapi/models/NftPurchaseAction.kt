@@ -55,13 +55,14 @@ data class NftPurchaseAction (
     /**
      * 
      *
-     * Values: dNSPeriodTg,getgems,basic
+     * Values: dNSPeriodTon,dNSPeriodTg,nUMBERPeriodTg,getgems
      */
     @JsonClass(generateAdapter = false)
     enum class AuctionType(val value: kotlin.String) {
+        @Json(name = "DNS.ton") dNSPeriodTon("DNS.ton"),
         @Json(name = "DNS.tg") dNSPeriodTg("DNS.tg"),
-        @Json(name = "getgems") getgems("getgems"),
-        @Json(name = "basic") basic("basic");
+        @Json(name = "NUMBER.tg") nUMBERPeriodTg("NUMBER.tg"),
+        @Json(name = "getgems") getgems("getgems");
     }
 }
 

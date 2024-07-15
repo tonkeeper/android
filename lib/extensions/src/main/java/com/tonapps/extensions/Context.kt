@@ -1,12 +1,19 @@
 package com.tonapps.extensions
 
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import java.io.File
+import java.security.spec.AlgorithmParameterSpec
 import java.util.Locale
 
 val Context.locale: Locale
@@ -36,6 +43,28 @@ fun Context.rawText(@RawRes id: Int): String {
 val Context.packageInfo: PackageInfo
     get() = packageManager.getPackageInfo(packageName, 0)
 
+val Context.appVersionName: String
+    get() = packageInfo.versionName
+
+val Context.appVersionCode: Long
+    get() = packageInfo.versionCodeCompat
+
+val Context.isMainVersion: Boolean
+    get() = packageInfo.packageName == "com.ton_keeper"
+
 fun Context.prefs(name: String): SharedPreferences {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
+
+val Context.activity: ComponentActivity?
+    get() {
+        var context = this
+        while (context is ContextWrapper) {
+            if (context is ComponentActivity) {
+                return context
+            }
+            context = context.baseContext
+        }
+        return null
+    }
+

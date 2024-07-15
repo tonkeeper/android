@@ -16,4 +16,5 @@ android {
 
 dependencies {
     implementation(Dependence.AndroidX.recyclerView)
+    implementation(Dependence.AndroidX.lifecycle)
 }

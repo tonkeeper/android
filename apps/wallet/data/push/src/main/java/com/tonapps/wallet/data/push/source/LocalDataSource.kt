@@ -22,7 +22,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "dapp_pu
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $TABLE_NAME (" +
                 "$COLUMN_OBJECT BLOB," +
-                "$COLUMN_WALLET_ID INTEGER," +
+                "$COLUMN_WALLET_ID TEXT," +
                 "$COLUMN_ACCOUNT_ID TEXT," +
                 "$COLUMN_DATE INTEGER" +
                 ");")
@@ -31,25 +31,25 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "dapp_pu
     }
 
     fun save(
-        walletId: Long,
+        walletId: String,
         list: List<AppPushEntity>
     ) {
         val query = "INSERT INTO $TABLE_NAME ($COLUMN_OBJECT, $COLUMN_ACCOUNT_ID, $COLUMN_DATE, $COLUMN_WALLET_ID) VALUES (?, ?, ?, ?);"
         writableDatabase.withTransaction {
-            delete(TABLE_NAME, "$COLUMN_WALLET_ID = ?", arrayOf(walletId.toString()))
+            delete(TABLE_NAME, "$COLUMN_WALLET_ID = ?", arrayOf(walletId))
             val statement = compileStatement(query)
             for (push in list) {
                 statement.bindBlob(1, push.toByteArray())
                 statement.bindString(2, push.account)
                 statement.bindLong(3, push.dateUnix)
-                statement.bindLong(4, walletId)
+                statement.bindString(4, walletId)
                 statement.execute()
                 statement.clearBindings()
             }
         }
     }
 
-    fun insert(walletId: Long, push: AppPushEntity) {
+    fun insert(walletId: String, push: AppPushEntity) {
         writableDatabase.delete(TABLE_NAME, "$COLUMN_WALLET_ID = ? AND $COLUMN_DATE = ?", arrayOf(walletId.toString(), push.dateUnix.toString()))
         val values = ContentValues()
         values.put(COLUMN_OBJECT, push.toByteArray())
@@ -59,9 +59,9 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "dapp_pu
         writableDatabase.insert(TABLE_NAME, null, values)
     }
 
-    fun get(walletId: Long): List<AppPushEntity> {
+    fun get(walletId: String): List<AppPushEntity> {
         val query = "SELECT $COLUMN_OBJECT FROM $TABLE_NAME WHERE $COLUMN_WALLET_ID = ? ORDER BY $COLUMN_DATE DESC;"
-        val cursor = readableDatabase.rawQuery(query, arrayOf(walletId.toString()))
+        val cursor = readableDatabase.rawQuery(query, arrayOf(walletId))
         val result = mutableListOf<AppPushEntity>()
         while (cursor.moveToNext()) {
             val bytes = cursor.getBlob(0)

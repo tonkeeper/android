@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Handler
 import android.text.SpannableString
 import android.util.Log
 import android.view.LayoutInflater
@@ -31,6 +32,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.navigation.ScreenResultContract
 import uikit.widget.BottomSheetLayout
 import uikit.widget.ModalView
 import uikit.widget.SwipeBackLayout

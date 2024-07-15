@@ -3,6 +3,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven("https://jitpack.io")
     }
 }
 dependencyResolutionManagement {
@@ -10,6 +11,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")
     }
 }
 
@@ -19,11 +21,8 @@ include(":apps:signer")
 
 
 include(":baselineprofile:x")
-include(":baselineprofile:signer")
 
 
-include(":ton")
-include(":core")
 include(":tonapi")
 
 
@@ -43,8 +42,11 @@ include(":lib:icu")
 include(":lib:emoji")
 include(":lib:blockchain")
 include(":lib:sqlite")
+include(":lib:ledger")
 
-include(":apps:wallet:instance")
+include(":apps:wallet:instance:app")
+include(":apps:wallet:instance:main")
+include(":apps:wallet:instance:x")
 include(":apps:wallet:localization")
 include(":apps:wallet:api")
 
@@ -58,3 +60,8 @@ include(":apps:wallet:data:collectibles")
 include(":apps:wallet:data:tonconnect")
 include(":apps:wallet:data:push")
 include(":apps:wallet:data:browser")
+include(":apps:wallet:data:backup")
+include(":apps:wallet:data:rn")
+include(":apps:wallet:data:passcode")
+include(":apps:wallet:data:staking")
+include(":apps:wallet:data:purchase")

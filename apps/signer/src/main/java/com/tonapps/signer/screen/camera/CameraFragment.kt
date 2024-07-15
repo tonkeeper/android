@@ -28,6 +28,7 @@ import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.tonapps.qr.QRImageAnalyzer
+import com.tonapps.signer.deeplink.DeeplinkSource
 import uikit.extensions.applyBottomInsets
 import uikit.widget.ModalView
 
@@ -48,6 +49,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
     }
 
     private var isFlashAvailable = false
+    private var isReady = false
 
     private val qrAnalyzer = QRImageAnalyzer()
     private val chunks = mutableListOf<String>()
@@ -95,6 +97,9 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
     }
 
     private fun handleBarcode(barcode: Barcode) {
+        if (isReady) {
+            return
+        }
         val data = barcode.rawValue ?: return
 
         if (data.startsWith("${Key.SCHEME}://")) {
@@ -107,13 +112,14 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         }
 
         val uri = chunks.joinToString("").uriOrNull ?: return
-        if (rootViewModel.processDeepLink(uri, false)) {
+        if (rootViewModel.processDeepLink(uri, DeeplinkSource.QR)) {
+            isReady = true
             finishDelay()
         }
     }
 
     private fun finishDelay() {
-        postDelayed(ModalView.animationDuration) {
+        postDelayed(300) {
             finish()
         }
     }

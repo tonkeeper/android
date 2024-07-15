@@ -3,10 +3,13 @@ package com.tonapps.security
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.KeyGenerator
@@ -14,6 +17,18 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
 object Security {
+
+    fun pref(context: Context, keyAlias: String, name: String): SharedPreferences {
+        KeyHelper.createIfNotExists(keyAlias)
+
+        return EncryptedSharedPreferences.create(
+            name,
+            keyAlias,
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     fun generatePrivateKey(keySize: Int): SecretKey {
         return try {

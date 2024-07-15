@@ -3,6 +3,7 @@ package uikit.widget
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -52,10 +53,13 @@ class ToastView @JvmOverloads constructor(
         valueAnimator
     }
 
+    private val horizontalOffset = 24.dp
+    private val verticalOffset = context.getDimensionPixelSize(R.dimen.offsetMedium)
+
     init {
         inflate(context, R.layout.view_toast, this)
         setBackgroundResource(R.drawable.bg_content_tint_24)
-        setPadding(context.getDimensionPixelSize(R.dimen.offsetMedium))
+        setPadding(horizontalOffset, verticalOffset, horizontalOffset, verticalOffset)
         visibility = View.GONE
         loaderView = findViewById(R.id.toast_loader)
         textView = findViewById(R.id.toast_text)
@@ -66,8 +70,10 @@ class ToastView @JvmOverloads constructor(
     }
 
     fun show(text: CharSequence, loading: Boolean, color: Int = context.backgroundContentTintColor) {
-        val data = Data(loading, text, color)
-        val cancelCurrent = currentData?.let { it.text == text && it.color == color } == true
+        val data = Data(loading, text, if (color == Color.TRANSPARENT) context.backgroundContentTintColor else color)
+        val cancelCurrent = currentData?.let {
+            it.text == text && it.color == (if (color == Color.TRANSPARENT) context.backgroundContentTintColor else color)
+        } == true
         if (cancelCurrent) {
             hide()
         } else if (currentData == null) {

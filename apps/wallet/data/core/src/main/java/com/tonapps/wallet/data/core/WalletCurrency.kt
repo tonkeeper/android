@@ -52,7 +52,24 @@ data class WalletCurrency(
         val TON = WalletCurrency("TON")
 
         val ALL = FIAT + CRYPTO
+
+        fun of(code: String?): WalletCurrency {
+            if (code.isNullOrBlank()) {
+                return DEFAULT
+            }
+            if (code in FIAT) {
+                return WalletCurrency(code)
+            }
+            return DEFAULT
+        }
     }
 
     constructor(code: String) : this(code, code in FIAT)
+
+    val decimals: Int
+        get() = when (code) {
+            "TON" -> 9
+            "BTC" -> 8
+            else -> 6
+        }
 }

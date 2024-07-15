@@ -1,6 +1,8 @@
 package com.tonapps.wallet.data.rates.entity
 
 import android.os.Parcelable
+import com.tonapps.icu.Coins
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import kotlinx.parcelize.Parcelize
 
@@ -45,19 +47,31 @@ data class RatesEntity(
         return map[token]
     }
 
-    fun rateValue(token: String): Float {
-        return rate(token)?.value ?: 0f
+    fun rateValue(token: String): Coins {
+        return rate(token)?.value ?: Coins.ZERO
     }
 
     fun rateDiff(token: String): RateDiffEntity? {
         return rate(token)?.diff
     }
 
-    fun convert(token: String, value: Float): Float {
-        return value * rateValue(token)
+    fun convert(token: String, value: Coins): Coins {
+        if (token == TokenEntity.USDT.address) {
+            return value
+        }
+        val rate = rateValue(token)
+        return (value * rate)
     }
 
-    fun getRate(token: String): Float {
+    fun convertFromFiat(token: String, value: Coins): Coins {
+        if (token == TokenEntity.USDT.address) {
+            return value
+        }
+        val rate = rateValue(token)
+        return (value / rate)
+    }
+
+    fun getRate(token: String): Coins {
         return rateValue(token)
     }
 

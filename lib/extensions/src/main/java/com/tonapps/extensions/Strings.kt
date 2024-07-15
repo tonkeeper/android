@@ -1,5 +1,6 @@
 package com.tonapps.extensions
 
+import android.graphics.Color
 import com.tonapps.icu.Punycode
 
 val String.short8: String
@@ -48,4 +49,17 @@ val CharSequence.withMinus: CharSequence
 val CharSequence.withPlus: CharSequence
     get() {
         return if (startsWith("+")) this else "+ $this"
+    }
+
+val String.color: Int
+    get() {
+        return try {
+            if (startsWith("#")) {
+                Color.parseColor(this)
+            } else {
+                Color.parseColor("#$this")
+            }
+        } catch (e: Exception) {
+            0
+        }
     }

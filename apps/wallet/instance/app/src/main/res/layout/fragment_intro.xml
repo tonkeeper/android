@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_intro_blue"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetLarge">
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetMedium"
+            android:title="@string/app_name"
+            android:description="@string/intro_description"/>
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/new_wallet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/start_create_new_wallet"/>
+
+        <Button
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/import_wallet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/start_import_wallet"/>
+
+    </uikit.widget.ColumnLayout>
+
+</uikit.widget.ColumnLayout>

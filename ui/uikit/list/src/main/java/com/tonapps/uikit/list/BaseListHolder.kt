@@ -7,11 +7,17 @@ import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import androidx.annotation.ColorInt
 import androidx.annotation.LayoutRes
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 
 abstract class BaseListHolder<I: BaseListItem>(
     view: View
 ): RecyclerView.ViewHolder(view) {
+
+    val lifecycleScope: LifecycleCoroutineScope?
+        get() = itemView.findViewTreeLifecycleOwner()?.lifecycleScope
 
     constructor(
         parent: ViewGroup,

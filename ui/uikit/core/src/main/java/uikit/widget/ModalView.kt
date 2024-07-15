@@ -143,7 +143,6 @@ class ModalView @JvmOverloads constructor(
     }
 
     fun hide(force: Boolean) {
-        Log.d("ModalViewLog", "hide!")
         if (force) {
             behavior.isHideable = true
         }
@@ -169,6 +168,9 @@ class ModalView @JvmOverloads constructor(
     }
 
     private fun setPeekHeight(newPeekHeight: Int) {
+        if (behavior.peekHeight == newPeekHeight && behavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+            return
+        }
         post {
             behavior.peekHeight = newPeekHeight
             behavior.state = BottomSheetBehavior.STATE_EXPANDED

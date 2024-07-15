@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("androidx.baselineprofile")
 }
 
 android {
@@ -9,11 +8,11 @@ android {
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        applicationId = "com.tonapps.signer"
+        applicationId = Build.namespacePrefix("signer")
         minSdk = Build.minSdkVersion
         targetSdk = 34
-        versionCode = 8
-        versionName = "0.0.8"
+        versionCode = 22
+        versionName = "0.2.2"
     }
 
     lint {
@@ -59,24 +58,25 @@ android {
 }
 
 dependencies {
-    implementation(Dependence.AndroidX.profileinstaller)
-    "baselineProfile"(project(":baselineprofile:signer"))
-
     implementation(Dependence.AndroidX.core)
     implementation(Dependence.AndroidX.appCompat)
     implementation(Dependence.AndroidX.activity)
     implementation(Dependence.AndroidX.fragment)
     implementation(Dependence.AndroidX.recyclerView)
     implementation(Dependence.AndroidX.viewPager2)
+    implementation(Dependence.AndroidX.splashscreen)
 
     implementation(Dependence.UI.material)
+    implementation(Dependence.UI.flexbox)
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)
     implementation(Dependence.AndroidX.Camera.lifecycle)
     implementation(Dependence.AndroidX.Camera.view)
     implementation(Dependence.AndroidX.security)
+    implementation(Dependence.AndroidX.constraintlayout)
     implementation(Dependence.AndroidX.lifecycleSavedState)
-    api(project(Dependence.Lib.blockchain))
+    implementation(project(Dependence.Lib.blockchain))
+    implementation(project(Dependence.Lib.extensions))
 
 
     implementation(project(Dependence.UIKit.core)) {

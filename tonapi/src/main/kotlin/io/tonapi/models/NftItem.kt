@@ -19,6 +19,7 @@ import io.tonapi.models.AccountAddress
 import io.tonapi.models.ImagePreview
 import io.tonapi.models.NftItemCollection
 import io.tonapi.models.Sale
+import io.tonapi.models.TrustType
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -31,11 +32,13 @@ import com.squareup.moshi.JsonClass
  * @param verified 
  * @param metadata 
  * @param approvedBy 
+ * @param trust 
  * @param owner 
  * @param collection 
  * @param sale 
  * @param previews 
  * @param dns 
+ * @param includeCnft 
  */
 
 
@@ -56,6 +59,9 @@ data class NftItem (
     @Json(name = "approved_by")
     val approvedBy: kotlin.collections.List<NftItem.ApprovedBy>,
 
+    @Json(name = "trust")
+    val trust: TrustType,
+
     @Json(name = "owner")
     val owner: AccountAddress? = null,
 
@@ -69,7 +75,10 @@ data class NftItem (
     val previews: kotlin.collections.List<ImagePreview>? = null,
 
     @Json(name = "dns")
-    val dns: kotlin.String? = null
+    val dns: kotlin.String? = null,
+
+    @Json(name = "include_cnft")
+    val includeCnft: kotlin.Boolean? = null
 
 ) {
 

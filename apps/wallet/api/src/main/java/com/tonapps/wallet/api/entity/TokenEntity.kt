@@ -22,12 +22,25 @@ data class TokenEntity(
     }
 
     companion object {
+
+        val TON_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_ton_with_bg.toString()).build()
+        val USDT_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_usdt.toString()).build()
+
         val TON = TokenEntity(
             address = "TON",
             name = "Toncoin",
             symbol = "TON",
-            imageUri = Uri.Builder().scheme("res").path(R.drawable.ic_ton_with_bg.toString()).build(),
+            imageUri = TON_ICON_URI,
             decimals = 9,
+            verification = Verification.whitelist
+        )
+
+        val USDT = TokenEntity(
+            address = "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+            name = "Tether USD",
+            symbol = "USD₮",
+            imageUri = USDT_ICON_URI,
+            decimals = 6,
             verification = Verification.whitelist
         )
 

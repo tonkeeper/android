@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.events.entities
 
 import android.os.Parcelable
-import com.tonapps.blockchain.Coin
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.AccountEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
@@ -21,7 +21,7 @@ data class ActionEntity(
     val recipient: AccountEntity? = null,
     val comment: String? = null,
     val token: TokenEntity? = null,
-    val amount: Float? = null,
+    val amount: Coins? = null,
     val nftAddress: String? = null,
     var nftEntity: NftEntity? = null
 ): Parcelable {
@@ -62,7 +62,7 @@ data class ActionEntity(
                 recipient = AccountEntity(tonTransfer.recipient, testnet),
                 comment = tonTransfer.comment,
                 token = TokenEntity.TON,
-                amount = Coin.toCoins(tonTransfer.amount)
+                amount = Coins.of(tonTransfer.amount)
             )
         }
 
@@ -76,7 +76,7 @@ data class ActionEntity(
                 recipient = jettonTransfer.recipient?.let { AccountEntity(it, testnet) },
                 comment = jettonTransfer.comment,
                 token = TokenEntity(jettonTransfer.jetton),
-                amount = Coin.parseJettonBalance(jettonTransfer.amount, jettonTransfer.jetton.decimals)
+                amount = Coins.of(jettonTransfer.amount, jettonTransfer.jetton.decimals)
             )
         }
 

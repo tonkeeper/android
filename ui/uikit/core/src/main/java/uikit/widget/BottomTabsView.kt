@@ -20,6 +20,7 @@ import uikit.drawable.FooterDrawable
 import uikit.extensions.createRipple
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingBottom
+import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.useAttributes
 
 @SuppressLint("RestrictedApi")
@@ -58,6 +59,7 @@ class BottomTabsView @JvmOverloads constructor(
 
     init {
         background = drawable
+        setPaddingHorizontal(context.getDimensionPixelSize(R.dimen.offsetMedium))
         context.useAttributes(attrs, R.styleable.BottomTabsView) {
             if (it.hasValue(R.styleable.BottomTabsView_menu)) {
                 inflateMenu(it.getResourceId(R.styleable.BottomTabsView_menu, 0))

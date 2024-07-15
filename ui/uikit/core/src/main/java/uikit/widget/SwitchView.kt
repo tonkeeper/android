@@ -45,16 +45,9 @@ class SwitchView @JvmOverloads constructor(
         setShadowLayer(8f.dp, 0f, 3f.dp, Color.parseColor("#26000000"))
     }
 
-    var checked: Boolean = false
-        set(value) {
-            if (field != value) {
-                field = value
-                doCheckedChanged?.invoke(value)
-                applyState(value)
-            }
-        }
+    private var checked: Boolean = false
 
-    var doCheckedChanged: ((Boolean) -> Unit)? = null
+    var doCheckedChanged: ((checked: Boolean, byUser: Boolean) -> Unit)? = null
 
     private var progress = 0f
 
@@ -69,13 +62,24 @@ class SwitchView @JvmOverloads constructor(
 
     init {
         setOnClickListener {
-            toggle()
+            toggle(true)
         }
     }
 
-    fun toggle() {
-        checked = !checked
+    fun toggle(byUser: Boolean) {
+        setChecked(!checked, byUser)
     }
+
+    fun setChecked(newChecked: Boolean, byUser: Boolean) {
+        if (newChecked == checked) {
+            return
+        }
+        checked = newChecked
+        doCheckedChanged?.invoke(checked, byUser)
+        applyState(checked)
+    }
+
+    fun isChecked() = checked
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)

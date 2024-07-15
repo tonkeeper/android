@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.widget.Button
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatImageView
@@ -47,7 +48,7 @@ open class HeaderView @JvmOverloads constructor(
 
     private val drawable = HeaderDrawable(context)
     private val subtitleContainerView: View
-    private val subtitleView: AppCompatTextView
+    val subtitleView: AppCompatTextView
     private val loaderView: LoaderView
     private val textView: View
 
@@ -61,12 +62,12 @@ open class HeaderView @JvmOverloads constructor(
             }
         }
 
-    var doOnActionClick: (() -> Unit)? = null
+    var doOnActionClick: ((view: View) -> Unit)? = null
         set(value) {
             field = value
             actionView.setOnClickListener {
                 if (it.alpha != 0f) {
-                    value?.invoke()
+                    value?.invoke(it)
                 }
             }
         }
@@ -102,6 +103,10 @@ open class HeaderView @JvmOverloads constructor(
             val actionResId = it.getResourceId(R.styleable.HeaderView_android_action, 0)
             setAction(actionResId)
         }
+    }
+
+    fun setIgnoreSystemOffset(value: Boolean = true) {
+        ignoreSystemOffset = value
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
@@ -153,12 +158,14 @@ open class HeaderView @JvmOverloads constructor(
 
     fun setUpdating(@StringRes textResId: Int) {
         setSubtitle(textResId)
+        loaderView.visibility = View.VISIBLE
         loaderView.startAnimation()
     }
 
     fun setDefault() {
         withAnimation(duration = ANIMATION_DURATION) {
             subtitleContainerView.visibility = View.GONE
+            loaderView.visibility = View.GONE
             loaderView.stopAnimation()
         }
     }

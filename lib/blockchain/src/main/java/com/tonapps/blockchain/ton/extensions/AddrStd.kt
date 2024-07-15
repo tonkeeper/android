@@ -16,17 +16,17 @@ fun AddrStd.toAccountId(): String {
     ).lowercase()
 }
 
-
 fun String.toUserFriendly(
     wallet: Boolean = true,
-    testnet: Boolean
+    testnet: Boolean,
+    bounceable: Boolean = true,
 ): String {
     return try {
         val addr = AddrStd(this)
         if (wallet) {
             addr.toWalletAddress(testnet)
         } else {
-            addr.toString(userFriendly = true)
+            addr.toString(userFriendly = true, bounceable = bounceable)
         }
     } catch (e: Exception) {
         this
@@ -41,7 +41,7 @@ fun String.toRawAddress(): String {
     }
 }
 
-fun String.isValid(): Boolean {
+fun String.isValidTonAddress(): Boolean {
     return try {
         AddrStd(this)
         true

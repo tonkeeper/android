@@ -15,7 +15,7 @@ import javax.crypto.SecretKey
 object Password {
 
     private const val MIN_LENGTH = 4
-    private const val UNLOCK_TIMEOUT = 60000L
+    private const val UNLOCK_TIMEOUT = 60000L * 15 // 15 minutes
 
     private var unlockTime = AtomicLong(0)
 
@@ -40,7 +40,7 @@ object Password {
         val dialog = PasswordDialog(context, ::trySend)
         dialog.setOnDismissListener {
             if (isActive) {
-                close(Throwable("User canceled"))
+                close(UserCancelThrowable )
             } else {
                 close()
             }
@@ -48,4 +48,8 @@ object Password {
         dialog.show()
         awaitClose { dialog.destroy() }
     }.flowOn(Dispatchers.Main).take(1)
+
+    object UserCancelThrowable : Throwable("User canceled") {
+        private fun readResolve(): Any = UserCancelThrowable
+    }
 }

@@ -8,6 +8,9 @@ import com.tonapps.extensions.toParcel
 import com.tonapps.wallet.api.entity.ConfigEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -18,27 +21,36 @@ internal class ConfigRepository(
 ) {
 
     private val configFile = context.cacheDir.file("config")
+    private val _stream = MutableStateFlow<ConfigEntity?>(null)
 
-    var configEntity: ConfigEntity = ConfigEntity.default
-        private set
+    val stream = _stream.asStateFlow().filterNotNull()
+
+    var configEntity: ConfigEntity? = null
+        private set (value) {
+            field = value
+            _stream.value = value
+        }
 
     init {
         readCache()?.let {
             configEntity = it
         }
         scope.launch(Dispatchers.Main) {
-            remote()?.let {
+            remote(false)?.let {
                 configEntity = it
             }
         }
     }
 
     private fun readCache(): ConfigEntity? {
-        return configFile.readBytes().toParcel()
+        if (configFile.exists() && configFile.length() > 0) {
+            return configFile.readBytes().toParcel()
+        }
+        return null
     }
 
-    private suspend fun remote(): ConfigEntity? = withContext(Dispatchers.IO) {
-        val config = internalApi.downloadConfig() ?: return@withContext null
+    private suspend fun remote(testnet: Boolean): ConfigEntity? = withContext(Dispatchers.IO) {
+        val config = internalApi.downloadConfig(testnet) ?: return@withContext null
         configFile.writeBytes(config.toByteArray())
         config
     }

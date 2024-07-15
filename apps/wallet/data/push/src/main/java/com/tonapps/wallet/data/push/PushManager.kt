@@ -7,8 +7,8 @@ import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.locale
 import com.tonapps.network.getBitmap
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.WalletRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.push.entities.WalletPushEntity
@@ -22,10 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -34,7 +32,7 @@ import kotlinx.coroutines.withContext
 class PushManager(
     private val context: Context,
     private val scope: CoroutineScope,
-    private val walletRepository: WalletRepository,
+    private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val eventsRepository: EventsRepository,
     private val tonConnectRepository: TonConnectRepository,
@@ -55,11 +53,11 @@ class PushManager(
     init {
         combine(
             settingsRepository.firebaseTokenFlow,
-            walletRepository.walletsFlow,
+            settingsRepository.walletPush,
             ::subscribe
         ).flowOn(Dispatchers.IO).launchIn(scope)
 
-        walletRepository.activeWalletFlow.onEach {
+        accountRepository.selectedWalletFlow.onEach {
             _dAppPushFlow.value = getRemoteDAppEvents(it)
         }.launchIn(scope)
     }
@@ -69,7 +67,7 @@ class PushManager(
     }
 
     suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<AppPushEntity> = withContext(Dispatchers.IO) {
-        val token = walletRepository.getTonProofToken(wallet.id) ?: return@withContext emptyList()
+        val token = accountRepository.requestTonProofToken(wallet.id) ?: return@withContext emptyList()
         val items = remoteDataSource.getEvents(token, wallet.accountId)
         localDataSource.save(wallet.id, items)
         return@withContext items
@@ -81,13 +79,13 @@ class PushManager(
         }
         scope.launch(Dispatchers.IO) {
             try {
-                val wallet = walletRepository.getWallet(push.account) ?: throw IllegalStateException("Wallet not found")
+                val wallet = accountRepository.getWalletByAccountId(push.account) ?: throw IllegalStateException("Wallet not found")
                 val app = tonConnectRepository.getApp(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
                 localDataSource.insert(wallet.id, push)
                 val largeIcon = api.defaultHttpClient.getBitmap(app.manifest.iconUrl)
                 displayAppPush(app, push, wallet, largeIcon)
 
-                if (walletRepository.activeWalletFlow.firstOrNull() == wallet) {
+                if (accountRepository.selectedWalletFlow.firstOrNull() == wallet) {
                     val old = _dAppPushFlow.value ?: emptyList()
                     _dAppPushFlow.value = old + push
                 }
@@ -119,7 +117,7 @@ class PushManager(
     fun handleWalletPush(push: WalletPushEntity) {
         scope.launch(Dispatchers.IO) {
             try {
-                val wallet = walletRepository.getWallet(push.account) ?: throw IllegalStateException("Wallet not found")
+                val wallet = accountRepository.getWalletByAccountId(push.account) ?: throw IllegalStateException("Wallet not found")
                 displayWalletPush(push, wallet)
             } catch (ignored: Throwable) {}
         }
@@ -154,81 +152,15 @@ class PushManager(
         return false
     }
 
-    private fun forceUpdatePushToken() {
-        scope.launch {
-            val firebaseToken = GooglePushService.requestToken() ?: return@launch
-            tonConnectRepository.updatePushToken(firebaseToken)
-        }
-    }
-
-
-
-
-    /*@SuppressLint("MissingPermission")
-    private suspend fun displayNotification(push: PushData) {
-        val activeNotifications = notificationManager.activeNotifications
-        val oldNotification: StatusBarNotification? = activeNotifications.firstOrNull { it.notification.extras?.getCharSequence(Notification.EXTRA_TEXT) == push.notificationBody }
-        val isNew = oldNotification == null
-        val notificationTag = oldNotification?.tag ?: push.type
-        val notificationId = oldNotification?.id ?: randomNotificationId()
-
-        try {
-            val event = getEvent(push)
-            val wallet = walletRepository.getWallet(push.account) ?: return
-            if (wallet.testnet) {
-                return
-            }
-            val walletLabel = wallet.label
-            val builder = NotificationCompat.Builder(context, notificationChannelDefault)
-            builder.setContentTitle(walletLabel.title)
-            builder.setContentText(push.notificationBody)
-            builder.setSmallIcon(R.drawable.ic_push)
-            builder.setColorized(true)
-            builder.setGroupSummary(true)
-            builder.setShowWhen(true)
-            builder.setGroup(push.type)
-            if (!isNew) {
-                builder.setOnlyAlertOnce(true)
-            }
-            builder.setColor(walletLabel.color)
-            builder.setLargeIcon(getLargeIcon(event))
-            builder.setContentIntent(createPendingIntent(push.deeplink))
-            notificationManager.notify(notificationTag, notificationId, builder.build())
-        } catch (ignored: Throwable) { }
-    }
-
-    private fun getLargeIcon(event: EventEntity?): Bitmap? {
-        val firstAction = event?.actions?.firstOrNull() ?: return null
-        val bigIconUri = (firstAction.sender?.iconUri ?: firstAction.token?.imageUri) ?: return null
-        if (bigIconUri.isLocal) {
-            return null
-        }
-        return bigIconUri.getBitmap()
-    }
-
-    private suspend fun getEvent(
-        push: PushData
-    ): EventEntity? {
-        return try {
-            val eventId = push.transactionHash ?: return null
-            eventsRepository.getSingleRemote(push.account, false, eventId)
-        } catch (ignored: Throwable) {
-            null
-        }
-    }
-
-    private fun createPendingIntent(deepLink: String): PendingIntent {
-        val intent = Intent(Intent.ACTION_VIEW, deepLink.toUri())
-        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        return PendingIntent.getActivity(context, 0, intent, flags)
-    }
-
-     */
-
-    private suspend fun subscribe(firebaseToken: String, wallets: List<WalletEntity>) {
-        tonConnectRepository.updatePushToken(firebaseToken)
-
-        val accounts = wallets.filter { !it.testnet }.map { it.accountId.toUserFriendly(testnet = false) }
+    private suspend fun subscribe(
+        firebaseToken: String,
+        walletPush: Map<String, Boolean>
+    ) {
+        val wallets = accountRepository.getWallets()
+        val accounts = wallets.filter { !it.testnet && settingsRepository.getPushWallet(it.id) }
+            .map { it.accountId.toUserFriendly(testnet = false) }
         api.pushSubscribe(context.locale, firebaseToken, settingsRepository.installId, accounts)
+
+        tonConnectRepository.updatePushToken(firebaseToken)
     }
 }

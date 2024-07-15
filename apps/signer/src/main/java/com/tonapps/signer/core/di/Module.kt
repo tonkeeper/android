@@ -1,14 +1,15 @@
 package com.tonapps.signer.core.di
 
-import com.tonapps.signer.core.Database
 import com.tonapps.signer.core.repository.KeyRepository
-import com.tonapps.signer.core.source.KeyDataSource
-import org.koin.android.ext.koin.androidContext
+import com.tonapps.signer.core.source.SQLSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
 
 val coreModule = module {
-    single<Database> { Database(androidContext()) }
+    single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
 
-    single { KeyDataSource(get<Database>()) }
-    single { KeyRepository(get<KeyDataSource>()) }
+    single { SQLSource(get()) }
+    single { KeyRepository(get<CoroutineScope>(), get<SQLSource>()) }
 }

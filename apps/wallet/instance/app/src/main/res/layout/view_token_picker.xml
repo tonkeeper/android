@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.FrescoView
+        android:id="@+id/token_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        app:roundAsCircle="true"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/token_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="6dp"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Label2"
+        android:textColor="?attr/textPrimaryColor"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_switch_16"
+        android:tint="?attr/iconSecondaryColor"/>
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="0dp"/>
+
+</merge>

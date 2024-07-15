@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="40dp"
+            android:paddingTop="40dp"
+            android:paddingBottom="16dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/bluetooth_icon"
+                android:layout_width="42dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:foreground="@drawable/bluetooth" />
+
+            <RelativeLayout
+                android:id="@+id/ledger_picture"
+                android:layout_width="353dp"
+                android:layout_height="56dp"
+                android:translationX="24dp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="353dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="center"
+                    android:foreground="@drawable/ledger" />
+
+                <LinearLayout
+                    android:id="@+id/ledger_display"
+                    android:layout_width="89dp"
+                    android:layout_height="40dp"
+                    android:layout_marginLeft="52dp"
+                    android:layout_marginTop="8dp"
+                    android:alpha="0"
+                    android:background="@drawable/bg_ledger_display">
+
+                    <TextView
+                        android:id="@+id/ledger_display_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fontFamily="@font/roboto_mono"
+                        android:gravity="center"
+                        android:textColor="?attr/textSecondaryColor"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </RelativeLayout>
+        </LinearLayout>
+
+        <uikit.widget.SimpleRecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:paddingTop="12dp"
+            android:paddingBottom="20dp" />
+    </LinearLayout>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

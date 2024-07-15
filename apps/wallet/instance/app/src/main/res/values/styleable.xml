@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="LabelEditorView">
+        <attr name="android:button" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="TransactionDetailView">
+        <attr name="position"/>
+        <attr name="android:title" format="string|reference"/>
+    </declare-styleable>
+</resources>

@@ -2,8 +2,10 @@ package com.tonapps.wallet.data.token
 
 import android.content.Context
 import androidx.collection.ArrayMap
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
@@ -23,7 +25,7 @@ class TokenRepository(
     private val api: API
 ) {
 
-    private val totalBalanceCache = ConcurrentHashMap<String, Float>(3, 1.0f, 2)
+    private val totalBalanceCache = ConcurrentHashMap<String, Coins>(3, 1.0f, 2)
 
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
@@ -32,7 +34,7 @@ class TokenRepository(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): Float {
+    ): Coins {
         return totalBalanceCache[cacheKey(accountId, testnet)] ?: loadTotalBalances(currency, accountId, testnet)
     }
 
@@ -40,9 +42,9 @@ class TokenRepository(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): Float {
+    ): Coins {
         val tokens = get(currency, accountId, testnet)
-        var fiatBalance = 0f
+        var fiatBalance = Coins.of(0)
         if (testnet) {
             fiatBalance = tokens.first().balance.value
         } else {
@@ -138,6 +140,8 @@ class TokenRepository(
             when {
                 first.isTon -> -1
                 second.isTon -> 1
+                first.isUsdt -> -1
+                second.isUsdt -> 1
                 else -> second.fiat.compareTo(first.fiat)
             }
         }
@@ -171,7 +175,7 @@ class TokenRepository(
             return@withContext balances
         }
 
-        val rates = async { ratesRepository.load(currency, "TON") }
+        val rates = async { ratesRepository.load(currency, TokenEntity.TON.symbol) }
         val balances = remoteDataSource.load(currency, accountId, false)
         insertRates(currency, balances)
         localDataSource.setCache(cacheKey(accountId, false), balances)

@@ -29,6 +29,16 @@
         <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
     </style>
 
+    <style name="Widget.App.Button.Green" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_button_green</item>
+        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+    </style>
+
+    <style name="Widget.App.Button.Orange" parent="Base.Widget.App.Button">
+        <item name="android:background">@drawable/bg_button_orange</item>
+        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+    </style>
+
     <style name="Widget.App.Button.Small.Secondary" parent="Base.Widget.App.Button">
         <item name="android:background">@drawable/bg_small_button_secondary</item>
         <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>

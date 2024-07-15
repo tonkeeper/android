@@ -23,6 +23,10 @@ data class ConfigEntity(
     val tonApiV2Key: String,
     val featuredPlayInterval: Int,
     val flags: FlagsEntity,
+    val faqUrl: String,
+    val aptabaseEndpoint: String,
+    val aptabaseAppKey: String,
+    val scamEndpoint: String
 ): Parcelable {
 
     val swapUri: Uri
@@ -47,8 +51,14 @@ data class ConfigEntity(
             FlagsEntity()
         } else {
             FlagsEntity(json.getJSONObject("flags"))
-        }
-    )
+        },
+        faqUrl = json.getString("faq_url"),
+        aptabaseEndpoint = json.getString("aptabaseEndpoint"),
+        aptabaseAppKey = json.getString("aptabaseAppKey"),
+        scamEndpoint = json.optString("scamEndpoint", "https://scam.tonkeeper.com")
+    ) {
+        Log.d("ConfigLog", "ConfigEntity: $json")
+    }
 
     constructor() : this(
         supportLink = "mailto:support@tonkeeper.com",
@@ -65,7 +75,11 @@ data class ConfigEntity(
         tonCommunityChatUrl = "https://t.me/toncoin_chat",
         tonApiV2Key = "",
         featuredPlayInterval = 3000,
-        flags = FlagsEntity()
+        flags = FlagsEntity(),
+        faqUrl = "https://tonkeeper.helpscoutdocs.com/",
+        aptabaseEndpoint = "https://anonymous-analytics.tonkeeper.com",
+        aptabaseAppKey = "A-SH-4314447490",
+        scamEndpoint = "https://scam.tonkeeper.com",
     )
 
     companion object {

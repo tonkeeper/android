@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/review_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/ic_chevron_left_16"
+        app:ignoreSystemOffset="true"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <uikit.widget.FrescoView
+                android:id="@+id/review_icon"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_gravity="center"
+                app:roundAsCircle="true"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/review_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:text="@string/confirm_action"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="?attr/textSecondaryColor"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/review_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetExtraSmall"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.H3"
+                android:textColor="?attr/textPrimaryColor"/>
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/offsetLarge"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:background="@drawable/bg_content_tint_16">
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/review_wallet"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/wallet"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/review_recipient"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/recipient"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/review_recipient_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/recipient_address"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/review_amount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/amount"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/review_fee"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/fee"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/review_comment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/comment"/>
+
+            </uikit.widget.ColumnLayout>
+
+        </uikit.widget.ColumnLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <FrameLayout
+        android:id="@+id/task_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetMedium">
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/confirm_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:enabled="false"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/confirm"/>
+
+        <uikit.widget.ProcessTaskView
+            android:id="@+id/process_task"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:successLabel="@string/done"
+            app:errorLabel="@string/error"/>
+
+    </FrameLayout>
+
+</uikit.widget.ColumnLayout>

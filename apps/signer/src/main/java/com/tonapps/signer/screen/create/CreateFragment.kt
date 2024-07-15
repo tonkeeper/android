@@ -1,15 +1,13 @@
 package com.tonapps.signer.screen.create
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.doOnLayout
-import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.tonapps.signer.R
+import com.tonapps.signer.screen.create.pager.PageType
 import com.tonapps.signer.screen.create.pager.PagerAdapter
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.filter
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -36,7 +34,6 @@ class CreateFragment: BaseFragment(R.layout.fragment_create), BaseFragment.Swipe
     private val createViewModel: CreateViewModel by viewModel { parametersOf(import) }
 
     private lateinit var headerView: HeaderView
-    private lateinit var adapter: PagerAdapter
     private lateinit var pagerView: ViewPager2
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,22 +47,26 @@ class CreateFragment: BaseFragment(R.layout.fragment_create), BaseFragment.Swipe
             }
         }
 
-        adapter = PagerAdapter(this, createViewModel.pages)
-
         pagerView = view.findViewById(R.id.pager)
         pagerView.isUserInputEnabled = false
-        pagerView.adapter = adapter
 
-        collectFlow(createViewModel.pageIndex(), ::setPage)
+        collectFlow(createViewModel.pageIndex().filter { it != -1 }, ::setPage)
+        collectFlow(createViewModel.pagesFlow, ::applyPages)
         collectFlow(createViewModel.onReady) {
             finish()
         }
     }
 
+    private fun applyPages(pages: List<PageType>) {
+        val adapter = PagerAdapter(this, pages)
+        pagerView.offscreenPageLimit = adapter.itemCount
+        pagerView.adapter = adapter
+    }
+
     private fun setPage(index: Int) {
         val currentIndex = pagerView.currentItem
         if (currentIndex != index) {
-            pagerView.setCurrentItem(index, true)
+            post { pagerView.setCurrentItem(index, true) }
         }
     }
 }

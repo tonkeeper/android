@@ -1,67 +1,66 @@
 package com.tonapps.wallet.data.account.entities
 
+import android.os.Parcelable
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
-import com.tonapps.blockchain.ton.contract.WalletV3R1Contract
-import com.tonapps.blockchain.ton.contract.WalletV3R2Contract
-import com.tonapps.blockchain.ton.contract.WalletV4R1Contract
-import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
-import com.tonapps.wallet.data.account.WalletSource
-import com.tonapps.wallet.data.account.WalletType
-import com.tonapps.wallet.data.account.legacy.WalletLegacy
+import com.tonapps.wallet.data.account.Wallet
+import kotlinx.parcelize.Parcelize
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.block.AddrStd
-import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 
 data class WalletEntity(
-    val id: Long,
+    val id: String,
     val publicKey: PublicKeyEd25519,
-    val type: WalletType,
+    val type: Wallet.Type,
     val version: WalletVersion = WalletVersion.V4R2,
-    val label: WalletLabel,
-    val source: WalletSource = WalletSource.Default
+    val label: Wallet.Label,
+    val ledger: Ledger? = null,
 ) {
 
     companion object {
         const val WORKCHAIN = 0
     }
 
-    constructor(legacy: WalletLegacy) : this(
-        id = legacy.id,
-        publicKey = legacy.publicKey,
-        type = legacy.type,
-        version = legacy.version,
-        label = WalletLabel(
-            name = legacy.name,
-            emoji = legacy.emoji.toString(),
-            color = legacy.color
-        ),
-        source = legacy.source
-    )
+    @Parcelize
+    data class Ledger(
+        val deviceId: String,
+        val accountIndex: Int
+    ): Parcelable
 
-    val contract: BaseWalletContract = when (version) {
-        WalletVersion.V4R2 -> WalletV4R2Contract(WORKCHAIN, publicKey)
-        WalletVersion.V3R2 -> WalletV3R2Contract(WORKCHAIN, publicKey)
-        WalletVersion.V3R1 -> WalletV3R1Contract(WORKCHAIN, publicKey)
-        WalletVersion.V4R1 -> WalletV4R1Contract(WORKCHAIN, publicKey)
-        else -> throw IllegalArgumentException("Unsupported wallet version: $version")
+    val contract: BaseWalletContract by lazy {
+        val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value
+
+        BaseWalletContract.create(publicKey, version.title, network)
     }
 
     val testnet: Boolean
-        get() = type == WalletType.Testnet
+        get() = type == Wallet.Type.Testnet
+
+    val signer: Boolean
+        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR
 
     val hasPrivateKey: Boolean
-        get() = type == WalletType.Default || type == WalletType.Testnet
+        get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet
 
     val accountId: String = contract.address.toAccountId()
 
     val address: String = contract.address.toWalletAddress(testnet)
+
+    val isWatchOnly: Boolean
+        get() = type == Wallet.Type.Watch
+
+    val isExternal: Boolean
+        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR || type == Wallet.Type.Ledger
+
+    fun isMyAddress(address: String): Boolean {
+        return address.toRawAddress().equals(accountId, ignoreCase = true)
+    }
 
     fun createBody(
         seqno: Int,
@@ -87,14 +86,4 @@ data class WalletEntity(
             unsignedBody = body,
         )
     }
-
-
-    /*
-    val cell = contract.createTransferMessageCell(
-            address = contract.address,
-            privateKey = EmptyPrivateKeyEd25519,
-            seqno = seqno,
-            unsignedBody = unsignedBody,
-        )
-     */
 }

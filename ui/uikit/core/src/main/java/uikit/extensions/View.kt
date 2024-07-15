@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.PixelCopy
 import android.view.SurfaceView
+import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
@@ -141,6 +142,10 @@ fun View.round(radius: Int) {
     }
 }
 
+fun View.round(radius: Float) {
+    round(radius.toInt())
+}
+
 fun View.getDrawable(@DrawableRes resId: Int): Drawable {
     return AppCompatResources.getDrawable(context, resId)!!
 }
@@ -168,6 +173,16 @@ fun View.withAnimation(duration: Long = 120, block: () -> Unit) {
 
     TransitionManager.beginDelayedTransition(this, transition)
     block()
+}
+
+fun View.expandTouchArea(extraPadding: Int) {
+    val parent = parent as? View ?: return
+    parent.post {
+        val rect = Rect()
+        getHitRect(rect)
+        rect.inset(-extraPadding, -extraPadding)
+        parent.touchDelegate = TouchDelegate(rect, this)
+    }
 }
 
 fun TextView.setEndDrawable(drawable: Drawable?) {
@@ -278,4 +293,16 @@ fun View.getViews(): List<View> {
         }
     }
     return result
+}
+
+fun TextView.setLeftDrawable(drawable: Drawable?) {
+    setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+}
+
+fun TextView.setRightDrawable(drawable: Drawable?) {
+    setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null)
+}
+
+fun TextView.clearDrawables() {
+    setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
 }

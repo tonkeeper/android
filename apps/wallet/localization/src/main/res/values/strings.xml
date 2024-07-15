@@ -3,9 +3,89 @@
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
+    <string name="w5beta" translatable="false">W5 Beta</string>
+    <string name="w5_wallet">Wallet W5</string>
+    <string name="nft_unverified">Unverified NFT</string>
+    <string name="report_spam">Report spam</string>
+    <string name="not_spam">Not spam</string>
+    <string name="unverified">Unverified</string>
+    <string name="setup_finish_title">Finish setting up</string>
+    <string name="setup_finish_push">Enable transaction notifications</string>
+    <string name="setup_finish_biometry">Use biometry to approve transactions</string>
+    <string name="setup_finish_backup">Back up the wallet recovery phrase</string>
+    <string name="setup_finish_telegram">Join Tonkeeper channel</string>
 
+    <string name="w5_story_title_1">Gasless USDT Transfers</string>
+    <string name="w5_story_title_2">Reduced Blockchain Fees</string>
+    <string name="w5_story_title_3">Up to 255 Operations in One Transaction</string>
+    <string name="w5_story_title_4">Recovery Phrase Does Not Change</string>
+    <string name="w5_story_title_5">W5 is Beta</string>
+
+    <string name="unverified_token_description">This token looks suspicious for one or several reasons.</string>
+    <string name="unverified_token_reason_1">Low liquidity. Token may have some value, but it is extremely low.</string>
+    <string name="unverified_token_reason_2">Token is not listed on trading platforms and has limited demand.</string>
+    <string name="unverified_token_reason_3">Used for spam. Employed for sending unwanted and often irrelevant messages at scale.</string>
+    <string name="unverified_token_reason_4">Used for scam. Token\'s name or image can lead users into deception.</string>
+
+    <string name="w5_story_description_1">Send USDT without having TON – transaction fees will be covered by a few cents of USDT automatically.</string>
+    <string name="w5_story_description_2">W5 employs a more efficient transaction processing approach, which means up to 25% lower gas costs.</string>
+    <string name="w5_story_description_3">W5 increases the number of simultaneous operations from 4 to 255, which can save on fee costs.</string>
+    <string name="w5_story_description_4">Old accounts and W5 use the same recovery phrase – when restoring accounts on a new device, both old and new will appear automatically.</string>
+    <string name="w5_story_description_5">The W5 standard is in beta – gasless transactions are an experimental feature to test – do not move all assets to the W5 wallet until final release.</string>
+
+    <string name="w5_add_wallet">Add W5 Wallet</string>
+
+    <string name="edit">Edit</string>
+    <string name="pinned">Pinned</string>
+    <string name="all_assets">All Assets</string>
+    <string name="sorted_by_price">Sorted by Price</string>
+    <string name="staking_max_apy" translatable="false">MAX APY</string>
+    <string name="staking_minimum_deposit">Minimum deposit %1$s.</string>
+    <string name="staking_options">Options</string>
+    <string name="staking_apy" translatable="false">APY</string>
+    <string name="staking_minimal_deposit">Minimal deposit</string>
+    <string name="staking_details_description">Staking is based on smart contracts by third parties. Tonkeeper is not responsible for staking experience.</string>
+    <string name="staking_links">Links</string>
+    <string name="staking_choose">Choose</string>
+    <string name="staking_confirm">Confirm and Stake</string>
+    <string name="unstake_confirm">Confirm and Unstake</string>
+    <string name="domain_link_button">Link domain</string>
+    <string name="domain_renew_button">Renew domain</string>
+
+    <string name="manual">Manual</string>
+    <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>
+    <string name="manual_backup_done">Manual Backup Done</string>
+    <string name="manual_backup_date">Last backup %1$s</string>
+    <string name="manual_start_button">Back Up Manually</string>
+    <string name="backup_attention_title">Attention</string>
+    <string name="backup_attention_description">Please read the following carefully before viewing your recovery phrase.</string>
+    <string name="backup_attention_line_1">Never enter your recovery phrase any other place than Tonkeeper to access your wallet.</string>
+    <string name="backup_attention_line_2">Tonkeeper Support never asks for a recovery phrase.</string>
+    <string name="backup_attention_line_3">Everybody with your recovery phrase can access your wallet.</string>
+    <string name="manual_backup_check">Check Backup</string>
+    <string name="backup_check">Backup Check</string>
+    <string name="backup_check_subtitle">Let\'s see if you\'ve got everything right. Enter words %1$d, %2$d, and %3$d.</string>
+
+    <string name="refresh">Refresh</string>
+    <string name="mute">Mute</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="apps">Apps</string>
+    <string name="apps_notifications_description">Notifications from connected apps in your activity</string>
+    <string name="push_notifications">Push notifications</string>
+    <string name="push_notifications_description">Get notifications when you receive TON, tokens, and NFTs. Notifications from connected apps.</string>
+
+    <string name="faq" translatable="false">FAQ</string>
     <string name="failed">Failed</string>
     <string name="remove_dapp_confirm">Remove %1$s?</string>
+    <string name="rate_tonkeeper">Rate Tonkeeper</string>
+    <string name="encrypted_comment">Encrypted comment</string>
+    <string name="encrypted_comment_description">The comment is encrypted by sender and can only be decrypted by you. Please be careful with the content and beware of scams.</string>
+    <string name="decrypted_comment_action">Decrypt the comment</string>
+    <string name="comment_decrypted_hint">Will be visible to everyone.</string>
+    <string name="encrypt_comment">Encrypt comment</string>
+
+    <string name="comment_encrypted_hint">Will be visible only to recipient and you.</string>
+    <string name="decrypt_comment">Decrypt</string>
 
     <string name="sign_out">Sign out</string>
     <string name="delete_watch_account_alert">Delete watch account?</string>
@@ -42,6 +122,8 @@
     <string name="unsubscribed">Unsubscribed</string>
     <string name="subscribed">Subscribed</string>
     <string name="received">Received</string>
+    <string name="nft_transfer">NFT Transfer</string>
+    <string name="nft_disabled_transfer">NFT is on sale at the marketplace now. For transfer, you should remove it from sale first.</string>
 
     <string name="continue_action">Continue</string>
     <string name="get_started">Get started</string>
@@ -83,6 +165,7 @@
     <string name="buy_or_sell">Buy or sell</string>
     <string name="fiat_open_description">You are opening an external app not operated by Tonkeeper.</string>
     <string name="buy">Buy</string>
+    <string name="sell">Sell</string>
     <string name="search">Search</string>
     <string name="add_wallet">Add wallet</string>
     <string name="wallets">Wallets</string>
@@ -107,6 +190,8 @@
     <string name="passcode_enter">Enter passcode</string>
     <string name="passcode_create">Create passcode</string>
     <string name="passcode_re_enter">Re-enter passcode</string>
+    <string name="passcode_current">Enter current passcode</string>
+    <string name="passcode_new">Create new passcode</string>
     <string name="import_wallet">Import wallet</string>
     <string name="import_wallet_subtitle">Choose from the options below.</string>
     <string name="import_wallet_words">Import wallet with a 24 secret recovery words</string>
@@ -115,11 +200,12 @@
     <string name="watch_wallet_add">Monitor wallet activity without recovery phrase. You will be notified of any transactions from this wallet.</string>
     <string name="testnet_wallet">Testnet Account</string>
     <string name="testnet_wallet_subtitle">Import wallet with a 24 secret recovery words to Testnet</string>
-    <string name="signer_wallet">Pair Signer</string>
+    <string name="signer_wallet">Pair with Signer</string>
     <string name="signer_wallet_subtitle">A higher level of control and security</string>
     <string name="cancel">Cancel</string>
     <string name="fee">Fee</string>
     <string name="period_24h">24h</string>
+    <string name="notifications">Notifications</string>
     <string name="enable_notification">Enable notification</string>
     <string name="allow_notification">Allow Notifications</string>
     <string name="enable_notification_title">Get instant notifications</string>
@@ -148,6 +234,9 @@
     <string name="sending_transaction">Sending transaction</string>
     <string name="transaction_confirmed">Transaction confirmed</string>
 
+    <string name="connected_placeholder_title">Connected apps will be shown here</string>
+    <string name="connected_placeholder_subtitle">Explore apps and services in Tonkeeper browser.</string>
+
     <string name="send">Send</string>
     <string name="swap">Swap</string>
     <string name="manage">Manage</string>
@@ -155,6 +244,7 @@
     <string name="receive">Receive</string>
     <string name="log_out">Log out</string>
     <string name="amount">Amount</string>
+    <string name="backup">Backup</string>
 
     <string name="recipient">Recipient</string>
     <string name="recipient_address">Recipient address</string>
@@ -206,6 +296,8 @@
 
     <string name="done">Done</string>
     <string name="error">Error</string>
+    <string name="unnamed_collection">Unnamed collection</string>
+    <string name="view_details">View details</string>
 
     <string name="receive_coin">Receive %1$s</string>
     <string name="receive_coin_description">Send only %1$s and tokens in TON network to this address, or you might lose your funds.</string>
@@ -258,6 +350,7 @@
     <string name="signer" translatable="false">Signer</string>
     <string name="choose_wallet_title">Choose wallet</string>
     <string name="choose_wallet_subtitle">Choose wallets you want to add.</string>
+    <string name="choose_wallet_already_added">Already added</string>
 
     <string name="customize">Customize</string>
     <string name="customize_wallet_title">Customize your Wallet</string>
@@ -267,4 +360,19 @@
     <string name="explore">Explore</string>
     <string name="connected">Connected</string>
     <string name="browser_search_placeholder">Enter an address or search the web</string>
+
+    <string name="ledger" translatable="false">Ledger</string>
+    <string name="ledger_title">Pair with Ledger</string>
+    <string name="ledger_subtitle">Hardware module, Bluetooth, limited TON features</string>
+    <string name="ledger_confirm_title">Confirm Action</string>
+    <string name="ledger_connect_title">Connect Ledger</string>
+    <string name="ledger_connect">Connect Ledger to your device via Bluetooth</string>
+    <string name="ledger_open_ton_app">Unlock it and open TON App</string>
+    <string name="ledger_install_ton_app">Install TON App</string>
+    <string name="ledger_confirm_tx">Confirm your transaction on Ledger</string>
+    <string name="ledger_operation_not_supported">The operation is not available for Ledger wallets. Select another wallet and try again.</string>
+
+    <string name="bluetooth_permissions_alert_title">Bluetooth Permissions</string>
+    <string name="bluetooth_permissions_alert_message">Please enable Bluetooth permissions in your settings to use this feature</string>
+    <string name="bluetooth_permissions_alert_open_settings">Open Settings</string>
 </resources>

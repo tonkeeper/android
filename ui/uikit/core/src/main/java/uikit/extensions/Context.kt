@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.ColorStateList
 import android.content.res.TypedArray
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.RippleDrawable
 import android.text.Spannable
@@ -103,8 +105,15 @@ fun Context.textWithLabel(text: String, label: CharSequence?): CharSequence {
     return span
 }
 
-fun Context.drawable(id: Int): Drawable {
-    return ResourcesCompat.getDrawable(resources, id, theme)!!
+fun Context.drawable(
+    id: Int,
+    @ColorInt color: Int = Color.TRANSPARENT
+): Drawable {
+    val drawable = ResourcesCompat.getDrawable(resources, id, theme) ?: ColorDrawable(Color.TRANSPARENT)
+    if (color != Color.TRANSPARENT) {
+        drawable.setTint(color)
+    }
+    return drawable
 }
 
 fun Context.getCurrentFocus(): View? {
@@ -113,4 +122,8 @@ fun Context.getCurrentFocus(): View? {
 
 fun Context.getCurrentFocusEditText(): EditText? {
     return getCurrentFocus() as? EditText
+}
+
+fun Context.hideKeyboard() {
+    (activity?.currentFocus as? EditText)?.hideKeyboard()
 }

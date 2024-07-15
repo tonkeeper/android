@@ -155,6 +155,7 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         if (removeModals) {
             dismissModals(transaction)
         }
+        transaction.setReorderingAllowed(true)
         transaction.commitAllowingStateLoss()
     }
 

@@ -12,7 +12,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class DAppEntity(
     val url: String,
-    val walletId: Long,
+    val walletId: String,
     val accountId: String,
     val testnet: Boolean,
     val clientId: String,

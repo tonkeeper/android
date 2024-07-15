@@ -2,7 +2,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
-    kotlin("plugin.serialization") version "1.9.23"
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 android {
@@ -30,6 +30,7 @@ dependencies {
     implementation(Dependence.ton)
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Wallet.Data.core))
+    implementation(project(Dependence.Wallet.Data.rn))
     implementation(project(Dependence.Wallet.Data.rates))
     implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Lib.security))
@@ -37,6 +38,5 @@ dependencies {
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.sqlite))
-
-    implementation(project(Dependence.Module.core))
+    implementation(project(Dependence.Lib.ledger))
 }

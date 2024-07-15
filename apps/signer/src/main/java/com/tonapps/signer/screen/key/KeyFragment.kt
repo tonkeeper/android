@@ -20,6 +20,8 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.api.pub.PublicKeyEd25519
 import com.tonapps.qr.ui.QRView
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.list.ListCell
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
@@ -114,11 +116,10 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
     }
 
     private fun setExportByUri(publicKey: PublicKeyEd25519, name: String) {
-        val uri = TKDeepLink.buildLinkUri(publicKey, name)
-        qrView.setContent(uri.toString())
+        qrView.setContent(TKDeepLink.buildLinkUri(publicKey, name, false).toString())
 
         exportTonkeeperView.setOnClickListener {
-            TKDeepLink.openOrInstall(requireContext(), uri)
+            TKDeepLink.openOrInstall(requireContext(), TKDeepLink.buildLinkUri(publicKey, name, true))
         }
 
         exportTonkeeperWebView.setOnClickListener {
@@ -142,11 +143,10 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
     private fun openDeleteDialog() {
         val builder = AlertDialog.Builder(requireContext())
-        builder.setColoredButtons()
         builder.setTitle(R.string.delete_key_question)
         builder.setMessage(R.string.delete_key_question_subtitle)
-        builder.setNegativeButton(R.string.delete_key) { _ -> delete() }
-        builder.setPositiveButton(R.string.cancel)
+        builder.setPositiveButton(R.string.delete_key, requireContext().accentRedColor) { _ -> delete() }
+        builder.setNegativeButton(R.string.cancel, requireContext().accentBlueColor)
         builder.show()
     }
 

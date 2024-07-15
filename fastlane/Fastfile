@@ -81,6 +81,9 @@ platform :android do
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
             }  
         )
+        
+        apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+        sh("echo APK_PATH=#{apk_path} >> $GITHUB_ENV")
     end
 
     desc "Upload to GooglePlay"

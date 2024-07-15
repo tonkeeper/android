@@ -47,4 +47,4 @@ jobs:
         with:
           name: Tonkeeper X apk ${{ env.VERSION_CODE }}
           path: |
-            ${{ github.workspace }}/apps/wallet/instance/main/build/outputs
+            ${{ env.APK_PATH }}

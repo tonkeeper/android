@@ -1,9 +1,6 @@
 name: Android Mobile CD
 
 on:
-  push:
-    branches:
-      - 'feature/**'
   workflow_dispatch:
 
 jobs:

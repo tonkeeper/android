@@ -43,7 +43,8 @@ platform :android do
 
     desc "Start android baselineprofile"
     lane :baseline do
-        sh("../gradlew :baselineprofile:main:generateBaselineProfile")
+        sh("echo ANDROID_HOME=$ANDROID_HOME")
+        sh("../gradlew :baselineprofile:main:generateBaselineProfile --stacktrace --info")
     end
 
     desc "Build the android aab for release"

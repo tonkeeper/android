@@ -51,7 +51,7 @@ platform :android do
     desc "Build the android aab for release"
     lane :build_release do
         gradle(
-            tasks: ["clean", ":apps:wallet.instance:main:bundle"],
+            task: ":apps:wallet.instance:main:bundle",
             build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],

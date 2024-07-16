@@ -61,7 +61,7 @@ platform :android do
             }
         )
 
-        sh("ls -lR ./apps/wallet/instance/main/build/outputs/apk/release")
+        sh("ls -lR ./apps/wallet/instance/main/release/")
 
         puts "Debug"
         puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
@@ -87,7 +87,7 @@ platform :android do
 
         apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
 
-        sh("ls -lR ./apps/wallet/instance/main/build/outputs/apk/release")
+        sh("ls -lR ./apps/wallet/instance/main/release/")
 
         puts "Debug"
         puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]

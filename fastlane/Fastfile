@@ -61,21 +61,19 @@ platform :android do
             }
         )
 
-        sh("ls -lR ../apps/wallet/instance/main/src/release")
-
         puts "Debug"
         puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
         puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
 
-        sh("echo OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]} >> $GITHUB_ENV")
+        sh("echo AAB_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]} >> $GITHUB_ENV")
     end
 
     desc "Build the android apk"
     lane :assemble_release do
         gradle(
-            task: ":apps:wallet.instance:main:assemble",
+            task: ":apps:wallet:instance:main:assemble",
             build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
@@ -85,15 +83,13 @@ platform :android do
             }  
         )
 
-        sh("ls -lR ./apps/wallet/instance/main/release/")
-
         puts "Debug"
         puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
         puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
 
-        sh("echo OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]} >> $GITHUB_ENV")
+        sh("echo APK_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]} >> $GITHUB_ENV")
     end
 
     desc "Upload to GooglePlay"
@@ -114,11 +110,7 @@ platform :android do
         fetch_and_increment_build_number
         build_release
         upload_release
-    end
 
-    desc "Build APK"
-    lane :apk do
-        fetch_and_increment_build_number
         assemble_release
     end
 end

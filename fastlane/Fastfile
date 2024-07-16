@@ -43,9 +43,7 @@ platform :android do
 
     desc "Start android baselineprofile"
     lane :baseline do
-        gradle(
-            tasks: [":baselineprofile:main:generateBaselineProfile"]
-        )
+        sh("./gradlew :baselineprofile:main:generateBaselineProfile")
     end
 
     desc "Build the android aab for release"
@@ -60,12 +58,6 @@ platform :android do
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
             }
         )
-
-        puts "Debug"
-        puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
-        puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
-        puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
-        puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
 
         sh("echo AAB_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]} >> $GITHUB_ENV")
     end
@@ -82,12 +74,6 @@ platform :android do
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
             }  
         )
-
-        puts "Debug"
-        puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
-        puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
-        puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
-        puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
 
         sh("echo APK_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]} >> $GITHUB_ENV")
     end

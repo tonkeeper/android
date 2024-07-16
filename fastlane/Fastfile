@@ -43,7 +43,9 @@ platform :android do
 
     desc "Start android baselineprofile"
     lane :baseline do
-        sh("../gradlew :apps:wallet:instance:main:generateReleaseBaselineProfile")
+        sh("../gradlew :apps:wallet:instance:main")
+        sh("../gradlew cleanManagedDevices --unused-only")
+        sh("../gradlew :apps:wallet:instance:main:generateReleaseBaselineProfile --stacktrace -Pandroid.testoptions.manageddevices.emulator.gpu=\"swiftshader_indirect\" -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=20 -Dorg.gradle.workers.max=4")
     end
 
     desc "Build the android aab for release"

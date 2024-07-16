@@ -33,8 +33,8 @@ jobs:
         run: |
          echo $CERTIFICATE_BASE64 | base64 --decode > google-release.keystore
 
-      - name: Build android apk
-        run: bundle exec fastlane android apk
+      - name: Build android beta
+        run: bundle exec fastlane android beta
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/google-release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.TONKEEPER_UPLOAD_STORE_PASSWORD }}
@@ -42,9 +42,9 @@ jobs:
           KEY_PASSWORD: ${{ secrets.TONKEEPER_UPLOAD_KEY_PASSWORD }}
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
 
-      - name: Upload android apk to artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Tonkeeper X apk ${{ env.VERSION_CODE }}
-          path: |
-            ${{ env.APK_PATH }}
+      # - name: Upload android apk to artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: Tonkeeper X apk ${{ env.VERSION_CODE }}
+      #     path: |
+      #       ${{ env.APK_PATH }}

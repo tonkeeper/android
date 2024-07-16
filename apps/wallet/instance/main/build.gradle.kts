@@ -34,12 +34,12 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
-            /*postprocessing {
+            postprocessing {
                 isObfuscate = true
                 isOptimizeCode = true
                 isRemoveUnusedCode = true
                 isRemoveUnusedResources = true
-            }*/
+            }
         }
         debug {
             isMinifyEnabled = false

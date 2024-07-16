@@ -21,10 +21,11 @@
 #-renamesourcefileattribute SourceFile
 
 -keepattributes *Annotation*
--keepclassmembers class your.package.name.** {
+-keepclassmembers class com.ton_keeper.** {
     @org.jetbrains.annotations.** <fields>;
     @org.jetbrains.annotations.** <methods>;
 }
 
 -keep class io.tonapi.** { *; }
 
+-keep class com.google.j2objc.annotations.** { *; }

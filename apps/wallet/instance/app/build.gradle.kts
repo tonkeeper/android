@@ -32,6 +32,7 @@ android {
 dependencies {
     implementation(Dependence.Koin.core)
     implementation(Dependence.KotlinX.datetime)
+    implementation(Dependence.j2objc)
 
     implementation(project(Dependence.Wallet.localization))
     implementation(project(Dependence.Wallet.api))
@@ -65,6 +66,7 @@ dependencies {
     implementation(Dependence.AndroidX.biometric)
     implementation(Dependence.AndroidX.swiperefreshlayout)
     implementation(Dependence.AndroidX.lifecycle)
+    implementation(Dependence.AndroidX.profileinstaller)
 
     implementation(Dependence.guava)
 

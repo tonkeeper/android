@@ -4,6 +4,7 @@ object Dependence {
     const val fresco = "com.facebook.fresco:fresco:3.1.3"
     const val guava = "com.google.guava:guava:33.1.0-android"
     const val zxing = "com.google.zxing:core:3.5.3"
+    const val j2objc = "com.google.j2objc:j2objc-annotations:3.0.0"
 
     object Analytics {
         const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"

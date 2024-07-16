@@ -49,9 +49,9 @@ platform :android do
     end
 
     desc "Build the android aab for release"
-    lane :build_release do |options|
+    lane :build_release do
         gradle(
-            tasks: [":apps:wallet.instance:main:bundleRelease"],
+            task: "clean :apps:wallet.instance:main:bundleRelease",
             build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
@@ -63,7 +63,7 @@ platform :android do
     end
 
     desc "Build the android apk"
-    lane :assemble_release do |options|
+    lane :assemble_release do
         gradle(
             tasks: [":apps:wallet.instance:main:assembleRelease"],
             build_type: "Release",

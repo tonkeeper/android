@@ -35,3 +35,7 @@ allprojects {
         }
     }
 }
+
+tasks.register<Delete>("clean") {
+    delete(getLayout().buildDirectory)
+}

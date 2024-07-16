@@ -5,12 +5,11 @@ plugins {
 }
 
 android {
-    namespace = Build.namespacePrefix("x.baselineprofile")
+    namespace = Build.namespacePrefix("main.baselineprofile")
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
         minSdk = 28
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -18,11 +17,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+    buildTypes {
+        debug {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
 
-    targetProjectPath = ":apps:wallet:instance:x"
+    targetProjectPath = ":apps:wallet:instance:main"
 }
 
 dependencies {

@@ -30,8 +30,6 @@ android {
 }
 
 dependencies {
-    "baselineProfile"(project(":baselineprofile:x"))
-
     implementation(Dependence.Koin.core)
     implementation(Dependence.KotlinX.datetime)
 

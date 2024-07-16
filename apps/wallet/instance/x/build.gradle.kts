@@ -51,5 +51,6 @@ android {
 }
 
 dependencies {
+    "baselineProfile"(project(":baselineprofile:x"))
     implementation(project(Dependence.Wallet.app))
 }

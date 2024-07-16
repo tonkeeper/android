@@ -21,21 +21,6 @@ android {
         versionName = "4.7.2-x"
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file(project.property("android.injected.signing.store.file").toString())
-            storePassword = project.property("android.injected.signing.store.password").toString()
-            keyAlias = project.property("android.injected.signing.key.alias").toString()
-            keyPassword = project.property("android.injected.signing.key.password").toString()
-        }
-        getByName("debug") {
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-        }
-    }
-
     buildFeatures {
         buildConfig = true
     }
@@ -49,6 +34,16 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            /*postprocessing {
+                isObfuscate = true
+                isOptimizeCode = true
+                isRemoveUnusedCode = true
+                isRemoveUnusedResources = true
+            }*/
+        }
+        debug {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -62,5 +57,6 @@ android {
 }
 
 dependencies {
+    "baselineProfile"(project(":baselineprofile:main"))
     implementation(project(Dependence.Wallet.app))
 }

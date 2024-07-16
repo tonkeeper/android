@@ -1,11 +1,9 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
     id("kotlin-parcelize")
     id("kotlinx-serialization")
     id("kotlin-kapt")
-    id("androidx.baselineprofile")
 }
 
 android {

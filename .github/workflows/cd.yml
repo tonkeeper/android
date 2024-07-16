@@ -40,14 +40,14 @@ jobs:
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
 
       - name: Upload android aab to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Tonkeeper X aab ${{ env.VERSION_CODE }}
           path: |
             ${{ env.AAB_OUTPUT_PATH }}
 
       - name: Upload android apk to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Tonkeeper X apk ${{ env.VERSION_CODE }}
           path: |

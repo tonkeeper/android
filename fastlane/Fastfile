@@ -51,7 +51,7 @@ platform :android do
     desc "Build the android aab for release"
     lane :build_release do
         gradle(
-            task: "clean :apps:wallet.instance:main:bundleRelease",
+            task: ":apps:wallet.instance:main:bundle",
             build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
@@ -61,15 +61,13 @@ platform :android do
             }
         )
 
-        sh("ls -lR ./apps/wallet/instance/main/release/")
+        sh("ls -lR ../apps/wallet/instance/main/src/release")
 
         puts "Debug"
         puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
         puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
-
-        sh("echo APK_PATH=#{apk_path} >> $GITHUB_ENV")
     end
 
     desc "Build the android apk"

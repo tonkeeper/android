@@ -60,6 +60,16 @@ platform :android do
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
             }
         )
+
+        sh("ls -lR ./apps/wallet/instance/main/build/outputs/apk/release")
+
+        puts "Debug"
+        puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
+        puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
+
+        sh("echo APK_PATH=#{apk_path} >> $GITHUB_ENV")
     end
 
     desc "Build the android apk"
@@ -76,6 +86,8 @@ platform :android do
         )
 
         apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+
+        sh("ls -lR ./apps/wallet/instance/main/build/outputs/apk/release")
 
         puts "Debug"
         puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]

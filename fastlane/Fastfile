@@ -44,8 +44,7 @@ platform :android do
     desc "Start android baselineprofile"
     lane :baseline do
         gradle(
-            tasks: [":baselineprofile:main:generateBaselineProfile"],
-            flags: "-q"
+            tasks: [":baselineprofile:main:generateBaselineProfile"]
         )
     end
 
@@ -59,8 +58,7 @@ platform :android do
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
                 "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-            },
-            flags: "-q"
+            }
         )
     end
 
@@ -96,7 +94,6 @@ platform :android do
 
     desc "Build and upload to GooglePlay"
     lane :beta do
-        baseline
         fetch_and_increment_build_number
         build_release
         upload_release
@@ -104,7 +101,6 @@ platform :android do
 
     desc "Build APK"
     lane :apk do
-        baseline
         fetch_and_increment_build_number
         assemble_release
     end

@@ -42,7 +42,7 @@ platform :android do
     end
 
     desc "Start android baselineprofile"
-    lane :baseline
+    lane :baseline do
         gradle(
             tasks: [":baselineprofile:main:generateBaselineProfile"],
             flags: "-q"

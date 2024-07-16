@@ -47,4 +47,11 @@ jobs:
         with:
           name: Tonkeeper X aab ${{ env.VERSION_CODE }}
           path: |
-            ${{ github.workspace }}/apps/wallet/instance/main/src/release
+            ${{ env.AAB_OUTPUT_PATH }}
+
+      - name: Upload android apk to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Tonkeeper X apk ${{ env.VERSION_CODE }}
+          path: |
+            ${{ env.APK_OUTPUT_PATH }}

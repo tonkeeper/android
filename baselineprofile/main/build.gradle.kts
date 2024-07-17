@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
+
 plugins {
     id("com.android.test")
     id("org.jetbrains.kotlin.android")
@@ -29,15 +31,25 @@ android {
         jvmTarget = "1.8"
     }
 
-    targetProjectPath = ":apps:wallet:instance:main"
-
-    testOptions.managedDevices.devices {
-        create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel6Api31") {
-            device = "Pixel 6"
-            apiLevel = 31
-            systemImageSource = "aosp"
+    testOptions {
+        managedDevices {
+            devices {
+                create<ManagedVirtualDevice>("pixel7Api34") {
+                    device = "Pixel 7"
+                    apiLevel = 34
+                    systemImageSource = "google"
+                }
+            }
         }
     }
+
+    targetProjectPath = ":apps:wallet:instance:main"
+    experimentalProperties["android.experimental.self-instrumenting"] = true
+    experimentalProperties["android.experimental.testOptions.managedDevices.setupTimeoutMinutes"] = 20
+    experimentalProperties["android.experimental.androidTest.numManagedDeviceShards"] = 1
+    experimentalProperties["android.experimental.testOptions.managedDevices.maxConcurrentDevices"] = 1
+    experimentalProperties["android.experimental.testOptions.managedDevices.emulator.showKernelLogging"] = true
+    experimentalProperties["android.testoptions.manageddevices.emulator.gpu"] = "swiftshader_indirect"
 }
 
 dependencies {
@@ -48,6 +60,7 @@ dependencies {
 }
 
 baselineProfile {
-    managedDevices += "pixel6Api31"
+    managedDevices += "pixel7Api34"
     useConnectedDevices = false
+    enableEmulatorDisplay = false
 }

@@ -37,7 +37,7 @@ android {
                 create<ManagedVirtualDevice>("pixel7Api34") {
                     device = "Pixel 7"
                     apiLevel = 34
-                    systemImageSource = "google"
+                    systemImageSource = "aosp"
                 }
             }
         }

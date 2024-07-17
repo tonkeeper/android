@@ -106,6 +106,7 @@ platform :android do
     desc "Build and upload to GooglePlay"
     lane :beta do
         fetch_and_increment_build_number
+        sh("yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses")
         build_release
         upload_release
     end

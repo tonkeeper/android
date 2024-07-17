@@ -34,10 +34,10 @@ android {
     testOptions {
         managedDevices {
             devices {
-                create<ManagedVirtualDevice>("pixel7Api34") {
+                create<ManagedVirtualDevice>("pixel6Api31") {
                     device = "Pixel 7"
-                    apiLevel = 34
-                    systemImageSource = "google"
+                    apiLevel = 31
+                    systemImageSource = "google_apis"
                 }
             }
         }
@@ -50,6 +50,7 @@ android {
     experimentalProperties["android.experimental.testOptions.managedDevices.maxConcurrentDevices"] = 1
     experimentalProperties["android.experimental.testOptions.managedDevices.emulator.showKernelLogging"] = true
     experimentalProperties["android.testoptions.manageddevices.emulator.gpu"] = "swiftshader_indirect"
+    experimentalProperties["android.testoptions.manageddevices.emulator.no-audio"] = "true"
 }
 
 dependencies {
@@ -60,7 +61,7 @@ dependencies {
 }
 
 baselineProfile {
-    managedDevices += "pixel7Api34"
+    managedDevices += "pixel6Api31"
     useConnectedDevices = false
     enableEmulatorDisplay = false
 }

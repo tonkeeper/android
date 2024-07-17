@@ -44,6 +44,7 @@ android {
     }
 
     targetProjectPath = ":apps:wallet:instance:main"
+    experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
     experimentalProperties["android.experimental.self-instrumenting"] = true
     experimentalProperties["android.experimental.testOptions.managedDevices.setupTimeoutMinutes"] = 20
     experimentalProperties["android.experimental.androidTest.numManagedDeviceShards"] = 1

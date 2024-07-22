@@ -1,26 +1,16 @@
 package com.tonapps.tonkeeper.ui.component.coin
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.text.TextPaint
 import android.util.AttributeSet
-import android.util.Log
 import androidx.appcompat.R
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged
 import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.ui.component.coin.drawable.SuffixDrawable
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingConfig
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingFilter
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingTextWatcher
-import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.uikit.icon.UIKitIcon
-import uikit.base.BaseDrawable
 import uikit.extensions.dp
 import uikit.extensions.replaceAll
-import uikit.extensions.setLeftDrawable
 import uikit.extensions.setRightDrawable
 import uikit.widget.input.InputTextView
 

@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.tonconnect.source
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.SQLiteHelper
@@ -23,7 +24,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         private const val APP_COLUMN_WALLET_ID = "walletId"
     }
 
-    override fun onCreate(db: SQLiteDatabase) {
+    override fun create(db: SQLiteDatabase) {
         createManifestTable(db)
         createAppTable(db)
     }
@@ -69,7 +70,8 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         value.put(APP_COLUMN_OBJECT, app.toByteArray())
         value.put(APP_COLUMN_URL, app.url)
         value.put(APP_COLUMN_WALLET_ID, app.walletId)
-        writableDatabase.insert(APP_TABLE_NAME, null, value)
+        val s = writableDatabase.insert(APP_TABLE_NAME, null, value)
+        Log.d("TonConnectLog", "insert: $s")
     }
 
     fun updateApp(app: DAppEntity) {
@@ -104,5 +106,9 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
 
     private fun uniqueApps(list: List<DAppEntity>): List<DAppEntity> {
         return list.distinctBy { it.uniqueId }
+    }
+
+    fun clearApps() {
+        writableDatabase.delete(APP_TABLE_NAME, null, null)
     }
 }

@@ -56,6 +56,9 @@ data class TokenEntity(
     val isTon: Boolean
         get() = address == TON.address
 
+    val isUsdt: Boolean
+        get() = address == USDT.address
+
     constructor(jetton: JettonPreview) : this(
         address = jetton.address,
         name = jetton.name,

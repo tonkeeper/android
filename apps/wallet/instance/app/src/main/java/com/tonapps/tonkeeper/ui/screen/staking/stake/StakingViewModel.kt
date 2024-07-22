@@ -114,7 +114,7 @@ class StakingViewModel(
                 balanceFormat = balanceFormat,
                 remainingFormat = CurrencyFormatter.format(token.symbol, remaining),
                 minStakeFormat = minStakeFormat,
-                insufficientBalance = 0.0 > remaining.value,
+                insufficientBalance = !remaining.isPositive,
                 requestMinStake = pool.minStake > amount
             )
         }
@@ -136,8 +136,7 @@ class StakingViewModel(
         if (amount == Coins.ZERO) {
             pool.apyFormat
         } else {
-            val earnings = BigDecimal(amount.value)
-                .multiply(pool.apy)
+            val earnings = amount.value.multiply(pool.apy)
                 .divide(BigDecimal(100), RoundingMode.HALF_UP)
 
             val coinsFormat = CurrencyFormatter.format(token.symbol, Coins.of(earnings))
@@ -209,9 +208,9 @@ class StakingViewModel(
     ): WalletTransfer {
         val withdrawalFee = Coins.of(StakingUtils.getWithdrawalFee(pool.implementation))
         val coins = if (pool.implementation == StakingPool.Implementation.LiquidTF) {
-            org.ton.block.Coins.ofNano(amount.nano() + withdrawalFee.nano())
+            org.ton.block.Coins.ofNano(amount.toLong() + withdrawalFee.toLong())
         } else {
-            org.ton.block.Coins.ofNano(amount.nano())
+            org.ton.block.Coins.ofNano(amount.toLong())
         }
         val sendParams = getSendParams(wallet)
 

@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
@@ -74,13 +75,21 @@ class WalletViewModel(
     private val _stateSettingsFlow = combine(
         settingsRepository.hiddenBalancesFlow,
         api.configFlow,
-        statusFlow
-    ) { hiddenBalance, config, status ->
-        State.Settings(hiddenBalance, config, status)
+        statusFlow,
+        settingsRepository.telegramChannelFlow,
+    ) { hiddenBalance, config, status, telegramChannel ->
+        State.Settings(hiddenBalance, config, status, telegramChannel)
     }.distinctUntilChanged()
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
+
+    val hasBackupFlow = combine(
+        accountRepository.selectedWalletFlow,
+        backupRepository.stream
+    ) { wallet, backups ->
+        backups.indexOfFirst { it.walletId == wallet.id } > -1
+    }.map { !it }
 
     init {
         collectFlow(accountRepository.realtimeEventsFlow) { event ->
@@ -119,7 +128,8 @@ class WalletViewModel(
             alertNotificationsFlow,
             pushManager.dAppPushFlow,
             _stateSettingsFlow,
-        ) { state, alerts, dAppNotifications, settings ->
+            settingsRepository.walletPrefsChangedFlow,
+        ) { state, alerts, dAppNotifications, settings, _ ->
             val status = if (settings.status == Status.NoInternet) {
                 settings.status
             } else if (settings.status != Status.SendingTransaction && settings.status != Status.TransactionConfirmed) {
@@ -131,14 +141,24 @@ class WalletViewModel(
             val dAppEvents = dAppNotifications ?: emptyList()
             val apps = getApps(state.wallet, dAppEvents)
 
+            val isSetupHidden = settingsRepository.isSetupHidden(state.wallet.id)
+            val uiSetup: State.Setup? = if (isSetupHidden) null else {
+                State.Setup(
+                    pushEnabled = context.hasPushPermission() && settingsRepository.getPushWallet(state.wallet.id),
+                    biometryEnabled = settingsRepository.biometric,
+                    hasBackup = state.hasBackup,
+                    showTelegramChannel = settings.telegramChannel
+                )
+            }
+
             val uiItems = state.uiItems(
+                wallet = state.wallet,
                 hiddenBalance = settings.hiddenBalance,
                 status = status,
                 config = settings.config,
                 alerts = alerts,
                 dAppNotifications = State.DAppNotifications(dAppEvents, apps),
-                biometryEnabled = settingsRepository.biometric,
-                push = context.hasPushPermission() && settingsRepository.getPushWallet(state.wallet.id)
+                setup = uiSetup,
             )
             _uiItemsFlow.value = uiItems
             setCached(state.wallet, uiItems)

@@ -4,6 +4,7 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
     <string name="w5beta" translatable="false">W5 Beta</string>
+    <string name="w5" translatable="false">W5</string>
     <string name="w5_wallet">Wallet W5</string>
     <string name="nft_unverified">Unverified NFT</string>
     <string name="report_spam">Report spam</string>
@@ -225,7 +226,7 @@
     <string name="wallet_attention_description">We strongly recommend you write down the recovery phrase because it’s the only way to have access to and recover your wallet should you lose your device. Do not send it to yourself via email or take a screenshot. It’s safer when kept offline.</string>
 
     <string name="phrase_title">Your recovery phrase</string>
-    <string name="phrase_description">Write down these 24 words in the order given below and store them in a secret, safe place.</string>
+    <string name="phrase_description">Write down these words with their numbers and store them in a safe place.</string>
 
     <string name="phrase_check_title">So, let’s check</string>
     <string name="phrase_check_description">To check whether you’ve written down your recovery phrase correctly, please enter the %1$dth, %2$dth, and %3$dst words.</string>
@@ -253,8 +254,9 @@
     <string name="sender_address">Sender address</string>
 
     <string name="transaction">Transaction</string>
+    <string name="incorrect_phrase">Incorrect phrase</string>
 
-    <string name="address_hint">Address or Name</string>
+    <string name="address_hint">Address or name</string>
     <string name="comment">Comment</string>
     <string name="paste">Paste</string>
     <string name="version">Version %1$s (%2$d)</string>

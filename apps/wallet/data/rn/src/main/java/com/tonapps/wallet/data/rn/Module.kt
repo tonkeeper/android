@@ -3,5 +3,5 @@ package com.tonapps.wallet.data.rn
 import org.koin.dsl.module
 
 val rnLegacyModule = module {
-    single { RNLegacy(get()) }
+    single { RNLegacy(get(), get()) }
 }

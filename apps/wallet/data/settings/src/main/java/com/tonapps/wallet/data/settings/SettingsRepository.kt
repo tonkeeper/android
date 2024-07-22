@@ -12,6 +12,7 @@ import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.entities.NftPrefsEntity
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
@@ -56,7 +57,7 @@ class SettingsRepository(
         private const val FIREBASE_TOKEN_KEY = "firebase_token"
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
-        private const val AMOUNT_INPUT_CURRENCY_KEY = "amount_input_currency"
+        private const val TELEGRAM_CHANNEL_KEY = "telegram_channel"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -64,6 +65,9 @@ class SettingsRepository(
 
     private val _languageFlow = MutableEffectFlow<Language>()
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+
+    private val _telegramChannelFlow = MutableStateFlow(true)
+    val telegramChannelFlow = _telegramChannelFlow.stateIn(scope, SharingStarted.Eagerly, true)
 
     private val _themeFlow = MutableEffectFlow<Theme>()
     val themeFlow = _themeFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
@@ -89,14 +93,14 @@ class SettingsRepository(
     private val _walletPush = MutableStateFlow<Map<String, Boolean>?>(null)
     val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _amountInputCurrencyFlow = MutableStateFlow<Boolean?>(null)
-    val amountInputCurrencyFlow = _amountInputCurrencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
-
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context)
     private val walletPrefsFolder = WalletPrefsFolder(context)
     private val nftPrefsFolder = NftPrefsFolder(context)
     private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)
+
+    val walletPrefsChangedFlow: Flow<Unit>
+        get() = walletPrefsFolder.changedFlow
 
     val tokenPrefsChangedFlow: Flow<Unit>
         get() = tokenPrefsFolder.changedFlow
@@ -109,15 +113,6 @@ class SettingsRepository(
             val id = java.util.UUID.randomUUID().toString()
             prefs.edit().putString(INSTALL_ID_KEY, id).apply()
             id
-        }
-
-    var amountInputCurrency: Boolean = prefs.getBoolean(AMOUNT_INPUT_CURRENCY_KEY, false)
-        set(value) {
-            if (value != field) {
-                prefs.edit().putBoolean(AMOUNT_INPUT_CURRENCY_KEY, value).apply()
-                field = value
-                _amountInputCurrencyFlow.tryEmit(value)
-            }
         }
 
     var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)
@@ -137,6 +132,15 @@ class SettingsRepository(
                 field = value
                 _themeFlow.tryEmit(value)
                 migrationHelper.setLegacyTheme(value)
+            }
+        }
+
+    var telegramChannel: Boolean = prefs.getBoolean(TELEGRAM_CHANNEL_KEY, true)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(TELEGRAM_CHANNEL_KEY, value).apply()
+                field = value
+                _telegramChannelFlow.tryEmit(value)
             }
         }
 
@@ -179,7 +183,7 @@ class SettingsRepository(
             }
         }
 
-    var biometric: Boolean = prefs.getBoolean(BIOMETRIC_KEY, false)
+    var biometric: Boolean = if (isAvailableBiometric(context)) prefs.getBoolean(BIOMETRIC_KEY, false) else false
         set(value) {
             if (value != field) {
                 prefs.edit().putBoolean(BIOMETRIC_KEY, value).apply()
@@ -223,10 +227,10 @@ class SettingsRepository(
         _walletPush.tryEmit(map)
     }
 
-    fun isSetupDone(walletId: String): Boolean = walletPrefsFolder.isSetupDone(walletId)
+    fun isSetupHidden(walletId: String): Boolean = walletPrefsFolder.isSetupHidden(walletId)
 
-    fun setSetupDone(walletId: String) {
-        walletPrefsFolder.setSetupDone(walletId)
+    fun setupHide(walletId: String) {
+        walletPrefsFolder.setupHide(walletId)
     }
 
     suspend fun setTokenHidden(
@@ -296,22 +300,21 @@ class SettingsRepository(
         }.launchIn(scope)
 
         scope.launch(Dispatchers.IO) {
-            val legacyValues = importFromLegacy()
-
-
-            biometric = legacyValues.biometric
-            lockScreen = legacyValues.lockScreen
-            currency = if (legacyValues.currency.code.isBlank()) {
-                WalletCurrency.DEFAULT
-            } else {
-                legacyValues.currency
+            if (rnLegacy.isRequestMigration()) {
+                val legacyValues = importFromLegacy()
+                biometric = legacyValues.biometric
+                lockScreen = legacyValues.lockScreen
+                currency = if (legacyValues.currency.code.isBlank()) {
+                    WalletCurrency.DEFAULT
+                } else {
+                    legacyValues.currency
+                }
+                theme = legacyValues.theme
+                language = legacyValues.language
+                hiddenBalances = legacyValues.hiddenBalances
+                country = legacyValues.country
+                searchEngine = legacyValues.searchEngine
             }
-            theme = legacyValues.theme
-            language = legacyValues.language
-            hiddenBalances = legacyValues.hiddenBalances
-            country = legacyValues.country
-            searchEngine = legacyValues.searchEngine
-
             _currencyFlow.tryEmit(currency)
             _themeFlow.tryEmit(theme)
             _languageFlow.tryEmit(language)
@@ -319,7 +322,6 @@ class SettingsRepository(
             _firebaseTokenFlow.tryEmit(firebaseToken)
             _countryFlow.tryEmit(country)
             _searchEngineFlow.tryEmit(searchEngine)
-            _amountInputCurrencyFlow.tryEmit(amountInputCurrency)
             _biometricFlow.tryEmit(biometric)
             _lockscreenFlow.tryEmit(lockScreen)
             _walletPush.tryEmit(mapOf())

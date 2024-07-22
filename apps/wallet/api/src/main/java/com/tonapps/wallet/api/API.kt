@@ -155,14 +155,14 @@ class API(
     fun getJettonsBalances(
         accountId: String,
         testnet: Boolean,
-        currency: String
+        currency: String? = null
     ): List<BalanceEntity> {
         try {
             val jettonsBalances = accounts(testnet).getAccountJettonsBalances(
                 accountId = accountId,
-                currencies = listOf(currency)
+                currencies = currency?.let { listOf(it) }
             ).balances
-            return jettonsBalances.map { BalanceEntity(it) }.filter { !it.value.isZero }
+            return jettonsBalances.map { BalanceEntity(it) }.filter { it.value.isPositive }
         } catch (e: Throwable) {
             return emptyList()
         }
@@ -212,11 +212,11 @@ class API(
         }
     }
 
-    fun getNftItems(address: String, testnet: Boolean): List<NftItem> {
+    fun getNftItems(address: String, testnet: Boolean, limit: Int = 1000): List<NftItem> {
         return try {
             accounts(testnet).getAccountNftItems(
                 accountId = address,
-                limit = 1000,
+                limit = limit,
                 indirectOwnership = true,
             ).nftItems
         } catch (e: Throwable) {

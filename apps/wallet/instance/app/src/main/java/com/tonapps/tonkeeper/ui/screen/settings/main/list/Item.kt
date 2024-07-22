@@ -37,10 +37,10 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data object Logo: Item(TYPE_LOGO)
 
-    open class Text(
+    sealed class Text(
         val titleRes: Int,
         val value: String,
-        val position: ListCell.Position
+        open val position: ListCell.Position
     ): Item(TYPE_TEXT)
 
     class Currency(
@@ -52,15 +52,16 @@ sealed class Item(type: Int): BaseListItem(type) {
         position = position
     )
 
-    open class Icon(
+    sealed class Icon(
         val titleRes: Int,
         val iconRes: Int,
-        val position: ListCell.Position,
-        val secondaryIcon: Boolean
+        open val position: ListCell.Position,
+        val secondaryIcon: Boolean,
+        val dot: Boolean = false,
     ): Item(TYPE_ICON)
 
-    class Theme(
-        position: ListCell.Position
+    data class Theme(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.theme,
         iconRes = UIKitIcon.ic_appearance_28,
@@ -68,8 +69,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class Widget(
-        position: ListCell.Position
+    data class Widget(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.widget,
         iconRes = R.drawable.ic_widget_28,
@@ -77,17 +78,19 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class Backup(
-        position: ListCell.Position
+    data class Backup(
+        override val position: ListCell.Position,
+        val hasBackup: Boolean,
     ): Icon(
         titleRes = Localization.backup,
         iconRes = UIKitIcon.ic_key_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        dot = !hasBackup
     )
 
-    class Support(
-        position: ListCell.Position,
+    data class Support(
+        override val position: ListCell.Position,
         val url: String
     ): Icon(
         titleRes = Localization.support,
@@ -96,8 +99,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class FAQ(
-        position: ListCell.Position,
+    data class FAQ(
+        override val position: ListCell.Position,
         val url: String
     ): Icon(
         titleRes = Localization.faq,
@@ -106,8 +109,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class News(
-        position: ListCell.Position,
+    data class News(
+        override val position: ListCell.Position,
         val url: String
     ): Icon(
         titleRes = Localization.tonkeeper_news,
@@ -116,8 +119,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = true
     )
 
-    class Contact(
-        position: ListCell.Position,
+    data class Contact(
+        override val position: ListCell.Position,
         val url: String
     ): Icon(
         titleRes = Localization.contact_us,
@@ -126,8 +129,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = true
     )
 
-    class Legal(
-        position: ListCell.Position
+    data class Legal(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.legal,
         iconRes = UIKitIcon.ic_doc_28,
@@ -135,8 +138,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = true
     )
 
-    class Notifications(
-        position: ListCell.Position
+    data class Notifications(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.notifications,
         iconRes = UIKitIcon.ic_notifications_28,
@@ -144,8 +147,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class Logout(
-        position: ListCell.Position
+    data class Logout(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.log_out,
         iconRes = R.drawable.ic_door_28,
@@ -153,8 +156,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class Security(
-        position: ListCell.Position
+    data class Security(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.security,
         iconRes = UIKitIcon.ic_lock_28,
@@ -162,8 +165,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class DeleteWatchAccount(
-        position: ListCell.Position
+    data class DeleteWatchAccount(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.delete_watch_account,
         iconRes = UIKitIcon.ic_trash_bin_28,
@@ -171,26 +174,26 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
-    class SearchEngine(
-        engine: com.tonapps.wallet.data.core.SearchEngine,
-        position: ListCell.Position
+    data class SearchEngine(
+        val engine: com.tonapps.wallet.data.core.SearchEngine,
+        override val position: ListCell.Position
     ): Text(
         titleRes = Localization.search,
         value = engine.title,
         position = position
     )
 
-    class Language(
-        data: String,
-        position: ListCell.Position
+    data class Language(
+        val data: String,
+        override val position: ListCell.Position
     ): Text(
         titleRes = Localization.language,
         value = data,
         position = position
     )
 
-    class Rate(
-        position: ListCell.Position
+    data class Rate(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.rate_tonkeeper,
         iconRes = UIKitIcon.ic_star_28,
@@ -198,8 +201,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = true
     )
 
-    class W5(
-        position: ListCell.Position
+    data class W5(
+        override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.w5_wallet,
         iconRes = UIKitIcon.ic_wallet_28,

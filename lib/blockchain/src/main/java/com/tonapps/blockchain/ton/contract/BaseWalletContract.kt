@@ -1,5 +1,8 @@
 package com.tonapps.blockchain.ton.contract
 
+import com.tonapps.blockchain.ton.contract.w5.W5Context
+import com.tonapps.blockchain.ton.contract.w5.WalletV5BetaContract
+import com.tonapps.blockchain.ton.contract.w5.WalletV5R1Contract
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
@@ -22,10 +25,11 @@ import org.ton.contract.wallet.WalletTransfer
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeTlb
+import java.math.BigInteger
 
 enum class MessageType {
+    Extension,
     Internal,
-    External,
 }
 
 enum class SignaturePosition {
@@ -48,7 +52,10 @@ abstract class BaseWalletContract(
                 "v3r2" -> WalletV3R2Contract(publicKey = publicKey)
                 "v4r1" -> WalletV4R1Contract(publicKey = publicKey)
                 "v4r2" -> WalletV4R2Contract(publicKey = publicKey)
-                "v5r1" -> WalletV5R1Contract(publicKey = publicKey, networkGlobalId = networkGlobalId)
+                "v5beta" -> WalletV5BetaContract(publicKey = publicKey, networkGlobalId = networkGlobalId)
+                "v5r1" -> WalletV5R1Contract(publicKey = publicKey, context = W5Context.Client(
+                    networkGlobalId = networkGlobalId,
+                ))
                 else -> throw IllegalArgumentException("Unsupported contract version: $v")
             }
         }
@@ -103,10 +110,13 @@ abstract class BaseWalletContract(
 
     abstract fun getCode(): Cell
 
+    abstract fun getWalletVersion(): WalletVersion
+
     abstract fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
-        messageType: MessageType = MessageType.External,
+        messageType: MessageType = MessageType.Internal,
+        queryId: BigInteger? = null,
         vararg gifts: WalletTransfer
     ): Cell
 

@@ -5,8 +5,10 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.navigation.Navigation
 
@@ -15,7 +17,16 @@ class PasscodeManager(
     private val settingsRepository: SettingsRepository,
     private val helper: PasscodeHelper,
     private val rnLegacy: RNLegacy,
+    private val scope: CoroutineScope
 ) {
+
+    init {
+        scope.launch(Dispatchers.IO) {
+            if (rnLegacy.isRequestMigration()) {
+                helper.reset()
+            }
+        }
+    }
 
     suspend fun hasPinCode(): Boolean = withContext(Dispatchers.IO) {
         if (helper.hasPinCode) {
@@ -59,7 +70,7 @@ class PasscodeManager(
         } else {
             try {
                 rnLegacy.changePasscode(old, new)
-                if (PasscodeBiometric.isAvailableOnDevice(context)) {
+                if (settingsRepository.biometric) {
                     rnLegacy.setupBiometry(new)
                 }
                 true

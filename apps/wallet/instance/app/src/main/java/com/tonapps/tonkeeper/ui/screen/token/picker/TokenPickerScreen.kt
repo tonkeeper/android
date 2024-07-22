@@ -18,6 +18,7 @@ import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
 import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.widget.HeaderView
 
 class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragment.BottomSheet {
 
@@ -43,6 +44,7 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.findViewById<HeaderView>(R.id.header).doOnActionClick = { finish() }
         headerDrawable = HeaderDrawable(requireContext())
 
         searchContainer = view.findViewById(R.id.search_container)

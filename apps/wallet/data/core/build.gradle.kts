@@ -25,6 +25,7 @@ android {
 dependencies {
     implementation(Dependence.ton)
     implementation(Dependence.Koin.core)
+    implementation(Dependence.AndroidX.biometric)
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.sqlite))

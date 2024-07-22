@@ -382,13 +382,18 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         }
     }
 
-    data class SetupTitle(val showDone: Boolean): Item(TYPE_SETUP_TITLE) {
+    data class SetupTitle(
+        val walletId: String,
+        val showDone: Boolean
+    ): Item(TYPE_SETUP_TITLE) {
 
         constructor(parcel: Parcel) : this(
+            parcel.readString()!!,
             parcel.readBooleanCompat()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeString(walletId)
             dest.writeBooleanCompat(showDone)
         }
 

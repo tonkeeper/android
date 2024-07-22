@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import io.tonapi.models.Account
 import io.tonapi.models.AccountStatus
@@ -24,6 +25,14 @@ data class AccountDetailsEntity(
     val isWallet: Boolean
         get() = preview.isWallet
 
+    constructor(contract: BaseWalletContract, testnet: Boolean) : this(
+        query = "",
+        preview = AccountEntity(contract.address, testnet),
+        active = true,
+        walletVersion = contract.getWalletVersion(),
+        balance = 0
+    )
+
     constructor(query: String, account: Account, testnet: Boolean) : this(
         query = query,
         preview = AccountEntity(account, testnet),
@@ -35,7 +44,9 @@ data class AccountDetailsEntity(
     private companion object {
         private fun resolveVersion(interfaces: List<String>?): WalletVersion {
             interfaces ?: return WalletVersion.UNKNOWN
-            return if (interfaces.contains("wallet_v5_beta")) {
+            return if(interfaces.contains("wallet_v5_beta")) {
+                WalletVersion.V5R1BETA
+            } else if (interfaces.contains("wallet_v5")) {
                 WalletVersion.V5R1
             } else if (interfaces.contains("wallet_v4r2")) {
                 WalletVersion.V4R2

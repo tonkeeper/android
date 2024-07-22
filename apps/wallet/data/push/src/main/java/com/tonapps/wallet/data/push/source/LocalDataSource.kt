@@ -19,7 +19,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "dapp_pu
         private const val COLUMN_DATE = "date"
     }
 
-    override fun onCreate(db: SQLiteDatabase) {
+    override fun create(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $TABLE_NAME (" +
                 "$COLUMN_OBJECT BLOB," +
                 "$COLUMN_WALLET_ID TEXT," +

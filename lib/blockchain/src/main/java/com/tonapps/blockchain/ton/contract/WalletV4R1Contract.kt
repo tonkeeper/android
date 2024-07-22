@@ -1,6 +1,7 @@
 package com.tonapps.blockchain.ton.contract
 
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.bigint.BigInt
 import org.ton.block.MessageRelaxed
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
@@ -15,6 +16,8 @@ open class WalletV4R1Contract(
     workchain: Int = DEFAULT_WORKCHAIN,
     publicKey: PublicKeyEd25519,
 ) : BaseWalletContract(workchain, publicKey) {
+
+    override fun getWalletVersion() = WalletVersion.V4R1
 
     override fun getSignaturePosition(): SignaturePosition {
         return SignaturePosition.Front
@@ -37,6 +40,7 @@ open class WalletV4R1Contract(
         validUntil: Long,
         seqno: Int,
         messageType: MessageType,
+        queryId: BigInt?,
         vararg gifts: WalletTransfer
     ): Cell {
         if (gifts.size > 4) {

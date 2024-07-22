@@ -9,6 +9,7 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.prefs
 import com.tonapps.security.CryptoBox
+import com.tonapps.security.Security
 import com.tonapps.security.hex
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletProof
@@ -69,8 +70,13 @@ class TonConnectRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
+            if (rnLegacy.isRequestMigration()) {
+                localDataSource.clearApps()
+                migrationFromRN()
+            }
+
             val apps = localDataSource.getApps()
-            if (context.isMainVersion && apps.isEmpty()) {
+            if (apps.isEmpty()) {
                 migrationFromRN()
                 _appsFlow.value = localDataSource.getApps()
             } else {
@@ -91,13 +97,16 @@ class TonConnectRepository(
             val wallet = accountRepository.getWalletByAccountId(address, testnet) ?: continue
             val json = value.getJSONObject(key)
             for (clientId in json.keys()) {
-                migrationRNApp(wallet, json.getJSONObject(clientId))
+                try {
+                    migrationRNApp(wallet, clientId, json.getJSONObject(clientId))
+                } catch (ignored: Throwable) { }
             }
         }
     }
 
     private fun migrationRNApp(
         wallet: WalletEntity,
+        clientId: String,
         json: JSONObject
     ) {
         val manifest = DAppManifestEntity(
@@ -114,18 +123,23 @@ class TonConnectRepository(
             return
         }
         val connection = connections.getJSONObject(connections.length() - 1)
-        val sessionKeyPair = connection.optJSONObject("sessionKeyPair") ?: return
+        val sessionKeyPair = connection.optJSONObject("sessionKeyPair")
+        val keyPair = if (sessionKeyPair == null) {
+            CryptoBox.keyPair()
+        } else {
+            CryptoBox.KeyPair(
+                publicKey = sessionKeyPair.getString("publicKey").hex(),
+                privateKey = sessionKeyPair.getString("secretKey").hex(),
+            )
+        }
 
         val app = DAppEntity(
             url = manifest.url,
             walletId = wallet.id,
             accountId = wallet.accountId,
             testnet = wallet.testnet,
-            clientId = connection.getString("clientSessionId"),
-            keyPair = CryptoBox.KeyPair(
-                publicKey = sessionKeyPair.getString("publicKey").hex(),
-                privateKey = sessionKeyPair.getString("secretKey").hex(),
-            ),
+            clientId = connection.optString("clientSessionId", clientId),
+            keyPair = keyPair,
             enablePush = notificationsEnabled,
             manifest = manifest,
         )

@@ -11,8 +11,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonMnemonic
-import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.contract.w5.WalletV5R1Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.contract.w5.W5Context
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
@@ -74,8 +76,6 @@ class InitViewModel(
     application: Application,
     private val passcodeManager: PasscodeManager,
     private val accountRepository: AccountRepository,
-    private val tokenRepository: TokenRepository,
-    private val collectiblesRepository: CollectiblesRepository,
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val backupRepository: BackupRepository,
@@ -86,6 +86,9 @@ class InitViewModel(
     private val passcodeAfterSeed = false // type == InitArgs.Type.Import || type == InitArgs.Type.Testnet
     private val savedState = InitModelState(savedStateHandle)
     private val testnet: Boolean = type == InitArgs.Type.Testnet
+
+    private val tonNetwork: TonNetwork
+        get() = if (testnet) TonNetwork.TESTNET else TonNetwork.MAINNET
 
     private val _uiTopOffset = MutableStateFlow(0)
     val uiTopOffset = _uiTopOffset.asStateFlow()
@@ -123,9 +126,7 @@ class InitViewModel(
 
     init {
         viewModelScope.launch {
-            if (passcodeAfterSeed) {
-                _eventFlow.tryEmit(InitEvent.Step.ImportWords)
-            } else  if (!passcodeManager.hasPinCode()) {
+            if (!passcodeManager.hasPinCode()) {
                 _eventFlow.tryEmit(InitEvent.Step.CreatePasscode)
             } else {
                 startWalletFlow()
@@ -206,7 +207,7 @@ class InitViewModel(
             val publicKey = privateKey.publicKey()
             resolveWallets(publicKey)
         } catch (e: Throwable) {
-            Log.e("InitViewModelLog", "resolveWallets error", e)
+            Log.e("InitViewLog", "error", e)
         }
     }
 
@@ -215,52 +216,21 @@ class InitViewModel(
             it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
         }.sortedByDescending { it.walletVersion.index }.toMutableList()
 
-        if (accounts.count { it.walletVersion == WalletVersion.V4R2 } == 0) {
-            val contract = WalletV4R2Contract(publicKey = publicKey)
-            accounts.add(0, AccountDetailsEntity(
-                query = "",
-                preview = AccountEntity(
-                    address = contract.address.toWalletAddress(testnet),
-                    accountId = contract.address.toAccountId(),
-                    name = null,
-                    iconUri = null,
-                    isWallet = true,
-                    isScam = false,
-                ),
-                active = true,
-                walletVersion = WalletVersion.V4R2,
-                balance = 0
-            ))
+        if (accounts.count { it.walletVersion == WalletVersion.V5R1 } == 0) {
+            val contract = WalletV5R1Contract(publicKey, tonNetwork)
+            accounts.add(0, AccountDetailsEntity(contract, testnet))
         }
 
-        val deferredTokens = mutableListOf<Deferred<List<AccountTokenEntity>>>()
-        for (account in accounts) {
-            deferredTokens.add(async { getTokens(account.address) })
-        }
-
-        val deferredCollectibles = mutableListOf<Deferred<List<NftEntity>>>()
-        for (account in accounts) {
-            deferredCollectibles.add(async { collectiblesRepository.getRemoteNftItems(account.address, testnet) })
+        val deferredAccounts = accounts.mapIndexed { index, account ->
+            async {
+                getAccountItem(account, ListCell.getPosition(accounts.size, index))
+            }
         }
 
         val items = mutableListOf<AccountItem>()
-        for ((index, account) in accounts.withIndex()) {
-            val balance = Coins.of(account.balance)
-            val hasTokens = deferredTokens[index].await().size > 2
-            val hasCollectibles = deferredCollectibles[index].await().isNotEmpty()
-            val item = AccountItem(
-                address = AddrStd(account.address).toWalletAddress(testnet),
-                name = account.name,
-                walletVersion = account.walletVersion,
-                balanceFormat = CurrencyFormatter.format("TON", balance),
-                tokens = hasTokens,
-                collectibles = hasCollectibles,
-                selected = account.walletVersion == WalletVersion.V4R2 || (account.balance > 0 || hasTokens || hasCollectibles),
-                position = ListCell.getPosition(accounts.size, index)
-            )
-            items.add(item)
+        for (account in deferredAccounts) {
+            items.add(account.await())
         }
-
         setAccounts(items)
 
         if (items.size > 1) {
@@ -270,8 +240,25 @@ class InitViewModel(
         }
     }
 
-    private suspend fun getTokens(accountId: String): List<AccountTokenEntity> {
-        return tokenRepository.getRemote(settingsRepository.currency, accountId, testnet)
+    private suspend fun getAccountItem(
+        account: AccountDetailsEntity,
+        position: ListCell.Position,
+    ): AccountItem = withContext(Dispatchers.IO) {
+        val deferredTokens = async { api.getJettonsBalances(account.address, testnet) }
+        val deferredNftItems = async { api.getNftItems(account.address, testnet, 1) }
+        val balance = Coins.of(account.balance)
+        val hasTokens = deferredTokens.await().isNotEmpty()
+        val hasNftItems = deferredNftItems.await().isNotEmpty()
+        AccountItem(
+            address = AddrStd(account.address).toWalletAddress(testnet),
+            name = account.name,
+            walletVersion = account.walletVersion,
+            balanceFormat = CurrencyFormatter.format("TON", balance),
+            tokens = hasTokens,
+            collectibles = hasNftItems,
+            selected = account.walletVersion == WalletVersion.V5R1 || (account.balance > 0 || hasTokens || hasNftItems),
+            position = position,
+        )
     }
 
     private fun setWatchAccount(account: AccountDetailsEntity?) {

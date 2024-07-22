@@ -60,7 +60,7 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
 
     private fun enableBiometric(value: Boolean) {
         securityViewModel.enableBiometric(requireContext(), value).catch {
-
+            biometricView.setChecked(newChecked = false, byUser = true)
         }.launchIn(lifecycleScope)
     }
 

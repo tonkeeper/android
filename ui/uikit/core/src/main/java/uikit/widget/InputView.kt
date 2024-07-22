@@ -53,19 +53,14 @@ class InputView @JvmOverloads constructor(
         set(value) {
             if (field != value) {
                 field = value
-                if (value) {
-                    clearView.visibility = View.GONE
-                }
+                updateVisibleClearButton()
             }
         }
 
     private var visibleClearView: Boolean = false
         set(value) {
-            if (disableClearButton) {
-                return
-            }
             field = value
-            clearView.visibility = if (value && isEnabled) View.VISIBLE else View.GONE
+            updateVisibleClearButton()
         }
 
     private var hintReduced = false
@@ -122,16 +117,13 @@ class InputView @JvmOverloads constructor(
             if (field != value) {
                 field = value
                 if (value && hintReduced) {
-                    visibleClearView = false
                     loaderView.visibility = View.VISIBLE
                     loaderView.startAnimation()
                 } else {
-                    if (hintReduced) {
-                        visibleClearView = true
-                    }
                     loaderView.visibility = View.GONE
                     loaderView.stopAnimation()
                 }
+                updateVisibleClearButton()
             }
         }
 
@@ -254,6 +246,14 @@ class InputView @JvmOverloads constructor(
         }
     }
 
+    private fun updateVisibleClearButton() {
+        if (disableClearButton || loading || !visibleClearView || !isEnabled || !editText.isFocused) {
+            clearView.visibility = View.GONE
+        } else {
+            clearView.visibility = View.VISIBLE
+        }
+    }
+
     override fun setEnabled(enabled: Boolean) {
         super.setEnabled(enabled)
         editText.isEnabled = enabled
@@ -296,6 +296,7 @@ class InputView @JvmOverloads constructor(
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {
         inputDrawable.active = hasFocus
+        updateVisibleClearButton()
     }
 
     override fun onAnimationUpdate(animation: ValueAnimator) {

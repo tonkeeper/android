@@ -26,14 +26,14 @@
         android:background="@drawable/bg_content"
         android:padding="@dimen/offsetMedium">
 
-        <androidx.appcompat.widget.AppCompatTextView
+        <uikit.widget.BulletPointTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/backup_attention_line_1"
             android:textAppearance="@style/TextAppearance.Body2"
             android:textColor="?attr/textPrimaryColor"/>
 
-        <androidx.appcompat.widget.AppCompatTextView
+        <uikit.widget.BulletPointTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetMedium"
@@ -41,7 +41,7 @@
             android:textAppearance="@style/TextAppearance.Body2"
             android:textColor="?attr/textPrimaryColor"/>
 
-        <androidx.appcompat.widget.AppCompatTextView
+        <uikit.widget.BulletPointTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetMedium"

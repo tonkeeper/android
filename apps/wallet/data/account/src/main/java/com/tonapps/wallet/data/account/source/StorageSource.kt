@@ -23,8 +23,11 @@ internal class StorageSource(context: Context) {
     }
 
     fun setTonProofToken(id: String, token: String) {
-        prefs.edit {
-            putString(tonProofToken(id), token)
+        val key = tonProofToken(id)
+        if (!prefs.contains(key)) {
+            prefs.edit {
+                putString(key, token)
+            }
         }
     }
 
@@ -52,5 +55,11 @@ internal class StorageSource(context: Context) {
 
     private fun key(prefix: String, id: String): String {
         return "${prefix}_${id}"
+    }
+
+    fun clear() {
+        prefs.edit {
+            clear()
+        }
     }
 }

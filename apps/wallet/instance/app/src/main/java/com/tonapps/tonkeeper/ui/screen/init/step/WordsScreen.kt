@@ -9,6 +9,7 @@ import androidx.core.view.updatePadding
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.TonMnemonic
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.component.WordEditText
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.R
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
@@ -26,6 +28,7 @@ import uikit.extensions.getViews
 import uikit.extensions.hideKeyboard
 import uikit.extensions.scrollDown
 import uikit.extensions.withAlpha
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ColumnLayout
 import uikit.widget.LoaderView
 
@@ -79,7 +82,8 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private fun next() {
         lifecycleScope.launch {
             val words = getMnemonic()
-            if (words.isEmpty()) {
+            if (words.isEmpty() || !Mnemonic.isValid(words)) {
+                navigation?.toast(Localization.incorrect_phrase)
                 return@launch
             }
             setLoading()

@@ -9,7 +9,6 @@ import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
-import com.tonapps.tonkeeper.ui.screen.backup.attention.BackupAttentionViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
@@ -63,13 +62,13 @@ val koinModel = module {
     uiAdapter { WalletPickerAdapter() }
 
     viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get(), get()) }
-    viewModel { parameters -> InitViewModel(get(), parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> InitViewModel(get(), parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(get(), get()) }
     viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
-    viewModel { SettingsViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
     viewModel { EditNameViewModel(get()) }
     viewModel { LanguageViewModel(get()) }
     viewModel { SecurityViewModel(get(), get(), get()) }
@@ -89,9 +88,8 @@ val koinModel = module {
     viewModel { parameters -> TokenViewModel(get(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BackupViewModel(get(), get(), get()) }
     viewModel { BackupCheckViewModel(get(), get()) }
-    viewModel { BackupAttentionViewModel(get(), get()) }
     viewModel { TokensManageViewModel(get(), get(), get()) }
-    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
     viewModel { StakingViewModel(get(), get(), get(), get(), get(), get(), get()) }

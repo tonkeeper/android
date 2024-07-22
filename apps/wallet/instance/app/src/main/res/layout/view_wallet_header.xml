@@ -50,11 +50,27 @@
 
     </FrameLayout>
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/settings"
-        android:layout_width="@dimen/iconSize"
-        android:layout_height="@dimen/iconSize"
-        android:layout_gravity="center"
-        android:tint="?attr/iconSecondaryColor"
-        android:src="@drawable/ic_gear_outline_28" />
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/settings"
+            android:layout_width="@dimen/iconSize"
+            android:layout_height="@dimen/iconSize"
+            android:layout_marginRight="@dimen/offsetMedium"
+            android:tint="?attr/iconSecondaryColor"
+            android:src="@drawable/ic_gear_outline_28"/>
+
+        <View
+            android:id="@+id/settings_dot"
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_gravity="end"
+            android:layout_marginRight="10dp"
+            android:visibility="gone"/>
+    </FrameLayout>
+
+
 </merge>

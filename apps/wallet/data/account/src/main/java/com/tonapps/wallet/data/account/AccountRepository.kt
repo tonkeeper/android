@@ -105,12 +105,15 @@ class AccountRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
-            val selectedId = storageSource.getSelectedId()
-            if (selectedId == null && context.isMainVersion) {
+            if (rnLegacy.isRequestMainMigration()) {
+                database.clearAccounts()
+                storageSource.clear()
                 migrationFromRN()
-            } else {
-                setSelectedWallet(selectedId)
+                rnLegacy.setWalletMigrated()
             }
+
+            val selectedId = storageSource.getSelectedId()
+            setSelectedWallet(selectedId)
         }
     }
 
@@ -124,12 +127,16 @@ class AccountRepository(
         }
     }
 
-    private suspend fun migrationFromRN() {
+    private suspend fun migrationFromRN() = withContext(Dispatchers.IO) {
         val (selectedId, wallets) = migrationHelper.loadLegacy()
         if (wallets.isEmpty()) {
             _selectedStateFlow.value = SelectedState.Empty
         } else {
             database.insertAccounts(wallets)
+            for (wallet in wallets) {
+                val token = rnLegacy.getTonProof(wallet.id) ?: continue
+                storageSource.setTonProofToken(wallet.id, token)
+            }
             setSelectedWallet(selectedId)
         }
     }
@@ -142,14 +149,13 @@ class AccountRepository(
             Wallet.Type.SignerQR -> RNWallet.Type.Signer
             Wallet.Type.Signer -> RNWallet.Type.SignerDeeplink
             Wallet.Type.Ledger -> RNWallet.Type.Ledger
-            else -> return
+            else -> RNWallet.Type.Regular
         }
 
-        var emoji = wallet.label.emoji.toString()
-        if (emoji.startsWith("custom_")) {
-            emoji = emoji.replace("custom_", "ic-")
-            emoji = emoji.replace("_", "-")
-            emoji = "$emoji-32"
+        var emoji = wallet.label.emoji.toString().removePrefix("custom_")
+        val rnCustomIcon = RNWallet.icons[emoji]
+        if (rnCustomIcon != null) {
+            emoji = rnCustomIcon
         }
 
         val rnWallet = RNWallet(
@@ -194,8 +200,13 @@ class AccountRepository(
             return@withContext null
         }
         val tonProofToken = createTonProofToken(wallet) ?: return@withContext null
-        storageSource.setTonProofToken(id, tonProofToken)
+        saveTonProof(id, tonProofToken)
         tonProofToken
+    }
+
+    private suspend fun saveTonProof(id: String, token: String) = withContext(Dispatchers.IO) {
+        storageSource.setTonProofToken(id, token)
+        rnLegacy.setTonProof(id, token)
     }
 
     suspend fun getWallets() = database.getAccounts()

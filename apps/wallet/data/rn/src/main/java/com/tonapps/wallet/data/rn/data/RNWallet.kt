@@ -48,6 +48,30 @@ data class RNWallet(
             put(Color.FireOrange, "#FF525D")
         }
 
+        val icons = ArrayMap<String, String>().apply {
+            put("wallet", "ic-wallet-32")
+            put("leaf", "ic-leaf-32")
+            put("lock", "ic-lock-32")
+            put("key", "ic-key-32")
+            put("inbox", "ic-inbox-32")
+            put("snowflake", "ic-snowflake-32")
+            put("sparkles", "ic-sparkles-32")
+            put("sun", "ic-sun-32")
+            put("hare", "ic-hare-32")
+            put("flash", "ic-flash-32")
+            put("bank_card", "ic-bank-card-32")
+            put("gear", "ic-gear-32")
+            put("hand_raised", "ic-hand-raised-32")
+            put("magnifying_glass_circle", "ic-magnifying-glass-circle-32")
+            put("flash_circle", "ic-flash-circle-32")
+            put("dollar_circle", "ic-dollar-circle-32")
+            put("euro_circle", "ic-euro-circle-32")
+            put("sterling_circle", "ic-sterling-circle-32")
+            put("chinese_yuan_circle", "ic-chinese-yuan-circle-32")
+            put("ruble_circle", "ic-ruble-circle-32")
+            put("indian_rupee_circle", "ic-indian-rupee-circle-32")
+        }
+
         fun fromJSONArray(array: JSONArray?): List<RNWallet> {
             if (array == null) {
                 return emptyList()

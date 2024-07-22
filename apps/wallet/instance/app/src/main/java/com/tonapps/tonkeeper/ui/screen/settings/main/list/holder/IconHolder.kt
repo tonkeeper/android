@@ -25,5 +25,6 @@ class IconHolder(
         }
         itemIconView.iconRes = item.iconRes
         itemIconView.text = getString(item.titleRes)
+        itemIconView.dot = item.dot
     }
 }

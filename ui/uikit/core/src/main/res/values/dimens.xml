@@ -19,4 +19,7 @@
     <dimen name="offsetExtraSmall">4dp</dimen>
     <dimen name="offsetMedium">16dp</dimen>
     <dimen name="offsetLarge">32dp</dimen>
+
+    <dimen name="bulletSize">3dp</dimen>
+    <dimen name="bulletOffset">8dp</dimen>
 </resources>

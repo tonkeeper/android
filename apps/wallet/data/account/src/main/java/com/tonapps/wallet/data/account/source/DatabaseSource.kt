@@ -163,5 +163,4 @@ internal class DatabaseSource(
         cursor.close()
         return accounts
     }
-
 }

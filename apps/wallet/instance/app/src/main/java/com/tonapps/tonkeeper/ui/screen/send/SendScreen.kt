@@ -1,3 +1,5 @@
+@file:OptIn(FlowPreview::class)
+
 package com.tonapps.tonkeeper.ui.screen.send
 
 import android.os.Bundle
@@ -19,14 +21,21 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.fieldErrorBorderColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.boc.BagOfCells
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
+import uikit.extensions.dp
 import uikit.extensions.hideKeyboard
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -149,12 +158,12 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
 
         collectFlow(sendViewModel.uiEventFlow, ::onEvent)
-        collectFlow(sendViewModel.uiInputAmountFlow, amountView::setValue)
+        collectFlow(sendViewModel.uiInputAmountFlow.map { it.toDouble() }, amountView::setValue)
         collectFlow(sendViewModel.uiBalanceFlow, ::setAmountState)
         collectFlow(sendViewModel.uiInputTokenFlow, ::setToken)
+        collectFlow(sendViewModel.uiInputNftFlow, ::setNft)
         collectFlow(sendViewModel.uiButtonEnabledFlow, button::setEnabled)
         collectFlow(sendViewModel.uiTransactionFlow, ::applyTransaction)
-        collectFlow(sendViewModel.feeFlow, ::setFee)
 
         sendViewModel.userInputTokenByAddress(args.tokenAddress)
     }
@@ -183,13 +192,10 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun next() {
-        showReview()
-    }
-
-    private fun showReview() {
-        // sendViewModel.calculateFee()
         slidesView.next()
         addressInput.hideKeyboard()
+        setFee(null)
+        collectFlow(sendViewModel.calculateFee(), ::setFee)
     }
 
     private fun setFailed() {
@@ -275,6 +281,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private fun setAmountState(state: SendAmountState) {
         convertedView.text = state.convertedFormat
+        amountView.suffix = state.currencyCode
 
         if (state.insufficientBalance) {
             statusView.setTextColor(requireContext().fieldErrorBorderColor)
@@ -293,25 +300,16 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         reviewSubtitleView.text = getString(Localization.jetton_transfer, token.symbol)
     }
 
+    private fun setNft(nft: NftEntity) {
+        reviewIconView.setRound(20f.dp)
+        reviewIconView.setImageURI(nft.mediumUri, null)
+        reviewSubtitleView.setText(Localization.nft_transfer)
+    }
+
     override fun onDragging() {
         super.onDragging()
         context?.hideKeyboard()
     }
-
-    /*
-
-    titleView.setText(Localization.nft_transfer)
-                amountView.visibility = View.GONE
-
-    private fun applyNft(nftEntity: NftEntity) {
-        iconView.setRound(20f.dp)
-        iconView.setImageURI(nftEntity.mediumUri)
-        actionTitle.text = String.format("%s · %s", nftEntity.name, nftEntity.collectionName.ifEmpty {
-            getString(Localization.unnamed_collection)
-        })
-        titleView.setText(Localization.nft_transfer)
-    }
-     */
 
     companion object {
 

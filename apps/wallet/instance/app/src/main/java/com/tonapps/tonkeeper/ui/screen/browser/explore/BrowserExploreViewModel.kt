@@ -37,6 +37,9 @@ class BrowserExploreViewModel(
             items.add(Item.Banners(data.apps, api.config.featuredPlayInterval))
         }
         for (category in data.categories) {
+            if (category.id == "featured") {
+                continue
+            }
             items.add(Item.Title(category.title))
             for (app in category.apps) {
                 items.add(Item.App(app))

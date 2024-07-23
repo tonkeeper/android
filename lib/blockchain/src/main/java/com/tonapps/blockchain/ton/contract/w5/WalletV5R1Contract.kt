@@ -9,18 +9,11 @@ import com.tonapps.blockchain.ton.contract.w5.W5Context.Companion.getWorkchain
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
 import org.ton.bigint.toBigInt
-import org.ton.block.MessageRelaxed
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.cell.CellSlice
-import org.ton.cell.buildCell
-import org.ton.cell.storeRef
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.crypto.hex
-import org.ton.tlb.constructor.AnyTlbConstructor
-import org.ton.tlb.storeRef
-import org.ton.tlb.CellRef
 
 class WalletV5R1Contract(
     publicKey: PublicKeyEd25519,
@@ -76,7 +69,7 @@ class WalletV5R1Contract(
             W5OpCodes.AuthSignedExternal
         }
 
-        val signingMessage = CellBuilder.beginCell().storeUInt(opCode.code, 32).storeRef(context.cell())
+        val signingMessage = CellBuilder.beginCell().storeUInt(opCode.code, 32).storeSlice(context.cell().beginParse())
         if (seqno == 0) {
             for (i in 0 until 32) {
                 signingMessage.storeBit(true)
@@ -86,8 +79,7 @@ class WalletV5R1Contract(
         }
 
         signingMessage.storeUInt(seqno, 32)
-        signingMessage.storeRef(W5Action.storeOutListExtendedV5R1(gifts.toList(), messageType))
-
+        signingMessage.storeSlice(W5Action.storeOutListExtendedV5R1(gifts.toList(), messageType).beginParse())
         return signingMessage.endCell()
     }
 

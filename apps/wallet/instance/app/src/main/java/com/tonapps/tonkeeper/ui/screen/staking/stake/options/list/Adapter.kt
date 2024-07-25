@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.holder.TitleHo
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
+import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 
 class Adapter(

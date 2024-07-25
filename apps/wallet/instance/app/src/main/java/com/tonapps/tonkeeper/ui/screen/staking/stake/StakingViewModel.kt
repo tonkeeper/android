@@ -26,11 +26,13 @@ import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
+import io.tonapi.models.PoolInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -43,6 +45,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,6 +59,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class StakingViewModel(
+    address: String,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
     private val tokenRepository: TokenRepository,
@@ -74,16 +78,14 @@ class StakingViewModel(
     )
 
     val poolsFlow = accountRepository.selectedWalletFlow.map { wallet ->
-        stakingRepository.pools(wallet.accountId, wallet.testnet)
+        stakingRepository.get(wallet.accountId, wallet.testnet).pools
     }.flowOn(Dispatchers.IO).filter { it.isNotEmpty() }
 
     private val _amountFlow = MutableStateFlow(0.0)
     private val amountFlow = _amountFlow.map { Coins.of(it) }
 
-    private val _selectedPoolInfoFlow = MutableStateFlow<PoolInfoEntity?>(null)
-    val selectedPoolInfoFlow = _selectedPoolInfoFlow.asStateFlow().filterNotNull()
-
-    val selectedPoolFlow = selectedPoolInfoFlow.map { it.pools.first() }
+    private val _selectedPoolFlow = MutableStateFlow<PoolEntity?>(null)
+    val selectedPoolFlow = _selectedPoolFlow.asStateFlow().filterNotNull()
 
     private val _eventFlow = MutableEffectFlow<StakingEvent>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
@@ -96,7 +98,11 @@ class StakingViewModel(
         ratesRepository.getRates(settingsRepository.currency, token.address)
     }.flowOn(Dispatchers.IO)
 
-    val availableUiStateFlow = combine(amountFlow, tokenFlow, selectedPoolInfoFlow) { amount, token, pool ->
+    val availableUiStateFlow = combine(
+        amountFlow,
+        tokenFlow,
+        selectedPoolFlow
+    ) { amount, token, pool ->
         val balance = token.balance.value
         val balanceFormat = CurrencyFormatter.format(token.symbol, balance)
         val minStakeFormat = CurrencyFormatter.format(token.symbol, pool.minStake)
@@ -132,15 +138,21 @@ class StakingViewModel(
         CurrencyFormatter.format(token.symbol, amount)
     }
 
-    val apyFormatFlow = combine(amountFlow, selectedPoolInfoFlow, tokenFlow) { amount, pool, token ->
+    val apyFormatFlow = combine(
+        amountFlow,
+        selectedPoolFlow,
+        tokenFlow,
+        poolsFlow
+    ) { amount, pool, token, pools ->
+        val info = pools.find { it.implementation == pool.implementation } ?: return@combine ""
         if (amount == Coins.ZERO) {
-            pool.apyFormat
+            info.apyFormat
         } else {
             val earnings = amount.value.multiply(pool.apy)
                 .divide(BigDecimal(100), RoundingMode.HALF_UP)
 
             val coinsFormat = CurrencyFormatter.format(token.symbol, Coins.of(earnings))
-            "${pool.apyFormat} · $coinsFormat"
+            "${info.apyFormat} · $coinsFormat"
         }
     }
 
@@ -149,9 +161,18 @@ class StakingViewModel(
     val taskStateFlow = MutableEffectFlow<ProcessTaskView.State>()
 
     init {
-        collectFlow(poolsFlow) {
-            if (_selectedPoolInfoFlow.value == null) {
-                selectPoolInfo(it.first())
+        collectFlow(poolsFlow) { pools ->
+            if (_selectedPoolFlow.value != null) {
+                return@collectFlow
+            }
+
+            val poolAddress = address.ifBlank {
+                pools.first().pools.first().address
+            }
+            pools.map { it.pools }.flatten().find {
+                it.address == poolAddress
+            }?.let {
+                selectPool(it)
             }
         }
         updateAmount(0.0)
@@ -161,8 +182,8 @@ class StakingViewModel(
         _amountFlow.value = amount
     }
 
-    fun selectPoolInfo(pool: PoolInfoEntity) {
-        _selectedPoolInfoFlow.value = pool
+    fun selectPool(pool: PoolEntity) {
+        _selectedPoolFlow.value = pool
     }
 
     fun details(pool: PoolInfoEntity) {
@@ -174,7 +195,7 @@ class StakingViewModel(
     }
 
     fun confirm() {
-        val pool = _selectedPoolInfoFlow.value ?: return
+        val pool = _selectedPoolFlow.value ?: return
         _eventFlow.tryEmit(StakingEvent.OpenConfirm(pool, Coins.of(_amountFlow.value)))
     }
 
@@ -205,6 +226,7 @@ class StakingViewModel(
         amount: Coins,
         pool: PoolEntity,
         token: TokenEntity,
+        sendParams: SendMetadataEntity,
     ): WalletTransfer {
         val withdrawalFee = Coins.of(StakingUtils.getWithdrawalFee(pool.implementation))
         val coins = if (pool.implementation == StakingPool.Implementation.LiquidTF) {
@@ -212,7 +234,6 @@ class StakingViewModel(
         } else {
             org.ton.block.Coins.ofNano(amount.toLong())
         }
-        val sendParams = getSendParams(wallet)
 
         val builder = WalletTransferBuilder()
         builder.body = buildPayload(pool)
@@ -235,7 +256,7 @@ class StakingViewModel(
         tokenFlow.take(1),
     ) { wallet, amount, pool, token ->
         val params = getSendParams(wallet)
-        val gift = buildTransfer(wallet, amount, pool, token.balance.token)
+        val gift = buildTransfer(wallet, amount, pool, token.balance.token, params)
         val body = wallet.contract.createTransferUnsignedBody(
             validUntil = params.validUntil,
             seqno = params.seqno,

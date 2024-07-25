@@ -36,6 +36,8 @@ import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerViewModel
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenViewModel
 import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesViewModel
@@ -66,7 +68,7 @@ val koinModel = module {
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(get(), get()) }
-    viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
     viewModel { EditNameViewModel(get()) }
@@ -92,9 +94,11 @@ val koinModel = module {
     viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
-    viewModel { StakingViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> StakingViewModel(address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { W5StoriesViewModel(get(), get(), get()) }
     viewModel { PurchaseViewModel(get(), get(), get()) }
     viewModel { parameters -> NftViewModel(nft = parameters.get(), get(), get(), get()) }
+    viewModel { parameters -> StakeViewerViewModel(address = parameters.get(), get(), get(), get(), get()) }
+    viewModel { parameters -> UnStakeViewModel(address = parameters.get(), get(), get(), get(), get(), get(), get()) }
 }

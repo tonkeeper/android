@@ -120,7 +120,7 @@ class SettingsViewModel(
         if (wallet.type == Wallet.Type.Watch) {
             uiItems.add(Item.DeleteWatchAccount(ListCell.Position.SINGLE))
         } else {
-            uiItems.add(Item.Logout(ListCell.Position.SINGLE))
+            uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label))
         }
         uiItems.add(Item.Space)
         uiItems.add(Item.Logo)

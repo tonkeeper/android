@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import com.facebook.common.util.UriUtil
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.Coins
 import com.tonapps.extensions.readArrayCompat
@@ -22,6 +23,8 @@ import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.staking.StakingPool
+import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 
@@ -40,6 +43,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         const val TYPE_SETUP_TITLE = 9
         const val TYPE_SETUP_SWITCH = 10
         const val TYPE_SETUP_LINK = 11
+        const val TYPE_STAKED = 12
 
         fun createFromParcel(parcel: Parcel): Item {
             return when (parcel.readInt()) {
@@ -53,6 +57,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
                 TYPE_SETUP_TITLE -> SetupTitle(parcel)
                 TYPE_SETUP_SWITCH -> SetupSwitch(parcel)
                 TYPE_SETUP_LINK -> SetupLink(parcel)
+                TYPE_STAKED -> Stake(parcel)
                 else -> throw IllegalArgumentException("Unknown type")
             }
         }
@@ -65,6 +70,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         SendingTransaction,
         TransactionConfirmed,
         Unknown,
+        LastUpdated,
     }
 
     enum class BalanceType {
@@ -129,6 +135,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val hiddenBalance: Boolean,
         val hasBackup: Boolean,
         val balanceType: BalanceType,
+        val lastUpdatedFormat: String,
     ): Item(TYPE_BALANCE) {
 
         constructor(parcel: Parcel) : this(
@@ -139,7 +146,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readEnum(Status::class.java)!!,
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
-            parcel.readEnum(BalanceType::class.java)!!
+            parcel.readEnum(BalanceType::class.java)!!,
+            parcel.readString()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -151,6 +159,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(hasBackup)
             dest.writeEnum(balanceType)
+            dest.writeString(lastUpdatedFormat)
         }
 
         companion object CREATOR : Parcelable.Creator<Balance> {
@@ -188,6 +197,52 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             override fun createFromParcel(parcel: Parcel) = Actions(parcel)
 
             override fun newArray(size: Int): Array<Actions?> = arrayOfNulls(size)
+        }
+    }
+
+    data class Stake(
+        val position: ListCell.Position,
+        val poolAddress: String,
+        val poolName: String,
+        val poolImplementation: StakingPool.Implementation,
+        val balance: Coins,
+        val balanceFormat: CharSequence,
+        val message: String?,
+        val fiat: Coins,
+        val fiatFormat: CharSequence,
+    ): Item(TYPE_STAKED) {
+
+        val iconUri: Uri
+            get() = UriUtil.getUriForResourceId(StakingPool.getIcon(poolImplementation))
+
+        constructor(parcel: Parcel) : this(
+            parcel.readEnum(ListCell.Position::class.java)!!,
+            parcel.readString()!!,
+            parcel.readString()!!,
+            parcel.readEnum(StakingPool.Implementation::class.java)!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readString(),
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeEnum(position)
+            dest.writeString(poolAddress)
+            dest.writeString(poolName)
+            dest.writeEnum(poolImplementation)
+            dest.writeParcelable(balance, flags)
+            dest.writeCharSequenceCompat(balanceFormat)
+            dest.writeString(message)
+            dest.writeParcelable(fiat, flags)
+            dest.writeCharSequenceCompat(fiatFormat)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Stake> {
+            override fun createFromParcel(parcel: Parcel) = Stake(parcel)
+
+            override fun newArray(size: Int): Array<Stake?> = arrayOfNulls(size)
         }
     }
 

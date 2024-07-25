@@ -2,6 +2,7 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.wallet.api.R
 import io.tonapi.models.JettonPreview
 import io.tonapi.models.JettonVerificationType

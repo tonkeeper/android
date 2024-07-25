@@ -14,8 +14,14 @@ data class PoolInfoEntity(
     val details: PoolDetailsEntity,
 ): Parcelable {
 
-    val apy = pools.map { it.apy }.maxOrNull() ?: BigDecimal.ZERO
-    val minStake = pools.map { it.minStake }.minOrNull() ?: Coins.ZERO
+    val apy = pools.maxOfOrNull { it.apy } ?: BigDecimal.ZERO
+    val minStake = pools.minOfOrNull { it.minStake } ?: Coins.ZERO
     val apyPercent = apy.setScale(2, RoundingMode.DOWN).stripTrailingZeros()
     val apyFormat = "APY ≈ ${apyPercent}%"
+
+    val name: String
+        get() = implementation.name
+
+    val cycleStart: Long
+        get() = pools.minOfOrNull { it.cycleStart } ?: 0
 }

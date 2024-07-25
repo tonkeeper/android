@@ -34,8 +34,8 @@ class SlideBetweenView @JvmOverloads constructor(
     }
 
     fun prev() {
-        val fromView = getChildAt(currentIndex)
-        val toView = getChildAt(currentIndex - 1)
+        val fromView = getChildAt(currentIndex) ?: return
+        val toView = getChildAt(currentIndex - 1) ?: return
 
         toView.visibility = VISIBLE
         toView.translationX = -measuredWidth.toFloat()

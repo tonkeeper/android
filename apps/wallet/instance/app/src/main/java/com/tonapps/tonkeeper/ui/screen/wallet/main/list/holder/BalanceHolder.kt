@@ -90,11 +90,20 @@ class BalanceHolder(
         }
 
         setWalletType(item.walletType, item.walletVersion)
-        setWalletState(item.status, item.address, item.walletType)
+        setWalletState(item.status, item.address, item.walletType, item.lastUpdatedFormat)
     }
 
-    private fun setWalletState(state: Item.Status, address: String, walletType: Wallet.Type) {
-        if (state == Item.Status.Updating) {
+    private fun setWalletState(
+        state: Item.Status,
+        address: String,
+        walletType: Wallet.Type,
+        lastUpdatedFormat: String,
+    ) {
+        if (state == Item.Status.LastUpdated) {
+            walletLoaderView.visibility = View.GONE
+            walletAddressView.text = context.getString(Localization.last_updated, lastUpdatedFormat)
+            walletAddressView.setTextColor(context.textSecondaryColor)
+        } else if (state == Item.Status.Updating) {
             walletLoaderView.visibility = View.VISIBLE
             walletAddressView.setText(Localization.updating)
             walletAddressView.setTextColor(context.textSecondaryColor)

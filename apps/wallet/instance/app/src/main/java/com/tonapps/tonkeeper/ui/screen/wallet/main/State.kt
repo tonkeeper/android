@@ -1,14 +1,18 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
+import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.DEFAULT_DECIMALS
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.BalanceType
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -17,6 +21,9 @@ import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.staking.entities.PoolEntity
+import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 import com.tonapps.wallet.localization.Localization
@@ -37,24 +44,14 @@ sealed class State {
         val showTelegramChannel: Boolean,
     ): State()
 
-    data class Tokens(
+    data class Assets(
         val currency: WalletCurrency,
-        val list: List<AccountTokenEntity>,
+        val list: List<AssetsEntity>,
         val fromCache: Boolean,
     ): State() {
 
         val size: Int
             get() = list.size
-
-        val balanceType: BalanceType
-            get() {
-                val balance = list.first().balance.value
-                return when {
-                    balance > Coins.of(20.0, DEFAULT_DECIMALS) -> BalanceType.Huge
-                    balance > Coins.of(2.0, DEFAULT_DECIMALS) -> BalanceType.Positive
-                    else -> BalanceType.Zero
-                }
-            }
 
         private fun getTotalBalance(wallet: WalletEntity): Coins {
             return if (wallet.testnet) {
@@ -64,9 +61,17 @@ sealed class State {
             }
         }
 
+        fun getBalanceType(wallet: WalletEntity): BalanceType {
+            val balance = getTotalBalance(wallet)
+            return when {
+                balance > Coins.of(20.0, DEFAULT_DECIMALS) -> BalanceType.Huge
+                balance > Coins.of(2.0, DEFAULT_DECIMALS) -> BalanceType.Positive
+                else -> BalanceType.Zero
+            }
+        }
+
         fun getTotalBalanceFormat(
-            wallet: WalletEntity,
-            currency: WalletCurrency
+            wallet: WalletEntity
         ): CharSequence {
             val total = getTotalBalance(wallet)
             return CurrencyFormatter.formatFiat(currency.code, total)
@@ -75,31 +80,47 @@ sealed class State {
 
     data class Main(
         val wallet: WalletEntity,
-        val tokens: Tokens,
+        val assets: Assets,
         val hasBackup: Boolean,
     ): State() {
 
-        val totalBalanceFormat: CharSequence
-            get() = tokens.getTotalBalanceFormat(wallet, tokens.currency)
+        private val totalBalanceFormat: CharSequence
+            get() = assets.getTotalBalanceFormat(wallet)
 
-        val balanceType: BalanceType
-            get() = tokens.balanceType
-
-        val status: Item.Status
-            get() = if (tokens.fromCache) Item.Status.Updating else Item.Status.Default
+        private val balanceType: BalanceType
+            get() = assets.getBalanceType(wallet)
 
         private fun uiItemsTokens(hiddenBalance: Boolean): List<Item> {
+            val currencyCode = assets.currency.code
             val uiItems = mutableListOf<Item>()
             uiItems.add(Item.Space(true))
-            for ((index, token) in tokens.list.withIndex()) {
-                val item = Item.Token(
-                    position = ListCell.getPosition(tokens.size, index),
-                    token = token,
-                    hiddenBalance = hiddenBalance,
-                    testnet = wallet.testnet,
-                    currencyCode = tokens.currency.code
-                )
-                uiItems.add(item)
+
+            for ((index, asset) in assets.list.withIndex()) {
+                val position = ListCell.getPosition(assets.list.size, index)
+                if (asset is AssetsEntity.Staked) {
+                    val staked = asset.staked
+                    val item = Item.Stake(
+                        position = position,
+                        poolAddress = staked.pool.address,
+                        poolName = staked.pool.name,
+                        poolImplementation = staked.pool.implementation,
+                        balance = staked.amount,
+                        balanceFormat = CurrencyFormatter.format(value = staked.amount),
+                        message = null,
+                        fiat = staked.fiatBalance,
+                        fiatFormat = CurrencyFormatter.formatFiat(currencyCode, staked.fiatBalance),
+                    )
+                    uiItems.add(item)
+                } else if (asset is AssetsEntity.Token) {
+                    val item = Item.Token(
+                        position = position,
+                        token = asset.token,
+                        hiddenBalance = hiddenBalance,
+                        testnet = wallet.testnet,
+                        currencyCode = currencyCode
+                    )
+                    uiItems.add(item)
+                }
             }
             uiItems.add(Item.Space(true))
             uiItems.add(Item.Manage(true))
@@ -109,6 +130,7 @@ sealed class State {
         private fun uiItemBalance(
             hiddenBalance: Boolean,
             status: Item.Status,
+            lastUpdatedFormat: String,
         ): Item.Balance {
             return Item.Balance(
                 balance = totalBalanceFormat,
@@ -119,6 +141,7 @@ sealed class State {
                 hiddenBalance = hiddenBalance,
                 hasBackup = hasBackup,
                 balanceType = balanceType,
+                lastUpdatedFormat = lastUpdatedFormat
             )
         }
 
@@ -215,6 +238,7 @@ sealed class State {
             alerts: List<NotificationEntity>,
             dAppNotifications: DAppNotifications,
             setup: Setup?,
+            lastUpdatedFormat: String,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             if (alerts.isNotEmpty()) {
@@ -223,7 +247,7 @@ sealed class State {
                     uiItems.add(Item.Space(true))
                 }
             }
-            uiItems.add(uiItemBalance(hiddenBalance, status))
+            uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat))
             uiItems.add(uiItemActions(config))
             if (!dAppNotifications.isEmpty) {
                 uiItems.add(Item.Push(dAppNotifications.notifications, dAppNotifications.apps))

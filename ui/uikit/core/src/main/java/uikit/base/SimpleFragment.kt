@@ -1,19 +1,18 @@
-package com.tonapps.tonkeeper.ui.screen.staking.stake.main
+package uikit.base
 
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.uikit.color.backgroundPageColor
-import org.koin.androidx.viewmodel.ext.android.viewModel
 
-abstract class StakeChildFragment(layoutId: Int): Fragment(layoutId) {
+abstract class SimpleFragment<P: BaseFragment>(
+    @LayoutRes layoutId: Int
+): Fragment(layoutId) {
 
-    val stakeViewModel: StakingViewModel by viewModel(ownerProducer = { requireParentFragment() })
-
-    val rootScreen: StakeScreen?
-        get() = parentFragment as? StakeScreen
+    val rootScreen: P?
+        get() = parentFragment as? P
 
     val rootFragmentManager: FragmentManager?
         get() = rootScreen?.childFragmentManager
@@ -38,17 +37,11 @@ abstract class StakeChildFragment(layoutId: Int): Fragment(layoutId) {
         visibleState = false
     }
 
-    open fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {
-
-    }
-
-    abstract fun getTitle(): String
-
     open fun onVisibleState(visible: Boolean) {
 
     }
 
-    fun finish() {
-        rootScreen?.backFragment()
-    }
+    abstract fun finish()
+
+    abstract fun getTitle(): String
 }

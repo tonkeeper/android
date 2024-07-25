@@ -2,10 +2,12 @@
 
 package com.tonapps.tonkeeper.ui.screen.send
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
@@ -25,6 +27,7 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -33,6 +36,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.boc.BagOfCells
 import uikit.base.BaseFragment
+import uikit.dialog.modal.ModalDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
@@ -175,6 +179,9 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             is SendEvent.Failed -> setFailed()
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> processTaskView.state = ProcessTaskView.State.LOADING
+            is SendEvent.Fee -> setFee(event)
+            is SendEvent.InsufficientBalance -> showInsufficientBalance()
+            is SendEvent.Confirm -> slidesView.next()
         }
     }
 
@@ -192,10 +199,13 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun next() {
-        slidesView.next()
-        addressInput.hideKeyboard()
         setFee(null)
-        collectFlow(sendViewModel.calculateFee(), ::setFee)
+        addressInput.hideKeyboard()
+        sendViewModel.next()
+    }
+
+    private fun showInsufficientBalance() {
+        InsufficientBalanceDialog(requireContext()).show()
     }
 
     private fun setFailed() {
@@ -255,13 +265,13 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
     }
 
-    private fun setFee(state: SendFeeState?) {
-        if (state == null) {
+    private fun setFee(event: SendEvent.Fee?) {
+        if (event == null) {
             reviewRecipientFeeView.setLoading()
             confirmButton.isEnabled = false
         } else {
-            reviewRecipientFeeView.value = "≈ ${state.format}"
-            reviewRecipientFeeView.description = "≈ ${state.convertedFormat}"
+            reviewRecipientFeeView.value = "≈ ${event.format}"
+            reviewRecipientFeeView.description = "≈ ${event.convertedFormat}"
             reviewRecipientFeeView.setDefault()
             confirmButton.isEnabled = true
         }
@@ -323,6 +333,16 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             val screen = SendScreen()
             screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""))
             return screen
+        }
+
+        private class InsufficientBalanceDialog(
+            context: Context
+        ): ModalDialog(context, R.layout.dialog_insufficient_balance) {
+
+            init {
+                findViewById<HeaderView>(R.id.header)?.doOnActionClick = { dismiss() }
+                findViewById<View>(R.id.ok)?.setOnClickListener { dismiss() }
+            }
         }
     }
 }

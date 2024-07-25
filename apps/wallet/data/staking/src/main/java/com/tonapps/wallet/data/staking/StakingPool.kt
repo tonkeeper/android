@@ -4,6 +4,12 @@ import io.tonapi.models.PoolImplementationType
 
 object StakingPool {
 
+    val knownImplementations = arrayOf(
+        PoolImplementationType.whales,
+        PoolImplementationType.tf,
+        PoolImplementationType.liquidTF
+    )
+
     enum class Implementation(
         val title: String
     ) {

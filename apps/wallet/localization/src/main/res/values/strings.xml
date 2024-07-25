@@ -4,6 +4,7 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
     <string name="w5beta" translatable="false">W5 Beta</string>
+    <string name="ok" translatable="false">OK</string>
     <string name="w5" translatable="false">W5</string>
     <string name="w5_wallet">Wallet W5</string>
     <string name="nft_unverified">Unverified NFT</string>
@@ -15,6 +16,9 @@
     <string name="setup_finish_biometry">Use biometry to approve transactions</string>
     <string name="setup_finish_backup">Back up the wallet recovery phrase</string>
     <string name="setup_finish_telegram">Join Tonkeeper channel</string>
+
+    <string name="insufficient_balance_title">Insufficient funds</string>
+    <string name="insufficient_balance_description">Enter an amount less or choose your maximum balance.</string>
 
     <string name="w5_story_title_1">Gasless USDT Transfers</string>
     <string name="w5_story_title_2">Reduced Blockchain Fees</string>
@@ -47,11 +51,13 @@
     <string name="staking_minimal_deposit">Minimal deposit</string>
     <string name="staking_details_description">Staking is based on smart contracts by third parties. Tonkeeper is not responsible for staking experience.</string>
     <string name="staking_links">Links</string>
+    <string name="links">Links</string>
     <string name="staking_choose">Choose</string>
     <string name="staking_confirm">Confirm and Stake</string>
     <string name="unstake_confirm">Confirm and Unstake</string>
     <string name="domain_link_button">Link domain</string>
     <string name="domain_renew_button">Renew domain</string>
+    <string name="staked">Staked</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>
@@ -118,6 +124,7 @@
     <string name="domain_renew">Domain Renew</string>
     <string name="unstake">Unstake</string>
     <string name="unknown">Unknown</string>
+    <string name="unknown_error">Unknown error</string>
     <string name="nft_purchase">NFT Purchase</string>
     <string name="burned">Burned</string>
     <string name="unsubscribed">Unsubscribed</string>
@@ -246,6 +253,7 @@
     <string name="log_out">Log out</string>
     <string name="amount">Amount</string>
     <string name="backup">Backup</string>
+    <string name="unstake_amount">Unstake amount</string>
 
     <string name="recipient">Recipient</string>
     <string name="recipient_address">Recipient address</string>
@@ -318,7 +326,8 @@
     <string name="reset_passcode">Reset passcode</string>
     <string name="recovery_phrase">Show recovery phrase</string>
     <string name="logout_description">Wallet keys will be erased from this device.</string>
-    <string name="logout_confirmation">I have a backup copy of recovery phrase</string>
+    <string name="logout_confirmation">I have a backup copy of the recovery phrase for %1$s</string>
+    <string name="last_updated">Updated %1$s</string>
     <string name="back_up_now">Back up now</string>
     <string name="max">Max</string>
     <string name="confirm_and_send">Confirm and send</string>

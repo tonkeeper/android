@@ -45,6 +45,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMap
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -54,6 +56,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import org.ton.bitstring.BitString
 import org.ton.cell.Cell
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
@@ -142,7 +145,7 @@ class SendViewModel(
         ratesTokenFlow,
     ) { token, value, rates ->
         val (decimals, balance, currencyCode) = if (amountInputCurrency) {
-            Triple(currency.decimals, token.fiat, currency.code) // token.fiat.copy(decimals = token.decimals)
+            Triple(currency.decimals, token.fiat, currency.code)
         } else {
             Triple(token.decimals, token.balance.value, token.symbol)
         }
@@ -251,32 +254,50 @@ class SendViewModel(
         }
     }
 
+    private fun isInsufficientBalance(): Boolean {
+        val token = selectedTokenFlow.value
+        val amount = Coins.of(userInputFlow.value.amount, token.decimals)
+        val balance = if (amountInputCurrency) token.fiat else token.balance.value
+        val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
+            .multiply(BigDecimal("100"))
+            .setScale(2, RoundingMode.HALF_UP)
+        return percentage > BigDecimal("95.00")
+    }
+
+    fun next() {
+        if (isInsufficientBalance()) {
+            _uiEventFlow.tryEmit(SendEvent.InsufficientBalance)
+            return
+        }
+        _uiEventFlow.tryEmit(SendEvent.Confirm)
+        transferFlow.take(1).map { calculateFee(it) }.map { eventFee(it) }.filterNotNull().onEach {
+            _uiEventFlow.tryEmit(it)
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }
+
     private fun loadNft() {
         accountRepository.selectedWalletFlow.take(1).map { wallet ->
             collectiblesRepository.getNft(wallet.accountId, wallet.testnet, nftAddress)
         }.flowOn(Dispatchers.IO).filterNotNull().onEach(::userInputNft).launchIn(viewModelScope)
     }
 
-    fun calculateFee() = combine(
-        accountRepository.selectedWalletFlow.take(1),
-        transferFlow.take(1)
-    ) { wallet, transfer ->
+    private suspend fun calculateFee(
+        transfer: TransferEntity
+    ): Coins = withContext(Dispatchers.IO) {
         val message = transfer.toSignedMessage(EmptyPrivateKeyEd25519)
-        requestFee(wallet, message)
-    }.flowOn(Dispatchers.IO)
+        val fee = api.emulate(message, transfer.wallet.testnet).totalFees
+        Coins.of(fee)
+    }
 
-    private suspend fun requestFee(
-        wallet: WalletEntity,
-        message: Cell,
-    ): SendFeeState? = withContext(Dispatchers.IO) {
-        try {
+    private fun eventFee(
+        coins: Coins
+    ): SendEvent.Fee? {
+        return try {
             val code = TokenEntity.TON.symbol
             val rates = ratesRepository.getRates(currency, code)
-            val fee = api.emulate(message, wallet.testnet).totalFees
-            val coins = Coins.of(fee)
             val converted = rates.convert(code, coins)
 
-            SendFeeState(
+            SendEvent.Fee(
                 value = coins,
                 format = CurrencyFormatter.format(code, coins, TokenEntity.TON.decimals),
                 convertedFormat = CurrencyFormatter.format(currency.code, converted, currency.decimals),

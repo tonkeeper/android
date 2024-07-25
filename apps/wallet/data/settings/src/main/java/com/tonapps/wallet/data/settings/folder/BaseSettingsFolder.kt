@@ -30,18 +30,33 @@ internal abstract class BaseSettingsFolder(
 
     fun getInt(key: String, defValue: Int = 0) = prefs.getInt(key, defValue)
 
-    fun putBoolean(key: String, value: Boolean) {
+    fun getLong(key: String, defValue: Long = 0) = prefs.getLong(key, defValue)
+
+    fun putLong(key: String, value: Long, notify: Boolean = true) {
+        prefs.edit().putLong(key, value).apply()
+        if (notify) {
+            notifyChanged()
+        }
+    }
+
+    fun putBoolean(key: String, value: Boolean, notify: Boolean = true) {
         prefs.edit().putBoolean(key, value).apply()
-        notifyChanged()
+        if (notify) {
+            notifyChanged()
+        }
     }
 
-    fun putInt(key: String, value: Int) {
+    fun putInt(key: String, value: Int, notify: Boolean = true) {
         prefs.edit().putInt(key, value).apply()
-        notifyChanged()
+        if (notify) {
+            notifyChanged()
+        }
     }
 
-    fun edit(block: SharedPreferences.Editor.() -> Unit) {
+    fun edit(notify: Boolean = true, block: SharedPreferences.Editor.() -> Unit) {
         prefs.edit().apply(block).apply()
-        notifyChanged()
+        if (notify) {
+            notifyChanged()
+        }
     }
 }

@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.ui.screen.staking.stake.main.StakeChildFragment
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.Item
 import com.tonapps.tonkeeperx.R
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.onEach
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 
-class StakeOptionsFragment: StakeChildFragment(R.layout.fragment_simple_list) {
+class StakeOptionsFragment: StakingScreen.ChildFragment(R.layout.fragment_simple_list) {
 
     private val adapter = Adapter { pool ->
         stakeViewModel.details(pool)
@@ -27,7 +27,7 @@ class StakeOptionsFragment: StakeChildFragment(R.layout.fragment_simple_list) {
         super.onCreate(savedInstanceState)
         combine(
             stakeViewModel.poolsFlow,
-            stakeViewModel.selectedPoolInfoFlow
+            stakeViewModel.selectedPoolFlow
         ) { pools, selectedPool ->
             val uniquePools = pools.distinctBy { it.implementation }
             Item.map(uniquePools, selectedPool)

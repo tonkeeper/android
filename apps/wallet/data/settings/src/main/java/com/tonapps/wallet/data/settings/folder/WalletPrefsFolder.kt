@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
+import android.os.SystemClock
 import android.util.Log
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.WalletPrefsEntity
@@ -12,6 +13,15 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
         private const val PUSH_PREFIX = "push_"
         private const val PURCHASE_PREFIX = "purchase_"
         private const val SETUP_HIDDEN_PREFIX = "setup_hidden_"
+        private const val LAST_UPDATED_PREFIX = "last_updated_"
+    }
+
+    fun setLastUpdated(walletId: String) {
+        putLong(key(LAST_UPDATED_PREFIX, walletId), SystemClock.uptimeMillis(), false)
+    }
+
+    fun getLastUpdated(walletId: String): Long {
+        return getLong(key(LAST_UPDATED_PREFIX, walletId))
     }
 
     fun isSetupHidden(walletId: String): Boolean {

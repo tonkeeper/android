@@ -6,47 +6,57 @@ import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
-data class TokenExtendedEntity(
-    val raw: AccountTokenEntity,
+data class AssetsExtendedEntity(
+    val raw: AssetsEntity,
     val prefs: TokenPrefsEntity,
 ) {
 
     companion object {
-        val comparator = compareBy<TokenExtendedEntity> {
+        val comparator = compareBy<AssetsExtendedEntity> {
             !it.isTon
         }.thenBy {
             !it.pinned
+        }.thenBy {
+            !it.verified
         }.thenBy {
             it.index
         }
     }
 
+    private val token: AccountTokenEntity
+        get() = when (raw) {
+            is AssetsEntity.Token -> raw.token
+            is AssetsEntity.Staked -> AccountTokenEntity(
+                balance = raw.staked.balance,
+            )
+        }
+
     val imageUri: Uri
-        get() = raw.imageUri
+        get() = token.imageUri
 
     val balance: BalanceEntity
-        get() = raw.balance
+        get() = token.balance
 
     val fiat: Coins
         get() = raw.fiat
 
     val address: String
-        get() = raw.address
+        get() = token.address
 
     val symbol: String
-        get() = raw.symbol
+        get() = token.symbol
 
     val name: String
-        get() = raw.name
+        get() = token.name
 
     val rateNow: Coins
-        get() = raw.rateNow
+        get() = token.rateNow
 
     val rateDiff24h: String
-        get() = raw.rateDiff24h
+        get() = token.rateDiff24h
 
     val verified: Boolean
-        get() = raw.verified
+        get() = token.verified
 
     val pinned: Boolean
         get() = prefs.pinned
@@ -58,5 +68,5 @@ data class TokenExtendedEntity(
         get() = prefs.index
 
     val isTon: Boolean
-        get() = raw.isTon
+        get() = (raw as? AssetsEntity.Token)?.token?.isTon ?: false
 }

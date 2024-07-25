@@ -2,6 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/offsetMedium">
 
     <uikit.widget.ColumnLayout
@@ -90,7 +91,10 @@
         <com.google.android.flexbox.FlexboxLayout
             android:id="@+id/links"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            app:flexDirection="row"
+            app:flexWrap="wrap"
+            app:layout_flexGrow="1"/>
 
 
     </uikit.widget.ColumnLayout>

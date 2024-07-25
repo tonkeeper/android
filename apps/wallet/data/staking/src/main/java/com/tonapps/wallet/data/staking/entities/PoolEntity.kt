@@ -8,13 +8,16 @@ import kotlinx.parcelize.Parcelize
 import java.math.BigDecimal
 
 @Parcelize
-class PoolEntity(
+data class PoolEntity(
     val address: String,
     val name: String,
     val implementation: StakingPool.Implementation,
     val minStake: Coins,
     val apy: BigDecimal,
     val verified: Boolean,
+    val cycleStart: Long,
+    val cycleEnd: Long,
+    val liquidJettonMaster: String?
 ): Parcelable {
 
     constructor(
@@ -25,7 +28,10 @@ class PoolEntity(
         implementation = StakingPool.implementation(info.implementation),
         minStake = Coins.of(info.minStake),
         apy = info.apy,
-        verified = info.verified
+        verified = info.verified,
+        cycleStart = info.cycleStart,
+        cycleEnd = info.cycleEnd,
+        liquidJettonMaster = info.liquidJettonMaster
     )
 
 }

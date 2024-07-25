@@ -14,6 +14,8 @@
     <string name="setup_finish_biometry">Используйте биометрию для подтверждения транзакций</string>
     <string name="setup_finish_backup">Создайте резервную копию фразы восстановления кошелька</string>
     <string name="setup_finish_telegram">Присоединяйтесь к каналу Тонкипер</string>
+    <string name="staked">Стейкинг</string>
+    <string name="unstake_amount">Сумма снятия ставки</string>
 
     <string name="unverified_token_description">Токен выглядит подозрительно по одной или нескольким причинам.</string>
     <string name="unverified_token_reason_1">Низкая ликвидность. У токена может быть какая-то стоимость, но она крайне мала.</string>
@@ -116,6 +118,8 @@
     <string name="domain_renew">Домен продлён</string>
     <string name="unstake">Вывести</string>
     <string name="unknown">Неизвестно</string>
+    <string name="unknown_error">Неизвестная ошибка</string>
+    <string name="links">Ссылки</string>
     <string name="nft_purchase">Покупка NFT</string>
     <string name="burned">Сожжено</string>
     <string name="unsubscribed">Отмена подписки</string>
@@ -302,9 +306,15 @@
     <string name="reset_passcode">Сбросить пин-код</string>
     <string name="recovery_phrase">Показать секретный ключ</string>
     <string name="logout_description">Ключи кошелька будут удалены с этого устройства.</string>
-    <string name="logout_confirmation">У меня есть резервная копия фразы восстановления.</string>
+    <string name="logout_confirmation">У меня есть резервная копия фразы восстановления кошелька %1$s</string>
     <string name="back_up_now">Скопировать сейчас</string>
+    <string name="last_updated">Обновлён в %1$s</string>
     <string name="max">Максимум</string>
+
+    <string name="insufficient_balance_title">Недостаточно средств</string>
+    <string name="insufficient_balance_description">Укажите сумму меньше или выберите максимальный свой баланс.</string>
+
+
     <string name="confirm_and_send">Подтвердить и отправить</string>
     <string name="confirm_action">Подтвердить действие</string>
     <string name="ton_connect_title">Войти в %1$s</string>

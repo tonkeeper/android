@@ -6,7 +6,7 @@ import com.tonapps.tonkeeper.extensions.openCamera
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.SendScreen
-import com.tonapps.tonkeeper.ui.screen.staking.stake.main.StakeScreen
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
@@ -28,7 +28,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         sendView.setOnClickListener { navigation?.add(SendScreen.newInstance()) }
         buyOrSellView.setOnClickListener { navigation?.add(PurchaseScreen.newInstance()) }
         scanView.setOnClickListener { navigation?.openCamera() }
-        stakeView.setOnClickListener { navigation?.add(StakeScreen.newInstance()) }
+        stakeView.setOnClickListener { navigation?.add(StakingScreen.newInstance()) }
     }
 
     override fun onBind(item: Item.Actions) {

@@ -18,4 +18,10 @@ data class PoolDetailsEntity(
         url = model.url,
         socials = model.socials
     )
+
+    fun getLinks(address: String): List<String> {
+        val links = mutableListOf(url, "https://tonviewer.com/${address}")
+        links.addAll(socials)
+        return links.toList()
+    }
 }

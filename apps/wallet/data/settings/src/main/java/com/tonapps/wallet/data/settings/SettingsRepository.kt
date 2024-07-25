@@ -272,19 +272,18 @@ class SettingsRepository(
 
     fun getWalletPrefs(walletId: String) = walletPrefsFolder.get(walletId)
 
+    fun getWalletLastUpdated(walletId: String) = walletPrefsFolder.getLastUpdated(walletId)
+
+    fun setWalletLastUpdated(walletId: String) {
+        walletPrefsFolder.setLastUpdated(walletId)
+    }
+
     suspend fun getTokenPrefs(
         walletId: String,
         tokenAddress: String,
         blacklist: Boolean,
     ): TokenPrefsEntity = withContext(Dispatchers.IO) {
-        val token = tokenPrefsFolder.get(walletId, tokenAddress, blacklist)
-        if (token.contains) {
-            token
-        } else {
-            token.copy(
-                hidden = !blacklist && rnLegacy.isHiddenToken(walletId, tokenAddress)
-            )
-        }
+        tokenPrefsFolder.get(walletId, tokenAddress, blacklist)
     }
 
     suspend fun getNftPrefs(
@@ -315,6 +314,7 @@ class SettingsRepository(
                 country = legacyValues.country
                 searchEngine = legacyValues.searchEngine
             }
+
             _currencyFlow.tryEmit(currency)
             _themeFlow.tryEmit(theme)
             _languageFlow.tryEmit(language)

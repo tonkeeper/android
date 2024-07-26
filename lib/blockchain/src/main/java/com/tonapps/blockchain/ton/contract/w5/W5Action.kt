@@ -4,9 +4,7 @@ import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.contract.BaseWalletContract.Companion.createIntMsg
 import com.tonapps.blockchain.ton.contract.MessageType
 import org.ton.block.AddrStd
-import org.ton.block.Maybe
 import org.ton.block.MessageRelaxed
-import org.ton.block.toMaybe
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellBuilder.Companion.beginCell
@@ -14,7 +12,6 @@ import org.ton.cell.storeRef
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
-import org.ton.tlb.constructor.tlbCodec
 import org.ton.tlb.storeRef
 import org.ton.tlb.storeTlb
 
@@ -39,14 +36,13 @@ sealed class W5Action(
             return !isOutActionExtended(out)
         }
 
-        private fun storeOutList(actions: List<Out>): (CellBuilder) -> Unit = { builder ->
-            val cell = actions.fold(beginCell().endCell()) { cell, action ->
+        private fun storeOutList(actions: List<Out>): Cell {
+            return actions.fold(beginCell().endCell()) { cell, action ->
                 beginCell()
                     .storeRef(cell)
                     .storeRef(action.store())
                     .endCell()
             }
-            builder.storeSlice(cell.beginParse())
         }
 
         private fun packExtendedActionsRec(extendedActions: List<Out>): Cell {
@@ -58,24 +54,24 @@ sealed class W5Action(
             return builder.endCell()
         }
 
-        fun storeOutListExtendedV5R1(gifts: List<WalletTransfer>, authType: MessageType): (CellBuilder) -> Unit {
+        fun storeOutListExtendedV5R1(gifts: List<WalletTransfer>, authType: MessageType): Cell {
             return storeOutListExtendedV5R1(patchV5R1ActionsSendMode(gifts.map {
                 OutActionSendMsg(it)
-            }, authType))
+            }, authType)).endCell()
         }
 
-        fun storeOutListExtendedV5R1(actions: List<Out>): (CellBuilder) -> Unit = { builder ->
+        fun storeOutListExtendedV5R1(actions: List<Out>): CellBuilder {
+            val builder = beginCell()
             val extendedActions = actions.filter { isOutActionExtended(it) }
             val basicActions = actions.filter { isOutActionBasic(it) }
 
 
-            val outListPacked: Maybe<Cell> = if (basicActions.isNotEmpty()) {
-                beginCell().storeRef(storeOutList(basicActions.reversed())).endCell()
+            if (basicActions.isNotEmpty()) {
+                builder.storeBit(true)
+                builder.storeRef(beginCell().storeSlice(storeOutList(basicActions.reversed()).beginParse()).endCell())
             } else {
-                null
-            }.toMaybe()
-
-            builder.storeTlb(Maybe.tlbCodec(Cell.tlbCodec()), outListPacked)
+                builder.storeBit(false)
+            }
 
             if (extendedActions.isEmpty()) {
                 builder.storeUInt(0, 1)
@@ -87,6 +83,7 @@ sealed class W5Action(
                     builder.storeRef(packExtendedActionsRec(rest))
                 }
             }
+            return builder
         }
 
         private fun patchV5R1ActionsSendMode(actions: List<Out>, authType: MessageType): List<Out> {

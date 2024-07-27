@@ -16,7 +16,7 @@ let translated = 0
 let total = 0
 
 // You need to put your OpenAI API key here
-const OPENAI_API_KEY = "sk-proj-YRmWaJpuZBCIifX6aFpeT3BlbkFJ6cZGrZazD543kCKtPynF";
+const OPENAI_API_KEY = "";
 
 async function askChatGPT(messages, model = "gpt-4o") {
   const headers = {

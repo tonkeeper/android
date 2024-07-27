@@ -1,9 +1,13 @@
+@file:OptIn(FlowPreview::class)
+
 package com.tonapps.tonkeeper.ui.screen.send
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
@@ -19,14 +23,23 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.fieldErrorBorderColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.boc.BagOfCells
 import uikit.base.BaseFragment
+import uikit.dialog.modal.ModalDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
+import uikit.extensions.dp
 import uikit.extensions.hideKeyboard
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -149,12 +162,12 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
 
         collectFlow(sendViewModel.uiEventFlow, ::onEvent)
-        collectFlow(sendViewModel.uiInputAmountFlow, amountView::setValue)
+        collectFlow(sendViewModel.uiInputAmountFlow.map { it.toDouble() }, amountView::setValue)
         collectFlow(sendViewModel.uiBalanceFlow, ::setAmountState)
         collectFlow(sendViewModel.uiInputTokenFlow, ::setToken)
+        collectFlow(sendViewModel.uiInputNftFlow, ::setNft)
         collectFlow(sendViewModel.uiButtonEnabledFlow, button::setEnabled)
         collectFlow(sendViewModel.uiTransactionFlow, ::applyTransaction)
-        collectFlow(sendViewModel.feeFlow, ::setFee)
 
         sendViewModel.userInputTokenByAddress(args.tokenAddress)
     }
@@ -166,6 +179,9 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             is SendEvent.Failed -> setFailed()
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> processTaskView.state = ProcessTaskView.State.LOADING
+            is SendEvent.Fee -> setFee(event)
+            is SendEvent.InsufficientBalance -> showInsufficientBalance()
+            is SendEvent.Confirm -> slidesView.next()
         }
     }
 
@@ -183,13 +199,13 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun next() {
-        showReview()
+        setFee(null)
+        addressInput.hideKeyboard()
+        sendViewModel.next()
     }
 
-    private fun showReview() {
-        // sendViewModel.calculateFee()
-        slidesView.next()
-        addressInput.hideKeyboard()
+    private fun showInsufficientBalance() {
+        InsufficientBalanceDialog(requireContext()).show()
     }
 
     private fun setFailed() {
@@ -249,13 +265,13 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
     }
 
-    private fun setFee(state: SendFeeState?) {
-        if (state == null) {
+    private fun setFee(event: SendEvent.Fee?) {
+        if (event == null) {
             reviewRecipientFeeView.setLoading()
             confirmButton.isEnabled = false
         } else {
-            reviewRecipientFeeView.value = "≈ ${state.format}"
-            reviewRecipientFeeView.description = "≈ ${state.convertedFormat}"
+            reviewRecipientFeeView.value = "≈ ${event.format}"
+            reviewRecipientFeeView.description = "≈ ${event.convertedFormat}"
             reviewRecipientFeeView.setDefault()
             confirmButton.isEnabled = true
         }
@@ -275,6 +291,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private fun setAmountState(state: SendAmountState) {
         convertedView.text = state.convertedFormat
+        amountView.suffix = state.currencyCode
 
         if (state.insufficientBalance) {
             statusView.setTextColor(requireContext().fieldErrorBorderColor)
@@ -293,25 +310,16 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         reviewSubtitleView.text = getString(Localization.jetton_transfer, token.symbol)
     }
 
+    private fun setNft(nft: NftEntity) {
+        reviewIconView.setRound(20f.dp)
+        reviewIconView.setImageURI(nft.mediumUri, null)
+        reviewSubtitleView.setText(Localization.nft_transfer)
+    }
+
     override fun onDragging() {
         super.onDragging()
         context?.hideKeyboard()
     }
-
-    /*
-
-    titleView.setText(Localization.nft_transfer)
-                amountView.visibility = View.GONE
-
-    private fun applyNft(nftEntity: NftEntity) {
-        iconView.setRound(20f.dp)
-        iconView.setImageURI(nftEntity.mediumUri)
-        actionTitle.text = String.format("%s · %s", nftEntity.name, nftEntity.collectionName.ifEmpty {
-            getString(Localization.unnamed_collection)
-        })
-        titleView.setText(Localization.nft_transfer)
-    }
-     */
 
     companion object {
 
@@ -325,6 +333,16 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             val screen = SendScreen()
             screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""))
             return screen
+        }
+
+        private class InsufficientBalanceDialog(
+            context: Context
+        ): ModalDialog(context, R.layout.dialog_insufficient_balance) {
+
+            init {
+                findViewById<HeaderView>(R.id.header)?.doOnActionClick = { dismiss() }
+                findViewById<View>(R.id.ok)?.setOnClickListener { dismiss() }
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode.source
 
 import android.content.Context
+import com.tonapps.extensions.clear
 import com.tonapps.extensions.putString
 import com.tonapps.extensions.remove
 import com.tonapps.security.Security
@@ -27,7 +28,7 @@ class PasscodeStore(context: Context) {
     }
 
     suspend fun clearPinCode() = withContext(Dispatchers.IO) {
-        keyValue.remove(CODE_KEY)
+        keyValue.clear()
     }
 
     suspend fun change(oldCode: String, newCode: String): Boolean {

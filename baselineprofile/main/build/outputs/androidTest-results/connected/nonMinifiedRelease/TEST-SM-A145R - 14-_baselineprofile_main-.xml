@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.baselineprofile.BaselineProfileGenerator" tests="3" failures="0" errors="0" skipped="2" time="93.865" timestamp="2024-07-16T10:56:56" hostname="localhost">
+  <properties>
+    <property name="device" value="SM-A145R - 14" />
+    <property name="flavor" value="" />
+    <property name="project" value=":baselineprofile:main" />
+  </properties>
+  <testcase name="generate" classname="com.baselineprofile.BaselineProfileGenerator" time="92.085" />
+  <testcase name="startupCompilationBaselineProfiles" classname="com.baselineprofile.StartupBenchmarks" time="0.002">
+    <skipped />
+  </testcase>
+  <testcase name="startupCompilationNone" classname="com.baselineprofile.StartupBenchmarks" time="0.002">
+    <skipped />
+  </testcase>
+</testsuite>

@@ -5,15 +5,15 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
-import com.tonapps.tonkeeper.ui.screen.staking.stake.main.StakeChildFragment
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.staking.StakingPool
-import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.collectFlow
 import uikit.extensions.focusWithKeyboard
@@ -21,7 +21,7 @@ import uikit.extensions.hideKeyboard
 import uikit.extensions.withAlpha
 import uikit.widget.FrescoView
 
-class StakeAmountFragment: StakeChildFragment(R.layout.fragment_stake_amount) {
+class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_amount) {
 
     private lateinit var amountView: CoinEditText
     private lateinit var poolItemView: View
@@ -58,7 +58,7 @@ class StakeAmountFragment: StakeChildFragment(R.layout.fragment_stake_amount) {
         button = view.findViewById(R.id.next_button)
         button.setOnClickListener { stakeViewModel.confirm() }
 
-        collectFlow(stakeViewModel.selectedPoolInfoFlow, ::applyPoolInfo)
+        collectFlow(stakeViewModel.selectedPoolFlow, ::applyPoolInfo)
         collectFlow(stakeViewModel.availableUiStateFlow, ::applyAvailableState)
         collectFlow(stakeViewModel.fiatFormatFlow, ::applyFiat)
         collectFlow(stakeViewModel.apyFormatFlow, poolDescriptionView::setText)
@@ -104,9 +104,9 @@ class StakeAmountFragment: StakeChildFragment(R.layout.fragment_stake_amount) {
         }
     }
 
-    private fun applyPoolInfo(poolInfo: PoolInfoEntity) {
-        poolIconView.setLocalRes(StakingPool.getIcon(poolInfo.implementation))
-        poolTitleView.setText(StakingPool.getTitle(poolInfo.implementation))
+    private fun applyPoolInfo(pool: PoolEntity) {
+        poolIconView.setLocalRes(StakingPool.getIcon(pool.implementation))
+        poolTitleView.setText(StakingPool.getTitle(pool.implementation))
     }
 
     companion object {

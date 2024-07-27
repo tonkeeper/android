@@ -35,7 +35,7 @@ class ItemSwitchView @JvmOverloads constructor(
         switchView = findViewById(R.id.check)
 
         setOnClickListener {
-            setChecked(isChecked(), true)
+            setChecked(!isChecked(), true)
         }
 
         context.useAttributes(attrs, R.styleable.ItemSwitchView) {

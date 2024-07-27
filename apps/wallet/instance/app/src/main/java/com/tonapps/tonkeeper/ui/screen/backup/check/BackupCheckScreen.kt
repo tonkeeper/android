@@ -32,7 +32,7 @@ class BackupCheckScreen: BaseFragment(R.layout.fragment_backup_check), BaseFragm
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<HeaderView>(R.id.header).doOnActionClick = { finish() }
+        view.findViewById<HeaderView>(R.id.header).doOnCloseClick = { finish() }
 
         val textView = view.findViewById<TextHeaderView>(R.id.text)
         textView.desciption = getString(Localization.backup_check_subtitle, indexes[0] + 1, indexes[1] + 1, indexes[2] + 1)

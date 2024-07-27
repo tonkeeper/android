@@ -21,6 +21,8 @@ import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.collectibles.CollectiblesRepository
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -36,22 +38,25 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMap
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.bitstring.BitString
 import org.ton.cell.Cell
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
@@ -62,7 +67,8 @@ class SendViewModel(
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
     private val ratesRepository: RatesRepository,
-    private val passcodeManager: PasscodeManager
+    private val passcodeManager: PasscodeManager,
+    private val collectiblesRepository: CollectiblesRepository,
 ): ViewModel() {
 
     private val isNft: Boolean
@@ -73,6 +79,7 @@ class SendViewModel(
         val amount: Double = 0.0,
         val token: TokenEntity = TokenEntity.TON,
         val comment: String? = null,
+        val nft: NftEntity? = null,
     )
 
     sealed class Recipient {
@@ -81,8 +88,11 @@ class SendViewModel(
         data object NotFound: Recipient()
     }
 
+    private val currency = settingsRepository.currency
+    private var amountInputCurrency = false
+
     private val _userInputFlow = MutableStateFlow(UserInput())
-    private val userInputFlow = _userInputFlow.stateIn(viewModelScope, SharingStarted.Eagerly, UserInput())
+    private val userInputFlow = _userInputFlow.asStateFlow()
 
     private val userInputAddressFlow = userInputFlow
         .map { it.address }
@@ -100,10 +110,7 @@ class SendViewModel(
         Recipient.Data(account)
     }.state(viewModelScope)
 
-    val tokensFlow = combine(
-        accountRepository.selectedWalletFlow,
-        settingsRepository.currencyFlow
-    ) { wallet, currency ->
+    val tokensFlow = accountRepository.selectedWalletFlow.map { wallet ->
         tokenRepository.get(currency, wallet.accountId, wallet.testnet)
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -114,16 +121,18 @@ class SendViewModel(
         tokens.find { it.address == selectedToken.address } ?: AccountTokenEntity.EMPTY
     }.distinctUntilChanged().flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, AccountTokenEntity.EMPTY)
 
-    val ratesTokenFlow = combine(settingsRepository.currencyFlow, selectedTokenFlow) { currency, token ->
+    val ratesTokenFlow = selectedTokenFlow.map { token ->
         ratesRepository.getRates(currency, token.address)
     }.state(viewModelScope)
 
     val uiInputAddressErrorFlow = recipientFlow.map { it is Recipient.NotFound }
 
-    private val _uiInputAmountFlow = MutableEffectFlow<Double>()
+    private val _uiInputAmountFlow = MutableEffectFlow<Coins>()
     val uiInputAmountFlow = _uiInputAmountFlow.asSharedFlow()
 
-    val uiInputTokenFlow = userInputFlow.map { it.token }.distinctUntilChanged()
+    val uiInputTokenFlow = userInputFlow.map { it.token }.filter { !isNft }.distinctUntilChanged()
+
+    val uiInputNftFlow = userInputFlow.map { it.nft }.distinctUntilChanged().filterNotNull()
 
     val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
@@ -133,17 +142,15 @@ class SendViewModel(
     val uiBalanceFlow = combine(
         selectedTokenFlow,
         inputAmountFlow,
-        settingsRepository.amountInputCurrencyFlow,
-        settingsRepository.currencyFlow,
         ratesTokenFlow,
-    ) { token, value, amountInputCurrency, currency, rates ->
-        val (decimals, code, balance) = if (amountInputCurrency) {
-            Triple(currency.decimals, currency.code, token.fiat.copy(decimals = token.decimals))
+    ) { token, value, rates ->
+        val (decimals, balance, currencyCode) = if (amountInputCurrency) {
+            Triple(currency.decimals, token.fiat, currency.code)
         } else {
-            Triple(token.decimals, token.symbol, token.balance.value)
+            Triple(token.decimals, token.balance.value, token.symbol)
         }
 
-        val amount = Coins.of(value, token.decimals)
+        val amount = Coins.of(value.toBigDecimal().stripTrailingZeros(), decimals)
         val remaining = balance - amount
 
         val convertedCode = if (amountInputCurrency) token.symbol else currency.code
@@ -153,12 +160,18 @@ class SendViewModel(
             rates.convert(token.address, amount)
         }
 
+        val remainingToken = if (!amountInputCurrency) {
+            token.balance.value - amount
+        } else {
+            rates.convertFromFiat(token.address, token.fiat - amount)
+        }
+
         SendAmountState(
-            remaining = remaining,
-            remainingFormat = CurrencyFormatter.format(code, remaining, decimals, RoundingMode.UP),
-            converted = converted,
-            convertedFormat = CurrencyFormatter.format(convertedCode, converted, decimals, RoundingMode.UP),
-            insufficientBalance = 0 > remaining.value,
+            remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, token.decimals, RoundingMode.UP, false),
+            converted = converted.stripTrailingZeros(),
+            convertedFormat = CurrencyFormatter.format(convertedCode, converted, decimals, RoundingMode.UP, false),
+            insufficientBalance = !remaining.isPositive,
+            currencyCode = if (amountInputCurrency) currencyCode else "",
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SendAmountState())
 
@@ -167,16 +180,14 @@ class SendViewModel(
         uiBalanceFlow,
         inputAmountFlow,
     ) { recipient, balance, amount ->
-        recipient is Recipient.Data && !balance.insufficientBalance && amount > 0
+        recipient is Recipient.Data && (isNft || (!balance.insufficientBalance && amount > 0))
     }
 
     private val amountTokenFlow = combine(
         selectedTokenFlow,
         inputAmountFlow,
-        settingsRepository.amountInputCurrencyFlow,
-        settingsRepository.currencyFlow,
         ratesTokenFlow
-    ) { token, amount, amountInputCurrency, _, rates ->
+    ) { token, amount, rates ->
         val coins = Coins.of(amount, token.decimals)
         if (amountInputCurrency) {
             rates.convertFromFiat(token.address, coins)
@@ -189,14 +200,12 @@ class SendViewModel(
         amountTokenFlow,
         selectedTokenFlow,
         ratesTokenFlow,
-        settingsRepository.currencyFlow,
-    ) { amount, token, rates, currency ->
-
+    ) { amount, token, rates ->
         SendTransaction.Amount(
             value = amount,
             converted = rates.convert(token.address, amount),
-            format = CurrencyFormatter.format(token.symbol, amount, token.decimals, RoundingMode.UP),
-            convertedFormat = CurrencyFormatter.format(currency.code, rates.convert(token.address, amount), token.decimals, RoundingMode.UP),
+            format = CurrencyFormatter.format(token.symbol, amount, token.decimals, RoundingMode.UP, false),
+            convertedFormat = CurrencyFormatter.format(currency.code, rates.convert(token.address, amount), token.decimals, RoundingMode.UP, false),
         )
     }
 
@@ -218,9 +227,9 @@ class SendViewModel(
 
     private val transferFlow = combine(
         accountRepository.selectedWalletFlow.distinctUntilChanged(),
-        uiTransactionFlow.distinctUntilChanged().debounce(600),
+        uiTransactionFlow.distinctUntilChanged(),
         userInputFlow.map { it.address }.distinctUntilChanged(),
-        userInputFlow.map { it.comment }.distinctUntilChanged().debounce(600),
+        userInputFlow.map { it.comment }.distinctUntilChanged(),
         selectedTokenFlow,
     ) { wallet, transaction, userInputAddress, comment, token ->
         val sendMetadata = getSendParams(wallet)
@@ -237,25 +246,66 @@ class SendViewModel(
             builder.setNftAddress(nftAddress)
         }
         builder.build()
-    }.flowOn(Dispatchers.IO).shareIn(viewModelScope, SharingStarted.Eagerly, 1)
-
-    val feeFlow = combine(
-        accountRepository.selectedWalletFlow,
-        transferFlow.map { it.toSignedMessage(EmptyPrivateKeyEd25519) },
-        settingsRepository.currencyFlow,
-    ) { wallet, message, currency ->
-        val code = TokenEntity.TON.symbol
-        val rates = ratesRepository.getRates(currency, code)
-        val fee = api.emulate(message, wallet.testnet).totalFees
-        val coins = Coins.of(fee)
-        val converted = rates.convert(code, coins)
-
-        SendFeeState(
-            value = coins,
-            format = CurrencyFormatter.format(code, coins, TokenEntity.TON.decimals),
-            convertedFormat = CurrencyFormatter.format(currency.code, converted, currency.decimals),
-        )
     }.flowOn(Dispatchers.IO)
+
+    init {
+        if (isNft) {
+            loadNft()
+        }
+    }
+
+    private fun isInsufficientBalance(): Boolean {
+        val token = selectedTokenFlow.value
+        val amount = Coins.of(userInputFlow.value.amount, token.decimals)
+        val balance = if (amountInputCurrency) token.fiat else token.balance.value
+        val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
+            .multiply(BigDecimal("100"))
+            .setScale(2, RoundingMode.HALF_UP)
+        return percentage > BigDecimal("95.00")
+    }
+
+    fun next() {
+        if (isInsufficientBalance()) {
+            _uiEventFlow.tryEmit(SendEvent.InsufficientBalance)
+            return
+        }
+        _uiEventFlow.tryEmit(SendEvent.Confirm)
+        transferFlow.take(1).map { calculateFee(it) }.map { eventFee(it) }.filterNotNull().onEach {
+            _uiEventFlow.tryEmit(it)
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }
+
+    private fun loadNft() {
+        accountRepository.selectedWalletFlow.take(1).map { wallet ->
+            collectiblesRepository.getNft(wallet.accountId, wallet.testnet, nftAddress)
+        }.flowOn(Dispatchers.IO).filterNotNull().onEach(::userInputNft).launchIn(viewModelScope)
+    }
+
+    private suspend fun calculateFee(
+        transfer: TransferEntity
+    ): Coins = withContext(Dispatchers.IO) {
+        val message = transfer.toSignedMessage(EmptyPrivateKeyEd25519)
+        val fee = api.emulate(message, transfer.wallet.testnet).totalFees
+        Coins.of(fee)
+    }
+
+    private fun eventFee(
+        coins: Coins
+    ): SendEvent.Fee? {
+        return try {
+            val code = TokenEntity.TON.symbol
+            val rates = ratesRepository.getRates(currency, code)
+            val converted = rates.convert(code, coins)
+
+            SendEvent.Fee(
+                value = coins,
+                format = CurrencyFormatter.format(code, coins, TokenEntity.TON.decimals),
+                convertedFormat = CurrencyFormatter.format(currency.code, converted, currency.decimals),
+            )
+        } catch (e: Throwable) {
+            null
+        }
+    }
 
     fun userInputAmount(double: Double) {
         _userInputFlow.value = _userInputFlow.value.copy(amount = double)
@@ -265,11 +315,16 @@ class SendViewModel(
         _userInputFlow.value = _userInputFlow.value.copy(token = token)
     }
 
+    fun userInputNft(nft: NftEntity) {
+        _userInputFlow.value = _userInputFlow.value.copy(nft = nft)
+    }
+
     fun userInputTokenByAddress(tokenAddress: String) {
-        viewModelScope.launch {
-            val token = tokensFlow.value.find { it.address == tokenAddress } ?: return@launch
+        tokensFlow.filter { it.isNotEmpty() }.map { list ->
+            list.find { it.address == tokenAddress }
+        }.filterNotNull().take(1).onEach { token ->
             userInputToken(token.balance.token)
-        }
+        }.launchIn(viewModelScope)
     }
 
     fun userInputAddress(address: String) {
@@ -281,20 +336,19 @@ class SendViewModel(
     }
 
     fun swap() {
-        val amountInputCurrency = !settingsRepository.amountInputCurrency
+        amountInputCurrency = !amountInputCurrency
         val convertedAmount = uiBalanceFlow.value.converted
-        _uiInputAmountFlow.tryEmit(convertedAmount.value)
-        settingsRepository.amountInputCurrency = amountInputCurrency
+        _uiInputAmountFlow.tryEmit(convertedAmount)
     }
 
     fun setMax() {
         val token = selectedTokenFlow.value
-        val coins = if (settingsRepository.amountInputCurrency) {
+        val coins = if (amountInputCurrency) {
             token.fiat
         } else {
             token.balance.value
         }
-        _uiInputAmountFlow.tryEmit(coins.value)
+        _uiInputAmountFlow.tryEmit(coins)
     }
 
     private suspend fun getSendParams(

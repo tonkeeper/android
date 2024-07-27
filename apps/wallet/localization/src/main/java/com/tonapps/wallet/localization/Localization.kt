@@ -5,5 +5,11 @@ typealias Localization = R.string
 val SupportedLanguages = listOf(
     Language(),
     Language("en"),
-    Language("ru")
+    Language("ru"),
+    Language("ua"),
+    Language("uz"),
+    Language("id"),
+    Language("es"),
+    Language("tr"),
+    Language("zh")
 )

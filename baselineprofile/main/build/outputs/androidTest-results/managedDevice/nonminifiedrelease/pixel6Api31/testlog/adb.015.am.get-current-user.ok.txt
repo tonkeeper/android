@@ -1,0 +1,17 @@
+EXECUTING: /Users/polstianka/Library/Android/sdk/platform-tools/adb -H localhost -P 5037 -s emulator-5556 shell am get-current-user
+CURRENT_WORKING_DIRECTORY: /Users/polstianka/StudioProjects/TonkeeperX
+START_TIME: 2024-07-16 04:06:05.210
+START_TIME-NANOS: 2024-07-16 04:06:05.210035000
+ENVIRONMENT:
+ANDROID_SDK_HOME=/Users/polstianka/Library/Android/sdk
+ANDROID_ADB=/Users/polstianka/Library/Android/sdk/platform-tools/adb
+*****************************************
+STDOUT/STDERR BELOW
+===================
+0
+
+===================
+END_TIME: 2024-07-16 04:06:05.230
+END_TIME-NANOS: 2024-07-16 04:06:05.230762000
+DURATION: 20ms
+EXIT CODE: 0

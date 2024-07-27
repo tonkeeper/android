@@ -8,6 +8,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.wallet.data.staking.StakingPool
+import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
@@ -49,7 +50,7 @@ class PoolHolder(
         radioView.checked = item.selected
         descriptionView.text = "%s\n%s".format(
             context.getString(Localization.staking_minimum_deposit, item.minimumDepositFormat),
-            item.entity.apyFormat
+            item.entity.apy
         )
     }
 }

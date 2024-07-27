@@ -27,9 +27,12 @@ class RatesRepository(
         load(currency, mutableListOf(token))
     }
 
-    fun load(currency: WalletCurrency, tokens: MutableList<String>) {
-        if (!tokens.contains("TON")) {
-            tokens.add("TON")
+    private fun load(currency: WalletCurrency, tokens: MutableList<String>) {
+        if (!tokens.contains(TokenEntity.TON.address)) {
+            tokens.add(TokenEntity.TON.address)
+        }
+        if (!tokens.contains(TokenEntity.USDT.address)) {
+            tokens.add(TokenEntity.USDT.address)
         }
         val rates = api.getRates(currency.code, tokens)
         insertRates(currency, rates)
@@ -55,16 +58,6 @@ class RatesRepository(
     }
 
     fun getRates(currency: WalletCurrency, token: String): RatesEntity {
-        if (token == TokenEntity.USDT.address) {
-            return RatesEntity(currency, hashMapOf<String, RateEntity>().apply {
-                put(token, RateEntity(
-                    tokenCode = token,
-                    currency = currency,
-                    value = Coins.ONE,
-                    diff = RateDiffEntity("", "", ""),
-                ))
-            })
-        }
         return getRates(currency, listOf(token))
     }
 

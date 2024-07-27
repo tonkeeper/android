@@ -1,0 +1,17 @@
+EXECUTING: /Users/polstianka/Library/Android/sdk/platform-tools/adb -H localhost -P 5037 -s emulator-5556 shell pm uninstall com.ton_keeper
+CURRENT_WORKING_DIRECTORY: /Users/polstianka/StudioProjects/TonkeeperX
+START_TIME: 2024-07-16 04:08:24.939
+START_TIME-NANOS: 2024-07-16 04:08:24.939850000
+ENVIRONMENT:
+ANDROID_SDK_HOME=/Users/polstianka/Library/Android/sdk
+ANDROID_ADB=/Users/polstianka/Library/Android/sdk/platform-tools/adb
+*****************************************
+STDOUT/STDERR BELOW
+===================
+Success
+
+===================
+END_TIME: 2024-07-16 04:08:25.077
+END_TIME-NANOS: 2024-07-16 04:08:25.077371000
+DURATION: 137ms
+EXIT CODE: 0

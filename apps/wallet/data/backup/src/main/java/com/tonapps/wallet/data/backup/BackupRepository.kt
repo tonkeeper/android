@@ -31,12 +31,11 @@ class BackupRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
-            val allBackups = localDataSource.getAllBackups()
-            if (context.isMainVersion && allBackups.isEmpty()) {
+            if (rnLegacy.isRequestMigration()) {
+                localDataSource.clear()
                 migrationFromRN()
-            } else {
-                _stream.value = allBackups
             }
+            _stream.value = localDataSource.getAllBackups()
         }
     }
 

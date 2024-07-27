@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.ui.screen.backup.attention.BackupAttentionScreen
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
@@ -21,15 +20,24 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class BackupScreen: BaseListFragment(), BaseFragment.SwipeBack {
 
+    private val attentionDialog: BackupAttentionDialog by lazy {
+        BackupAttentionDialog(requireContext())
+    }
+
     private val backupViewModel: BackupViewModel by viewModel()
 
     private val adapter = Adapter { item ->
-        if (item is Item.RecoveryPhrase) {
-            openRecoveryPhrase()
-        } else if (item is Item.ManualBackup) {
-            navigation?.add(BackupAttentionScreen.newInstance(0))
-        } else if (item is Item.Backup) {
-            navigation?.add(BackupAttentionScreen.newInstance(item.entity.id))
+        when (item) {
+            is Item.RecoveryPhrase -> attentionDialog.show {
+                openRecoveryPhrase()
+            }
+            is Item.ManualBackup -> attentionDialog.show {
+                openRecoveryPhrase(backup = true)
+            }
+            is Item.Backup -> attentionDialog.show {
+                openRecoveryPhrase(backup = true, backupId = item.entity.id)
+            }
+            else -> { }
         }
     }
 
@@ -44,11 +52,11 @@ class BackupScreen: BaseListFragment(), BaseFragment.SwipeBack {
         setTitle(getString(Localization.backup))
     }
 
-    private fun openRecoveryPhrase() {
+    private fun openRecoveryPhrase(backup: Boolean = false, backupId: Long = 0) {
         backupViewModel.getRecoveryPhrase(requireContext()).catch {
             navigation?.toast(Localization.authorization_required)
         }.filterNotNull().onEach {
-            navigation?.add(PhraseScreen.newInstance(it))
+            navigation?.add(PhraseScreen.newInstance(it, backup, backupId))
         }.launchIn(lifecycleScope)
     }
 

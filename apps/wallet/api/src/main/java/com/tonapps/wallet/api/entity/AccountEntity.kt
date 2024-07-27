@@ -2,13 +2,16 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.short4
 import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
 import kotlinx.parcelize.Parcelize
+import org.ton.block.AddrStd
 
 @Parcelize
 data class AccountEntity(
@@ -27,6 +30,15 @@ data class AccountEntity(
             }
             return name
         }
+
+    constructor(address: AddrStd, testnet: Boolean) : this(
+        address = address.toWalletAddress(testnet),
+        accountId = address.toAccountId(),
+        name = null,
+        iconUri = null,
+        isWallet = true,
+        isScam = false,
+    )
 
     constructor(model: AccountAddress, testnet: Boolean): this(
         address = model.address.toUserFriendly(model.isWallet, testnet),

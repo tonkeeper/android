@@ -97,8 +97,13 @@ class HistoryActionHolder(
         }
 
         bindPending(item.pending)
-        bindComment(item.comment)
-        bindEncryptedComment(item.cipherText, item.address?:"")
+        if (item.comment == null && item.cipherText == null) {
+            commentView.visibility = View.GONE
+        } else {
+            bindComment(item.comment)
+            bindEncryptedComment(item.cipherText, item.address?:"")
+        }
+
         bindNft(item)
         bindAmount(item)
     }
@@ -146,22 +151,18 @@ class HistoryActionHolder(
     }
 
     private fun bindComment(comment: String?) {
-        if (comment.isNullOrBlank()) {
-            commentView.visibility = View.GONE
+        if (comment == null) {
             return
         }
-
         commentView.visibility = View.VISIBLE
         commentView.text = comment
         commentView.setOnClickListener(null)
     }
 
     private fun bindEncryptedComment(cipherText: String?, senderAddress: String) {
-        if (cipherText.isNullOrBlank()) {
-            commentView.visibility = View.GONE
+        if (cipherText == null) {
             return
         }
-
         commentView.visibility = View.VISIBLE
         commentView.text = context.getString(Localization.encrypted_comment)
         commentView.setLeftDrawable(lockDrawable)

@@ -1,0 +1,280 @@
+# 2024-07-16T11:08:28.956336Z:
+test_suite_meta_data {
+  scheduled_test_case_count: 3
+}
+test_status: PASSED
+test_result {
+  test_case {
+    test_class: "BaselineProfileGenerator"
+    test_package: "com.baselineprofile"
+    test_method: "generate"
+    start_time {
+      seconds: 1721127967
+      nanos: 43000000
+    }
+    end_time {
+      seconds: 1721128104
+      nanos: 229000000
+    }
+  }
+  test_status: PASSED
+  output_artifact {
+    label {
+      label: "additionaltestoutput.benchmark.message"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api31/additionaltestoutput.benchmark.message_com.baselineprofile.BaselineProfileGenerator.generate.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "additionaltestoutput.benchmark.trace"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api31/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "logcat"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/logcat-com.baselineprofile.BaselineProfileGenerator-generate.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/cpuinfo"
+    }
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt"
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+  }
+  details {
+    key: "android.studio.display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark.outputDirPath"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output"
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt"
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+  }
+  details {
+    key: "android.studio.display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark.outputDirPath"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output"
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt"
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+  }
+  details {
+    key: "android.studio.display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark.outputDirPath"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output"
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt"
+  }
+  details {
+    key: "additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt"
+  }
+  details {
+    key: "android.studio.display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark"
+    value: "BaselineProfileGenerator_generate\nTotal run time Ns: 137051327524.\nBaseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt)\n\nTo copy the profile use:\nadb -e pull \"/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt\" .\n"
+  }
+  details {
+    key: "android.studio.v2display.benchmark.outputDirPath"
+    value: "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output"
+  }
+}
+test_result {
+  test_case {
+    test_class: "StartupBenchmarks"
+    test_package: "com.baselineprofile"
+    test_method: "startupCompilationBaselineProfiles"
+    start_time {
+      seconds: 1721128104
+      nanos: 281000000
+    }
+    end_time {
+      seconds: 1721128104
+      nanos: 282000000
+    }
+  }
+  test_status: IGNORED
+  error {
+    error_message: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\n\tat org.junit.Assume.assumeThat(Assume.java:106)\n\tat org.junit.Assume.assumeTrue(Assume.java:50)\n\tat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\n\tat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\n\tat org.junit.rules.RunRules.evaluate(RunRules.java:20)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2248)\n"
+    error_type: "org.junit.AssumptionViolatedException"
+    stack_trace: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\n\tat org.junit.Assume.assumeThat(Assume.java:106)\n\tat org.junit.Assume.assumeTrue(Assume.java:50)\n\tat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\n\tat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\n\tat org.junit.rules.RunRules.evaluate(RunRules.java:20)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2248)\n"
+  }
+  output_artifact {
+    label {
+      label: "logcat"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/logcat-com.baselineprofile.StartupBenchmarks-startupCompilationBaselineProfiles.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/cpuinfo"
+    }
+  }
+}
+test_result {
+  test_case {
+    test_class: "StartupBenchmarks"
+    test_package: "com.baselineprofile"
+    test_method: "startupCompilationNone"
+    start_time {
+      seconds: 1721128104
+      nanos: 284000000
+    }
+    end_time {
+      seconds: 1721128104
+      nanos: 286000000
+    }
+  }
+  test_status: IGNORED
+  error {
+    error_message: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\n\tat org.junit.Assume.assumeThat(Assume.java:106)\n\tat org.junit.Assume.assumeTrue(Assume.java:50)\n\tat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\n\tat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\n\tat org.junit.rules.RunRules.evaluate(RunRules.java:20)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2248)\n"
+    error_type: "org.junit.AssumptionViolatedException"
+    stack_trace: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\n\tat org.junit.Assume.assumeThat(Assume.java:106)\n\tat org.junit.Assume.assumeTrue(Assume.java:50)\n\tat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\n\tat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\n\tat org.junit.rules.RunRules.evaluate(RunRules.java:20)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\n\tat org.junit.runners.Suite.runChild(Suite.java:128)\n\tat org.junit.runners.Suite.runChild(Suite.java:27)\n\tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\n\tat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\n\tat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\n\tat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2248)\n"
+  }
+  output_artifact {
+    label {
+      label: "logcat"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/logcat-com.baselineprofile.StartupBenchmarks-startupCompilationNone.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/cpuinfo"
+    }
+  }
+}
+output_artifact {
+  label {
+    label: "test-results.log"
+    namespace: "com.google.testing.platform.runtime.android.driver.AndroidInstrumentationDriver"
+  }
+  source_path {
+    path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api31/testlog/test-results.log"
+  }
+  type: TEST_DATA
+  mime_type: "text/plain"
+}

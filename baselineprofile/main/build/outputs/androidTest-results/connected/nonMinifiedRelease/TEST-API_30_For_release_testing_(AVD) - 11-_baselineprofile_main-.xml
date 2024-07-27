@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.baselineprofile.BaselineProfileGenerator" tests="3" failures="1" errors="0" skipped="2" time="1.492" timestamp="2024-07-16T10:55:14" hostname="localhost">
+  <properties>
+    <property name="device" value="API_30_For_release_testing_(AVD) - 11" />
+    <property name="flavor" value="" />
+    <property name="project" value=":baselineprofile:main" />
+  </properties>
+  <testcase name="generate" classname="com.baselineprofile.BaselineProfileGenerator" time="0.242">
+    <failure>java.lang.IllegalArgumentException: Baseline Profile collection requires API 33+, or a rooted device running API 28 or higher and rooted adb session (via `adb root`).
+at androidx.benchmark.macro.BaselineProfilesKt.buildMacrobenchmarkScope(BaselineProfiles.kt:154)
+at androidx.benchmark.macro.BaselineProfilesKt.collect(BaselineProfiles.kt:49)
+at androidx.benchmark.macro.junit4.BaselineProfileRule.collect(BaselineProfileRule.kt:136)
+at androidx.benchmark.macro.junit4.BaselineProfileRule.collect$default(BaselineProfileRule.kt:126)
+at com.baselineprofile.BaselineProfileGenerator.generate(BaselineProfileGenerator.kt:19)
+</failure>
+  </testcase>
+  <testcase name="startupCompilationBaselineProfiles" classname="com.baselineprofile.StartupBenchmarks" time="0.013">
+    <skipped />
+  </testcase>
+  <testcase name="startupCompilationNone" classname="com.baselineprofile.StartupBenchmarks" time="0.007">
+    <skipped />
+  </testcase>
+</testsuite>

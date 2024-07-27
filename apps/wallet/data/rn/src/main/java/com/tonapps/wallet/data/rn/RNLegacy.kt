@@ -1,16 +1,22 @@
 package com.tonapps.wallet.data.rn
 
 import android.content.Context
+import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallets
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-class RNLegacy(context: Context) {
+class RNLegacy(
+    context: Context,
+    private val scope: CoroutineScope
+) {
 
     companion object {
         const val DEFAULT_KEYSTORE_ALIAS = "key_v1"
@@ -19,6 +25,58 @@ class RNLegacy(context: Context) {
     private val sql = RNSql(context)
     private val seedStorage = RNSeedStorage(context)
     private var cacheWallets: RNWallets? = null
+
+    @Volatile
+    private var requestMigration: Boolean? = null
+
+    @Volatile
+    private var walletMigrated: Boolean? = null
+
+    init {
+        scope.launch(Dispatchers.IO) {
+            requestMigration = sql.getValue("x") == null
+            if (requestMigration == true) {
+                sql.setValue("x", "true")
+            } else {
+                walletMigrated = true
+            }
+        }
+    }
+
+    fun isRequestMainMigration(): Boolean {
+        while (requestMigration == null) {
+            Thread.sleep(16)
+        }
+        return requestMigration!!
+    }
+
+    private fun isWalletMigrated(): Boolean {
+        while (walletMigrated == null) {
+            Thread.sleep(16)
+        }
+        return walletMigrated!!
+    }
+
+    fun isRequestMigration(): Boolean {
+        if (!isRequestMainMigration()) {
+            return false
+        }
+        return isWalletMigrated()
+    }
+
+    fun setWalletMigrated() {
+        walletMigrated = true
+    }
+
+    suspend fun setTonProof(id: String, token: String) {
+        if (getTonProof(id) == null) {
+            seedStorage.setTonProof(id, token)
+        }
+    }
+
+    suspend fun getTonProof(id: String): String? {
+        return seedStorage.getTonProof(id)
+    }
 
     suspend fun exportPasscodeWithBiometry(): String {
         return seedStorage.exportPasscodeWithBiometry()

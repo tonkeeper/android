@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.unicodeToPunycode
+import com.tonapps.extensions.withRetry
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
 import com.tonapps.network.SSLSocketFactoryTcpNoDelay
@@ -140,7 +141,7 @@ class API(
         )
     }
 
-    fun getTonBalance(
+    suspend fun getTonBalance(
         accountId: String,
         testnet: Boolean
     ): BalanceEntity {
@@ -152,23 +153,25 @@ class API(
         return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
     }
 
-    fun getJettonsBalances(
+    suspend fun getJettonsBalances(
         accountId: String,
         testnet: Boolean,
-        currency: String
+        currency: String? = null
     ): List<BalanceEntity> {
         try {
-            val jettonsBalances = accounts(testnet).getAccountJettonsBalances(
-                accountId = accountId,
-                currencies = listOf(currency)
-            ).balances
-            return jettonsBalances.map { BalanceEntity(it) }.filter { !it.value.isZero }
+            val jettonsBalances = withRetry {
+                accounts(testnet).getAccountJettonsBalances(
+                    accountId = accountId,
+                    currencies = currency?.let { listOf(it) }
+                ).balances
+            } ?: return emptyList()
+            return jettonsBalances.map { BalanceEntity(it) }.filter { it.value.isPositive }
         } catch (e: Throwable) {
             return emptyList()
         }
     }
 
-    fun resolveAddressOrName(
+    suspend fun resolveAddressOrName(
         query: String,
         testnet: Boolean
     ): AccountDetailsEntity? {
@@ -212,11 +215,11 @@ class API(
         }
     }
 
-    fun getNftItems(address: String, testnet: Boolean): List<NftItem> {
+    fun getNftItems(address: String, testnet: Boolean, limit: Int = 1000): List<NftItem> {
         return try {
             accounts(testnet).getAccountNftItems(
                 accountId = address,
-                limit = 1000,
+                limit = limit,
                 indirectOwnership = true,
             ).nftItems
         } catch (e: Throwable) {
@@ -345,15 +348,13 @@ class API(
         return@withContext resolveDomain(value.lowercase().trim(), testnet)
     }
 
-    private fun resolveDomain(domain: String, testnet: Boolean): Account? {
+    private suspend fun resolveDomain(domain: String, testnet: Boolean): Account? {
         return getAccount(domain, testnet) ?: getAccount(domain.unicodeToPunycode(), testnet)
     }
 
-    private fun getAccount(accountId: String, testnet: Boolean): Account? {
-        return try {
+    private suspend fun getAccount(accountId: String, testnet: Boolean): Account? {
+        return withRetry {
             accounts(testnet).getAccount(accountId)
-        } catch (e: Throwable) {
-            null
         }
     }
 

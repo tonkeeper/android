@@ -18,7 +18,7 @@ data class WalletEntity(
     val id: String,
     val publicKey: PublicKeyEd25519,
     val type: Wallet.Type,
-    val version: WalletVersion = WalletVersion.V4R2,
+    val version: WalletVersion,
     val label: Wallet.Label,
     val ledger: Ledger? = null,
 ) {

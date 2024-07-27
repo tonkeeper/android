@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.entities.TokenExtendedEntity
+import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 
@@ -34,7 +34,7 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         constructor(
             position: ListCell.Position,
-            token: TokenExtendedEntity,
+            token: AssetsExtendedEntity,
         ) : this(
             position = position,
             iconUri = token.imageUri,

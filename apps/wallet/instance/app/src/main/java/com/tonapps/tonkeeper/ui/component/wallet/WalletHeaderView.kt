@@ -17,6 +17,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.account.Wallet
 import uikit.drawable.BarDrawable
+import uikit.drawable.DotDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
@@ -32,6 +33,8 @@ class WalletHeaderView @JvmOverloads constructor(
 ) : RowLayout(context, attrs, defStyle),
     BarDrawable.BarDrawableOwner {
 
+    var doWalletSwipe: ((right: Boolean) -> Unit)? = null
+
     private val barHeight = context.getDimensionPixelSize(uikit.R.dimen.barHeight)
     private var topOffset: Int = statusBarHeight
         set(value) {
@@ -41,9 +44,6 @@ class WalletHeaderView @JvmOverloads constructor(
                 requestLayout()
             }
         }
-
-
-    var doWalletSwipe: ((right: Boolean) -> Unit)? = null
 
     private val swipeGestureListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onFling(
@@ -74,6 +74,7 @@ class WalletHeaderView @JvmOverloads constructor(
     private val emojiView: EmojiView
     private val nameView: AppCompatTextView
     private val arrowView: AppCompatImageView
+    private val settingsDot: View
     private val drawable = HeaderDrawable(context).apply {
         setColor(context.backgroundTransparentColor)
     }
@@ -91,8 +92,12 @@ class WalletHeaderView @JvmOverloads constructor(
         }
 
     init {
-        setPaddingHorizontal(context.getDimensionPixelSize(uikit.R.dimen.offsetMedium))
-        setPaddingTop(topOffset)
+        setPadding(
+            context.getDimensionPixelSize(uikit.R.dimen.offsetMedium),
+            topOffset,
+            0,
+            0
+        )
         super.setBackground(drawable)
         inflate(context, R.layout.view_wallet_header, this)
         settingsView = findViewById(R.id.settings)
@@ -101,6 +106,13 @@ class WalletHeaderView @JvmOverloads constructor(
         emojiView = findViewById(R.id.wallet_emoji)
         nameView = findViewById(R.id.wallet_name)
         arrowView = findViewById(R.id.wallet_arrow)
+
+        settingsDot = findViewById(R.id.settings_dot)
+        settingsDot.background = DotDrawable(context)
+    }
+
+    fun setDot(dot: Boolean) {
+        settingsDot.visibility = if (dot) View.VISIBLE else View.GONE
     }
 
     override fun setDivider(value: Boolean) {

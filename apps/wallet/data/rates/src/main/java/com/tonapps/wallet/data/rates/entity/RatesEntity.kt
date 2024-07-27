@@ -21,6 +21,9 @@ data class RatesEntity(
     val isEmpty: Boolean
         get() = map.isEmpty()
 
+    private val isUSD: Boolean
+        get() = currency.code == "USD"
+
     fun merge(rates: RatesEntity) {
         for ((key, value) in rates.map) {
             map[key] = value
@@ -56,17 +59,11 @@ data class RatesEntity(
     }
 
     fun convert(token: String, value: Coins): Coins {
-        if (token == TokenEntity.USDT.address) {
-            return value
-        }
         val rate = rateValue(token)
         return (value * rate)
     }
 
     fun convertFromFiat(token: String, value: Coins): Coins {
-        if (token == TokenEntity.USDT.address) {
-            return value
-        }
         val rate = rateValue(token)
         return (value / rate)
     }

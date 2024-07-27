@@ -17,7 +17,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup"
         private const val BACKUP_COLUMN_SOURCE = "source"
     }
 
-    override fun onCreate(db: SQLiteDatabase) {
+    override fun create(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $BACKUP_TABLE_NAME (" +
                 "$BACKUP_COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "$BACKUP_COLUMN_DATE INTEGER, " +
@@ -84,5 +84,9 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup"
             source = source,
             date = date
         )
+    }
+
+    fun clear() {
+        writableDatabase.delete(BACKUP_TABLE_NAME, null, null)
     }
 }

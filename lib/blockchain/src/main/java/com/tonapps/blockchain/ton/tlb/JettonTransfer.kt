@@ -2,7 +2,6 @@ package com.tonapps.blockchain.ton.tlb
 
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
-import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellSlice
 import org.ton.cell.invoke

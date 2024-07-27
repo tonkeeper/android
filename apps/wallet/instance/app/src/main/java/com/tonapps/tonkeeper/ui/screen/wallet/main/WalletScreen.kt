@@ -48,6 +48,7 @@ class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
         listView.adapter = adapter
 
         collectFlow(walletViewModel.uiLabelFlow.filterNotNull(), headerView::setWallet)
+        collectFlow(walletViewModel.hasBackupFlow, headerView::setDot)
     }
 
     override fun getRecyclerView(): RecyclerView? {

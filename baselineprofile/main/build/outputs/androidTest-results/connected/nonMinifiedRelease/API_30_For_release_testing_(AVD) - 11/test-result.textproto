@@ -1,0 +1,187 @@
+# 2024-07-16T10:55:14.314684Z:
+test_suite_meta_data {
+  scheduled_test_case_count: 3
+}
+test_status: FAILED
+test_result {
+  test_case {
+    test_class: "BaselineProfileGenerator"
+    test_package: "com.baselineprofile"
+    test_method: "generate"
+    start_time {
+      seconds: 1721127312
+      nanos: 783000000
+    }
+    end_time {
+      seconds: 1721127313
+      nanos: 22000000
+    }
+  }
+  test_status: FAILED
+  error {
+    error_message: "java.lang.IllegalArgumentException: Baseline Profile collection requires API 33+, or a rooted device running API 28 or higher and rooted adb session (via `adb root`).\nat androidx.benchmark.macro.BaselineProfilesKt.buildMacrobenchmarkScope(BaselineProfiles.kt:154)\nat androidx.benchmark.macro.BaselineProfilesKt.collect(BaselineProfiles.kt:49)\nat androidx.benchmark.macro.junit4.BaselineProfileRule.collect(BaselineProfileRule.kt:136)\nat androidx.benchmark.macro.junit4.BaselineProfileRule.collect$default(BaselineProfileRule.kt:126)\nat com.baselineprofile.BaselineProfileGenerator.generate(BaselineProfileGenerator.kt:19)\n"
+    error_type: "java.lang.IllegalArgumentException"
+    stack_trace: "java.lang.IllegalArgumentException: Baseline Profile collection requires API 33+, or a rooted device running API 28 or higher and rooted adb session (via `adb root`).\nat androidx.benchmark.macro.BaselineProfilesKt.buildMacrobenchmarkScope(BaselineProfiles.kt:154)\nat androidx.benchmark.macro.BaselineProfilesKt.collect(BaselineProfiles.kt:49)\nat androidx.benchmark.macro.junit4.BaselineProfileRule.collect(BaselineProfileRule.kt:136)\nat androidx.benchmark.macro.junit4.BaselineProfileRule.collect$default(BaselineProfileRule.kt:126)\nat com.baselineprofile.BaselineProfileGenerator.generate(BaselineProfileGenerator.kt:19)\n"
+  }
+  output_artifact {
+    label {
+      label: "logcat"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/logcat-com.baselineprofile.BaselineProfileGenerator-generate.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/cpuinfo"
+    }
+  }
+}
+test_result {
+  test_case {
+    test_class: "StartupBenchmarks"
+    test_package: "com.baselineprofile"
+    test_method: "startupCompilationBaselineProfiles"
+    start_time {
+      seconds: 1721127313
+      nanos: 44000000
+    }
+    end_time {
+      seconds: 1721127313
+      nanos: 52000000
+    }
+  }
+  test_status: IGNORED
+  error {
+    error_message: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\nat org.junit.Assume.assumeThat(Assume.java:106)\nat org.junit.Assume.assumeTrue(Assume.java:50)\nat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\nat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\nat org.junit.rules.RunRules.evaluate(RunRules.java:20)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\nat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\nat org.junit.runners.Suite.runChild(Suite.java:128)\nat org.junit.runners.Suite.runChild(Suite.java:27)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\nat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\nat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2205)\n"
+    error_type: "org.junit.AssumptionViolatedException"
+    stack_trace: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\nat org.junit.Assume.assumeThat(Assume.java:106)\nat org.junit.Assume.assumeTrue(Assume.java:50)\nat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\nat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\nat org.junit.rules.RunRules.evaluate(RunRules.java:20)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\nat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\nat org.junit.runners.Suite.runChild(Suite.java:128)\nat org.junit.runners.Suite.runChild(Suite.java:27)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\nat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\nat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2205)\n"
+  }
+  output_artifact {
+    label {
+      label: "logcat"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/logcat-com.baselineprofile.StartupBenchmarks-startupCompilationBaselineProfiles.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/cpuinfo"
+    }
+  }
+}
+test_result {
+  test_case {
+    test_class: "StartupBenchmarks"
+    test_package: "com.baselineprofile"
+    test_method: "startupCompilationNone"
+    start_time {
+      seconds: 1721127313
+      nanos: 58000000
+    }
+    end_time {
+      seconds: 1721127313
+      nanos: 64000000
+    }
+  }
+  test_status: IGNORED
+  error {
+    error_message: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\nat org.junit.Assume.assumeThat(Assume.java:106)\nat org.junit.Assume.assumeTrue(Assume.java:50)\nat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\nat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\nat org.junit.rules.RunRules.evaluate(RunRules.java:20)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\nat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\nat org.junit.runners.Suite.runChild(Suite.java:128)\nat org.junit.runners.Suite.runChild(Suite.java:27)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\nat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\nat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2205)\n"
+    error_type: "org.junit.AssumptionViolatedException"
+    stack_trace: "org.junit.AssumptionViolatedException: got: <false>, expected: is <true>\nat org.junit.Assume.assumeThat(Assume.java:106)\nat org.junit.Assume.assumeTrue(Assume.java:50)\nat androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)\nat androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)\nat org.junit.rules.RunRules.evaluate(RunRules.java:20)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\nat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\nat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)\nat org.junit.runners.Suite.runChild(Suite.java:128)\nat org.junit.runners.Suite.runChild(Suite.java:27)\nat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\nat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\nat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\nat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\nat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\nat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\nat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:137)\nat org.junit.runner.JUnitCore.run(JUnitCore.java:115)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)\nat androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)\nat androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:463)\nat android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2205)\n"
+  }
+  output_artifact {
+    label {
+      label: "logcat"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/logcat-com.baselineprofile.StartupBenchmarks-startupCompilationNone.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/cpuinfo"
+    }
+  }
+}
+output_artifact {
+  label {
+    label: "test-results.log"
+    namespace: "com.google.testing.platform.runtime.android.driver.AndroidInstrumentationDriver"
+  }
+  source_path {
+    path: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/connected/nonMinifiedRelease/API_30_For_release_testing_(AVD) - 11/testlog/test-results.log"
+  }
+  type: TEST_DATA
+  mime_type: "text/plain"
+}

@@ -1,0 +1,18 @@
+EXECUTING: /Users/polstianka/Library/Android/sdk/platform-tools/adb -H localhost -P 5037 -s emulator-5556 emu avd name
+CURRENT_WORKING_DIRECTORY: /Users/polstianka/StudioProjects/TonkeeperX
+START_TIME: 2024-07-16 04:06:05.276
+START_TIME-NANOS: 2024-07-16 04:06:05.276926000
+ENVIRONMENT:
+ANDROID_SDK_HOME=/Users/polstianka/Library/Android/sdk
+ANDROID_ADB=/Users/polstianka/Library/Android/sdk/platform-tools/adb
+*****************************************
+STDOUT/STDERR BELOW
+===================
+dev31_default_arm64-v8a_Pixel_6
+OK
+
+===================
+END_TIME: 2024-07-16 04:06:05.285
+END_TIME-NANOS: 2024-07-16 04:06:05.285973000
+DURATION: 9ms
+EXIT CODE: 0

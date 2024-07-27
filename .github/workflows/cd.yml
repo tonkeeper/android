@@ -1,4 +1,4 @@
-name: Android Mobile CD
+name: Android APK build CD
 
 on:
   # Allows you to run this workflow manually from the Actions a tab

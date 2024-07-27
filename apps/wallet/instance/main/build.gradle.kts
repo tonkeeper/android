@@ -21,21 +21,6 @@ android {
         versionName = "4.7.2-x"
     }
 
-    signingConfigs {
-        getByName("release") {
-            storeFile file(project.property('android.injected.signing.store.file'))
-            storePassword project.property('android.injected.signing.store.password')
-            keyAlias project.property('android.injected.signing.key.alias')
-            keyPassword project.property('android.injected.signing.key.password')
-        }
-        getByName("debug") {
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-        }
-    }
-
     buildFeatures {
         buildConfig = true
     }
@@ -48,6 +33,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+            postprocessing {
+                isObfuscate = true
+                isOptimizeCode = true
+                isRemoveUnusedCode = true
+                isRemoveUnusedResources = true
+            }
+        }
+        debug {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 

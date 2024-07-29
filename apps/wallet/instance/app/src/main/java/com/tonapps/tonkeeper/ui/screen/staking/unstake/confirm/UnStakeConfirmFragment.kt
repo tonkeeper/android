@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
@@ -44,7 +45,7 @@ class UnStakeConfirmFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unst
         taskView = view.findViewById(R.id.task)
 
         collectFlow(unStakeViewModel.walletFlow) { wallet ->
-            walletView.value = wallet.label.title
+            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView)
         }
 
         collectFlow(unStakeViewModel.poolFlow, ::applyPool)

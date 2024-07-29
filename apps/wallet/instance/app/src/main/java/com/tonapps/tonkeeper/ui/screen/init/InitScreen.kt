@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import com.tonapps.ledger.ton.LedgerConnectData
@@ -89,8 +90,8 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
         val transaction = childFragmentManager.beginTransaction()
         transaction.setCustomAnimations(uikit.R.anim.fragment_enter_from_right, uikit.R.anim.fragment_exit_to_left, uikit.R.anim.fragment_enter_from_left, uikit.R.anim.fragment_exit_to_right)
-        transaction.replace(R.id.step_container, fragment, step.toString())
-        transaction.addToBackStack(step.toString())
+        transaction.replace(R.id.step_container, fragment, fragment.toString())
+        transaction.addToBackStack(fragment.toString())
         transaction.commit()
     }
 

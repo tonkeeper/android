@@ -113,7 +113,7 @@ fun Context.drawable(
     if (color != Color.TRANSPARENT) {
         drawable.setTint(color)
     }
-    return drawable
+    return drawable.mutate()
 }
 
 fun Context.getCurrentFocus(): View? {

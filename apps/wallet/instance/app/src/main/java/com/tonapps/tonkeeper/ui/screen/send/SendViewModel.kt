@@ -94,6 +94,8 @@ class SendViewModel(
     private val _userInputFlow = MutableStateFlow(UserInput())
     private val userInputFlow = _userInputFlow.asStateFlow()
 
+    val walletTypeFlow = accountRepository.selectedWalletFlow.map { it.type }
+
     private val userInputAddressFlow = userInputFlow
         .map { it.address }
         .distinctUntilChanged()
@@ -384,6 +386,20 @@ class SendViewModel(
         launchTransfer(transferFlow.onEach { transfer ->
             send(body, transfer)
         })
+    }
+
+    fun signerData() = combine(
+        accountRepository.selectedWalletFlow.take(1),
+        transferFlow.take(1)
+    ) { wallet, transfer ->
+        Pair(wallet.publicKey, transfer.unsignedBody)
+    }
+
+    fun signerDataLedger() = combine(
+        accountRepository.selectedWalletFlow.take(1),
+        transferFlow.take(1)
+    ) { wallet, transfer ->
+        Pair(wallet.id, transfer.ledgerTransaction)
     }
 
     fun send(context: Context) {

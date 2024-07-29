@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
@@ -43,7 +44,7 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
         button.setOnClickListener { stake() }
 
         collectFlow(stakeViewModel.walletFlow) { wallet ->
-            walletView.value = wallet.label.title
+            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView)
         }
 
         collectFlow(stakeViewModel.fiatFormatFlow) { fiatFormat ->

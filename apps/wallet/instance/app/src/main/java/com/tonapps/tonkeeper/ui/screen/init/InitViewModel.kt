@@ -149,11 +149,12 @@ class InitViewModel(
             _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
         } else if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
             _eventFlow.tryEmit(InitEvent.Step.ImportWords)
-        } else if (type == InitArgs.Type.Signer) {
+        } else if (type == InitArgs.Type.Signer || type == InitArgs.Type.SignerQR) {
+            _eventFlow.tryEmit(InitEvent.Loading(true))
             scope.launch(Dispatchers.IO) {
                 resolveWallets(savedState.publicKey!!)
+                _eventFlow.tryEmit(InitEvent.Loading(false))
             }
-            // _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
         } else if (type == InitArgs.Type.Ledger) {
             _eventFlow.tryEmit(InitEvent.Step.SelectAccount)
         }
@@ -363,7 +364,7 @@ class InitViewModel(
                     InitArgs.Type.Ledger -> wallets.addAll(ledgerWallets())
                 }
 
-                if (type == InitArgs.Type.Import) {
+                if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
                     for (wallet in wallets) {
                         backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)
                     }

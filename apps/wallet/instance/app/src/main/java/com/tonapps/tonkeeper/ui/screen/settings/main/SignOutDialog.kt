@@ -4,6 +4,8 @@ import android.content.Context
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.tonkeeper.extensions.getStringCompat
+import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.Wallet
@@ -34,7 +36,7 @@ class SignOutDialog(
 
     fun show(label: Wallet.Label, onClick: () -> Unit) {
         super.show()
-        confirmationTextView.text = context.getString(Localization.logout_confirmation, label.title)
+        confirmationTextView.text = context.getStringCompat(Localization.logout_confirmation, label.getTitle(context, confirmationTextView))
         findViewById<View>(R.id.logout)?.setOnClickListener {
             onClick()
             dismiss()

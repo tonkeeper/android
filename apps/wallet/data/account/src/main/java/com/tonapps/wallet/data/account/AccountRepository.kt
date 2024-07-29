@@ -262,7 +262,7 @@ class AccountRepository(
         label: Wallet.Label,
         mnemonic: List<String>,
         versions: List<WalletVersion>,
-        testnet: Boolean,
+        testnet: Boolean
     ): List<WalletEntity> {
         val publicKey = vaultSource.addMnemonic(mnemonic)
         val type = if (testnet) Wallet.Type.Testnet else Wallet.Type.Default

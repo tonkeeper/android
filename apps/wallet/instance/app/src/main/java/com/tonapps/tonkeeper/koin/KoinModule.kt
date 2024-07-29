@@ -96,7 +96,7 @@ val koinModel = module {
     viewModel { CountryPickerViewModel(get(), get(), get()) }
     viewModel { parameters -> StakingViewModel(address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { W5StoriesViewModel(get(), get(), get()) }
+    viewModel { W5StoriesViewModel(get(), get(), get(), get()) }
     viewModel { PurchaseViewModel(get(), get(), get()) }
     viewModel { parameters -> NftViewModel(nft = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> StakeViewerViewModel(address = parameters.get(), get(), get(), get(), get()) }

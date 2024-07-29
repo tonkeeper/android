@@ -10,6 +10,7 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,6 +28,7 @@ class W5StoriesViewModel(
     private val accountRepository: AccountRepository,
     private val passcodeManager: PasscodeManager,
     private val backupRepository: BackupRepository,
+    private val rnLegacy: RNLegacy,
 ): ViewModel() {
 
     private val stories = StoryEntity.all
@@ -80,9 +82,9 @@ class W5StoriesViewModel(
                 type = wallet.type
             ).first()
         }.map { wallet ->
-            if (wallet.hasPrivateKey && !passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
-                throw Exception("wrong passcode")
-            }
+            val mnemonic = accountRepository.getMnemonic(wallet.id) ?: throw Exception("mnemonic not found")
+            val passcode = passcodeManager.requestValidPasscode(context)
+            rnLegacy.addMnemonics(passcode, listOf(wallet.id), mnemonic.toList())
             wallet
         }.onEach { wallet ->
             backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)

@@ -20,10 +20,12 @@ import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
+import com.tonapps.tonkeeper.ui.screen.send.SendScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
@@ -149,7 +151,12 @@ class RootActivity: NavigationActivity() {
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
             is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
-            // is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))
+            is RootEvent.Transfer -> add(SendScreen.newInstance(
+                targetAddress = event.address,
+                tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
+                amountNano = event.amount?.toLongOrNull() ?: 0L,
+                text = event.text
+            ))
             is RootEvent.Transaction -> TransactionDialog.open(this, event.event)
             is RootEvent.BuyOrSell -> {
                 if (event.methodEntity == null) {

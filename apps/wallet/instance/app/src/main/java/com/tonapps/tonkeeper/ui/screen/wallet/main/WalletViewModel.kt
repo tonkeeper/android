@@ -92,7 +92,11 @@ class WalletViewModel(
         accountRepository.selectedWalletFlow,
         backupRepository.stream
     ) { wallet, backups ->
-        backups.indexOfFirst { it.walletId == wallet.id } > -1
+        if (!wallet.hasPrivateKey) {
+            true
+        } else {
+            backups.indexOfFirst { it.walletId == wallet.id } > -1
+        }
     }.map { !it }
 
     init {
@@ -132,14 +136,20 @@ class WalletViewModel(
             accountRepository.selectedWalletFlow,
             settingsRepository.currencyFlow,
             backupRepository.stream,
-            networkMonitor.isOnlineFlow
-        ) { wallet, currency, backups, isOnline ->
+            networkMonitor.isOnlineFlow,
+            settingsRepository.walletPrefsChangedFlow,
+        ) { wallet, currency, backups, isOnline, _ ->
             if (isOnline) {
                 setStatus(Status.Updating)
             }
             _uiLabelFlow.value = wallet.label
 
-            val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
+            val hasBackup = if (!wallet.hasPrivateKey) {
+                true
+            } else {
+                backups.indexOfFirst { it.walletId == wallet.id } > -1
+            }
+
             val walletCurrency = getCurrency(wallet, currency)
 
             val localAssets = getLocalAssets(walletCurrency, wallet)

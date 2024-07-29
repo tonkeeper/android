@@ -4,6 +4,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatImageView
@@ -12,13 +13,17 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.tonapps.blockchain.ton.extensions.publicKey
 import com.tonapps.qr.QRImageAnalyzer
 import com.tonapps.tonkeeper.core.signer.SignerApp
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
+import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeperx.R
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -74,9 +79,12 @@ class AddSignerScreen: BaseFragment(R.layout.fragment_signer_add), BaseFragment.
             return
         }
 
-        /*val fragment = InitScreen.singer(uri) ?: return
+        val pk = uri.getQueryParameter("pk")?.publicKey() ?: return
+        val name = uri.getQueryParameter("name")
+
+        val fragment = InitScreen.newInstance(InitArgs.Type.SignerQR, pk, name)
         navigation?.add(fragment)
-        finish()*/
+        finish()
     }
 
     private fun startCamera() {

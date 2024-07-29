@@ -15,6 +15,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.webkit.ProxyConfig
+import androidx.webkit.ProxyController
+import androidx.webkit.WebViewFeature
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
@@ -37,6 +40,8 @@ import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.webview.bridge.BridgeWebView
 import java.util.UUID
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
 import kotlin.coroutines.resume
 
 class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
@@ -104,6 +109,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
         closeView.setOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web_view)
+
         webView.clipToPadding = false
         webView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
             headerDrawable.setDivider(scrollY > 0)
@@ -131,6 +137,11 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             webView.updatePadding(navInsets.bottom)
             insets
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        webView.destroy()
     }
 
     private fun requestMenu(view: View) {

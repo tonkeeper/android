@@ -45,6 +45,9 @@ internal class CustomIcons {
     }
 
     fun contains(emoji: CharSequence): Boolean {
+        if (emoji.startsWith(PREFIX)) {
+            return store.containsKey(emoji.removePrefix(PREFIX))
+        }
         return store.containsKey(emoji)
     }
 

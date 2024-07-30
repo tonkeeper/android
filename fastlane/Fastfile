@@ -29,32 +29,22 @@ platform :android do
             package_name: app_identifier,
             json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
         )
-        
+
         max = internal_version_codes[0] > production_version_codes[0] ? internal_version_codes[0] : production_version_codes[0]
         updated_version_code = max + 1
-        
+
         increment_version_code(
             gradle_file_path: "./apps/wallet/instance/main/build.gradle.kts",
             version_code: updated_version_code
         )
-        
+
         sh("echo VERSION_CODE=#{updated_version_code} >> $GITHUB_ENV")
     end
 
     desc "Start android baselineprofile"
     lane :baseline do
         gradle(
-            tasks: [
-                ":apps:wallet:instance:main:assembleBenchmark",
-                "cleanManagedDevices --unused-only",
-                ":apps:wallet:instance:main:generateReleaseBaselineProfile"
-            ],
-            properties: {
-                "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
-                "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
-                "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
-                "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-            }
+            tasks: [":baselineprofile:main:generateBaselineProfile"]
         )
     end
 
@@ -71,6 +61,12 @@ platform :android do
             }
         )
 
+        puts "Debug"
+        puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
+        puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
+
         sh("echo AAB_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]} >> $GITHUB_ENV")
     end
 
@@ -84,8 +80,14 @@ platform :android do
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
                 "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-            }  
+            }
         )
+
+        puts "Debug"
+        puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
+        puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
 
         sh("echo APK_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]} >> $GITHUB_ENV")
     end
@@ -106,8 +108,9 @@ platform :android do
     desc "Build and upload to GooglePlay"
     lane :beta do
         fetch_and_increment_build_number
-        sh("yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses")
         build_release
         upload_release
+
+        assemble_release
     end
 end

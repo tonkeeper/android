@@ -3,18 +3,18 @@ package com.tonapps.tonkeeper.ui.screen.dialog.encrypted
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import androidx.fragment.app.viewModels
-import com.tonapps.tonkeeper.ui.screen.swap.SwapArgs
 import com.tonapps.tonkeeperx.R
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.tonapps.wallet.data.settings.SettingsRepository
+import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.widget.CheckBoxView
 import uikit.widget.HeaderView
 
 class EncryptedCommentScreen: BaseFragment(R.layout.fragment_encrypted_comment), BaseFragment.Modal {
 
-    private val args: EncryptedCommentArgs by lazy { EncryptedCommentArgs(requireArguments()) }
-    private val encryptedCommentViewModel: EncryptedCommentViewModel by viewModel()
+    private var onAction: (() -> Unit)? = null
+
+    private val settingsRepository: SettingsRepository by inject()
 
     private lateinit var headerView: HeaderView
     private lateinit var button: Button
@@ -28,7 +28,11 @@ class EncryptedCommentScreen: BaseFragment(R.layout.fragment_encrypted_comment),
 
         button = view.findViewById(R.id.decrypted_button)
         button.setOnClickListener {
-            encryptedCommentViewModel.decrypt(requireContext(), args.cipherText, args.senderAddress)
+            if (checkboxView.checked) {
+                settingsRepository.showEncryptedCommentModal = false
+            }
+            onAction?.invoke()
+            finish()
         }
 
         checkboxContainerView = view.findViewById(R.id.checkbox_container)
@@ -38,10 +42,9 @@ class EncryptedCommentScreen: BaseFragment(R.layout.fragment_encrypted_comment),
     }
 
     companion object {
-
-        fun newInstance(cipherText: String, senderAddress: String): EncryptedCommentScreen {
+        fun newInstance(onAction: () -> Unit): EncryptedCommentScreen {
             val fragment = EncryptedCommentScreen()
-            fragment.setArgs(EncryptedCommentArgs(cipherText, senderAddress))
+            fragment.onAction = onAction
             return fragment
         }
     }

@@ -1,25 +1,22 @@
 package com.tonapps.tonkeeper.core.history.list.holder
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
-import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
-import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.iconRes
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
-import com.tonapps.tonkeeper.dialog.TransactionDialog
-import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
+import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
@@ -32,13 +29,16 @@ import uikit.extensions.clearDrawables
 import uikit.extensions.drawable
 import uikit.extensions.setLeftDrawable
 import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 
 class HistoryActionHolder(
     parent: ViewGroup,
-    private val disableOpenAction: Boolean
-): HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
+    private val disableOpenAction: Boolean,
+    private val getDecryptedComment: (txId: String) -> String?,
+    private val decryptComment: (context: Context, position: Int, txId: String, cipherText: String, senderAddress: String) -> Unit,
+) : HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
 
     private val amountColorReceived = context.accentGreenColor
     private val amountColorDefault = context.textPrimaryColor
@@ -75,7 +75,7 @@ class HistoryActionHolder(
         }
 
         if (!disableOpenAction) {
-            itemView.setOnClickListener { TransactionDialog.open(context, item) }
+            itemView.setOnClickListener { context.navigation?.add(TransactionScreen.newInstance(item)) }
         }
 
         itemView.background = item.position.drawable(context)
@@ -97,19 +97,18 @@ class HistoryActionHolder(
         }
 
         bindPending(item.pending)
-        if (item.comment == null && item.cipherText == null) {
+        if (item.comment.isNullOrBlank() && item.cipherText == null) {
             commentView.visibility = View.GONE
         } else {
-            bindComment(item.comment)
-            bindEncryptedComment(item.cipherText, item.address?:"")
+            val decryptedComment = getDecryptedComment(item.txId)
+            bindComment(item.comment ?: decryptedComment)
+            if (decryptedComment == null) {
+                bindEncryptedComment(item.txId, item.cipherText, item.address ?: "")
+            }
         }
 
         bindNft(item)
         bindAmount(item)
-    }
-
-    private fun decryptComment(cipherText: String, senderAddress: String) {
-        Navigation.from(context)?.add(EncryptedCommentScreen.newInstance(cipherText, senderAddress))
     }
 
     private fun loadIcon(uri: Uri) {
@@ -159,14 +158,22 @@ class HistoryActionHolder(
         commentView.setOnClickListener(null)
     }
 
-    private fun bindEncryptedComment(cipherText: String?, senderAddress: String) {
+    private fun bindEncryptedComment(txId: String, cipherText: String?, senderAddress: String) {
         if (cipherText == null) {
             return
         }
         commentView.visibility = View.VISIBLE
         commentView.text = context.getString(Localization.encrypted_comment)
         commentView.setLeftDrawable(lockDrawable)
-        commentView.setOnClickListener { decryptComment(cipherText, senderAddress) }
+        commentView.setOnClickListener {
+            decryptComment(
+                context,
+                layoutPosition,
+                txId,
+                cipherText,
+                senderAddress
+            )
+        }
     }
 
     private fun bindNft(item: HistoryItem.Event) {

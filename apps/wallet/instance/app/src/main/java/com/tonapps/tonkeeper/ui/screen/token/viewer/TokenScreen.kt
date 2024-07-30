@@ -18,7 +18,12 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListPaginationListener
+import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -36,7 +41,16 @@ class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
     private val args: TokenArgs by lazy { TokenArgs(requireArguments()) }
     private val tokenViewModel: TokenViewModel by viewModel { parametersOf(args.address) }
     private val tokenAdapter = TokenAdapter()
-    private val historyAdapter = HistoryAdapter()
+    private val eventsRepository: EventsRepository by inject()
+    private val settingsRepository: SettingsRepository by inject()
+    private val accountRepository: AccountRepository by inject()
+    private val passcodeManager: PasscodeManager by inject()
+    private val historyAdapter = HistoryAdapter(
+        eventsRepository = eventsRepository,
+        settingsRepository = settingsRepository,
+        accountRepository = accountRepository,
+        passcodeManager = passcodeManager
+    )
     private val paginationListener = object : ListPaginationListener() {
         override fun onLoadMore() {
             tokenViewModel.loadMore()

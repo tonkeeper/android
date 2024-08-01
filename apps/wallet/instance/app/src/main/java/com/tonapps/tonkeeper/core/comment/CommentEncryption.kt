@@ -1,16 +1,23 @@
 package com.tonapps.tonkeeper.core.comment
 
 import android.util.Log
+import com.tonapps.security.Security
 import io.ktor.util.hex
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
+import org.ton.cell.Cell
+import org.ton.cell.CellBuilder
 import org.ton.crypto.Ed25519
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.experimental.xor
+import kotlin.math.ceil
 
 object CommentEncryption {
+    private const val ROOT_CELL_BYTE_LENGTH = 35 + 4
+    private const val CELL_BYTE_LENGTH = 127
+
     fun decryptComment(
         publicKey: PublicKeyEd25519,
         privateKey: PrivateKeyEd25519,
@@ -29,16 +36,125 @@ object CommentEncryption {
         return decryptedData.decodeToString()
     }
 
+    fun encryptComment(
+        comment: String,
+        myPublicKey: PublicKeyEd25519,
+        theirPublicKey: PublicKeyEd25519,
+        myPrivateKey: PrivateKeyEd25519,
+        senderAddress: String
+    ): Cell {
+        if (comment.isEmpty()) throw IllegalArgumentException("empty comment")
+
+        val myPublicKeyBytes = myPublicKey.key.toByteArray()
+        val theirPublicKeyBytes = theirPublicKey.key.toByteArray()
+        val myPrivateKeyBytes = myPrivateKey.key.toByteArray()
+
+        val privateKey =
+            if (myPrivateKeyBytes.size == 64) myPrivateKeyBytes.sliceArray(0 until 32) else myPrivateKeyBytes
+
+        val commentBytes = comment.toByteArray()
+
+        val address = AddrStd(senderAddress).toString(bounceable = true, urlSafe = true)
+        val salt = address.toByteArray()
+
+        val encryptedBytes =
+            encryptData(commentBytes, myPublicKeyBytes, theirPublicKeyBytes, privateKey, salt)
+
+        val payload = ByteArray(encryptedBytes.size + 4)
+        payload[0] = 0x21 // encrypted text prefix
+        payload[1] = 0x67
+        payload[2] = 0xda.toByte()
+        payload[3] = 0x4b
+        encryptedBytes.copyInto(payload, 4)
+
+        return makeSnakeCells(payload)
+    }
+
+    private fun makeSnakeCells(bytes: ByteArray): Cell {
+        val rootCellBuilder = CellBuilder.beginCell()
+            .storeBytes(bytes.sliceArray(0 until minOf(bytes.size, ROOT_CELL_BYTE_LENGTH)))
+
+        val cellCount =
+            ceil((bytes.size - ROOT_CELL_BYTE_LENGTH).toDouble() / CELL_BYTE_LENGTH).toInt()
+        if (cellCount > 16) {
+            throw IllegalArgumentException("Text too long")
+        }
+
+        rootCellBuilder.storeRef(storeDeepRef(bytes.sliceArray(ROOT_CELL_BYTE_LENGTH until bytes.size)))
+
+        return rootCellBuilder.endCell()
+    }
+
+    private fun storeDeepRef(bytes: ByteArray): Cell {
+        return if (bytes.size <= CELL_BYTE_LENGTH) {
+            CellBuilder.beginCell().storeBytes(bytes.sliceArray(0 until bytes.size)).endCell()
+        } else {
+            CellBuilder.beginCell().storeBytes(bytes.sliceArray(0 until CELL_BYTE_LENGTH))
+                .storeRef(storeDeepRef(bytes.sliceArray(CELL_BYTE_LENGTH until bytes.size)))
+                .endCell()
+        }
+    }
+
+    private fun encryptData(
+        data: ByteArray,
+        myPublicKey: ByteArray,
+        theirPublicKey: ByteArray,
+        privateKey: ByteArray,
+        salt: ByteArray
+    ): ByteArray {
+        val sharedSecret = Ed25519.sharedKey(privateKey, theirPublicKey)
+
+        val encrypted = encryptDataImpl(data, sharedSecret, salt)
+        val prefixedEncrypted = ByteArray(myPublicKey.size + encrypted.size)
+
+        for (i in myPublicKey.indices) {
+            prefixedEncrypted[i] = (theirPublicKey[i] xor myPublicKey[i]).toByte()
+        }
+
+        encrypted.copyInto(prefixedEncrypted, myPublicKey.size)
+
+        return prefixedEncrypted
+    }
+
+    private fun encryptDataImpl(
+        data: ByteArray,
+        sharedSecret: ByteArray,
+        salt: ByteArray
+    ): ByteArray {
+        val prefix = getRandomPrefix(data.size, 16)
+        val combined = ByteArray(prefix.size + data.size)
+        System.arraycopy(prefix, 0, combined, 0, prefix.size)
+        System.arraycopy(data, 0, combined, prefix.size, data.size)
+        return encryptDataWithPrefix(combined, sharedSecret, salt)
+    }
+
+    private fun encryptDataWithPrefix(
+        data: ByteArray,
+        sharedSecret: ByteArray,
+        salt: ByteArray
+    ): ByteArray {
+        if (data.size % 16 != 0) throw IllegalArgumentException("Data length is not divisible by 16")
+        val dataHash = hmacSha512(salt, data)
+        val msgKey = dataHash.sliceArray(0 until 16)
+        val cbcStateSecret = hmacSha512(sharedSecret, msgKey)
+        val encrypted = AesCbcState(cbcStateSecret).encrypt(data)
+        return msgKey + encrypted
+    }
+
+    private fun getRandomPrefix(dataLength: Int, minPadding: Int): ByteArray {
+        val prefixLength = ((minPadding + 15 + dataLength) and -16) - dataLength
+        val prefix = Security.randomBytes(prefixLength)
+        prefix[0] = prefixLength.toByte()
+        if ((prefixLength + dataLength) % 16 != 0) throw IllegalArgumentException("Prefix length is invalid")
+        return prefix
+    }
+
     private fun decryptData(
         data: ByteArray,
         publicKey: ByteArray,
         privateKey: ByteArray,
         salt: ByteArray
     ): ByteArray {
-        Log.d("decryptData", "data: ${hex(data)}")
-        Log.d("decryptData", "publicKey: ${hex(publicKey)}")
-        Log.d("decryptData", "privateKey: ${hex(privateKey)}")
-        Log.d("decryptData", "salt: ${hex(salt)}")
         val theirPublicKey = ByteArray(publicKey.size)
         for (i in publicKey.indices) {
             theirPublicKey[i] = data[i] xor publicKey[i]
@@ -52,9 +168,6 @@ object CommentEncryption {
         sharedSecret: ByteArray,
         salt: ByteArray
     ): ByteArray {
-        Log.d("decryptDataImpl", "encryptedData: ${hex(encryptedData)}")
-        Log.d("decryptDataImpl", "sharedSecret: ${hex(sharedSecret)}")
-        Log.d("decryptDataImpl", "salt: ${hex(salt)}")
         if (encryptedData.size < 16) throw IllegalArgumentException("Failed to decrypt: data is too small")
         if (encryptedData.size % 16 != 0) throw IllegalArgumentException("Failed to decrypt: data size is not divisible by 16")
 
@@ -71,10 +184,6 @@ object CommentEncryption {
         encryptedData: ByteArray,
         salt: ByteArray
     ): ByteArray {
-        Log.d("doDecrypt", "cbcStateSecret: ${hex(cbcStateSecret)}")
-        Log.d("doDecrypt", "msgKey: ${hex(msgKey)}")
-        Log.d("doDecrypt", "encryptedData: ${hex(encryptedData)}")
-        Log.d("doDecrypt", "salt: ${hex(salt)}")
         val decryptedData = AesCbcState(cbcStateSecret).decrypt(encryptedData)
         val dataHash = hmacSha512(salt, decryptedData)
 

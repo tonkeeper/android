@@ -12,7 +12,7 @@ suspend fun <R> withRetry(
         try {
             return block()
         } catch (e: Throwable) {
-            Log.d("SendScreenLog", "Error: emulating transfer", e)
+            Log.e("TonKeeperReleaseLog", "Failed request", e)
         }
         delay(delay)
     }

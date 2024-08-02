@@ -68,7 +68,7 @@ class API(
     val config: ConfigEntity
         get() {
             while (configRepository.configEntity == null) {
-                Thread.sleep(32)
+                Thread.sleep(16)
             }
             return configRepository.configEntity!!
         }
@@ -538,7 +538,7 @@ class API(
             tonApiV2Key: String
         ): OkHttpClient {
             return baseOkHttpClientBuilder()
-                // .addInterceptor(AcceptLanguageInterceptor(context.locale))
+                .addInterceptor(AcceptLanguageInterceptor(context.locale))
                 .addInterceptor(AuthorizationInterceptor.bearer(tonApiV2Key))
                 .build()
         }

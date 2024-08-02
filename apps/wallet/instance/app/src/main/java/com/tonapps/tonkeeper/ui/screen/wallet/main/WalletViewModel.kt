@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.network.NetworkMonitor
@@ -246,6 +247,7 @@ class WalletViewModel(
             val staking = stakingRepository.get(wallet.accountId, wallet.testnet, ignoreCache = true)
             buildStateTokens(wallet, currency, tokens, staking, false)
         } catch (e: Throwable) {
+            Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
             return@withContext null
         }
     }

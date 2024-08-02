@@ -1,7 +1,9 @@
 package com.tonapps.wallet.data.account.entities
 
+import kotlinx.serialization.Serializable
 import org.json.JSONObject
 
+@Serializable
 data class ProofEntity(
     val timestamp: Long,
     val domain: ProofDomainEntity,

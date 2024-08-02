@@ -17,6 +17,8 @@ class WalletV4R2Contract(
     publicKey: PublicKeyEd25519,
 ) : WalletV4R1Contract(workchain, publicKey) {
 
+    override fun getWalletVersion() = WalletVersion.V4R2
+
     override fun getSignaturePosition(): SignaturePosition {
         return SignaturePosition.Front
     }

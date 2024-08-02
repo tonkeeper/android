@@ -2,12 +2,14 @@ package com.tonapps.icu
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.RoundingMode
 import kotlin.math.pow
 
 data class Coins(
-    val value: Double,
+    val value: BigDecimal,
     val decimals: Int = DEFAULT_DECIMALS,
 ): Parcelable, Comparable<Coins> {
 
@@ -21,11 +23,9 @@ data class Coins(
 
         const val DEFAULT_DECIMALS = 9
 
-        val ZERO = Coins(0.0, DEFAULT_DECIMALS)
+        val ZERO = of(BigDecimal.ZERO, DEFAULT_DECIMALS)
 
-        val ONE = Coins(1.0, DEFAULT_DECIMALS)
-
-        // private const val BASE = 1000000000L
+        val ONE = of(BigDecimal.ONE, DEFAULT_DECIMALS)
 
         fun of(
             value: String,
@@ -33,39 +33,41 @@ data class Coins(
         ): Coins {
             val divisor = BigDecimal.TEN.pow(decimals)
             val bigDecimal = safeBigDecimal(prepareValue(value)).divide(divisor, decimals, RoundingMode.FLOOR)
-            return Coins(bigDecimal.toDouble(), decimals)
+            return of(bigDecimal.toDouble(), decimals)
         }
 
         fun of(
             value: BigDecimal,
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
-            return Coins(value.toDouble(), decimals)
+            return Coins(value, decimals)
         }
 
         fun of(
             value: Long,
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
-            val bigDecimal = BigDecimal(value / 10.0.pow(decimals))
-            return Coins(bigDecimal.toDouble(), decimals)
+            val bigDecimal = safeBigDecimal(value).movePointLeft(decimals)
+            return Coins(bigDecimal, decimals)
         }
 
         fun of(
             value: Double,
             decimals: Int = DEFAULT_DECIMALS,
         ): Coins {
-            val bigDecimal = BigDecimal(value)
-            return Coins(bigDecimal.toDouble(), decimals)
+            val bigDecimal = safeBigDecimal(value) //.movePointLeft(decimals)
+            return Coins(bigDecimal, decimals)
         }
 
-        fun safeBigDecimal(
+        private fun safeBigDecimal(
             value: Any
         ): BigDecimal {
             return try {
                 when (value) {
+                    is BigInteger -> value.toBigDecimal()
                     is String -> BigDecimal(value)
-                    is Double -> BigDecimal(value)
+                    is Double -> value.toBigDecimal()
+                    is Long -> value.toBigDecimal()
                     else -> BigDecimal.ZERO
                 }
             } catch (e: Throwable) {
@@ -113,25 +115,28 @@ data class Coins(
     val isPositive: Boolean
         get() = value > ZERO.value
 
+    val isNegative: Boolean
+        get() = value < ZERO.value
+
     constructor(parcel: Parcel) : this(
-        parcel.readDouble(),
+        parcel.readSerializable() as BigDecimal,
         parcel.readInt(),
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeDouble(value)
+        parcel.writeSerializable(value)
         parcel.writeInt(decimals)
     }
 
-    operator fun plus(other: Coins) = Coins(value + other.value, decimals)
+    operator fun plus(other: Coins) = of(value + other.value, decimals)
 
-    operator fun minus(other: Coins) = Coins(value - other.value, decimals)
+    operator fun minus(other: Coins) = of(value - other.value, decimals)
 
-    operator fun times(other: Coins) = Coins(value * other.value, decimals)
+    operator fun times(other: Coins) = of(value * other.value, decimals)
 
-    operator fun div(other: Coins) = Coins(value / other.value, decimals)
+    operator fun div(other: Coins) = of(value / other.value, decimals)
 
-    operator fun rem(other: Coins) = Coins(value % other.value, decimals)
+    operator fun rem(other: Coins) = of(value.remainder(other.value), decimals)
 
     operator fun inc() = Coins(value + ONE.value, decimals)
 
@@ -139,19 +144,17 @@ data class Coins(
 
     override operator fun compareTo(other: Coins) = value.compareTo(other.value)
 
-    fun abs() = Coins(kotlin.math.abs(value), decimals)
+    fun abs() = Coins(value.abs(), decimals)
 
-    fun stripTrailingZeros(): BigDecimal {
-        return try {
-            BigDecimal(value).stripTrailingZeros()
-        } catch (e: Throwable) {
-            BigDecimal.ZERO
-        }
+    fun stripTrailingZeros(): Coins = Coins(value.stripTrailingZeros(), decimals)
+
+    fun toLong(): Long {
+        val multiplier = BigDecimal.TEN.pow(decimals)
+        val multipliedValue = value.multiply(multiplier)
+        return multipliedValue.toLong()
     }
 
-    fun nano(): Long {
-        return (value * 10.0.pow(decimals)).toLong()
-    }
+    fun toDouble(): Double = value.toDouble()
 
     override fun describeContents(): Int {
         return 0

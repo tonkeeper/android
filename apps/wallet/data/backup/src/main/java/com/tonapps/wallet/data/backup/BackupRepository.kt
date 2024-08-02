@@ -31,12 +31,11 @@ class BackupRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
-            val allBackups = localDataSource.getAllBackups()
-            if (context.isMainVersion && allBackups.isEmpty()) {
+            if (rnLegacy.isRequestMigration()) {
+                localDataSource.clear()
                 migrationFromRN()
-            } else {
-                _stream.value = allBackups
             }
+            _stream.value = localDataSource.getAllBackups()
         }
     }
 
@@ -46,8 +45,8 @@ class BackupRepository(
         for (wallet in wallets) {
             val key = "${wallet.identifier}/setup"
             val value = rnLegacy.getJSONValue(key) ?: continue
-            val lastBackupAt = value.optLong("lastBackupAt", 0)
-            if (lastBackupAt > 0) {
+            val lastBackupAt = value.optLong("lastBackupAt", -1)
+            if (lastBackupAt >= 0) {
                 backups.add(addBackup(wallet.identifier, BackupEntity.Source.LOCAL, lastBackupAt))
             }
         }
@@ -58,8 +57,8 @@ class BackupRepository(
         scope.launch(Dispatchers.IO) {
             val wallets = rnLegacy.getWallets().wallets
             for (wallet in wallets) {
-                val entity = entities?.find { it.walletId == wallet.identifier }
-                val lastBackupAt = entity?.date ?: 0
+                val entity = entities?.find { it.walletId == wallet.identifier } ?: continue
+                val lastBackupAt = entity.date
                 val key = "${wallet.identifier}/setup"
                 val json = JSONObject()
                 json.put("lastBackupAt", lastBackupAt)

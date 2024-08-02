@@ -1,0 +1,16 @@
+EXECUTING: /Users/polstianka/Library/Android/sdk/platform-tools/adb -H localhost -P 5037 -s emulator-5556 shell rm -rf "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output"
+CURRENT_WORKING_DIRECTORY: /Users/polstianka/StudioProjects/TonkeeperX
+START_TIME: 2024-07-16 04:06:06.569
+START_TIME-NANOS: 2024-07-16 04:06:06.569747000
+ENVIRONMENT:
+ANDROID_SDK_HOME=/Users/polstianka/Library/Android/sdk
+ANDROID_ADB=/Users/polstianka/Library/Android/sdk/platform-tools/adb
+*****************************************
+STDOUT/STDERR BELOW
+===================
+
+===================
+END_TIME: 2024-07-16 04:06:06.587
+END_TIME-NANOS: 2024-07-16 04:06:06.587273000
+DURATION: 17ms
+EXIT CODE: 0

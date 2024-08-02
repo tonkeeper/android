@@ -34,13 +34,13 @@ internal class RemoteDataSource(
             it.token.address == TokenEntity.USDT.address
         }
 
-        if (usdtIndex == -1) {
+        if (usdtIndex == -1 && !testnet) {
             entities.add(BalanceEntity(
                 token = TokenEntity.USDT,
                 value = Coins.ZERO,
                 walletAddress = accountId
             ))
-        } else {
+        } else if (usdtIndex >= 0) {
             jettons[usdtIndex] = jettons[usdtIndex].copy(
                 token = TokenEntity.USDT
             )

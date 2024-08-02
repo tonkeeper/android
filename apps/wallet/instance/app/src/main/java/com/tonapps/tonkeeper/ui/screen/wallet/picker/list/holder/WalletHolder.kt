@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
@@ -69,14 +70,18 @@ class WalletHolder(
             checkView.visibility = View.VISIBLE
         }
 
-        setType(item.walletType, item.w5)
+        setType(item.walletType, item.walletVersion)
     }
 
-    private fun setType(type: Wallet.Type, w5: Boolean) {
-        if (w5) {
+    private fun setType(type: Wallet.Type, version: WalletVersion) {
+        if (version == WalletVersion.V5R1 || version == WalletVersion.V5R1BETA) {
             val color = context.accentGreenColor
             typeView.visibility = View.VISIBLE
-            typeView.setText(Localization.w5beta)
+            if (version == WalletVersion.V5R1BETA) {
+                typeView.setText(Localization.w5beta)
+            } else {
+                typeView.setText(Localization.w5)
+            }
             typeView.setTextColor(color)
             typeView.backgroundTintList = color.withAlpha(.16f).stateList
             return

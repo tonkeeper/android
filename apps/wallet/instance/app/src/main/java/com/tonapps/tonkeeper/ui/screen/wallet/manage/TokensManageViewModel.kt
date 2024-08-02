@@ -2,7 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.wallet.manage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.tonkeeper.core.entities.TokenExtendedEntity
+import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
@@ -31,11 +32,11 @@ class TokensManageViewModel(
         settingsRepository.tokenPrefsChangedFlow,
     ) { wallet, _ ->
         tokenRepository.getLocal(settingsRepository.currency, wallet.accountId, wallet.testnet).map { token ->
-            TokenExtendedEntity(
-                raw = token,
+            AssetsExtendedEntity(
+                raw = AssetsEntity.Token(token),
                 prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
             )
-        }.filter { !it.raw.isTon }
+        }.filter { !it.isTon }
     }
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())

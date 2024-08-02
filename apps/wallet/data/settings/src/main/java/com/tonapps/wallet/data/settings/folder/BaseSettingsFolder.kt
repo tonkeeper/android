@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getByteArray
 import kotlinx.coroutines.flow.asSharedFlow
@@ -20,7 +21,7 @@ internal abstract class BaseSettingsFolder(
         notifyChanged()
     }
 
-    fun notifyChanged() {
+    private fun notifyChanged() {
         _changedFlow.tryEmit(Unit)
     }
 
@@ -30,18 +31,33 @@ internal abstract class BaseSettingsFolder(
 
     fun getInt(key: String, defValue: Int = 0) = prefs.getInt(key, defValue)
 
-    fun putBoolean(key: String, value: Boolean) {
+    fun getLong(key: String, defValue: Long = 0) = prefs.getLong(key, defValue)
+
+    fun putLong(key: String, value: Long, notify: Boolean = true) {
+        prefs.edit().putLong(key, value).apply()
+        if (notify) {
+            notifyChanged()
+        }
+    }
+
+    fun putBoolean(key: String, value: Boolean, notify: Boolean = true) {
         prefs.edit().putBoolean(key, value).apply()
-        notifyChanged()
+        if (notify) {
+            notifyChanged()
+        }
     }
 
-    fun putInt(key: String, value: Int) {
+    fun putInt(key: String, value: Int, notify: Boolean = true) {
         prefs.edit().putInt(key, value).apply()
-        notifyChanged()
+        if (notify) {
+            notifyChanged()
+        }
     }
 
-    fun edit(block: SharedPreferences.Editor.() -> Unit) {
+    fun edit(notify: Boolean = true, block: SharedPreferences.Editor.() -> Unit) {
         prefs.edit().apply(block).apply()
-        notifyChanged()
+        if (notify) {
+            notifyChanged()
+        }
     }
 }

@@ -5,10 +5,8 @@ import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
-import com.tonapps.blockchain.ton.contract.WalletV5R1Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
-import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
@@ -17,6 +15,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -33,7 +32,8 @@ class SettingsViewModel(
     application: Application,
     private val accountRepository: AccountRepository,
     private val settings: SettingsRepository,
-    private val api: API
+    private val api: API,
+    private val backupRepository: BackupRepository,
 ): AndroidViewModel(application) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
@@ -44,9 +44,11 @@ class SettingsViewModel(
             accountRepository.selectedWalletFlow,
             settings.currencyFlow,
             settings.languageFlow,
-            settings.searchEngineFlow
-        ) { wallet, currency, language, searchEngine ->
-            buildUiItems(wallet, currency, language, searchEngine)
+            settings.searchEngineFlow,
+            backupRepository.stream,
+        ) { wallet, currency, language, searchEngine, backups ->
+            val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
+            buildUiItems(wallet, currency, language, searchEngine, hasBackup)
         }.launchIn(viewModelScope)
     }
 
@@ -74,7 +76,8 @@ class SettingsViewModel(
         wallet: WalletEntity,
         currency: WalletCurrency,
         language: Language,
-        searchEngine: SearchEngine
+        searchEngine: SearchEngine,
+        hasBackup: Boolean
     ) {
         val hasW5 = hasW5(wallet)
         val uiItems = mutableListOf<Item>()
@@ -82,7 +85,7 @@ class SettingsViewModel(
 
         uiItems.add(Item.Space)
         if (!wallet.isExternal && !wallet.isWatchOnly) {
-            uiItems.add(Item.Backup(ListCell.Position.FIRST))
+            uiItems.add(Item.Backup(ListCell.Position.FIRST, hasBackup))
             uiItems.add(Item.Security(ListCell.Position.LAST))
         } else {
             uiItems.add(Item.Security(ListCell.Position.SINGLE))
@@ -117,7 +120,7 @@ class SettingsViewModel(
         if (wallet.type == Wallet.Type.Watch) {
             uiItems.add(Item.DeleteWatchAccount(ListCell.Position.SINGLE))
         } else {
-            uiItems.add(Item.Logout(ListCell.Position.SINGLE))
+            uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label))
         }
         uiItems.add(Item.Space)
         uiItems.add(Item.Logo)

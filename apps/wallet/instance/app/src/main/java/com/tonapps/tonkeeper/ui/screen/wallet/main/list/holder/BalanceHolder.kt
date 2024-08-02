@@ -74,7 +74,7 @@ class BalanceHolder(
             balanceView.background = null
         }
 
-        val requestBackup = (item.walletType == Wallet.Type.Default || item.walletType == Wallet.Type.Testnet || item.walletType == Wallet.Type.Lockup) && !item.hasBackup
+        val requestBackup = (item.walletType == Wallet.Type.Default || item.walletType == Wallet.Type.Lockup) && !item.hasBackup
 
         if (requestBackup && item.balanceType == Item.BalanceType.Huge) {
             balanceView.setTextColor(context.accentRedColor)
@@ -89,12 +89,21 @@ class BalanceHolder(
             backupIconView.visibility = View.GONE
         }
 
-        setWalletType(item.walletType, item.walletVersion == WalletVersion.V5R1)
-        setWalletState(item.status, item.address, item.walletType)
+        setWalletType(item.walletType, item.walletVersion)
+        setWalletState(item.status, item.address, item.walletType, item.lastUpdatedFormat)
     }
 
-    private fun setWalletState(state: Item.Status, address: String, walletType: Wallet.Type) {
-        if (state == Item.Status.Updating) {
+    private fun setWalletState(
+        state: Item.Status,
+        address: String,
+        walletType: Wallet.Type,
+        lastUpdatedFormat: String,
+    ) {
+        if (state == Item.Status.LastUpdated) {
+            walletLoaderView.visibility = View.GONE
+            walletAddressView.text = context.getString(Localization.last_updated, lastUpdatedFormat)
+            walletAddressView.setTextColor(context.textSecondaryColor)
+        } else if (state == Item.Status.Updating) {
             walletLoaderView.visibility = View.VISIBLE
             walletAddressView.setText(Localization.updating)
             walletAddressView.setTextColor(context.textSecondaryColor)
@@ -124,13 +133,17 @@ class BalanceHolder(
         }
     }
 
-    private fun setWalletType(type: Wallet.Type, w5: Boolean) {
-        if (w5) {
+    private fun setWalletType(type: Wallet.Type, version: WalletVersion) {
+        if (version == WalletVersion.V5R1 || version == WalletVersion.V5R1BETA) {
             val color = context.accentGreenColor
             walletTypeView.visibility = View.VISIBLE
             walletTypeView.setTextColor(color)
             walletTypeView.backgroundTintList = color.withAlpha(.16f).stateList
-            walletTypeView.setText(Localization.w5beta)
+            if (version == WalletVersion.V5R1BETA) {
+                walletTypeView.setText(Localization.w5beta)
+            } else {
+                walletTypeView.setText(Localization.w5)
+            }
             return
         }
 

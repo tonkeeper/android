@@ -9,7 +9,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class RatesEntity(
     val currency: WalletCurrency,
-    private val map: HashMap<String, RateEntity>
+    private val map: Map<String, RateEntity>
 ): Parcelable {
 
     companion object {
@@ -21,17 +21,15 @@ data class RatesEntity(
     val isEmpty: Boolean
         get() = map.isEmpty()
 
-    fun merge(rates: RatesEntity) {
-        for ((key, value) in rates.map) {
-            map[key] = value
-        }
-    }
+    private val isUSD: Boolean
+        get() = currency.code == "USD"
 
     fun merge(rates: List<RateEntity>): RatesEntity {
+        val newMap = map.toMutableMap()
         for (rate in rates) {
-            map[rate.tokenCode] = rate
+            newMap[rate.tokenCode] = rate.copy()
         }
-        return this
+        return copy(map = newMap.toMap())
     }
 
     fun filter(tokens: List<String>): RatesEntity {
@@ -56,17 +54,11 @@ data class RatesEntity(
     }
 
     fun convert(token: String, value: Coins): Coins {
-        if (token == TokenEntity.USDT.address) {
-            return value
-        }
         val rate = rateValue(token)
         return (value * rate)
     }
 
     fun convertFromFiat(token: String, value: Coins): Coins {
-        if (token == TokenEntity.USDT.address) {
-            return value
-        }
         val rate = rateValue(token)
         return (value / rate)
     }

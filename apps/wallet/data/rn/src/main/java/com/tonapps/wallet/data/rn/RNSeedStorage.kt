@@ -24,6 +24,24 @@ internal class RNSeedStorage(context: Context) {
         kv.setActivity(activity)
     }
 
+    suspend fun setTonProof(id: String, token: String) = withContext(Dispatchers.IO) {
+        val key = keyTonProof(id)
+        kv.setItemImpl(key, token)
+    }
+
+    suspend fun getTonProof(id: String): String? = withContext(Dispatchers.IO) {
+        val key = keyTonProof(id)
+        val value = kv.getItemImpl(key)
+        if (value.isNullOrBlank()) {
+            return@withContext null
+        }
+        value
+    }
+
+    private fun keyTonProof(id: String): String {
+        return "proof-$id"
+    }
+
     suspend fun exportPasscodeWithBiometry(): String = withContext(Dispatchers.IO) {
         val passcode = kv.getItemImpl(biometryKey, SecureStoreOptions(
             keychainService = keychainService

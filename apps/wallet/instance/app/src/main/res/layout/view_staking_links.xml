@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/itemHeight"
+        android:text="@string/links"
+        android:gravity="center_vertical"
+        android:textAppearance="@style/TextAppearance.H3"
+        android:textColor="?attr/textPrimaryColor"/>
+
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/links"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:flexDirection="row"
+        app:flexWrap="wrap"
+        app:layout_flexGrow="1"/>
+</uikit.widget.ColumnLayout>

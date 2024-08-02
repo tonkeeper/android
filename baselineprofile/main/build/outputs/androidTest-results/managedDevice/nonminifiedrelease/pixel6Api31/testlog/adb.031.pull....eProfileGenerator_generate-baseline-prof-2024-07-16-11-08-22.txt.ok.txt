@@ -1,0 +1,17 @@
+EXECUTING: /Users/polstianka/Library/Android/sdk/platform-tools/adb -H localhost -P 5037 -s emulator-5556 pull /sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt /Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api31/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt
+CURRENT_WORKING_DIRECTORY: /Users/polstianka/StudioProjects/TonkeeperX
+START_TIME: 2024-07-16 04:08:24.247
+START_TIME-NANOS: 2024-07-16 04:08:24.247550000
+ENVIRONMENT:
+ANDROID_SDK_HOME=/Users/polstianka/Library/Android/sdk
+ANDROID_ADB=/Users/polstianka/Library/Android/sdk/platform-tools/adb
+*****************************************
+STDOUT/STDERR BELOW
+===================
+/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-11-08-22.txt: 1 file pulled, 0 skipped. 220.7 MB/s (3155609 bytes in 0.014s)
+
+===================
+END_TIME: 2024-07-16 04:08:24.275
+END_TIME-NANOS: 2024-07-16 04:08:24.275311000
+DURATION: 27ms
+EXIT CODE: 0

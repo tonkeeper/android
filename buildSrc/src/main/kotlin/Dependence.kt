@@ -54,6 +54,7 @@ object Dependence {
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"
+        const val webkit = "androidx.webkit:webkit:1.9.0"
 
         const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.2"
         const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.2"

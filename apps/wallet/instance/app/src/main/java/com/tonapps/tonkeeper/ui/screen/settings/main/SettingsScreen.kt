@@ -23,6 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeScreen
 import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -65,7 +66,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             is Item.Support -> navigation?.openURL(item.url, true)
             is Item.Contact -> navigation?.openURL(item.url, true)
             is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance())
-            is Item.Logout -> signOut()
+            is Item.Logout -> signOut(item.label)
             is Item.SearchEngine -> searchPicker(item)
             is Item.DeleteWatchAccount -> deleteWatchAccount()
             is Item.Rate -> openRate()
@@ -126,16 +127,12 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
         }
     }
 
-    private fun signOut() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle(Localization.sign_out_title)
-        builder.setMessage(Localization.sign_out_description)
-        builder.setNegativeButton(Localization.sign_out) {
+    private fun signOut(label: Wallet.Label) {
+        val dialog = SignOutDialog(requireContext())
+        dialog.show(label) {
             settingsViewModel.signOut()
             finish()
         }
-        builder.setPositiveButton(Localization.cancel)
-        builder.show()
     }
 
     private fun deleteWatchAccount() {

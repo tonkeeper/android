@@ -2,6 +2,7 @@ package com.tonapps.emoji
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
@@ -41,6 +42,14 @@ object Emoji {
 
         return all.toTypedArray()
     }
+
+    fun isCustomIcon(
+        emoji: CharSequence
+    ): Boolean {
+        return customIcons.contains(emoji)
+    }
+
+    fun getCustomEmoji(emoji: CharSequence) = customIcons[emoji]
 
     suspend fun isValid(
         context: Context,

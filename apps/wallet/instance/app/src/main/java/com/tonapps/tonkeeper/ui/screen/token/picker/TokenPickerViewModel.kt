@@ -2,7 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.token.picker
 
 import androidx.lifecycle.ViewModel
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.entities.TokenExtendedEntity
+import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -39,14 +40,14 @@ class TokenPickerViewModel(
 
     val uiItems = combine(accountRepository.selectedWalletFlow, selectedTokenFlow, searchTokensFlow) { wallet, selectedToken, tokens ->
         val sortedTokens = tokens.map {
-            TokenExtendedEntity(
-                raw = it,
+            AssetsExtendedEntity(
+                raw = AssetsEntity.Token(it),
                 prefs = settingsRepository.getTokenPrefs(wallet.id, it.address, it.blacklist)
             )
-        }.filter { !it.hidden }.sortedWith(TokenExtendedEntity.comparator)
+        }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator)
 
         sortedTokens.mapIndexed { index, tokenExtendedEntity ->
-            val token = tokenExtendedEntity.raw
+            val token = (tokenExtendedEntity.raw as AssetsEntity.Token).token
             Item.Token(
                 position = ListCell.getPosition(sortedTokens.size, index),
                 raw = token,

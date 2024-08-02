@@ -14,6 +14,14 @@ abstract class SQLiteHelper(context: Context, name: String, version: Int): SQLit
         db.emptyRawQuery("PRAGMA temp_store = MEMORY; PRAGMA secure_delete = TRUE;")
     }
 
+    override fun onCreate(db: SQLiteDatabase) {
+        try {
+            create(db)
+        } catch (ignored: Exception) { }
+    }
+
+    abstract fun create(db: SQLiteDatabase)
+
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
     }
 

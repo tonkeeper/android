@@ -20,7 +20,7 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
 
     private val lruCache = ConcurrentHashMap<String, String>(10, 1.0f, 2)
 
-    override fun onCreate(db: SQLiteDatabase) {
+    override fun create(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $KV_TABLE_NAME ($KV_TABLE_KEY_COLUMN TEXT PRIMARY KEY, $KV_TABLE_VALUE_COLUMN TEXT NOT NULL);")
     }
 

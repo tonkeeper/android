@@ -25,9 +25,10 @@ class BrowserExploreViewModel(
 
     init {
         combine(settings.countryFlow, accountRepository.selectedWalletFlow) { code, wallet ->
+            val locale = settings.getLocale()
             _uiItemsFlow.value = emptyList()
-            browserRepository.load(code, wallet.testnet)?.let { setData(it) }
-            browserRepository.loadRemote(code, wallet.testnet)?.let { setData(it) }
+            browserRepository.load(code, wallet.testnet, locale)?.let { setData(it) }
+            browserRepository.loadRemote(code, wallet.testnet, locale)?.let { setData(it) }
         }.launchIn(viewModelScope)
     }
 
@@ -37,6 +38,9 @@ class BrowserExploreViewModel(
             items.add(Item.Banners(data.apps, api.config.featuredPlayInterval))
         }
         for (category in data.categories) {
+            if (category.id == "featured") {
+                continue
+            }
             items.add(Item.Title(category.title))
             for (app in category.apps) {
                 items.add(Item.App(app))

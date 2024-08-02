@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account.entities
 
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -18,7 +19,7 @@ data class WalletEntity(
     val id: String,
     val publicKey: PublicKeyEd25519,
     val type: Wallet.Type,
-    val version: WalletVersion = WalletVersion.V4R2,
+    val version: WalletVersion,
     val label: Wallet.Label,
     val ledger: Ledger? = null,
 ) {
@@ -46,7 +47,7 @@ data class WalletEntity(
         get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR
 
     val hasPrivateKey: Boolean
-        get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet
+        get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet || type == Wallet.Type.Lockup
 
     val accountId: String = contract.address.toAccountId()
 

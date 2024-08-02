@@ -8,6 +8,7 @@ import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.ui.screen.init.InitEvent
+import com.tonapps.tonkeeper.ui.screen.init.InitRoute
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.R
 import kotlinx.coroutines.flow.launchIn
@@ -74,7 +75,7 @@ class WatchScreen: BaseFragment(R.layout.fragment_init_watch) {
     private fun next() {
         if (button.isEnabled) {
             inputView.hideKeyboard()
-            initViewModel.nextStep(requireContext(), InitEvent.Step.WatchAccount)
+            initViewModel.nextStep(requireContext(), InitRoute.WatchAccount)
         }
     }
 

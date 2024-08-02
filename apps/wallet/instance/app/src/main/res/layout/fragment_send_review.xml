@@ -76,6 +76,7 @@
                     android:id="@+id/review_amount"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:visibility="gone"
                     android:title="@string/amount"/>
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView

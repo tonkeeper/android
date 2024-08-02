@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_content"
+                android:paddingVertical="44dp">
+
+                <com.tonapps.tonkeeper.ui.component.coin.CoinEditText
+                    android:id="@+id/unstake_amount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="6dp"
+                    android:background="@null"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:digits="0123456789.,"
+                    android:inputType="numberDecimal"
+                    android:textCursorDrawable="@drawable/cursor"
+                    android:textColor="?attr/textPrimaryColor"
+                    android:textColorHint="?attr/textSecondaryColor"
+                    android:textSize="40sp"
+                    android:fontFamily="@font/montserrat_semi_bold"
+                    android:hint="0"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/unstake_currency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_gravity="center"
+                    android:paddingVertical="12dp"
+                    android:paddingHorizontal="@dimen/offsetMedium"
+                    android:background="@drawable/bg_island_border"
+                    android:textAppearance="@style/TextAppearance.Body1"
+                    android:textColor="?attr/textSecondaryColor"/>
+
+            </uikit.widget.ColumnLayout>
+
+            <uikit.widget.RowLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/tertiaryHeight"
+                android:layout_marginVertical="@dimen/offsetMedium">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/max"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_button_secondary_18"
+                    android:paddingHorizontal="@dimen/offsetMedium"
+                    android:gravity="center"
+                    android:text="@string/max"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:textColor="?attr/buttonSecondaryForegroundColor"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/available"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor"/>
+
+            </uikit.widget.RowLayout>
+
+        </uikit.widget.ColumnLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/next_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="?attr/textPrimaryColor"
+        android:enabled="false"
+        android:text="@string/continue_action"/>
+
+</FrameLayout>

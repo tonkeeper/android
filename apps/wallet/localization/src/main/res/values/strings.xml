@@ -4,6 +4,8 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
     <string name="w5beta" translatable="false">W5 Beta</string>
+    <string name="ok" translatable="false">OK</string>
+    <string name="w5" translatable="false">W5</string>
     <string name="w5_wallet">Wallet W5</string>
     <string name="nft_unverified">Unverified NFT</string>
     <string name="report_spam">Report spam</string>
@@ -14,6 +16,17 @@
     <string name="setup_finish_biometry">Use biometry to approve transactions</string>
     <string name="setup_finish_backup">Back up the wallet recovery phrase</string>
     <string name="setup_finish_telegram">Join Tonkeeper channel</string>
+
+    <string name="step_1">Step 1</string>
+    <string name="step_2">Step 2</string>
+    <string name="step_3">Step 3</string>
+
+    <string name="signer_step_1">Scan the QR code with Signer</string>
+    <string name="signer_step_2">Confirm your transaction in Signer</string>
+    <string name="signer_step_3">Scan signed transaction QR code from Signer</string>
+
+    <string name="insufficient_balance_title">Insufficient funds</string>
+    <string name="insufficient_balance_description">Enter an amount less or choose your maximum balance.</string>
 
     <string name="w5_story_title_1">Gasless USDT Transfers</string>
     <string name="w5_story_title_2">Reduced Blockchain Fees</string>
@@ -46,11 +59,13 @@
     <string name="staking_minimal_deposit">Minimal deposit</string>
     <string name="staking_details_description">Staking is based on smart contracts by third parties. Tonkeeper is not responsible for staking experience.</string>
     <string name="staking_links">Links</string>
+    <string name="links">Links</string>
     <string name="staking_choose">Choose</string>
     <string name="staking_confirm">Confirm and Stake</string>
     <string name="unstake_confirm">Confirm and Unstake</string>
     <string name="domain_link_button">Link domain</string>
     <string name="domain_renew_button">Renew domain</string>
+    <string name="staked">Staked</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>
@@ -117,6 +132,7 @@
     <string name="domain_renew">Domain Renew</string>
     <string name="unstake">Unstake</string>
     <string name="unknown">Unknown</string>
+    <string name="unknown_error">Unknown error</string>
     <string name="nft_purchase">NFT Purchase</string>
     <string name="burned">Burned</string>
     <string name="unsubscribed">Unsubscribed</string>
@@ -137,6 +153,9 @@
     <string name="jetton_transfer">%1$s transfer</string>
     <string name="name_your_wallet">Name your wallet</string>
     <string name="name_your_wallet_subtitle">Name your wallet to easily identify it while using the Tonkeeper. These names are stored locally, and can only be seen by you.</string>
+    <string name="open_anyway">Open anyway</string>
+    <string name="nft_warning_buttton_title">Are you sure you want to open an external link?</string>
+    <string name="nft_warning_buttton_subtitle">Visit this external link only if you trust the author of the collection.\n\n%1$s</string>
 
     <string name="tokens">Tokens</string>
     <string name="today">Today</string>
@@ -225,7 +244,7 @@
     <string name="wallet_attention_description">We strongly recommend you write down the recovery phrase because it’s the only way to have access to and recover your wallet should you lose your device. Do not send it to yourself via email or take a screenshot. It’s safer when kept offline.</string>
 
     <string name="phrase_title">Your recovery phrase</string>
-    <string name="phrase_description">Write down these 24 words in the order given below and store them in a secret, safe place.</string>
+    <string name="phrase_description">Write down these words with their numbers and store them in a safe place.</string>
 
     <string name="phrase_check_title">So, let’s check</string>
     <string name="phrase_check_description">To check whether you’ve written down your recovery phrase correctly, please enter the %1$dth, %2$dth, and %3$dst words.</string>
@@ -242,9 +261,10 @@
     <string name="manage">Manage</string>
     <string name="manage_wallets">Manage wallets</string>
     <string name="receive">Receive</string>
-    <string name="log_out">Log out</string>
+    <string name="log_out">Sign out</string>
     <string name="amount">Amount</string>
     <string name="backup">Backup</string>
+    <string name="unstake_amount">Unstake amount</string>
 
     <string name="recipient">Recipient</string>
     <string name="recipient_address">Recipient address</string>
@@ -253,8 +273,9 @@
     <string name="sender_address">Sender address</string>
 
     <string name="transaction">Transaction</string>
+    <string name="incorrect_phrase">Incorrect phrase</string>
 
-    <string name="address_hint">Address or Name</string>
+    <string name="address_hint">Address or name</string>
     <string name="comment">Comment</string>
     <string name="paste">Paste</string>
     <string name="version">Version %1$s (%2$d)</string>
@@ -316,8 +337,9 @@
     <string name="reset_passcode">Reset passcode</string>
     <string name="recovery_phrase">Show recovery phrase</string>
     <string name="logout_description">Wallet keys will be erased from this device.</string>
-    <string name="logout_confirmation">I have a backup copy of recovery phrase</string>
-    <string name="back_up_now">Back up now</string>
+    <string name="logout_confirmation">I have a backup copy of the recovery phrase for %1$s</string>
+    <string name="last_updated">Updated %1$s</string>
+    <string name="back_up_now">Back up</string>
     <string name="max">Max</string>
     <string name="confirm_and_send">Confirm and send</string>
     <string name="confirm_action">Confirm action</string>

@@ -2,12 +2,8 @@ package com.tonapps.tonkeeper.ui.component.coin.drawable
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PixelFormat
-import android.graphics.Rect
-import android.text.Layout
-import android.text.StaticLayout
 import android.text.TextPaint
 import androidx.core.content.res.ResourcesCompat
 import com.tonapps.uikit.color.textSecondaryColor
@@ -16,14 +12,13 @@ import uikit.extensions.dp
 
 class SuffixDrawable(
     context: Context,
-): BaseDrawable() {
-
-    private val textPaint = TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
+    private val textPaint: TextPaint = TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
         textSize = 28f.dp
         typeface = ResourcesCompat.getFont(context, uikit.R.font.montserrat_semi_bold)
         textAlign = Paint.Align.RIGHT
         color = context.textSecondaryColor
     }
+): BaseDrawable() {
 
     private var textWidth = 0f
     private var textHeight = 0f

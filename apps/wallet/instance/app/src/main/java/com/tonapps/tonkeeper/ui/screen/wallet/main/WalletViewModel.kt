@@ -1,11 +1,15 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
+import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.extensions.hasPushPermission
+import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
 import com.tonapps.wallet.api.API
@@ -19,10 +23,14 @@ import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.staking.StakingRepository
+import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +40,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
@@ -47,7 +56,9 @@ class WalletViewModel(
     private val pushManager: PushManager,
     private val tonConnectRepository: TonConnectRepository,
     private val screenCacheSource: ScreenCacheSource,
-    private val backupRepository: BackupRepository
+    private val backupRepository: BackupRepository,
+    private val stakingRepository: StakingRepository,
+    private val ratesRepository: RatesRepository,
 ): AndroidViewModel(app) {
 
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
@@ -57,16 +68,7 @@ class WalletViewModel(
 
     private val _lastLtFlow = MutableStateFlow(0L)
     private val _statusFlow = MutableStateFlow(Status.Updating)
-    private val statusFlow = combine(
-        networkMonitor.isOnlineFlow,
-        _statusFlow
-    ) { isOnline, status ->
-        if (!isOnline) {
-            Status.NoInternet
-        } else {
-            status
-        }
-    }.distinctUntilChanged()
+    private val statusFlow = _statusFlow.asStateFlow()
 
     private val _stateMainFlow = MutableStateFlow<State.Main?>(null)
     private val stateMainFlow = _stateMainFlow.asStateFlow().filterNotNull()
@@ -74,13 +76,25 @@ class WalletViewModel(
     private val _stateSettingsFlow = combine(
         settingsRepository.hiddenBalancesFlow,
         api.configFlow,
-        statusFlow
-    ) { hiddenBalance, config, status ->
-        State.Settings(hiddenBalance, config, status)
+        statusFlow,
+        settingsRepository.telegramChannelFlow,
+    ) { hiddenBalance, config, status, telegramChannel ->
+        State.Settings(hiddenBalance, config, status, telegramChannel)
     }.distinctUntilChanged()
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
+
+    val hasBackupFlow = combine(
+        accountRepository.selectedWalletFlow,
+        backupRepository.stream
+    ) { wallet, backups ->
+        if (!wallet.hasPrivateKey) {
+            true
+        } else {
+            backups.indexOfFirst { it.walletId == wallet.id } > -1
+        }
+    }.map { !it }
 
     init {
         collectFlow(accountRepository.realtimeEventsFlow) { event ->
@@ -94,23 +108,46 @@ class WalletViewModel(
             }
         }
 
+        collectFlow(networkMonitor.isOnlineFlow) { online ->
+            if (!online) {
+                setStatus(Status.NoInternet)
+                delay(3000)
+                setStatus(Status.LastUpdated)
+            }
+        }
+
         combine(
             accountRepository.selectedWalletFlow,
             settingsRepository.currencyFlow,
             backupRepository.stream,
-        ) { wallet, currency, backups ->
+            networkMonitor.isOnlineFlow,
+            settingsRepository.walletPrefsChangedFlow,
+        ) { wallet, currency, backups, isOnline, _ ->
+            if (isOnline) {
+                setStatus(Status.Updating)
+            }
             _uiLabelFlow.value = wallet.label
 
-            val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
-
-            val localTokens = getLocalTokens(getCurrency(wallet, currency), wallet)
-            if (localTokens != null) {
-                _stateMainFlow.value = State.Main(wallet, localTokens, hasBackup)
+            val hasBackup = if (!wallet.hasPrivateKey) {
+                true
+            } else {
+                backups.indexOfFirst { it.walletId == wallet.id } > -1
             }
 
-            val remoteTokens = getRemoteTokens(getCurrency(wallet, currency), wallet)
-            if (remoteTokens != null) {
-                _stateMainFlow.value = State.Main(wallet, remoteTokens, hasBackup)
+            val walletCurrency = getCurrency(wallet, currency)
+
+            val localAssets = getLocalAssets(walletCurrency, wallet)
+            if (localAssets != null) {
+                _stateMainFlow.value = State.Main(wallet = wallet, assets = localAssets, hasBackup)
+            }
+
+            if (isOnline) {
+                val remoteAssets = getRemoteAssets(walletCurrency, wallet)
+                if (remoteAssets != null) {
+                    _stateMainFlow.value = State.Main(wallet, remoteAssets, hasBackup)
+                    settingsRepository.setWalletLastUpdated(wallet.id)
+                    setStatus(Status.Default)
+                }
             }
         }.launchIn(viewModelScope)
 
@@ -119,26 +156,40 @@ class WalletViewModel(
             alertNotificationsFlow,
             pushManager.dAppPushFlow,
             _stateSettingsFlow,
-        ) { state, alerts, dAppNotifications, settings ->
-            val status = if (settings.status == Status.NoInternet) {
+            settingsRepository.walletPrefsChangedFlow,
+        ) { state, alerts, dAppNotifications, settings, _ ->
+            val status = settings.status /* if (settings.status == Status.NoInternet) {
                 settings.status
             } else if (settings.status != Status.SendingTransaction && settings.status != Status.TransactionConfirmed) {
                 state.status
             } else {
                 settings.status
-            }
+            }*/
 
             val dAppEvents = dAppNotifications ?: emptyList()
             val apps = getApps(state.wallet, dAppEvents)
 
+            val isSetupHidden = settingsRepository.isSetupHidden(state.wallet.id)
+            val uiSetup: State.Setup? = if (isSetupHidden) null else {
+                State.Setup(
+                    pushEnabled = context.hasPushPermission() && settingsRepository.getPushWallet(state.wallet.id),
+                    biometryEnabled = settingsRepository.biometric,
+                    hasBackup = state.hasBackup,
+                    showTelegramChannel = settings.telegramChannel
+                )
+            }
+
+            val lastUpdated = settingsRepository.getWalletLastUpdated(state.wallet.id)
+
             val uiItems = state.uiItems(
+                wallet = state.wallet,
                 hiddenBalance = settings.hiddenBalance,
                 status = status,
                 config = settings.config,
                 alerts = alerts,
                 dAppNotifications = State.DAppNotifications(dAppEvents, apps),
-                biometryEnabled = settingsRepository.biometric,
-                push = context.hasPushPermission() && settingsRepository.getPushWallet(state.wallet.id)
+                setup = uiSetup,
+                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated)
             )
             _uiItemsFlow.value = uiItems
             setCached(state.wallet, uiItems)
@@ -177,32 +228,61 @@ class WalletViewModel(
         _statusFlow.tryEmit(status)
     }
 
-    private suspend fun getLocalTokens(
+    private suspend fun getLocalAssets(
         currency: WalletCurrency,
         wallet: WalletEntity
-    ): State.Tokens? = withContext(Dispatchers.IO) {
-        val tokens = tokenRepository.getLocal(currency, wallet.accountId, wallet.testnet).sortAndFilterTokens(wallet, settingsRepository)
-        if (tokens.isEmpty()) {
-            return@withContext null
-        }
-        State.Tokens(currency, tokens, fromCache = true)
+    ): State.Assets? = withContext(Dispatchers.IO) {
+        val tokens = tokenRepository.getLocal(currency, wallet.accountId, wallet.testnet)
+        val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+        buildStateTokens(wallet, currency, tokens, staking, true)
     }
 
-    private suspend fun getRemoteTokens(
+    private suspend fun getRemoteAssets(
         currency: WalletCurrency,
         wallet: WalletEntity
-    ): State.Tokens? = withContext(Dispatchers.IO) {
-        val tokens = tokenRepository.getRemote(currency, wallet.accountId, wallet.testnet).sortAndFilterTokens(wallet, settingsRepository)
-        if (tokens.isEmpty()) {
+    ): State.Assets? = withContext(Dispatchers.IO) {
+        try {
+            val tokens = tokenRepository.getRemote(currency, wallet.accountId, wallet.testnet)
+            val staking = stakingRepository.get(wallet.accountId, wallet.testnet, ignoreCache = true)
+            buildStateTokens(wallet, currency, tokens, staking, false)
+        } catch (e: Throwable) {
             return@withContext null
         }
-        State.Tokens(currency, tokens, fromCache = false)
+    }
+
+    private suspend fun buildStateTokens(
+        wallet: WalletEntity,
+        currency: WalletCurrency,
+        tokens: List<AccountTokenEntity>,
+        staking: StakingEntity,
+        fromCache: Boolean
+    ): State.Assets? {
+        val staked = StakedEntity.create(staking, tokens)
+        val stakedTokens = staked.map { it.balance.token }.filter { !it.isTon }.map { it.address }
+        val rates = ratesRepository.getRates(currency, stakedTokens + "TON")
+        val filteredTokens = tokens.filter {
+            !stakedTokens.contains(it.address)
+        }
+        val stakedWithFiat = staked.map {
+            val tokenAddress = it.balance.token.address
+            it.copy(
+                fiatBalance = rates.convert(tokenAddress, it.balance.value),
+                fiatReadyWithdraw = rates.convert(tokenAddress, it.readyWithdraw),
+            )
+        }
+        if (filteredTokens.isEmpty() && stakedWithFiat.isEmpty()) {
+            return null
+        }
+
+        val assets = (filteredTokens.map { AssetsEntity.Token(it) } + stakedWithFiat.map { AssetsEntity.Staked(it) }).sortedBy { it.fiat }.reversed()
+
+        return State.Assets(currency, assets.sort(wallet, settingsRepository), fromCache)
     }
 
     private fun getApps(
         wallet: WalletEntity,
         events: List<AppPushEntity>
-    ): List<DAppEntity> {
+    ): List<DConnectEntity> {
         if (events.isEmpty()) {
             return emptyList()
         }

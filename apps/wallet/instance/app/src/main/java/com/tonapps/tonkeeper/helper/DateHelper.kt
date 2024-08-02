@@ -3,6 +3,9 @@ package com.tonapps.tonkeeper.helper
 import android.content.Context
 import android.icu.text.SimpleDateFormat
 import com.tonapps.wallet.localization.Localization
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import java.util.Calendar
 
 object DateHelper {
@@ -91,4 +94,20 @@ object DateHelper {
         calendar.timeInMillis = timestamp * 1000
         return calendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR)
     }
+
+    fun formattedDate(unixTimestamp: Long): String {
+        if (0 >= unixTimestamp) {
+            return ""
+        }
+        val instant = Instant.fromEpochMilliseconds(unixTimestamp * 1000)
+        val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+
+        val month = dateTime.month.name.take(3)
+        val day = dateTime.dayOfMonth
+        val hour = dateTime.hour.toString().padStart(2, '0')
+        val minute = dateTime.minute.toString().padStart(2, '0')
+
+        return "$month $day, $hour:$minute"
+    }
+
 }

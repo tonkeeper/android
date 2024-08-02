@@ -27,7 +27,7 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "collect
         }
     }
 
-    override fun onCreate(db: SQLiteDatabase) {
+    override fun create(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $TABLE_NAME (" +
                 "$COLUMN_ID TEXT UNIQUE," +
                 "$COLUMN_OBJECT BLOB," +

@@ -7,6 +7,7 @@ import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.crypto.base64
+import java.math.BigInteger
 
 class LockupContractV1(
     publicKey: PublicKeyEd25519,
@@ -45,10 +46,13 @@ class LockupContractV1(
         return CODE
     }
 
+    override fun getWalletVersion() = WalletVersion.UNKNOWN
+
     override fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
         messageType: MessageType,
+        queryId: BigInteger?,
         vararg gifts: WalletTransfer
     ): Cell {
         TODO("Not yet implemented")

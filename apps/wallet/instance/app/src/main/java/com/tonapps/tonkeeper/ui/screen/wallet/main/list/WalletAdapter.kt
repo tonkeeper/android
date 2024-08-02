@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.SetupSwitchHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.SetupTitleHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.SkeletonHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.SpaceHolder
+import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.StakedHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.TitleHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder.TokenHolder
 import com.tonapps.uikit.list.BaseListAdapter
@@ -39,6 +40,7 @@ class WalletAdapter(
             Item.TYPE_SETUP_TITLE -> SetupTitleHolder(parent)
             Item.TYPE_SETUP_SWITCH -> SetupSwitchHolder(parent)
             Item.TYPE_SETUP_LINK -> SetupLinkHolder(parent)
+            Item.TYPE_STAKED -> StakedHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

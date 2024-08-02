@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.unicodeToPunycode
+import com.tonapps.extensions.withRetry
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
 import com.tonapps.network.SSLSocketFactoryTcpNoDelay
@@ -28,6 +29,7 @@ import io.tonapi.models.Account
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import io.tonapi.models.EmulateMessageToWalletRequest
+import io.tonapi.models.EmulateMessageToWalletRequestParamsInner
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
@@ -140,7 +142,7 @@ class API(
         )
     }
 
-    fun getTonBalance(
+    suspend fun getTonBalance(
         accountId: String,
         testnet: Boolean
     ): BalanceEntity {
@@ -152,23 +154,25 @@ class API(
         return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
     }
 
-    fun getJettonsBalances(
+    suspend fun getJettonsBalances(
         accountId: String,
         testnet: Boolean,
-        currency: String
+        currency: String? = null
     ): List<BalanceEntity> {
         try {
-            val jettonsBalances = accounts(testnet).getAccountJettonsBalances(
-                accountId = accountId,
-                currencies = listOf(currency)
-            ).balances
-            return jettonsBalances.map { BalanceEntity(it) }.filter { !it.value.isZero }
+            val jettonsBalances = withRetry {
+                accounts(testnet).getAccountJettonsBalances(
+                    accountId = accountId,
+                    currencies = currency?.let { listOf(it) }
+                ).balances
+            } ?: return emptyList()
+            return jettonsBalances.map { BalanceEntity(it) }.filter { it.value.isPositive }
         } catch (e: Throwable) {
             return emptyList()
         }
     }
 
-    fun resolveAddressOrName(
+    suspend fun resolveAddressOrName(
         query: String,
         testnet: Boolean
     ): AccountDetailsEntity? {
@@ -180,13 +184,15 @@ class API(
         }
     }
 
-    fun resolvePublicKey(
+    suspend fun resolvePublicKey(
         pk: PublicKeyEd25519,
         testnet: Boolean
     ): List<AccountDetailsEntity> {
         return try {
             val query = pk.key.hex()
-            val wallets = wallet(testnet).getWalletsByPublicKey(query).accounts
+            val wallets = withRetry {
+                wallet(testnet).getWalletsByPublicKey(query).accounts
+            } ?: return emptyList()
             wallets.map { AccountDetailsEntity(query, it, testnet) }
         } catch (e: Throwable) {
             emptyList()
@@ -212,13 +218,15 @@ class API(
         }
     }
 
-    fun getNftItems(address: String, testnet: Boolean): List<NftItem> {
+    suspend fun getNftItems(address: String, testnet: Boolean, limit: Int = 1000): List<NftItem> {
         return try {
-            accounts(testnet).getAccountNftItems(
-                accountId = address,
-                limit = 1000,
-                indirectOwnership = true,
-            ).nftItems
+            withRetry {
+                accounts(testnet).getAccountNftItems(
+                    accountId = address,
+                    limit = limit,
+                    indirectOwnership = true,
+                ).nftItems
+            } ?: emptyList()
         } catch (e: Throwable) {
             emptyList()
         }
@@ -258,20 +266,24 @@ class API(
         return tonAPIHttpClient.sse(url)
     }
 
-    fun tonconnectPayload(): String? {
+    suspend fun tonconnectPayload(): String? {
         try {
             val url = "${config.tonapiMainnetHost}/v2/tonconnect/payload"
-            val json = JSONObject(tonAPIHttpClient.get(url))
+            val json = withRetry {
+                JSONObject(tonAPIHttpClient.get(url))
+            } ?: return null
             return json.getString("payload")
         } catch (e: Throwable) {
             return null
         }
     }
 
-    fun tonconnectProof(address: String, proof: String): String {
+    suspend fun tonconnectProof(address: String, proof: String): String {
         val url = "${config.tonapiMainnetHost}/v2/wallet/auth/proof"
         val data = "{\"address\":\"$address\",\"proof\":$proof}"
-        val response = tonAPIHttpClient.postJSON(url, data)
+        val response = withRetry {
+            tonAPIHttpClient.postJSON(url, data)
+        } ?: throw Exception("Empty response")
         if (!response.isSuccessful) {
             throw Exception("Failed creating proof: ${response.code}")
         }
@@ -295,16 +307,26 @@ class API(
     suspend fun emulate(
         boc: String,
         testnet: Boolean,
-    ): MessageConsequences = withContext(Dispatchers.IO) {
-        val request = EmulateMessageToWalletRequest(boc)
-        emulation(testnet).emulateMessageToWallet(request)
+        address: String? = null,
+        balance: Long? = null
+    ): MessageConsequences? = withContext(Dispatchers.IO) {
+        val params = mutableListOf<EmulateMessageToWalletRequestParamsInner>()
+        if (address != null) {
+            params.add(EmulateMessageToWalletRequestParamsInner(address, balance))
+        }
+        val request = EmulateMessageToWalletRequest(boc, params)
+        withRetry {
+            emulation(testnet).emulateMessageToWallet(request)
+        }
     }
 
     suspend fun emulate(
         cell: Cell,
-        testnet: Boolean
-    ): MessageConsequences {
-        return emulate(cell.base64(), testnet)
+        testnet: Boolean,
+        address: String? = null,
+        balance: Long? = null
+    ): MessageConsequences? {
+        return emulate(cell.base64(), testnet, address, balance)
     }
 
     suspend fun sendToBlockchain(
@@ -345,15 +367,13 @@ class API(
         return@withContext resolveDomain(value.lowercase().trim(), testnet)
     }
 
-    private fun resolveDomain(domain: String, testnet: Boolean): Account? {
+    private suspend fun resolveDomain(domain: String, testnet: Boolean): Account? {
         return getAccount(domain, testnet) ?: getAccount(domain.unicodeToPunycode(), testnet)
     }
 
-    private fun getAccount(accountId: String, testnet: Boolean): Account? {
-        return try {
+    private suspend fun getAccount(accountId: String, testnet: Boolean): Account? {
+        return withRetry {
             accounts(testnet).getAccount(accountId)
-        } catch (e: Throwable) {
-            null
         }
     }
 
@@ -430,12 +450,12 @@ class API(
         }
     }
 
-    fun getBrowserApps(testnet: Boolean): JSONObject {
-        return internalApi.getBrowserApps(testnet)
+    fun getBrowserApps(testnet: Boolean, locale: Locale): JSONObject {
+        return internalApi.getBrowserApps(testnet, locale)
     }
 
-    fun getFiatMethods(testnet: Boolean): JSONObject {
-        return internalApi.getFiatMethods(testnet)
+    fun getFiatMethods(testnet: Boolean, locale: Locale): JSONObject {
+        return internalApi.getFiatMethods(testnet, locale)
     }
 
     fun getTransactionEvents(accountId: String, testnet: Boolean, eventId: String): AccountEvent? {
@@ -518,7 +538,7 @@ class API(
             tonApiV2Key: String
         ): OkHttpClient {
             return baseOkHttpClientBuilder()
-                .addInterceptor(AcceptLanguageInterceptor(context.locale))
+                // .addInterceptor(AcceptLanguageInterceptor(context.locale))
                 .addInterceptor(AuthorizationInterceptor.bearer(tonApiV2Key))
                 .build()
         }

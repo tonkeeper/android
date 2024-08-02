@@ -29,7 +29,7 @@ class TransactionDetailView @JvmOverloads constructor(
         }
 
     private val titleView: AppCompatTextView
-    private val valueView: AppCompatTextView
+    val valueView: AppCompatTextView
     private val descriptionView: AppCompatTextView
     private val loaderView: LoaderView
 

@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake.options.list
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -14,7 +15,7 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         fun map(
             pools: List<PoolInfoEntity>,
-            selectedPool: PoolInfoEntity,
+            selectedPool: PoolEntity,
         ): List<Item> {
             val items = mutableListOf<Item>()
             for ((index, pool) in pools.withIndex()) {

@@ -1,6 +1,7 @@
 package com.tonapps.icu
 
 import android.util.ArrayMap
+import android.util.Log
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -12,9 +13,8 @@ object CurrencyFormatter {
     private const val CURRENCY_SIGN = "¤"
     private const val SMALL_SPACE = " "
     private const val APOSTROPHE = "'"
-    private const val TON_SYMBOL = "TON"
 
-    private val symbols = ArrayMap<String, String>().apply {
+    private val fiatSymbols = ArrayMap<String, String>().apply {
         put("USD", "$")
         put("EUR", "€")
         put("RUB", "₽")
@@ -46,24 +46,37 @@ object CurrencyFormatter {
         put("BRL", "R$")
         put("GEL", "₾")
         put("BDT", "৳")
-
-        put("TON", TON_SYMBOL)
-        put("BTC", "₿")
     }
+
+    private val tokenSymbols = ArrayMap<String, String>().apply {
+        put("BTC", "₿")
+        put("ETH", "Ξ")
+        put("USDT", "₮")
+        put("USDC", "₵")
+        put("DOGE", "Ð")
+        put("TON", "TON")
+    }
+
+    private val symbols = fiatSymbols + tokenSymbols
 
     private val thresholds = listOf(
         0.0000000001 to 18,
         0.00000001 to 16,
-        0.0001 to 8,
+        0.000001 to 8,
+        0.0001 to 4,
         0.01 to 2
     )
 
-    private fun isTON(currency: String): Boolean {
-        return currency == "TON"
-    }
+    private val bigDecimalThresholds = listOf(
+        BigDecimal("0.0000000001") to 18,
+        BigDecimal("0.00000001") to 16,
+        BigDecimal("0.000001") to 8,
+        BigDecimal("0.0001") to 4,
+        BigDecimal("0.01") to 2
+    )
 
-    private fun isCrypto(currency: String): Boolean {
-        return isTON(currency) || currency == "BTC"
+    private fun isFiat(currency: String): Boolean {
+        return fiatSymbols.containsKey(currency)
     }
 
     private val format = NumberFormat.getCurrencyInstance() as DecimalFormat
@@ -75,38 +88,53 @@ object CurrencyFormatter {
 
     fun format(
         currency: String = "",
-        value: Double,
+        value: BigDecimal,
         scale: Int = 0,
-        roundingMode: RoundingMode = RoundingMode.DOWN
+        roundingMode: RoundingMode = RoundingMode.DOWN,
+        replaceSymbol: Boolean = true
     ): CharSequence {
-        var bigDecimal = Coins.safeBigDecimal(value).stripTrailingZeros()
+        var bigDecimal = value.stripTrailingZeros()
         if (scale > 0) {
             bigDecimal = bigDecimal.setScale(scale, roundingMode)
         } else if (bigDecimal.scale() > 0) {
-            bigDecimal = bigDecimal.setScale(getScale(value), roundingMode)
+            bigDecimal = bigDecimal.setScale(getScale(value.abs()), roundingMode)
         }
         bigDecimal = bigDecimal.stripTrailingZeros()
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(bigDecimal)
-        return format(currency, amount)
+        return format(currency, amount, replaceSymbol)
     }
 
     fun format(
         currency: String = "",
         value: Coins,
         scale: Int = 0,
-        roundingMode: RoundingMode = RoundingMode.DOWN
+        roundingMode: RoundingMode = RoundingMode.DOWN,
+        replaceSymbol: Boolean = true
     ): CharSequence {
-        return format(currency, value.value, scale, roundingMode)
+        return format(currency, value.value, scale, roundingMode, replaceSymbol)
     }
 
     fun formatFiat(
         currency: String,
         value: Coins,
         scale: Int = 2,
-        roundingMode: RoundingMode = RoundingMode.DOWN
+        roundingMode: RoundingMode = RoundingMode.DOWN,
+        replaceSymbol: Boolean = true
     ): CharSequence {
-        return format(currency, value, scale, roundingMode)
+        return format(currency, value, scale, roundingMode, replaceSymbol)
+    }
+
+    private fun getScale(value: BigDecimal): Int {
+        if (value == BigDecimal.ZERO) {
+            return 0
+        }
+        return when {
+            value >= BigDecimal.ONE -> 2
+            value >= BigDecimal("0.1") -> 2
+            value >= BigDecimal("0.01") -> 3
+            else -> 4
+        }
     }
 
     private fun getScale(value: Double): Int {
@@ -124,15 +152,15 @@ object CurrencyFormatter {
         return 2
     }
 
-
     private fun format(
         currency: String = "",
         value: String,
+        replaceSymbol: Boolean,
     ): CharSequence {
-        val symbol = symbols[currency]
+        val symbol = if (replaceSymbol) symbols[currency] else currency
         val builder = StringBuilder()
         if (symbol != null) {
-            if (monetarySymbolFirstPosition && !isCrypto(currency)) {
+            if (monetarySymbolFirstPosition && isFiat(currency)) {
                 builder.append(symbol)
                 builder.append(SMALL_SPACE)
                 builder.append(value)

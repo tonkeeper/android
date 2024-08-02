@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.core.entities
 
+import android.util.Log
 import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
@@ -52,7 +53,9 @@ data class TransferEntity(
         }
 
     private val coins: org.ton.block.Coins
-        get() = org.ton.block.Coins.ofNano(amount.nano())
+        get() {
+            return org.ton.block.Coins.ofNano(amount.toLong())
+        }
 
 
     private val gift: WalletTransfer by lazy {
@@ -238,7 +241,7 @@ data class TransferEntity(
 
     companion object {
 
-        private val TRANSFER_PRICE = org.ton.block.Coins.ofNano(Coins.of(0.064, 9).nano())
+        private val TRANSFER_PRICE = org.ton.block.Coins.ofNano(Coins.of(0.064, 9).toLong())
 
         fun newWalletQueryId(): BigInteger {
             return try {

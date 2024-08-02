@@ -4,21 +4,27 @@
     android:layout_height="@dimen/barHeight"
     android:paddingHorizontal="@dimen/offsetMedium">
 
-    <uikit.widget.input.InputTextView
-        android:id="@+id/coin_input"
+    <FrameLayout
+        android:id="@+id/coin_input_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:layout_gravity="center_vertical"
-        android:background="@null"
-        android:singleLine="true"
-        android:digits="0123456789.,"
-        android:inputType="numberDecimal"
-        android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="?attr/textPrimaryColor"
-        android:textColorHint="?attr/textSecondaryColor"
-        android:textCursorDrawable="@drawable/cursor"
-        android:gravity="center_vertical"/>
+        android:layout_gravity="center_vertical">
+
+        <uikit.widget.input.InputTextView
+            android:id="@+id/coin_input"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:minWidth="36dp"
+            android:background="@null"
+            android:singleLine="true"
+            android:digits="0123456789.,"
+            android:inputType="numberDecimal"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:textColor="?attr/textPrimaryColor"
+            android:textColorHint="?attr/textSecondaryColor"
+            android:textCursorDrawable="@drawable/cursor"/>
+    </FrameLayout>
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/coin_input_clear"

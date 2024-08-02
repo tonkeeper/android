@@ -4,25 +4,25 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.tonkeeper.ui.screen.staking.stake.main.StakeChildFragment
+import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.staking.StakingPool
-import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.data.staking.entities.PoolEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 import uikit.widget.FrescoView
 import uikit.widget.ProcessTaskView
 
-class StakeConfirmFragment: StakeChildFragment(R.layout.fragment_stake_confirm) {
+class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_confirm) {
 
     private lateinit var iconView: FrescoView
     private lateinit var walletView: TransactionDetailView
     private lateinit var recipientView: TransactionDetailView
     private lateinit var amountView: TransactionDetailView
     private lateinit var feeView: TransactionDetailView
-    private lateinit var apyView: TransactionDetailView
     private lateinit var button: Button
     private lateinit var taskView: ProcessTaskView
 
@@ -38,15 +38,13 @@ class StakeConfirmFragment: StakeChildFragment(R.layout.fragment_stake_confirm) 
         feeView = view.findViewById(R.id.review_fee)
         feeView.setLoading()
 
-        apyView = view.findViewById(R.id.review_apy)
-
         button = view.findViewById(R.id.button)
         taskView = view.findViewById(R.id.task)
 
         button.setOnClickListener { stake() }
 
         collectFlow(stakeViewModel.walletFlow) { wallet ->
-            walletView.value = wallet.label.title
+            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView)
         }
 
         collectFlow(stakeViewModel.fiatFormatFlow) { fiatFormat ->
@@ -57,7 +55,7 @@ class StakeConfirmFragment: StakeChildFragment(R.layout.fragment_stake_confirm) 
             amountView.value = amountFormat
         }
 
-        collectFlow(stakeViewModel.selectedPoolInfoFlow, ::applyPool)
+        collectFlow(stakeViewModel.selectedPoolFlow, ::applyPool)
 
         collectFlow(stakeViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
             feeView.setDefault()
@@ -106,10 +104,9 @@ class StakeConfirmFragment: StakeChildFragment(R.layout.fragment_stake_confirm) 
         taskView.state = ProcessTaskView.State.SUCCESS
     }
 
-    private fun applyPool(pool: PoolInfoEntity) {
+    private fun applyPool(pool: PoolEntity) {
         iconView.setLocalRes(StakingPool.getIcon(pool.implementation))
-        recipientView.value = pool.details.name
-        apyView.value = "≈ ${pool.apyPercent}%"
+        recipientView.value = pool.name
     }
 
     override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {

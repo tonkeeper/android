@@ -1,4 +1,4 @@
-name: Android Mobile CD
+name: Android APK build CD
 
 on:
   workflow_dispatch:

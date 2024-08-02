@@ -5,6 +5,7 @@ import android.util.Log
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.collectibles.source.LocalDataSource
+import io.tonapi.models.TrustType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -31,11 +32,13 @@ class CollectiblesRepository(
         return localDataSource.get(address, testnet)
     }
 
-    fun getRemoteNftItems(
+    suspend fun getRemoteNftItems(
         address: String,
         testnet: Boolean
     ): List<NftEntity> {
-        val items = api.getNftItems(address, testnet).map { NftEntity(it, testnet) }
+        val items = api.getNftItems(address, testnet).filter {
+            it.trust != TrustType.blacklist
+        }.map { NftEntity(it, testnet) }
         localDataSource.save(address, testnet, items)
         return items
     }

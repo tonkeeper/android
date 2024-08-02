@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="108dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingVertical="@dimen/offsetMedium"
+    android:paddingLeft="@dimen/offsetMedium"
+    android:paddingRight="12dp">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.H2"
+            android:textColor="?attr/textPrimaryColor"
+            android:singleLine="true"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/fiat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"
+            android:singleLine="true"/>
+
+    </uikit.widget.ColumnLayout>
+    
+    <FrameLayout
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        android:layout_gravity="center">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_ton_with_bg"/>
+        
+        <uikit.widget.FrescoView
+            app:roundAsCircle="true"
+            app:roundingBorderColor="?attr/backgroundPageColor"
+            app:roundingBorderWidth="2dp"
+            android:id="@+id/icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="end|bottom" />
+
+    </FrameLayout>
+
+</uikit.widget.RowLayout>

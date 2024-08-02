@@ -64,7 +64,7 @@ dependencies {
     implementation(Dependence.AndroidX.biometric)
     implementation(Dependence.AndroidX.swiperefreshlayout)
     implementation(Dependence.AndroidX.lifecycle)
-    implementation(Dependence.AndroidX.profileinstaller)
+    implementation(Dependence.AndroidX.webkit)
 
     implementation(Dependence.guava)
 

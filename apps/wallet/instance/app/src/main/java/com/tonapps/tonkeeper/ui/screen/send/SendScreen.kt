@@ -1,32 +1,55 @@
+@file:OptIn(FlowPreview::class)
+
 package com.tonapps.tonkeeper.ui.screen.send
 
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.signer.SingerResultContract
+import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendFeeState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendTransaction
+import com.tonapps.tonkeeper.ui.screen.signer.qr.SignerQRScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.fieldErrorBorderColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import uikit.base.BaseFragment
+import uikit.dialog.modal.ModalDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
+import uikit.extensions.dp
 import uikit.extensions.hideKeyboard
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -34,13 +57,16 @@ import uikit.widget.HeaderView
 import uikit.widget.InputView
 import uikit.widget.ProcessTaskView
 import uikit.widget.SlideBetweenView
+import java.util.UUID
 
 class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomSheet {
 
     private val args: SendArgs by lazy { SendArgs(requireArguments()) }
+    private val signerQRRequestKey: String by lazy { "send_${UUID.randomUUID()}" }
     private val sendViewModel: SendViewModel by viewModel { parametersOf(args.nftAddress) }
 
-    private val signerLauncher = registerForActivityResult(SingerResultContract()) {
+    private val signerResultContract = SingerResultContract()
+    private val signerLauncher = registerForActivityResult(signerResultContract) {
         if (it == null) {
             setFailed()
         } else {
@@ -74,6 +100,12 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AnalyticsHelper.trackEvent("send_open")
+        navigation?.setFragmentResultListener(signerQRRequestKey) { bundle ->
+            val sign = bundle.getString(SignerQRScreen.KEY_URI)?.toUri()?.getQueryParameter("sign")
+            if (sign != null) {
+                sendViewModel.sendSignedMessage(BitString(sign))
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -91,6 +123,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             addressInput.loading = true
             sendViewModel.userInputAddress(text)
         }
+        args.targetAddress?.let { addressInput.text = it }
 
         amountView = view.findViewById(R.id.amount)
         amountView.doOnValueChanged = sendViewModel::userInputAmount
@@ -110,6 +143,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
         commentInput = view.findViewById(R.id.comment)
         commentInput.doOnTextChange = sendViewModel::userInputComment
+        args.text?.let { commentInput.text = it }
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener { next() }
@@ -127,7 +161,6 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         taskContainerView = view.findViewById(R.id.task_container)
 
         confirmButton = view.findViewById(R.id.confirm_button)
-        confirmButton.setOnClickListener { confirm() }
 
         processTaskView = view.findViewById(R.id.process_task)
 
@@ -149,14 +182,35 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
 
         collectFlow(sendViewModel.uiEventFlow, ::onEvent)
-        collectFlow(sendViewModel.uiInputAmountFlow, amountView::setValue)
+        collectFlow(sendViewModel.uiInputAmountFlow.map { it.toDouble() }, amountView::setValue)
         collectFlow(sendViewModel.uiBalanceFlow, ::setAmountState)
         collectFlow(sendViewModel.uiInputTokenFlow, ::setToken)
+        collectFlow(sendViewModel.uiInputNftFlow, ::setNft)
         collectFlow(sendViewModel.uiButtonEnabledFlow, button::setEnabled)
         collectFlow(sendViewModel.uiTransactionFlow, ::applyTransaction)
-        collectFlow(sendViewModel.feeFlow, ::setFee)
+        collectFlow(sendViewModel.walletTypeFlow) { walletType ->
+            if (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup) {
+                confirmButton.setText(Localization.confirm)
+                confirmButton.setOnClickListener { confirm() }
+                return@collectFlow
+            }
+            confirmButton.setText(Localization.continue_action)
+            if (walletType == Wallet.Type.Ledger) {
+                confirmButton.setOnClickListener { openLedger() }
+            } else if (walletType == Wallet.Type.SignerQR) {
+                confirmButton.setOnClickListener { openSignerQR() }
+            } else if (walletType == Wallet.Type.Signer) {
+                confirmButton.setOnClickListener { openSigner() }
+            }
+        }
 
-        sendViewModel.userInputTokenByAddress(args.tokenAddress)
+        if (args.amountNano > 0) {
+            collectFlow(sendViewModel.uiInputTokenFlow.drop(1).take(1)) { token ->
+                val amount = Coins.of(args.amountNano, token.decimals)
+                amountView.setValue(amount.toDouble())
+            }
+            sendViewModel.userInputTokenByAddress(args.tokenAddress)
+        }
     }
 
     private fun onEvent(event: SendEvent) {
@@ -166,6 +220,9 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             is SendEvent.Failed -> setFailed()
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> processTaskView.state = ProcessTaskView.State.LOADING
+            is SendEvent.Fee -> setFee(event)
+            is SendEvent.InsufficientBalance -> showInsufficientBalance()
+            is SendEvent.Confirm -> slidesView.next()
         }
     }
 
@@ -183,13 +240,13 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun next() {
-        showReview()
+        setFee(null)
+        addressInput.hideKeyboard()
+        sendViewModel.next()
     }
 
-    private fun showReview() {
-        // sendViewModel.calculateFee()
-        slidesView.next()
-        addressInput.hideKeyboard()
+    private fun showInsufficientBalance() {
+        InsufficientBalanceDialog(requireContext()).show()
     }
 
     private fun setFailed() {
@@ -216,7 +273,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun applyTransaction(transaction: SendTransaction) {
-        reviewWalletView.value = transaction.fromWallet.label.title
+        reviewWalletView.value = transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView)
         applyTransactionAccount(transaction.targetAccount, transaction.fromWallet.testnet)
         applyTransactionAmount(transaction.amount)
         applyTransactionComment(transaction.comment)
@@ -232,6 +289,11 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun applyTransactionAmount(amount: SendTransaction.Amount) {
+        if (!amount.value.isPositive) {
+            reviewRecipientAmountView.visibility = View.GONE
+            return
+        }
+        reviewRecipientAmountView.visibility = View.VISIBLE
         reviewRecipientAmountView.value = amount.format
         reviewRecipientAmountView.description = amount.convertedFormat
     }
@@ -249,13 +311,13 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
     }
 
-    private fun setFee(state: SendFeeState?) {
-        if (state == null) {
+    private fun setFee(event: SendEvent.Fee?) {
+        if (event == null) {
             reviewRecipientFeeView.setLoading()
             confirmButton.isEnabled = false
         } else {
-            reviewRecipientFeeView.value = "≈ ${state.format}"
-            reviewRecipientFeeView.description = "≈ ${state.convertedFormat}"
+            reviewRecipientFeeView.value = "≈ ${event.format}"
+            reviewRecipientFeeView.description = "≈ ${event.convertedFormat}"
             reviewRecipientFeeView.setDefault()
             confirmButton.isEnabled = true
         }
@@ -268,6 +330,29 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         sendViewModel.send(requireContext())
     }
 
+    private fun openLedger() {
+        collectFlow(sendViewModel.signerDataLedger()) { (walletId, transaction) ->
+            requestLedgerSign(transaction, walletId)
+        }
+    }
+
+    private fun openSignerQR() {
+        var text = commentInput.text
+        if (text.isEmpty()) {
+            text = reviewRecipientView.value?.toString() ?: "..."
+        }
+
+        collectFlow(sendViewModel.signerData()) { (publicKey, unsignedBody) ->
+            navigation?.add(SignerQRScreen.newInstance(publicKey, unsignedBody, text, signerQRRequestKey))
+        }
+    }
+
+    private fun openSigner() {
+        collectFlow(sendViewModel.signerData()) { (publicKey, unsignedBody) ->
+            signerLauncher.launch(SingerResultContract.Input(unsignedBody, publicKey))
+        }
+    }
+
     private fun setMax() {
         sendViewModel.setMax()
         amountView.hideKeyboard()
@@ -275,6 +360,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private fun setAmountState(state: SendAmountState) {
         convertedView.text = state.convertedFormat
+        amountView.suffix = state.currencyCode
 
         if (state.insufficientBalance) {
             statusView.setTextColor(requireContext().fieldErrorBorderColor)
@@ -293,25 +379,16 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         reviewSubtitleView.text = getString(Localization.jetton_transfer, token.symbol)
     }
 
+    private fun setNft(nft: NftEntity) {
+        reviewIconView.setRound(20f.dp)
+        reviewIconView.setImageURI(nft.mediumUri, null)
+        reviewSubtitleView.setText(Localization.nft_transfer)
+    }
+
     override fun onDragging() {
         super.onDragging()
         context?.hideKeyboard()
     }
-
-    /*
-
-    titleView.setText(Localization.nft_transfer)
-                amountView.visibility = View.GONE
-
-    private fun applyNft(nftEntity: NftEntity) {
-        iconView.setRound(20f.dp)
-        iconView.setImageURI(nftEntity.mediumUri)
-        actionTitle.text = String.format("%s · %s", nftEntity.name, nftEntity.collectionName.ifEmpty {
-            getString(Localization.unnamed_collection)
-        })
-        titleView.setText(Localization.nft_transfer)
-    }
-     */
 
     companion object {
 
@@ -325,6 +402,16 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             val screen = SendScreen()
             screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""))
             return screen
+        }
+
+        private class InsufficientBalanceDialog(
+            context: Context
+        ): ModalDialog(context, R.layout.dialog_insufficient_balance) {
+
+            init {
+                findViewById<HeaderView>(R.id.header)?.doOnActionClick = { dismiss() }
+                findViewById<View>(R.id.ok)?.setOnClickListener { dismiss() }
+            }
         }
     }
 }

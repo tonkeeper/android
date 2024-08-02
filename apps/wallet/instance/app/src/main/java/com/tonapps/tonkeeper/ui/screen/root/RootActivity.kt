@@ -125,9 +125,9 @@ class RootActivity: NavigationActivity() {
             val request = SignRequestEntity(param)
             try {
                 val boc = rootViewModel.requestSign(this, event.wallet, request)
-                rootViewModel.tonconnectBoc(event.id, event.app, boc)
+                rootViewModel.tonconnectBoc(event.id, event.connect, boc)
             } catch (e: Throwable) {
-                rootViewModel.tonconnectReject(event.id, event.app)
+                rootViewModel.tonconnectReject(event.id, event.connect)
             }
         }
     }

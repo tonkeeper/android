@@ -6,10 +6,8 @@ import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.toRawAddress
-import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.prefs
 import com.tonapps.security.CryptoBox
-import com.tonapps.security.Security
 import com.tonapps.security.hex
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.WalletProof
@@ -18,10 +16,10 @@ import org.ton.crypto.base64
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.data.rn.data.RNWallet
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppItemEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity.Type
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppAddressItemEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppEventSuccessEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppProofItemReplySuccess
@@ -59,34 +57,35 @@ class TonConnectRepository(
     private val prefs = context.prefs("tonconnect")
     private val events = EventsHelper(prefs, accountRepository, api)
 
-    private val _appsFlow = MutableStateFlow<List<DAppEntity>?>(null)
-    val appsFlow = _appsFlow.asStateFlow().filterNotNull()
+    private val _connectionsFlow = MutableStateFlow<List<DConnectEntity>?>(null)
+    val connectionsFlow = _connectionsFlow.asStateFlow().filterNotNull()
 
-    val eventsFlow = events.flow(appsFlow).onEach {
+    val eventsFlow = events.flow(connectionsFlow).onEach {
         if (it.method == "disconnect") {
-            disconnect(it.app)
+            disconnect(it.connect)
         }
     }.filterNotNull().flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
 
     init {
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
-                localDataSource.clearApps()
+                localDataSource.clearConnections()
                 migrationFromRN()
             }
 
-            val apps = localDataSource.getApps()
+            val apps = localDataSource.getConnections()
             if (apps.isEmpty()) {
                 migrationFromRN()
-                _appsFlow.value = localDataSource.getApps()
+                _connectionsFlow.value = localDataSource.getConnections()
             } else {
-                _appsFlow.value = apps
+                _connectionsFlow.value = apps
             }
         }
     }
 
     private suspend fun migrationFromRN() {
-        val value = rnLegacy.getJSONState("TCApps")?.getJSONObject("connectedApps") ?: return
+        val tcApps = rnLegacy.getJSONState("TCApps")
+        val value = tcApps?.getJSONObject("connectedApps") ?: return
         value.optJSONObject("mainnet")?.let { migrationRN(it, false) }
         value.optJSONObject("testnet")?.let { migrationRN(it, true) }
     }
@@ -110,11 +109,12 @@ class TonConnectRepository(
         json: JSONObject
     ) {
         val manifest = DAppManifestEntity(
-            url = json.getString("url"),
+            url = json.getString("url").removeSuffix("/"),
             name = json.getString("name"),
             iconUrl = json.getString("icon"),
             termsOfUseUrl = "",
             privacyPolicyUrl = "",
+            source = "",
         )
 
         val notificationsEnabled = json.optBoolean("notificationsEnabled", false)
@@ -133,51 +133,60 @@ class TonConnectRepository(
             )
         }
 
-        val app = DAppEntity(
-            url = manifest.url,
+        val connect = DConnectEntity(
             walletId = wallet.id,
             accountId = wallet.accountId,
             testnet = wallet.testnet,
             clientId = connection.optString("clientSessionId", clientId),
             keyPair = keyPair,
             enablePush = notificationsEnabled,
+            type = if (connection.optString("type") == "remote") {
+                Type.External
+            } else {
+                Type.Internal
+            },
+            url = manifest.url,
             manifest = manifest,
         )
 
-        localDataSource.addApp(app)
+        localDataSource.addConnect(connect)
     }
 
     fun setPushEnabled(walletId: String, url: String, enabled: Boolean) {
-        val app = localDataSource.getApp(walletId, url) ?: return
-        if (app.enablePush != enabled) {
-            setPushEnabled(app, enabled)
+        val connect = localDataSource.getConnect(walletId, url) ?: return
+        if (connect.enablePush != enabled) {
+            setPushEnabled(connect, enabled)
         }
     }
 
-    fun setPushEnabled(app: DAppEntity, enabled: Boolean) {
-        if (app.enablePush != enabled) {
-            val newApp = app.copy(enablePush = enabled)
-            localDataSource.updateApp(newApp)
-            _appsFlow.value = _appsFlow.value?.map {
-                if (it.clientId == app.clientId) newApp else it
+    fun setPushEnabled(connect: DConnectEntity, enabled: Boolean) {
+        if (connect.enablePush != enabled) {
+            val newConnect = connect.copy(enablePush = enabled)
+            localDataSource.updateConnect(newConnect)
+            _connectionsFlow.value = _connectionsFlow.value?.map {
+                if (it.clientId == connect.clientId) newConnect else it
             }
         }
     }
 
-    fun disconnect(app: DAppEntity) {
-        localDataSource.deleteApp(app.walletId, app.url)
-        _appsFlow.value = _appsFlow.value?.filter { app.clientId != it.clientId }
+    fun disconnect(connect: DConnectEntity) {
+        localDataSource.deleteConnect(connect.walletId, connect.url)
+        _connectionsFlow.value = _connectionsFlow.value?.filter { connect.clientId != it.clientId }
     }
 
-    fun getApps(urls: List<String>, wallet: WalletEntity): List<DAppEntity> {
-        return urls.mapNotNull { getApp(it, wallet) }.distinctBy { it.publicKeyHex }
+    fun getApps(urls: List<String>, wallet: WalletEntity): List<DConnectEntity> {
+        return urls.mapNotNull { getConnect(it, wallet) }.distinctBy { it.publicKeyHex }
     }
 
-    fun getApp(url: String, wallet: WalletEntity): DAppEntity? {
-        val apps = localDataSource.getApps().filter { it.walletId == wallet.id }
+    fun getConnect(url: String, wallet: WalletEntity): DConnectEntity? {
+        val apps = localDataSource.getConnections().filter { it.walletId == wallet.id }
         return apps.find {
             Uri.parse(it.url).host == Uri.parse(url).host
         }
+    }
+
+    suspend fun getLocalManifest(url: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
+        localDataSource.getManifest(url)
     }
 
     suspend fun getManifest(sourceUrl: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
@@ -195,47 +204,47 @@ class TonConnectRepository(
         }
     }
 
-    suspend fun newApp(
+    private suspend fun newApp(
+        wallet: WalletEntity,
         manifest: DAppManifestEntity,
-        accountId: String,
-        testnet: Boolean,
         clientId: String,
-        walletId: String,
         enablePush: Boolean,
-    ): DAppEntity = withContext(Dispatchers.IO) {
+        type: Type,
+    ): DConnectEntity = withContext(Dispatchers.IO) {
         val keyPair = CryptoBox.keyPair()
-        val app = DAppEntity(
-            url = manifest.url,
-            accountId = accountId,
-            testnet = testnet,
+        val connect = DConnectEntity(
+            accountId = wallet.accountId,
+            testnet = wallet.testnet,
             clientId = clientId,
             keyPair = keyPair,
-            walletId = walletId,
+            walletId = wallet.id,
             enablePush = enablePush,
+            type = type,
+            url = manifest.url,
             manifest = manifest,
         )
-        localDataSource.addApp(app)
-        val oldValue = _appsFlow.value ?: emptyList()
-        _appsFlow.value = oldValue.plus(app)
-        app
+        localDataSource.addConnect(connect)
+        val oldValue = _connectionsFlow.value ?: emptyList()
+        _connectionsFlow.value = oldValue.plus(connect)
+        connect
     }
 
     suspend fun send(
-        app: DAppEntity,
+        connect: DConnectEntity,
         body: String,
     ) = withContext(Dispatchers.IO) {
-        val encrypted = app.encrypt(body)
-        api.tonconnectSend(app.publicKeyHex, app.clientId, base64(encrypted))
+        val encrypted = connect.encrypt(body)
+        api.tonconnectSend(connect.publicKeyHex, connect.clientId, base64(encrypted))
     }
 
     suspend fun send(
-        app: DAppEntity,
+        connect: DConnectEntity,
         body: JSONObject,
-    ) = send(app, body.toString())
+    ) = send(connect, body.toString())
 
     suspend fun sendError(
         requestId: String,
-        app: DAppEntity,
+        connect: DConnectEntity,
         errorCode: Int,
         errorMessage: String
     ) {
@@ -247,48 +256,48 @@ class TonConnectRepository(
         json.put("id", requestId)
         json.put("error", error)
 
-        send(app, json.toString())
+        send(connect, json.toString())
     }
 
     suspend fun send(
         requestId: String,
-        app: DAppEntity,
+        connect: DConnectEntity,
         result: String
     ) {
         val data = DAppSuccessEntity(requestId, result)
-        send(app, data.toJSON())
+        send(connect, data.toJSON())
     }
 
     suspend fun subscribePush(
         wallet: WalletEntity,
-        app: DAppEntity,
+        connect: DConnectEntity,
         firebaseToken: String
     ) {
-        val proofToken = accountRepository.requestTonProofToken(wallet.id) ?: return
-        val url = app.url.removeSuffix("/")
+        val proofToken = accountRepository.requestTonProofToken(wallet) ?: return
+        val url = connect.url
         api.pushTonconnectSubscribe(
             token = proofToken,
             appUrl = url,
             accountId = wallet.address,
             firebaseToken = firebaseToken,
-            sessionId = app.clientId,
+            sessionId = connect.clientId,
             commercial = true,
             silent = false,
         )
     }
 
     suspend fun subscribePush(
-        app: DAppEntity,
+        connect: DConnectEntity,
         firebaseToken: String
     ) {
-        val wallet = accountRepository.getWalletById(app.walletId) ?: return
-        subscribePush(wallet, app, firebaseToken)
+        val wallet = accountRepository.getWalletById(connect.walletId) ?: return
+        subscribePush(wallet, connect, firebaseToken)
     }
 
     suspend fun updatePushToken(firebaseToken: String) = withContext(Dispatchers.IO) {
-        val apps = localDataSource.getApps()
-        for (app in apps) {
-            subscribePush(app, firebaseToken)
+        val connections = localDataSource.getConnections()
+        for (connect in connections) {
+            subscribePush(connect, firebaseToken)
         }
     }
 
@@ -299,9 +308,16 @@ class TonConnectRepository(
         clientId: String,
         requestItems: List<DAppItemEntity>,
         firebaseToken: String?,
+        type: Type,
     ): DAppEventSuccessEntity = withContext(Dispatchers.IO) {
         val enablePush = firebaseToken != null
-        val app = newApp(manifest, wallet.accountId, wallet.testnet, clientId, wallet.id, enablePush)
+        val app = newApp(
+            wallet = wallet,
+            manifest = manifest,
+            clientId = clientId,
+            enablePush = enablePush,
+            type = type
+        )
         val items = createItems(app, wallet, privateKey, requestItems)
         val res = DAppEventSuccessEntity(items)
         send(app, res.toJSON())
@@ -325,7 +341,7 @@ class TonConnectRepository(
     }
 
     private fun createItems(
-        app: DAppEntity,
+        connect: DConnectEntity,
         wallet: WalletEntity,
         privateKey: PrivateKeyEd25519,
         items: List<DAppItemEntity>
@@ -342,7 +358,7 @@ class TonConnectRepository(
             } else if (requestItem.name == DAppItemEntity.TON_PROOF) {
                 result.add(createProofItem(
                     payload = requestItem.payload ?: "",
-                    domain = app.domain,
+                    domain = connect.domain,
                     address = wallet.contract.address,
                     privateWalletKey = privateKey,
                     stateInit = wallet.contract.getStateCell().base64()

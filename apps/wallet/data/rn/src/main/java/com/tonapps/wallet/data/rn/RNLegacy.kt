@@ -201,8 +201,9 @@ class RNLegacy(
     }
 
     suspend fun addWallet(wallet: RNWallet) {
-        val newWallets = getWallets().copy(
-            wallets = getWallets().wallets.toMutableList().apply {
+        val state = getWallets()
+        val newWallets = state.copy(
+            wallets = state.wallets.toMutableList().apply {
                 add(wallet)
             }
         )

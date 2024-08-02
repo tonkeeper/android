@@ -16,6 +16,7 @@ import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
+import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -114,17 +115,18 @@ class EventsViewModel(
 
     private suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
         val events = pushManager.getRemoteDAppEvents(wallet)
-        return dAppEventsMapping(wallet, events)
+        return dAppEventsMapping(wallet, events, emptyList())
     }
 
     private suspend fun getLocalDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
         val events = pushManager.getLocalDAppEvents(wallet)
-        return dAppEventsMapping(wallet, events)
+        return dAppEventsMapping(wallet, events, emptyList())
     }
 
     private fun dAppEventsMapping(
         wallet: WalletEntity,
-        events: List<AppPushEntity>
+        events: List<AppPushEntity>,
+        manifests: List<DAppManifestEntity>
     ): List<HistoryItem.App> {
         val dappUrls = events.map { it.dappUrl }
         val apps = tonConnectRepository.getApps(dappUrls, wallet)
@@ -135,14 +137,16 @@ class EventsViewModel(
                 it.url.startsWith(event.dappUrl) && it.accountId == event.account
             } ?: continue
 
+            val manifest = manifests.firstOrNull { it.url == app.url } ?: continue
+
             items.add(HistoryItem.App(
-                iconUri = Uri.parse(app.manifest.iconUrl),
-                title = app.manifest.name,
+                iconUri = Uri.parse(manifest.iconUrl),
+                title = manifest.name,
                 body = event.message,
                 date = DateHelper.formatTime(event.dateUnix),
                 timestamp = event.dateUnix,
                 deepLink = event.link,
-                host = app.manifest.host
+                host = manifest.host
             ))
         }
         return items

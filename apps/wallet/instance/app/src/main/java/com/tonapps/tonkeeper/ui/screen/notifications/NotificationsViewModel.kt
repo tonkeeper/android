@@ -28,7 +28,7 @@ class NotificationsViewModel(
     init {
         combine(
             accountRepository.selectedWalletFlow,
-            tonConnectRepository.appsFlow.take(1)
+            tonConnectRepository.connectionsFlow.take(1)
         ) { wallet, apps ->
             val myApps = apps.filter { it.walletId == wallet.id }
             val uiItems = mutableListOf<Item>()
@@ -37,7 +37,7 @@ class NotificationsViewModel(
                 walletId = wallet.id
             ))
             uiItems.add(Item.Space)
-            if (myApps.isNotEmpty()) {
+            /*if (myApps.isNotEmpty()) {
                 uiItems.add(Item.AppsHeader)
                 uiItems.add(Item.Space)
                 for ((index, app) in myApps.withIndex()) {
@@ -45,7 +45,7 @@ class NotificationsViewModel(
                     uiItems.add(Item.App(app, position))
                 }
                 uiItems.add(Item.Space)
-            }
+            }*/
             _uiItemsFlow.value = uiItems
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }

@@ -16,7 +16,8 @@ import com.tonapps.wallet.data.push.source.LocalDataSource
 import com.tonapps.wallet.data.push.source.RemoteDataSource
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +68,7 @@ class PushManager(
     }
 
     suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<AppPushEntity> = withContext(Dispatchers.IO) {
-        val token = accountRepository.requestTonProofToken(wallet.id) ?: return@withContext emptyList()
+        val token = accountRepository.requestTonProofToken(wallet) ?: return@withContext emptyList()
         val items = remoteDataSource.getEvents(token, wallet.accountId)
         localDataSource.save(wallet.id, items)
         return@withContext items
@@ -80,10 +81,11 @@ class PushManager(
         scope.launch(Dispatchers.IO) {
             try {
                 val wallet = accountRepository.getWalletByAccountId(push.account) ?: throw IllegalStateException("Wallet not found")
-                val app = tonConnectRepository.getApp(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
+                val connect = tonConnectRepository.getConnect(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
+                val manifest = tonConnectRepository.getManifest(connect.url) ?: throw IllegalStateException("Manifest not found")
                 localDataSource.insert(wallet.id, push)
-                val largeIcon = api.defaultHttpClient.getBitmap(app.manifest.iconUrl)
-                displayAppPush(app, push, wallet, largeIcon)
+                val largeIcon = api.defaultHttpClient.getBitmap(manifest.iconUrl)
+                displayAppPush(connect, manifest, push, wallet, largeIcon)
 
                 if (accountRepository.selectedWalletFlow.firstOrNull() == wallet) {
                     val old = _dAppPushFlow.value ?: emptyList()
@@ -94,7 +96,8 @@ class PushManager(
     }
 
     private suspend fun displayAppPush(
-        app: DAppEntity,
+        connect: DConnectEntity,
+        manifest: DAppManifestEntity,
         push: AppPushEntity,
         wallet: WalletEntity,
         largeIcon: Bitmap?
@@ -106,7 +109,7 @@ class PushManager(
         val pending = helper.createPendingIntent(context, push.intent)
         val channel = helper.getChannel(notificationChannelApp)
         val builder = helper.baseBuilder(context, channel.id)
-        builder.setContentTitle(app.manifest.name)
+        builder.setContentTitle(manifest.name)
         builder.setContentText(push.message)
         builder.setColor(wallet.label.color)
         builder.setLargeIcon(largeIcon)

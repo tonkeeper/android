@@ -114,7 +114,7 @@ class UnStakeViewModel(
             seqno = seqno,
             unsignedBody = unsignedBody,
         )
-        api.emulate(message, wallet.testnet).totalFees
+        api.emulate(message, wallet.testnet)?.totalFees ?: 0L
     }.take(1).flowOn(Dispatchers.IO)
 
     fun requestFeeFormat() = combine(requestFee(), stakeFlow) { fee, stake ->

@@ -9,6 +9,7 @@ import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.tonkeeper.ui.screen.init.InitEvent
+import com.tonapps.tonkeeper.ui.screen.init.InitRoute
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.init.list.Adapter
@@ -39,7 +40,7 @@ class SelectScreen: BaseFragment(R.layout.fragment_init_select) {
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener {
-            initViewModel.nextStep(requireContext(), InitEvent.Step.SelectAccount)
+            initViewModel.nextStep(requireContext(), InitRoute.SelectAccount)
         }
 
         collectFlow(initViewModel.uiTopOffset) {

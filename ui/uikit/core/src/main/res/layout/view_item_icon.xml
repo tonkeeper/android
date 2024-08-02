@@ -6,7 +6,6 @@
         android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_weight="1"
         android:singleLine="true"
         android:gravity="center_vertical"
         android:textAppearance="@style/TextAppearance.Label1"
@@ -20,7 +19,7 @@
         android:layout_weight="1"
         android:singleLine="true"
         android:paddingLeft="10dp"
-        android:gravity="center_vertical"
+        android:gravity="center_vertical|start"
         android:textColor="?attr/textSecondaryColor"
         android:textAppearance="@style/TextAppearance.Body1"/>
 

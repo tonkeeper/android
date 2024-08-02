@@ -1,5 +1,6 @@
 package com.tonapps.extensions
 
+import android.util.Log
 import kotlinx.coroutines.delay
 
 suspend fun <R> withRetry(
@@ -10,7 +11,9 @@ suspend fun <R> withRetry(
     for (i in 0 until times) {
         try {
             return block()
-        } catch (ignored: Throwable) { }
+        } catch (e: Throwable) {
+            Log.d("SendScreenLog", "Error: emulating transfer", e)
+        }
         delay(delay)
     }
     return null

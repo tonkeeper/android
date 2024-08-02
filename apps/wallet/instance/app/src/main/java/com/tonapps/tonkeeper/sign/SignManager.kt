@@ -78,7 +78,7 @@ class SignManager(
         val seqno = accountRepository.getSeqno(wallet)
         val cell = accountRepository.createSignedMessage(wallet, seqno, EmptyPrivateKeyEd25519, request.validUntil, request.transfers)
         return try {
-            val emulated = api.emulate(cell, wallet.testnet)
+            val emulated = api.emulate(cell, wallet.testnet) ?: return null
             historyHelper.create(wallet, emulated, rates)
         } catch (e: Throwable) {
             null

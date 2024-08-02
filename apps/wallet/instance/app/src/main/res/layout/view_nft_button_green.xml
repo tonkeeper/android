@@ -4,7 +4,7 @@
     android:layout_height="wrap_content">
 
     <Button
-        style="@style/Widget.App.Button.Secondary"
+        style="@style/Widget.App.Button.Green"
         android:id="@+id/nft_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 // TODO need to be refactored
 class SettingsRepository(
@@ -231,6 +232,13 @@ class SettingsRepository(
 
     fun setupHide(walletId: String) {
         walletPrefsFolder.setupHide(walletId)
+    }
+
+    fun getLocale(): Locale {
+        if (language.code == Language.DEFAULT) {
+            return context.locale
+        }
+        return language.locale
     }
 
     suspend fun setTokenHidden(

@@ -289,6 +289,11 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun applyTransactionAmount(amount: SendTransaction.Amount) {
+        if (!amount.value.isPositive) {
+            reviewRecipientAmountView.visibility = View.GONE
+            return
+        }
+        reviewRecipientAmountView.visibility = View.VISIBLE
         reviewRecipientAmountView.value = amount.format
         reviewRecipientAmountView.description = amount.convertedFormat
     }

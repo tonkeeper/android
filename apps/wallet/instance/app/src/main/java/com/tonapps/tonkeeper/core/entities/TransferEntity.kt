@@ -54,7 +54,6 @@ data class TransferEntity(
 
     private val coins: org.ton.block.Coins
         get() {
-            Log.d("TransferEntityLog", "amount: $amount; long: ${amount.toLong()}")
             return org.ton.block.Coins.ofNano(amount.toLong())
         }
 

@@ -1,8 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.BASE_FORWARD_AMOUNT
+import com.tonapps.blockchain.ton.ONE_TON
+import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.MutableEffectFlow
@@ -13,6 +17,8 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
+import com.tonapps.tonkeeper.core.entities.TransferEntity.Companion.newWalletQueryId
+import com.tonapps.tonkeeper.ui.screen.send.helper.SendNftHelper
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendFeeState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendTransaction
@@ -31,6 +37,7 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
 import io.tonapi.models.AccountStatus
+import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -55,9 +62,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import org.ton.bitstring.BitString
+import org.ton.block.AddrStd
+import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
+import org.ton.contract.wallet.WalletTransferBuilder
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.math.abs
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
@@ -238,14 +249,19 @@ class SendViewModel(
         val builder = TransferEntity.Builder(wallet)
         builder.setToken(transaction.token)
         builder.setDestination(transaction.targetAccount.address)
-        builder.setAmount(transaction.amount.value)
         builder.setSeqno(sendMetadata.seqno)
         builder.setComment(comment)
         builder.setValidUntil(sendMetadata.validUntil)
-        builder.setBounceable(isBounce(userInputAddress, transaction.targetAccount))
-        builder.setMax(transaction.amount.value == token.balance.value)
         if (isNft) {
+            val amount = getNftTotalAmount(wallet, sendMetadata, transaction.targetAccount.address, comment)
             builder.setNftAddress(nftAddress)
+            builder.setBounceable(true)
+            builder.setAmount(amount)
+            builder.setMax(false)
+        } else {
+            builder.setMax(transaction.amount.value == token.balance.value)
+            builder.setAmount(transaction.amount.value)
+            builder.setBounceable(isBounce(userInputAddress, transaction.targetAccount))
         }
         builder.build()
     }.flowOn(Dispatchers.IO)
@@ -254,6 +270,23 @@ class SendViewModel(
         if (isNft) {
             loadNft()
         }
+    }
+
+    private suspend fun getNftTotalAmount(
+        wallet: WalletEntity,
+        sendMetadata: SendMetadataEntity,
+        destination: String,
+        comment: String?
+    ): Coins = withContext(Dispatchers.IO) {
+        SendNftHelper.totalAmount(
+            nftAddress = AddrStd.parse(nftAddress),
+            api = api,
+            wallet = wallet,
+            seqno = sendMetadata.seqno,
+            destination = AddrStd.parse(destination),
+            validUntil = sendMetadata.validUntil,
+            comment = comment,
+        )
     }
 
     private fun isInsufficientBalance(): Boolean {
@@ -287,7 +320,7 @@ class SendViewModel(
         transfer: TransferEntity
     ): Coins = withContext(Dispatchers.IO) {
         val message = transfer.toSignedMessage(EmptyPrivateKeyEd25519)
-        val fee = api.emulate(message, transfer.wallet.testnet).totalFees
+        val fee = api.emulate(message, transfer.wallet.testnet)?.totalFees ?: 0
         Coins.of(fee)
     }
 
@@ -356,12 +389,12 @@ class SendViewModel(
     private suspend fun getSendParams(
         wallet: WalletEntity,
     ): SendMetadataEntity = withContext(Dispatchers.IO) {
-        val seqnoDeferred = async { accountRepository.getSeqno(wallet) }
-        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.testnet) }
+        val seqno = accountRepository.getSeqno(wallet)
+        val validUntil = accountRepository.getValidUntil(wallet.testnet)
 
         SendMetadataEntity(
-            seqno = seqnoDeferred.await(),
-            validUntil = validUntilDeferred.await(),
+            seqno = seqno,
+            validUntil = validUntil,
         )
     }
 

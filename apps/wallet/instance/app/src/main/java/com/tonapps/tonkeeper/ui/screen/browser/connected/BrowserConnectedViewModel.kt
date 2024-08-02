@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,15 +24,20 @@ class BrowserConnectedViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
-        combine(accountRepository.selectedWalletFlow, tonConnectRepository.appsFlow) { wallet, apps ->
-            apps.filter { it.accountId == wallet.accountId }.distinctBy { it.url }.map { Item(it) }
+        combine(
+            accountRepository.selectedWalletFlow,
+            tonConnectRepository.connectionsFlow
+        ) { wallet, apps ->
+            apps.filter { it.accountId == wallet.accountId }.distinctBy { it.url }.map {
+                val manifest = tonConnectRepository.getLocalManifest(it.url) ?: return@map null
+                Item(it, manifest)
+            }.filterNotNull()
         }.onEach {
             _uiItemsFlow.value = it
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 
-    fun deleteApp(app: DAppEntity) {
-        tonConnectRepository.disconnect(app)
-
+    fun deleteConnect(connect: DConnectEntity) {
+        tonConnectRepository.disconnect(connect)
     }
 }

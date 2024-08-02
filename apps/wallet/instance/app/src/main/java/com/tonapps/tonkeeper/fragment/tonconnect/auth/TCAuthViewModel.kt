@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.core.tonconnect.models.TCData
@@ -10,6 +11,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppEventSuccessEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +63,8 @@ class TCAuthViewModel(
 
     fun connect(
         context: Context,
-        allowPush: Boolean
+        allowPush: Boolean,
+        type: DConnectEntity.Type,
     ): Flow<DAppEventSuccessEntity> = wallet(context).combine(dataState) { wallet, data ->
         val privateKey = accountRepository.getPrivateKey(wallet.id)
         val firebaseToken = if (allowPush) {
@@ -69,7 +72,7 @@ class TCAuthViewModel(
         } else {
             null
         }
-        tonConnectRepository.connect(wallet, privateKey, data.manifest, data.clientId, data.items, firebaseToken)
+        tonConnectRepository.connect(wallet, privateKey, data.manifest, data.clientId, data.items, firebaseToken, type)
     }.take(1).flowOn(Dispatchers.IO)
 
 

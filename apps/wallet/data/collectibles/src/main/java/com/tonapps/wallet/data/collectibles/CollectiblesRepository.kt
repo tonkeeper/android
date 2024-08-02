@@ -32,7 +32,7 @@ class CollectiblesRepository(
         return localDataSource.get(address, testnet)
     }
 
-    fun getRemoteNftItems(
+    suspend fun getRemoteNftItems(
         address: String,
         testnet: Boolean
     ): List<NftEntity> {

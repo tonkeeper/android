@@ -2,10 +2,13 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.ConsoleMessage
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -15,9 +18,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import androidx.webkit.ProxyConfig
-import androidx.webkit.ProxyController
-import androidx.webkit.WebViewFeature
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
@@ -26,7 +26,7 @@ import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.localization.Localization
@@ -37,11 +37,10 @@ import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
+import uikit.extensions.pinToBottomInsets
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.webview.bridge.BridgeWebView
 import java.util.UUID
-import java.util.concurrent.Executor
-import java.util.concurrent.ExecutorService
 import kotlin.coroutines.resume
 
 class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
@@ -70,14 +69,17 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             return rootViewModel.processDeepLink(url, false)
         }
 
-        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+        override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
             refreshView.isRefreshing = true
         }
 
-        override fun onPageFinished(view: WebView?, url: String?) {
+        override fun onPageFinished(view: WebView, url: String?) {
             super.onPageFinished(view, url)
             refreshView.isRefreshing = false
+            if (args.title.isNullOrBlank()) {
+                titleView.text = view.title
+            }
         }
     }
 
@@ -97,7 +99,11 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
         backView.setOnClickListener { back() }
 
         titleView = view.findViewById(R.id.title)
-        titleView.text = args.title
+        if (args.title.isNullOrBlank()) {
+            titleView.text = getString(Localization.loading)
+        } else {
+            titleView.text = args.title
+        }
 
         hostView = view.findViewById(R.id.host)
         hostView.text = args.host
@@ -114,6 +120,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
         webView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
             headerDrawable.setDivider(scrollY > 0)
         }
+
         webView.jsBridge = DAppBridge(
             send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
             connect = { _, request -> tonConnectAuth(request) },
@@ -121,6 +128,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             disconnect = { dAppViewModel.disconnect() }
         )
         webView.loadUrl(args.url)
+        webView.pinToBottomInsets()
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.setColorSchemeColors(requireContext().tabBarActiveIconColor)
@@ -148,7 +156,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
         collectFlow(dAppViewModel.getApp()) { openMenu(view, it) }
     }
 
-    private fun openMenu(view: View, app: DAppEntity?) {
+    private fun openMenu(view: View, app: DConnectEntity?) {
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(REFRESH_ID, Localization.refresh, UIKitIcon.ic_refresh_16)
         if (app?.enablePush == true) {
@@ -200,7 +208,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             id = id,
             r = request.toJSON().toString(),
         )
-        navigation?.add(TCAuthFragment.newInstance(entity, id))
+        navigation?.add(TCAuthFragment.newInstance(entity, id, true))
     }
 
     override fun onResume() {
@@ -239,8 +247,19 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             host: String? = null,
             url: String
         ): DAppScreen {
+            val mustHost = if (host.isNullOrBlank()) {
+                Uri.parse(url).host
+            } else {
+                host
+            }
+            return newInstance(DAppArgs(title, mustHost, url))
+        }
+
+        fun newInstance(
+            args: DAppArgs,
+        ): DAppScreen {
             val fragment = DAppScreen()
-            fragment.setArgs(DAppArgs(title, host, url))
+            fragment.setArgs(args)
             return fragment
         }
     }

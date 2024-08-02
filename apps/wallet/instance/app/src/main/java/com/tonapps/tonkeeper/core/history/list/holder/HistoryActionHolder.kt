@@ -97,7 +97,7 @@ class HistoryActionHolder(
         }
 
         bindPending(item.pending)
-        if (item.comment == null && item.cipherText == null) {
+        if (item.comment.isNullOrBlank() && item.cipherText.isNullOrBlank()) {
             commentView.visibility = View.GONE
         } else {
             bindComment(item.comment)

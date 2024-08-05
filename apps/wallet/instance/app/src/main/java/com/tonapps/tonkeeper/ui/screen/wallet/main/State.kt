@@ -1,31 +1,24 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
-import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.DEFAULT_DECIMALS
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
-import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.BalanceType
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
-import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.push.entities.AppPushEntity
-import com.tonapps.wallet.data.staking.entities.PoolEntity
-import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
-import com.tonapps.wallet.data.staking.entities.StakingEntity
-import com.tonapps.wallet.data.token.entities.AccountTokenEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.localization.Localization
 
 sealed class State {
@@ -250,7 +243,7 @@ sealed class State {
             uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat))
             uiItems.add(uiItemActions(config))
             if (!dAppNotifications.isEmpty) {
-                uiItems.add(Item.Push(dAppNotifications.notifications, dAppNotifications.apps))
+                uiItems.add(Item.Push(dAppNotifications.notifications, dAppNotifications.apps, dAppNotifications.manifestEntity))
             }
 
             setup?.let {
@@ -267,7 +260,8 @@ sealed class State {
 
     data class DAppNotifications(
         val notifications: List<AppPushEntity> = emptyList(),
-        val apps: List<DAppEntity> = emptyList(),
+        val apps: List<DConnectEntity> = emptyList(),
+        val manifestEntity: List<DAppManifestEntity> = emptyList(),
     ): State() {
 
         val isEmpty: Boolean

@@ -65,27 +65,27 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
         loaderIconView = view.findViewById(R.id.loader_icon)
 
         collectFlow(initViewModel.eventFlow, ::onEvent)
+        collectFlow(initViewModel.routeFlow, ::onRoute)
     }
 
     private fun onEvent(event: InitEvent) {
+        Log.d("InitViewModelLog", "onEvent: $event")
         when (event) {
             is InitEvent.Back -> popBackStack()
             is InitEvent.Finish -> finish()
             is InitEvent.Loading -> setLoading(event.loading)
-            is InitEvent.Step -> setStep(event)
         }
     }
 
-    private fun setStep(step: InitEvent.Step) {
-        val fragment = when (step) {
-            InitEvent.Step.CreatePasscode -> PasscodeScreen.newInstance(false)
-            InitEvent.Step.ReEnterPasscode -> PasscodeScreen.newInstance(true)
-            InitEvent.Step.ImportWords -> WordsScreen.newInstance(false)
-            InitEvent.Step.WatchAccount -> WatchScreen.newInstance()
-            InitEvent.Step.LabelAccount -> LabelScreen.newInstance()
-            InitEvent.Step.SelectAccount -> SelectScreen.newInstance()
-            InitEvent.Step.Push -> PushScreen.newInstance()
-            else -> throw IllegalArgumentException("Unknown step: $step")
+    private fun onRoute(route: InitRoute) {
+        val fragment = when (route) {
+            InitRoute.CreatePasscode -> PasscodeScreen.newInstance(false)
+            InitRoute.ReEnterPasscode -> PasscodeScreen.newInstance(true)
+            InitRoute.ImportWords -> WordsScreen.newInstance(false)
+            InitRoute.WatchAccount -> WatchScreen.newInstance()
+            InitRoute.LabelAccount -> LabelScreen.newInstance()
+            InitRoute.SelectAccount -> SelectScreen.newInstance()
+            InitRoute.Push -> PushScreen.newInstance()
         }
 
         val transaction = childFragmentManager.beginTransaction()

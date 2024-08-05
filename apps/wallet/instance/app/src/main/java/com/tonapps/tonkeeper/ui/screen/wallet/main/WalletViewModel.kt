@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
@@ -31,7 +30,7 @@ import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,10 +39,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
@@ -118,19 +115,6 @@ class WalletViewModel(
                 setStatus(Status.LastUpdated)
             }
         }
-
-        /*
-        combine(
-        networkMonitor.isOnlineFlow,
-        _statusFlow
-    ) { isOnline, status ->
-        if (!isOnline) {
-            Status.NoInternet
-        } else {
-            status
-        }
-    }.distinctUntilChanged()
-         */
 
         combine(
             accountRepository.selectedWalletFlow,
@@ -298,7 +282,7 @@ class WalletViewModel(
     private fun getApps(
         wallet: WalletEntity,
         events: List<AppPushEntity>
-    ): List<DAppEntity> {
+    ): List<DConnectEntity> {
         if (events.isEmpty()) {
             return emptyList()
         }

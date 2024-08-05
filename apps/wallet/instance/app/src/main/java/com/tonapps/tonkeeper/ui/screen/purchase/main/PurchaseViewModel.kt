@@ -39,9 +39,9 @@ class PurchaseViewModel(
 
     private val dataFlow = combine(
         accountRepository.selectedWalletFlow,
-        settingsRepository.countryFlow
+        settingsRepository.countryFlow,
     ) { wallet, country ->
-        purchaseRepository.get(wallet.testnet, country)
+        purchaseRepository.get(wallet.testnet, country, settingsRepository.getLocale())
     }.flowOn(Dispatchers.IO)
 
     val uiItemsFlow = combine(dataFlow, tabFlow) { (buy, sell), tab ->

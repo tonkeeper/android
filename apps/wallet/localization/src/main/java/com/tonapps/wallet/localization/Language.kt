@@ -4,7 +4,7 @@ import java.util.Locale
 
 data class Language(val code: String = DEFAULT) {
 
-    private val locale: Locale by lazy {
+    val locale: Locale by lazy {
         Locale(code)
     }
 

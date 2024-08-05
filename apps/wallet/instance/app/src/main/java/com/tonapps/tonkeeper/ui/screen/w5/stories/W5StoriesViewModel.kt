@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.w5.stories
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -73,7 +74,6 @@ class W5StoriesViewModel(
     }
 
     fun addWallet(context: Context) = accountRepository.selectedWalletFlow.take(1)
-        .filter { it.type != Wallet.Type.Watch && it.type != Wallet.Type.Ledger }
         .map { wallet ->
             accountRepository.addWallet(
                 label = wallet.label,

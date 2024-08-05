@@ -17,9 +17,7 @@ abstract class SQLiteHelper(context: Context, name: String, version: Int): SQLit
     override fun onCreate(db: SQLiteDatabase) {
         try {
             create(db)
-        } catch (e: Exception) {
-            Log.e("TonConnectLog", "onCreate", e)
-        }
+        } catch (ignored: Exception) { }
     }
 
     abstract fun create(db: SQLiteDatabase)

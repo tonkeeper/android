@@ -115,6 +115,9 @@ data class Coins(
     val isPositive: Boolean
         get() = value > ZERO.value
 
+    val isNegative: Boolean
+        get() = value < ZERO.value
+
     constructor(parcel: Parcel) : this(
         parcel.readSerializable() as BigDecimal,
         parcel.readInt(),

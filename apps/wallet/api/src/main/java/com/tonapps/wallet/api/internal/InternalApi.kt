@@ -2,6 +2,7 @@ package com.tonapps.wallet.api.internal
 
 import android.content.Context
 import android.net.Uri
+import android.util.ArrayMap
 import android.util.Log
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
@@ -11,6 +12,7 @@ import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import okhttp3.OkHttpClient
 import org.json.JSONObject
+import java.util.Locale
 
 internal class InternalApi(
     private val context: Context,
@@ -39,14 +41,17 @@ internal class InternalApi(
         testnet: Boolean,
         platform: String = "android_x",
         build: String = "4.6.3", //context.packageInfo.versionName.removeSuffix("-debug")
+        locale: Locale,
     ): JSONObject {
         val url = endpoint(path, testnet, platform, build)
-        val body = okHttpClient.get(url)
+        val headers = ArrayMap<String, String>()
+        headers["Accept-Language"] = locale.toString()
+        val body = okHttpClient.get(url, headers)
         return JSONObject(body)
     }
 
     fun getNotifications(): List<NotificationEntity> {
-        val json = request("notifications", false)
+        val json = request("notifications", false, locale = context.locale)
         val array = json.getJSONArray("notifications")
         val list = mutableListOf<NotificationEntity>()
         for (i in 0 until array.length()) {
@@ -55,19 +60,19 @@ internal class InternalApi(
         return list.toList()
     }
 
-    fun getBrowserApps(testnet: Boolean): JSONObject {
-        val data = request("apps/popular", testnet)
+    fun getBrowserApps(testnet: Boolean, locale: Locale): JSONObject {
+        val data = request("apps/popular", testnet, locale = locale)
         return data.getJSONObject("data")
     }
 
-    fun getFiatMethods(testnet: Boolean = false): JSONObject {
-        val data = request("fiat/methods", testnet)
+    fun getFiatMethods(testnet: Boolean = false, locale: Locale): JSONObject {
+        val data = request("fiat/methods", testnet, locale = locale)
         return data.getJSONObject("data")
     }
 
     fun downloadConfig(testnet: Boolean): ConfigEntity? {
         return try {
-            val json = request("keys", testnet)
+            val json = request("keys", testnet, locale = context.locale)
             ConfigEntity(json, context.isDebug)
         } catch (e: Throwable) {
             null

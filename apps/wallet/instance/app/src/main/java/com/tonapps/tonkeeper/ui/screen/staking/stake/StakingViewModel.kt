@@ -273,7 +273,7 @@ class StakingViewModel(
             seqno = seqno,
             unsignedBody = unsignedBody,
         )
-        api.emulate(message, wallet.testnet).totalFees
+        api.emulate(message, wallet.testnet)?.totalFees ?: 0L
     }.take(1).flowOn(Dispatchers.IO)
 
     fun requestFeeFormat() = combine(ratesFlow.take(1), requestFee(), tokenFlow.take(1)) { rates, fee, token ->

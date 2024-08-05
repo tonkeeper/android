@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 fun <T> LifecycleOwner.collectFlow(flow: Flow<T>, action: suspend (T) -> Unit): Job {
-    return flow.onEach(action).flowOn(Dispatchers.Main).launchIn(lifecycleScope) // .flowWithLifecycle(lifecycle)
+    return flow.onEach(action).launchIn(lifecycleScope) // .flowWithLifecycle(lifecycle)
 }
 
 fun <T> ViewModel.collectFlow(flow: Flow<T>, action: suspend (T) -> Unit): Job {

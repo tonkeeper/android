@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getByteArray
 import kotlinx.coroutines.flow.asSharedFlow
@@ -20,7 +21,7 @@ internal abstract class BaseSettingsFolder(
         notifyChanged()
     }
 
-    fun notifyChanged() {
+    private fun notifyChanged() {
         _changedFlow.tryEmit(Unit)
     }
 

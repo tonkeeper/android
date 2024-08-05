@@ -31,7 +31,11 @@ internal class RNSeedStorage(context: Context) {
 
     suspend fun getTonProof(id: String): String? = withContext(Dispatchers.IO) {
         val key = keyTonProof(id)
-        kv.getItemImpl(key)
+        val value = kv.getItemImpl(key)
+        if (value.isNullOrBlank()) {
+            return@withContext null
+        }
+        value
     }
 
     private fun keyTonProof(id: String): String {

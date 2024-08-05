@@ -153,6 +153,9 @@
     <string name="jetton_transfer">%1$s transfer</string>
     <string name="name_your_wallet">Name your wallet</string>
     <string name="name_your_wallet_subtitle">Name your wallet to easily identify it while using the Tonkeeper. These names are stored locally, and can only be seen by you.</string>
+    <string name="open_anyway">Open anyway</string>
+    <string name="nft_warning_buttton_title">Are you sure you want to open an external link?</string>
+    <string name="nft_warning_buttton_subtitle">Visit this external link only if you trust the author of the collection.\n\n%1$s</string>
 
     <string name="tokens">Tokens</string>
     <string name="today">Today</string>

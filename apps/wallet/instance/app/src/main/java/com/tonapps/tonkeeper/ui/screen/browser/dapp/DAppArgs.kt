@@ -4,7 +4,7 @@ import android.os.Bundle
 import uikit.base.BaseArgs
 
 data class DAppArgs(
-    val title: String?,
+    val title: String? = null,
     val host: String?,
     val url: String
 ): BaseArgs() {

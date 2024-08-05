@@ -3,14 +3,10 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aptabase.Aptabase
-import com.aptabase.InitOptions
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
@@ -35,7 +31,6 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -47,7 +42,7 @@ import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppSuccessEntity
@@ -222,13 +217,13 @@ class RootViewModel(
         _passcodeFlow.value = Passcode(show = false, biometric = false)
     }
 
-    suspend fun tonconnectReject(requestId: String, app: DAppEntity) {
+    suspend fun tonconnectReject(requestId: String, app: DConnectEntity) {
         tonConnectRepository.sendError(requestId, app, 300, "Reject Request")
     }
 
     suspend fun tonconnectBoc(
         requestId: String,
-        app: DAppEntity,
+        app: DConnectEntity,
         boc: String
     ) {
         tonConnectRepository.send(requestId, app, boc)
@@ -268,7 +263,7 @@ class RootViewModel(
         json: JSONObject
     ): String? {
         val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
-        val app = tonConnectRepository.getApp(url, wallet) ?: throw IllegalStateException("No app")
+        val app = tonConnectRepository.getConnect(url, wallet) ?: throw IllegalStateException("No app")
         val event = DAppEventEntity(wallet.copy(), app.copy(), json)
         if (event.method != "sendTransaction") {
             throw IllegalStateException("Invalid method")
@@ -360,7 +355,7 @@ class RootViewModel(
             _eventFlow.tryEmit(RootEvent.BuyOrSell())
         } else if (uri.path?.startsWith("/exchange") == true) {
             val name = uri.pathSegments.lastOrNull() ?: return
-            val method = purchaseRepository.getMethod(name, wallet.testnet)
+            val method = purchaseRepository.getMethod(name, wallet.testnet, settingsRepository.getLocale())
             _eventFlow.tryEmit(RootEvent.BuyOrSell(method))
         } else if (uri.path?.startsWith("/backups") == true) {
             _eventFlow.tryEmit(RootEvent.OpenBackups)

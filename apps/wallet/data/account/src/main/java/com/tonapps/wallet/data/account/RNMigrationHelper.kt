@@ -6,7 +6,6 @@ import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
-import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallet.Companion.int
 import org.ton.api.pub.PublicKeyEd25519

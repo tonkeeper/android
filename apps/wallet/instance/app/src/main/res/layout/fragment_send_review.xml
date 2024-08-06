@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="@dimen/offsetLarge"
                 android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:background="@drawable/bg_content_tint_16">
+                android:background="@drawable/bg_content">
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_wallet"

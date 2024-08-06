@@ -1,11 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:paddingHorizontal="@dimen/offsetMedium"
-    android:orientation="vertical">
-    
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/offsetMedium">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.H3"
+            android:textColor="?attr/textPrimaryColor"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/title" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <uikit.widget.FrescoView
         android:id="@+id/icon"
         android:layout_width="96dp"
@@ -89,13 +130,17 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <Button
-        style="@style/Widget.App.Button.Secondary"
+    <androidx.appcompat.widget.AppCompatTextView
+        style="@style/Widget.App.Button.Small.Secondary"
         android:id="@+id/open_explorer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginVertical="@dimen/offsetMedium"
-        android:text="@string/view_in_explorer"
-        android:textAppearance="@style/TextAppearance.Label1"/>
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/tertiaryHeight"
+        android:layout_marginVertical="@dimen/offsetLarge"
+        android:layout_gravity="center"
+        android:paddingStart="@dimen/offsetMedium"
+        android:paddingEnd="@dimen/offsetMedium"
+        android:drawableLeft="@drawable/ic_globe_16"
+        android:drawablePadding="8dp"
+        android:text="@string/transaction" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

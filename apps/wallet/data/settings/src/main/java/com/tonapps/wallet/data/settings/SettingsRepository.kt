@@ -59,6 +59,7 @@ class SettingsRepository(
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
         private const val TELEGRAM_CHANNEL_KEY = "telegram_channel"
+        private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -142,6 +143,14 @@ class SettingsRepository(
                 prefs.edit().putBoolean(TELEGRAM_CHANNEL_KEY, value).apply()
                 field = value
                 _telegramChannelFlow.tryEmit(value)
+            }
+        }
+
+    var showEncryptedCommentModal: Boolean = prefs.getBoolean(ENCRYPTED_COMMENT_MODAL_KEY, true)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(ENCRYPTED_COMMENT_MODAL_KEY, value).apply()
+                field = value
             }
         }
 

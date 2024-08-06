@@ -3,6 +3,7 @@ package com.tonapps.wallet.api
 import android.content.Context
 import android.util.ArrayMap
 import android.util.Log
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.locale
@@ -48,6 +49,7 @@ import org.json.JSONObject
 import org.koin.androidx.viewmodel.lazyResolveViewModel
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
+import org.ton.crypto.hex
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -98,9 +100,11 @@ class API(
 
     fun getAlertNotifications() = internalApi.getNotifications()
 
-    fun isOkStatus(testnet: Boolean): Boolean {
+    private suspend fun isOkStatus(testnet: Boolean): Boolean {
         try {
-            val status = provider.blockchain.get(testnet).status()
+            val status = withRetry {
+                provider.blockchain.get(testnet).status()
+            } ?: return false
             if (!status.restOnline) {
                 return false
             }
@@ -232,12 +236,20 @@ class API(
         }
     }
 
-    fun getPublicKey(
+    suspend fun getPublicKey(
         accountId: String,
         testnet: Boolean
-    ): String {
-        return accounts(testnet).getAccountPublicKey(accountId).publicKey
+    ): PublicKeyEd25519? {
+        val hex = withRetry {
+            accounts(testnet).getAccountPublicKey(accountId)
+        }?.publicKey ?: return null
+        return PublicKeyEd25519(hex(hex))
     }
+
+    suspend fun safeGetPublicKey(
+        accountId: String,
+        testnet: Boolean
+    ) = getPublicKey(accountId, testnet) ?: EmptyPrivateKeyEd25519.publicKey()
 
     fun accountEvents(accountId: String, testnet: Boolean): Flow<SSEvent> {
         val endpoint = if (testnet) {
@@ -336,13 +348,11 @@ class API(
         if (!isOkStatus(testnet)) {
             return@withContext false
         }
-        try {
-            val request = SendBlockchainMessageRequest(boc)
+        val request = SendBlockchainMessageRequest(boc)
+        withRetry {
             blockchain(testnet).sendBlockchainMessage(request)
             true
-        } catch (e: Throwable) {
-            false
-        }
+        } ?: false
     }
 
     suspend fun sendToBlockchain(

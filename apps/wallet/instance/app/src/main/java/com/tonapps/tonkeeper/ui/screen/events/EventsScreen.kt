@@ -21,7 +21,7 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
-class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
+class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
 
     private val eventsViewModel: EventsViewModel by viewModel()
 
@@ -77,7 +77,13 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
 
     private fun openQRCode() {
         collectFlow(eventsViewModel.openQRCode()) { walletEntity ->
-            navigation?.add(QRScreen.newInstance(walletEntity.address, TokenEntity.TON, walletEntity.type))
+            navigation?.add(
+                QRScreen.newInstance(
+                    walletEntity.address,
+                    TokenEntity.TON,
+                    walletEntity.type
+                )
+            )
         }
     }
 

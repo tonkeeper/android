@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.events
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.network.NetworkMonitor
@@ -53,6 +54,10 @@ class EventsViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
+        combine(accountRepository.selectedWalletFlow, eventsRepository.decryptedCommentFlow) { wallet, _ ->
+            loadEvents(wallet, false, updating = false)
+        }.launchIn(viewModelScope)
+
         collectFlow(accountRepository.selectedWalletFlow.map { getCached(it) }.flowOn(Dispatchers.IO)) { items ->
             if (!items.isNullOrEmpty()) {
                 _uiItemsFlow.value = items
@@ -63,7 +68,7 @@ class EventsViewModel(
             accountRepository.selectedWalletFlow,
             networkMonitor.isOnlineFlow
         ) { wallet, isOnline ->
-            loadEvents(wallet, isOnline)
+            loadEvents(wallet, isOnline, false)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
         collectFlow(accountRepository.realtimeEventsFlow.map { it.wallet }) { wallet ->
@@ -179,14 +184,20 @@ class EventsViewModel(
 
     private fun loadEvents(
         wallet: WalletEntity,
-        isOnline: Boolean
+        isOnline: Boolean,
+        updating: Boolean = true
     ) {
-        withUpdating {
-            loadLocal(wallet)
-            if (isOnline) {
+        if (updating && isOnline) {
+            withUpdating {
+                loadLocal(wallet)
                 loadRemote(wallet)
             }
+        } else {
+            viewModelScope.launch(Dispatchers.IO) {
+                loadLocal(wallet)
+            }
         }
+
     }
 
     private suspend fun loadLocal(wallet: WalletEntity) {

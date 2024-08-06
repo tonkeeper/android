@@ -10,12 +10,8 @@ import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
-import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
-import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -23,7 +19,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -39,16 +34,7 @@ class ActionScreen: BaseFragment(R.layout.fragment_action), BaseFragment.Modal {
     }
 
     private val actionViewModel: ActionViewModel by viewModel { parametersOf(args) }
-    private val eventsRepository: EventsRepository by inject()
-    private val settingsRepository: SettingsRepository by inject()
-    private val accountRepository: AccountRepository by inject()
-    private val passcodeManager: PasscodeManager by inject()
-    private val adapter = HistoryAdapter(
-        eventsRepository = eventsRepository,
-        settingsRepository = settingsRepository,
-        accountRepository = accountRepository,
-        passcodeManager = passcodeManager
-    )
+    private val adapter = HistoryAdapter()
 
     private lateinit var walletView: AppCompatTextView
     private lateinit var closeView: View

@@ -57,7 +57,7 @@ val koinModel = module {
     single { NetworkMonitor(get(), get()) }
     single(createdAtStart = true) { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
-    single { HistoryHelper(get(), get(), get(), get()) }
+    single { HistoryHelper(get(), get(), get(), get(), get(), get()) }
 
     uiAdapter { WalletAdapter(get()) }
     uiAdapter { WalletPickerAdapter() }

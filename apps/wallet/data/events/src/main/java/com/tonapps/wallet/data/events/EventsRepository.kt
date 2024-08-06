@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.events
 
 import android.content.Context
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.prefs
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
@@ -24,24 +25,15 @@ class EventsRepository(
     private val api: API
 ) {
 
-    private val localDataSource = LocalDataSource(context)
+    private val localDataSource = LocalDataSource(scope, context)
     private val remoteDataSource = RemoteDataSource(api)
-    private val decryptedComments = context.getSharedPreferences("events.decrypted_comments", Context.MODE_PRIVATE)
 
-    private val _decryptedCommentFlow = MutableEffectFlow<Pair<String, String>>()
-    val decryptedCommentFlow = _decryptedCommentFlow.stateIn(scope, SharingStarted.Lazily, null).filterNotNull()
+    val decryptedCommentFlow = localDataSource.decryptedCommentFlow
 
-    private fun decryptedCommentKey(txId: String): String {
-        return "tx_$txId"
-    }
+    fun getDecryptedComment(txId: String) = localDataSource.getDecryptedComment(txId)
 
-    fun getDecryptedComment(txId: String): String? {
-        return decryptedComments.getString(decryptedCommentKey(txId), null)
-    }
-
-    fun setDecryptedComment(txId: String, comment: String) {
-        decryptedComments.edit().putString(decryptedCommentKey(txId), comment).apply()
-        _decryptedCommentFlow.tryEmit(txId to comment)
+    fun saveDecryptedComment(txId: String, comment: String) {
+        localDataSource.saveDecryptedComment(txId, comment)
     }
 
     suspend fun getLast(

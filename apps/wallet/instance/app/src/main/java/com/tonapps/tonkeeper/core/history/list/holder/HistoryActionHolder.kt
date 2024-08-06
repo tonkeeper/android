@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.core.history.list.holder
 
-import android.content.Context
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.View
@@ -14,6 +13,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.iconRes
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
+import com.tonapps.tonkeeper.koin.historyHelper
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeperx.R
@@ -25,8 +25,12 @@ import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import uikit.extensions.clearDrawables
 import uikit.extensions.drawable
+import uikit.extensions.reject
 import uikit.extensions.setLeftDrawable
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
@@ -36,8 +40,6 @@ import uikit.widget.LoaderView
 class HistoryActionHolder(
     parent: ViewGroup,
     private val disableOpenAction: Boolean,
-    private val getDecryptedComment: (txId: String) -> String?,
-    private val decryptComment: (context: Context, position: Int, txId: String, cipherText: String, senderAddress: String) -> Unit,
 ) : HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
 
     private val amountColorReceived = context.accentGreenColor
@@ -97,14 +99,10 @@ class HistoryActionHolder(
         }
 
         bindPending(item.pending)
-        if (item.comment.isNullOrBlank() && item.cipherText.isNullOrBlank()) {
+        if (item.comment == null) {
             commentView.visibility = View.GONE
         } else {
-            val decryptedComment = getDecryptedComment(item.txId)
-            bindComment(item.comment ?: decryptedComment)
-            if (decryptedComment == null) {
-                bindEncryptedComment(item.txId, item.cipherText, item.address ?: "")
-            }
+            bindComment(item.comment, item.txId, item.address!!)
         }
 
         bindNft(item)
@@ -149,31 +147,34 @@ class HistoryActionHolder(
         }
     }
 
-    private fun bindComment(comment: String?) {
-        if (comment == null) {
-            return
-        }
+    private fun bindComment(
+        comment: HistoryItem.Event.Comment,
+        txId: String,
+        senderAddress: String,
+    ) {
         commentView.visibility = View.VISIBLE
-        commentView.text = comment
-        commentView.setOnClickListener(null)
+        if (comment.isEncrypted) {
+            commentView.text = context.getString(Localization.encrypted_comment)
+            commentView.setLeftDrawable(lockDrawable)
+            commentView.setOnClickListener { requestDecryptComment(comment, txId, senderAddress) }
+        } else {
+            commentView.text = comment.body
+            commentView.setOnClickListener(null)
+        }
     }
 
-    private fun bindEncryptedComment(txId: String, cipherText: String?, senderAddress: String) {
-        if (cipherText == null) {
-            return
-        }
-        commentView.visibility = View.VISIBLE
-        commentView.text = context.getString(Localization.encrypted_comment)
-        commentView.setLeftDrawable(lockDrawable)
-        commentView.setOnClickListener {
-            decryptComment(
-                context,
-                layoutPosition,
-                txId,
-                cipherText,
-                senderAddress
-            )
-        }
+    private fun requestDecryptComment(
+        comment: HistoryItem.Event.Comment,
+        txId: String,
+        senderAddress: String
+    ) {
+        val scope = lifecycleScope ?: return
+        val flow = context.historyHelper?.requestDecryptComment(context, comment, txId, senderAddress) ?: return
+        flow.catch {
+            commentView.reject()
+        }.onEach {
+            bindComment(it, txId, senderAddress)
+        }.launchIn(scope)
     }
 
     private fun bindNft(item: HistoryItem.Event) {

@@ -7,11 +7,12 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.shortHash
-import com.tonapps.tonkeeper.core.comment.CommentEncryption
 import com.tonapps.tonkeeper.core.history.ActionType
+import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
@@ -31,22 +32,36 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.drawable
+import uikit.extensions.reject
 import uikit.extensions.setColor
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 
-class TransactionScreen(private val action: HistoryItem.Event) :
-    BaseFragment(R.layout.dialog_transaction), BaseFragment.Modal {
+class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment.Modal {
 
     companion object {
+
+        private const val ARG_ACTION = "action"
+
         fun newInstance(action: HistoryItem.Event): TransactionScreen {
-            return TransactionScreen(action)
+            val screen = TransactionScreen()
+            screen.arguments = Bundle().apply {
+                putParcelable(ARG_ACTION, action)
+            }
+            return screen
         }
     }
+
+    private val action: HistoryItem.Event by lazy {
+        requireArguments().getParcelableCompat(ARG_ACTION)!!
+    }
+
+    private val historyHelper: HistoryHelper by inject()
 
     private lateinit var iconView: FrescoView
     private lateinit var amountView: AppCompatTextView
@@ -61,11 +76,6 @@ class TransactionScreen(private val action: HistoryItem.Event) :
     private lateinit var explorerButton: AppCompatTextView
     private lateinit var unverifiedView: View
 
-    private val eventsRepository: EventsRepository by inject()
-    private val settingsRepository: SettingsRepository by inject()
-    private val accountRepository: AccountRepository by inject()
-    private val passcodeManager: PasscodeManager by inject()
-
     private val lockDrawable: Drawable by lazy {
         val drawable = requireContext().drawable(UIKitIcon.ic_lock_16)
         drawable.setTint(requireContext().accentGreenColor)
@@ -74,6 +84,10 @@ class TransactionScreen(private val action: HistoryItem.Event) :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        view.findViewById<View>(R.id.close).setOnClickListener {
+            finish()
+        }
 
         iconView = view.findViewById(R.id.icon)!!
         amountView = view.findViewById(R.id.amount)!!
@@ -115,14 +129,12 @@ class TransactionScreen(private val action: HistoryItem.Event) :
         }
 
         applyIcon(action.coinIconUrl)
-        val comment = action.comment ?: eventsRepository.getDecryptedComment(action.txId)
-        if (!comment.isNullOrBlank()) {
-            applyComment(comment)
-        } else if (action.cipherText != null) {
-            applyEncryptedComment(action.txId, action.cipherText, action.address ?: "")
+        if (action.comment != null) {
+            applyComment(action.comment!!)
         } else {
             commentView.visibility = View.GONE
         }
+
         applyAccount(action.isOut, action.address, action.addressName?.ifPunycodeToUnicode())
         applyCurrency(action.currency, action.hiddenBalance)
         applyDate(action.action, action.date)
@@ -176,49 +188,24 @@ class TransactionScreen(private val action: HistoryItem.Event) :
         }
     }
 
-    private fun applyComment(comment: String) {
+    private fun applyComment(comment: HistoryItem.Event.Comment) {
         commentView.visibility = View.VISIBLE
-        commentView.setData(comment, "")
-        commentView.setOnClickListener {
-            context?.copyWithToast(comment)
+        if (!comment.isEncrypted) {
+            val text = comment.body
+            commentView.setData(text, "")
+            commentView.setOnClickListener { context?.copyWithToast(text) }
+        } else {
+            commentView.setData(getString(Localization.encrypted_comment), "", lockDrawable)
+            commentView.setOnClickListener { decryptComment(comment) }
         }
     }
 
-    private fun applyEncryptedComment(txId: String, cipherText: String, senderAddress: String) {
-        commentView.visibility = View.VISIBLE
-        commentView.setData(getString(Localization.encrypted_comment), "", lockDrawable)
-        commentView.setOnClickListener {
-            if (settingsRepository.showEncryptedCommentModal) {
-                context?.navigation?.add(EncryptedCommentScreen.newInstance {
-                    decryptComment(
-                            txId,
-                            cipherText,
-                            senderAddress
-                        )
-                    })
-            } else {
-                decryptComment(txId, cipherText, senderAddress)
-            }
-        }
-    }
-
-    private fun decryptComment(txId: String, cipherText: String, senderAddress: String) {
-        accountRepository.selectedWalletFlow.combine(
-            passcodeManager.confirmationFlow(
-                requireContext(),
-                requireContext().getString(Localization.app_name)
-            )
-        ) { wallet, _ ->
-            val privateKey = accountRepository.getPrivateKey(wallet.id)
-            val comment = CommentEncryption.decryptComment(
-                wallet.publicKey,
-                privateKey,
-                cipherText,
-                senderAddress
-            )
-            eventsRepository.setDecryptedComment(txId, comment)
-            applyComment(comment)
-        }.catch {}.take(1).launchIn(lifecycleScope)
+    private fun decryptComment(comment: HistoryItem.Event.Comment) {
+        historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.address!!).catch {
+            commentView.reject()
+        }.onEach {
+            applyComment(it)
+        }.launchIn(lifecycleScope)
     }
 
     private fun applyAccount(out: Boolean, address: String?, name: String?) {

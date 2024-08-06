@@ -1,6 +1,7 @@
-package com.tonapps.tonkeeper.core.comment
+package com.tonapps.wallet.data.events
 
 import android.util.Log
+import com.tonapps.security.AesCbcState
 import com.tonapps.security.Security
 import io.ktor.util.hex
 import org.ton.api.pk.PrivateKeyEd25519
@@ -9,8 +10,6 @@ import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.crypto.Ed25519
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 import kotlin.experimental.xor
 import kotlin.math.ceil
 
@@ -49,8 +48,11 @@ object CommentEncryption {
         val theirPublicKeyBytes = theirPublicKey.key.toByteArray()
         val myPrivateKeyBytes = myPrivateKey.key.toByteArray()
 
-        val privateKey =
-            if (myPrivateKeyBytes.size == 64) myPrivateKeyBytes.sliceArray(0 until 32) else myPrivateKeyBytes
+        val privateKey = if (myPrivateKeyBytes.size == 64) {
+            myPrivateKeyBytes.sliceArray(0 until 32)
+        } else {
+            myPrivateKeyBytes
+        }
 
         val commentBytes = comment.toByteArray()
 
@@ -134,9 +136,9 @@ object CommentEncryption {
         salt: ByteArray
     ): ByteArray {
         if (data.size % 16 != 0) throw IllegalArgumentException("Data length is not divisible by 16")
-        val dataHash = hmacSha512(salt, data)
+        val dataHash = Security.hmacSha512(salt, data)
         val msgKey = dataHash.sliceArray(0 until 16)
-        val cbcStateSecret = hmacSha512(sharedSecret, msgKey)
+        val cbcStateSecret = Security.hmacSha512(sharedSecret, msgKey)
         val encrypted = AesCbcState(cbcStateSecret).encrypt(data)
         return msgKey + encrypted
     }
@@ -173,7 +175,7 @@ object CommentEncryption {
 
         val msgKey = encryptedData.sliceArray(0 until 16)
         val data = encryptedData.sliceArray(16 until encryptedData.size)
-        val cbcStateSecret = hmacSha512(sharedSecret, msgKey)
+        val cbcStateSecret = Security.hmacSha512(sharedSecret, msgKey)
 
         return doDecrypt(cbcStateSecret, msgKey, data, salt)
     }
@@ -185,12 +187,11 @@ object CommentEncryption {
         salt: ByteArray
     ): ByteArray {
         val decryptedData = AesCbcState(cbcStateSecret).decrypt(encryptedData)
-        val dataHash = hmacSha512(salt, decryptedData)
+        val dataHash = Security.hmacSha512(salt, decryptedData)
 
         val gotMsgKey = dataHash.sliceArray(0 until 16)
 
         if (!msgKey.contentEquals(gotMsgKey)) {
-            Log.d("CommentEncryption", "msgKey: ${hex(msgKey)}, gotMsgKey: ${hex(gotMsgKey)}")
             throw IllegalArgumentException("Failed to decrypt: hash mismatch")
         }
 
@@ -202,10 +203,5 @@ object CommentEncryption {
         return decryptedData.sliceArray(prefixLength until decryptedData.size)
     }
 
-    private fun hmacSha512(key: ByteArray, data: ByteArray): ByteArray {
-        val mac = Mac.getInstance("HmacSHA512")
-        val keySpec = SecretKeySpec(key, "HmacSHA512")
-        mac.init(keySpec)
-        return mac.doFinal(data)
-    }
+
 }

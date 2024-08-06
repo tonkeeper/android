@@ -13,12 +13,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
-import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
@@ -30,16 +25,7 @@ class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
 
     private val eventsViewModel: EventsViewModel by viewModel()
 
-    private val eventsRepository: EventsRepository by inject()
-    private val settingsRepository: SettingsRepository by inject()
-    private val accountRepository: AccountRepository by inject()
-    private val passcodeManager: PasscodeManager by inject()
-    private val legacyAdapter = HistoryAdapter(
-        eventsRepository = eventsRepository,
-        settingsRepository = settingsRepository,
-        accountRepository = accountRepository,
-        passcodeManager = passcodeManager
-    )
+    private val legacyAdapter = HistoryAdapter()
     private val paginationListener = object : ListPaginationListener() {
         override fun onLoadMore() {
             eventsViewModel.loadMore()

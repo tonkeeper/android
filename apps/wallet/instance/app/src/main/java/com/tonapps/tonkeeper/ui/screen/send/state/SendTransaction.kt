@@ -2,16 +2,15 @@ package com.tonapps.tonkeeper.ui.screen.send.state
 
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import io.tonapi.models.Account
 
 data class SendTransaction(
     val fromWallet: WalletEntity,
-    val targetAccount: Account,
+    val destination: SendDestination.Account,
     val token: BalanceEntity,
     val comment: String?,
-    val amount: Amount
+    val amount: Amount,
+    val encryptedComment: Boolean
 ) {
 
     data class Amount(

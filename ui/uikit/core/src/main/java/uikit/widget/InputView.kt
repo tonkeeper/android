@@ -165,7 +165,6 @@ class InputView @JvmOverloads constructor(
             text.replace(0, text.length, value)
         }
 
-
     val isEmpty: Boolean
         get() = text.isBlank()
 

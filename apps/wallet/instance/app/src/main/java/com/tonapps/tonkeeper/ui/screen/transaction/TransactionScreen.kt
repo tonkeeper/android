@@ -201,7 +201,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     }
 
     private fun decryptComment(comment: HistoryItem.Event.Comment) {
-        historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.address!!).catch {
+        historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.authorAddress).catch {
             commentView.reject()
         }.onEach {
             applyComment(it)

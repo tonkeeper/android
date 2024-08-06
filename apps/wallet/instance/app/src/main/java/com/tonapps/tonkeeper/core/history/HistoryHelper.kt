@@ -407,6 +407,12 @@ class HistoryHelper(
                 address = nftItemTransfer.nft
             )
 
+            val comment = HistoryItem.Event.Comment.create(
+                nftItemTransfer.comment,
+                nftItemTransfer.encryptedComment,
+                eventsRepository.getDecryptedComment(txId)
+            )
+
             return HistoryItem.Event(
                 index = index,
                 txId = txId,
@@ -414,6 +420,7 @@ class HistoryHelper(
                 action = itemAction,
                 title = simplePreview.name,
                 subtitle = subtitle,
+                comment = comment,
                 value = "NFT",
                 nft = nftItem,
                 tokenCode = "NFT",

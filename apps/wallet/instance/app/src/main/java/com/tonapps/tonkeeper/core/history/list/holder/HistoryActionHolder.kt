@@ -102,7 +102,7 @@ class HistoryActionHolder(
         if (item.comment == null) {
             commentView.visibility = View.GONE
         } else {
-            bindComment(item.comment, item.txId, item.address!!)
+            bindComment(item.comment, item.txId, item.authorAddress)
         }
 
         bindNft(item)
@@ -159,6 +159,7 @@ class HistoryActionHolder(
             commentView.setOnClickListener { requestDecryptComment(comment, txId, senderAddress) }
         } else {
             commentView.text = comment.body
+            commentView.setLeftDrawable(null)
             commentView.setOnClickListener(null)
         }
     }

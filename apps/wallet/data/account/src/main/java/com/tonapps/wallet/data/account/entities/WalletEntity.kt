@@ -49,6 +49,9 @@ data class WalletEntity(
     val hasPrivateKey: Boolean
         get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet || type == Wallet.Type.Lockup
 
+    val isSigner: Boolean
+        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR
+
     val accountId: String = contract.address.toAccountId()
 
     val address: String = contract.address.toWalletAddress(testnet)

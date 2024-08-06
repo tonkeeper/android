@@ -1,6 +1,5 @@
 package com.tonapps.wallet.data.events
 
-import android.util.Log
 import com.tonapps.security.AesCbcState
 import com.tonapps.security.Security
 import io.ktor.util.hex
@@ -34,7 +33,6 @@ object CommentEncryption {
 
         return decryptedData.decodeToString()
     }
-
     fun encryptComment(
         comment: String,
         myPublicKey: PublicKeyEd25519,
@@ -42,16 +40,25 @@ object CommentEncryption {
         myPrivateKey: PrivateKeyEd25519,
         senderAddress: String
     ): Cell {
-        if (comment.isEmpty()) throw IllegalArgumentException("empty comment")
-
         val myPublicKeyBytes = myPublicKey.key.toByteArray()
         val theirPublicKeyBytes = theirPublicKey.key.toByteArray()
         val myPrivateKeyBytes = myPrivateKey.key.toByteArray()
+        return encryptComment(comment, myPublicKeyBytes, theirPublicKeyBytes, myPrivateKeyBytes, senderAddress)
+    }
 
-        val privateKey = if (myPrivateKeyBytes.size == 64) {
-            myPrivateKeyBytes.sliceArray(0 until 32)
+    fun encryptComment(
+        comment: String,
+        myPublicKey: ByteArray,
+        theirPublicKey: ByteArray,
+        myPrivateKey: ByteArray,
+        senderAddress: String
+    ): Cell {
+        if (comment.isEmpty()) throw IllegalArgumentException("empty comment")
+
+        val privateKey = if (myPrivateKey.size == 64) {
+            myPrivateKey.sliceArray(0 until 32)
         } else {
-            myPrivateKeyBytes
+            myPrivateKey
         }
 
         val commentBytes = comment.toByteArray()
@@ -60,7 +67,7 @@ object CommentEncryption {
         val salt = address.toByteArray()
 
         val encryptedBytes =
-            encryptData(commentBytes, myPublicKeyBytes, theirPublicKeyBytes, privateKey, salt)
+            encryptData(commentBytes, myPublicKey, theirPublicKey, privateKey, salt)
 
         val payload = ByteArray(encryptedBytes.size + 4)
         payload[0] = 0x21 // encrypted text prefix

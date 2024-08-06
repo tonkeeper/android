@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.core.history.list.item
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
@@ -185,11 +186,23 @@ sealed class HistoryItem(
         val unverifiedToken: Boolean = false
     ): HistoryItem(TYPE_ACTION) {
 
+        val authorAddress: String by lazy {
+            if (address.isNullOrBlank()) {
+                nft?.ownerAddress ?: ""
+            } else {
+                address
+            }
+        }
+
         @Parcelize
         data class Comment(
-            val type: String,
+            val type: Type,
             val body: String,
         ): Parcelable {
+
+            enum class Type {
+                Text, Simple
+            }
 
             companion object {
 
@@ -204,17 +217,19 @@ sealed class HistoryItem(
                     if (!localText.isNullOrBlank()) {
                         return Comment(localText)
                     }
-                    return encrypted?.let {
-                        Comment(it.encryptionType, it.cipherText)
+                    val data = encrypted ?: return null
+                    if (data.encryptionType == "simple") {
+                        return Comment(Type.Simple, data.cipherText)
                     }
+                    return null
                 }
             }
 
             val isEncrypted: Boolean
-                get() = type != "text"
+                get() = type != Type.Text
 
             constructor(body: String) : this(
-                type = "text",
+                type = Type.Text,
                 body = body
             )
         }

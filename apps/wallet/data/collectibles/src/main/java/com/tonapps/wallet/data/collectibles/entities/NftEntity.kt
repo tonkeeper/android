@@ -45,6 +45,9 @@ data class NftEntity(
     val isDomain: Boolean
         get() = dns != null
 
+    val ownerAddress: String
+        get() = owner?.address ?: address
+
     val thumbUri: Uri by lazy {
         getImageUri(64, 320) ?: previews.first().url.let { Uri.parse(it) }
     }

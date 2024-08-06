@@ -128,7 +128,6 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             disconnect = { dAppViewModel.disconnect() }
         )
         webView.loadUrl(args.url)
-        webView.pinToBottomInsets()
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.setColorSchemeColors(requireContext().tabBarActiveIconColor)
@@ -141,8 +140,8 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             headerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 topMargin = statusInsets.top
             }
-            val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            webView.updatePadding(navInsets.bottom)
+            // val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            // webView.translationY = -imeInsets.bottom.toFloat()
             insets
         }
     }

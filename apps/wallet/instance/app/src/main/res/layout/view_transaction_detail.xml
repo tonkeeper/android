@@ -4,9 +4,8 @@
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/itemHeight"
+        android:layout_height="wrap_content"
         android:drawablePadding="4dp"
-        android:gravity="center"
         android:textColor="?attr/textSecondaryColor"
         android:textAppearance="@style/TextAppearance.Body1"/>
 
@@ -14,8 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/offsetMedium"
-        android:layout_gravity="center"
-        android:paddingVertical="@dimen/offsetExtraSmall"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -24,6 +21,7 @@
             android:layout_height="wrap_content"
             android:gravity="end"
             android:layout_gravity="end"
+            android:drawablePadding="4dp"
             android:textAppearance="@style/TextAppearance.Label1"
             android:textColor="?attr/textPrimaryColor"/>
 

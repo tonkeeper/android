@@ -3,8 +3,15 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.TextPaint
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -21,13 +28,18 @@ import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
+import com.tonapps.tonkeeper.ui.screen.send.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.state.SendFeeState
 import com.tonapps.tonkeeper.ui.screen.send.state.SendTransaction
 import com.tonapps.tonkeeper.ui.screen.signer.qr.SignerQRScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.fieldActiveBorderColor
 import com.tonapps.uikit.color.fieldErrorBorderColor
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
@@ -50,8 +62,10 @@ import uikit.dialog.modal.ModalDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
+import uikit.extensions.drawable
 import uikit.extensions.hideKeyboard
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.span.ClickableSpanCompat
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
 import uikit.widget.InputView
@@ -72,6 +86,12 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         } else {
             sendViewModel.sendSignedMessage(it)
         }
+    }
+
+    private val lockDrawable: Drawable by lazy {
+        val drawable = requireContext().drawable(UIKitIcon.ic_lock_16)
+        drawable.setTint(requireContext().accentGreenColor)
+        drawable
     }
 
     private lateinit var slidesView: SlideBetweenView
@@ -96,6 +116,10 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private lateinit var reviewRecipientCommentView: TransactionDetailView
     private lateinit var reviewSubtitleView: AppCompatTextView
     private lateinit var convertedContainerView: View
+    private lateinit var commentEncryptView: AppCompatTextView
+    private lateinit var commentDecryptView: AppCompatTextView
+
+    private var encryptedCommentAvailable = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,8 +166,29 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         maxView.setOnClickListener { setMax() }
 
         commentInput = view.findViewById(R.id.comment)
-        commentInput.doOnTextChange = sendViewModel::userInputComment
-        args.text?.let { commentInput.text = it }
+
+        commentEncryptView = view.findViewById(R.id.comment_encrypt)
+        commentEncryptView.movementMethod = LinkMovementMethod.getInstance()
+        applyCommentEncryptView()
+
+        commentDecryptView = view.findViewById(R.id.comment_decrypt)
+        commentDecryptView.movementMethod = LinkMovementMethod.getInstance()
+        applyCommentDecryptView()
+
+        commentInput.doOnTextChange = { text ->
+            if (text.isEmpty()) {
+                commentEncryptView.visibility = View.GONE
+                commentDecryptView.visibility = View.GONE
+                commentInput.hintColor = requireContext().textSecondaryColor
+            } else if (encryptedCommentAvailable && sendViewModel.uiInputEncryptedComment.value) {
+                commentDecryptView.visibility = View.VISIBLE
+                commentInput.hintColor = requireContext().accentGreenColor
+            } else if (encryptedCommentAvailable) {
+                commentEncryptView.visibility = View.VISIBLE
+                commentInput.hintColor = requireContext().textSecondaryColor
+            }
+            sendViewModel.userInputComment(text)
+        }
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener { next() }
@@ -190,19 +235,22 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         collectFlow(sendViewModel.uiTransactionFlow, ::applyTransaction)
         collectFlow(sendViewModel.walletTypeFlow) { walletType ->
             if (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup) {
+                encryptedCommentAvailable = true
                 confirmButton.setText(Localization.confirm)
-                confirmButton.setOnClickListener { confirm() }
+                confirmButton.setOnClickListener { confirmDefault() }
                 return@collectFlow
             }
+            encryptedCommentAvailable = false
             confirmButton.setText(Localization.continue_action)
-            if (walletType == Wallet.Type.Ledger) {
-                confirmButton.setOnClickListener { openLedger() }
-            } else if (walletType == Wallet.Type.SignerQR) {
-                confirmButton.setOnClickListener { openSignerQR() }
-            } else if (walletType == Wallet.Type.Signer) {
-                confirmButton.setOnClickListener { openSigner() }
+            when (walletType) {
+                Wallet.Type.Ledger -> confirmButton.setOnClickListener { openLedger() }
+                Wallet.Type.SignerQR -> confirmButton.setOnClickListener { openSignerQR() }
+                Wallet.Type.Signer -> confirmButton.setOnClickListener { openSigner() }
+                else -> throw IllegalArgumentException("Unsupported wallet type: $walletType")
             }
         }
+
+        collectFlow(sendViewModel.uiInputEncryptedComment, ::applyCommentEncryptState)
 
         if (args.amountNano > 0) {
             collectFlow(sendViewModel.uiInputTokenFlow.drop(1).take(1)) { token ->
@@ -211,12 +259,66 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             }
             sendViewModel.userInputTokenByAddress(args.tokenAddress)
         }
+
+        args.text?.let { commentInput.text = it }
+    }
+
+    private fun applyCommentEncryptState(enabled: Boolean) {
+        val textIsEmpty = commentInput.text.isBlank()
+        val textSecondaryColor = requireContext().textSecondaryColor
+        if (enabled) {
+            val greenColor = requireContext().accentGreenColor
+            if (textIsEmpty) {
+                commentInput.hintColor = textSecondaryColor
+            } else {
+                commentInput.hintColor = greenColor
+            }
+            commentInput.activeBorderColor = greenColor
+            if (!textIsEmpty) {
+                commentDecryptView.visibility = View.VISIBLE
+                commentEncryptView.visibility = View.GONE
+            }
+        } else {
+            commentInput.hintColor = textSecondaryColor
+            commentInput.activeBorderColor = requireContext().fieldActiveBorderColor
+            if (!textIsEmpty) {
+                commentDecryptView.visibility = View.GONE
+                commentEncryptView.visibility = View.VISIBLE
+            }
+        }
+
+        if (textIsEmpty) {
+            commentDecryptView.visibility = View.GONE
+            commentEncryptView.visibility = View.GONE
+        }
+    }
+
+    private fun applyCommentDecryptView() {
+        val hint = getString(Localization.comment_encrypted_hint)
+        val button = getString(Localization.decrypt_comment)
+        val text = "$hint $button"
+        val spannableString = SpannableString(text)
+        spannableString.setSpan(ClickableSpanCompat(requireContext().accentBlueColor) {
+            sendViewModel.userInputEncryptedComment(false)
+        }, hint.length + 1, text.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        commentDecryptView.text = spannableString
+    }
+
+    private fun applyCommentEncryptView() {
+        val hint = getString(Localization.comment_decrypted_hint)
+        val button = getString(Localization.encrypt_comment)
+        val text = "$hint $button"
+        val spannableString = SpannableString(text)
+        spannableString.setSpan(ClickableSpanCompat(requireContext().accentBlueColor) {
+            sendViewModel.userInputEncryptedComment(true)
+        }, hint.length + 1, text.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        commentEncryptView.text = spannableString
     }
 
     private fun onEvent(event: SendEvent) {
         when (event) {
-            is SendEvent.Signer -> signerLauncher.launch(SingerResultContract.Input(event.body, event.publicKey))
-            is SendEvent.Ledger -> requestLedgerSign(event.transaction, event.walletId)
             is SendEvent.Failed -> setFailed()
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> processTaskView.state = ProcessTaskView.State.LOADING
@@ -274,17 +376,22 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private fun applyTransaction(transaction: SendTransaction) {
         reviewWalletView.value = transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView)
-        applyTransactionAccount(transaction.targetAccount, transaction.fromWallet.testnet)
+        applyTransactionAccount(transaction.destination)
         applyTransactionAmount(transaction.amount)
-        applyTransactionComment(transaction.comment)
+        applyTransactionComment(transaction.comment, transaction.encryptedComment)
     }
 
-    private fun applyTransactionComment(comment: String?) {
+    private fun applyTransactionComment(comment: String?, encryptedComment: Boolean) {
         if (comment.isNullOrEmpty()) {
             reviewRecipientCommentView.visibility = View.GONE
+            return
+        }
+        reviewRecipientCommentView.visibility = View.VISIBLE
+        reviewRecipientCommentView.value = comment
+        if (encryptedComment) {
+            reviewRecipientCommentView.setTitleRightDrawable(lockDrawable)
         } else {
-            reviewRecipientCommentView.visibility = View.VISIBLE
-            reviewRecipientCommentView.value = comment
+            reviewRecipientCommentView.setTitleRightDrawable(null)
         }
     }
 
@@ -298,16 +405,16 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         reviewRecipientAmountView.description = amount.convertedFormat
     }
 
-    private fun applyTransactionAccount(account: Account, testnet: Boolean) {
-        val address = account.address.toUserFriendly(account.isWallet, testnet).shortAddress
+    private fun applyTransactionAccount(destination: SendDestination.Account) {
+        val shortAddress = destination.query.shortAddress
 
-        if (account.name.isNullOrEmpty()) {
-            reviewRecipientView.value = address
+        if (destination.name.isNullOrEmpty()) {
+            reviewRecipientView.value = shortAddress
             reviewRecipientAddressView.visibility = View.GONE
         } else {
-            reviewRecipientView.value = account.name
+            reviewRecipientView.value = destination.name
             reviewRecipientAddressView.visibility = View.VISIBLE
-            reviewRecipientAddressView.value = address
+            reviewRecipientAddressView.value = shortAddress
         }
     }
 
@@ -323,7 +430,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
     }
 
-    private fun confirm() {
+    private fun confirmDefault() {
         confirmButton.visibility = View.GONE
         processTaskView.visibility = View.VISIBLE
         processTaskView.state = ProcessTaskView.State.LOADING
@@ -331,12 +438,14 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun openLedger() {
-        collectFlow(sendViewModel.signerDataLedger()) { (walletId, transaction) ->
+        collectFlow(sendViewModel.ledgerData()) { (walletId, transaction) ->
             requestLedgerSign(transaction, walletId)
         }
     }
 
     private fun openSignerQR() {
+        AnalyticsHelper.trackEvent("send_transaction")
+
         var text = commentInput.text
         if (text.isEmpty()) {
             text = reviewRecipientView.value?.toString() ?: "..."
@@ -348,6 +457,8 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun openSigner() {
+        AnalyticsHelper.trackEvent("send_transaction")
+
         collectFlow(sendViewModel.signerData()) { (publicKey, unsignedBody) ->
             signerLauncher.launch(SingerResultContract.Input(unsignedBody, publicKey))
         }

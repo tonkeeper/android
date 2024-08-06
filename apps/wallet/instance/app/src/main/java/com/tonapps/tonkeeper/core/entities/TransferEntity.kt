@@ -1,9 +1,10 @@
 package com.tonapps.tonkeeper.core.entities
 
-import android.util.Log
 import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.blockchain.ton.tlb.MessageData
 import com.tonapps.extensions.toByteArray
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.TonPayloadFormat
@@ -13,7 +14,9 @@ import com.tonapps.security.Security
 import com.tonapps.security.hex
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.events.CommentEncryption
 import org.ton.api.pk.PrivateKeyEd25519
+import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.block.StateInit
@@ -26,13 +29,15 @@ data class TransferEntity(
     val wallet: WalletEntity,
     val token: BalanceEntity,
     val destination: AddrStd,
+    val destinationPK: PublicKeyEd25519,
     val amount: Coins,
     val max: Boolean,
     val seqno: Int,
     val validUntil: Long,
     val bounceable: Boolean,
     val comment: String?,
-    val nftAddress: String? = null
+    val nftAddress: String? = null,
+    val commentEncrypted: Boolean,
 ) {
 
     val contract: BaseWalletContract
@@ -47,6 +52,9 @@ data class TransferEntity(
     val stateInit: StateInit?
         get() = if (seqno == 0) contract.stateInit else null
 
+    val testnet: Boolean
+        get() = wallet.testnet
+
     val sendMode: Int
         get() {
             return if (max && isTon) TonSendMode.CARRY_ALL_REMAINING_BALANCE.value else (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
@@ -57,11 +65,31 @@ data class TransferEntity(
             return org.ton.block.Coins.ofNano(amount.toLong())
         }
 
+    private fun getCommentForwardPayload(
+        privateKey: PrivateKeyEd25519? = null
+    ): Cell? {
+        if (comment.isNullOrBlank()) {
+            return null
+        } else if (!commentEncrypted) {
+            return MessageData.text(comment).body
+        } else {
+            privateKey ?: throw IllegalArgumentException("Private key required for encrypted comment")
 
-    private val gift: WalletTransfer by lazy {
+            val publicKey = privateKey.publicKey()
+            return CommentEncryption.encryptComment(
+                comment = comment,
+                myPublicKey = publicKey,
+                theirPublicKey = publicKey,
+                myPrivateKey = privateKey,
+                senderAddress = contract.address.toAccountId()
+            )
+        }
+    }
+
+    private fun getWalletTransfer(privateKey: PrivateKeyEd25519?): WalletTransfer {
         val builder = WalletTransferBuilder()
         builder.bounceable = bounceable
-        builder.body = body()
+        builder.body = body(privateKey)
         builder.sendMode = sendMode
         if (isNft) {
             builder.coins = coins
@@ -74,22 +102,22 @@ data class TransferEntity(
             builder.destination = destination
         }
         builder.stateInit = stateInit
-        builder.build()
+        return builder.build()
     }
 
-    private val gifts: Array<WalletTransfer> by lazy {
-        arrayOf(gift)
+    private fun getGifts(privateKey: PrivateKeyEd25519?): Array<WalletTransfer> {
+        return arrayOf(getWalletTransfer(privateKey))
     }
 
-    val unsignedBody: Cell by lazy {
-        contract.createTransferUnsignedBody(
+    fun getUnsignedBody(privateKey: PrivateKeyEd25519? = null): Cell {
+        return contract.createTransferUnsignedBody(
             validUntil = validUntil,
             seqno = seqno,
-            gifts = gifts
+            gifts = getGifts(privateKey)
         )
     }
 
-    val ledgerTransaction: Transaction by lazy {
+    fun getLedgerTransaction(): Transaction {
         val builder = TransactionBuilder()
         if (isNft) {
             builder.setCoins(coins)
@@ -99,7 +127,7 @@ data class TransferEntity(
                     queryId = newWalletQueryId(),
                     newOwnerAddress = destination,
                     excessesAddress = contract.address,
-                    forwardPayload = TonTransferHelper.text(comment),
+                    forwardPayload = getCommentForwardPayload(),
                     forwardAmount = org.ton.block.Coins.ofNano(1L),
                     customPayload = null
                 )
@@ -113,7 +141,7 @@ data class TransferEntity(
                     coins = coins,
                     receiverAddress = destination,
                     excessesAddress = contract.address,
-                    forwardPayload = TonTransferHelper.text(comment),
+                    forwardPayload = getCommentForwardPayload(),
                     forwardAmount = org.ton.block.Coins.ofNano(1L),
                     customPayload = null
                 )
@@ -130,18 +158,22 @@ data class TransferEntity(
         builder.setTimeout(validUntil.toInt())
         builder.setBounceable(bounceable)
         builder.setStateInit(stateInit)
-        builder.build()
+        return builder.build()
     }
 
     fun signedHash(privateKey: PrivateKeyEd25519): BitString {
-        return BitString(privateKey.sign(unsignedBody.hash()))
+        return BitString(privateKey.sign(getUnsignedBody(privateKey).hash()))
     }
 
-    fun messageBodyWithSign(signature: BitString): Cell {
-        return contract.signedBody(signature, unsignedBody)
+    private fun messageBodyWithSign(
+        signature: BitString
+    ): Cell {
+        return contract.signedBody(signature, getUnsignedBody())
     }
 
-    fun transferMessage(signature: BitString): Cell {
+    fun transferMessage(
+        signature: BitString
+    ): Cell {
         val signedBody = messageBodyWithSign(signature)
         return contract.createTransferMessageCell(contract.address, seqno, signedBody)
     }
@@ -150,31 +182,31 @@ data class TransferEntity(
         return contract.createTransferMessageCell(contract.address, seqno, signedBody)
     }
 
-    private fun body(): Cell? {
+    private fun body(privateKey: PrivateKeyEd25519?): Cell? {
         if (isNft) {
-            return nftBody()
+            return nftBody(privateKey)
         } else if (!isTon) {
-            return jettonBody()
+            return jettonBody(privateKey)
         }
-        return TonTransferHelper.text(comment)
+        return getCommentForwardPayload(privateKey)
     }
 
-    private fun jettonBody(): Cell {
+    private fun jettonBody(privateKey: PrivateKeyEd25519?): Cell {
         return TonTransferHelper.jetton(
             coins = coins,
             toAddress = destination,
             responseAddress = contract.address,
             queryId = newWalletQueryId(),
-            body = comment,
+            body = getCommentForwardPayload(privateKey),
         )
     }
 
-    private fun nftBody(): Cell {
+    private fun nftBody(privateKey: PrivateKeyEd25519?): Cell {
         return TonTransferHelper.nft(
             newOwnerAddress = destination,
             excessesAddress = contract.address,
             queryId = newWalletQueryId(),
-            body = comment,
+            body = getCommentForwardPayload(privateKey),
         )
     }
 
@@ -183,28 +215,31 @@ data class TransferEntity(
             address = contract.address,
             privateKey = privateKeyEd25519,
             seqno = seqno,
-            unsignedBody = unsignedBody,
+            unsignedBody = getUnsignedBody(privateKeyEd25519),
         )
     }
 
     class Builder(private val wallet: WalletEntity) {
         private var token: BalanceEntity? = null
         private var destination: AddrStd? = null
+        private var destinationPK: PublicKeyEd25519? = null
         private var amount: Coins? = null
         private var max: Boolean = false
         private var seqno: Int? = null
         private var validUntil: Long? = null
         private var bounceable: Boolean = false
         private var comment: String? = null
+        private var commentEncrypted: Boolean = false
         private var nftAddress: String? = null
 
         fun setNftAddress(nftAddress: String) = apply { this.nftAddress = nftAddress }
 
         fun setToken(token: BalanceEntity) = apply { this.token = token }
 
-        fun setDestination(destination: AddrStd) = apply { this.destination = destination }
-
-        fun setDestination(destination: String) = setDestination(AddrStd.parse(destination))
+        fun setDestination(destination: AddrStd, destinationPK: PublicKeyEd25519) = apply {
+            this.destination = destination
+            this.destinationPK = destinationPK
+        }
 
         fun setAmount(amount: Coins) = apply { this.amount = amount }
 
@@ -216,11 +251,15 @@ data class TransferEntity(
 
         fun setBounceable(bounceable: Boolean = false) = apply { this.bounceable = bounceable }
 
-        fun setComment(comment: String?) = apply { this.comment = comment }
+        fun setComment(comment: String?, commentEncrypted: Boolean) = apply {
+            this.comment = comment
+            this.commentEncrypted = commentEncrypted
+        }
 
         fun build(): TransferEntity {
             val token = token ?: throw IllegalArgumentException("Token is not set")
             val destination = destination ?: throw IllegalArgumentException("Destination is not set")
+            val destinationPK = destinationPK ?: throw IllegalArgumentException("DestinationPK is not set")
             val amount = amount ?: throw IllegalArgumentException("Amount is not set")
             val seqno = seqno ?: throw IllegalArgumentException("Seqno is not set")
             val validUntil = validUntil ?: throw IllegalArgumentException("ValidUntil is not set")
@@ -228,13 +267,15 @@ data class TransferEntity(
                 wallet = wallet,
                 token = token,
                 destination = destination,
+                destinationPK = destinationPK,
                 amount = amount,
                 max = max,
                 seqno = seqno,
                 validUntil = validUntil,
                 bounceable = bounceable,
                 comment = comment,
-                nftAddress = nftAddress
+                nftAddress = nftAddress,
+                commentEncrypted = commentEncrypted,
             )
         }
     }

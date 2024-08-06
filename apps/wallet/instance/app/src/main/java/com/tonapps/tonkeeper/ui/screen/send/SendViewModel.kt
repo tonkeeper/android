@@ -1,14 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.ton.BASE_FORWARD_AMOUNT
-import com.tonapps.blockchain.ton.ONE_TON
-import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
-import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
@@ -17,16 +12,14 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
-import com.tonapps.tonkeeper.core.entities.TransferEntity.Companion.newWalletQueryId
 import com.tonapps.tonkeeper.ui.screen.send.helper.SendNftHelper
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
-import com.tonapps.tonkeeper.ui.screen.send.state.SendFeeState
+import com.tonapps.tonkeeper.ui.screen.send.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.state.SendTransaction
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -35,12 +28,8 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
-import io.tonapi.models.Account
-import io.tonapi.models.AccountStatus
-import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,23 +41,20 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMap
-import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
+import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
-import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
-import org.ton.contract.wallet.WalletTransferBuilder
 import java.math.BigDecimal
 import java.math.RoundingMode
-import kotlin.math.abs
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
@@ -91,13 +77,8 @@ class SendViewModel(
         val token: TokenEntity = TokenEntity.TON,
         val comment: String? = null,
         val nft: NftEntity? = null,
+        val encryptedComment: Boolean = false,
     )
-
-    sealed class Recipient {
-        data class Data(val raw: Account): Recipient()
-        data object Empty: Recipient()
-        data object NotFound: Recipient()
-    }
 
     private val currency = settingsRepository.currency
     private var amountInputCurrency = false
@@ -112,15 +93,17 @@ class SendViewModel(
         .distinctUntilChanged()
         .debounce { if (it.isEmpty()) 0 else 600 }
 
-    val recipientFlow = combine(
+    val destinationFlow = combine(
         accountRepository.selectedWalletFlow,
         userInputAddressFlow,
     ) { wallet, address ->
         if (address.isEmpty()) {
-            return@combine Recipient.Empty
+            return@combine SendDestination.Empty
         }
-        val account = api.resolveAccount(address, wallet.testnet) ?: return@combine Recipient.NotFound
-        Recipient.Data(account)
+        val account = api.resolveAccount(address, wallet.testnet) ?: return@combine SendDestination.NotFound
+        val publicKey = api.safeGetPublicKey(account.address, wallet.testnet)
+
+        SendDestination.Account(address, publicKey, account)
     }.state(viewModelScope)
 
     val tokensFlow = accountRepository.selectedWalletFlow.map { wallet ->
@@ -138,7 +121,7 @@ class SendViewModel(
         ratesRepository.getRates(currency, token.address)
     }.state(viewModelScope)
 
-    val uiInputAddressErrorFlow = recipientFlow.map { it is Recipient.NotFound }
+    val uiInputAddressErrorFlow = destinationFlow.map { it is SendDestination.NotFound }
 
     private val _uiInputAmountFlow = MutableEffectFlow<Coins>()
     val uiInputAmountFlow = _uiInputAmountFlow.asSharedFlow()
@@ -146,6 +129,8 @@ class SendViewModel(
     val uiInputTokenFlow = userInputFlow.map { it.token }.filter { !isNft }.distinctUntilChanged()
 
     val uiInputNftFlow = userInputFlow.map { it.nft }.distinctUntilChanged().filterNotNull()
+
+    val uiInputEncryptedComment = userInputFlow.map { it.encryptedComment }.distinctUntilChanged().stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
@@ -189,11 +174,11 @@ class SendViewModel(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SendAmountState())
 
     val uiButtonEnabledFlow = combine(
-        recipientFlow,
+        destinationFlow,
         uiBalanceFlow,
         inputAmountFlow,
     ) { recipient, balance, amount ->
-        recipient is Recipient.Data && (isNft || (!balance.insufficientBalance && amount > 0))
+        recipient is SendDestination.Account && (isNft || (!balance.insufficientBalance && amount > 0))
     }
 
     private val amountTokenFlow = combine(
@@ -224,16 +209,17 @@ class SendViewModel(
 
     val uiTransactionFlow = combine(
         accountRepository.selectedWalletFlow,
-        recipientFlow.filter { it is Recipient.Data }.map { (it as Recipient.Data).raw },
+        destinationFlow.mapNotNull { it as? SendDestination.Account },
         selectedTokenFlow,
         uiTransferAmountFlow,
         userInputFlow,
-    ) { wallet, account, token, amount, userInput ->
+    ) { wallet, destination, token, amount, userInput ->
         SendTransaction(
             fromWallet = wallet,
-            targetAccount = account,
+            destination = destination,
             token = token.balance,
             comment = userInput.comment,
+            encryptedComment = userInput.encryptedComment,
             amount = amount,
         )
     }
@@ -241,19 +227,18 @@ class SendViewModel(
     private val transferFlow = combine(
         accountRepository.selectedWalletFlow.distinctUntilChanged(),
         uiTransactionFlow.distinctUntilChanged(),
-        userInputFlow.map { it.address }.distinctUntilChanged(),
-        userInputFlow.map { it.comment }.distinctUntilChanged(),
+        userInputFlow.map { Pair(it.comment, it.encryptedComment) }.distinctUntilChanged(),
         selectedTokenFlow,
-    ) { wallet, transaction, userInputAddress, comment, token ->
+    ) { wallet, transaction, (comment, encryptedComment), token ->
         val sendMetadata = getSendParams(wallet)
         val builder = TransferEntity.Builder(wallet)
         builder.setToken(transaction.token)
-        builder.setDestination(transaction.targetAccount.address)
+        builder.setDestination(transaction.destination.address, transaction.destination.publicKey)
         builder.setSeqno(sendMetadata.seqno)
-        builder.setComment(comment)
+        builder.setComment(comment, encryptedComment)
         builder.setValidUntil(sendMetadata.validUntil)
         if (isNft) {
-            val amount = getNftTotalAmount(wallet, sendMetadata, transaction.targetAccount.address, comment)
+            val amount = getNftTotalAmount(wallet, sendMetadata, transaction.destination.address, comment)
             builder.setNftAddress(nftAddress)
             builder.setBounceable(true)
             builder.setAmount(amount)
@@ -261,7 +246,7 @@ class SendViewModel(
         } else {
             builder.setMax(transaction.amount.value == token.balance.value)
             builder.setAmount(transaction.amount.value)
-            builder.setBounceable(isBounce(userInputAddress, transaction.targetAccount))
+            builder.setBounceable(transaction.destination.isBounce)
         }
         builder.build()
     }.flowOn(Dispatchers.IO)
@@ -275,7 +260,7 @@ class SendViewModel(
     private suspend fun getNftTotalAmount(
         wallet: WalletEntity,
         sendMetadata: SendMetadataEntity,
-        destination: String,
+        destination: AddrStd,
         comment: String?
     ): Coins = withContext(Dispatchers.IO) {
         SendNftHelper.totalAmount(
@@ -283,7 +268,7 @@ class SendViewModel(
             api = api,
             wallet = wallet,
             seqno = sendMetadata.seqno,
-            destination = AddrStd.parse(destination),
+            destination = destination,
             validUntil = sendMetadata.validUntil,
             comment = comment,
         )
@@ -319,7 +304,12 @@ class SendViewModel(
     private suspend fun calculateFee(
         transfer: TransferEntity
     ): Coins = withContext(Dispatchers.IO) {
-        val message = transfer.toSignedMessage(EmptyPrivateKeyEd25519)
+        val fakePrivateKey = if (transfer.commentEncrypted) {
+            PrivateKeyEd25519()
+        } else {
+            EmptyPrivateKeyEd25519
+        }
+        val message = transfer.toSignedMessage(fakePrivateKey)
         val fee = api.emulate(message, transfer.wallet.testnet)?.totalFees ?: 0
         Coins.of(fee)
     }
@@ -340,6 +330,10 @@ class SendViewModel(
         } catch (e: Throwable) {
             null
         }
+    }
+
+    fun userInputEncryptedComment(encrypted: Boolean) {
+        _userInputFlow.value = _userInputFlow.value.copy(encryptedComment = encrypted)
     }
 
     fun userInputAmount(double: Double) {
@@ -398,92 +392,62 @@ class SendViewModel(
         )
     }
 
-    private fun isBounce(value: String, account: Account): Boolean {
-        if (account.status != AccountStatus.active && value.startsWith("EQ")) {
-            return false
-        }
-        val bounce = value.startsWith("EQ") || !value.startsWith("U")
-        if (!value.isValidTonAddress()) {
-            return !account.isWallet
-        }
-        return bounce
-    }
-
-    fun sendSignedMessage(signature: BitString) {
-        launchTransfer(transferFlow.onEach { transfer ->
-            send(signature, transfer)
-        })
-    }
-
-    fun sendLedgerSignedMessage(body: Cell) {
-        launchTransfer(transferFlow.onEach { transfer ->
-            send(body, transfer)
-        })
-    }
-
     fun signerData() = combine(
         accountRepository.selectedWalletFlow.take(1),
         transferFlow.take(1)
     ) { wallet, transfer ->
-        Pair(wallet.publicKey, transfer.unsignedBody)
+        Pair(wallet.publicKey, transfer.getUnsignedBody())
     }
 
-    fun signerDataLedger() = combine(
+    fun ledgerData() = combine(
         accountRepository.selectedWalletFlow.take(1),
         transferFlow.take(1)
     ) { wallet, transfer ->
-        Pair(wallet.id, transfer.ledgerTransaction)
+        Pair(wallet.id, transfer.getLedgerTransaction())
+    }
+
+    fun sendSignedMessage(signature: BitString) {
+        transferFlow.take(1).map { transfer ->
+            Pair(transfer.transferMessage(signature), transfer.testnet)
+        }.sendTransfer()
+    }
+
+    fun sendLedgerSignedMessage(body: Cell) {
+        transferFlow.take(1).map { transfer ->
+            Pair(transfer.transferMessage(body), transfer.testnet)
+        }.sendTransfer()
     }
 
     fun send(context: Context) {
-        launchTransfer(transferFlow.onEach { transfer ->
-            val wallet = transfer.wallet
-            val unsignedBody = transfer.unsignedBody
-            val ledgerTransaction = transfer.ledgerTransaction
-            when (wallet.type) {
-                Wallet.Type.Signer, Wallet.Type.SignerQR -> _uiEventFlow.tryEmit(SendEvent.Signer(unsignedBody, wallet.publicKey))
-                Wallet.Type.Ledger -> _uiEventFlow.tryEmit(SendEvent.Ledger(ledgerTransaction, wallet.id))
-                Wallet.Type.Watch -> throw SendException.UnableSendTransaction()
-                else -> {
-                    val isValidPasscode = passcodeManager.confirmation(context, context.getString(Localization.app_name))
-                    if (!isValidPasscode) {
-                        throw SendException.WrongPasscode()
-                    }
-                    val privateKey = accountRepository.getPrivateKey(wallet.id)
-                    val signature = transfer.signedHash(privateKey)
-                    send(signature, transfer)
-                }
-            }
-        })
-    }
-
-    private suspend fun send(
-        signature: BitString,
-        transfer: TransferEntity
-    ) {
         AnalyticsHelper.trackEvent("send_transaction")
-        val message = transfer.transferMessage(signature)
-        if (!api.sendToBlockchain(message, transfer.wallet.testnet)) {
-            throw SendException.FailedToSendTransaction()
-        }
-        _uiEventFlow.tryEmit(SendEvent.Success)
-        AnalyticsHelper.trackEvent("send_success")
+        transferFlow.take(1).map { transfer ->
+            val wallet = transfer.wallet
+            if (!wallet.hasPrivateKey) {
+                throw SendException.UnableSendTransaction()
+            }
+            val isValidPasscode = passcodeManager.confirmation(context, context.getString(Localization.app_name))
+            if (!isValidPasscode) {
+                throw SendException.WrongPasscode()
+            }
+            val privateKey = accountRepository.getPrivateKey(wallet.id)
+            val boc = transfer.toSignedMessage(privateKey)
+            Pair(boc, wallet.testnet)
+        }.sendTransfer()
     }
 
-    private suspend fun send(
-        body: Cell,
-        transfer: TransferEntity,
-    ) {
-        val message = transfer.transferMessage(body)
-        if (!api.sendToBlockchain(message, transfer.wallet.testnet)) {
+    private suspend fun sendToBlockchain(message: Cell, testnet: Boolean) {
+        if (!api.sendToBlockchain(message, testnet)) {
             throw SendException.FailedToSendTransaction()
         }
-        _uiEventFlow.tryEmit(SendEvent.Success)
     }
 
-    private fun launchTransfer(flow: Flow<TransferEntity>) {
-        flow.catch {
+    private fun Flow<Pair<Cell, Boolean>>.sendTransfer() {
+        this.map { (boc, testnet) ->
+            sendToBlockchain(boc, testnet)
+            AnalyticsHelper.trackEvent("send_success")
+            _uiEventFlow.tryEmit(SendEvent.Success)
+        }.catch {
             _uiEventFlow.tryEmit(SendEvent.Failed)
-        }.flowOn(Dispatchers.IO).take(1).launchIn(viewModelScope)
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 }

@@ -2,24 +2,21 @@ package com.tonapps.tonkeeper.core.history.list.holder
 
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
-import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
-import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.iconRes
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
-import com.tonapps.tonkeeper.dialog.TransactionDialog
-import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
+import com.tonapps.tonkeeper.koin.historyHelper
+import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
@@ -28,17 +25,22 @@ import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import uikit.extensions.clearDrawables
 import uikit.extensions.drawable
+import uikit.extensions.reject
 import uikit.extensions.setLeftDrawable
 import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 
 class HistoryActionHolder(
     parent: ViewGroup,
-    private val disableOpenAction: Boolean
-): HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
+    private val disableOpenAction: Boolean,
+) : HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
 
     private val amountColorReceived = context.accentGreenColor
     private val amountColorDefault = context.textPrimaryColor
@@ -75,7 +77,7 @@ class HistoryActionHolder(
         }
 
         if (!disableOpenAction) {
-            itemView.setOnClickListener { TransactionDialog.open(context, item) }
+            itemView.setOnClickListener { context.navigation?.add(TransactionScreen.newInstance(item)) }
         }
 
         itemView.background = item.position.drawable(context)
@@ -97,19 +99,14 @@ class HistoryActionHolder(
         }
 
         bindPending(item.pending)
-        if (item.comment.isNullOrBlank() && item.cipherText.isNullOrBlank()) {
+        if (item.comment == null) {
             commentView.visibility = View.GONE
         } else {
-            bindComment(item.comment)
-            bindEncryptedComment(item.cipherText, item.address?:"")
+            bindComment(item.comment, item.txId, item.authorAddress)
         }
 
         bindNft(item)
         bindAmount(item)
-    }
-
-    private fun decryptComment(cipherText: String, senderAddress: String) {
-        Navigation.from(context)?.add(EncryptedCommentScreen.newInstance(cipherText, senderAddress))
     }
 
     private fun loadIcon(uri: Uri) {
@@ -150,23 +147,35 @@ class HistoryActionHolder(
         }
     }
 
-    private fun bindComment(comment: String?) {
-        if (comment == null) {
-            return
-        }
+    private fun bindComment(
+        comment: HistoryItem.Event.Comment,
+        txId: String,
+        senderAddress: String,
+    ) {
         commentView.visibility = View.VISIBLE
-        commentView.text = comment
-        commentView.setOnClickListener(null)
+        if (comment.isEncrypted) {
+            commentView.text = context.getString(Localization.encrypted_comment)
+            commentView.setLeftDrawable(lockDrawable)
+            commentView.setOnClickListener { requestDecryptComment(comment, txId, senderAddress) }
+        } else {
+            commentView.text = comment.body
+            commentView.setLeftDrawable(null)
+            commentView.setOnClickListener(null)
+        }
     }
 
-    private fun bindEncryptedComment(cipherText: String?, senderAddress: String) {
-        if (cipherText == null) {
-            return
-        }
-        commentView.visibility = View.VISIBLE
-        commentView.text = context.getString(Localization.encrypted_comment)
-        commentView.setLeftDrawable(lockDrawable)
-        commentView.setOnClickListener { decryptComment(cipherText, senderAddress) }
+    private fun requestDecryptComment(
+        comment: HistoryItem.Event.Comment,
+        txId: String,
+        senderAddress: String
+    ) {
+        val scope = lifecycleScope ?: return
+        val flow = context.historyHelper?.requestDecryptComment(context, comment, txId, senderAddress) ?: return
+        flow.catch {
+            commentView.reject()
+        }.onEach {
+            bindComment(it, txId, senderAddress)
+        }.launchIn(scope)
     }
 
     private fun bindNft(item: HistoryItem.Event) {

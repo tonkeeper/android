@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.w5.WalletV5R1Contract
@@ -207,13 +208,10 @@ class InitViewModel(
     }
 
     private suspend fun resolveWallets(publicKey: PublicKeyEd25519) = withContext(Dispatchers.IO) {
-        Log.d("InitViewModelLog", "resolveWallets publicKey: $publicKey")
         try {
             val accounts = api.resolvePublicKey(publicKey, testnet).filter {
                 it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
             }.sortedByDescending { it.walletVersion.index }.toMutableList()
-
-            Log.d("InitViewModelLog", "resolveWallets accounts: $accounts")
 
             if (accounts.count { it.walletVersion == WalletVersion.V5R1 } == 0) {
                 val contract = WalletV5R1Contract(publicKey, tonNetwork)
@@ -386,13 +384,13 @@ class InitViewModel(
     private suspend fun saveWatchWallet(): WalletEntity {
         val account = getWatchAccount() ?: throw IllegalStateException("Account is not set")
         val label = getLabel()
-        val publicKey = getPublicKey(account.address)
+        val publicKey = api.safeGetPublicKey(account.address, testnet)
 
         return accountRepository.addWatchWallet(label, publicKey, account.walletVersion)
     }
 
     private suspend fun newWallet(context: Context): WalletEntity {
-        val mnemonic = Mnemonic.generate()
+        val mnemonic = Mnemonic.generate(random = AndroidSecureRandom)
         val label = getLabel()
         val wallet = accountRepository.addNewWallet(label, mnemonic)
         saveMnemonic(context, listOf(wallet.id), mnemonic)
@@ -455,13 +453,4 @@ class InitViewModel(
         }
         rnLegacy.addMnemonics(passcode, walletIds, list)
     }
-
-    private fun getPublicKey(
-        accountId: String,
-    ): PublicKeyEd25519 {
-        api.getPublicKey(accountId, testnet).let { hex ->
-            return PublicKeyEd25519(hex(hex))
-        }
-    }
-
 }

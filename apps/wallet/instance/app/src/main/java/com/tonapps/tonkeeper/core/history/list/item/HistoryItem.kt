@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.core.history.list.item
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
@@ -15,6 +16,8 @@ import com.tonapps.tonkeeper.helper.DateFormat
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import io.tonapi.models.EncryptedComment
+import kotlinx.parcelize.Parcelize
 
 sealed class HistoryItem(
     type: Int,
@@ -162,7 +165,7 @@ sealed class HistoryItem(
         val title: String,
         val subtitle: String,
         val timestamp: Long = 0L,
-        val comment: String? = null,
+        val comment: Comment? = null,
         val value: CharSequence,
         val value2: CharSequence = "",
         val currency: CharSequence? = null,
@@ -179,10 +182,57 @@ sealed class HistoryItem(
         val addressName: String? = null,
         val lt: Long = 0L,
         val failed: Boolean,
-        val cipherText: String? = null,
         val hiddenBalance: Boolean = false,
         val unverifiedToken: Boolean = false
     ): HistoryItem(TYPE_ACTION) {
+
+        val authorAddress: String by lazy {
+            if (address.isNullOrBlank()) {
+                nft?.ownerAddress ?: ""
+            } else {
+                address
+            }
+        }
+
+        @Parcelize
+        data class Comment(
+            val type: Type,
+            val body: String,
+        ): Parcelable {
+
+            enum class Type {
+                Text, Simple
+            }
+
+            companion object {
+
+                fun create(
+                    text: String?,
+                    encrypted: EncryptedComment?,
+                    localText: String?
+                ): Comment? {
+                    if (!text.isNullOrBlank()) {
+                        return Comment(text)
+                    }
+                    if (!localText.isNullOrBlank()) {
+                        return Comment(localText)
+                    }
+                    val data = encrypted ?: return null
+                    if (data.encryptionType == "simple") {
+                        return Comment(Type.Simple, data.cipherText)
+                    }
+                    return null
+                }
+            }
+
+            val isEncrypted: Boolean
+                get() = type != Type.Text
+
+            constructor(body: String) : this(
+                type = Type.Text,
+                body = body
+            )
+        }
 
         val hasNft: Boolean
             get() = nft != null
@@ -195,7 +245,7 @@ sealed class HistoryItem(
             title = parcel.readString()!!,
             subtitle = parcel.readString()!!,
             timestamp = parcel.readLong(),
-            comment = parcel.readString(),
+            comment = parcel.readParcelableCompat(),
             value = parcel.readCharSequenceCompat()!!,
             value2 = parcel.readCharSequenceCompat()!!,
             currency = parcel.readCharSequenceCompat(),
@@ -212,7 +262,6 @@ sealed class HistoryItem(
             addressName = parcel.readString(),
             lt = parcel.readLong(),
             failed = parcel.readBooleanCompat(),
-            cipherText = parcel.readString(),
             hiddenBalance = parcel.readBooleanCompat(),
             unverifiedToken = parcel.readBooleanCompat()
         )
@@ -225,7 +274,7 @@ sealed class HistoryItem(
             dest.writeString(title)
             dest.writeString(subtitle)
             dest.writeLong(timestamp)
-            dest.writeString(comment)
+            dest.writeParcelable(comment, flags)
             dest.writeCharSequenceCompat(value)
             dest.writeCharSequenceCompat(value2)
             dest.writeCharSequenceCompat(currency)
@@ -242,7 +291,6 @@ sealed class HistoryItem(
             dest.writeString(addressName)
             dest.writeLong(lt)
             dest.writeBooleanCompat(failed)
-            dest.writeString(cipherText)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(unverifiedToken)
         }

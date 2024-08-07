@@ -1,8 +1,5 @@
 package com.tonapps.blockchain.ton.contract
 
-import com.tonapps.blockchain.ton.contract.w5.W5Context
-import com.tonapps.blockchain.ton.contract.w5.WalletV5BetaContract
-import com.tonapps.blockchain.ton.contract.w5.WalletV5R1Contract
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
@@ -27,16 +24,6 @@ import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeTlb
 import java.math.BigInteger
 
-enum class MessageType {
-    Extension,
-    Internal,
-}
-
-enum class SignaturePosition {
-    Front,
-    Tail,
-}
-
 abstract class BaseWalletContract(
     val workchain: Int = DEFAULT_WORKCHAIN,
     val publicKey: PublicKeyEd25519
@@ -53,9 +40,7 @@ abstract class BaseWalletContract(
                 "v4r1" -> WalletV4R1Contract(publicKey = publicKey)
                 "v4r2" -> WalletV4R2Contract(publicKey = publicKey)
                 "v5beta" -> WalletV5BetaContract(publicKey = publicKey, networkGlobalId = networkGlobalId)
-                "v5r1" -> WalletV5R1Contract(publicKey = publicKey, context = W5Context.Client(
-                    networkGlobalId = networkGlobalId,
-                ))
+                "v5r1" -> WalletV5R1Contract(publicKey = publicKey, networkGlobalId = networkGlobalId)
                 else -> throw IllegalArgumentException("Unsupported contract version: $v")
             }
         }
@@ -115,12 +100,10 @@ abstract class BaseWalletContract(
     abstract fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
-        messageType: MessageType = MessageType.Internal,
+        internalMessage: Boolean = true,
         queryId: BigInteger? = null,
         vararg gifts: WalletTransfer
     ): Cell
-
-    abstract fun getSignaturePosition(): SignaturePosition
 
     private fun signBody(
         privateKey: PrivateKeyEd25519,
@@ -130,23 +113,13 @@ abstract class BaseWalletContract(
         return signedBody(signature, unsignedBody)
     }
 
-    fun signedBody(
+    open fun signedBody(
         signature: BitString,
         unsignedBody: Cell,
-    ): Cell {
-        return when(getSignaturePosition()) {
-            SignaturePosition.Front -> CellBuilder.createCell {
-                storeBits(signature)
-                storeBits(unsignedBody.bits)
-                storeRefs(unsignedBody.refs)
-            }
-
-            SignaturePosition.Tail -> CellBuilder.createCell {
-                storeBits(unsignedBody.bits)
-                storeBits(signature)
-                storeRefs(unsignedBody.refs)
-            }
-        }
+    ) = CellBuilder.createCell {
+        storeBits(signature)
+        storeBits(unsignedBody.bits)
+        storeRefs(unsignedBody.refs)
     }
 
     fun createTransferMessageCell(

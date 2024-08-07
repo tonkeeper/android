@@ -104,6 +104,16 @@
                 android:textColor="?attr/textSecondaryColor"
                 android:visibility="gone"/>
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_required"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/accentOrangeColor"
+                android:text="@string/send_request_comment"
+                android:visibility="gone"/>
+
         </uikit.widget.ColumnLayout>
 
     </uikit.widget.ColumnLayout>

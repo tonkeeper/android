@@ -118,8 +118,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private lateinit var convertedContainerView: View
     private lateinit var commentEncryptView: AppCompatTextView
     private lateinit var commentDecryptView: AppCompatTextView
-
-    private var encryptedCommentAvailable = true
+    private lateinit var commentRequiredView: AppCompatTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -175,15 +174,17 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         commentDecryptView.movementMethod = LinkMovementMethod.getInstance()
         applyCommentDecryptView()
 
+        commentRequiredView = view.findViewById(R.id.comment_required)
+
         commentInput.doOnTextChange = { text ->
             if (text.isEmpty()) {
                 commentEncryptView.visibility = View.GONE
                 commentDecryptView.visibility = View.GONE
                 commentInput.hintColor = requireContext().textSecondaryColor
-            } else if (encryptedCommentAvailable && sendViewModel.uiInputEncryptedComment.value) {
+            } else if (sendViewModel.uiEncryptedCommentAvailableFlow.value && sendViewModel.uiInputEncryptedComment.value) {
                 commentDecryptView.visibility = View.VISIBLE
                 commentInput.hintColor = requireContext().accentGreenColor
-            } else if (encryptedCommentAvailable) {
+            } else if (sendViewModel.uiEncryptedCommentAvailableFlow.value) {
                 commentEncryptView.visibility = View.VISIBLE
                 commentInput.hintColor = requireContext().textSecondaryColor
             }
@@ -235,12 +236,10 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         collectFlow(sendViewModel.uiTransactionFlow, ::applyTransaction)
         collectFlow(sendViewModel.walletTypeFlow) { walletType ->
             if (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup) {
-                encryptedCommentAvailable = true
                 confirmButton.setText(Localization.confirm)
                 confirmButton.setOnClickListener { confirmDefault() }
                 return@collectFlow
             }
-            encryptedCommentAvailable = false
             confirmButton.setText(Localization.continue_action)
             when (walletType) {
                 Wallet.Type.Ledger -> confirmButton.setOnClickListener { openLedger() }
@@ -251,6 +250,15 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
 
         collectFlow(sendViewModel.uiInputEncryptedComment, ::applyCommentEncryptState)
+        collectFlow(sendViewModel.uiRequiredMemoFlow) { memoRequired ->
+            if (memoRequired) {
+                commentRequiredView.visibility = View.VISIBLE
+                commentInput.hint = getString(Localization.required_comment)
+            } else {
+                commentInput.hint = getString(Localization.comment)
+                commentRequiredView.visibility = View.GONE
+            }
+        }
 
         if (args.amountNano > 0) {
             collectFlow(sendViewModel.uiInputTokenFlow.drop(1).take(1)) { token ->

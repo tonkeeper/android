@@ -59,8 +59,11 @@ data class WalletEntity(
     val isWatchOnly: Boolean
         get() = type == Wallet.Type.Watch
 
+    val isLedger: Boolean
+        get() = type == Wallet.Type.Ledger
+
     val isExternal: Boolean
-        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR || type == Wallet.Type.Ledger
+        get() = signer || isLedger
 
     fun isMyAddress(address: String): Boolean {
         return address.toRawAddress().equals(accountId, ignoreCase = true)

@@ -378,7 +378,7 @@ class RootViewModel(
         wallet: WalletEntity
     ) {
         try {
-            if (!wallet.hasPrivateKey) {
+            if (!wallet.hasPrivateKey && !wallet.isLedger) {
                 toast(Localization.not_supported)
                 return
             }

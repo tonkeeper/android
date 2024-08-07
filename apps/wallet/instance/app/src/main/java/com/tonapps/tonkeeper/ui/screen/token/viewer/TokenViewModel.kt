@@ -101,8 +101,8 @@ class TokenViewModel(
         items.add(
             Item.Actions(
             swapUri = api.config.swapUri,
-            swap = token.verified && (token.wallet.type == Wallet.Type.Default || token.wallet.type == Wallet.Type.Signer),
-            send = token.wallet.hasPrivateKey || token.wallet.signer,
+            swap = token.verified && !token.wallet.isWatchOnly,
+            send = !token.wallet.isWatchOnly,
             walletAddress = token.walletAddress,
             tokenAddress = token.address,
             token = token.token.balance.token,

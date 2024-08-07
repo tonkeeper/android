@@ -392,7 +392,11 @@
     <string name="ledger_open_ton_app">Unlock it and open TON App</string>
     <string name="ledger_install_ton_app">Install TON App</string>
     <string name="ledger_confirm_tx">Confirm your transaction on Ledger</string>
+    <string name="ledger_confirm_proof">Verify domain on Ledger</string>
     <string name="ledger_operation_not_supported">The operation is not available for Ledger wallets. Select another wallet and try again.</string>
+    <string name="ledger_update_title">Update TON app in Ledger to the %1$s version</string>
+    <string name="ledger_update_text">This type of transaction is not supported in your current application version.</string>
+    <string name="ledger_update_button">OK</string>
 
     <string name="bluetooth_permissions_alert_title">Bluetooth Permissions</string>
     <string name="bluetooth_permissions_alert_message">Please enable Bluetooth permissions in your settings to use this feature</string>

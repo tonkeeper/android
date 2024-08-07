@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton.contract
 
+import com.tonapps.blockchain.ton.extensions.storeSeqAndValidUntil
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
 import org.ton.block.MessageRelaxed
@@ -19,10 +20,6 @@ open class WalletV4R1Contract(
 
     override fun getWalletVersion() = WalletVersion.V4R1
 
-    override fun getSignaturePosition(): SignaturePosition {
-        return SignaturePosition.Front
-    }
-
     override fun getStateCell(): Cell {
         return CellBuilder.createCell {
             storeUInt(0, 32)
@@ -39,7 +36,7 @@ open class WalletV4R1Contract(
     override fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
-        messageType: MessageType,
+        internalMessage: Boolean,
         queryId: BigInt?,
         vararg gifts: WalletTransfer
     ): Cell {
@@ -48,14 +45,7 @@ open class WalletV4R1Contract(
         }
         return CellBuilder.createCell {
             storeUInt(walletId, 32)
-            if (seqno == 0) {
-                for (i in 0 until 32) {
-                    storeBit(true)
-                }
-            } else {
-                storeUInt(validUntil, 32)
-            }
-            storeUInt(seqno, 32)
+            storeSeqAndValidUntil(seqno, validUntil)
             storeUInt(0, 8)
             for (gift in gifts) {
                 var sendMode = 3

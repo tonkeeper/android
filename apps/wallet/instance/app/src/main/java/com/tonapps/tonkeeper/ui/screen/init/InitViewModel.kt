@@ -13,7 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.contract.w5.WalletV5R1Contract
+import com.tonapps.blockchain.ton.contract.WalletV5R1Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
@@ -41,7 +41,6 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -56,7 +55,6 @@ import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
-import org.ton.crypto.hex
 import org.ton.mnemonic.Mnemonic
 import uikit.extensions.context
 import uikit.navigation.Navigation

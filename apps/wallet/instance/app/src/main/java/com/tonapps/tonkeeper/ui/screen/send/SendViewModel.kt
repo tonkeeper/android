@@ -20,6 +20,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -30,6 +31,7 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -100,11 +102,9 @@ class SendViewModel(
         if (address.isEmpty()) {
             return@combine SendDestination.Empty
         }
-        val account = api.resolveAccount(address, wallet.testnet) ?: return@combine SendDestination.NotFound
-        val publicKey = api.safeGetPublicKey(account.address, wallet.testnet)
 
-        SendDestination.Account(address, publicKey, account)
-    }.state(viewModelScope)
+        getDestinationAccount(address, wallet.testnet)
+    }.flowOn(Dispatchers.IO).state(viewModelScope)
 
     val tokensFlow = accountRepository.selectedWalletFlow.map { wallet ->
         tokenRepository.get(currency, wallet.accountId, wallet.testnet)
@@ -130,7 +130,23 @@ class SendViewModel(
 
     val uiInputNftFlow = userInputFlow.map { it.nft }.distinctUntilChanged().filterNotNull()
 
-    val uiInputEncryptedComment = userInputFlow.map { it.encryptedComment }.distinctUntilChanged().stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val uiRequiredMemoFlow = destinationFlow.map { it as? SendDestination.Account }.map { it?.memoRequired == true }
+
+    val uiEncryptedCommentAvailableFlow = combine(
+        uiRequiredMemoFlow,
+        walletTypeFlow
+    ) { requiredMemo, walletType ->
+        !requiredMemo && (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val uiInputEncryptedComment = combine(
+        userInputFlow.map { it.encryptedComment }.distinctUntilChanged(),
+        uiEncryptedCommentAvailableFlow,
+    ) { encryptedComment, available ->
+        encryptedComment && available
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val uiInputComment = userInputFlow.map { it.comment }.distinctUntilChanged()
 
     val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
@@ -177,8 +193,15 @@ class SendViewModel(
         destinationFlow,
         uiBalanceFlow,
         inputAmountFlow,
-    ) { recipient, balance, amount ->
-        recipient is SendDestination.Account && (isNft || (!balance.insufficientBalance && amount > 0))
+        uiInputComment,
+    ) { recipient, balance, amount, comment ->
+        if (recipient !is SendDestination.Account) {
+            false
+        } else if (recipient.memoRequired && comment.isNullOrEmpty()) {
+            false
+        } else {
+            (isNft || (!balance.insufficientBalance && amount > 0))
+        }
     }
 
     private val amountTokenFlow = combine(
@@ -272,6 +295,19 @@ class SendViewModel(
             validUntil = sendMetadata.validUntil,
             comment = comment,
         )
+    }
+
+    private suspend fun getDestinationAccount(
+        address: String,
+        testnet: Boolean
+    ) = withContext(Dispatchers.IO) {
+        val accountDeferred = async { api.resolveAccount(address, testnet) }
+        val publicKeyDeferred = async { api.safeGetPublicKey(address, testnet) }
+
+        val account = accountDeferred.await() ?: return@withContext SendDestination.NotFound
+        val publicKey = publicKeyDeferred.await()
+
+        SendDestination.Account(address, publicKey, account)
     }
 
     private fun isInsufficientBalance(): Boolean {
@@ -383,8 +419,11 @@ class SendViewModel(
     private suspend fun getSendParams(
         wallet: WalletEntity,
     ): SendMetadataEntity = withContext(Dispatchers.IO) {
-        val seqno = accountRepository.getSeqno(wallet)
-        val validUntil = accountRepository.getValidUntil(wallet.testnet)
+        val seqnoDeferred = async { accountRepository.getSeqno(wallet) }
+        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.testnet) }
+
+        val seqno = seqnoDeferred.await()
+        val validUntil = validUntilDeferred.await()
 
         SendMetadataEntity(
             seqno = seqno,

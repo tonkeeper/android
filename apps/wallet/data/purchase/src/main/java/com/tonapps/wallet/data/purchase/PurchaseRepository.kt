@@ -42,9 +42,13 @@ class PurchaseRepository(
     ): List<PurchaseCategoryEntity> {
         val list = mutableListOf<PurchaseCategoryEntity>()
         for (category in categories) {
-            val items = category.items.filter { methods.contains(it.id) }
-            if (items.isNotEmpty()) {
-                list.add(category.copy(items = items))
+            if (category.type == "swap") {
+                list.add(category.copy(items = category.items))
+            } else {
+                val items = category.items.filter { methods.contains(it.id) }
+                if (items.isNotEmpty()) {
+                    list.add(category.copy(items = items))
+                }
             }
         }
         return list
@@ -59,11 +63,11 @@ class PurchaseRepository(
     private fun get(testnet: Boolean, locale: Locale): PurchaseDataEntity {
         val key = cacheKey(testnet, locale)
         var data = getCache(key)
-        if (data == null) {
+        if (true) { // data == null
             data = load(testnet, locale)
             setCache(key, data)
         }
-        return data
+        return data!!
     }
 
     private fun load(testnet: Boolean, locale: Locale): PurchaseDataEntity {

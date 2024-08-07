@@ -44,6 +44,7 @@ internal class InternalApi(
         locale: Locale,
     ): JSONObject {
         val url = endpoint(path, testnet, platform, build)
+        Log.d("InternalApiLog", "Request: $url")
         val headers = ArrayMap<String, String>()
         headers["Accept-Language"] = locale.toString()
         val body = okHttpClient.get(url, headers)

@@ -345,4 +345,6 @@
     <string name="bluetooth_permissions_alert_title">Permisos de Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Por favor, habilite los permisos de Bluetooth en su configuración para usar esta función</string>
     <string name="bluetooth_permissions_alert_open_settings">Abrir Configuración</string>
+    <string name="intro_title">Bienvenido a <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="required_comment">Comentario requerido</string>
 </resources>

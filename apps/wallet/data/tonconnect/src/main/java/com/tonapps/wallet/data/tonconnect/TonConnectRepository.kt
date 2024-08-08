@@ -15,6 +15,7 @@ import com.tonapps.wallet.data.account.entities.ProofDomainEntity
 import org.ton.crypto.base64
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.ProofEntity
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppItemEntity
@@ -301,6 +302,32 @@ class TonConnectRepository(
         }
     }
 
+    suspend fun connectLedger(
+        wallet: WalletEntity,
+        manifest: DAppManifestEntity,
+        clientId: String,
+        requestItems: List<DAppItemEntity>,
+        firebaseToken: String?,
+        type: Type,
+        proofEntity: ProofEntity?
+    ): DAppEventSuccessEntity = withContext(Dispatchers.IO) {
+        val enablePush = firebaseToken != null
+        val app = newApp(
+            wallet = wallet,
+            manifest = manifest,
+            clientId = clientId,
+            enablePush = enablePush,
+            type = type
+        )
+        val items = createLedgerItems(wallet, requestItems, proofEntity)
+        val res = DAppEventSuccessEntity(items)
+        send(app, res.toJSON())
+        firebaseToken?.let {
+            subscribePush(wallet, app, it)
+        }
+        res.copy()
+    }
+
     suspend fun connect(
         wallet: WalletEntity,
         privateKey: PrivateKeyEd25519,
@@ -338,6 +365,27 @@ class TonConnectRepository(
             stateInit = wallet.contract.stateInit
         ))
         DAppEventSuccessEntity(items)
+    }
+
+    private fun createLedgerItems(
+        wallet: WalletEntity,
+        items: List<DAppItemEntity>,
+        proof: ProofEntity?
+    ): List<DAppReply> {
+        val result = mutableListOf<DAppReply>()
+        for (requestItem in items) {
+            if (requestItem.name == DAppItemEntity.TON_ADDR) {
+                result.add(createAddressItem(
+                    accountId = wallet.accountId,
+                    testnet = wallet.testnet,
+                    publicKey = wallet.publicKey,
+                    stateInit = wallet.contract.stateInit
+                ))
+            } else if (requestItem.name == DAppItemEntity.TON_PROOF && proof != null) {
+                result.add(DAppProofItemReplySuccess(proof = proof))
+            }
+        }
+        return result
     }
 
     private fun createItems(

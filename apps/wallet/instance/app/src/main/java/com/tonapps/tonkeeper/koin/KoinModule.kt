@@ -77,7 +77,7 @@ val koinModel = module {
     viewModel { EventsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(request = parameters.get(), get(), get(), get()) }
     viewModel { CollectiblesViewModel(get(), get(), get(), get()) }
-    viewModel { parameters -> ActionViewModel(args = parameters.get(), get(), get()) }
+    viewModel { parameters -> ActionViewModel(args = parameters.get(), get(), get(), get()) }
     viewModel { BrowserExploreViewModel(get(), get(), get(), get()) }
     viewModel { BrowserConnectedViewModel(get(), get()) }
     viewModel { BrowserMainViewModel(get()) }

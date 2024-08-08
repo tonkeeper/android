@@ -28,6 +28,7 @@ import com.squareup.moshi.JsonClass
  * @param txQuantity 
  * @param utime 
  * @param shardsBlocks 
+ * @param parent 
  * @param masterRef 
  */
 
@@ -51,6 +52,9 @@ data class ReducedBlock (
 
     @Json(name = "shards_blocks")
     val shardsBlocks: kotlin.collections.List<kotlin.String>,
+
+    @Json(name = "parent")
+    val parent: kotlin.collections.List<kotlin.String>,
 
     @Json(name = "master_ref")
     val masterRef: kotlin.String? = null

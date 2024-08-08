@@ -21,6 +21,11 @@ internal abstract class BaseSettingsFolder(
         notifyChanged()
     }
 
+    fun clear() {
+        prefs.edit().clear().apply()
+        notifyChanged()
+    }
+
     private fun notifyChanged() {
         _changedFlow.tryEmit(Unit)
     }

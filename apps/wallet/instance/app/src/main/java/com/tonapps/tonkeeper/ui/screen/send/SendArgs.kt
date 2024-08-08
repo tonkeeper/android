@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
 import android.os.Bundle
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.wallet.api.entity.TokenEntity
 import uikit.base.BaseArgs
 
@@ -18,6 +19,14 @@ data class SendArgs(
         private const val ARG_AMOUNT_NANO = "amount_nano"
         private const val ARG_TEXT = "text"
         private const val ARG_NFT_ADDRESS = "nft_address"
+
+        private fun normalizeTokenAddress(address: String?): String {
+            return if (address.isNullOrBlank()) "TON" else address.toRawAddress()
+        }
+
+        private fun normalizeAmount(amount: Long): Long {
+            return if (amount < 0) 0 else amount
+        }
     }
 
     val isNft: Boolean
@@ -25,8 +34,8 @@ data class SendArgs(
 
     constructor(bundle: Bundle) : this(
         targetAddress = bundle.getString(ARG_TARGET_ADDRESS),
-        tokenAddress = bundle.getString(ARG_TOKEN_ADDRESS) ?: TokenEntity.TON.address,
-        amountNano = bundle.getLong(ARG_AMOUNT_NANO),
+        tokenAddress = normalizeTokenAddress(bundle.getString(ARG_TOKEN_ADDRESS)),
+        amountNano = normalizeAmount(bundle.getLong(ARG_AMOUNT_NANO)),
         text = bundle.getString(ARG_TEXT),
         nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: ""
     )

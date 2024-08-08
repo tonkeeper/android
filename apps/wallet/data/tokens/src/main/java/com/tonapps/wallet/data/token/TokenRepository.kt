@@ -30,6 +30,8 @@ class TokenRepository(
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
 
+    suspend fun getToken(accountId: String, testnet: Boolean) = remoteDataSource.getJetton(accountId, testnet)
+
     suspend fun getTotalBalances(
         currency: WalletCurrency,
         accountId: String,

@@ -3,7 +3,9 @@ package com.tonapps.wallet.api.entity
 import android.net.Uri
 import android.os.Parcelable
 import android.util.Log
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.wallet.api.R
+import io.tonapi.models.JettonInfo
 import io.tonapi.models.JettonPreview
 import io.tonapi.models.JettonVerificationType
 import kotlinx.parcelize.Parcelize
@@ -61,11 +63,20 @@ data class TokenEntity(
         get() = address == USDT.address
 
     constructor(jetton: JettonPreview) : this(
-        address = jetton.address,
+        address = jetton.address.toRawAddress(),
         name = jetton.name,
         symbol = jetton.symbol,
         imageUri = Uri.parse(jetton.image),
         decimals = jetton.decimals,
+        verification = convertVerification(jetton.verification)
+    )
+
+    constructor(jetton: JettonInfo) : this(
+        address = jetton.metadata.address.toRawAddress(),
+        name = jetton.metadata.name,
+        symbol = jetton.metadata.symbol,
+        imageUri = Uri.parse(jetton.metadata.image),
+        decimals = jetton.metadata.decimals.toInt(),
         verification = convertVerification(jetton.verification)
     )
 }

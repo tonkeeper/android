@@ -24,6 +24,7 @@ import uikit.extensions.replaceAll
 import uikit.extensions.setRightDrawable
 import uikit.widget.input.BaseInputView
 import uikit.widget.input.InputTextView
+import java.math.BigDecimal
 
 class CoinInputView @JvmOverloads constructor(
     context: Context,
@@ -109,6 +110,15 @@ class CoinInputView @JvmOverloads constructor(
             return 0.0
         }
         return Coins.safeParseDouble(text)
+    }
+
+    fun setValue(value: BigDecimal) {
+        val editable = editText.getText() ?: return
+        if (BigDecimal.ZERO == value) {
+            clear()
+        } else {
+            editable.replaceAll(value.toPlainString().removeSuffix(".0"))
+        }
     }
 
     fun setValue(value: Double) {

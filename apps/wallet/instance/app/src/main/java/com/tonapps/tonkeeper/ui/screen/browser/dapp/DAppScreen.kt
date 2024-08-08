@@ -251,7 +251,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             } else {
                 host
             }
-            return newInstance(DAppArgs(title, mustHost, url))
+            return newInstance(DAppArgs(title, mustHost, Uri.parse(url)))
         }
 
         fun newInstance(

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ClipData
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.text.Spannable
 import android.text.SpannableString
@@ -44,6 +45,10 @@ fun Context.clipboardText(): String {
     val clip = clipboard.primaryClip
     val text = clip?.getItemAt(0)?.text ?: ""
     return text.toString()
+}
+
+fun Context.copyToClipboard(uri: Uri) {
+    copyToClipboard(uri.toString())
 }
 
 fun Context.copyToClipboard(text: String) {

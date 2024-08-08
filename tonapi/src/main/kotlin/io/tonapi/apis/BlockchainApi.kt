@@ -1380,7 +1380,7 @@ class BlockchainApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
     /**
      * 
      * Send message to blockchain
-     * @param sendBlockchainMessageRequest both a single boc and a batch of boc serialized in base64 are accepted
+     * @param sendBlockchainMessageRequest both a single boc and a batch of boc serialized in base64/hex are accepted
      * @return void
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -1410,7 +1410,7 @@ class BlockchainApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
     /**
      * 
      * Send message to blockchain
-     * @param sendBlockchainMessageRequest both a single boc and a batch of boc serialized in base64 are accepted
+     * @param sendBlockchainMessageRequest both a single boc and a batch of boc serialized in base64/hex are accepted
      * @return ApiResponse<Unit?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -1427,7 +1427,7 @@ class BlockchainApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
     /**
      * To obtain the request config of the operation sendBlockchainMessage
      *
-     * @param sendBlockchainMessageRequest both a single boc and a batch of boc serialized in base64 are accepted
+     * @param sendBlockchainMessageRequest both a single boc and a batch of boc serialized in base64/hex are accepted
      * @return RequestConfig
      */
     fun sendBlockchainMessageRequestConfig(sendBlockchainMessageRequest: SendBlockchainMessageRequest) : RequestConfig<SendBlockchainMessageRequest> {

@@ -84,6 +84,8 @@ class API(
 
     fun accounts(testnet: Boolean) = provider.accounts.get(testnet)
 
+    fun jettons(testnet: Boolean) = provider.jettons.get(testnet)
+
     fun wallet(testnet: Boolean) = provider.wallet.get(testnet)
 
     fun nft(testnet: Boolean) = provider.nft.get(testnet)
@@ -156,6 +158,19 @@ class API(
             walletAddress = accountId
         )
         return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
+    }
+
+    suspend fun getJetton(
+        accountId: String,
+        testnet: Boolean
+    ): TokenEntity? {
+        val jettonsAPI = jettons(testnet)
+        val jetton = withRetry {
+            jettonsAPI.getJettonInfo(accountId)
+        } ?: return null
+        Log.d("SendAmountLog", "getJetton: $jetton")
+
+        return TokenEntity(jetton)
     }
 
     suspend fun getJettonsBalances(

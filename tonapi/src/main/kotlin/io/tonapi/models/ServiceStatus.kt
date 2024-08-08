@@ -24,6 +24,7 @@ import com.squareup.moshi.JsonClass
  *
  * @param restOnline 
  * @param indexingLatency 
+ * @param lastKnownMasterchainSeqno 
  */
 
 
@@ -33,7 +34,10 @@ data class ServiceStatus (
     val restOnline: kotlin.Boolean = true,
 
     @Json(name = "indexing_latency")
-    val indexingLatency: kotlin.Int
+    val indexingLatency: kotlin.Int,
+
+    @Json(name = "last_known_masterchain_seqno")
+    val lastKnownMasterchainSeqno: kotlin.Int
 
 )
 

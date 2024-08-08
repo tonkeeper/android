@@ -146,7 +146,6 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             addressInput.loading = true
             sendViewModel.userInputAddress(text)
         }
-        args.targetAddress?.let { addressInput.text = it }
 
         amountView = view.findViewById(R.id.amount)
         amountView.doOnValueChanged = sendViewModel::userInputAmount
@@ -228,7 +227,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
 
         collectFlow(sendViewModel.uiEventFlow, ::onEvent)
-        collectFlow(sendViewModel.uiInputAmountFlow.map { it.toDouble() }, amountView::setValue)
+        collectFlow(sendViewModel.uiInputAmountFlow.map { it.value }, amountView::setValue)
         collectFlow(sendViewModel.uiBalanceFlow, ::setAmountState)
         collectFlow(sendViewModel.uiInputTokenFlow, ::setToken)
         collectFlow(sendViewModel.uiInputNftFlow, ::setNft)
@@ -260,21 +259,20 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             }
         }
 
-        if (args.amountNano > 0) {
-            collectFlow(sendViewModel.uiInputTokenFlow.drop(1).take(1)) { token ->
-                val amount = Coins.of(args.amountNano, token.decimals)
-                amountView.setValue(amount.toDouble())
-            }
-            sendViewModel.userInputTokenByAddress(args.tokenAddress)
-        }
+        sendViewModel.initializeTokenAndAmount(
+            tokenAddress = args.tokenAddress,
+            amountNano = args.amountNano,
+        )
 
         args.text?.let { commentInput.text = it }
+        args.targetAddress?.let { addressInput.text = it }
     }
 
     private fun applyCommentEncryptState(enabled: Boolean) {
         val textIsEmpty = commentInput.text.isBlank()
         val textSecondaryColor = requireContext().textSecondaryColor
         if (enabled) {
+            commentInput.hint = getString(Localization.encrypted_comment)
             val greenColor = requireContext().accentGreenColor
             if (textIsEmpty) {
                 commentInput.hintColor = textSecondaryColor
@@ -287,6 +285,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
                 commentEncryptView.visibility = View.GONE
             }
         } else {
+            commentInput.hint = getString(Localization.comment)
             commentInput.hintColor = textSecondaryColor
             commentInput.activeBorderColor = requireContext().fieldActiveBorderColor
             if (!textIsEmpty) {

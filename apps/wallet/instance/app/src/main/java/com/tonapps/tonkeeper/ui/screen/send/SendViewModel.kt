@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -55,6 +57,7 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
+import uikit.extensions.collectFlow
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -280,6 +283,19 @@ class SendViewModel(
         }
     }
 
+    fun initializeTokenAndAmount(tokenAddress: String, amountNano: Long) {
+        if (amountNano > 0) {
+            collectFlow(uiInputTokenFlow.filter {
+                it.address.equals(tokenAddress, ignoreCase = true)
+            }.take(1)) { token ->
+                val amount = Coins.of(amountNano, token.decimals)
+                _uiInputAmountFlow.tryEmit(amount)
+            }
+        }
+        Log.d("SendAmountLog", "token: $tokenAddress")
+        userInputTokenByAddress(tokenAddress)
+    }
+
     private suspend fun getNftTotalAmount(
         wallet: WalletEntity,
         sendMetadata: SendMetadataEntity,
@@ -385,10 +401,15 @@ class SendViewModel(
     }
 
     fun userInputTokenByAddress(tokenAddress: String) {
-        tokensFlow.filter { it.isNotEmpty() }.map { list ->
-            list.find { it.address == tokenAddress }
-        }.filterNotNull().take(1).onEach { token ->
-            userInputToken(token.balance.token)
+        combine(
+            accountRepository.selectedWalletFlow.take(1),
+            tokensFlow.filter { it.isNotEmpty() }.map { list ->
+                list.find { it.address == tokenAddress }
+            }.map { it?.balance?.token }
+        ) { wallet, token ->
+            token ?: tokenRepository.getToken(tokenAddress, wallet.testnet) ?: TokenEntity.TON
+        }.take(1).flowOn(Dispatchers.IO).onEach { token ->
+            userInputToken(token)
         }.launchIn(viewModelScope)
     }
 

@@ -166,6 +166,19 @@ class RNLegacy(
         })
     }
 
+    fun getHiddenTokens(walletId: String): List<String> {
+        val tokens = sql.getJSONObject("${walletId}/tokenApproval")?.getJSONObject("tokens") ?: JSONObject()
+        val list = mutableListOf<String>()
+        for (key in tokens.keys()) {
+            val json = tokens.getJSONObject(key)
+            val hidden = json.optString("current") == "declined"
+            if (hidden) {
+                list.add(key)
+            }
+        }
+        return list
+    }
+
     fun isHiddenToken(walletId: String, tokenAddress: String): Boolean {
         if (tokenAddress.equals("TON", ignoreCase = true)) {
             return false

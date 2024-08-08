@@ -345,4 +345,6 @@
     <string name="bluetooth_permissions_alert_title">蓝牙权限</string>
     <string name="bluetooth_permissions_alert_message">请在设置中启用蓝牙权限以使用此功能</string>
     <string name="bluetooth_permissions_alert_open_settings">打开设置</string>
+    <string name="intro_title">欢迎来到 <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="required_comment">必填注释</string>
 </resources>

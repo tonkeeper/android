@@ -150,7 +150,9 @@
     <string name="sign_out_description">Доступ к кошельку будет отключён. Убедитесь, что вы сохранили секретный ключ.</string>
 
 
-
+    <string name="open_anyway">Все равно открыть</string>
+    <string name="nft_warning_buttton_title">Вы уверены, что хотите открыть внешнюю ссылку?</string>
+    <string name="nft_warning_buttton_subtitle">Посетите эту внешнюю ссылку, только если вы доверяете автору коллекции. %1$s</string>
     <string name="tokens">Токены</string>
     <string name="today">Сегодня</string>
     <string name="address">Адрес</string>
@@ -308,6 +310,12 @@
     <string name="last_updated">Обновлён в %1$s</string>
     <string name="max">Максимум</string>
 
+    <string name="step_1">Шаг 1</string>
+    <string name="step_2">Шаг 2</string>
+    <string name="step_3">Шаг 3</string>
+    <string name="signer_step_1">Сканируйте QR-код с помощью Signer</string>
+    <string name="signer_step_2">Подтвердите транзакцию в Signer</string>
+    <string name="signer_step_3">Отсканируйте QR-код подписанной транзакции из Signer</string>
     <string name="insufficient_balance_title">Недостаточно средств</string>
     <string name="insufficient_balance_description">Укажите сумму меньше или выберите максимальный свой баланс.</string>
 
@@ -382,4 +390,5 @@
     <string name="bluetooth_permissions_alert_title">Разрешения Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Пожалуйста, включите разрешения Bluetooth в настройках, чтобы использовать эту функцию</string>
     <string name="bluetooth_permissions_alert_open_settings">Открыть настройки</string>
+    <string name="required_comment">Обязательный комментарий</string>
 </resources>

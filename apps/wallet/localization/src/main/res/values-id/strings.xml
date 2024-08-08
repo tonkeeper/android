@@ -9,6 +9,12 @@
     <string name="setup_finish_biometry">Gunakan biometrik untuk menyetujui transaksi</string>
     <string name="setup_finish_backup">Cadangkan frasa pemulihan dompet</string>
     <string name="setup_finish_telegram">Bergabung dengan saluran Tonkeeper</string>
+    <string name="step_1">Langkah 1</string>
+    <string name="step_2">Langkah 2</string>
+    <string name="step_3">Langkah 3</string>
+    <string name="signer_step_1">Pindai kode QR dengan Signer</string>
+    <string name="signer_step_2">Konfirmasikan transaksi Anda di Signer</string>
+    <string name="signer_step_3">Pindai kode QR transaksi yang ditandatangani dari Signer</string>
     <string name="insufficient_balance_title">Dana tidak mencukupi</string>
     <string name="insufficient_balance_description">Masukkan jumlah yang lebih sedikit atau pilih saldo maksimum Anda.</string>
     <string name="w5_story_title_1">Transfer USDT Tanpa Gas</string>
@@ -120,6 +126,9 @@
     <string name="jetton_transfer">%1$s transfer</string>
     <string name="name_your_wallet">Beri nama dompet Anda</string>
     <string name="name_your_wallet_subtitle">Beri nama dompet Anda untuk memudahkan mengidentifikasinya saat menggunakan Tonkeeper. Nama-nama ini disimpan secara lokal, dan hanya dapat dilihat oleh Anda.</string>
+    <string name="open_anyway">Tetap buka</string>
+    <string name="nft_warning_buttton_title">Yakin ingin membuka link eksternal?</string>
+    <string name="nft_warning_buttton_subtitle">Kunjungi tautan eksternal ini hanya jika Anda memercayai penulis koleksi tersebut. %1$s</string>
     <string name="tokens">Token</string>
     <string name="today">Hari ini</string>
     <string name="address">Alamat</string>
@@ -328,8 +337,14 @@
     <string name="ledger_open_ton_app">Buka kunci dan buka Aplikasi TON</string>
     <string name="ledger_install_ton_app">Pasang Aplikasi TON</string>
     <string name="ledger_confirm_tx">Konfirmasi transaksi Anda di Ledger</string>
+    <string name="ledger_confirm_proof">Verifikasi domain di Ledger</string>
     <string name="ledger_operation_not_supported">Operasi ini tidak tersedia untuk dompet Ledger. Pilih dompet lain dan coba lagi.</string>
+    <string name="ledger_update_title">Perbarui aplikasi TON di Ledger ke versi %1$s</string>
+    <string name="ledger_update_text">Jenis transaksi ini tidak didukung di versi aplikasi Anda saat ini.</string>
+    <string name="ledger_update_button">OKE</string>
     <string name="bluetooth_permissions_alert_title">Izin Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Silakan aktifkan izin Bluetooth di pengaturan Anda untuk menggunakan fitur ini</string>
     <string name="bluetooth_permissions_alert_open_settings">Buka Pengaturan</string>
+    <string name="intro_title">Selamat datang di <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="required_comment">Komentar yang diperlukan</string>
 </resources>

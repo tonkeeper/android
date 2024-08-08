@@ -40,3 +40,20 @@ fun String.formatCompat(vararg args: CharSequence?): Spannable {
     }
     return result
 }
+
+fun String.isVersionLowerThan(other: String): Boolean {
+    val thisParts = this.split(".")
+    val otherParts = other.split(".")
+
+    val length = maxOf(thisParts.size, otherParts.size)
+
+    for (i in 0 until length) {
+        val thisPart = thisParts.getOrNull(i)?.toIntOrNull() ?: 0
+        val otherPart = otherParts.getOrNull(i)?.toIntOrNull() ?: 0
+
+        if (thisPart != otherPart) {
+            return thisPart < otherPart
+        }
+    }
+    return false // Versions are equal
+}

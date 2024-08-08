@@ -17,6 +17,7 @@ class ProcessTaskView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyle) {
 
     enum class State {
+        DEFAULT,
         LOADING,
         SUCCESS,
         FAILED
@@ -61,6 +62,7 @@ class ProcessTaskView @JvmOverloads constructor(
     private fun applyState(state: State) {
         withAnimation {
             when (state) {
+                State.DEFAULT -> {}
                 State.LOADING -> setLoading()
                 State.SUCCESS -> setSuccess()
                 State.FAILED -> setFailed()

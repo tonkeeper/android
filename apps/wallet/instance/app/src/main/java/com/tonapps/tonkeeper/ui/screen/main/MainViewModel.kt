@@ -14,7 +14,7 @@ import uikit.extensions.collectFlow
 class MainViewModel(
     private val accountRepository: AccountRepository,
     private val api: API,
-): ViewModel() {
+) : ViewModel() {
 
     private val _browserTabEnabledFlow = MutableStateFlow<Boolean?>(null)
     val browserTabEnabled = _browserTabEnabledFlow.asStateFlow().filterNotNull()
@@ -24,7 +24,8 @@ class MainViewModel(
 
     init {
         collectFlow(accountRepository.selectedWalletFlow) { wallet ->
-            _browserTabEnabledFlow.value = !api.config.flags.disableDApps && (wallet.type == Wallet.Type.Default || wallet.signer)
+            _browserTabEnabledFlow.value =
+                !api.config.flags.disableDApps && (wallet.type == Wallet.Type.Default || wallet.isExternal)
         }
     }
 

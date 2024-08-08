@@ -1,10 +1,8 @@
-package com.tonapps.tonkeeper.ui.screen.ledger.sign
+package com.tonapps.tonkeeper.ui.screen.ledger.proof
 
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.extensions.toByteArray
-import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
@@ -13,14 +11,14 @@ import com.tonapps.tonkeeper.ui.screen.ledger.update.LedgerUpdateScreen
 import com.tonapps.tonkeeperx.R
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.ton.cell.Cell
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
+import java.math.BigInteger
 
-class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragment.Modal {
+class LedgerProofScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragment.Modal {
 
-    private val args: LedgerSignArgs by lazy { LedgerSignArgs(requireArguments()) }
+    private val args: LedgerProofArgs by lazy { LedgerProofArgs(requireArguments()) }
 
     private val connectionViewModel: LedgerConnectionViewModel by viewModel()
 
@@ -33,7 +31,7 @@ class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragme
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        connectionViewModel.setSignData(args.transaction, args.walletId)
+        connectionViewModel.setProofData(args.domain, args.timestamp, args.payload, args.walletId)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -62,22 +60,27 @@ class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragme
         when (event) {
             is LedgerEvent.Ready -> {
                 if (event.isReady) {
-                    lifecycleScope.launch { connectionViewModel.signTransaction() }
+                    lifecycleScope.launch { connectionViewModel.signDomainProof() }
                 }
             }
+
             is LedgerEvent.WrongVersion -> {
                 onWrongVersion(event.requiredVersion)
             }
+
             is LedgerEvent.Error -> {
                 navigation?.toast(event.message)
                 finish()
             }
-            is LedgerEvent.SignedTransaction -> {
-                onSuccess(event.body)
+
+            is LedgerEvent.SignedProof -> {
+                onSuccess(event.proof)
             }
+
             is LedgerEvent.Rejected -> {
                 finish()
             }
+
             else -> null
         }
     }
@@ -87,20 +90,26 @@ class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragme
         finish()
     }
 
-    private fun onSuccess(body: Cell) {
+    private fun onSuccess(proof: ByteArray) {
         navigation?.setFragmentResult(args.requestKey, Bundle().apply {
-            putByteArray(SIGNED_MESSAGE, body.toByteArray())
+            putByteArray(SIGNED_PROOF, proof)
         })
         isSuccessful = true
         finish()
     }
 
     companion object {
-        const val SIGNED_MESSAGE = "signed_message"
+        const val SIGNED_PROOF = "signed_proof"
 
-        fun newInstance(transaction: Transaction, walletId: String, requestKey: String): LedgerSignScreen {
-            return LedgerSignScreen().apply {
-                setArgs(LedgerSignArgs(transaction, walletId, requestKey))
+        fun newInstance(
+            domain: String,
+            timestamp: BigInteger,
+            payload: String,
+            walletId: String,
+            requestKey: String,
+        ): LedgerProofScreen {
+            return LedgerProofScreen().apply {
+                setArgs(LedgerProofArgs(domain, timestamp, payload, walletId, requestKey))
             }
         }
     }

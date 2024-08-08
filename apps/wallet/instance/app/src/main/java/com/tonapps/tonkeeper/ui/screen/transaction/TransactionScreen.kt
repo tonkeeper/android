@@ -16,29 +16,23 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
-import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
-import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
-import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.take
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.drawable
 import uikit.extensions.reject
 import uikit.extensions.setColor
+import uikit.extensions.showError
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 
@@ -202,6 +196,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     private fun decryptComment(comment: HistoryItem.Event.Comment) {
         historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.authorAddress).catch {
+            context?.showError(it)
             commentView.reject()
         }.onEach {
             applyComment(it)

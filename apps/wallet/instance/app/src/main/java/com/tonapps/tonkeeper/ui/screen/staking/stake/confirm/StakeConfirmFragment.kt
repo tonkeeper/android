@@ -75,6 +75,7 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
 
     private fun setTaskState(state: ProcessTaskView.State) {
         when(state) {
+            ProcessTaskView.State.DEFAULT -> setDefaultState()
             ProcessTaskView.State.LOADING -> setLoadingState()
             ProcessTaskView.State.SUCCESS -> setSuccessState()
             ProcessTaskView.State.FAILED -> setFailedState()

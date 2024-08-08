@@ -13,12 +13,14 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.animation.AnimationUtils
 import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.AnimRes
 import androidx.annotation.ColorInt
@@ -30,6 +32,7 @@ import androidx.core.content.res.ResourcesCompat
 import com.tonapps.uikit.color.backgroundHighlightedColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textTertiaryColor
+import uikit.navigation.Navigation.Companion.navigation
 
 fun Context.inflate(
     @LayoutRes layoutId: Int,
@@ -126,4 +129,14 @@ fun Context.getCurrentFocusEditText(): EditText? {
 
 fun Context.hideKeyboard() {
     (activity?.currentFocus as? EditText)?.hideKeyboard()
+}
+
+fun Context.showError(e: Throwable) {
+    Log.e("AppErrorLog", "error", e)
+    val bestMessage = e.localizedMessage ?: e.message ?: toString()
+    if (navigation == null) {
+        Toast.makeText(this, bestMessage, Toast.LENGTH_LONG).show()
+    } else {
+        navigation?.toast(bestMessage, false, Color.RED)
+    }
 }

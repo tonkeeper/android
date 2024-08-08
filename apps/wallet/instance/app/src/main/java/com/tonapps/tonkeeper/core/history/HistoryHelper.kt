@@ -41,6 +41,7 @@ import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -73,11 +74,13 @@ class HistoryHelper(
         senderAddress: String,
     ): Flow<HistoryItem.Event.Comment> = accountRepository.selectedWalletFlow.take(1).map {
         if (settingsRepository.showEncryptedCommentModal) {
-            val noShowAgain = EncryptedCommentScreen.show(context) ?: throw Exception("use canceled")
+            val noShowAgain = withContext(Dispatchers.Main) {
+                EncryptedCommentScreen.show(context)
+            } ?: throw Exception("User canceled")
             settingsRepository.showEncryptedCommentModal = !noShowAgain
         }
         if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
-            throw Exception("failed to confirm passcode")
+            throw Exception("Wrong passcode")
         }
         it
     }.map { wallet ->

@@ -1,9 +1,13 @@
 package com.tonapps.wallet.data.passcode
 
+import android.content.Context
+import android.graphics.Color
+import com.tonapps.extensions.bestMessage
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import uikit.navigation.Navigation.Companion.navigation
 
 class PasscodeHelper(
     private val store: PasscodeStore,
@@ -13,8 +17,8 @@ class PasscodeHelper(
     val hasPinCode: Boolean
         get() = store.hasPinCode
 
-    suspend fun change(old: String, new: String): Boolean {
-        if (!store.hasPinCode && !isValidLegacy(old)) {
+    suspend fun change(context: Context, old: String, new: String): Boolean {
+        if (!store.hasPinCode && !isValidLegacy(context, old)) {
             return false
         }
         return store.change(old, new)
@@ -28,20 +32,21 @@ class PasscodeHelper(
         store.clearPinCode()
     }
 
-    suspend fun isValid(code: String): Boolean {
+    suspend fun isValid(context: Context, code: String): Boolean {
         return if (store.hasPinCode && store.compare(code)) {
             true
         } else {
-            isValidLegacy(code)
+            isValidLegacy(context, code)
         }
     }
 
-    private suspend fun isValidLegacy(code: String): Boolean = withContext(Dispatchers.IO) {
+    private suspend fun isValidLegacy(context: Context, code: String): Boolean = withContext(Dispatchers.IO) {
         try {
             accountRepository.importPrivateKeysFromRNLegacy(code)
             store.setPinCode(code)
             true
         } catch (e: Throwable) {
+            context.navigation?.toast(e.bestMessage, false, Color.RED)
             false
         }
     }

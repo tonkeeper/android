@@ -32,6 +32,7 @@ import uikit.extensions.clearDrawables
 import uikit.extensions.drawable
 import uikit.extensions.reject
 import uikit.extensions.setLeftDrawable
+import uikit.extensions.showError
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -172,6 +173,7 @@ class HistoryActionHolder(
         val scope = lifecycleScope ?: return
         val flow = context.historyHelper?.requestDecryptComment(context, comment, txId, senderAddress) ?: return
         flow.catch {
+            context.showError(it)
             commentView.reject()
         }.onEach {
             bindComment(it, txId, senderAddress)

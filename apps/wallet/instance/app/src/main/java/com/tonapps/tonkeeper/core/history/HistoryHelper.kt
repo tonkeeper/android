@@ -311,7 +311,8 @@ class HistoryHelper(
                 addressName = accountAddress?.name,
                 currency = CurrencyFormatter.format(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist
+                unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
+                senderAddress = jettonTransfer.sender?.address
             )
         } else if (action.tonTransfer != null) {
             val tonTransfer = action.tonTransfer!!
@@ -363,7 +364,8 @@ class HistoryHelper(
                 ),
                 addressName = accountAddress.name,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
-                failed = action.status == Action.Status.failed
+                failed = action.status == Action.Status.failed,
+                senderAddress = tonTransfer.sender.address,
             )
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!
@@ -431,6 +433,7 @@ class HistoryHelper(
                 date = date,
                 isOut = isOut,
                 failed = action.status == Action.Status.failed,
+                senderAddress = nftItemTransfer.sender?.address,
             )
         } else if (action.contractDeploy != null) {
             return HistoryItem.Event(

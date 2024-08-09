@@ -79,7 +79,7 @@ data class TransferEntity(
             return CommentEncryption.encryptComment(
                 comment = comment,
                 myPublicKey = publicKey,
-                theirPublicKey = publicKey,
+                theirPublicKey = destinationPK,
                 myPrivateKey = privateKey,
                 senderAddress = contract.address.toAccountId()
             )

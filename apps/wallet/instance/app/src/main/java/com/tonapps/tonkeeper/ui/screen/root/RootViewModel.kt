@@ -170,7 +170,7 @@ class RootViewModel(
             list.add(ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "ton://"))
         }
         list.addAll(walletShortcutsFromWallet(currentWallet, wallets))
-        ShortcutManagerCompat.setDynamicShortcuts(context, list)
+        ShortcutManagerCompat.setDynamicShortcuts(context, list.take(3))
     }
 
     private suspend fun walletShortcutsFromWallet(

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Paint
 import android.text.TextPaint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged
@@ -32,7 +33,7 @@ class CoinInputView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : BaseInputView(context, attrs, defStyle) {
 
-    var doOnValueChanged: ((Double) -> Unit)? = null
+    var doOnValueChanged: ((Coins) -> Unit)? = null
     var doOnTokenChanged: ((TokenEntity) -> Unit)? = null
 
     private val suffixDrawable = SuffixDrawable(context, TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
@@ -54,6 +55,9 @@ class CoinInputView @JvmOverloads constructor(
                 editText.setFormattingInputFilter(CoinFormattingFilter(value))
             }
         }
+
+    private val decimals: Int
+        get() = formattingConfig.decimals
 
     var suffix: String? = suffixDrawable.text
         set(value) {
@@ -104,29 +108,19 @@ class CoinInputView @JvmOverloads constructor(
         }
     }
 
-    fun getValue(): Double {
+    fun getValue(): Coins {
         val text = editText.text.toString()
         if (text.isEmpty()) {
-            return 0.0
+            return Coins.ZERO
         }
-        return Coins.safeParseDouble(text)
+        return Coins.of(text, decimals)
     }
 
     fun setValue(value: BigDecimal) {
-        val editable = editText.getText() ?: return
         if (BigDecimal.ZERO == value) {
             clear()
         } else {
-            editable.replaceAll(value.toPlainString().removeSuffix(".0"))
-        }
-    }
-
-    fun setValue(value: Double) {
-        val editable = editText.getText() ?: return
-        if (0 >= value) {
-            clear()
-        } else {
-            editable.replaceAll(value.toString().removeSuffix(".0"))
+            editText.setText(value.stripTrailingZeros().toPlainString().removeSuffix(".0"))
         }
     }
 

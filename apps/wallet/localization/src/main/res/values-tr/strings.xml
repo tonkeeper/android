@@ -347,4 +347,5 @@
     <string name="bluetooth_permissions_alert_open_settings">Ayarları Aç</string>
     <string name="intro_title"><annotation colorRes="textAccent">Tonkeeper</annotation>\'a hoş geldiniz</string>
     <string name="required_comment">Gerekli yorum</string>
+    <string name="biometric_enabled">Biyometrik etkin</string>
 </resources>

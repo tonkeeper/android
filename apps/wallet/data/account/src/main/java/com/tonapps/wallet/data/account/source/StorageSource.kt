@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account.source
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.edit
 import com.tonapps.extensions.prefs
 
@@ -15,7 +16,8 @@ internal class StorageSource(context: Context) {
     private val prefs = context.prefs(NAME)
 
     fun getTonProofToken(id: String): String? {
-        val value = prefs.getString(tonProofToken(id), null)
+        val key = tonProofToken(id)
+        val value = prefs.getString(key, null)
         if (value.isNullOrBlank()) {
             return null
         }

@@ -331,6 +331,7 @@
     <string name="licenses">Licenses</string>
     <string name="montserrat_font">Montserrat font</string>
     <string name="use_biometric">Use biometric</string>
+    <string name="biometric_enabled">Biometric enabled</string>
     <string name="biometric_description">You can always unlock your wallet with a passcode.</string>
     <string name="lock_screen">Lock screen</string>
     <string name="lock_screen_description">Require passcode to view wallet contents.</string>

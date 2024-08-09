@@ -392,4 +392,5 @@
     <string name="bluetooth_permissions_alert_title">Разрешения за Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Моля, включете разрешенията за Bluetooth в настройките, за да използвате тази функция</string>
     <string name="bluetooth_permissions_alert_open_settings">Отворете Настройки</string>
+    <string name="biometric_enabled">Биометричните са активирани</string>
 </resources>

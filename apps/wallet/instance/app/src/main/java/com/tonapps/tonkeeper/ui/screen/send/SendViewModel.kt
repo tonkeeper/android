@@ -78,11 +78,12 @@ class SendViewModel(
 
     data class UserInput(
         val address: String = "",
-        val amount: Double = 0.0,
+        val amount: Coins = Coins.ZERO,
         val token: TokenEntity = TokenEntity.TON,
         val comment: String? = null,
         val nft: NftEntity? = null,
         val encryptedComment: Boolean = false,
+        val max: Boolean = false,
     )
 
     private val currency = settingsRepository.currency
@@ -160,14 +161,13 @@ class SendViewModel(
         selectedTokenFlow,
         inputAmountFlow,
         ratesTokenFlow,
-    ) { token, value, rates ->
+    ) { token, amount, rates ->
         val (decimals, balance, currencyCode) = if (amountInputCurrency) {
             Triple(currency.decimals, token.fiat, currency.code)
         } else {
             Triple(token.decimals, token.balance.value, token.symbol)
         }
 
-        val amount = Coins.of(value.toBigDecimal().stripTrailingZeros(), decimals)
         val remaining = balance - amount
 
         val convertedCode = if (amountInputCurrency) token.symbol else currency.code
@@ -187,7 +187,7 @@ class SendViewModel(
             remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, token.decimals, RoundingMode.UP, false),
             converted = converted.stripTrailingZeros(),
             convertedFormat = CurrencyFormatter.format(convertedCode, converted, decimals, RoundingMode.UP, false),
-            insufficientBalance = !remaining.isPositive,
+            insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
             currencyCode = if (amountInputCurrency) currencyCode else "",
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SendAmountState())
@@ -203,7 +203,7 @@ class SendViewModel(
         } else if (recipient.memoRequired && comment.isNullOrEmpty()) {
             false
         } else {
-            (isNft || (!balance.insufficientBalance && amount > 0))
+            (isNft || (!balance.insufficientBalance && (amount.isPositive || amount.isZero)))
         }
     }
 
@@ -212,11 +212,10 @@ class SendViewModel(
         inputAmountFlow,
         ratesTokenFlow
     ) { token, amount, rates ->
-        val coins = Coins.of(amount, token.decimals)
         if (amountInputCurrency) {
-            rates.convertFromFiat(token.address, coins)
+            rates.convertFromFiat(token.address, amount)
         } else {
-            coins
+            amount
         }
     }
 
@@ -247,6 +246,7 @@ class SendViewModel(
             comment = userInput.comment,
             encryptedComment = userInput.encryptedComment,
             amount = amount,
+            max = userInput.max
         )
     }
 
@@ -270,7 +270,7 @@ class SendViewModel(
             builder.setAmount(amount)
             builder.setMax(false)
         } else {
-            builder.setMax(transaction.amount.value == token.balance.value)
+            builder.setMax(transaction.isRealMax(token.balance.value))
             builder.setAmount(transaction.amount.value)
             builder.setBounceable(transaction.destination.isBounce)
         }
@@ -292,7 +292,6 @@ class SendViewModel(
                 _uiInputAmountFlow.tryEmit(amount)
             }
         }
-        Log.d("SendAmountLog", "token: $tokenAddress")
         userInputTokenByAddress(tokenAddress)
     }
 
@@ -327,8 +326,11 @@ class SendViewModel(
     }
 
     private fun isInsufficientBalance(): Boolean {
+        if (true) {
+            return false
+        }
         val token = selectedTokenFlow.value
-        val amount = Coins.of(userInputFlow.value.amount, token.decimals)
+        val amount = userInputFlow.value.amount
         val balance = if (amountInputCurrency) token.fiat else token.balance.value
         val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
             .multiply(BigDecimal("100"))
@@ -388,8 +390,8 @@ class SendViewModel(
         _userInputFlow.value = _userInputFlow.value.copy(encryptedComment = encrypted)
     }
 
-    fun userInputAmount(double: Double) {
-        _userInputFlow.value = _userInputFlow.value.copy(amount = double)
+    fun userInputAmount(amount: Coins) {
+        _userInputFlow.value = _userInputFlow.value.copy(amount = amount)
     }
 
     fun userInputToken(token: TokenEntity) {

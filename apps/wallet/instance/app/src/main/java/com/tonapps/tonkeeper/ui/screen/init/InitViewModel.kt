@@ -41,6 +41,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -240,8 +241,10 @@ class InitViewModel(
         account: AccountDetailsEntity,
         position: ListCell.Position,
     ): AccountItem = withContext(Dispatchers.IO) {
-        val tokens = api.getJettonsBalances(account.address, testnet)
-        val nftItems = api.getNftItems(account.address, testnet, 1)
+        val tokensDeferred = async { api.getJettonsBalances(account.address, testnet) }
+        val nftItemsDeferred = async { api.getNftItems(account.address, testnet, 1) }
+        val tokens = tokensDeferred.await()
+        val nftItems = nftItemsDeferred.await()
         val balance = Coins.of(account.balance)
         val hasTokens = tokens.isNotEmpty()
         val hasNftItems = nftItems.isNotEmpty()

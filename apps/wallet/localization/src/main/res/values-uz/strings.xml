@@ -347,4 +347,5 @@
     <string name="bluetooth_permissions_alert_open_settings">Sozlamalarni oching</string>
     <string name="intro_title"><annotation colorRes="textAccent">Tonkeeper</annotation>ga xush kelibsiz</string>
     <string name="required_comment">Sharh kerak</string>
+    <string name="biometric_enabled">Biometrik yoqilgan</string>
 </resources>

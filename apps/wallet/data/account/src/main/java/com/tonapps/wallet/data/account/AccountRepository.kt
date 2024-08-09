@@ -114,6 +114,11 @@ class AccountRepository(
 
             val selectedId = storageSource.getSelectedId()
             setSelectedWallet(selectedId)
+
+            val list = getWallets()
+            for (wallet in list) {
+                requestTonProofToken(wallet)
+            }
         }
     }
 
@@ -339,7 +344,7 @@ class AccountRepository(
                 payload = payload,
                 stateInit = contract.getStateCell().base64()
             )
-            api.tonconnectProof(address.toAccountId(), Json.encodeToString(proof))
+            api.tonconnectProof(address.toAccountId(), proof.string(false))
         } catch (e: Throwable) {
             null
         }

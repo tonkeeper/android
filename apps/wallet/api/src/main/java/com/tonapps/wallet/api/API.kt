@@ -306,8 +306,11 @@ class API(
     }
 
     suspend fun tonconnectProof(address: String, proof: String): String {
+        val lines = mutableListOf<String>()
         val url = "${config.tonapiMainnetHost}/v2/wallet/auth/proof"
+        lines.add("url: $url")
         val data = "{\"address\":\"$address\",\"proof\":$proof}"
+        lines.add("data: $data")
         val response = withRetry {
             tonAPIHttpClient.postJSON(url, data)
         } ?: throw Exception("Empty response")
@@ -315,6 +318,9 @@ class API(
             throw Exception("Failed creating proof: ${response.code}")
         }
         val body = response.body?.string() ?: throw Exception("Empty response")
+        lines.add("body: $body")
+        lines.add("_____________________________________")
+        Log.d("AccountRepositoryLog", lines.joinToString("\n"))
         return JSONObject(body).getString("token")
     }
 

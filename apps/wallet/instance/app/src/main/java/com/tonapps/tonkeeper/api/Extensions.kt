@@ -169,10 +169,10 @@ val JettonBalance.symbol: String
     get() = jetton.symbol
 
 val JettonMintAction.parsedAmount: Coins
-    get() = Coins.of(amount, jetton.decimals)
+    get() = Coins.ofNano(amount, jetton.decimals)
 
 val JettonBurnAction.parsedAmount: Coins
-    get() = Coins.of(amount, jetton.decimals)
+    get() = Coins.ofNano(amount, jetton.decimals)
 
 fun NftItem.imageBySize(size: String): ImagePreview? {
     return previews?.firstOrNull { it.resolution == size }

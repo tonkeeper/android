@@ -4,6 +4,7 @@ object Dependence {
     const val fresco = "com.facebook.fresco:fresco:3.1.3"
     const val guava = "com.google.guava:guava:33.1.0-android"
     const val zxing = "com.google.zxing:core:3.5.3"
+    const val j2objc = "com.google.j2objc:j2objc-annotations:3.0.0"
 
     object Analytics {
         const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"
@@ -53,6 +54,7 @@ object Dependence {
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"
+        const val webkit = "androidx.webkit:webkit:1.9.0"
 
         const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.2"
         const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.2"

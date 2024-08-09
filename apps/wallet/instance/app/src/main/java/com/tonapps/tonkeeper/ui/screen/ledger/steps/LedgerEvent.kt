@@ -10,5 +10,7 @@ sealed class LedgerEvent {
     data class Error(val message: String): LedgerEvent()
     data class Next(val connectData: LedgerConnectData, val accounts: List<AccountItem>): LedgerEvent()
     data class SignedTransaction(val body: Cell): LedgerEvent()
+    data class SignedProof(val proof: ByteArray): LedgerEvent()
     data object Rejected: LedgerEvent()
+    data class WrongVersion(val requiredVersion: String): LedgerEvent()
 }

@@ -121,7 +121,7 @@ class GaslessApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
      * 
      * Estimates the cost of the given messages and returns a payload to sign.
      * @param masterId jetton to pay commission
-     * @param gaslessEstimateRequest bag-of-cells serialized to base64
+     * @param gaslessEstimateRequest bag-of-cells serialized to hex
      * @return SignRawParams
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -153,7 +153,7 @@ class GaslessApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
      * 
      * Estimates the cost of the given messages and returns a payload to sign.
      * @param masterId jetton to pay commission
-     * @param gaslessEstimateRequest bag-of-cells serialized to base64
+     * @param gaslessEstimateRequest bag-of-cells serialized to hex
      * @return ApiResponse<SignRawParams?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -172,7 +172,7 @@ class GaslessApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
      * To obtain the request config of the operation gaslessEstimate
      *
      * @param masterId jetton to pay commission
-     * @param gaslessEstimateRequest bag-of-cells serialized to base64
+     * @param gaslessEstimateRequest bag-of-cells serialized to hex
      * @return RequestConfig
      */
     fun gaslessEstimateRequestConfig(masterId: kotlin.String, gaslessEstimateRequest: GaslessEstimateRequest) : RequestConfig<GaslessEstimateRequest> {
@@ -195,7 +195,7 @@ class GaslessApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     /**
      * 
      * 
-     * @param gaslessSendRequest bag-of-cells serialized to base64
+     * @param gaslessSendRequest bag-of-cells serialized to hex
      * @return void
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -225,7 +225,7 @@ class GaslessApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     /**
      * 
      * 
-     * @param gaslessSendRequest bag-of-cells serialized to base64
+     * @param gaslessSendRequest bag-of-cells serialized to hex
      * @return ApiResponse<Unit?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -242,7 +242,7 @@ class GaslessApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     /**
      * To obtain the request config of the operation gaslessSend
      *
-     * @param gaslessSendRequest bag-of-cells serialized to base64
+     * @param gaslessSendRequest bag-of-cells serialized to hex
      * @return RequestConfig
      */
     fun gaslessSendRequestConfig(gaslessSendRequest: GaslessSendRequest) : RequestConfig<GaslessSendRequest> {

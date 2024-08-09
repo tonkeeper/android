@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.koin
 
 import android.content.Context
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -44,3 +45,6 @@ val Context.passcodeManager: PasscodeManager?
 
 val Context.rnLegacy: RNLegacy?
     get() = koin?.get<RNLegacy>()
+
+val Context.historyHelper: HistoryHelper?
+    get() = koin?.get<HistoryHelper>()

@@ -2,7 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.notifications.list
 
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -33,12 +34,13 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Item(TYPE_APP) {
 
         constructor(
-            app: DAppEntity,
+            app: DConnectEntity,
+            manifest: DAppManifestEntity,
             position: ListCell.Position
         ) : this(
             id = app.uniqueId,
-            name = app.manifest.name,
-            icon = app.manifest.iconUrl,
+            name = manifest.name,
+            icon = manifest.iconUrl,
             pushEnabled = app.enablePush,
             position = position,
             walletId = app.walletId,

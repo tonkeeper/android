@@ -25,7 +25,7 @@ import com.squareup.moshi.JsonClass
  *
  * @param address 
  * @param owner 
- * @param balance 
+ * @param balance balance in the smallest jetton's units
  */
 
 
@@ -37,6 +37,7 @@ data class JettonHoldersAddressesInner (
     @Json(name = "owner")
     val owner: AccountAddress,
 
+    /* balance in the smallest jetton's units */
     @Json(name = "balance")
     val balance: kotlin.String
 

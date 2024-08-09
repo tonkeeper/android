@@ -6,7 +6,7 @@ import com.tonapps.extensions.string
 import com.tonapps.network.SSEvent
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -23,14 +23,14 @@ internal class EventsHelper(
     private val recentlyReceivedEventIds = ArrayDeque<String>(10)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun flow(appsFlow: Flow<List<DAppEntity>>) = appsFlow.flatMapLatest { apps ->
+    fun flow(appsFlow: Flow<List<DConnectEntity>>) = appsFlow.flatMapLatest { apps ->
         val publicKeys = apps.map { it.publicKeyHex }
         api.tonconnectEvents(publicKeys, prefs.string(LAST_EVENT_ID_KEY)).map { event ->
             processEvent(apps, event)
         }
     }.filterNotNull()
 
-    private suspend fun processEvent(apps: List<DAppEntity>, event: SSEvent): DAppEventEntity? {
+    private suspend fun processEvent(apps: List<DConnectEntity>, event: SSEvent): DAppEventEntity? {
         if (!processEventId(event.id)) {
             return null
         }

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
 import android.os.Bundle
+import android.os.Looper
 import android.text.SpannableString
 import android.util.Log
 import android.view.View
@@ -18,6 +19,7 @@ import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppEventSuccessEntity
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -42,21 +44,25 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
         private const val REQUEST_KEY = "request"
         private const val CALLBACK_KEY = "callback"
+        private const val FROM_BROWSER_KEY = "from_browser"
 
         fun newInstance(
             request: DAppRequestEntity,
-            callbackKey: String? = null
+            callbackKey: String? = null,
+            fromBrowser: Boolean = false
         ): TCAuthFragment {
             val fragment = TCAuthFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(REQUEST_KEY, request)
                 putString(CALLBACK_KEY, callbackKey)
+                putBoolean(FROM_BROWSER_KEY, fromBrowser)
             }
             return fragment
         }
     }
 
     private val callbackKey: String? by lazy { arguments?.getString(CALLBACK_KEY) }
+    private val fromBrowser: Boolean by lazy { arguments?.getBoolean(FROM_BROWSER_KEY) ?: false }
 
     private val viewModel: TCAuthViewModel by viewModel { parametersOf(arguments?.getParcelable(REQUEST_KEY)!!) }
 
@@ -84,8 +90,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         loaderView = view.findViewById(R.id.loader)
         loaderView.visibility = View.VISIBLE
 
-        contentView = view.findViewById(R.id.content)
-        contentView.visibility = View.GONE
+        contentView = view.findViewById(R.id.app_content)
 
         appIconView = view.findViewById(R.id.app_icon)
 
@@ -142,7 +147,13 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         connectProcessView.visibility = View.VISIBLE
         connectProcessView.state = ProcessTaskView.State.LOADING
 
-        viewModel.connect(requireContext(), allowNotificationCheckbox.checked).catch {
+        val type = if (fromBrowser) {
+            DConnectEntity.Type.Internal
+        } else {
+            DConnectEntity.Type.External
+        }
+
+        viewModel.connect(requireContext(), allowNotificationCheckbox.checked, type).catch {
             setFailure()
         }.onEach {
             setSuccess(it)

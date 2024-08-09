@@ -8,7 +8,8 @@ import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -25,7 +26,9 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
         requireParentFragment().getViewModel()
     }
 
-    private val adapter = Adapter { deleteAppConfirm(it) }
+    private val adapter = Adapter { connect, manifest ->
+        deleteAppConfirm(connect, manifest)
+    }
 
     private val scrollListener = object : RecyclerVerticalScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
@@ -62,12 +65,12 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
         }
     }
 
-    private fun deleteAppConfirm(app: DAppEntity) {
-        val message = getString(Localization.remove_dapp_confirm, app.manifest.name)
+    private fun deleteAppConfirm(connect: DConnectEntity, manifest: DAppManifestEntity) {
+        val message = getString(Localization.remove_dapp_confirm, manifest.name)
         AlertDialog.Builder(requireContext())
             .setMessage(message)
             .setNegativeButton(Localization.confirm) {
-                connectedViewModel.deleteApp(app)
+                connectedViewModel.deleteConnect(connect)
             }
             .setPositiveButton(Localization.cancel) {
 

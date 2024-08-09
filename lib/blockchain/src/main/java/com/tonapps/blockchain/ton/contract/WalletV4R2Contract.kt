@@ -19,10 +19,6 @@ class WalletV4R2Contract(
 
     override fun getWalletVersion() = WalletVersion.V4R2
 
-    override fun getSignaturePosition(): SignaturePosition {
-        return SignaturePosition.Front
-    }
-
     override fun getCode(): Cell {
         return CODE
     }

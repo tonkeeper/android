@@ -30,6 +30,7 @@ import com.squareup.moshi.JsonClass
  * @param walletAddress 
  * @param jetton 
  * @param price 
+ * @param extensions 
  * @param lock 
  */
 
@@ -47,6 +48,9 @@ data class JettonBalance (
 
     @Json(name = "price")
     val price: TokenRates? = null,
+
+    @Json(name = "extensions")
+    val extensions: kotlin.collections.List<kotlin.String>? = null,
 
     @Json(name = "lock")
     val lock: JettonBalanceLock? = null

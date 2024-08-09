@@ -9,9 +9,18 @@ import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
+import org.ton.cell.CellSlice
+import org.ton.crypto.digest.sha256
 import org.ton.crypto.hex
 import org.ton.tlb.storeTlb
+import java.math.BigInteger
 import kotlin.math.ceil
+
+data class ParseOptions(
+    val disallowUnsafe: Boolean = false,
+    val disallowModification: Boolean = false,
+    val encodeJettonBurnEthAddressAsHex: Boolean = true
+)
 
 class TonTransport(private val transport: Transport) {
     companion object {
@@ -23,6 +32,8 @@ class TonTransport(private val transport: Transport) {
         const val INS_PROOF = 0x08
         const val INS_SIGN_DATA = 0x09
     }
+
+    private var _currentVersion: String? = null
 
     private fun chunks(buf: ByteArray, n: Int): List<ByteArray> {
         val nc = ceil(buf.size / n.toDouble()).toInt()
@@ -67,10 +78,21 @@ class TonTransport(private val transport: Transport) {
     }
 
     suspend fun isAppOpen(): Boolean {
-        return getCurrentApp().first == "TON"
+        val (appName, version) = getCurrentApp()
+        val isOpened = appName == "TON"
+
+        if (isOpened) {
+            _currentVersion = version
+        }
+
+        return isOpened
     }
 
     suspend fun getVersion(): String {
+        if (_currentVersion != null) {
+            return _currentVersion!!
+        }
+
         val loaded = doRequest(INS_VERSION, 0x00, 0x00, ByteArray(0))
         if (loaded.size < 3) {
             throw Exception("Invalid response")
@@ -94,6 +116,30 @@ class TonTransport(private val transport: Transport) {
         val contract = path.contract(publicKey)
 
         return LedgerAccount(contract.address, publicKey, path)
+    }
+
+    suspend fun signAddressProof(
+        path: AccountPath,
+        domain: String,
+        timestamp: BigInteger,
+        payload: String
+    ): ByteArray {
+        val publicKey = getAccount(path).publicKey
+        val domainBytes = domain.toByteArray()
+
+        val pkg =
+            path.toByteArray() + LedgerWriter.putUint8(domainBytes.size) + domainBytes + LedgerWriter.putUint64(
+                timestamp
+            ) + payload.toByteArray()
+
+        val res = doRequest(INS_PROOF, 0x01, 0x00, pkg)
+        val signature = res.sliceArray(1 until 1 + 64)
+        val hash = res.sliceArray(2 + 64 until 2 + 64 + 32)
+        if (!publicKey.verify(hash, signature)) {
+            throw Error("Received signature is invalid")
+        }
+
+        return signature
     }
 
     suspend fun signTransaction(
@@ -218,6 +264,254 @@ class TonTransport(private val transport: Transport) {
                 hints += LedgerWriter.putUint16(bytes.size) + bytes
             }
 
+            is TonPayloadFormat.JettonBurn -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x03)
+                var cell = CellBuilder.beginCell().storeUInt(0x595f07bc, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount.toLong()) + LedgerWriter.putAddress(
+                    transaction.payload.responseDestination
+                )
+                cell = cell.storeTlb(Coins, transaction.payload.coins)
+                    .storeTlb(MsgAddressInt, transaction.payload.responseDestination)
+
+                if (transaction.payload.customPayload != null) {
+                    when (val customPayload = transaction.payload.customPayload) {
+                        is JettonBurnCustomPayload.ByteArrayPayload -> {
+                            val customPayloadBytes = customPayload.byteArray
+                            bytes += LedgerWriter.putUint8(2) + LedgerWriter.putUint8(
+                                customPayloadBytes.size
+                            ) + customPayloadBytes
+                            cell = cell.storeBit(true)
+                                .storeRef(CellBuilder.createCell { storeBytes(customPayloadBytes) })
+                        }
+
+                        is JettonBurnCustomPayload.CellPayload -> {
+                            bytes += LedgerWriter.putUint8(1) + LedgerWriter.putCellRef(
+                                customPayload.cell
+                            )
+                            cell = cell.storeBit(true).storeRef(customPayload.cell)
+                        }
+
+                        null -> {}
+                    }
+                } else {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeBit(false)
+                }
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.AddWhitelist -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x04)
+                var cell = CellBuilder.beginCell().storeUInt(0x7258a69b, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                bytes += LedgerWriter.putAddress(transaction.payload.address)
+                cell = cell.storeTlb(MsgAddressInt, transaction.payload.address)
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.ChangeDNSRecord -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x09)
+                var cell = CellBuilder.beginCell().storeUInt(0x4eb1f0f9, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                when (val record = transaction.payload.record) {
+                    is DNSRecord.Wallet -> {
+                        cell = cell.storeBytes(sha256("wallet".toByteArray()))
+
+                        if (record.wallet != null) {
+                            val wallet = record.wallet
+                            bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint8(0) +
+                                    LedgerWriter.putAddress(wallet.address) +
+                                    LedgerWriter.putUint8(if (wallet.capabilities == null) 0 else 1)
+                            val rb = CellBuilder.beginCell()
+                                .storeUInt(0x9fd3, 16)
+                                .storeTlb(MsgAddressInt, wallet.address)
+                                .storeUInt(if (wallet.capabilities == null) 0 else 1, 8)
+
+                            if (wallet.capabilities != null) {
+                                bytes += LedgerWriter.putUint8(if (wallet.capabilities.isWallet) 1 else 0)
+                                if (wallet.capabilities.isWallet) {
+                                    rb.storeBit(true).storeUInt(0x2177, 16)
+                                }
+                                rb.storeBit(false)
+                            }
+                            cell = cell.storeRef(rb.endCell())
+                        } else {
+                            bytes += LedgerWriter.putUint8(0) + LedgerWriter.putUint8(0)
+                        }
+                    }
+
+                    is DNSRecord.Unknown -> {
+                        bytes += LedgerWriter.putUint8(if (record.value != null) 1 else 0) + LedgerWriter.putUint8(
+                            1
+                        )
+
+                        if (record.key.size != 32) {
+                            throw Error("DNS record key length must be 32 bytes long")
+                        }
+                        cell = cell.storeBytes(record.key)
+
+                        if (record.value != null) {
+                            bytes += LedgerWriter.putCellRef(record.value)
+                            cell = cell.storeRef(record.value)
+                        }
+                    }
+                }
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.SingleNominatorChangeValidator -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x06)
+                var cell = CellBuilder.beginCell().storeUInt(0x1001, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                bytes += LedgerWriter.putAddress(transaction.payload.address)
+                cell = cell.storeTlb(MsgAddressInt, transaction.payload.address)
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.SingleNominatorWithdraw -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x05)
+                var cell = CellBuilder.beginCell().storeUInt(0x1000, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount.toLong())
+                cell = cell.storeTlb(Coins, transaction.payload.coins)
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.TokenBridgePaySwap -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x0A)
+                var cell = CellBuilder.beginCell().storeUInt(0x8, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                if (transaction.payload.swapId.size != 32) {
+                    throw Error("Swap ID must be 32 bytes long")
+                }
+
+                bytes += transaction.payload.swapId
+                cell = cell.storeBytes(transaction.payload.swapId)
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.TonstakersDeposit -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x07)
+                var cell = CellBuilder.beginCell().storeUInt(0x47d54391, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                if (transaction.payload.appId != null) {
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(transaction.payload.appId)
+                    cell = cell.storeUInt(transaction.payload.appId, 64)
+                } else {
+                    bytes += LedgerWriter.putUint8(0)
+                }
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.Unsafe -> {
+                payload = transaction.payload.message
+            }
+
+            is TonPayloadFormat.VoteForProposal -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x08)
+                var cell = CellBuilder.beginCell().storeUInt(0x69fb306c, 32)
+                var bytes = ByteArray(0)
+
+                transaction.payload.queryId?.let { queryId ->
+                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    cell = cell.storeUInt(queryId, 64)
+                } ?: run {
+                    bytes += LedgerWriter.putUint8(0)
+                    cell = cell.storeUInt(0, 64)
+                }
+
+                bytes += LedgerWriter.putAddress(transaction.payload.votingAddress) + LedgerWriter.putUint48(
+                    transaction.payload.expirationDate
+                ) + LedgerWriter.putUint8(if (transaction.payload.vote) 1 else 0) + LedgerWriter.putUint8(
+                    if (transaction.payload.needConfirmation) 1 else 0
+                )
+                cell = cell.storeTlb(MsgAddressInt, transaction.payload.votingAddress)
+                    .storeUInt(transaction.payload.expirationDate, 48)
+                    .storeBit(transaction.payload.vote)
+                    .storeBit(transaction.payload.needConfirmation)
+
+                payload = cell.endCell()
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
             null -> {}
         }
 
@@ -294,3 +588,6 @@ class TonTransport(private val transport: Transport) {
         }
     }
 }
+
+val CellSlice.remainingRefs: Int
+    get() = refs.size - refsPosition

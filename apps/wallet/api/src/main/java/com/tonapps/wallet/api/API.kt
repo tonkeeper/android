@@ -3,6 +3,7 @@ package com.tonapps.wallet.api
 import android.content.Context
 import android.util.ArrayMap
 import android.util.Log
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.locale
@@ -29,6 +30,7 @@ import io.tonapi.models.Account
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import io.tonapi.models.EmulateMessageToWalletRequest
+import io.tonapi.models.EmulateMessageToWalletRequestParamsInner
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
@@ -47,6 +49,7 @@ import org.json.JSONObject
 import org.koin.androidx.viewmodel.lazyResolveViewModel
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
+import org.ton.crypto.hex
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -67,7 +70,7 @@ class API(
     val config: ConfigEntity
         get() {
             while (configRepository.configEntity == null) {
-                Thread.sleep(32)
+                Thread.sleep(16)
             }
             return configRepository.configEntity!!
         }
@@ -80,6 +83,8 @@ class API(
     }
 
     fun accounts(testnet: Boolean) = provider.accounts.get(testnet)
+
+    fun jettons(testnet: Boolean) = provider.jettons.get(testnet)
 
     fun wallet(testnet: Boolean) = provider.wallet.get(testnet)
 
@@ -97,9 +102,11 @@ class API(
 
     fun getAlertNotifications() = internalApi.getNotifications()
 
-    fun isOkStatus(testnet: Boolean): Boolean {
+    private suspend fun isOkStatus(testnet: Boolean): Boolean {
         try {
-            val status = provider.blockchain.get(testnet).status()
+            val status = withRetry {
+                provider.blockchain.get(testnet).status()
+            } ?: return false
             if (!status.restOnline) {
                 return false
             }
@@ -153,6 +160,17 @@ class API(
         return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
     }
 
+    suspend fun getJetton(
+        accountId: String,
+        testnet: Boolean
+    ): TokenEntity? {
+        val jettonsAPI = jettons(testnet)
+        val jetton = withRetry {
+            jettonsAPI.getJettonInfo(accountId)
+        } ?: return null
+        return TokenEntity(jetton)
+    }
+
     suspend fun getJettonsBalances(
         accountId: String,
         testnet: Boolean,
@@ -183,13 +201,15 @@ class API(
         }
     }
 
-    fun resolvePublicKey(
+    suspend fun resolvePublicKey(
         pk: PublicKeyEd25519,
         testnet: Boolean
     ): List<AccountDetailsEntity> {
         return try {
             val query = pk.key.hex()
-            val wallets = wallet(testnet).getWalletsByPublicKey(query).accounts
+            val wallets = withRetry {
+                wallet(testnet).getWalletsByPublicKey(query).accounts
+            } ?: return emptyList()
             wallets.map { AccountDetailsEntity(query, it, testnet) }
         } catch (e: Throwable) {
             emptyList()
@@ -215,24 +235,34 @@ class API(
         }
     }
 
-    fun getNftItems(address: String, testnet: Boolean, limit: Int = 1000): List<NftItem> {
+    suspend fun getNftItems(address: String, testnet: Boolean, limit: Int = 1000): List<NftItem> {
         return try {
-            accounts(testnet).getAccountNftItems(
-                accountId = address,
-                limit = limit,
-                indirectOwnership = true,
-            ).nftItems
+            withRetry {
+                accounts(testnet).getAccountNftItems(
+                    accountId = address,
+                    limit = limit,
+                    indirectOwnership = true,
+                ).nftItems
+            } ?: emptyList()
         } catch (e: Throwable) {
             emptyList()
         }
     }
 
-    fun getPublicKey(
+    suspend fun getPublicKey(
         accountId: String,
         testnet: Boolean
-    ): String {
-        return accounts(testnet).getAccountPublicKey(accountId).publicKey
+    ): PublicKeyEd25519? {
+        val hex = withRetry {
+            accounts(testnet).getAccountPublicKey(accountId)
+        }?.publicKey ?: return null
+        return PublicKeyEd25519(hex(hex))
     }
+
+    suspend fun safeGetPublicKey(
+        accountId: String,
+        testnet: Boolean
+    ) = getPublicKey(accountId, testnet) ?: EmptyPrivateKeyEd25519.publicKey()
 
     fun accountEvents(accountId: String, testnet: Boolean): Flow<SSEvent> {
         val endpoint = if (testnet) {
@@ -261,20 +291,24 @@ class API(
         return tonAPIHttpClient.sse(url)
     }
 
-    fun tonconnectPayload(): String? {
+    suspend fun tonconnectPayload(): String? {
         try {
             val url = "${config.tonapiMainnetHost}/v2/tonconnect/payload"
-            val json = JSONObject(tonAPIHttpClient.get(url))
+            val json = withRetry {
+                JSONObject(tonAPIHttpClient.get(url))
+            } ?: return null
             return json.getString("payload")
         } catch (e: Throwable) {
             return null
         }
     }
 
-    fun tonconnectProof(address: String, proof: String): String {
+    suspend fun tonconnectProof(address: String, proof: String): String {
         val url = "${config.tonapiMainnetHost}/v2/wallet/auth/proof"
         val data = "{\"address\":\"$address\",\"proof\":$proof}"
-        val response = tonAPIHttpClient.postJSON(url, data)
+        val response = withRetry {
+            tonAPIHttpClient.postJSON(url, data)
+        } ?: throw Exception("Empty response")
         if (!response.isSuccessful) {
             throw Exception("Failed creating proof: ${response.code}")
         }
@@ -298,16 +332,26 @@ class API(
     suspend fun emulate(
         boc: String,
         testnet: Boolean,
-    ): MessageConsequences = withContext(Dispatchers.IO) {
-        val request = EmulateMessageToWalletRequest(boc)
-        emulation(testnet).emulateMessageToWallet(request)
+        address: String? = null,
+        balance: Long? = null
+    ): MessageConsequences? = withContext(Dispatchers.IO) {
+        val params = mutableListOf<EmulateMessageToWalletRequestParamsInner>()
+        if (address != null) {
+            params.add(EmulateMessageToWalletRequestParamsInner(address, balance))
+        }
+        val request = EmulateMessageToWalletRequest(boc, params)
+        withRetry {
+            emulation(testnet).emulateMessageToWallet(request)
+        }
     }
 
     suspend fun emulate(
         cell: Cell,
-        testnet: Boolean
-    ): MessageConsequences {
-        return emulate(cell.base64(), testnet)
+        testnet: Boolean,
+        address: String? = null,
+        balance: Long? = null
+    ): MessageConsequences? {
+        return emulate(cell.base64(), testnet, address, balance)
     }
 
     suspend fun sendToBlockchain(
@@ -317,13 +361,11 @@ class API(
         if (!isOkStatus(testnet)) {
             return@withContext false
         }
-        try {
-            val request = SendBlockchainMessageRequest(boc)
+        val request = SendBlockchainMessageRequest(boc)
+        withRetry {
             blockchain(testnet).sendBlockchainMessage(request)
             true
-        } catch (e: Throwable) {
-            false
-        }
+        } ?: false
     }
 
     suspend fun sendToBlockchain(
@@ -414,6 +456,29 @@ class API(
         }
     }
 
+    fun pushTonconnectUnsubscribe(
+        token: String,
+        appUrl: String,
+        accountId: String,
+        firebaseToken: String,
+    ): Boolean {
+        return try {
+            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
+
+            val json = JSONObject()
+            json.put("app_url", appUrl)
+            json.put("account", accountId)
+            json.put("firebase_token", firebaseToken)
+            val data = json.toString().replace("\\/", "/")
+
+            tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
+                set("X-TonConnect-Auth", token)
+            }).isSuccessful
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
     fun getPushFromApps(
         token: String,
         accountId: String,
@@ -431,12 +496,12 @@ class API(
         }
     }
 
-    fun getBrowserApps(testnet: Boolean): JSONObject {
-        return internalApi.getBrowserApps(testnet)
+    fun getBrowserApps(testnet: Boolean, locale: Locale): JSONObject {
+        return internalApi.getBrowserApps(testnet, locale)
     }
 
-    fun getFiatMethods(testnet: Boolean): JSONObject {
-        return internalApi.getFiatMethods(testnet)
+    fun getFiatMethods(testnet: Boolean, locale: Locale): JSONObject {
+        return internalApi.getFiatMethods(testnet, locale)
     }
 
     fun getTransactionEvents(accountId: String, testnet: Boolean, eventId: String): AccountEvent? {

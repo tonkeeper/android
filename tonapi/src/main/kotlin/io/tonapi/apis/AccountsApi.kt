@@ -1392,6 +1392,7 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
     /**
      * 
      * Get human-friendly information about several accounts without low-level details.
+     * @param currency  (optional)
      * @param getAccountsRequest a list of account ids (optional)
      * @return Accounts
      * @throws IllegalStateException If the request is not correctly configured
@@ -1402,8 +1403,8 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAccounts(getAccountsRequest: GetAccountsRequest? = null) : Accounts {
-        val localVarResponse = getAccountsWithHttpInfo(getAccountsRequest = getAccountsRequest)
+    fun getAccounts(currency: kotlin.String? = null, getAccountsRequest: GetAccountsRequest? = null) : Accounts {
+        val localVarResponse = getAccountsWithHttpInfo(currency = currency, getAccountsRequest = getAccountsRequest)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Accounts
@@ -1423,6 +1424,7 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
     /**
      * 
      * Get human-friendly information about several accounts without low-level details.
+     * @param currency  (optional)
      * @param getAccountsRequest a list of account ids (optional)
      * @return ApiResponse<Accounts?>
      * @throws IllegalStateException If the request is not correctly configured
@@ -1430,8 +1432,8 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getAccountsWithHttpInfo(getAccountsRequest: GetAccountsRequest?) : ApiResponse<Accounts?> {
-        val localVariableConfig = getAccountsRequestConfig(getAccountsRequest = getAccountsRequest)
+    fun getAccountsWithHttpInfo(currency: kotlin.String?, getAccountsRequest: GetAccountsRequest?) : ApiResponse<Accounts?> {
+        val localVariableConfig = getAccountsRequestConfig(currency = currency, getAccountsRequest = getAccountsRequest)
 
         return request<GetAccountsRequest, Accounts>(
             localVariableConfig
@@ -1441,12 +1443,18 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
     /**
      * To obtain the request config of the operation getAccounts
      *
+     * @param currency  (optional)
      * @param getAccountsRequest a list of account ids (optional)
      * @return RequestConfig
      */
-    fun getAccountsRequestConfig(getAccountsRequest: GetAccountsRequest?) : RequestConfig<GetAccountsRequest> {
+    fun getAccountsRequestConfig(currency: kotlin.String?, getAccountsRequest: GetAccountsRequest?) : RequestConfig<GetAccountsRequest> {
         val localVariableBody = getAccountsRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (currency != null) {
+                    put("currency", listOf(currency.toString()))
+                }
+            }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"

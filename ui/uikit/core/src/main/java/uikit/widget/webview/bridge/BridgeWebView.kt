@@ -69,6 +69,8 @@ class BridgeWebView @JvmOverloads constructor(
                 clientCallbacks.forEach { it.onPageFinished(view, url) }
             }
         }
+
+
     }
 
     fun addClientCallback(callback: WebViewClient) {

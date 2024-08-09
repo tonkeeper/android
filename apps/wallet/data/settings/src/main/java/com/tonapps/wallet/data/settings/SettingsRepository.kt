@@ -7,6 +7,7 @@ import androidx.collection.ArrayMap
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.clear
 import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 // TODO need to be refactored
 class SettingsRepository(
@@ -58,6 +60,7 @@ class SettingsRepository(
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
         private const val TELEGRAM_CHANNEL_KEY = "telegram_channel"
+        private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -141,6 +144,14 @@ class SettingsRepository(
                 prefs.edit().putBoolean(TELEGRAM_CHANNEL_KEY, value).apply()
                 field = value
                 _telegramChannelFlow.tryEmit(value)
+            }
+        }
+
+    var showEncryptedCommentModal: Boolean = prefs.getBoolean(ENCRYPTED_COMMENT_MODAL_KEY, true)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(ENCRYPTED_COMMENT_MODAL_KEY, value).apply()
+                field = value
             }
         }
 
@@ -233,6 +244,13 @@ class SettingsRepository(
         walletPrefsFolder.setupHide(walletId)
     }
 
+    fun getLocale(): Locale {
+        if (language.code == Language.DEFAULT) {
+            return context.locale
+        }
+        return language.locale
+    }
+
     suspend fun setTokenHidden(
         walletId: String,
         tokenAddress: String,
@@ -300,6 +318,11 @@ class SettingsRepository(
 
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
+                prefs.clear()
+                tokenPrefsFolder.clear()
+                walletPrefsFolder.clear()
+                nftPrefsFolder.clear()
+
                 val legacyValues = importFromLegacy()
                 biometric = legacyValues.biometric
                 lockScreen = legacyValues.lockScreen
@@ -358,9 +381,15 @@ class SettingsRepository(
 
         val wallets = data.wallets
         for (wallet in wallets) {
-            val key = "${wallet.identifier}/notifications"
+            val walletId = wallet.identifier
+            val key = "$walletId/notifications"
             val isSubscribed = rnLegacy.getJSONValue(key)?.getBoolean("isSubscribed") ?: false
-            walletPrefsFolder.setPushEnabled(wallet.identifier, isSubscribed)
+            walletPrefsFolder.setPushEnabled(walletId, isSubscribed)
+
+            val hiddenTokens = rnLegacy.getHiddenTokens(walletId)
+            for (tokenAddress in hiddenTokens) {
+                tokenPrefsFolder.setHidden(walletId, tokenAddress, true)
+            }
         }
     }
 

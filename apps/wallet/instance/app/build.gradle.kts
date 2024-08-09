@@ -1,11 +1,9 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
     id("kotlin-parcelize")
     id("kotlinx-serialization")
     id("kotlin-kapt")
-    id("androidx.baselineprofile")
 }
 
 android {
@@ -30,10 +28,9 @@ android {
 }
 
 dependencies {
-    "baselineProfile"(project(":baselineprofile:x"))
-
     implementation(Dependence.Koin.core)
     implementation(Dependence.KotlinX.datetime)
+    implementation(Dependence.j2objc)
 
     implementation(project(Dependence.Wallet.localization))
     implementation(project(Dependence.Wallet.api))
@@ -67,6 +64,7 @@ dependencies {
     implementation(Dependence.AndroidX.biometric)
     implementation(Dependence.AndroidX.swiperefreshlayout)
     implementation(Dependence.AndroidX.lifecycle)
+    implementation(Dependence.AndroidX.webkit)
 
     implementation(Dependence.guava)
 

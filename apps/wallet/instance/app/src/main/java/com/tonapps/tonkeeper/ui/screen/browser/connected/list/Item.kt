@@ -3,25 +3,23 @@ package com.tonapps.tonkeeper.ui.screen.browser.connected.list
 import android.net.Uri
 import android.util.Log
 import com.tonapps.uikit.list.BaseListItem
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 
 data class Item(
-    val app: DAppEntity
+    val connect: DConnectEntity,
+    val manifest: DAppManifestEntity,
 ): BaseListItem(0) {
 
     val icon: Uri
-        get() = Uri.parse(app.manifest.iconUrl)
+        get() = Uri.parse(manifest.iconUrl)
 
     val name: String
-        get() = app.manifest.name
+        get() = manifest.name
 
     val url: Uri
-        get() = Uri.parse(app.manifest.url)
+        get() = Uri.parse(manifest.url)
 
     val host: String
         get() = url.host!!
-
-    init {
-        Log.d("ItemLog", "Item: $app")
-    }
 }

@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.rn.data
 
 import android.util.ArrayMap
+import android.util.Log
 import com.tonapps.extensions.color
 import org.json.JSONArray
 import org.json.JSONObject
@@ -48,7 +49,7 @@ data class RNWallet(
             put(Color.FireOrange, "#FF525D")
         }
 
-        val icons = ArrayMap<String, String>().apply {
+        private val icons = ArrayMap<String, String>().apply {
             put("wallet", "ic-wallet-32")
             put("leaf", "ic-leaf-32")
             put("lock", "ic-lock-32")
@@ -57,9 +58,11 @@ data class RNWallet(
             put("snowflake", "ic-snowflake-32")
             put("sparkles", "ic-sparkles-32")
             put("sun", "ic-sun-32")
+            put("sub", "ic-sun-32")
             put("hare", "ic-hare-32")
             put("flash", "ic-flash-32")
             put("bank_card", "ic-bank-card-32")
+            put("back_card", "ic-back-card-32")
             put("gear", "ic-gear-32")
             put("hand_raised", "ic-hand-raised-32")
             put("magnifying_glass_circle", "ic-magnifying-glass-circle-32")
@@ -110,6 +113,12 @@ data class RNWallet(
 
         val Color.int: Int
             get() = hex.color
+
+        fun fixEmoji(emoji: CharSequence): String {
+            var value = emoji.toString().removePrefix("custom_")
+            value = icons[value] ?: value
+            return value
+        }
     }
 
     enum class Type(val title: String) {

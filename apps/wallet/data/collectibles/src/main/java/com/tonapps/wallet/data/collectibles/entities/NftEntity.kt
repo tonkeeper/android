@@ -21,6 +21,7 @@ data class NftEntity(
     val inSale: Boolean,
     val dns: String?,
     val isTrusted: Boolean,
+    val suspicious: Boolean,
 ): Parcelable {
 
     val id: String
@@ -43,6 +44,9 @@ data class NftEntity(
 
     val isDomain: Boolean
         get() = dns != null
+
+    val ownerAddress: String
+        get() = owner?.address ?: address
 
     val thumbUri: Uri by lazy {
         getImageUri(64, 320) ?: previews.first().url.let { Uri.parse(it) }
@@ -82,6 +86,7 @@ data class NftEntity(
         verified = item.approvedBy.isNotEmpty(),
         inSale = item.sale != null,
         dns = item.dns,
-        isTrusted = item.trust == TrustType.whitelist
+        isTrusted = item.trust == TrustType.whitelist,
+        suspicious = item.trust == TrustType.none || item.trust == TrustType.blacklist
     )
 }

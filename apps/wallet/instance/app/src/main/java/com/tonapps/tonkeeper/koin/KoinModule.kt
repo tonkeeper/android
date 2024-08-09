@@ -18,7 +18,6 @@ import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
-import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
@@ -58,7 +57,7 @@ val koinModel = module {
     single { NetworkMonitor(get(), get()) }
     single(createdAtStart = true) { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
-    single { HistoryHelper(get(), get(), get(), get()) }
+    single { HistoryHelper(get(), get(), get(), get(), get(), get()) }
 
     uiAdapter { WalletAdapter(get()) }
     uiAdapter { WalletPickerAdapter() }
@@ -78,25 +77,24 @@ val koinModel = module {
     viewModel { EventsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(request = parameters.get(), get(), get(), get()) }
     viewModel { CollectiblesViewModel(get(), get(), get(), get()) }
-    viewModel { parameters -> ActionViewModel(args = parameters.get(), get(), get()) }
+    viewModel { parameters -> ActionViewModel(args = parameters.get(), get(), get(), get()) }
     viewModel { BrowserExploreViewModel(get(), get(), get(), get()) }
     viewModel { BrowserConnectedViewModel(get(), get()) }
     viewModel { BrowserMainViewModel(get()) }
     viewModel { BrowserSearchViewModel(get(), get(), get(), get()) }
     viewModel { parameters -> DAppViewModel(url = parameters.get(), get(), get()) }
     viewModel { ChangePasscodeViewModel(get(), get()) }
-    viewModel { EncryptedCommentViewModel(get(), get()) }
     viewModel { NotificationsViewModel(get(), get(), get()) }
     viewModel { parameters -> TokenViewModel(get(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BackupViewModel(get(), get(), get()) }
     viewModel { BackupCheckViewModel(get(), get()) }
     viewModel { TokensManageViewModel(get(), get(), get()) }
-    viewModel { parameters -> SendViewModel(nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> SendViewModel(get(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
     viewModel { parameters -> StakingViewModel(address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { W5StoriesViewModel(get(), get(), get()) }
+    viewModel { W5StoriesViewModel(get(), get(), get(), get()) }
     viewModel { PurchaseViewModel(get(), get(), get()) }
     viewModel { parameters -> NftViewModel(nft = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> StakeViewerViewModel(address = parameters.get(), get(), get(), get(), get()) }

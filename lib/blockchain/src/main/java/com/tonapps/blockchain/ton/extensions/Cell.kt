@@ -10,7 +10,6 @@ import org.ton.crypto.hex
 fun String.toBoc(): BagOfCells {
     return try {
         BagOfCells(hex(this))
-
     } catch (e: Throwable) {
         BagOfCells(base64())
     }

@@ -4,14 +4,13 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.tonkeeper.dialog.TransactionDialog
+import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
@@ -20,35 +19,32 @@ import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
+import com.tonapps.tonkeeper.ui.screen.send.SendScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
-import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
+import uikit.extensions.findFragment
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.navigation.NavigationActivity
 
 class RootActivity: NavigationActivity() {
 
     private val rootViewModel: RootViewModel by viewModel()
     private val legacyRN: RNLegacy by inject()
-
-    val transactionDialog: TransactionDialog by lazy {
-        TransactionDialog(this, lifecycleScope)
-    }
 
     private lateinit var uiHandler: Handler
 
@@ -123,9 +119,9 @@ class RootActivity: NavigationActivity() {
             val request = SignRequestEntity(param)
             try {
                 val boc = rootViewModel.requestSign(this, event.wallet, request)
-                rootViewModel.tonconnectBoc(event.id, event.app, boc)
+                rootViewModel.tonconnectBoc(event.id, event.connect, boc)
             } catch (e: Throwable) {
-                rootViewModel.tonconnectReject(event.id, event.app)
+                rootViewModel.tonconnectReject(event.id, event.connect)
             }
         }
     }
@@ -149,8 +145,13 @@ class RootActivity: NavigationActivity() {
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
             is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
-            // is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))
-            is RootEvent.Transaction -> TransactionDialog.open(this, event.event)
+            is RootEvent.Transfer -> openSend(
+                targetAddress = event.address,
+                tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
+                amountNano = event.amount?.toLongOrNull() ?: 0L,
+                text = event.text
+            )
+            is RootEvent.Transaction -> this.navigation?.add(TransactionScreen.newInstance(event.event))
             is RootEvent.BuyOrSell -> {
                 if (event.methodEntity == null) {
                     add(PurchaseScreen.newInstance())
@@ -160,6 +161,32 @@ class RootActivity: NavigationActivity() {
             }
             is RootEvent.OpenBackups -> add(BackupScreen.newInstance())
             else -> { }
+        }
+    }
+
+    private fun openSend(
+        targetAddress: String? = null,
+        tokenAddress: String = TokenEntity.TON.address,
+        amountNano: Long = 0,
+        text: String? = null,
+        nftAddress: String? = null
+    ) {
+        val fragment = supportFragmentManager.findFragment<SendScreen>()
+        if (fragment == null) {
+            add(SendScreen.newInstance(
+                targetAddress = targetAddress,
+                tokenAddress = tokenAddress,
+                amountNano = amountNano,
+                text = text,
+                nftAddress = nftAddress,
+            ))
+        } else {
+            fragment.initializeArgs(
+                targetAddress = targetAddress,
+                tokenAddress = tokenAddress,
+                amountNano = amountNano,
+                text = text,
+            )
         }
     }
 

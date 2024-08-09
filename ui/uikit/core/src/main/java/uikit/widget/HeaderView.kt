@@ -1,6 +1,7 @@
 package uikit.widget
 
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -97,6 +98,11 @@ open class HeaderView @JvmOverloads constructor(
             ignoreSystemOffset = it.getBoolean(R.styleable.HeaderView_ignoreSystemOffset, false)
             val iconResId = it.getResourceId(R.styleable.HeaderView_android_icon, 0)
             setIcon(iconResId)
+
+            val iconTintColor = it.getColor(R.styleable.HeaderView_android_iconTint, Color.TRANSPARENT)
+            if (iconTintColor != Color.TRANSPARENT) {
+                closeView.setColorFilter(iconTintColor)
+            }
 
             titleView.text = it.getString(R.styleable.HeaderView_android_title)
 

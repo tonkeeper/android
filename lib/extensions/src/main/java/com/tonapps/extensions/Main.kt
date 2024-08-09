@@ -10,7 +10,7 @@ suspend fun <R> withRetry(
     for (i in 0 until times) {
         try {
             return block()
-        } catch (ignored: Throwable) { }
+        } catch (ignored: Throwable) {}
         delay(delay)
     }
     return null

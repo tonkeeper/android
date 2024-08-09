@@ -4,6 +4,7 @@
         <attr name="android:icon" format="reference"/>
         <attr name="android:title" format="string|reference"/>
         <attr name="android:action" format="reference"/>
+        <attr name="android:iconTint" format="color"/>
         <attr name="ignoreSystemOffset" format="boolean"/>
     </declare-styleable>
 

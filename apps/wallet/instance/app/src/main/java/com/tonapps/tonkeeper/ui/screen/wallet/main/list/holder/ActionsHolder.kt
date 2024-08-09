@@ -39,7 +39,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(SwapScreen.newInstance(item.swapUri, item.address, TokenEntity.TON.address))
         }
 
-        swapView.isEnabled = item.walletType == Wallet.Type.Default && !item.disableSwap
+        swapView.isEnabled = item.walletType != Wallet.Type.Watch && !item.disableSwap
         sendView.isEnabled = item.walletType != Wallet.Type.Watch
         scanView.isEnabled = item.walletType != Wallet.Type.Watch
         stakeView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet

@@ -55,7 +55,7 @@ class BrowserSearchViewModel(
         }
 
         val uri = uri(query)
-        val apps = browserRepository.search(settingsRepository.country, query, false)
+        val apps = browserRepository.search(settingsRepository.country, query, false, settingsRepository.getLocale())
         val appsCount = if (uri == null) {
             apps.size
         } else {

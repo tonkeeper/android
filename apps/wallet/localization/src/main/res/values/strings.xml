@@ -17,6 +17,14 @@
     <string name="setup_finish_backup">Back up the wallet recovery phrase</string>
     <string name="setup_finish_telegram">Join Tonkeeper channel</string>
 
+    <string name="step_1">Step 1</string>
+    <string name="step_2">Step 2</string>
+    <string name="step_3">Step 3</string>
+
+    <string name="signer_step_1">Scan the QR code with Signer</string>
+    <string name="signer_step_2">Confirm your transaction in Signer</string>
+    <string name="signer_step_3">Scan signed transaction QR code from Signer</string>
+
     <string name="insufficient_balance_title">Insufficient funds</string>
     <string name="insufficient_balance_description">Enter an amount less or choose your maximum balance.</string>
 
@@ -145,6 +153,9 @@
     <string name="jetton_transfer">%1$s transfer</string>
     <string name="name_your_wallet">Name your wallet</string>
     <string name="name_your_wallet_subtitle">Name your wallet to easily identify it while using the Tonkeeper. These names are stored locally, and can only be seen by you.</string>
+    <string name="open_anyway">Open anyway</string>
+    <string name="nft_warning_buttton_title">Are you sure you want to open an external link?</string>
+    <string name="nft_warning_buttton_subtitle">Visit this external link only if you trust the author of the collection.  %1$s</string>
 
     <string name="tokens">Tokens</string>
     <string name="today">Today</string>
@@ -250,7 +261,7 @@
     <string name="manage">Manage</string>
     <string name="manage_wallets">Manage wallets</string>
     <string name="receive">Receive</string>
-    <string name="log_out">Log out</string>
+    <string name="log_out">Sign out</string>
     <string name="amount">Amount</string>
     <string name="backup">Backup</string>
     <string name="unstake_amount">Unstake amount</string>
@@ -266,6 +277,7 @@
 
     <string name="address_hint">Address or name</string>
     <string name="comment">Comment</string>
+    <string name="required_comment">Required comment</string>
     <string name="paste">Paste</string>
     <string name="version">Version %1$s (%2$d)</string>
     <string name="currency">Currency</string>
@@ -319,6 +331,7 @@
     <string name="licenses">Licenses</string>
     <string name="montserrat_font">Montserrat font</string>
     <string name="use_biometric">Use biometric</string>
+    <string name="biometric_enabled">Biometric enabled</string>
     <string name="biometric_description">You can always unlock your wallet with a passcode.</string>
     <string name="lock_screen">Lock screen</string>
     <string name="lock_screen_description">Require passcode to view wallet contents.</string>
@@ -328,7 +341,7 @@
     <string name="logout_description">Wallet keys will be erased from this device.</string>
     <string name="logout_confirmation">I have a backup copy of the recovery phrase for %1$s</string>
     <string name="last_updated">Updated %1$s</string>
-    <string name="back_up_now">Back up now</string>
+    <string name="back_up_now">Back up</string>
     <string name="max">Max</string>
     <string name="confirm_and_send">Confirm and send</string>
     <string name="confirm_action">Confirm action</string>
@@ -381,7 +394,11 @@
     <string name="ledger_open_ton_app">Unlock it and open TON App</string>
     <string name="ledger_install_ton_app">Install TON App</string>
     <string name="ledger_confirm_tx">Confirm your transaction on Ledger</string>
+    <string name="ledger_confirm_proof">Verify domain on Ledger</string>
     <string name="ledger_operation_not_supported">The operation is not available for Ledger wallets. Select another wallet and try again.</string>
+    <string name="ledger_update_title">Update TON app in Ledger to the %1$s version</string>
+    <string name="ledger_update_text">This type of transaction is not supported in your current application version.</string>
+    <string name="ledger_update_button">OK</string>
 
     <string name="bluetooth_permissions_alert_title">Bluetooth Permissions</string>
     <string name="bluetooth_permissions_alert_message">Please enable Bluetooth permissions in your settings to use this feature</string>

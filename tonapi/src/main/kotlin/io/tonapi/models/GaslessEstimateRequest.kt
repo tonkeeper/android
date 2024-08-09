@@ -15,7 +15,7 @@
 
 package io.tonapi.models
 
-import io.tonapi.models.GaslessEstimateRequestMessagesInner
+import io.tonapi.models.DecodeMessageRequest
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -38,7 +38,7 @@ data class GaslessEstimateRequest (
     val walletPublicKey: kotlin.String,
 
     @Json(name = "messages")
-    val messages: kotlin.collections.List<GaslessEstimateRequestMessagesInner>
+    val messages: kotlin.collections.List<DecodeMessageRequest>
 
 )
 

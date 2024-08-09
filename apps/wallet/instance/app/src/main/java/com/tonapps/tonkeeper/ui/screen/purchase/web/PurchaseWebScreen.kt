@@ -9,6 +9,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
 import uikit.widget.webview.WebViewFixed
@@ -100,6 +102,7 @@ class PurchaseWebScreen: BaseFragment(R.layout.fragment_purchase_web) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        navigation?.add(PurchaseScreen.newInstance())
         webView.destroy()
     }
 

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.nft
 
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,6 +13,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.send.SendScreen
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
@@ -19,6 +21,7 @@ import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.accentOrangeColor
+import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.buttonGreenBackgroundColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
@@ -31,6 +34,7 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
+import uikit.dialog.alert.AlertDialog
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
@@ -106,13 +110,18 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
         val domainLinkButton = view.findViewById<Button>(R.id.domain_link)
         val domainRenewButton = view.findViewById<Button>(R.id.domain_renew)
 
-        if (nftEntity.isDomain) {
+        if (nftEntity.isDomain && nftEntity.metadata.buttons.isEmpty()) {
+            val url = Uri.parse("https://dns.tonkeeper.com/manage?v=${nftEntity.userFriendlyAddress}")
+            val dAppArgs = DAppArgs(
+                host = url.host,
+                url = url.toString()
+            )
             domainLinkButton.setOnClickListener {
-                navigation?.add(DAppScreen.newInstance(url = "https://dns.ton.org/"))
+                navigation?.add(DAppScreen.newInstance(dAppArgs))
                 finish()
             }
             domainRenewButton.setOnClickListener {
-                navigation?.add(DAppScreen.newInstance(url = "https://dns.ton.org/"))
+                navigation?.add(DAppScreen.newInstance(dAppArgs))
                 finish()
             }
         } else {
@@ -124,19 +133,12 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
         if (nftEntity.metadata.buttons.isEmpty()) {
             buttonsContainer.visibility = View.GONE
         } else {
+            buttonsContainer.removeAllViews()
             buttonsContainer.visibility = View.VISIBLE
-            for (button in nftEntity.metadata.buttons) {
-                val buttonView = context?.inflate(R.layout.view_nft_button, null) as Button
+            for ((index, button) in nftEntity.metadata.buttons.take(5).withIndex()) {
+                val buttonView = newNftButton(buttonsContainer, index == 0)
                 buttonView.text = button.label
-                buttonView.setOnClickListener {
-                    navigation?.add(DAppScreen.newInstance(url = button.uri))
-                    finish()
-                }
-                buttonsContainer.addView(buttonView, ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                    topMargin = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
-                    leftMargin = topMargin
-                    rightMargin = topMargin
-                })
+                buttonView.setOnClickListener { openButtonDApp(button.uri) }
             }
         }
 
@@ -168,6 +170,35 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
                 showUnverifiedState()
             }
         }
+    }
+
+    private fun openButtonDApp(url: String) {
+        if (nftEntity.suspicious) {
+            val builder = AlertDialog.Builder(requireContext())
+            builder.setTitle(Localization.nft_warning_buttton_title)
+            builder.setMessage(getString(Localization.nft_warning_buttton_subtitle, url))
+            builder.setNegativeButton(Localization.open_anyway, requireContext().accentRedColor) { mustOpenButtonDApp(url) }
+            builder.setPositiveButton(Localization.cancel, requireContext().accentBlueColor)
+            builder.show()
+        } else {
+            mustOpenButtonDApp(url)
+        }
+    }
+
+    private fun mustOpenButtonDApp(url: String) {
+        navigation?.add(DAppScreen.newInstance(url = url))
+        finish()
+    }
+
+    private fun newNftButton(parent: ColumnLayout, first: Boolean): Button {
+        val layout = if (first) R.layout.view_nft_button_green else R.layout.view_nft_button
+        val view = parent.context.inflate(layout)
+        parent.addView(view, ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            topMargin = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+            leftMargin = topMargin
+            rightMargin = topMargin
+        })
+        return view.findViewById(R.id.nft_button)
     }
 
     private fun showUnverifiedState() {

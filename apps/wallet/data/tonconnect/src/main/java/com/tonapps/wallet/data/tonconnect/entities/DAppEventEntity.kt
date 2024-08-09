@@ -6,7 +6,7 @@ import org.json.JSONObject
 
 data class DAppEventEntity(
     val wallet: WalletEntity,
-    val app: DAppEntity,
+    val connect: DConnectEntity,
     val json: JSONObject
 ) {
 
@@ -21,12 +21,12 @@ data class DAppEventEntity(
 
     constructor(
         wallet: WalletEntity,
-        app: DAppEntity,
+        connect: DConnectEntity,
         body: ByteArray
     ) : this(
         wallet = wallet,
-        app = app,
-        json = JSONObject(app.decrypt(body).toString(Charsets.UTF_8))
+        connect = connect,
+        json = JSONObject(connect.decrypt(body).toString(Charsets.UTF_8))
     )
 
     companion object {

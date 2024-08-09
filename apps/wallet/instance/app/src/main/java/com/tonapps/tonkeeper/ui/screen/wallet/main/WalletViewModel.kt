@@ -2,8 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
@@ -31,7 +31,7 @@ import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,10 +40,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
@@ -92,7 +90,11 @@ class WalletViewModel(
         accountRepository.selectedWalletFlow,
         backupRepository.stream
     ) { wallet, backups ->
-        backups.indexOfFirst { it.walletId == wallet.id } > -1
+        if (!wallet.hasPrivateKey) {
+            true
+        } else {
+            backups.indexOfFirst { it.walletId == wallet.id } > -1
+        }
     }.map { !it }
 
     init {
@@ -115,31 +117,24 @@ class WalletViewModel(
             }
         }
 
-        /*
-        combine(
-        networkMonitor.isOnlineFlow,
-        _statusFlow
-    ) { isOnline, status ->
-        if (!isOnline) {
-            Status.NoInternet
-        } else {
-            status
-        }
-    }.distinctUntilChanged()
-         */
-
         combine(
             accountRepository.selectedWalletFlow,
             settingsRepository.currencyFlow,
             backupRepository.stream,
-            networkMonitor.isOnlineFlow
-        ) { wallet, currency, backups, isOnline ->
+            networkMonitor.isOnlineFlow,
+            settingsRepository.walletPrefsChangedFlow,
+        ) { wallet, currency, backups, isOnline, _ ->
             if (isOnline) {
                 setStatus(Status.Updating)
             }
             _uiLabelFlow.value = wallet.label
 
-            val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
+            val hasBackup = if (!wallet.hasPrivateKey) {
+                true
+            } else {
+                backups.indexOfFirst { it.walletId == wallet.id } > -1
+            }
+
             val walletCurrency = getCurrency(wallet, currency)
 
             val localAssets = getLocalAssets(walletCurrency, wallet)
@@ -252,6 +247,7 @@ class WalletViewModel(
             val staking = stakingRepository.get(wallet.accountId, wallet.testnet, ignoreCache = true)
             buildStateTokens(wallet, currency, tokens, staking, false)
         } catch (e: Throwable) {
+            Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
             return@withContext null
         }
     }
@@ -288,7 +284,7 @@ class WalletViewModel(
     private fun getApps(
         wallet: WalletEntity,
         events: List<AppPushEntity>
-    ): List<DAppEntity> {
+    ): List<DConnectEntity> {
         if (events.isEmpty()) {
             return emptyList()
         }

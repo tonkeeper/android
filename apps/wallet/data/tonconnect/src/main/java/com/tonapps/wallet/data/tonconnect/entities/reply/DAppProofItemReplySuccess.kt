@@ -12,7 +12,7 @@ data class DAppProofItemReplySuccess(
     override fun toJSON(): JSONObject {
         val json = JSONObject()
         json.put("name", name)
-        json.put("proof", proof.toJSON())
+        json.put("proof", proof.toJSON(true))
         return json
     }
 

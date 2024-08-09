@@ -1,6 +1,8 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import android.graphics.Color
+import com.tonapps.extensions.bestMessage
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -10,7 +12,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import uikit.extensions.showError
 import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
 
 class PasscodeManager(
     private val accountRepository: AccountRepository,
@@ -50,12 +54,13 @@ class PasscodeManager(
 
     suspend fun isValid(context: Context, code: String): Boolean = withContext(Dispatchers.IO) {
         if (!isRequestMigration()) {
-            helper.isValid(code)
+            helper.isValid(context, code)
         } else {
             try {
                 migration(context, code)
                 true
             } catch (e: Throwable) {
+                context.showError(e)
                 false
             }
         }
@@ -65,7 +70,7 @@ class PasscodeManager(
         if (isRequestMigration()) {
             migration(context, old)
         }
-        if (!helper.change(old, new)) {
+        if (!helper.change(context, old, new)) {
             false
         } else {
             try {
@@ -75,6 +80,7 @@ class PasscodeManager(
                 }
                 true
             } catch (e: Throwable) {
+                context.showError(e)
                 false
             }
         }
@@ -94,7 +100,7 @@ class PasscodeManager(
         title: String
     ): Boolean = withContext(Dispatchers.Main) {
         if (isRequestMigration()) {
-            return@withContext confirmationMigration(context, title)
+            return@withContext confirmationMigration(context)
         }
 
         val showDialog = if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context)) {
@@ -112,7 +118,6 @@ class PasscodeManager(
 
     private suspend fun confirmationMigration(
         context: Context,
-        title: String
     ): Boolean = withContext(Dispatchers.Main) {
         try {
             val passcode = if (settingsRepository.biometric) {
@@ -126,6 +131,7 @@ class PasscodeManager(
             migration(context, passcode)
             true
         } catch (e: Throwable) {
+            context.showError(e)
             false
         }
     }

@@ -10,12 +10,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.contract.w5.WalletV5R1Contract
+import com.tonapps.blockchain.ton.contract.WalletV5R1Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.blockchain.ton.contract.w5.W5Context
-import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.emoji.Emoji
@@ -29,27 +28,20 @@ import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
-import com.tonapps.wallet.api.entity.AccountEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.WalletColor
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
-import com.tonapps.wallet.data.collectibles.CollectiblesRepository
-import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.token.TokenRepository
-import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -64,7 +56,6 @@ import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
-import org.ton.crypto.hex
 import org.ton.mnemonic.Mnemonic
 import uikit.extensions.context
 import uikit.navigation.Navigation
@@ -93,8 +84,11 @@ class InitViewModel(
     private val _uiTopOffset = MutableStateFlow(0)
     val uiTopOffset = _uiTopOffset.asStateFlow()
 
-    private val _eventFlow = MutableSharedFlow<InitEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _eventFlow = MutableEffectFlow<InitEvent>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
+
+    private val _routeFlow = MutableEffectFlow<InitRoute>()
+    val routeFlow = _routeFlow.asSharedFlow().filterNotNull()
 
     private val _watchAccountResolveFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val watchAccountFlow = _watchAccountResolveFlow.asSharedFlow()
@@ -127,11 +121,15 @@ class InitViewModel(
     init {
         viewModelScope.launch {
             if (!passcodeManager.hasPinCode()) {
-                _eventFlow.tryEmit(InitEvent.Step.CreatePasscode)
+                routeTo(InitRoute.CreatePasscode)
             } else {
                 startWalletFlow()
             }
         }
+    }
+
+    private fun routeTo(route: InitRoute) {
+        _routeFlow.tryEmit(route)
     }
 
     fun toggleAccountSelection(address: String) {
@@ -144,18 +142,19 @@ class InitViewModel(
 
     private fun startWalletFlow() {
         if (type == InitArgs.Type.Watch) {
-            _eventFlow.tryEmit(InitEvent.Step.WatchAccount)
+            routeTo(InitRoute.WatchAccount)
         } else if (type == InitArgs.Type.New) {
-            _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
+            routeTo(InitRoute.LabelAccount)
         } else if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
-            _eventFlow.tryEmit(InitEvent.Step.ImportWords)
-        } else if (type == InitArgs.Type.Signer) {
+            routeTo(InitRoute.ImportWords)
+        } else if (type == InitArgs.Type.Signer || type == InitArgs.Type.SignerQR) {
+            _eventFlow.tryEmit(InitEvent.Loading(true))
             scope.launch(Dispatchers.IO) {
                 resolveWallets(savedState.publicKey!!)
+                _eventFlow.tryEmit(InitEvent.Loading(false))
             }
-            // _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
         } else if (type == InitArgs.Type.Ledger) {
-            _eventFlow.tryEmit(InitEvent.Step.SelectAccount)
+            routeTo(InitRoute.SelectAccount)
         }
     }
 
@@ -174,7 +173,7 @@ class InitViewModel(
     fun setPasscode(passcode: String) {
         savedState.passcode = passcode
 
-        _eventFlow.tryEmit(InitEvent.Step.ReEnterPasscode)
+        routeTo(InitRoute.ReEnterPasscode)
     }
 
     fun reEnterPasscode(passcode: String) {
@@ -201,42 +200,40 @@ class InitViewModel(
     }
 
     private suspend fun resolveWallets(mnemonic: List<String>) = withContext(Dispatchers.IO) {
-        try {
-            val seed = Mnemonic.toSeed(mnemonic)
-            val privateKey = PrivateKeyEd25519(seed)
-            val publicKey = privateKey.publicKey()
-            resolveWallets(publicKey)
-        } catch (e: Throwable) {
-            Log.e("InitViewLog", "error", e)
-        }
+        val seed = Mnemonic.toSeed(mnemonic)
+        val privateKey = PrivateKeyEd25519(seed)
+        val publicKey = privateKey.publicKey()
+        resolveWallets(publicKey)
     }
 
     private suspend fun resolveWallets(publicKey: PublicKeyEd25519) = withContext(Dispatchers.IO) {
-        val accounts = api.resolvePublicKey(publicKey, testnet).filter {
-            it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
-        }.sortedByDescending { it.walletVersion.index }.toMutableList()
+        try {
+            val accounts = api.resolvePublicKey(publicKey, testnet).filter {
+                it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
+            }.sortedByDescending { it.walletVersion.index }.toMutableList()
 
-        if (accounts.count { it.walletVersion == WalletVersion.V5R1 } == 0) {
-            val contract = WalletV5R1Contract(publicKey, tonNetwork)
-            accounts.add(0, AccountDetailsEntity(contract, testnet))
-        }
+            if (accounts.count { it.walletVersion == WalletVersion.V5R1 } == 0) {
+                val contract = WalletV5R1Contract(publicKey, tonNetwork)
+                accounts.add(0, AccountDetailsEntity(contract, testnet))
+            }
 
-        val deferredAccounts = accounts.mapIndexed { index, account ->
-            async {
+            val list = accounts.mapIndexed { index, account ->
                 getAccountItem(account, ListCell.getPosition(accounts.size, index))
             }
-        }
 
-        val items = mutableListOf<AccountItem>()
-        for (account in deferredAccounts) {
-            items.add(account.await())
-        }
-        setAccounts(items)
+            val items = mutableListOf<AccountItem>()
+            for (account in list) {
+                items.add(account)
+            }
+            setAccounts(items)
 
-        if (items.size > 1) {
-            _eventFlow.tryEmit(InitEvent.Step.SelectAccount)
-        } else {
-            _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
+            if (items.size > 1) {
+                routeTo(InitRoute.SelectAccount)
+            } else {
+                routeTo(InitRoute.LabelAccount)
+            }
+        } catch (e: Throwable) {
+            Log.e("InitViewModelLog", "error", e)
         }
     }
 
@@ -244,11 +241,13 @@ class InitViewModel(
         account: AccountDetailsEntity,
         position: ListCell.Position,
     ): AccountItem = withContext(Dispatchers.IO) {
-        val deferredTokens = async { api.getJettonsBalances(account.address, testnet) }
-        val deferredNftItems = async { api.getNftItems(account.address, testnet, 1) }
+        val tokensDeferred = async { api.getJettonsBalances(account.address, testnet) }
+        val nftItemsDeferred = async { api.getNftItems(account.address, testnet, 1) }
+        val tokens = tokensDeferred.await()
+        val nftItems = nftItemsDeferred.await()
         val balance = Coins.of(account.balance)
-        val hasTokens = deferredTokens.await().isNotEmpty()
-        val hasNftItems = deferredNftItems.await().isNotEmpty()
+        val hasTokens = tokens.isNotEmpty()
+        val hasNftItems = nftItems.isNotEmpty()
         AccountItem(
             address = AddrStd(account.address).toWalletAddress(testnet),
             name = account.name,
@@ -315,21 +314,21 @@ class InitViewModel(
     }
 
     fun setPush(context: Context) {
-        nextStep(context, InitEvent.Step.Push)
+        nextStep(context, InitRoute.Push)
     }
 
-    fun nextStep(context: Context, from: InitEvent.Step) {
-        if (from == InitEvent.Step.WatchAccount) {
-            _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
-        } else if (from == InitEvent.Step.SelectAccount) {
+    fun nextStep(context: Context, from: InitRoute) {
+        if (from == InitRoute.WatchAccount) {
+            routeTo(InitRoute.LabelAccount)
+        } else if (from == InitRoute.SelectAccount) {
             applyNameFromSelectedAccounts()
-            _eventFlow.tryEmit(InitEvent.Step.LabelAccount)
-        } else if (from == InitEvent.Step.Push) {
+            routeTo(InitRoute.LabelAccount)
+        } else if (from == InitRoute.Push) {
             execute(context)
         } else if (!hasPushPermission) {
-            _eventFlow.tryEmit(InitEvent.Step.Push)
-        } else if (passcodeAfterSeed && from == InitEvent.Step.ImportWords) {
-            _eventFlow.tryEmit(InitEvent.Step.CreatePasscode)
+            routeTo(InitRoute.Push)
+        } else if (passcodeAfterSeed && from == InitRoute.ImportWords) {
+            routeTo(InitRoute.CreatePasscode)
         } else {
             execute(context)
         }
@@ -363,7 +362,7 @@ class InitViewModel(
                     InitArgs.Type.Ledger -> wallets.addAll(ledgerWallets())
                 }
 
-                if (type == InitArgs.Type.Import) {
+                if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
                     for (wallet in wallets) {
                         backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)
                     }
@@ -386,13 +385,13 @@ class InitViewModel(
     private suspend fun saveWatchWallet(): WalletEntity {
         val account = getWatchAccount() ?: throw IllegalStateException("Account is not set")
         val label = getLabel()
-        val publicKey = getPublicKey(account.address)
+        val publicKey = api.safeGetPublicKey(account.address, testnet)
 
         return accountRepository.addWatchWallet(label, publicKey, account.walletVersion)
     }
 
     private suspend fun newWallet(context: Context): WalletEntity {
-        val mnemonic = Mnemonic.generate()
+        val mnemonic = Mnemonic.generate(random = AndroidSecureRandom)
         val label = getLabel()
         val wallet = accountRepository.addNewWallet(label, mnemonic)
         saveMnemonic(context, listOf(wallet.id), mnemonic)
@@ -455,13 +454,4 @@ class InitViewModel(
         }
         rnLegacy.addMnemonics(passcode, walletIds, list)
     }
-
-    private fun getPublicKey(
-        accountId: String,
-    ): PublicKeyEd25519 {
-        api.getPublicKey(accountId, testnet).let { hex ->
-            return PublicKeyEd25519(hex(hex))
-        }
-    }
-
 }

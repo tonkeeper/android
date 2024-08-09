@@ -46,6 +46,7 @@
             <option value="$PROJECT_DIR$/apps/wallet/instance/x" />
             <option value="$PROJECT_DIR$/apps/wallet/localization" />
             <option value="$PROJECT_DIR$/baselineprofile" />
+            <option value="$PROJECT_DIR$/baselineprofile/main" />
             <option value="$PROJECT_DIR$/baselineprofile/x" />
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/lib" />

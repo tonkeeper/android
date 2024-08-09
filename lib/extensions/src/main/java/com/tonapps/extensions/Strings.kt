@@ -3,6 +3,12 @@ package com.tonapps.extensions
 import android.graphics.Color
 import com.tonapps.icu.Punycode
 
+val String.short12: String
+    get() {
+        if (length < 24) return this
+        return substring(0, 12) + "…" + substring(length - 12, length)
+    }
+
 val String.short8: String
     get() {
         if (length < 16) return this
@@ -30,26 +36,6 @@ fun String.unicodeToPunycode(): String {
         this
     }
 }
-
-val String.withPlus: String
-    get() {
-        return if (startsWith("+")) this else "+ $this"
-    }
-
-val String.withMinus: String
-    get() {
-        return if (startsWith("-")) this else "− $this"
-    }
-
-val CharSequence.withMinus: CharSequence
-    get() {
-        return if (startsWith("-")) this else "− $this"
-    }
-
-val CharSequence.withPlus: CharSequence
-    get() {
-        return if (startsWith("+")) this else "+ $this"
-    }
 
 val String.color: Int
     get() {

@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
@@ -100,7 +101,7 @@ class ActionScreen: BaseFragment(R.layout.fragment_action), BaseFragment.Modal {
     }
 
     private fun applyWallet(wallet: WalletEntity) {
-        walletView.text = String.format("%s: %s", getString(Localization.wallet), wallet.label.title)
+        walletView.text = "${getString(Localization.wallet)}: ${wallet.label.getTitle(requireContext(), walletView)}"
     }
 
     companion object {

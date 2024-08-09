@@ -152,16 +152,10 @@ class AccountRepository(
             else -> RNWallet.Type.Regular
         }
 
-        var emoji = wallet.label.emoji.toString().removePrefix("custom_")
-        val rnCustomIcon = RNWallet.icons[emoji]
-        if (rnCustomIcon != null) {
-            emoji = rnCustomIcon
-        }
-
         val rnWallet = RNWallet(
             name = wallet.label.accountName,
             color = RNWallet.resolveColor(wallet.label.color),
-            emoji = emoji,
+            emoji = RNWallet.fixEmoji(wallet.label.emoji),
             identifier = wallet.id,
             pubkey = wallet.publicKey.hex(),
             network = if (wallet.testnet) RNWallet.Network.Testnet else RNWallet.Network.Mainnet,
@@ -186,21 +180,20 @@ class AccountRepository(
             val newLabel = Wallet.Label(name, emoji, color)
             _selectedStateFlow.value = SelectedState.Wallet(wallet.copy(label = newLabel))
             database.editAccount(wallet.id, Wallet.Label(name, emoji, color))
-            rnLegacy.edit(wallet.id, name, emoji.toString(), color)
+            rnLegacy.edit(wallet.id, name, RNWallet.fixEmoji(emoji), color)
         }
     }
 
-    suspend fun requestTonProofToken(id: String): String? = withContext(scope.coroutineContext) {
-        val token = storageSource.getTonProofToken(id)
-        if (token != null) {
-            return@withContext token
-        }
-        val wallet = database.getAccount(id) ?: return@withContext null
+    suspend fun requestTonProofToken(wallet: WalletEntity): String? = withContext(scope.coroutineContext) {
         if (!wallet.hasPrivateKey) {
             return@withContext null
         }
+        val token = storageSource.getTonProofToken(wallet.id)
+        if (token != null) {
+            return@withContext token
+        }
         val tonProofToken = createTonProofToken(wallet) ?: return@withContext null
-        saveTonProof(id, tonProofToken)
+        saveTonProof(wallet.id, tonProofToken)
         tonProofToken
     }
 
@@ -254,7 +247,7 @@ class AccountRepository(
         versions: List<WalletVersion>,
         qr: Boolean,
     ): List<WalletEntity> {
-        val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.SignerQR
+        val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
         return addWallet(label, publicKey, versions, type)
     }
 
@@ -262,7 +255,7 @@ class AccountRepository(
         label: Wallet.Label,
         mnemonic: List<String>,
         versions: List<WalletVersion>,
-        testnet: Boolean,
+        testnet: Boolean
     ): List<WalletEntity> {
         val publicKey = vaultSource.addMnemonic(mnemonic)
         val type = if (testnet) Wallet.Type.Testnet else Wallet.Type.Default
@@ -305,7 +298,7 @@ class AccountRepository(
 
     suspend fun addNewWallet(label: Wallet.Label, mnemonic: List<String>): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
-        return addWallet(label, publicKey, Wallet.Type.Default, WalletVersion.V4R2)
+        return addWallet(label, publicKey, Wallet.Type.Default, WalletVersion.V5R1)
     }
 
     private suspend fun addWallet(
@@ -330,22 +323,23 @@ class AccountRepository(
         database.insertAccounts(list)
         for (wallet in list) {
             addWalletToRN(wallet)
+            requestTonProofToken(wallet)
         }
     }
 
-    private fun createTonProofToken(wallet: WalletEntity): String? {
-        val secretKey = vaultSource.getPrivateKey(wallet.publicKey) ?: return null
-        val contract = wallet.contract
-        val address = contract.address
-        val payload = api.tonconnectPayload() ?: return null
-        val proof = WalletProof.signTonkeeper(
-            address = address,
-            secretKey = secretKey,
-            payload = payload,
-            stateInit = contract.getStateCell().base64()
-        )
+    private suspend fun createTonProofToken(wallet: WalletEntity): String? {
         return try {
-            api.tonconnectProof(address.toAccountId(), Json.encodeToString(proof))
+            val secretKey = vaultSource.getPrivateKey(wallet.publicKey) ?: throw Exception("private key not found")
+            val contract = wallet.contract
+            val address = contract.address
+            val payload = api.tonconnectPayload() ?: throw Exception("payload not found")
+            val proof = WalletProof.signTonkeeper(
+                address = address,
+                secretKey = secretKey,
+                payload = payload,
+                stateInit = contract.getStateCell().base64()
+            )
+            api.tonconnectProof(address.toAccountId(), proof.string(false))
         } catch (e: Throwable) {
             null
         }

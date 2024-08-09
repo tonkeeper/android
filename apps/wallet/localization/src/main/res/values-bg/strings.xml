@@ -1,0 +1,396 @@
+<resources>
+    <string name="w5_wallet">Портфейл W5</string>
+    <string name="nft_unverified">Неверифициран NFT</string>
+    <string name="report_spam">Докладвай за спам</string>
+    <string name="not_spam">Не е спам</string>
+    <string name="unverified">Неверифициран</string>
+    <string name="setup_finish_title">Завършете настройката</string>
+    <string name="setup_finish_push">Активирайте уведомления за транзакции</string>
+    <string name="setup_finish_biometry">Използвайте биометрия за потвърждаване на транзакции</string>
+    <string name="setup_finish_backup">Резервирайте възстановителната фраза на портфейла</string>
+    <string name="setup_finish_telegram">Присъединете се към канала на Tonkeeper</string>
+
+    <string name="step_1">Етап 1</string>
+    <string name="step_2">Етап 2</string>
+    <string name="step_3">Етап 3</string>
+    <string name="signer_step_1">Сканирайте QR кода с Signer</string>
+    <string name="signer_step_2">Потвърдете транзакцията си в Signer</string>
+    <string name="signer_step_3">Сканирайте QR кода на подписаната транзакция от Signer</string>
+    <string name="insufficient_balance_title">Недостатъчни средства</string>
+    <string name="insufficient_balance_description">Въведете по-малка сума или изберете максималния си баланс.</string>
+    <string name="w5_story_title_1">Безплатни USDT трансфери</string>
+    <string name="w5_story_title_2">Намалени блокчейн такси</string>
+    <string name="w5_story_title_3">До 255 операции в една транзакция</string>
+    <string name="w5_story_title_4">Възстановителната фраза не се променя</string>
+    <string name="w5_story_title_5">W5 е Бета</string>
+
+    <string name="unverified_token_description">Този токен изглежда подозрителен по една или няколко причини.</string>
+    <string name="unverified_token_reason_1">Ниска ликвидност. Токенът може да има някаква стойност, но тя е изключително ниска.</string>
+    <string name="unverified_token_reason_2">Токенът не е регистриран на търговски платформи и има ограничено търсене.</string>
+    <string name="unverified_token_reason_3">Използва се за спам. Изпращане на нежелани и често нерелевантни съобщения в голям мащаб.</string>
+    <string name="unverified_token_reason_4">Използва се за измама. Името или изображението на токена може да води потребителите в заблуда.</string>
+
+    <string name="w5_story_description_1">Изпращайте USDT без налични TON - таксите за транзакции ще бъдат покрити автоматично с няколко цента USDT.</string>
+    <string name="w5_story_description_2">W5 използва по-ефективен подход за обработка на транзакции, което означава до 25% по-ниски газови такси.</string>
+    <string name="w5_story_description_3">W5 увеличава броя на едновременните операции от 4 на 255, което може да намали таксите.</string>
+    <string name="w5_story_description_4">Старите акаунти и W5 използват същата възстановителна фраза - при възстановяване на акаунти на ново устройство, и старите, и новите ще се появят автоматично.</string>
+    <string name="w5_story_description_5">Стандартът W5 е в бета версия - безплатните транзакции са експериментална функция за тестване - не прехвърляйте всички активи към портфейла W5 до окончателното издание.</string>
+
+    <string name="w5_add_wallet">Добавете W5 портфейл</string>
+
+    <string name="edit">Редактиране</string>
+    <string name="pinned">Прикрепено</string>
+    <string name="all_assets">Всички активи</string>
+    <string name="sorted_by_price">Сортирано по цена</string>
+    <string name="staking_max_apy" translatable="false">MAX APY</string>
+    <string name="staking_minimum_deposit">Минимален депозит %1$s.</string>
+    <string name="staking_options">Опции</string>
+    <string name="staking_apy" translatable="false">APY</string>
+    <string name="staking_minimal_deposit">Минимален депозит</string>
+    <string name="staking_details_description">Стейкингът е базиран на умни договори от трети страни. Tonkeeper не носи отговорност за изживяването по време на стейкинг.</string>
+    <string name="staking_links">Линкове</string>
+    <string name="links">Връзки</string>
+    <string name="staking_choose">Избор</string>
+    <string name="staking_confirm">Потвърдете и стейк</string>
+    <string name="unstake_confirm">Потвърдете и изтеглете стейка</string>
+    <string name="domain_link_button">Свържете домейн</string>
+    <string name="domain_renew_button">Подновете домейн</string>
+
+    <string name="staked">Заложено</string>
+    <string name="manual">Ръководство</string>
+    <string name="manual_description">Направете резервно копие на вашия портфейл ръчно, като запишете възстановителната фраза.</string>
+    <string name="manual_backup_done">Ръчно резервно копие завършено</string>
+    <string name="manual_backup_date">Последно резервно копие %1$s</string>
+    <string name="manual_start_button">Ръчно резервно копие</string>
+    <string name="backup_attention_title">Внимание</string>
+    <string name="backup_attention_description">Моля, прочетете внимателно следното, преди да видите възстановителната си фраза.</string>
+    <string name="backup_attention_line_1">Никога не въвеждайте възстановителната си фраза другаде освен в Tonkeeper, за да получите достъп до вашия портфейл.</string>
+    <string name="backup_attention_line_2">Поддръжката на Tonkeeper никога не иска възстановителна фраза.</string>
+    <string name="backup_attention_line_3">Всеки с възстановителната ви фраза може да получи достъп до вашия портфейл.</string>
+    <string name="manual_backup_check">Проверка на резервното копие</string>
+    <string name="backup_check">Проверка на резервното копие</string>
+    <string name="backup_check_subtitle">Нека видим дали сте запомнили всичко. Въведете думи %1$d, %2$d и %3$d.</string>
+
+    <string name="refresh">Обновяване</string>
+    <string name="mute">Заглушаване</string>
+    <string name="disconnect">Прекъсване</string>
+    <string name="apps">Приложения</string>
+    <string name="apps_notifications_description">Уведомления от свързани приложения във вашата активност</string>
+    <string name="push_notifications">Push уведомления</string>
+    <string name="push_notifications_description">Получавайте уведомления, когато получите TON, токени и NFTs. Уведомления от свързани приложения.</string>
+
+    <string name="faq" translatable="false">FAQ</string>
+    <string name="failed">Неуспешно</string>
+    <string name="remove_dapp_confirm">Премахнете %1$s?</string>
+    <string name="rate_tonkeeper">Оценете Tonkeeper</string>
+    <string name="encrypted_comment">Шифриран коментар</string>
+    <string name="encrypted_comment_description">Коментарът е шифриран от изпращача и може да бъде дешифриран само от вас. Бъдете внимателни със съдържанието и пазете се от измами.</string>
+    <string name="decrypted_comment_action">Дешифриране на коментара</string>
+    <string name="comment_decrypted_hint">Ще бъде видим за всички.</string>
+    <string name="encrypt_comment">Шифриране на коментара</string>
+
+    <string name="comment_encrypted_hint">Ще бъде видим само за получателя и вас.</string>
+    <string name="decrypt_comment">Дешифриране</string>
+
+    <string name="sign_out">Изход</string>
+    <string name="delete_watch_account_alert">Изтриване на наблюдателен акаунт?</string>
+    <string name="delete">Изтриване</string>
+    <string name="delete_watch_account">Изтриване на наблюдателен акаунт</string>
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nИзход от всички портфейли?</string>
+    <string name="sign_out_all_description">Това ще изтрие ключовете за всички портфейли. Уверете се, че сте направили резервно копие на вашите възстановителни фрази.</string>
+
+    <string name="sign_out_title">🚧 🚨 Изход? 🚨 🚧</string>
+    <string name="sign_out_description">Това ще изтрие ключа за вашия портфейл. Уверете се, че сте направили резервно копие на възстановителната си фраза.</string>
+
+    <string name="authorization_required">Изисква се авторизация</string>
+    <string name="invalid_link">Невалиден линк</string>
+    <string name="settings">Настройки</string>
+    <string name="browser">Браузър</string>
+    <string name="wallet">Портфейл</string>
+    <string name="activity">Активност</string>
+    <string name="history">История</string>
+    <string name="price">Цена</string>
+    <string name="scan">Сканиране</string>
+    <string name="stake">Стейк</string>
+    <string name="watch_only">Само за наблюдение</string>
+    <string name="unverified_token">Неверифициран токен</string>
+    <string name="wallet_initialized">Портфейлът е инициализиран</string>
+    <string name="bid">Залог</string>
+    <string name="theme">Тема</string>
+    <string name="testnet" translatable="false">Testnet</string>
+    <string name="unstake_request">Искане за изтегляне на стейк</string>
+    <string name="domain_renew">Подновяване на домейн</string>
+    <string name="unstake">Изтегляне на стейк</string>
+    <string name="unknown">Неизвестно</string>
+    <string name="unknown_error">Неизвестна грешка</string>
+    <string name="nft_purchase">Покупка на NFT</string>
+    <string name="burned">Изгорено</string>
+    <string name="unsubscribed">Отписано</string>
+    <string name="subscribed">Абонирано</string>
+    <string name="received">Получено</string>
+    <string name="nft_transfer">Трансфер на NFT</string>
+    <string name="nft_disabled_transfer">NFT в момента е на продажба в пазара. За трансфер, трябва първо да го премахнете от продажба.</string>
+
+    <string name="continue_action">Продължи</string>
+    <string name="get_started">Започни</string>
+    <string name="updating">Актуализиране</string>
+    <string name="details">Детайли</string>
+    <string name="view_in_explorer">Преглед в изследовател</string>
+    <string name="owner">Собственик</string>
+    <string name="scan_qr_code">Сканиране на QR код</string>
+    <string name="loading">Зареждане…</string>
+    <string name="transfer">Трансфер</string>
+    <string name="jetton_transfer">%1$s трансфер</string>
+    <string name="name_your_wallet">Назовете вашия портфейл</string>
+    <string name="name_your_wallet_subtitle">Назовете вашия портфейл, за да го разпознавате лесно при използване на Tonkeeper. Тези имена се съхраняват локално и могат да бъдат видими само за вас.</string>
+
+    <string name="open_anyway">Отворете все пак</string>
+    <string name="nft_warning_buttton_title">Сигурни ли сте, че искате да отворите външна връзка?</string>
+    <string name="nft_warning_buttton_subtitle">Посетете тази външна връзка само ако имате доверие на автора на колекцията. %1$s</string>
+    <string name="tokens">Токени</string>
+    <string name="today">Днес</string>
+    <string name="address">Адрес</string>
+    <string name="yesterday">Вчера</string>
+    <string name="collectibles">Колекционерски предмети</string>
+    <string name="purchases">Покупки</string>
+    <string name="call_contract">Повикване на договор</string>
+    <string name="contract_address">Адрес на договора</string>
+    <string name="about_collection">За колекцията</string>
+    <string name="save">Запази</string>
+    <string name="share">Сподели</string>
+    <string name="copied">Копирано</string>
+    <string name="view_on_nft_market">Преглед на NFT пазара</string>
+    <string name="open_market">Отворен пазар</string>
+
+    <string name="widget">Уиджет</string>
+    <string name="empty_history_title">Вашата активност ще бъде показана тук</string>
+    <string name="empty_history_subtitle">Направете първата си транзакция!</string>
+
+    <string name="empty_collectibles_title">Вашите колекционерски предмети ще бъдат показани тук</string>
+    <string name="empty_collectibles_subtitle">Вземете първия си предмет!</string>
+
+    <string name="new_wallet">Нов портфейл</string>
+    <string name="buy_toncoin">Купете Toncoin</string>
+    <string name="buy_or_sell">Купи или продай</string>
+    <string name="fiat_open_description">Отваряте външно приложение, което не се управлява от Tonkeeper.</string>
+    <string name="buy">Купи</string>
+    <string name="sell">Продай</string>
+    <string name="search">Търсене</string>
+    <string name="add_wallet">Добави портфейл</string>
+    <string name="wallets">Портфейли</string>
+    <string name="country_title">Изберете вашата страна</string>
+    <string name="intro_description">Създайте нов портфейл или добавете съществуващ</string>
+    <string name="intro_title" formatted="true">Добре дошли в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_line_1_title">Световно ниво на скорост</string>
+    <string name="intro_line_1_description">TON е мрежа, проектирана за скорост и производителност. Таксите са значително по-ниски, отколкото на други блокчейн платформи, а транзакциите се потвърждават в рамките на секунди.</string>
+
+    <string name="intro_line_2_title">Край до край сигурност</string>
+    <string name="intro_line_2_description">Tonkeeper съхранява вашите криптографски ключове на вашето устройство, без да изисква документи, лична информация, контактни данни или KYC.</string>
+
+    <string name="intro_line_3_title">Вградени абонаменти</string>
+    <string name="intro_line_3_description">TON абонаментите са между потребителите и не познават граници, така че никой не може да ограничи доставчиците или клиентите. Почти нулеви такси и пълен контрол за вас.</string>
+
+    <string name="start_title">Tonkeeper</string>
+    <string name="no_internet_connection">Няма интернет връзка</string>
+    <string name="start_description">Създайте нов портфейл или добавете съществуващ</string>
+    <string name="start_create_new_wallet">Създаване на нов портфейл</string>
+    <string name="add_wallet_description">Създайте нов портфейл или добавете съществуващ.</string>
+    <string name="start_import_wallet">Импортиране на съществуващ портфейл</string>
+    <string name="passcode_enter">Въведете код за достъп</string>
+    <string name="passcode_create">Създайте код за достъп</string>
+    <string name="passcode_re_enter">Повторно въведете кода за достъп</string>
+    <string name="passcode_current">Въведете текущия код за достъп</string>
+    <string name="passcode_new">Създайте нов код за достъп</string>
+    <string name="import_wallet">Импортиране на портфейл</string>
+    <string name="import_wallet_subtitle">Изберете от опциите по-долу.</string>
+    <string name="import_wallet_words">Импортиране на портфейл с 24 тайни възстановителни думи</string>
+    <string name="watch_wallet">Наблюдателен акаунт</string>
+    <string name="watch_wallet_subtitle">За мониторинг на активността на портфейла без възстановителна фраза</string>
+    <string name="watch_wallet_add">Мониторинг на активността на портфейла без възстановителна фраза. Ще бъдете уведомявани за всички транзакции от този портфейл.</string>
+    <string name="testnet_wallet">Testnet акаунт</string>
+    <string name="testnet_wallet_subtitle">Импортиране на портфейл с 24 тайни възстановителни думи към Testnet</string>
+    <string name="signer_wallet">Сдвояване със Signer</string>
+    <string name="signer_wallet_subtitle">По-високо ниво на контрол и сигурност</string>
+    <string name="cancel">Отказ</string>
+    <string name="fee">Такса</string>
+    <string name="period_24h">24ч</string>
+    <string name="notifications">Уведомления</string>
+    <string name="enable_notification">Активиране на уведомление</string>
+    <string name="allow_notification">Разреши уведомления</string>
+    <string name="enable_notification_title">Получавайте моментални уведомления</string>
+    <string name="enable_notification_subtitle">Получавайте уведомления, когато получите TON, токени и NFTs</string>
+    <string name="widget_placeholder">Трябва да изберете портфейл</string>
+
+    <string name="import_wallet_title">Въведете вашата възстановителна фраза</string>
+    <string name="import_wallet_description">За да възстановите достъпа до вашия портфейл, въведете 24-те тайни възстановителни думи, които сте получили при създаването на вашия портфейл.</string>
+
+    <string name="start_dialog_title">Нека настроим вашия портфейл</string>
+    <string name="start_dialog_description">Необходим ви е свързан портфейл, за да използвате Tonkeeper. Създайте нов портфейл или импортирайте съществуващ.</string>
+
+    <string name="wallet_generating">Създаване на портфейл…</string>
+    <string name="wallet_created">Вашият портфейл току-що бе създаден!</string>
+
+    <string name="wallet_attention_title">Вземете химикал и лист хартия</string>
+    <string name="wallet_attention_description">Силно препоръчваме да запишете възстановителната фраза, тъй като това е единственият начин да имате достъп и да възстановите портфейла си в случай на загуба на устройството. Не изпращайте на себе си по имейл или правете екранни снимки. По-сигурно е, когато се съхранява офлайн.</string>
+
+    <string name="phrase_title">Вашата възстановителна фраза</string>
+    <string name="phrase_description">Запишете тези 24 думи в реда, в който са дадени по-долу, и ги съхранявайте на тайно, безопасно място.</string>
+
+    <string name="phrase_check_title">Нека проверим</string>
+    <string name="phrase_check_description">За да проверим дали сте записали възстановителната си фраза правилно, моля, въведете %1$d-та, %2$d-та и %3$d-та думи.</string>
+
+    <string name="security">Сигурност</string>
+    <string name="sending_transaction">Изпращане на транзакция</string>
+    <string name="transaction_confirmed">Транзакцията е потвърдена</string>
+
+    <string name="connected_placeholder_title">Свързаните приложения ще бъдат показани тук</string>
+    <string name="connected_placeholder_subtitle">Разгледайте приложенията и услугите в Tonkeeper браузъра.</string>
+
+    <string name="send">Изпращане</string>
+    <string name="swap">Смяна</string>
+    <string name="manage">Управление</string>
+    <string name="manage_wallets">Управление на портфейли</string>
+    <string name="receive">Получаване</string>
+    <string name="log_out">Изход</string>
+    <string name="amount">Сума</string>
+    <string name="backup">Резервно копие</string>
+
+    <string name="unstake_amount">Незаложена сума</string>
+    <string name="recipient">Получател</string>
+    <string name="recipient_address">Адрес на получателя</string>
+
+    <string name="sender">Изпращач</string>
+    <string name="sender_address">Адрес на изпращача</string>
+
+    <string name="transaction">Транзакция</string>
+
+    <string name="incorrect_phrase">Неправилна фраза</string>
+    <string name="address_hint">Адрес или име</string>
+    <string name="comment">Коментар</string>
+    <string name="required_comment">Задължителен коментар</string>
+    <string name="paste">Поставяне</string>
+    <string name="version">Версия %1$s (%2$d)</string>
+    <string name="currency">Валута</string>
+    <string name="rename">Преименуване</string>
+    <string name="wallet_name">Име на портфейл</string>
+    <string name="primary_currency">Основна валута</string>
+    <string name="currency_usd_name">Щатски долар</string>
+    <string name="currency_eur_name">Евро</string>
+    <string name="currency_rub_name">Руска рубла</string>
+    <string name="currency_aed_name">Дирхам на Обединените Арабски Емирства</string>
+    <string name="currency_uah_name">Украинска гривня</string>
+    <string name="currency_kzt_name">Казахстанско тенге</string>
+    <string name="currency_uzs_name">Узбекски сом</string>
+    <string name="currency_gbp_name">Британска лира</string>
+    <string name="currency_chf_name">Швейцарски франк</string>
+    <string name="currency_cny_name">Китайски юан</string>
+    <string name="currency_krw_name">Южнокорейски вон</string>
+    <string name="currency_idr_name">Индонезийска рупия</string>
+    <string name="currency_inr_name">Индийска рупия</string>
+    <string name="currency_jpy_name">Японска йена</string>
+    <string name="currency_cad_name">Канадски долар</string>
+    <string name="currency_ars_name">Аржентинско песо</string>
+    <string name="currency_byn_name">Беларуска рубла</string>
+    <string name="currency_cop_name">Колумбийско песо</string>
+    <string name="currency_etb_name">Етиопски бир</string>
+    <string name="currency_ils_name">Израелски шекел</string>
+    <string name="currency_kes_name">Кенийски шилинг</string>
+    <string name="currency_ngn_name">Нигерийска найра</string>
+    <string name="currency_ugx_name">Угандийски шилинг</string>
+    <string name="currency_ves_name">Венецуелски боливар</string>
+    <string name="currency_zar_name">Южноафрикански ранд</string>
+    <string name="currency_try_name">Турска лира</string>
+    <string name="currency_thb_name">Тайландски бат</string>
+    <string name="currency_vnd_name">Виетнамски донг</string>
+    <string name="currency_brl_name">Бразилски реал</string>
+    <string name="currency_gel_name">Грузински лари</string>
+    <string name="currency_bdt_name">Бангладешка така</string>
+
+    <string name="done">Готово</string>
+    <string name="error">Грешка</string>
+    <string name="unnamed_collection">Неназована колекция</string>
+    <string name="view_details">Преглед на детайли</string>
+
+    <string name="receive_coin">Получаване на %1$s</string>
+    <string name="receive_coin_description">Изпращайте само %1$s и токени в TON мрежата на този адрес, иначе може да загубите средствата си.</string>
+    <string name="copy">Копиране</string>
+    <string name="legal">Правен</string>
+    <string name="terms">Условия за ползване</string>
+    <string name="privacy">Политика за поверителност</string>
+    <string name="do_not_show_again">Не показвай отново</string>
+    <string name="licenses">Лицензи</string>
+    <string name="montserrat_font">Шрифт Montserrat</string>
+    <string name="use_biometric">Използвайте биометрия</string>
+    <string name="biometric_description">Винаги можете да отключите портфейла си с код за достъп.</string>
+    <string name="lock_screen">Заключване на екрана</string>
+    <string name="lock_screen_description">Изисквайте код за достъп, за да видите съдържанието на портфейла.</string>
+    <string name="change_passcode">Смяна на кода за достъп</string>
+    <string name="reset_passcode">Нулиране на кода за достъп</string>
+    <string name="recovery_phrase">Показване на възстановителната фраза</string>
+    <string name="logout_description">Ключовете на портфейла ще бъдат изтрити от това устройство.</string>
+    <string name="logout_confirmation">Имам резервно копие на възстановителната фраза</string>
+    <string name="last_updated">Актуализиран %1$s</string>
+    <string name="back_up_now">Направете резервно копие сега</string>
+    <string name="max">Макс</string>
+    <string name="confirm_and_send">Потвърди и изпрати</string>
+    <string name="confirm_action">Потвърдете действие</string>
+    <string name="ton_connect_title">Свързване с %1$s</string>
+    <string name="not_supported">Не се поддържа</string>
+    <string name="ton_connect_description">%1$s иска достъп до адреса на вашия портфейл %2$s</string>
+    <string name="connect_wallet">Свържете портфейл</string>
+    <string name="ton_connect_subtitle">Уверете се, че сте проверили адреса на услугата преди да свържете портфейла.</string>
+    <string name="available_balance">Наличност: %1$s</string>
+    <string name="insufficient_balance">Недостатъчна наличност</string>
+    <string name="to_address">До: %1$s</string>
+    <string name="remaining_balance">Оставаща наличност: %1$s</string>
+    <string name="wallet_balance">Баланс на портфейла</string>
+    <string name="rate">Оценка</string>
+    <string name="widget_updated">Обновено на %1$s</string>
+    <string name="set_up_wallet">Настройте портфейл</string>
+    <string name="support">Поддръжка</string>
+    <string name="tonkeeper_news">Новини от Tonkeeper</string>
+    <string name="contact_us">Свържете се с нас</string>
+    <string name="language">Език</string>
+    <string name="sent">Изпратено</string>
+    <string name="system">Система</string>
+    <string name="network_fee">Мрежова такса</string>
+    <string name="confirm">Потвърдете</string>
+    <string name="send_request_comment">Трябва да включите бележка от обмена за трансфер. Без нея средствата ви ще бъдат загубени.</string>
+    <string name="banner_top">В момента използвате експериментална версия на Tonkeeper.</string>
+    <string name="banner_top_button">Инсталирайте стабилната версия</string>
+    <string name="signer_description">Отворете Signer » Изберете необходимия ключ » Сканирайте QR код</string>
+    <string name="signer_open">Отворете Signer на това устройство</string>
+    <string name="signer" translatable="false">Signer</string>
+    <string name="choose_wallet_title">Изберете портфейл</string>
+    <string name="choose_wallet_subtitle">Изберете портфейли, които искате да добавите.</string>
+    <string name="choose_wallet_already_added">Вече добавено</string>
+
+    <string name="customize">Персонализиране</string>
+    <string name="customize_wallet_title">Персонализирайте вашия портфейл</string>
+    <string name="customize_wallet_subtitle">Името на портфейла и иконата се съхраняват локално на вашето устройство.</string>
+
+    <string name="search_browser">Търсене или въведете адрес</string>
+    <string name="explore">Разглеждане</string>
+    <string name="connected">Свързан</string>
+    <string name="browser_search_placeholder">Въведете адрес или търсете в мрежата</string>
+
+    <string name="ledger" translatable="false">Ledger</string>
+    <string name="ledger_title">Сдвояване с Ledger</string>
+    <string name="ledger_subtitle">Хардуерен модул, Bluetooth, ограничени функции за TON</string>
+    <string name="ledger_confirm_title">Потвърдете действие</string>
+    <string name="ledger_connect_title">Свържете Ledger</string>
+    <string name="ledger_connect">Свържете Ledger към вашето устройство чрез Bluetooth</string>
+    <string name="ledger_open_ton_app">Отключете го и отворете TON App</string>
+    <string name="ledger_install_ton_app">Инсталирайте TON App</string>
+    <string name="ledger_confirm_tx">Потвърдете транзакцията си на Ledger</string>
+    <string name="ledger_confirm_proof">Потвърдете домейна в Ledger</string>
+    <string name="ledger_operation_not_supported">Операцията не е налична за Ledger портфейли. Изберете друг портфейл и опитайте отново.</string>
+
+    <string name="ledger_update_title">Актуализирайте приложението TON в Ledger до версия %1$s</string>
+    <string name="ledger_update_text">Този тип транзакция не се поддържа в текущата ви версия на приложението.</string>
+    <string name="ledger_update_button">OK</string>
+    <string name="bluetooth_permissions_alert_title">Разрешения за Bluetooth</string>
+    <string name="bluetooth_permissions_alert_message">Моля, включете разрешенията за Bluetooth в настройките, за да използвате тази функция</string>
+    <string name="bluetooth_permissions_alert_open_settings">Отворете Настройки</string>
+    <string name="biometric_enabled">Биометричните са активирани</string>
+</resources>

@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.core.history
 
+import android.content.Context
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.withMinus
@@ -23,24 +24,37 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.events.CommentEncryption
 import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 
 // TODO request refactoring
 class HistoryHelper(
+    private val accountRepository: AccountRepository,
     private val ratesRepository: RatesRepository,
     private val collectiblesRepository: CollectiblesRepository,
     private val settingsRepository: SettingsRepository,
-    private val eventsRepository: EventsRepository
+    private val eventsRepository: EventsRepository,
+    private val passcodeManager: PasscodeManager,
 ) {
 
     private val currency: WalletCurrency
@@ -52,6 +66,34 @@ class HistoryHelper(
         const val MINUS_SYMBOL = "-"
         const val PLUS_SYMBOL = "+"
     }
+
+    fun requestDecryptComment(
+        context: Context,
+        comment: HistoryItem.Event.Comment,
+        txId: String,
+        senderAddress: String,
+    ): Flow<HistoryItem.Event.Comment> = accountRepository.selectedWalletFlow.take(1).map {
+        if (settingsRepository.showEncryptedCommentModal) {
+            val noShowAgain = withContext(Dispatchers.Main) {
+                EncryptedCommentScreen.show(context)
+            } ?: throw Exception("User canceled")
+            settingsRepository.showEncryptedCommentModal = !noShowAgain
+        }
+        if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
+            throw Exception("Wrong passcode")
+        }
+        it
+    }.map { wallet ->
+        val privateKey = accountRepository.getPrivateKey(wallet.id)
+        val decrypted = CommentEncryption.decryptComment(
+            wallet.publicKey,
+            privateKey,
+            comment.body,
+            senderAddress
+        )
+        eventsRepository.saveDecryptedComment(txId, decrypted)
+        HistoryItem.Event.Comment(decrypted)
+    }.flowOn(Dispatchers.IO)
 
     data class Details(
         val accountId: String,
@@ -178,7 +220,7 @@ class HistoryHelper(
             val jettonPreview = jettonSwap.jettonPreview!!
             val token = jettonSwap.jettonPreview!!.address
             val symbol = jettonPreview.symbol
-            val amount = Coins.of(jettonSwap.amount, jettonPreview.decimals)
+            val amount = Coins.ofNano(jettonSwap.amount, jettonPreview.decimals)
             val tonFromJetton = Coins.of(jettonSwap.ton)
 
             val isOut = jettonSwap.amountOut != ""
@@ -206,7 +248,6 @@ class HistoryHelper(
                 action = ActionType.Swap,
                 title = simplePreview.name,
                 subtitle = jettonSwap.router.getNameOrAddress(wallet.testnet),
-                comment = "",
                 value = value.withPlus,
                 value2 = value2.withMinus,
                 tokenCode = tokenCode,
@@ -224,7 +265,7 @@ class HistoryHelper(
             val symbol = jettonTransfer.jetton.symbol
             val isOut = !wallet.isMyAddress(jettonTransfer.recipient?.address ?: "")
 
-            val amount = Coins.of(jettonTransfer.amount, jettonTransfer.jetton.decimals)
+            val amount = Coins.ofNano(jettonTransfer.amount, jettonTransfer.jetton.decimals)
             var value = CurrencyFormatter.format(symbol, amount, jettonTransfer.jetton.decimals)
 
             val itemAction: ActionType
@@ -243,6 +284,12 @@ class HistoryHelper(
             val rates = ratesRepository.getRates(currency, token)
             val inCurrency = rates.convert(token, amount)
 
+            val comment = HistoryItem.Event.Comment.create(
+                jettonTransfer.comment,
+                jettonTransfer.encryptedComment,
+                eventsRepository.getDecryptedComment(txId)
+            )
+
             return HistoryItem.Event(
                 index = index,
                 txId = txId,
@@ -250,7 +297,7 @@ class HistoryHelper(
                 action = itemAction,
                 title = simplePreview.name,
                 subtitle = accountAddress?.getNameOrAddress(wallet.testnet) ?: "",
-                comment = jettonTransfer.comment,
+                comment = comment,
                 value = value,
                 tokenCode = "",
                 coinIconUrl = jettonTransfer.jetton.image,
@@ -264,8 +311,8 @@ class HistoryHelper(
                 addressName = accountAddress?.name,
                 currency = CurrencyFormatter.format(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                cipherText = action.tonTransfer?.encryptedComment?.cipherText,
-                unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist
+                unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
+                senderAddress = jettonTransfer.sender?.address
             )
         } else if (action.tonTransfer != null) {
             val tonTransfer = action.tonTransfer!!
@@ -291,6 +338,12 @@ class HistoryHelper(
             val rates = ratesRepository.getRates(currency, TokenEntity.TON.symbol)
             val inCurrency = rates.convert(TokenEntity.TON.symbol, amount)
 
+            val comment = HistoryItem.Event.Comment.create(
+                tonTransfer.comment,
+                tonTransfer.encryptedComment,
+                eventsRepository.getDecryptedComment(txId)
+            )
+
             return HistoryItem.Event(
                 index = index,
                 txId = txId,
@@ -298,7 +351,7 @@ class HistoryHelper(
                 action = itemAction,
                 title = simplePreview.name,
                 subtitle = accountAddress.getNameOrAddress(wallet.testnet),
-                comment = tonTransfer.comment,
+                comment = comment,
                 value = value,
                 tokenCode = "TON",
                 coinIconUrl = TokenEntity.TON.imageUri.toString(),
@@ -312,7 +365,7 @@ class HistoryHelper(
                 addressName = accountAddress.name,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                cipherText = action.tonTransfer?.encryptedComment?.cipherText
+                senderAddress = tonTransfer.sender.address,
             )
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!
@@ -359,6 +412,12 @@ class HistoryHelper(
                 address = nftItemTransfer.nft
             )
 
+            val comment = HistoryItem.Event.Comment.create(
+                nftItemTransfer.comment,
+                nftItemTransfer.encryptedComment,
+                eventsRepository.getDecryptedComment(txId)
+            )
+
             return HistoryItem.Event(
                 index = index,
                 txId = txId,
@@ -366,6 +425,7 @@ class HistoryHelper(
                 action = itemAction,
                 title = simplePreview.name,
                 subtitle = subtitle,
+                comment = comment,
                 value = "NFT",
                 nft = nftItem,
                 tokenCode = "NFT",
@@ -373,6 +433,7 @@ class HistoryHelper(
                 date = date,
                 isOut = isOut,
                 failed = action.status == Action.Status.failed,
+                senderAddress = nftItemTransfer.sender?.address,
             )
         } else if (action.contractDeploy != null) {
             return HistoryItem.Event(
@@ -473,7 +534,7 @@ class HistoryHelper(
             val auctionBid = action.auctionBid!!
             val subtitle = auctionBid.nft?.title ?: auctionBid.bidder.getNameOrAddress(wallet.testnet)
 
-            val amount = Coins.of(auctionBid.amount.value)
+            val amount = Coins.ofNano(auctionBid.amount.value)
             val tokenCode = auctionBid.amount.tokenName
 
             val value = CurrencyFormatter.format(auctionBid.amount.tokenName, amount)

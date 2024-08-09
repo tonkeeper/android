@@ -1,6 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
+import android.net.Uri
 import android.os.Bundle
+import androidx.core.net.toUri
+import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import uikit.base.BaseArgs
 
 data class DAppArgs(
@@ -18,7 +21,13 @@ data class DAppArgs(
     constructor(bundle: Bundle) : this(
         title = bundle.getString(ARG_TITLE),
         host = bundle.getString(ARG_HOST),
-        url = bundle.getString(ARG_URL)!!
+        url = bundle.getString(ARG_URL)!!.normalizeTONSites()
+    )
+
+    constructor(title: String? = null, host: String?, uri: Uri) : this(
+        title = title,
+        host = host,
+        url = uri.toString()
     )
 
     override fun toBundle(): Bundle = Bundle().apply {

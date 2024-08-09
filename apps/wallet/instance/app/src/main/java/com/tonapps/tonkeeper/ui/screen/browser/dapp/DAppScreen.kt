@@ -20,6 +20,7 @@ import androidx.core.view.updatePadding
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
+import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -61,7 +62,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
 
     private val webViewCallback = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-            val url = request.url
+            val url = request.url.normalizeTONSites()
             if (url.scheme != "https") {
                 navigation?.openURL(url.toString(), true)
                 return true
@@ -251,7 +252,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             } else {
                 host
             }
-            return newInstance(DAppArgs(title, mustHost, url))
+            return newInstance(DAppArgs(title, mustHost, Uri.parse(url)))
         }
 
         fun newInstance(

@@ -6,10 +6,11 @@ val SupportedLanguages = listOf(
     Language(),
     Language("en"),
     Language("ru"),
-    Language("ua"),
+    Language("uk"),
     Language("uz"),
     Language("id"),
     Language("es"),
     Language("tr"),
-    Language("zh")
+    Language("zh"),
+    Language("bg")
 )

@@ -4,6 +4,7 @@ import com.tonapps.blockchain.ton.extensions.storeSeqAndValidUntil
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
 import org.ton.block.MessageRelaxed
+import org.ton.block.StateInit
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder

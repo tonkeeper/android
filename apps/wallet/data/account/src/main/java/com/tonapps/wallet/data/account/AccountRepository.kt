@@ -247,7 +247,7 @@ class AccountRepository(
         versions: List<WalletVersion>,
         qr: Boolean,
     ): List<WalletEntity> {
-        val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.SignerQR
+        val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
         return addWallet(label, publicKey, versions, type)
     }
 
@@ -339,7 +339,7 @@ class AccountRepository(
                 payload = payload,
                 stateInit = contract.getStateCell().base64()
             )
-            api.tonconnectProof(address.toAccountId(), Json.encodeToString(proof))
+            api.tonconnectProof(address.toAccountId(), proof.string(false))
         } catch (e: Throwable) {
             null
         }

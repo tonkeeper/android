@@ -10,8 +10,13 @@ data class SendTransaction(
     val token: BalanceEntity,
     val comment: String?,
     val amount: Amount,
-    val encryptedComment: Boolean
+    val encryptedComment: Boolean,
+    val max: Boolean
 ) {
+
+    fun isRealMax(balance: Coins): Boolean {
+        return amount.value >= balance
+    }
 
     data class Amount(
         val value: Coins,

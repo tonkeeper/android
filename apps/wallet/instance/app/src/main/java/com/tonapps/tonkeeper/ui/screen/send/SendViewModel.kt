@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
+import android.app.Application
 import android.content.Context
-import androidx.lifecycle.ViewModel
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
@@ -37,6 +39,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.cache
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -48,18 +51,25 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
+import uikit.extensions.collectFlow
+import uikit.extensions.context
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
+    app: Application,
     private val nftAddress: String,
     private val accountRepository: AccountRepository,
     private val api: API,
@@ -68,25 +78,29 @@ class SendViewModel(
     private val ratesRepository: RatesRepository,
     private val passcodeManager: PasscodeManager,
     private val collectiblesRepository: CollectiblesRepository,
-): ViewModel() {
+): AndroidViewModel(app) {
 
     private val isNft: Boolean
         get() = nftAddress.isNotBlank()
 
     data class UserInput(
         val address: String = "",
-        val amount: Double = 0.0,
+        val amount: Coins = Coins.ZERO,
         val token: TokenEntity = TokenEntity.TON,
         val comment: String? = null,
         val nft: NftEntity? = null,
         val encryptedComment: Boolean = false,
+        val max: Boolean = false,
+        val amountCurrency: Boolean = false,
     )
 
     private val currency = settingsRepository.currency
-    private var amountInputCurrency = false
+    private val queryId: BigInteger by lazy { TransferEntity.newWalletQueryId() }
 
     private val _userInputFlow = MutableStateFlow(UserInput())
     private val userInputFlow = _userInputFlow.asStateFlow()
+
+    private var lastTransferEntity: TransferEntity? = null
 
     val walletTypeFlow = accountRepository.selectedWalletFlow.map { it.type }
 
@@ -148,6 +162,10 @@ class SendViewModel(
 
     val uiInputComment = userInputFlow.map { it.comment }.distinctUntilChanged()
 
+    val uiInputAmountCurrency = userInputFlow.map { it.amountCurrency }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
     private val _uiEventFlow = MutableEffectFlow<SendEvent>()
@@ -157,35 +175,38 @@ class SendViewModel(
         selectedTokenFlow,
         inputAmountFlow,
         ratesTokenFlow,
-    ) { token, value, rates ->
-        val (decimals, balance, currencyCode) = if (amountInputCurrency) {
+        uiInputAmountCurrency,
+    ) { token, amount, rates, amountCurrency ->
+        val (decimals, balance, currencyCode) = if (amountCurrency) {
             Triple(currency.decimals, token.fiat, currency.code)
         } else {
             Triple(token.decimals, token.balance.value, token.symbol)
         }
 
-        val amount = Coins.of(value.toBigDecimal().stripTrailingZeros(), decimals)
         val remaining = balance - amount
 
-        val convertedCode = if (amountInputCurrency) token.symbol else currency.code
-        val converted = if (amountInputCurrency) {
+        val convertedCode = if (amountCurrency) token.symbol else currency.code
+        val converted = if (amountCurrency) {
             rates.convertFromFiat(token.address, amount)
         } else {
             rates.convert(token.address, amount)
         }
 
-        val remainingToken = if (!amountInputCurrency) {
+        val remainingToken = if (!amountCurrency) {
             token.balance.value - amount
         } else {
             rates.convertFromFiat(token.address, token.fiat - amount)
         }
 
+        val remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, token.decimals, RoundingMode.UP, false)
+
         SendAmountState(
-            remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, token.decimals, RoundingMode.UP, false),
+            remainingFormat = context.getString(Localization.remaining_balance, remainingFormat),
             converted = converted.stripTrailingZeros(),
             convertedFormat = CurrencyFormatter.format(convertedCode, converted, decimals, RoundingMode.UP, false),
-            insufficientBalance = !remaining.isPositive,
-            currencyCode = if (amountInputCurrency) currencyCode else "",
+            insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
+            currencyCode = if (amountCurrency) currencyCode else "",
+            amountCurrency = amountCurrency,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SendAmountState())
 
@@ -200,20 +221,20 @@ class SendViewModel(
         } else if (recipient.memoRequired && comment.isNullOrEmpty()) {
             false
         } else {
-            (isNft || (!balance.insufficientBalance && amount > 0))
+            (isNft || (!balance.insufficientBalance && (amount.isPositive || amount.isZero)))
         }
     }
 
     private val amountTokenFlow = combine(
         selectedTokenFlow,
         inputAmountFlow,
-        ratesTokenFlow
-    ) { token, amount, rates ->
-        val coins = Coins.of(amount, token.decimals)
-        if (amountInputCurrency) {
-            rates.convertFromFiat(token.address, coins)
+        ratesTokenFlow,
+        uiInputAmountCurrency,
+    ) { token, amount, rates, amountCurrency ->
+        if (amountCurrency) {
+            rates.convertFromFiat(token.address, amount)
         } else {
-            coins
+            amount
         }
     }
 
@@ -244,6 +265,7 @@ class SendViewModel(
             comment = userInput.comment,
             encryptedComment = userInput.encryptedComment,
             amount = amount,
+            max = userInput.max
         )
     }
 
@@ -258,6 +280,7 @@ class SendViewModel(
         builder.setToken(transaction.token)
         builder.setDestination(transaction.destination.address, transaction.destination.publicKey)
         builder.setSeqno(sendMetadata.seqno)
+        builder.setQueryId(queryId)
         builder.setComment(comment, encryptedComment)
         builder.setValidUntil(sendMetadata.validUntil)
         if (isNft) {
@@ -267,17 +290,29 @@ class SendViewModel(
             builder.setAmount(amount)
             builder.setMax(false)
         } else {
-            builder.setMax(transaction.amount.value == token.balance.value)
+            builder.setMax(transaction.isRealMax(token.balance.value))
             builder.setAmount(transaction.amount.value)
             builder.setBounceable(transaction.destination.isBounce)
         }
         builder.build()
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     init {
         if (isNft) {
             loadNft()
         }
+    }
+
+    fun initializeTokenAndAmount(tokenAddress: String, amountNano: Long) {
+        if (amountNano > 0) {
+            collectFlow(uiInputTokenFlow.filter {
+                it.address.equals(tokenAddress, ignoreCase = true)
+            }.take(1)) { token ->
+                val amount = Coins.of(amountNano, token.decimals)
+                _uiInputAmountFlow.tryEmit(amount)
+            }
+        }
+        userInputTokenByAddress(tokenAddress)
     }
 
     private suspend fun getNftTotalAmount(
@@ -312,12 +347,13 @@ class SendViewModel(
 
     private fun isInsufficientBalance(): Boolean {
         val token = selectedTokenFlow.value
-        val amount = Coins.of(userInputFlow.value.amount, token.decimals)
-        val balance = if (amountInputCurrency) token.fiat else token.balance.value
+        val amount = userInputFlow.value.amount
+        val amountCurrency = userInputFlow.value.amountCurrency
+        val balance = if (amountCurrency) token.fiat else token.balance.value
         val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
             .multiply(BigDecimal("100"))
             .setScale(2, RoundingMode.HALF_UP)
-        return percentage > BigDecimal("95.00")
+        return percentage > BigDecimal("95.00") && percentage <= BigDecimal("99.99")
     }
 
     fun next() {
@@ -372,8 +408,8 @@ class SendViewModel(
         _userInputFlow.value = _userInputFlow.value.copy(encryptedComment = encrypted)
     }
 
-    fun userInputAmount(double: Double) {
-        _userInputFlow.value = _userInputFlow.value.copy(amount = double)
+    fun userInputAmount(amount: Coins) {
+        _userInputFlow.value = _userInputFlow.value.copy(amount = amount)
     }
 
     fun userInputToken(token: TokenEntity) {
@@ -385,35 +421,44 @@ class SendViewModel(
     }
 
     fun userInputTokenByAddress(tokenAddress: String) {
-        tokensFlow.filter { it.isNotEmpty() }.map { list ->
-            list.find { it.address == tokenAddress }
-        }.filterNotNull().take(1).onEach { token ->
-            userInputToken(token.balance.token)
+        combine(
+            accountRepository.selectedWalletFlow.take(1),
+            tokensFlow.filter { it.isNotEmpty() }.map { list ->
+                list.find { it.address == tokenAddress }
+            }.map { it?.balance?.token }
+        ) { wallet, token ->
+            token ?: tokenRepository.getToken(tokenAddress, wallet.testnet) ?: TokenEntity.TON
+        }.take(1).flowOn(Dispatchers.IO).onEach { token ->
+            userInputToken(token)
         }.launchIn(viewModelScope)
     }
 
     fun userInputAddress(address: String) {
-        _userInputFlow.value = _userInputFlow.value.copy(address = address)
+        _userInputFlow.update { it.copy(address = address) }
     }
 
     fun userInputComment(comment: String?) {
-        _userInputFlow.value = _userInputFlow.value.copy(comment = comment)
+        _userInputFlow.update { it.copy(comment = comment) }
     }
 
     fun swap() {
-        amountInputCurrency = !amountInputCurrency
-        val convertedAmount = uiBalanceFlow.value.converted
-        _uiInputAmountFlow.tryEmit(convertedAmount)
+        val balance = uiBalanceFlow.value.copy()
+        val amountCurrency = _userInputFlow.updateAndGet { it.copy(amountCurrency = !it.amountCurrency) }.amountCurrency
+        if (amountCurrency != balance.amountCurrency) {
+            _uiInputAmountFlow.tryEmit(balance.converted)
+        }
     }
 
     fun setMax() {
-        val token = selectedTokenFlow.value
-        val coins = if (amountInputCurrency) {
-            token.fiat
-        } else {
-            token.balance.value
+        collectFlow(uiInputAmountCurrency.take(1)) { amountCurrency ->
+            val token = selectedTokenFlow.value
+            val coins = if (amountCurrency) {
+                token.fiat
+            } else {
+                token.balance.value
+            }
+            _uiInputAmountFlow.tryEmit(coins)
         }
-        _uiInputAmountFlow.tryEmit(coins)
     }
 
     private suspend fun getSendParams(
@@ -435,6 +480,7 @@ class SendViewModel(
         accountRepository.selectedWalletFlow.take(1),
         transferFlow.take(1)
     ) { wallet, transfer ->
+        lastTransferEntity = transfer
         Pair(wallet.publicKey, transfer.getUnsignedBody())
     }
 
@@ -442,6 +488,7 @@ class SendViewModel(
         accountRepository.selectedWalletFlow.take(1),
         transferFlow.take(1)
     ) { wallet, transfer ->
+        lastTransferEntity = transfer
         Pair(wallet.id, transfer.getLedgerTransaction())
     }
 
@@ -484,9 +531,10 @@ class SendViewModel(
         this.map { (boc, testnet) ->
             sendToBlockchain(boc, testnet)
             AnalyticsHelper.trackEvent("send_success")
-            _uiEventFlow.tryEmit(SendEvent.Success)
         }.catch {
             _uiEventFlow.tryEmit(SendEvent.Failed)
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        }.flowOn(Dispatchers.IO).onEach {
+            _uiEventFlow.tryEmit(SendEvent.Success)
+        }.launchIn(viewModelScope)
     }
 }

@@ -347,4 +347,5 @@
     <string name="bluetooth_permissions_alert_open_settings">Buka Pengaturan</string>
     <string name="intro_title">Selamat datang di <annotation colorRes="textAccent">Tonkeeper</annotation></string>
     <string name="required_comment">Komentar yang diperlukan</string>
+    <string name="biometric_enabled">Biometrik diaktifkan</string>
 </resources>

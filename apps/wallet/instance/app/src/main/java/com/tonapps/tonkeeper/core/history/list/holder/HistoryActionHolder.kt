@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.core.history.list.holder
 
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
@@ -103,7 +104,7 @@ class HistoryActionHolder(
         if (item.comment == null) {
             commentView.visibility = View.GONE
         } else {
-            bindComment(item.comment, item.txId, item.authorAddress)
+            bindComment(item.comment, item.txId, item.senderAddress ?: "")
         }
 
         bindNft(item)

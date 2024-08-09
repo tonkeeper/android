@@ -8,6 +8,7 @@
         android:id="@+id/nft_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/offsetLarge"
         android:textAppearance="@style/TextAppearance.Label1"
         android:singleLine="true"/>
 

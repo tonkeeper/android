@@ -9,6 +9,8 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.hasPushPermission
+import com.tonapps.tonkeeper.extensions.showToast
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.passcodeManager
 import com.tonapps.tonkeeper.koin.rnLegacy
 import com.tonapps.tonkeeper.koin.settingsRepository
@@ -16,10 +18,12 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.stateList
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import uikit.extensions.activity
 import uikit.extensions.drawable
 import uikit.extensions.withAlpha
+import uikit.navigation.Navigation
 import uikit.widget.SwitchView
 
 class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.layout.view_wallet_setup_switch) {
@@ -78,6 +82,7 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
                 }
                 settingsRepository?.biometric = value
             } catch (e: Throwable) {
+                context.showToast(Localization.biometric_enabled)
                 switchView.setChecked(!value, false)
             }
         }

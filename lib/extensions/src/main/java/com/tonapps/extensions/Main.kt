@@ -1,6 +1,5 @@
 package com.tonapps.extensions
 
-import android.util.Log
 import kotlinx.coroutines.delay
 
 suspend fun <R> withRetry(
@@ -11,9 +10,7 @@ suspend fun <R> withRetry(
     for (i in 0 until times) {
         try {
             return block()
-        } catch (e: Throwable) {
-            Log.e("TonKeeperReleaseLog", "Failed request", e)
-        }
+        } catch (ignored: Throwable) {}
         delay(delay)
     }
     return null

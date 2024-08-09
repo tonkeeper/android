@@ -269,7 +269,22 @@ class TonConnectRepository(
         send(connect, data.toJSON())
     }
 
-    suspend fun subscribePush(
+    private suspend fun unsubscribePush(
+        wallet: WalletEntity,
+        connect: DConnectEntity,
+        firebaseToken: String
+    ) {
+        val proofToken = accountRepository.requestTonProofToken(wallet) ?: return
+        val url = connect.url
+        api.pushTonconnectUnsubscribe(
+            token = proofToken,
+            appUrl = url,
+            accountId = wallet.address,
+            firebaseToken = firebaseToken,
+        )
+    }
+
+    private suspend fun subscribePush(
         wallet: WalletEntity,
         connect: DConnectEntity,
         firebaseToken: String
@@ -287,7 +302,7 @@ class TonConnectRepository(
         )
     }
 
-    suspend fun subscribePush(
+    private suspend fun subscribePush(
         connect: DConnectEntity,
         firebaseToken: String
     ) {

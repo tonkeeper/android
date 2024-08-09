@@ -220,7 +220,7 @@ class HistoryHelper(
             val jettonPreview = jettonSwap.jettonPreview!!
             val token = jettonSwap.jettonPreview!!.address
             val symbol = jettonPreview.symbol
-            val amount = Coins.of(jettonSwap.amount, jettonPreview.decimals)
+            val amount = Coins.ofNano(jettonSwap.amount, jettonPreview.decimals)
             val tonFromJetton = Coins.of(jettonSwap.ton)
 
             val isOut = jettonSwap.amountOut != ""
@@ -265,7 +265,7 @@ class HistoryHelper(
             val symbol = jettonTransfer.jetton.symbol
             val isOut = !wallet.isMyAddress(jettonTransfer.recipient?.address ?: "")
 
-            val amount = Coins.of(jettonTransfer.amount, jettonTransfer.jetton.decimals)
+            val amount = Coins.ofNano(jettonTransfer.amount, jettonTransfer.jetton.decimals)
             var value = CurrencyFormatter.format(symbol, amount, jettonTransfer.jetton.decimals)
 
             val itemAction: ActionType
@@ -311,7 +311,8 @@ class HistoryHelper(
                 addressName = accountAddress?.name,
                 currency = CurrencyFormatter.format(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist
+                unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
+                senderAddress = jettonTransfer.sender?.address
             )
         } else if (action.tonTransfer != null) {
             val tonTransfer = action.tonTransfer!!
@@ -363,7 +364,8 @@ class HistoryHelper(
                 ),
                 addressName = accountAddress.name,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
-                failed = action.status == Action.Status.failed
+                failed = action.status == Action.Status.failed,
+                senderAddress = tonTransfer.sender.address,
             )
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!
@@ -431,6 +433,7 @@ class HistoryHelper(
                 date = date,
                 isOut = isOut,
                 failed = action.status == Action.Status.failed,
+                senderAddress = nftItemTransfer.sender?.address,
             )
         } else if (action.contractDeploy != null) {
             return HistoryItem.Event(
@@ -531,7 +534,7 @@ class HistoryHelper(
             val auctionBid = action.auctionBid!!
             val subtitle = auctionBid.nft?.title ?: auctionBid.bidder.getNameOrAddress(wallet.testnet)
 
-            val amount = Coins.of(auctionBid.amount.value)
+            val amount = Coins.ofNano(auctionBid.amount.value)
             val tokenCode = auctionBid.amount.tokenName
 
             val value = CurrencyFormatter.format(auctionBid.amount.tokenName, amount)

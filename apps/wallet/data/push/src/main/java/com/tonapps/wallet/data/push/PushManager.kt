@@ -63,7 +63,9 @@ class PushManager(
         }.launchIn(scope)
     }
 
-    suspend fun getLocalDAppEvents(wallet: WalletEntity): List<AppPushEntity> = withContext(Dispatchers.IO) {
+    suspend fun getLocalDAppEvents(
+        wallet: WalletEntity
+    ): List<AppPushEntity> = withContext(Dispatchers.IO) {
         localDataSource.get(wallet.id)
     }
 
@@ -160,8 +162,13 @@ class PushManager(
         walletPush: Map<String, Boolean>
     ) {
         val wallets = accountRepository.getWallets()
-        val accounts = wallets.filter { !it.testnet && settingsRepository.getPushWallet(it.id) }
-            .map { it.accountId.toUserFriendly(testnet = false) }
+        val accounts = wallets.filter {
+            !it.testnet && settingsRepository.getPushWallet(it.id)
+        }.map {
+            it.accountId.toUserFriendly(testnet = false)
+        }
+        val enabledAccounts = walletPush.filterValues { it }.keys
+
         api.pushSubscribe(context.locale, firebaseToken, settingsRepository.installId, accounts)
 
         tonConnectRepository.updatePushToken(firebaseToken)

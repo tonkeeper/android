@@ -84,6 +84,8 @@ class API(
 
     fun accounts(testnet: Boolean) = provider.accounts.get(testnet)
 
+    fun jettons(testnet: Boolean) = provider.jettons.get(testnet)
+
     fun wallet(testnet: Boolean) = provider.wallet.get(testnet)
 
     fun nft(testnet: Boolean) = provider.nft.get(testnet)
@@ -156,6 +158,17 @@ class API(
             walletAddress = accountId
         )
         return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
+    }
+
+    suspend fun getJetton(
+        accountId: String,
+        testnet: Boolean
+    ): TokenEntity? {
+        val jettonsAPI = jettons(testnet)
+        val jetton = withRetry {
+            jettonsAPI.getJettonInfo(accountId)
+        } ?: return null
+        return TokenEntity(jetton)
     }
 
     suspend fun getJettonsBalances(
@@ -433,6 +446,29 @@ class API(
             sessionId?.let { json.put("session_id", it) }
             json.put("commercial", commercial)
             json.put("silent", silent)
+            val data = json.toString().replace("\\/", "/")
+
+            tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
+                set("X-TonConnect-Auth", token)
+            }).isSuccessful
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun pushTonconnectUnsubscribe(
+        token: String,
+        appUrl: String,
+        accountId: String,
+        firebaseToken: String,
+    ): Boolean {
+        return try {
+            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
+
+            val json = JSONObject()
+            json.put("app_url", appUrl)
+            json.put("account", accountId)
+            json.put("firebase_token", firebaseToken)
             val data = json.toString().replace("\\/", "/")
 
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {

@@ -391,4 +391,5 @@
     <string name="bluetooth_permissions_alert_message">Пожалуйста, включите разрешения Bluetooth в настройках, чтобы использовать эту функцию</string>
     <string name="bluetooth_permissions_alert_open_settings">Открыть настройки</string>
     <string name="required_comment">Обязательный комментарий</string>
+    <string name="biometric_enabled">Биометрия включена</string>
 </resources>

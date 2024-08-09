@@ -8,4 +8,5 @@ data class SendAmountState(
     val converted: Coins = Coins.ZERO,
     val insufficientBalance: Boolean = false,
     val currencyCode: String = "",
+    val amountCurrency: Boolean = false,
 )

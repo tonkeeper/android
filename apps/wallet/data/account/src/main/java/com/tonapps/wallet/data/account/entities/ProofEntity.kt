@@ -12,14 +12,19 @@ data class ProofEntity(
     val stateInit: String? = null
 ) {
 
-    fun toJSON(): JSONObject {
+    fun toJSON(camelCase: Boolean): JSONObject {
         val json = JSONObject()
         json.put("timestamp", timestamp)
-        json.put("domain", domain.toJSON())
+        json.put("domain", domain.toJSON(camelCase))
         json.put("payload", payload)
         json.put("signature", signature)
-        json.put("stateInit", stateInit)
+        if (camelCase) {
+            json.put("stateInit", stateInit)
+        } else {
+            json.put("state_init", stateInit)
+        }
         return json
     }
 
+    fun string(camelCase: Boolean) = toJSON(camelCase).toString()
 }

@@ -13,6 +13,9 @@ internal class RemoteDataSource(
     private val api: API
 ) {
 
+
+    suspend fun getJetton(accountId: String, testnet: Boolean) = api.getJetton(accountId, testnet)
+
     suspend fun load(
         currency: WalletCurrency,
         accountId: String,

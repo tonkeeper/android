@@ -24,7 +24,9 @@ import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.signer.SingerResultContract
+import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
@@ -81,9 +83,8 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private val signerResultContract = SingerResultContract()
     private val signerLauncher = registerForActivityResult(signerResultContract) {
-        if (it == null) {
-            setFailed()
-        } else {
+        if (it != null) {
+            setLoading()
             sendViewModel.sendSignedMessage(it)
         }
     }
@@ -104,6 +105,8 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private lateinit var commentInput: InputView
     private lateinit var button: Button
     private lateinit var taskContainerView: View
+    private lateinit var pasteView: View
+    private lateinit var addressActionsView: View
     private lateinit var confirmButton: Button
     private lateinit var processTaskView: ProcessTaskView
     private lateinit var reviewIconView: FrescoView
@@ -126,6 +129,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         navigation?.setFragmentResultListener(signerQRRequestKey) { bundle ->
             val sign = bundle.getString(SignerQRScreen.KEY_URI)?.toUri()?.getQueryParameter("sign")
             if (sign != null) {
+                setLoading()
                 sendViewModel.sendSignedMessage(BitString(sign))
             }
         }
@@ -135,18 +139,26 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         super.onViewCreated(view, savedInstanceState)
         slidesView = view.findViewById(R.id.slides)
         val createHeaderView = view.findViewById<HeaderView>(R.id.create_header)
+        createHeaderView.closeView.background = null
         createHeaderView.doOnActionClick = { finish() }
+        createHeaderView.doOnCloseClick = { navigation?.add(CameraFragment.newInstance())  }
 
         val reviewHeaderView = view.findViewById<HeaderView>(R.id.review_header)
         reviewHeaderView.doOnCloseClick = { showCreate() }
 
         addressInput = view.findViewById(R.id.address)
+
+        addressActionsView = view.findViewById(R.id.address_actions)
+
         addressInput.doOnTextChange = { text ->
             reviewRecipientFeeView.setLoading()
             addressInput.loading = true
             sendViewModel.userInputAddress(text)
+            addressActionsView.visibility = if (text.isBlank()) View.VISIBLE else View.GONE
         }
-        args.targetAddress?.let { addressInput.text = it }
+
+        pasteView = view.findViewById(R.id.paste)
+        pasteView.setOnClickListener { addressInput.text = requireContext().clipboardText() }
 
         amountView = view.findViewById(R.id.amount)
         amountView.doOnValueChanged = sendViewModel::userInputAmount
@@ -228,7 +240,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         }
 
         collectFlow(sendViewModel.uiEventFlow, ::onEvent)
-        collectFlow(sendViewModel.uiInputAmountFlow.map { it.toDouble() }, amountView::setValue)
+        collectFlow(sendViewModel.uiInputAmountFlow.map { it.value }, amountView::setValue)
         collectFlow(sendViewModel.uiBalanceFlow, ::setAmountState)
         collectFlow(sendViewModel.uiInputTokenFlow, ::setToken)
         collectFlow(sendViewModel.uiInputNftFlow, ::setNft)
@@ -260,21 +272,29 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             }
         }
 
-        if (args.amountNano > 0) {
-            collectFlow(sendViewModel.uiInputTokenFlow.drop(1).take(1)) { token ->
-                val amount = Coins.of(args.amountNano, token.decimals)
-                amountView.setValue(amount.toDouble())
-            }
-            sendViewModel.userInputTokenByAddress(args.tokenAddress)
-        }
+        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress)
+    }
 
-        args.text?.let { commentInput.text = it }
+    fun initializeArgs(
+        targetAddress: String?,
+        amountNano: Long,
+        text: String?,
+        tokenAddress: String
+    ) {
+        sendViewModel.initializeTokenAndAmount(
+            tokenAddress = tokenAddress,
+            amountNano = amountNano,
+        )
+
+        text?.let { commentInput.text = it }
+        targetAddress?.let { addressInput.text = it }
     }
 
     private fun applyCommentEncryptState(enabled: Boolean) {
         val textIsEmpty = commentInput.text.isBlank()
         val textSecondaryColor = requireContext().textSecondaryColor
         if (enabled) {
+            commentInput.hint = getString(Localization.encrypted_comment)
             val greenColor = requireContext().accentGreenColor
             if (textIsEmpty) {
                 commentInput.hintColor = textSecondaryColor
@@ -287,6 +307,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
                 commentEncryptView.visibility = View.GONE
             }
         } else {
+            commentInput.hint = getString(Localization.comment)
             commentInput.hintColor = textSecondaryColor
             commentInput.activeBorderColor = requireContext().fieldActiveBorderColor
             if (!textIsEmpty) {
@@ -329,7 +350,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         when (event) {
             is SendEvent.Failed -> setFailed()
             is SendEvent.Success -> setSuccess()
-            is SendEvent.Loading -> processTaskView.state = ProcessTaskView.State.LOADING
+            is SendEvent.Loading -> setLoading()
             is SendEvent.Fee -> setFee(event)
             is SendEvent.InsufficientBalance -> showInsufficientBalance()
             is SendEvent.Confirm -> slidesView.next()
@@ -339,10 +360,12 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private fun requestLedgerSign(transaction: Transaction, walletId: String) {
         val requestKey = "ledger_sign_request"
         navigation?.setFragmentResultListener(requestKey) { bundle ->
+            processTaskView.state = ProcessTaskView.State.LOADING
             val result = bundle.getByteArray(LedgerSignScreen.SIGNED_MESSAGE)
             if (result == null) {
                 setDefault()
             } else {
+                setLoading()
                 sendViewModel.sendLedgerSignedMessage(BagOfCells(result).first())
             }
         }
@@ -359,17 +382,21 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         InsufficientBalanceDialog(requireContext()).show()
     }
 
+    private fun setLoading() {
+        confirmButton.visibility = View.GONE
+        processTaskView.visibility = View.VISIBLE
+        processTaskView.state = ProcessTaskView.State.LOADING
+    }
+
     private fun setFailed() {
         processTaskView.state = ProcessTaskView.State.FAILED
-        postDelayed(2000, ::setDefault)
+        postDelayed(4000, ::setDefault)
     }
 
     private fun setSuccess() {
         processTaskView.state = ProcessTaskView.State.SUCCESS
         navigation?.openURL("tonkeeper://activity")
-        postDelayed(2000) {
-            finish()
-        }
+        postDelayed(2000, ::finish)
     }
 
     private fun setDefault() {
@@ -439,9 +466,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun confirmDefault() {
-        confirmButton.visibility = View.GONE
-        processTaskView.visibility = View.VISIBLE
-        processTaskView.state = ProcessTaskView.State.LOADING
+        setLoading()
         sendViewModel.send(requireContext())
     }
 
@@ -466,7 +491,6 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private fun openSigner() {
         AnalyticsHelper.trackEvent("send_transaction")
-
         collectFlow(sendViewModel.signerData()) { (publicKey, unsignedBody) ->
             signerLauncher.launch(SingerResultContract.Input(unsignedBody, publicKey))
         }

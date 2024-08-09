@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.extensions
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.util.Log
+import androidx.core.net.toUri
 
 fun String.substringSafe(startIndex: Int, endIndex: Int): String {
     return if (startIndex > length) {
@@ -56,4 +57,8 @@ fun String.isVersionLowerThan(other: String): Boolean {
         }
     }
     return false // Versions are equal
+}
+
+fun String.normalizeTONSites(): String {
+    return toUri().normalizeTONSites().toString()
 }

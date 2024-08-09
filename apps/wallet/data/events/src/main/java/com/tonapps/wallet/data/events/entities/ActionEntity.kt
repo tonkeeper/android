@@ -76,7 +76,7 @@ data class ActionEntity(
                 recipient = jettonTransfer.recipient?.let { AccountEntity(it, testnet) },
                 comment = jettonTransfer.comment,
                 token = TokenEntity(jettonTransfer.jetton),
-                amount = Coins.of(jettonTransfer.amount, jettonTransfer.jetton.decimals)
+                amount = Coins.ofNano(jettonTransfer.amount, jettonTransfer.jetton.decimals)
             )
         }
 

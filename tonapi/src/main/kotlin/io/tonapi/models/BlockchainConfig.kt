@@ -51,7 +51,7 @@ import com.squareup.moshi.JsonClass
 /**
  * 
  *
- * @param raw config boc in base64 format
+ * @param raw config boc in hex format
  * @param _0 config address
  * @param _1 elector address
  * @param _2 minter address
@@ -100,7 +100,7 @@ import com.squareup.moshi.JsonClass
 
 data class BlockchainConfig (
 
-    /* config boc in base64 format */
+    /* config boc in hex format */
     @Json(name = "raw")
     val raw: kotlin.String,
 

@@ -4,7 +4,6 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.camera.core.TorchState
@@ -21,11 +20,9 @@ import org.ton.block.AddrStd
 import com.tonapps.qr.QRImageAnalyzer
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
-import uikit.widget.ModalView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 

@@ -15,7 +15,6 @@
 
 package io.tonapi.models
 
-import io.tonapi.models.JettonHoldersAddressesInner
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -23,19 +22,20 @@ import com.squareup.moshi.JsonClass
 /**
  * 
  *
- * @param addresses 
- * @param total total number of holders
+ * @param customPayload hex-encoded BoC
+ * @param stateInit hex-encoded BoC
  */
 
 
-data class JettonHolders (
+data class JettonTransferPayload (
 
-    @Json(name = "addresses")
-    val addresses: kotlin.collections.List<JettonHoldersAddressesInner>,
+    /* hex-encoded BoC */
+    @Json(name = "custom_payload")
+    val customPayload: kotlin.String? = null,
 
-    /* total number of holders */
-    @Json(name = "total")
-    val total: kotlin.Long
+    /* hex-encoded BoC */
+    @Json(name = "state_init")
+    val stateInit: kotlin.String? = null
 
 )
 

@@ -347,4 +347,5 @@
     <string name="bluetooth_permissions_alert_open_settings">Abrir Configuración</string>
     <string name="intro_title">Bienvenido a <annotation colorRes="textAccent">Tonkeeper</annotation></string>
     <string name="required_comment">Comentario requerido</string>
+    <string name="biometric_enabled">Biométrico habilitado</string>
 </resources>

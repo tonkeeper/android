@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ClipData
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.text.Spannable
 import android.text.SpannableString
@@ -34,6 +35,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+fun Context.showToast(@StringRes resId: Int) {
+    navigation?.toast(resId)
+}
+
 fun Context.copyWithToast(text: String, color: Int = backgroundContentTintColor) {
     navigation?.toast(getString(Localization.copied), color)
     copyToClipboard(text)
@@ -44,6 +49,10 @@ fun Context.clipboardText(): String {
     val clip = clipboard.primaryClip
     val text = clip?.getItemAt(0)?.text ?: ""
     return text.toString()
+}
+
+fun Context.copyToClipboard(uri: Uri) {
+    copyToClipboard(uri.toString())
 }
 
 fun Context.copyToClipboard(text: String) {

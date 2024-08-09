@@ -7,6 +7,7 @@ import androidx.collection.ArrayMap
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.clear
 import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
@@ -317,6 +318,11 @@ class SettingsRepository(
 
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
+                prefs.clear()
+                tokenPrefsFolder.clear()
+                walletPrefsFolder.clear()
+                nftPrefsFolder.clear()
+
                 val legacyValues = importFromLegacy()
                 biometric = legacyValues.biometric
                 lockScreen = legacyValues.lockScreen
@@ -375,9 +381,15 @@ class SettingsRepository(
 
         val wallets = data.wallets
         for (wallet in wallets) {
-            val key = "${wallet.identifier}/notifications"
+            val walletId = wallet.identifier
+            val key = "$walletId/notifications"
             val isSubscribed = rnLegacy.getJSONValue(key)?.getBoolean("isSubscribed") ?: false
-            walletPrefsFolder.setPushEnabled(wallet.identifier, isSubscribed)
+            walletPrefsFolder.setPushEnabled(walletId, isSubscribed)
+
+            val hiddenTokens = rnLegacy.getHiddenTokens(walletId)
+            for (tokenAddress in hiddenTokens) {
+                tokenPrefsFolder.setHidden(walletId, tokenAddress, true)
+            }
         }
     }
 

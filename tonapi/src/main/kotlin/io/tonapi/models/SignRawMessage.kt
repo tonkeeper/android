@@ -24,8 +24,8 @@ import com.squareup.moshi.JsonClass
  *
  * @param address 
  * @param amount Number of nanocoins to send. Decimal string.
- * @param payload Raw one-cell BoC encoded in Base64.
- * @param stateInit Raw once-cell BoC encoded in Base64.
+ * @param payload Raw one-cell BoC encoded in hex.
+ * @param stateInit Raw once-cell BoC encoded in hex.
  */
 
 
@@ -38,11 +38,11 @@ data class SignRawMessage (
     @Json(name = "amount")
     val amount: kotlin.String,
 
-    /* Raw one-cell BoC encoded in Base64. */
+    /* Raw one-cell BoC encoded in hex. */
     @Json(name = "payload")
     val payload: kotlin.String? = null,
 
-    /* Raw once-cell BoC encoded in Base64. */
+    /* Raw once-cell BoC encoded in hex. */
     @Json(name = "stateInit")
     val stateInit: kotlin.String? = null
 

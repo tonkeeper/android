@@ -168,8 +168,6 @@ class API(
         val jetton = withRetry {
             jettonsAPI.getJettonInfo(accountId)
         } ?: return null
-        Log.d("SendAmountLog", "getJetton: $jetton")
-
         return TokenEntity(jetton)
     }
 
@@ -306,11 +304,8 @@ class API(
     }
 
     suspend fun tonconnectProof(address: String, proof: String): String {
-        val lines = mutableListOf<String>()
         val url = "${config.tonapiMainnetHost}/v2/wallet/auth/proof"
-        lines.add("url: $url")
         val data = "{\"address\":\"$address\",\"proof\":$proof}"
-        lines.add("data: $data")
         val response = withRetry {
             tonAPIHttpClient.postJSON(url, data)
         } ?: throw Exception("Empty response")
@@ -318,9 +313,6 @@ class API(
             throw Exception("Failed creating proof: ${response.code}")
         }
         val body = response.body?.string() ?: throw Exception("Empty response")
-        lines.add("body: $body")
-        lines.add("_____________________________________")
-        Log.d("AccountRepositoryLog", lines.joinToString("\n"))
         return JSONObject(body).getString("token")
     }
 
@@ -454,6 +446,29 @@ class API(
             sessionId?.let { json.put("session_id", it) }
             json.put("commercial", commercial)
             json.put("silent", silent)
+            val data = json.toString().replace("\\/", "/")
+
+            tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
+                set("X-TonConnect-Auth", token)
+            }).isSuccessful
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun pushTonconnectUnsubscribe(
+        token: String,
+        appUrl: String,
+        accountId: String,
+        firebaseToken: String,
+    ): Boolean {
+        return try {
+            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
+
+            val json = JSONObject()
+            json.put("app_url", appUrl)
+            json.put("account", accountId)
+            json.put("firebase_token", firebaseToken)
             val data = json.toString().replace("\\/", "/")
 
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {

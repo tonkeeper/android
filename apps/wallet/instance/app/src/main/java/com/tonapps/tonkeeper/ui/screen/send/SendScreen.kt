@@ -83,9 +83,8 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private val signerResultContract = SingerResultContract()
     private val signerLauncher = registerForActivityResult(signerResultContract) {
-        if (it == null) {
-            setFailed()
-        } else {
+        if (it != null) {
+            setLoading()
             sendViewModel.sendSignedMessage(it)
         }
     }
@@ -130,6 +129,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         navigation?.setFragmentResultListener(signerQRRequestKey) { bundle ->
             val sign = bundle.getString(SignerQRScreen.KEY_URI)?.toUri()?.getQueryParameter("sign")
             if (sign != null) {
+                setLoading()
                 sendViewModel.sendSignedMessage(BitString(sign))
             }
         }
@@ -350,7 +350,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         when (event) {
             is SendEvent.Failed -> setFailed()
             is SendEvent.Success -> setSuccess()
-            is SendEvent.Loading -> processTaskView.state = ProcessTaskView.State.LOADING
+            is SendEvent.Loading -> setLoading()
             is SendEvent.Fee -> setFee(event)
             is SendEvent.InsufficientBalance -> showInsufficientBalance()
             is SendEvent.Confirm -> slidesView.next()
@@ -360,10 +360,12 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private fun requestLedgerSign(transaction: Transaction, walletId: String) {
         val requestKey = "ledger_sign_request"
         navigation?.setFragmentResultListener(requestKey) { bundle ->
+            processTaskView.state = ProcessTaskView.State.LOADING
             val result = bundle.getByteArray(LedgerSignScreen.SIGNED_MESSAGE)
             if (result == null) {
                 setDefault()
             } else {
+                setLoading()
                 sendViewModel.sendLedgerSignedMessage(BagOfCells(result).first())
             }
         }
@@ -380,17 +382,21 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         InsufficientBalanceDialog(requireContext()).show()
     }
 
+    private fun setLoading() {
+        confirmButton.visibility = View.GONE
+        processTaskView.visibility = View.VISIBLE
+        processTaskView.state = ProcessTaskView.State.LOADING
+    }
+
     private fun setFailed() {
         processTaskView.state = ProcessTaskView.State.FAILED
-        postDelayed(2000, ::setDefault)
+        postDelayed(4000, ::setDefault)
     }
 
     private fun setSuccess() {
         processTaskView.state = ProcessTaskView.State.SUCCESS
         navigation?.openURL("tonkeeper://activity")
-        postDelayed(2000) {
-            finish()
-        }
+        postDelayed(2000, ::finish)
     }
 
     private fun setDefault() {
@@ -460,9 +466,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun confirmDefault() {
-        confirmButton.visibility = View.GONE
-        processTaskView.visibility = View.VISIBLE
-        processTaskView.state = ProcessTaskView.State.LOADING
+        setLoading()
         sendViewModel.send(requireContext())
     }
 
@@ -487,7 +491,6 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
 
     private fun openSigner() {
         AnalyticsHelper.trackEvent("send_transaction")
-
         collectFlow(sendViewModel.signerData()) { (publicKey, unsignedBody) ->
             signerLauncher.launch(SingerResultContract.Input(unsignedBody, publicKey))
         }

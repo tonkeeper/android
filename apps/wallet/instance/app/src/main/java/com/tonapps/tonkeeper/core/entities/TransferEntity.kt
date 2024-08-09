@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.core.entities
 
+import android.util.Log
 import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
@@ -38,6 +39,7 @@ data class TransferEntity(
     val comment: String?,
     val nftAddress: String? = null,
     val commentEncrypted: Boolean,
+    val queryId: BigInteger = newWalletQueryId(),
 ) {
 
     val contract: BaseWalletContract
@@ -124,7 +126,7 @@ data class TransferEntity(
             builder.setDestination(AddrStd.parse(nftAddress!!))
             builder.setPayload(
                 TonPayloadFormat.NftTransfer(
-                    queryId = newWalletQueryId(),
+                    queryId = queryId,
                     newOwnerAddress = destination,
                     excessesAddress = contract.address,
                     forwardPayload = getCommentForwardPayload(),
@@ -137,7 +139,7 @@ data class TransferEntity(
             builder.setDestination(AddrStd.parse(token.walletAddress))
             builder.setPayload(
                 TonPayloadFormat.JettonTransfer(
-                    queryId = newWalletQueryId(),
+                    queryId = queryId,
                     coins = coins,
                     receiverAddress = destination,
                     excessesAddress = contract.address,
@@ -168,7 +170,8 @@ data class TransferEntity(
     private fun messageBodyWithSign(
         signature: BitString
     ): Cell {
-        return contract.signedBody(signature, getUnsignedBody())
+        val unsignedBody = getUnsignedBody()
+        return contract.signedBody(signature, unsignedBody)
     }
 
     fun transferMessage(
@@ -196,7 +199,7 @@ data class TransferEntity(
             coins = coins,
             toAddress = destination,
             responseAddress = contract.address,
-            queryId = newWalletQueryId(),
+            queryId = queryId,
             body = getCommentForwardPayload(privateKey),
         )
     }
@@ -205,7 +208,7 @@ data class TransferEntity(
         return TonTransferHelper.nft(
             newOwnerAddress = destination,
             excessesAddress = contract.address,
-            queryId = newWalletQueryId(),
+            queryId = queryId,
             body = getCommentForwardPayload(privateKey),
         )
     }
@@ -231,6 +234,9 @@ data class TransferEntity(
         private var comment: String? = null
         private var commentEncrypted: Boolean = false
         private var nftAddress: String? = null
+        private var queryId: BigInteger? = null
+
+        fun setQueryId(queryId: BigInteger) = apply { this.queryId = queryId }
 
         fun setNftAddress(nftAddress: String) = apply { this.nftAddress = nftAddress }
 
@@ -276,6 +282,7 @@ data class TransferEntity(
                 comment = comment,
                 nftAddress = nftAddress,
                 commentEncrypted = commentEncrypted,
+                queryId = queryId ?: newWalletQueryId()
             )
         }
     }

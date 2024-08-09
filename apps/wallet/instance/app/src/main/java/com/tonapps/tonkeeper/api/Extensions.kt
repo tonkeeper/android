@@ -5,6 +5,7 @@ import com.squareup.moshi.adapter
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.ifPunycodeToUnicode
+import com.tonapps.extensions.short12
 import com.tonapps.tonkeeperx.R
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.AccountAddress
@@ -135,7 +136,7 @@ val JettonSwapAction.ton: Long
 
 fun AccountAddress.getNameOrAddress(testnet: Boolean): String {
     if (!name.isNullOrBlank()) {
-        return name!!.ifPunycodeToUnicode()
+        return name!!.ifPunycodeToUnicode().short12
     }
     return address.toUserFriendly(
         wallet = isWallet,

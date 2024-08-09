@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.send
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.cache
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -49,6 +51,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
@@ -60,6 +63,8 @@ import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import uikit.extensions.collectFlow
 import uikit.extensions.context
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
@@ -90,9 +95,12 @@ class SendViewModel(
     )
 
     private val currency = settingsRepository.currency
+    private val queryId: BigInteger by lazy { TransferEntity.newWalletQueryId() }
 
     private val _userInputFlow = MutableStateFlow(UserInput())
     private val userInputFlow = _userInputFlow.asStateFlow()
+
+    private var lastTransferEntity: TransferEntity? = null
 
     val walletTypeFlow = accountRepository.selectedWalletFlow.map { it.type }
 
@@ -272,6 +280,7 @@ class SendViewModel(
         builder.setToken(transaction.token)
         builder.setDestination(transaction.destination.address, transaction.destination.publicKey)
         builder.setSeqno(sendMetadata.seqno)
+        builder.setQueryId(queryId)
         builder.setComment(comment, encryptedComment)
         builder.setValidUntil(sendMetadata.validUntil)
         if (isNft) {
@@ -286,7 +295,7 @@ class SendViewModel(
             builder.setBounceable(transaction.destination.isBounce)
         }
         builder.build()
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     init {
         if (isNft) {
@@ -337,17 +346,14 @@ class SendViewModel(
     }
 
     private fun isInsufficientBalance(): Boolean {
-        /*if (true) {
-            return false
-        }
         val token = selectedTokenFlow.value
         val amount = userInputFlow.value.amount
-        val balance = if (amountInputCurrency) token.fiat else token.balance.value
+        val amountCurrency = userInputFlow.value.amountCurrency
+        val balance = if (amountCurrency) token.fiat else token.balance.value
         val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
             .multiply(BigDecimal("100"))
             .setScale(2, RoundingMode.HALF_UP)
-        return percentage > BigDecimal("95.00")*/
-        return true
+        return percentage > BigDecimal("95.00") && percentage <= BigDecimal("99.99")
     }
 
     fun next() {
@@ -474,6 +480,7 @@ class SendViewModel(
         accountRepository.selectedWalletFlow.take(1),
         transferFlow.take(1)
     ) { wallet, transfer ->
+        lastTransferEntity = transfer
         Pair(wallet.publicKey, transfer.getUnsignedBody())
     }
 
@@ -481,6 +488,7 @@ class SendViewModel(
         accountRepository.selectedWalletFlow.take(1),
         transferFlow.take(1)
     ) { wallet, transfer ->
+        lastTransferEntity = transfer
         Pair(wallet.id, transfer.getLedgerTransaction())
     }
 
@@ -523,9 +531,10 @@ class SendViewModel(
         this.map { (boc, testnet) ->
             sendToBlockchain(boc, testnet)
             AnalyticsHelper.trackEvent("send_success")
-            _uiEventFlow.tryEmit(SendEvent.Success)
         }.catch {
             _uiEventFlow.tryEmit(SendEvent.Failed)
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        }.flowOn(Dispatchers.IO).onEach {
+            _uiEventFlow.tryEmit(SendEvent.Success)
+        }.launchIn(viewModelScope)
     }
 }

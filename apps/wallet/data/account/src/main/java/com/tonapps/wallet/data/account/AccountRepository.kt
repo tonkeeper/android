@@ -114,11 +114,6 @@ class AccountRepository(
 
             val selectedId = storageSource.getSelectedId()
             setSelectedWallet(selectedId)
-
-            val list = getWallets()
-            for (wallet in list) {
-                requestTonProofToken(wallet)
-            }
         }
     }
 
@@ -252,7 +247,7 @@ class AccountRepository(
         versions: List<WalletVersion>,
         qr: Boolean,
     ): List<WalletEntity> {
-        val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.SignerQR
+        val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
         return addWallet(label, publicKey, versions, type)
     }
 

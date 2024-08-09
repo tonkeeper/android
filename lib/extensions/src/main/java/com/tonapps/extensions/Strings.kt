@@ -3,6 +3,12 @@ package com.tonapps.extensions
 import android.graphics.Color
 import com.tonapps.icu.Punycode
 
+val String.short12: String
+    get() {
+        if (length < 24) return this
+        return substring(0, 12) + "…" + substring(length - 12, length)
+    }
+
 val String.short8: String
     get() {
         if (length < 16) return this

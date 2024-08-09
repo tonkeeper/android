@@ -24,7 +24,9 @@ import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.signer.SingerResultContract
+import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.state.SendAmountState
@@ -104,6 +106,8 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     private lateinit var commentInput: InputView
     private lateinit var button: Button
     private lateinit var taskContainerView: View
+    private lateinit var pasteView: View
+    private lateinit var addressActionsView: View
     private lateinit var confirmButton: Button
     private lateinit var processTaskView: ProcessTaskView
     private lateinit var reviewIconView: FrescoView
@@ -135,17 +139,26 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
         super.onViewCreated(view, savedInstanceState)
         slidesView = view.findViewById(R.id.slides)
         val createHeaderView = view.findViewById<HeaderView>(R.id.create_header)
+        createHeaderView.closeView.background = null
         createHeaderView.doOnActionClick = { finish() }
+        createHeaderView.doOnCloseClick = { navigation?.add(CameraFragment.newInstance())  }
 
         val reviewHeaderView = view.findViewById<HeaderView>(R.id.review_header)
         reviewHeaderView.doOnCloseClick = { showCreate() }
 
         addressInput = view.findViewById(R.id.address)
+
+        addressActionsView = view.findViewById(R.id.address_actions)
+
         addressInput.doOnTextChange = { text ->
             reviewRecipientFeeView.setLoading()
             addressInput.loading = true
             sendViewModel.userInputAddress(text)
+            addressActionsView.visibility = if (text.isBlank()) View.VISIBLE else View.GONE
         }
+
+        pasteView = view.findViewById(R.id.paste)
+        pasteView.setOnClickListener { addressInput.text = requireContext().clipboardText() }
 
         amountView = view.findViewById(R.id.amount)
         amountView.doOnValueChanged = sendViewModel::userInputAmount
@@ -259,13 +272,22 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             }
         }
 
+        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress)
+    }
+
+    fun initializeArgs(
+        targetAddress: String?,
+        amountNano: Long,
+        text: String?,
+        tokenAddress: String
+    ) {
         sendViewModel.initializeTokenAndAmount(
-            tokenAddress = args.tokenAddress,
-            amountNano = args.amountNano,
+            tokenAddress = tokenAddress,
+            amountNano = amountNano,
         )
 
-        args.text?.let { commentInput.text = it }
-        args.targetAddress?.let { addressInput.text = it }
+        text?.let { commentInput.text = it }
+        targetAddress?.let { addressInput.text = it }
     }
 
     private fun applyCommentEncryptState(enabled: Boolean) {

@@ -72,15 +72,6 @@
                 <data android:scheme="tonkeeper"/>
                 <data android:scheme="tc"/>
             </intent-filter>
-            <intent-filter android:priority="1">
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https"/>
-                <data android:scheme="http"/>
-                <data android:host="*.ton"/>
-            </intent-filter>
             <intent-filter android:autoVerify="true" android:priority="1">
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <action android:name="android.intent.action.VIEW"/>

@@ -125,7 +125,7 @@ class CoinInputView @JvmOverloads constructor(
     }
 
     fun clear() {
-        editText.text?.clear()
+        editText.text = null
     }
 
     fun setToken(token: TokenEntity): Boolean {

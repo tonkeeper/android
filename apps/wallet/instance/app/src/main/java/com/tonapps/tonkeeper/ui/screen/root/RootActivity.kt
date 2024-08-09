@@ -37,6 +37,7 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
+import uikit.extensions.findFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.navigation.NavigationActivity
 
@@ -144,12 +145,12 @@ class RootActivity: NavigationActivity() {
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
             is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
-            is RootEvent.Transfer -> add(SendScreen.newInstance(
+            is RootEvent.Transfer -> openSend(
                 targetAddress = event.address,
                 tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
                 amountNano = event.amount?.toLongOrNull() ?: 0L,
                 text = event.text
-            ))
+            )
             is RootEvent.Transaction -> this.navigation?.add(TransactionScreen.newInstance(event.event))
             is RootEvent.BuyOrSell -> {
                 if (event.methodEntity == null) {
@@ -160,6 +161,32 @@ class RootActivity: NavigationActivity() {
             }
             is RootEvent.OpenBackups -> add(BackupScreen.newInstance())
             else -> { }
+        }
+    }
+
+    private fun openSend(
+        targetAddress: String? = null,
+        tokenAddress: String = TokenEntity.TON.address,
+        amountNano: Long = 0,
+        text: String? = null,
+        nftAddress: String? = null
+    ) {
+        val fragment = supportFragmentManager.findFragment<SendScreen>()
+        if (fragment == null) {
+            add(SendScreen.newInstance(
+                targetAddress = targetAddress,
+                tokenAddress = tokenAddress,
+                amountNano = amountNano,
+                text = text,
+                nftAddress = nftAddress,
+            ))
+        } else {
+            fragment.initializeArgs(
+                targetAddress = targetAddress,
+                tokenAddress = tokenAddress,
+                amountNano = amountNano,
+                text = text,
+            )
         }
     }
 

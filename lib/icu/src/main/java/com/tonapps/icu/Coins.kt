@@ -160,7 +160,11 @@ data class Coins(
 
     operator fun times(other: Coins) = of(value * other.value, decimals)
 
-    operator fun div(other: Coins) = of(value / other.value, decimals)
+    operator fun div(other: Coins): Coins {
+        //  = of(value / other.value, decimals)
+        val result = value.divide(other.value, decimals, RoundingMode.HALF_UP)
+        return of(result, decimals)
+    }
 
     operator fun rem(other: Coins) = of(value.remainder(other.value), decimals)
 

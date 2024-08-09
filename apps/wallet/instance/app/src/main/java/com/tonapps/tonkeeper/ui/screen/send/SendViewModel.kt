@@ -1,8 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
+import android.app.Application
 import android.content.Context
-import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
@@ -45,24 +45,26 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import uikit.extensions.collectFlow
-import java.math.BigDecimal
+import uikit.extensions.context
 import java.math.RoundingMode
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
+    app: Application,
     private val nftAddress: String,
     private val accountRepository: AccountRepository,
     private val api: API,
@@ -71,7 +73,7 @@ class SendViewModel(
     private val ratesRepository: RatesRepository,
     private val passcodeManager: PasscodeManager,
     private val collectiblesRepository: CollectiblesRepository,
-): ViewModel() {
+): AndroidViewModel(app) {
 
     private val isNft: Boolean
         get() = nftAddress.isNotBlank()
@@ -84,10 +86,10 @@ class SendViewModel(
         val nft: NftEntity? = null,
         val encryptedComment: Boolean = false,
         val max: Boolean = false,
+        val amountCurrency: Boolean = false,
     )
 
     private val currency = settingsRepository.currency
-    private var amountInputCurrency = false
 
     private val _userInputFlow = MutableStateFlow(UserInput())
     private val userInputFlow = _userInputFlow.asStateFlow()
@@ -152,6 +154,10 @@ class SendViewModel(
 
     val uiInputComment = userInputFlow.map { it.comment }.distinctUntilChanged()
 
+    val uiInputAmountCurrency = userInputFlow.map { it.amountCurrency }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
     private val _uiEventFlow = MutableEffectFlow<SendEvent>()
@@ -161,8 +167,9 @@ class SendViewModel(
         selectedTokenFlow,
         inputAmountFlow,
         ratesTokenFlow,
-    ) { token, amount, rates ->
-        val (decimals, balance, currencyCode) = if (amountInputCurrency) {
+        uiInputAmountCurrency,
+    ) { token, amount, rates, amountCurrency ->
+        val (decimals, balance, currencyCode) = if (amountCurrency) {
             Triple(currency.decimals, token.fiat, currency.code)
         } else {
             Triple(token.decimals, token.balance.value, token.symbol)
@@ -170,25 +177,28 @@ class SendViewModel(
 
         val remaining = balance - amount
 
-        val convertedCode = if (amountInputCurrency) token.symbol else currency.code
-        val converted = if (amountInputCurrency) {
+        val convertedCode = if (amountCurrency) token.symbol else currency.code
+        val converted = if (amountCurrency) {
             rates.convertFromFiat(token.address, amount)
         } else {
             rates.convert(token.address, amount)
         }
 
-        val remainingToken = if (!amountInputCurrency) {
+        val remainingToken = if (!amountCurrency) {
             token.balance.value - amount
         } else {
             rates.convertFromFiat(token.address, token.fiat - amount)
         }
 
+        val remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, token.decimals, RoundingMode.UP, false)
+
         SendAmountState(
-            remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, token.decimals, RoundingMode.UP, false),
+            remainingFormat = context.getString(Localization.remaining_balance, remainingFormat),
             converted = converted.stripTrailingZeros(),
             convertedFormat = CurrencyFormatter.format(convertedCode, converted, decimals, RoundingMode.UP, false),
             insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
-            currencyCode = if (amountInputCurrency) currencyCode else "",
+            currencyCode = if (amountCurrency) currencyCode else "",
+            amountCurrency = amountCurrency,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SendAmountState())
 
@@ -210,9 +220,10 @@ class SendViewModel(
     private val amountTokenFlow = combine(
         selectedTokenFlow,
         inputAmountFlow,
-        ratesTokenFlow
-    ) { token, amount, rates ->
-        if (amountInputCurrency) {
+        ratesTokenFlow,
+        uiInputAmountCurrency,
+    ) { token, amount, rates, amountCurrency ->
+        if (amountCurrency) {
             rates.convertFromFiat(token.address, amount)
         } else {
             amount
@@ -326,7 +337,7 @@ class SendViewModel(
     }
 
     private fun isInsufficientBalance(): Boolean {
-        if (true) {
+        /*if (true) {
             return false
         }
         val token = selectedTokenFlow.value
@@ -335,7 +346,8 @@ class SendViewModel(
         val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
             .multiply(BigDecimal("100"))
             .setScale(2, RoundingMode.HALF_UP)
-        return percentage > BigDecimal("95.00")
+        return percentage > BigDecimal("95.00")*/
+        return true
     }
 
     fun next() {
@@ -416,27 +428,31 @@ class SendViewModel(
     }
 
     fun userInputAddress(address: String) {
-        _userInputFlow.value = _userInputFlow.value.copy(address = address)
+        _userInputFlow.update { it.copy(address = address) }
     }
 
     fun userInputComment(comment: String?) {
-        _userInputFlow.value = _userInputFlow.value.copy(comment = comment)
+        _userInputFlow.update { it.copy(comment = comment) }
     }
 
     fun swap() {
-        amountInputCurrency = !amountInputCurrency
-        val convertedAmount = uiBalanceFlow.value.converted
-        _uiInputAmountFlow.tryEmit(convertedAmount)
+        val balance = uiBalanceFlow.value.copy()
+        val amountCurrency = _userInputFlow.updateAndGet { it.copy(amountCurrency = !it.amountCurrency) }.amountCurrency
+        if (amountCurrency != balance.amountCurrency) {
+            _uiInputAmountFlow.tryEmit(balance.converted)
+        }
     }
 
     fun setMax() {
-        val token = selectedTokenFlow.value
-        val coins = if (amountInputCurrency) {
-            token.fiat
-        } else {
-            token.balance.value
+        collectFlow(uiInputAmountCurrency.take(1)) { amountCurrency ->
+            val token = selectedTokenFlow.value
+            val coins = if (amountCurrency) {
+                token.fiat
+            } else {
+                token.balance.value
+            }
+            _uiInputAmountFlow.tryEmit(coins)
         }
-        _uiInputAmountFlow.tryEmit(coins)
     }
 
     private suspend fun getSendParams(

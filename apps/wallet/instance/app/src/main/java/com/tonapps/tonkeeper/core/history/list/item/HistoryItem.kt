@@ -180,19 +180,12 @@ sealed class HistoryItem(
         val isOut: Boolean,
         val address: String? = null,
         val addressName: String? = null,
+        val senderAddress: String? = null,
         val lt: Long = 0L,
         val failed: Boolean,
         val hiddenBalance: Boolean = false,
         val unverifiedToken: Boolean = false
     ): HistoryItem(TYPE_ACTION) {
-
-        val authorAddress: String by lazy {
-            if (address.isNullOrBlank()) {
-                nft?.ownerAddress ?: ""
-            } else {
-                address
-            }
-        }
 
         @Parcelize
         data class Comment(
@@ -260,6 +253,7 @@ sealed class HistoryItem(
             isOut = parcel.readBooleanCompat(),
             address = parcel.readString(),
             addressName = parcel.readString(),
+            senderAddress = parcel.readString(),
             lt = parcel.readLong(),
             failed = parcel.readBooleanCompat(),
             hiddenBalance = parcel.readBooleanCompat(),
@@ -289,6 +283,7 @@ sealed class HistoryItem(
             dest.writeBooleanCompat(isOut)
             dest.writeString(address)
             dest.writeString(addressName)
+            dest.writeString(senderAddress)
             dest.writeLong(lt)
             dest.writeBooleanCompat(failed)
             dest.writeBooleanCompat(hiddenBalance)

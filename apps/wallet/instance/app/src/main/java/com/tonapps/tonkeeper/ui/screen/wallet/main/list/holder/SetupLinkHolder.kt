@@ -27,7 +27,7 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
         itemView.setOnClickListener {
             Navigation.from(context)?.openURL(item.link, item.external)
             if (item.external) {
-                settingsRepository?.telegramChannel = false
+                settingsRepository?.setTelegramChannel(item.walletId)
             }
         }
         setIconColor(if (item.blue) context.accentBlueColor else context.accentOrangeColor)

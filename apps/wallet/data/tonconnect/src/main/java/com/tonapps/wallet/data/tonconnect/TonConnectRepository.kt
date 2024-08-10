@@ -3,9 +3,11 @@ package com.tonapps.wallet.data.tonconnect
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.collection.ArrayMap
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.prefs
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.hex
@@ -17,6 +19,11 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.ProofEntity
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.rn.data.RNTC
+import com.tonapps.wallet.data.rn.data.RNTCApp
+import com.tonapps.wallet.data.rn.data.RNTCApps
+import com.tonapps.wallet.data.rn.data.RNTCConnection
+import com.tonapps.wallet.data.rn.data.RNTCKeyPair
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppItemEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
@@ -84,73 +91,97 @@ class TonConnectRepository(
         }
     }
 
-    private suspend fun migrationFromRN() {
-        val tcApps = rnLegacy.getJSONState("TCApps")
-        val value = tcApps?.getJSONObject("connectedApps") ?: return
-        value.optJSONObject("mainnet")?.let { migrationRN(it, false) }
-        value.optJSONObject("testnet")?.let { migrationRN(it, true) }
+    private suspend fun migrationFromRN() = withContext(Dispatchers.IO) {
+        Log.d("TonConnectRepository", "migrationFromRN")
+        try {
+            val tcApps = rnLegacy.getTCApps()
+            for (app in tcApps.mainnet) {
+                migrationTCFromRN(app, false)
+            }
+            for (apps in tcApps.testnet) {
+                migrationTCFromRN(apps, true)
+            }
+            Log.d("TonConnectRepository", "done!")
+        } catch (e: Throwable) {
+            Log.e("TonConnectRepository", "migrationFromRN", e)
+        }
     }
 
-    private suspend fun migrationRN(value: JSONObject, testnet: Boolean) {
-        for (key in value.keys()) {
-            val address = key.toRawAddress()
-            val wallet = accountRepository.getWalletByAccountId(address, testnet) ?: continue
-            val json = value.getJSONObject(key)
-            for (clientId in json.keys()) {
-                try {
-                    migrationRNApp(wallet, clientId, json.getJSONObject(clientId))
-                } catch (ignored: Throwable) { }
+    private suspend fun addTCMigrationToRN(apps: List<DConnectEntity>) = withContext(Dispatchers.IO) {
+        val mainnet = ArrayMap<String, MutableList<RNTCApp>>()
+        val testnet = ArrayMap<String, MutableList<RNTCApp>>()
+        for (app in apps) {
+            val connection = RNTCConnection(
+                type = if (app.type == Type.External) "remote" else "injected",
+                sessionKeyPair = RNTCKeyPair(app.keyPair),
+                clientSessionId = app.clientId
+            )
+            val legacyApp = RNTCApp(
+                name = app.manifest.name,
+                url = app.manifest.url,
+                icon = app.manifest.iconUrl,
+                notificationsEnabled = app.enablePush,
+                connections = listOf(connection)
+            )
+
+            val walletAddress = app.accountId.toUserFriendly(
+                wallet = false,
+                bounceable = true,
+                testnet = app.testnet
+            )
+
+            val list = (if (app.testnet) testnet[walletAddress] else mainnet[walletAddress]) ?: mutableListOf()
+            list.add(legacyApp)
+            if (app.testnet) {
+                testnet[walletAddress] = list
+            } else {
+                mainnet[walletAddress] = list
             }
         }
+        val mainnetApps = mutableListOf<RNTCApps>()
+        for (entry in mainnet.entries) {
+            mainnetApps.add(RNTCApps(entry.key, entry.value))
+        }
+
+        val testnetApps = mutableListOf<RNTCApps>()
+        for (entry in testnet.entries) {
+            testnetApps.add(RNTCApps(entry.key, entry.value))
+        }
+
+        val data = RNTC(mainnetApps, testnetApps)
+        Log.d("TonConnectRepository", "addTCMigrationToRN: $data")
+        rnLegacy.setTCApps(data)
     }
 
-    private fun migrationRNApp(
-        wallet: WalletEntity,
-        clientId: String,
-        json: JSONObject
-    ) {
-        val manifest = DAppManifestEntity(
-            url = json.getString("url").removeSuffix("/"),
-            name = json.getString("name"),
-            iconUrl = json.getString("icon"),
-            termsOfUseUrl = "",
-            privacyPolicyUrl = "",
-            source = "",
-        )
-
-        val notificationsEnabled = json.optBoolean("notificationsEnabled", false)
-        val connections = json.optJSONArray("connections") ?: return
-        if (connections.length() == 0) {
-            return
-        }
-        val connection = connections.getJSONObject(connections.length() - 1)
-        val sessionKeyPair = connection.optJSONObject("sessionKeyPair")
-        val keyPair = if (sessionKeyPair == null) {
-            CryptoBox.keyPair()
-        } else {
-            CryptoBox.KeyPair(
-                publicKey = sessionKeyPair.getString("publicKey").hex(),
-                privateKey = sessionKeyPair.getString("secretKey").hex(),
+    private suspend fun migrationTCFromRN(apps: RNTCApps, testnet: Boolean) {
+        val wallet = accountRepository.getWalletByAccountId(apps.address.toRawAddress(), testnet) ?: return
+        for (app in apps.apps) {
+            val manifest = DAppManifestEntity(
+                url = app.url.removeSuffix("/"),
+                name = app.name,
+                iconUrl = app.icon
             )
+
+            for (connection in app.connections) {
+                val connect = DConnectEntity(
+                    walletId = wallet.id,
+                    accountId = wallet.accountId,
+                    testnet = wallet.testnet,
+                    clientId = connection.clientId,
+                    keyPair = connection.keyPair,
+                    enablePush = app.notificationsEnabled,
+                    type = if (connection.type == "remote") {
+                        Type.External
+                    } else {
+                        Type.Internal
+                    },
+                    url = manifest.url,
+                    manifest = manifest,
+                )
+                Log.d("TonConnectRepository", "connect: $connect")
+                localDataSource.addConnect(connect)
+            }
         }
-
-        val connect = DConnectEntity(
-            walletId = wallet.id,
-            accountId = wallet.accountId,
-            testnet = wallet.testnet,
-            clientId = connection.optString("clientSessionId", clientId),
-            keyPair = keyPair,
-            enablePush = notificationsEnabled,
-            type = if (connection.optString("type") == "remote") {
-                Type.External
-            } else {
-                Type.Internal
-            },
-            url = manifest.url,
-            manifest = manifest,
-        )
-
-        localDataSource.addConnect(connect)
     }
 
     fun setPushEnabled(walletId: String, url: String, enabled: Boolean) {
@@ -184,10 +215,6 @@ class TonConnectRepository(
         return apps.find {
             Uri.parse(it.url).host == Uri.parse(url).host
         }
-    }
-
-    suspend fun getLocalManifest(url: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
-        localDataSource.getManifest(url)
     }
 
     suspend fun getManifest(sourceUrl: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
@@ -225,10 +252,14 @@ class TonConnectRepository(
             manifest = manifest,
         )
         localDataSource.addConnect(connect)
-        val oldValue = _connectionsFlow.value ?: emptyList()
-        _connectionsFlow.value = oldValue.plus(connect)
+        val apps = (_connectionsFlow.value ?: emptyList()).plus(connect)
+        _connectionsFlow.value = apps
+        try {
+            addTCMigrationToRN(apps.toList())
+        } catch (ignored: Throwable) { }
         connect
     }
+
 
     suspend fun send(
         connect: DConnectEntity,

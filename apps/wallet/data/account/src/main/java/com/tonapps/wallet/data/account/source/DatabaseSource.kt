@@ -3,14 +3,11 @@ package com.tonapps.wallet.data.account.source
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
-import android.database.sqlite.SQLiteCursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
-import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.sqlite.withTransaction
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity

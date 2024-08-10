@@ -3,12 +3,9 @@ package com.tonapps.wallet.data.settings
 import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.collection.ArrayMap
-import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
-import com.tonapps.extensions.isMainVersion
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
@@ -17,20 +14,15 @@ import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.entities.NftPrefsEntity
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
-import com.tonapps.wallet.data.settings.folder.ImportLegacyFolder
 import com.tonapps.wallet.data.settings.folder.NftPrefsFolder
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
 import com.tonapps.wallet.localization.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -59,7 +51,6 @@ class SettingsRepository(
         private const val FIREBASE_TOKEN_KEY = "firebase_token"
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
-        private const val TELEGRAM_CHANNEL_KEY = "telegram_channel"
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
     }
 
@@ -135,15 +126,6 @@ class SettingsRepository(
                 field = value
                 _themeFlow.tryEmit(value)
                 migrationHelper.setLegacyTheme(value)
-            }
-        }
-
-    var telegramChannel: Boolean = prefs.getBoolean(TELEGRAM_CHANNEL_KEY, true)
-        set(value) {
-            if (value != field) {
-                prefs.edit().putBoolean(TELEGRAM_CHANNEL_KEY, value).apply()
-                field = value
-                _telegramChannelFlow.tryEmit(value)
             }
         }
 
@@ -236,12 +218,20 @@ class SettingsRepository(
         val map = (_walletPush.value ?: mapOf()).toMutableMap()
         map[walletId] = value
         _walletPush.tryEmit(map)
+
+        rnLegacy.setNotificationsEnabled(walletId, value)
     }
 
     fun isSetupHidden(walletId: String): Boolean = walletPrefsFolder.isSetupHidden(walletId)
 
     fun setupHide(walletId: String) {
         walletPrefsFolder.setupHide(walletId)
+        rnLegacy.setSetupDismissed(walletId)
+    }
+
+    fun setTelegramChannel(walletId: String) {
+        walletPrefsFolder.setTelegramChannel(walletId)
+        rnLegacy.setHasOpenedTelegramChannel(walletId)
     }
 
     fun getLocale(): Locale {
@@ -382,13 +372,21 @@ class SettingsRepository(
         val wallets = data.wallets
         for (wallet in wallets) {
             val walletId = wallet.identifier
-            val key = "$walletId/notifications"
-            val isSubscribed = rnLegacy.getJSONValue(key)?.getBoolean("isSubscribed") ?: false
-            walletPrefsFolder.setPushEnabled(walletId, isSubscribed)
+
+            walletPrefsFolder.setPushEnabled(walletId, rnLegacy.getNotificationsEnabled(walletId))
 
             val hiddenTokens = rnLegacy.getHiddenTokens(walletId)
             for (tokenAddress in hiddenTokens) {
                 tokenPrefsFolder.setHidden(walletId, tokenAddress, true)
+            }
+
+            val (setupDismissed, hasOpenedTelegramChannel) = rnLegacy.getSetup(walletId)
+
+            if (hasOpenedTelegramChannel) {
+                walletPrefsFolder.setTelegramChannel(walletId)
+            }
+            if (setupDismissed) {
+                walletPrefsFolder.setupHide(walletId)
             }
         }
     }

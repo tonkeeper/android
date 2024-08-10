@@ -8,8 +8,10 @@ import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 
 data class Item(
     val connect: DConnectEntity,
-    val manifest: DAppManifestEntity,
 ): BaseListItem(0) {
+
+    val manifest: DAppManifestEntity
+        get() = connect.manifest
 
     val icon: Uri
         get() = Uri.parse(manifest.iconUrl)

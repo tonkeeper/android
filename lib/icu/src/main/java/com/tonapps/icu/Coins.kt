@@ -77,7 +77,7 @@ data class Coins(
                 return BigDecimal.ZERO
             }
             try {
-                val input = value.filter { it.isDigit() or (it == '.') }
+                val input = prepareValue(value).filter { it.isDigit() or (it == '.') }
                 return BigDecimal.ZERO.max(BigDecimal(input, MathContext.DECIMAL128))
             } catch (e: Throwable) {
                 return BigDecimal.ZERO
@@ -160,10 +160,14 @@ data class Coins(
 
     operator fun times(other: Coins) = of(value * other.value, decimals)
 
-    operator fun div(other: Coins): Coins {
+    fun div(other: Coins, roundingMode: RoundingMode = RoundingMode.HALF_UP): Coins {
         //  = of(value / other.value, decimals)
-        val result = value.divide(other.value, decimals, RoundingMode.HALF_UP)
+        val result = value.divide(other.value, decimals, roundingMode)
         return of(result, decimals)
+    }
+
+    operator fun div(other: Coins): Coins {
+        return div(other, RoundingMode.HALF_UP)
     }
 
     operator fun rem(other: Coins) = of(value.remainder(other.value), decimals)

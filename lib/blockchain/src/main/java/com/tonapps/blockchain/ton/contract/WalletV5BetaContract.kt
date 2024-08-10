@@ -24,7 +24,7 @@ class WalletV5BetaContract(
     private val subwalletNumber: Int = 0
 ) : BaseWalletContract(workchain, publicKey) {
 
-    override fun getWalletVersion() = WalletVersion.V5R1BETA
+    override fun getWalletVersion() = WalletVersion.V5BETA
 
     override fun getStateCell(): Cell {
         return CellBuilder.createCell {

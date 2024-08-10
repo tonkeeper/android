@@ -500,6 +500,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
     data class SetupLink(
         val position: ListCell.Position,
+        val walletId: String,
         val iconRes: Int,
         val textRes: Int,
         val link: String,
@@ -509,6 +510,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
         constructor(parcel: Parcel) : this(
             parcel.readEnum(ListCell.Position::class.java)!!,
+            parcel.readString()!!,
             parcel.readInt(),
             parcel.readInt(),
             parcel.readString()!!,
@@ -518,6 +520,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
         override fun marshall(dest: Parcel, flags: Int) {
             dest.writeEnum(position)
+            dest.writeString(walletId)
             dest.writeInt(iconRes)
             dest.writeInt(textRes)
             dest.writeString(link)

@@ -14,6 +14,7 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
         private const val PURCHASE_PREFIX = "purchase_"
         private const val SETUP_HIDDEN_PREFIX = "setup_hidden_"
         private const val LAST_UPDATED_PREFIX = "last_updated_"
+        private const val TELEGRAM_CHANNEL_PREFIX = "telegram_channel_"
     }
 
     fun setLastUpdated(walletId: String) {
@@ -28,8 +29,16 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
         return getBoolean(key(SETUP_HIDDEN_PREFIX, walletId), false)
     }
 
+    fun isTelegramChannel(walletId: String): Boolean {
+        return getBoolean(keyTelegramChannel(walletId), false)
+    }
+
     fun setupHide(walletId: String) {
         putBoolean(key(SETUP_HIDDEN_PREFIX, walletId), true)
+    }
+
+    fun setTelegramChannel(walletId: String) {
+        putBoolean(keyTelegramChannel(walletId), true)
     }
 
     fun isPurchaseOpenConfirm(walletId: String, id: String): Boolean {
@@ -75,6 +84,10 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
 
     private fun keyPush(walletId: String): String {
         return key(PUSH_PREFIX, walletId)
+    }
+
+    private fun keyTelegramChannel(walletId: String): String {
+        return key(TELEGRAM_CHANNEL_PREFIX, walletId)
     }
 
     private fun key(prefix: String, walletId: String): String {

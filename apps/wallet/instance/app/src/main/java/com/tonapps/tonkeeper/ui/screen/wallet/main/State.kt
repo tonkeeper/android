@@ -173,6 +173,7 @@ sealed class State {
                         link = "tonkeeper://backups",
                         external = false,
                         blue = false,
+                        walletId = wallet.id
                     )
                     SetupType.Telegram -> Item.SetupLink(
                         position = position,
@@ -180,7 +181,8 @@ sealed class State {
                         textRes = Localization.setup_finish_telegram,
                         link = config.tonkeeperNewsUrl,
                         external = true,
-                        blue = true
+                        blue = true,
+                        walletId = wallet.id
                     )
                     SetupType.Biometry -> Item.SetupSwitch(
                         position = position,

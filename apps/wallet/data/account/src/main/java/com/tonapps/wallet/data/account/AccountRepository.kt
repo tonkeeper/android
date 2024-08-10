@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.account
 import android.content.Context
 import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
@@ -160,7 +161,7 @@ class AccountRepository(
             pubkey = wallet.publicKey.hex(),
             network = if (wallet.testnet) RNWallet.Network.Testnet else RNWallet.Network.Mainnet,
             type = type,
-            version = wallet.version.title,
+            version = walletVersion(wallet.version),
             workchain = wallet.contract.workchain,
             allowedDestinations = null,
             configPubKey = null,
@@ -171,6 +172,7 @@ class AccountRepository(
                 )
             },
         )
+
         rnLegacy.addWallet(rnWallet)
     }
 

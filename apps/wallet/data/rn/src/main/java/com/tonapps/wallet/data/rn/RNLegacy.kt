@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
+import com.tonapps.wallet.data.rn.data.RNTC
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallets
@@ -146,13 +147,24 @@ class RNLegacy(
         seedStorage.setActivity(activity)
     }
 
+    fun getTCApps(): RNTC {
+        val tcApps = getJSONState("TCApps")?.getJSONObject("connectedApps") ?: JSONObject()
+        return RNTC(tcApps)
+    }
+
+    fun setTCApps(data: RNTC) {
+        val json = JSONObject()
+        json.put("connectedApps", data.toJSON())
+        setJSONState("TCApps", json)
+    }
+
     fun setTokenHidden(
         walletId: String,
         tokenAddress: String,
         hidden: Boolean
     ) {
         val key = "${walletId}/tokenApproval"
-        val json = sql.getJSONObject(key)?.getJSONObject("tokens") ?: JSONObject()
+        val json = getJSONValue(key)?.getJSONObject("tokens") ?: JSONObject()
         if (hidden) {
             json.put(tokenAddress, JSONObject().apply {
                 put("current", "declined")
@@ -161,31 +173,56 @@ class RNLegacy(
         } else {
             json.remove(tokenAddress)
         }
-        sql.setJSONObject(key, JSONObject().apply {
+        setJSONValue(key, JSONObject().apply {
             put("tokens", json)
         })
     }
 
+    fun getSetup(walletId: String): Pair<Boolean, Boolean> {
+        val json = getJSONValue("${walletId}/setup") ?: JSONObject()
+        val setupDismissed = json.optBoolean("setupDismissed", false)
+        val hasOpenedTelegramChannel = json.optBoolean("hasOpenedTelegramChannel", false)
+        return Pair(setupDismissed, hasOpenedTelegramChannel)
+    }
+
+    fun setSetupDismissed(walletId: String) {
+        val key = "${walletId}/setup"
+        val json = getJSONValue(key) ?: JSONObject()
+        json.put("setupDismissed", true)
+        setJSONValue(key, json)
+    }
+
+    fun setHasOpenedTelegramChannel(walletId: String) {
+        val key = "${walletId}/setup"
+        val json = getJSONValue(key) ?: JSONObject()
+        json.put("hasOpenedTelegramChannel", true)
+        setJSONValue(key, json)
+    }
+
+    fun getNotificationsEnabled(walletId: String): Boolean {
+        val key = "$walletId/notifications"
+        return getJSONValue(key)?.getBoolean("isSubscribed") ?: false
+    }
+
+    fun setNotificationsEnabled(walletId: String, enabled: Boolean) {
+        val key = "$walletId/notifications"
+        val value = getJSONValue(key) ?: JSONObject()
+        value.put("isSubscribed", enabled)
+        setJSONValue(key, value)
+    }
+
     fun getHiddenTokens(walletId: String): List<String> {
-        val tokens = sql.getJSONObject("${walletId}/tokenApproval")?.getJSONObject("tokens") ?: JSONObject()
+        val tokens = getJSONValue("${walletId}/tokenApproval")?.getJSONObject("tokens") ?: JSONObject()
         val list = mutableListOf<String>()
         for (key in tokens.keys()) {
             val json = tokens.getJSONObject(key)
-            val hidden = json.optString("current") == "declined"
+            val current = json.optString("current") ?: continue
+            val hidden = current == "declined" || current == "spam"
             if (hidden) {
                 list.add(key)
             }
         }
         return list
-    }
-
-    fun isHiddenToken(walletId: String, tokenAddress: String): Boolean {
-        if (tokenAddress.equals("TON", ignoreCase = true)) {
-            return false
-        }
-        val tokens = sql.getJSONObject("${walletId}/tokenApproval")?.getJSONObject("tokens") ?: return false
-        val json = tokens.optJSONObject(tokenAddress) ?: return false
-        return json.optString("current") == "declined"
     }
 
     suspend fun getWallets(): RNWallets {
@@ -256,7 +293,7 @@ class RNLegacy(
     }
 
     private suspend fun loadWallets(): RNWallets = withContext(Dispatchers.IO) {
-        val value = sql.getJSONObject("walletsStore") ?: return@withContext RNWallets.empty
+        val value = getJSONValue("walletsStore") ?: return@withContext RNWallets.empty
         try {
             RNWallets(value)
         } catch (e: Throwable) {
@@ -265,7 +302,9 @@ class RNLegacy(
     }
 
     private suspend fun saveWallets(wallets: RNWallets) = withContext(Dispatchers.IO) {
-        sql.setJSONObject("walletsStore", wallets.toJSON())
+        val json = wallets.toJSON()
+        json.put("__version", 2)
+        setJSONValue("walletsStore", json)
     }
 
 }

@@ -29,9 +29,8 @@ class BrowserConnectedViewModel(
             tonConnectRepository.connectionsFlow
         ) { wallet, apps ->
             apps.filter { it.accountId == wallet.accountId }.distinctBy { it.url }.map {
-                val manifest = tonConnectRepository.getLocalManifest(it.url) ?: return@map null
-                Item(it, manifest)
-            }.filterNotNull()
+                Item(it)
+            }
         }.onEach {
             _uiItemsFlow.value = it
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)

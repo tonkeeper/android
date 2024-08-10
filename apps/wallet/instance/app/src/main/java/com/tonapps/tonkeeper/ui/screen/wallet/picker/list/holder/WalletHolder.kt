@@ -74,10 +74,10 @@ class WalletHolder(
     }
 
     private fun setType(type: Wallet.Type, version: WalletVersion) {
-        if (version == WalletVersion.V5R1 || version == WalletVersion.V5R1BETA) {
+        if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
             val color = context.accentGreenColor
             typeView.visibility = View.VISIBLE
-            if (version == WalletVersion.V5R1BETA) {
+            if (version == WalletVersion.V5BETA) {
                 typeView.setText(Localization.w5beta)
             } else {
                 typeView.setText(Localization.w5)

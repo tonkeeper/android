@@ -134,12 +134,12 @@ class BalanceHolder(
     }
 
     private fun setWalletType(type: Wallet.Type, version: WalletVersion) {
-        if (version == WalletVersion.V5R1 || version == WalletVersion.V5R1BETA) {
+        if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
             val color = context.accentGreenColor
             walletTypeView.visibility = View.VISIBLE
             walletTypeView.setTextColor(color)
             walletTypeView.backgroundTintList = color.withAlpha(.16f).stateList
-            if (version == WalletVersion.V5R1BETA) {
+            if (version == WalletVersion.V5BETA) {
                 walletTypeView.setText(Localization.w5beta)
             } else {
                 walletTypeView.setText(Localization.w5)

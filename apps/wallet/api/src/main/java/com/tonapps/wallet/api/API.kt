@@ -483,12 +483,11 @@ class API(
         token: String,
         accountId: String,
     ): JSONArray {
-        val url = "${config.tonapiMainnetHost}/v1/messages/history?account=$accountId"
-        val response = tonAPIHttpClient.get(url, ArrayMap<String, String>().apply {
-            set("X-TonConnect-Auth", token)
-        })
-
         return try {
+            val url = "${config.tonapiMainnetHost}/v1/messages/history?account=$accountId"
+            val response = tonAPIHttpClient.get(url, ArrayMap<String, String>().apply {
+                set("X-TonConnect-Auth", token)
+            })
             val json = JSONObject(response)
             json.getJSONArray("items")
         } catch (e: Throwable) {

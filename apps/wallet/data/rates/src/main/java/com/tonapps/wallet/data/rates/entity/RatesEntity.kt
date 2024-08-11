@@ -55,11 +55,19 @@ data class RatesEntity(
     }
 
     fun convert(token: String, value: Coins): Coins {
+        if (currency.code == token) {
+            return value
+        }
+
         val rate = rateValue(token)
         return (value * rate)
     }
 
     fun convertFromFiat(token: String, value: Coins): Coins {
+        if (currency.code == token) {
+            return value
+        }
+
         val rate = rateValue(token)
         return value.div(rate, RoundingMode.HALF_DOWN)
     }

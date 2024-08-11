@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
@@ -20,8 +21,8 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, null)
         nameView.text = item.poolName
-        balanceView.text = item.balanceFormat
-        balanceFiatView.text = item.fiatFormat
+        balanceView.text = item.balanceFormat.withCustomSymbol(context)
+        balanceFiatView.text = item.fiatFormat.withCustomSymbol(context)
 
         itemView.setOnClickListener {
             Navigation.from(context)?.add(StakeViewerScreen.newInstance(item.poolAddress, item.poolName))

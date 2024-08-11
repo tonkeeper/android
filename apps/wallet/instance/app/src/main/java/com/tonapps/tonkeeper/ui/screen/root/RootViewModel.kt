@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
@@ -64,6 +65,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
@@ -328,39 +330,60 @@ class RootViewModel(
     private fun resolveOther(_uri: Uri, wallet: WalletEntity) {
         val url = _uri.toString().replace("ton://", "https://app.tonkeeper.com/").replace("tonkeeper://", "https://app.tonkeeper.com/")
         val uri = Uri.parse(url)
+        val path = uri.path
 
         if (DeepLink.isTonConnectUri(uri)) {
             resolveTonConnect(uri, wallet)
         } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
             _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString()))
-        } else if (uri.path?.startsWith("/transfer/") == true) {
+        } else if (path?.startsWith("/staking") == true) {
+            _eventFlow.tryEmit(RootEvent.Staking)
+        } else if (path?.startsWith("/pool/") == true) {
+            _eventFlow.tryEmit(RootEvent.StakingPool(uri.pathSegments.last()))
+        } else if (path?.startsWith("/action/") == true) {
+            val actionId = uri.pathSegments.last()
+            val accountAddress = uri.getQueryParameter("account")
+            if (accountAddress == null) {
+                showTransaction(actionId)
+            } else {
+                showTransaction(accountAddress, actionId)
+            }
+        } else if (path?.startsWith("/transfer/") == true) {
             _eventFlow.tryEmit(RootEvent.Transfer(
                 address = uri.pathSegments.last(),
                 amount = uri.getQueryParameter("amount"),
                 text = uri.getQueryParameter("text"),
                 jettonAddress = uri.getQueryParameter("jetton"),
             ))
-        } else if (uri.path?.startsWith("/action/") == true) {
+        } else if (path?.startsWith("/action/") == true) {
             val account = uri.getQueryParameter("account") ?: return
             val hash = uri.pathSegments.lastOrNull() ?: return
             showTransaction(account, hash)
-        } else if (uri.path?.startsWith("/pick/") == true) {
+        } else if (path?.startsWith("/pick/") == true) {
             val walletId = uri.pathSegments.lastOrNull() ?: return
             viewModelScope.launch { accountRepository.setSelectedWallet(walletId) }
-        } else if (uri.path?.startsWith("/swap") == true) {
+        } else if (path?.startsWith("/swap") == true) {
             val ft = uri.getQueryParameter("ft") ?: "TON"
             val tt = uri.getQueryParameter("tt")
             _eventFlow.tryEmit(RootEvent.Swap(api.config.swapUri, wallet.address, ft, tt))
-        } else if (uri.path?.startsWith("/buy-ton") == true || uri.path == "/exchange" || uri.path == "/exchange/") {
+        } else if (path?.startsWith("/buy-ton") == true || uri.path == "/exchange" || uri.path == "/exchange/") {
             _eventFlow.tryEmit(RootEvent.BuyOrSell())
-        } else if (uri.path?.startsWith("/exchange") == true) {
+        } else if (path?.startsWith("/exchange") == true) {
             val name = uri.pathSegments.lastOrNull() ?: return
             val method = purchaseRepository.getMethod(name, wallet.testnet, settingsRepository.getLocale())
             _eventFlow.tryEmit(RootEvent.BuyOrSell(method))
-        } else if (uri.path?.startsWith("/backups") == true) {
+        } else if (path?.startsWith("/backups") == true) {
             _eventFlow.tryEmit(RootEvent.OpenBackups)
         } else {
             toast(Localization.invalid_link)
+        }
+    }
+
+    private fun showTransaction(hash: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
+            val item = historyHelper.getEvent(wallet, hash).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return@launch
+            _eventFlow.tryEmit(RootEvent.Transaction(item))
         }
     }
 

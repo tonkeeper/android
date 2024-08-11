@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.token.picker.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.drawable
@@ -23,7 +24,7 @@ class TokenHolder(
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
         titleView.text = item.symbol
-        balanceView.text = item.balance
+        balanceView.text = item.balance.withCustomSymbol(context)
         checkView.visibility = if (item.selected) View.VISIBLE else View.GONE
     }
 

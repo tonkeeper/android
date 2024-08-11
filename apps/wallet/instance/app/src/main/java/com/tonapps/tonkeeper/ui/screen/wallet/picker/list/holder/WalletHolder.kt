@@ -7,6 +7,8 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.emoji.ui.EmojiView
+import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
@@ -53,7 +55,7 @@ class WalletHolder(
         if (item.hiddenBalance) {
             balanceView.text = HIDDEN_BALANCE
         } else {
-            balanceView.text = item.balance
+            balanceView.text = item.balance.withCustomSymbol(context)
         }
 
         if (item.selected) {

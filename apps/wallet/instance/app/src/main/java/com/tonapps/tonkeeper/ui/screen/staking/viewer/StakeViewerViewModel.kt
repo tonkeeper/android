@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.staking.viewer
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
@@ -11,8 +12,11 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class StakeViewerViewModel(
     address: String,
@@ -24,12 +28,23 @@ class StakeViewerViewModel(
 
     private val currency = settingsRepository.currency
 
-    val uiItemsFlow = accountRepository.selectedWalletFlow.map { wallet ->
+    private val poolFlow = accountRepository.selectedWalletFlow.map { wallet ->
+        stakingRepository.get(wallet.accountId, wallet.testnet)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null).filterNotNull()
+
+    val poolNameFlow = poolFlow.map { staking ->
+        val pool = staking.findPoolByAddress(address) ?: throw IllegalArgumentException("Pool not found")
+        pool.name
+    }
+
+    val uiItemsFlow = poolFlow.map { staking ->
         val tonCode = TokenEntity.TON.symbol
         val rates = ratesRepository.getRates(currency, tonCode)
-        val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+
         val pool = staking.findPoolByAddress(address) ?: throw IllegalArgumentException("Pool not found")
         val poolDetails = staking.getDetails(pool.implementation) ?: throw IllegalArgumentException("Pool details not found")
+        Pair(pool, poolDetails)
+
         val amount = staking.getAmount(pool)
         val fiat = rates.convert(tonCode, amount)
 

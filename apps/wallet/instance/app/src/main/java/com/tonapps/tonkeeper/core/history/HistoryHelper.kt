@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
-import android.util.Log
 import androidx.collection.arrayMapOf
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
@@ -229,6 +228,16 @@ class HistoryHelper(
         hiddenBalances: Boolean = false
     ): List<HistoryItem> {
         return mapping(wallet, listOf(event), removeDate, hiddenBalances)
+    }
+
+    suspend fun getEvent(
+        wallet: WalletEntity,
+        eventId: String,
+        removeDate: Boolean = false,
+        hiddenBalances: Boolean = false
+    ): List<HistoryItem> {
+        val events = eventsRepository.getSingle(eventId, wallet.testnet) ?: return emptyList()
+        return mapping(wallet, events, removeDate, hiddenBalances)
     }
 
     suspend fun mapping(

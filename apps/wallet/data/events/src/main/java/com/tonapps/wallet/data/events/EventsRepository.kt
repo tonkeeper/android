@@ -36,6 +36,8 @@ class EventsRepository(
         localDataSource.saveDecryptedComment(txId, comment)
     }
 
+    suspend fun getSingle(eventId: String, testnet: Boolean) = remoteDataSource.getSingle(eventId, testnet)
+
     suspend fun getLast(
         accountId: String,
         testnet: Boolean
@@ -73,8 +75,9 @@ class EventsRepository(
             if (beforeLt != null) {
                 remoteDataSource.get(accountId, testnet, beforeLt)
             } else {
-                val events = remoteDataSource.get(accountId, testnet)
-                localDataSource.setCache(cacheKey(accountId, testnet), events)
+                val events = remoteDataSource.get(accountId, testnet)?.also {
+                    localDataSource.setCache(cacheKey(accountId, testnet), it)
+                }
                 events
             }
         } catch (e: Throwable) {

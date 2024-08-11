@@ -9,6 +9,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.ifPunycodeToUnicode
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.shortHash
 import com.tonapps.tonkeeper.core.history.ActionType
@@ -118,9 +119,10 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             amountView.text = HIDDEN_BALANCE
             feeView.setData(HIDDEN_BALANCE, HIDDEN_BALANCE)
         } else {
-            amountView.text = action.value
-            feeView.setData(action.fee!!, action.feeInCurrency!!)
+            amountView.text = action.value.withCustomSymbol(requireContext())
+            feeView.setData(action.fee!!.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
         }
+
 
         applyIcon(action.coinIconUrl)
         if (action.comment != null) {
@@ -168,7 +170,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             if (hiddenBalance) {
                 currencyView.text = HIDDEN_BALANCE
             } else {
-                currencyView.text = currency
+                currencyView.text = currency.withCustomSymbol(requireContext())
             }
         }
     }

@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
@@ -69,7 +70,7 @@ class BalanceHolder(
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
             balanceView.background = HiddenBalanceDrawable(context)
         } else {
-            balanceView.text = item.balance
+            balanceView.text = item.balance.withCustomSymbol(context)
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f)
             balanceView.background = null
         }

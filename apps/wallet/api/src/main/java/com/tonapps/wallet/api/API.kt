@@ -27,10 +27,12 @@ import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.api.internal.ConfigRepository
 import com.tonapps.wallet.api.internal.InternalApi
 import io.tonapi.models.Account
+import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.EmulateMessageToWalletRequestParamsInner
+import io.tonapi.models.Event
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
@@ -98,9 +100,13 @@ class API(
 
     fun staking(testnet: Boolean) = provider.staking.get(testnet)
 
+    fun events(testnet: Boolean) = provider.events.get(testnet)
+
     fun rates() = provider.rates.get(false)
 
-    fun getAlertNotifications() = internalApi.getNotifications()
+    suspend fun getAlertNotifications() = withRetry {
+        internalApi.getNotifications()
+    } ?: emptyList()
 
     private suspend fun isOkStatus(testnet: Boolean): Boolean {
         try {
@@ -119,19 +125,42 @@ class API(
         }
     }
 
-    fun getEvents(
+    suspend fun getEvents(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
         limit: Int = 20
-    ): AccountEvents {
-        return accounts(testnet).getAccountEvents(
+    ): AccountEvents? = withRetry {
+        accounts(testnet).getAccountEvents(
             accountId = accountId,
             limit = limit,
             beforeLt = beforeLt,
             subjectOnly = true
         )
     }
+
+    suspend fun getSingleEvent(
+        eventId: String,
+        testnet: Boolean
+    ): List<AccountEvent>? {
+        val event = withRetry { events(testnet).getEvent(eventId) } ?: return null
+        val accountEvent = AccountEvent(
+            eventId = eventId,
+            account = AccountAddress(
+                address = "",
+                isScam = false,
+                isWallet = false,
+            ),
+            timestamp = event.timestamp,
+            actions = event.actions,
+            isScam = event.isScam,
+            lt = event.lt,
+            inProgress = event.inProgress,
+            extra = 0L,
+        )
+        return listOf(accountEvent)
+    }
+
 
     fun getTokenEvents(
         tokenAddress: String,

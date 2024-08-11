@@ -1,10 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.action
 
 import android.os.Bundle
+import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -56,7 +58,13 @@ class ActionScreen: BaseFragment(R.layout.fragment_action), BaseFragment.Modal {
         adapter.submitList(args.historyItems)
 
         feeView = view.findViewById(R.id.fee)
-        feeView.text = String.format("≈ %s · %s", args.feeFormat, args.feeFiatFormat)
+
+        val builder = SpannableStringBuilder("≈ ")
+        builder.append(args.feeFormat.withCustomSymbol(requireContext()))
+        builder.append(" · ")
+        builder.append(args.feeFiatFormat.withCustomSymbol(requireContext()))
+
+        feeView.text = builder
 
         processView = view.findViewById(R.id.process)
         buttonsView = view.findViewById(R.id.buttons)

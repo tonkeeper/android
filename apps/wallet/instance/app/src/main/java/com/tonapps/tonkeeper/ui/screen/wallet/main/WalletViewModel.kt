@@ -276,7 +276,7 @@ class WalletViewModel(
 
         val assets = (filteredTokens.map { AssetsEntity.Token(it) } + stakedWithFiat.map { AssetsEntity.Staked(it) }).sortedBy { it.fiat }.reversed()
 
-        return State.Assets(currency, assets.sort(wallet, settingsRepository), fromCache)
+        return State.Assets(currency, assets.sort(wallet, settingsRepository), fromCache, rates)
     }
 
     private fun getApps(

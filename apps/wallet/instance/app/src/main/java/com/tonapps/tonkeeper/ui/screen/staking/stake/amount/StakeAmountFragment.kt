@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
@@ -15,6 +16,7 @@ import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.map
 import uikit.extensions.collectFlow
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
@@ -61,7 +63,9 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
         collectFlow(stakeViewModel.selectedPoolFlow, ::applyPoolInfo)
         collectFlow(stakeViewModel.availableUiStateFlow, ::applyAvailableState)
         collectFlow(stakeViewModel.fiatFormatFlow, ::applyFiat)
-        collectFlow(stakeViewModel.apyFormatFlow, poolDescriptionView::setText)
+        collectFlow(stakeViewModel.apyFormatFlow.map {
+            it.withCustomSymbol(requireContext())
+        }, poolDescriptionView::setText)
     }
 
     override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {
@@ -81,7 +85,7 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
     override fun getTitle() = getString(Localization.stake)
 
     private fun applyFiat(fiatFormat: CharSequence) {
-        currencyView.text = fiatFormat
+        currencyView.text = fiatFormat.withCustomSymbol(requireContext())
     }
 
     private fun applyAvailableState(state: StakingViewModel.AvailableUiState) {
@@ -90,15 +94,15 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
             availableView.setTextColor(requireContext().accentRedColor)
             button.isEnabled = false
         } else if (state.remainingFormat == state.balanceFormat) {
-            availableView.text = getString(Localization.available_balance, state.balanceFormat)
+            availableView.text = getString(Localization.available_balance, state.balanceFormat).withCustomSymbol(requireContext())
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = false
         } else if (state.requestMinStake) {
-            availableView.text = getString(Localization.staking_minimum_deposit, state.minStakeFormat)
+            availableView.text = getString(Localization.staking_minimum_deposit, state.minStakeFormat).withCustomSymbol(requireContext())
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = false
         } else {
-            availableView.text = getString(Localization.remaining_balance, state.remainingFormat)
+            availableView.text = getString(Localization.remaining_balance, state.remainingFormat).withCustomSymbol(requireContext())
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = true
         }

@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
@@ -31,7 +32,7 @@ class TokenHolder(
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
         titleView.text = item.symbol
-        balanceView.text = item.balanceFormat
+        balanceView.text = item.balanceFormat.withCustomSymbol(context)
 
         pinnedView.setOnClickListener {
             val pinned = !item.pinned

@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
+import android.content.Context
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.DEFAULT_DECIMALS
 import com.tonapps.icu.Coins.Companion.sumOf
@@ -17,6 +18,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.localization.Localization
@@ -41,12 +43,13 @@ sealed class State {
         val currency: WalletCurrency,
         val list: List<AssetsEntity>,
         val fromCache: Boolean,
+        val rates: RatesEntity,
     ): State() {
 
         val size: Int
             get() = list.size
 
-        private fun getTotalBalance(wallet: WalletEntity): Coins {
+        private fun getTotalBalanceFiat(wallet: WalletEntity): Coins {
             return if (wallet.testnet) {
                 list.first().fiat
             } else {
@@ -55,18 +58,19 @@ sealed class State {
         }
 
         fun getBalanceType(wallet: WalletEntity): BalanceType {
-            val balance = getTotalBalance(wallet)
+            val balanceFiat = getTotalBalanceFiat(wallet)
+            val balanceTON = rates.convertFromFiat(TokenEntity.TON.address, balanceFiat)
             return when {
-                balance > Coins.of(20.0, DEFAULT_DECIMALS) -> BalanceType.Huge
-                balance > Coins.of(2.0, DEFAULT_DECIMALS) -> BalanceType.Positive
+                balanceTON >= Coins.of(20.0, DEFAULT_DECIMALS) -> BalanceType.Huge
+                balanceTON >= Coins.of(2.0, DEFAULT_DECIMALS) -> BalanceType.Positive
                 else -> BalanceType.Zero
             }
         }
 
         fun getTotalBalanceFormat(
-            wallet: WalletEntity
+            wallet: WalletEntity,
         ): CharSequence {
-            val total = getTotalBalance(wallet)
+            val total = getTotalBalanceFiat(wallet)
             return CurrencyFormatter.formatFiat(currency.code, total)
         }
     }
@@ -74,7 +78,7 @@ sealed class State {
     data class Main(
         val wallet: WalletEntity,
         val assets: Assets,
-        val hasBackup: Boolean,
+        val hasBackup: Boolean
     ): State() {
 
         private val totalBalanceFormat: CharSequence
@@ -171,34 +175,34 @@ sealed class State {
                         iconRes = UIKitIcon.ic_key_28,
                         textRes = Localization.setup_finish_backup,
                         link = "tonkeeper://backups",
-                        external = false,
                         blue = false,
-                        walletId = wallet.id
+                        walletId = wallet.id,
+                        settingsType = Item.SetupLink.TYPE_NONE
                     )
                     SetupType.Telegram -> Item.SetupLink(
                         position = position,
                         iconRes = UIKitIcon.ic_telegram_28,
                         textRes = Localization.setup_finish_telegram,
                         link = config.tonkeeperNewsUrl,
-                        external = true,
                         blue = true,
-                        walletId = wallet.id
+                        walletId = wallet.id,
+                        settingsType = Item.SetupLink.TYPE_TELEGRAM_CHANNEL
                     )
                     SetupType.Biometry -> Item.SetupSwitch(
                         position = position,
                         iconRes = UIKitIcon.ic_faceid_28,
                         textRes = Localization.setup_finish_biometry,
                         enabled = false,
-                        isPush = false,
-                        walletId = wallet.id
+                        walletId = wallet.id,
+                        settingsType = Item.SetupSwitch.TYPE_BIOMETRIC
                     )
                     SetupType.Push -> Item.SetupSwitch(
                         position = ListCell.Position.FIRST,
                         iconRes = UIKitIcon.ic_bell_28,
                         textRes = Localization.setup_finish_push,
                         enabled = false,
-                        isPush = true,
-                        walletId = wallet.id
+                        walletId = wallet.id,
+                        settingsType = Item.SetupSwitch.TYPE_PUSH
                     )
                 }
                 uiItems.add(item)

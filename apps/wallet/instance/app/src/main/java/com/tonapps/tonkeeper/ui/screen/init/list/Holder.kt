@@ -6,6 +6,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textTertiaryColor
@@ -35,12 +36,12 @@ class Holder(
     }
 
     private fun setDetails(walletVersion: WalletVersion, balance: CharSequence, tokens: Boolean, collectibles: Boolean, isLedger: Boolean, ledgerAdded: Boolean) {
-        val builder = StringBuilder()
+        val builder = SpannableStringBuilder()
         if (!isLedger) {
             builder.append(walletVersion.title)
             builder.append(DOT)
         }
-        builder.append(balance)
+        builder.append(balance.withCustomSymbol(context))
         if (tokens) {
             builder.append(", ")
             builder.append("tokens")

@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.widget.RemoteViews
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
@@ -39,8 +40,8 @@ class WidgetBalanceProvider: Widget() {
             val balanceFormat = CurrencyFormatter.format("TON", token.balance.value)
             val fiatBalance = CurrencyFormatter.formatFiat(settingsRepository.currency.code, token.fiat)
             val entity = WidgetBalanceEntity(
-                tonBalance = balanceFormat,
-                currencyBalance = fiatBalance,
+                tonBalance = balanceFormat.withCustomSymbol(context),
+                currencyBalance = fiatBalance.withCustomSymbol(context),
                 walletAddress = wallet.address,
                 label = wallet.label.title
             )

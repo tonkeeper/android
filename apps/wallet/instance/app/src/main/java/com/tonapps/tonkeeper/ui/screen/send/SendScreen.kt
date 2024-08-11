@@ -20,6 +20,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.icu.Coins
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -436,8 +437,8 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             return
         }
         reviewRecipientAmountView.visibility = View.VISIBLE
-        reviewRecipientAmountView.value = amount.format
-        reviewRecipientAmountView.description = amount.convertedFormat
+        reviewRecipientAmountView.value = amount.format.withCustomSymbol(requireContext())
+        reviewRecipientAmountView.description = amount.convertedFormat.withCustomSymbol(requireContext())
     }
 
     private fun applyTransactionAccount(destination: SendDestination.Account) {
@@ -458,8 +459,8 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             reviewRecipientFeeView.setLoading()
             confirmButton.isEnabled = false
         } else {
-            reviewRecipientFeeView.value = "≈ ${event.format}"
-            reviewRecipientFeeView.description = "≈ ${event.convertedFormat}"
+            reviewRecipientFeeView.value = "≈ ${event.format}".withCustomSymbol(requireContext())
+            reviewRecipientFeeView.description = "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
             reviewRecipientFeeView.setDefault()
             confirmButton.isEnabled = true
         }
@@ -502,7 +503,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
     }
 
     private fun setAmountState(state: SendAmountState) {
-        convertedView.text = state.convertedFormat
+        convertedView.text = state.convertedFormat.withCustomSymbol(requireContext())
         amountView.suffix = state.currencyCode
 
         if (state.insufficientBalance) {
@@ -511,7 +512,7 @@ class SendScreen: BaseFragment(R.layout.fragment_send_new), BaseFragment.BottomS
             maxView.visibility = View.GONE
         } else {
             statusView.setTextColor(requireContext().textSecondaryColor)
-            statusView.text = state.remainingFormat
+            statusView.text = state.remainingFormat.withCustomSymbol(requireContext())
             maxView.visibility = View.VISIBLE
         }
     }

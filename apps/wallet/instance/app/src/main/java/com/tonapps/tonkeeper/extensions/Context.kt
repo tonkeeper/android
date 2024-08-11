@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import androidx.core.text.bold
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.ui.screen.action.ActionScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.proof.LedgerProofScreen
@@ -82,18 +83,22 @@ fun Context.getDiffColor(diff: String): Int {
     }
 }
 
-fun Context.buildRateString(rate: CharSequence, diff24h: String): SpannableString {
+fun Context.buildRateString(rate: CharSequence, diff24h: String): CharSequence {
     if (diff24h.isEmpty() || diff24h == "0" || diff24h == "0.00%") {
         return SpannableString(rate)
     }
-    val span = SpannableString("$rate $diff24h")
-    span.setSpan(
+    val builder = SpannableStringBuilder()
+    builder.append(rate)
+    builder.append(" ")
+    builder.append(diff24h)
+
+    builder.setSpan(
         ForegroundColorSpan(getDiffColor(diff24h)),
         rate.length,
         rate.length + diff24h.length + 1,
         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
     )
-    return span
+    return builder
 }
 
 fun Context.getStringCompat(@StringRes resId: Int, vararg formatArgs: CharSequence?): CharSequence {

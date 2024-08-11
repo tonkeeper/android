@@ -1,8 +1,8 @@
 object Dependence {
 
     const val ton = "org.ton:ton-kotlin:0.2.15"
-    const val fresco = "com.facebook.fresco:fresco:3.1.3"
-    const val guava = "com.google.guava:guava:33.1.0-android"
+    const val fresco = "com.facebook.fresco:fresco:3.2.0"
+    const val guava = "com.google.guava:guava:33.2.1-android"
     const val zxing = "com.google.zxing:core:3.5.3"
 
     object Analytics {
@@ -11,10 +11,10 @@ object Dependence {
 
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
-        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.0"
-        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0"
+        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.1"
+        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.0"
-        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.4.0"
+        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.5.1"
     }
 
     object GooglePlay {
@@ -40,23 +40,23 @@ object Dependence {
         const val core = "androidx.core:core-ktx:1.13.1"
         const val shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
         const val appCompat = "androidx.appcompat:appcompat:1.7.0"
-        const val activity = "androidx.activity:activity-ktx:1.9.0"
-        const val fragment = "androidx.fragment:fragment-ktx:1.8.0"
+        const val activity = "androidx.activity:activity-ktx:1.9.1"
+        const val fragment = "androidx.fragment:fragment-ktx:1.8.2"
         const val recyclerView = "androidx.recyclerview:recyclerview:1.3.2"
         const val viewPager2 = "androidx.viewpager2:viewpager2:1.1.0"
         const val security = "androidx.security:security-crypto:1.0.0"
-        const val workManager = "androidx.work:work-runtime-ktx:2.9.0"
+        const val workManager = "androidx.work:work-runtime-ktx:2.9.1"
         const val biometric = "androidx.biometric:biometric:1.1.0"
-        const val annotation = "androidx.annotation:annotation:1.8.0"
+        const val annotation = "androidx.annotation:annotation:1.8.1"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.1"
         const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.1.4"
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"
-        const val webkit = "androidx.webkit:webkit:1.9.0"
+        const val webkit = "androidx.webkit:webkit:1.11.0"
 
-        const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.2"
-        const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.2"
+        const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
+        const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.4"
 
         object Camera {
             private const val version = "1.4.0-alpha04"
@@ -81,7 +81,7 @@ object Dependence {
     }
 
     object Firebase {
-        const val bom = "com.google.firebase:firebase-bom:33.1.0"
+        const val bom = "com.google.firebase:firebase-bom:33.1.2"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
         const val messaging = "com.google.firebase:firebase-messaging-ktx"

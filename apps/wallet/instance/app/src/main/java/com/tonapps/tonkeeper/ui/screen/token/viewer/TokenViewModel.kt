@@ -154,24 +154,7 @@ class TokenViewModel(
     private fun setEvents(
         items: List<HistoryItem>
     ) {
-        val preparedItems = items.filter { it is HistoryItem.Event || it is HistoryItem.App }
-            .sortedBy { it.timestampForSort }
-            .reversed()
-
-        val uiItems = mutableListOf<HistoryItem>()
-        var currentDate: String? = null
-
-        for (item in preparedItems) {
-            val timestamp = item.timestampForSort
-            val dateFormat = DateHelper.formatDate(application, timestamp)
-            if (dateFormat != currentDate) {
-                uiItems.add(HistoryItem.Header(dateFormat, item.timestampForSort))
-                currentDate = dateFormat
-            }
-            uiItems.add(item)
-        }
-
-        _uiHistoryFlow.value = uiItems.toList()
+        _uiHistoryFlow.value = historyHelper.groupByDate(items)
     }
 
     private fun foundLastItem(): HistoryItem.Event? {

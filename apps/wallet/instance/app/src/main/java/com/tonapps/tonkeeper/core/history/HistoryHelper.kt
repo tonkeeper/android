@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
+import android.util.Log
+import androidx.collection.arrayMapOf
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.withMinus
@@ -46,9 +48,20 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.until
+import java.time.format.DateTimeFormatterBuilder
+import java.util.Locale
 
 // TODO request refactoring
 class HistoryHelper(
+    private val context: Context,
     private val accountRepository: AccountRepository,
     private val ratesRepository: RatesRepository,
     private val collectiblesRepository: CollectiblesRepository,
@@ -61,10 +74,74 @@ class HistoryHelper(
         get() = settingsRepository.currency
 
     companion object {
-        const val EVENT_LIMIT = 20
 
         const val MINUS_SYMBOL = "-"
         const val PLUS_SYMBOL = "+"
+
+        private val monthYearFormatter = DateTimeFormatterBuilder()
+            .appendPattern("MMMM yyyy")
+            .toFormatter(Locale.US)
+
+        private val dayMonthFormatter = DateTimeFormatterBuilder()
+            .appendPattern("d MMMM")
+            .toFormatter(Locale.US)
+    }
+
+    private data class ActionDateSection(
+        val date: Long,
+        val dateFormat: String,
+        val events: MutableList<HistoryItem.Event>
+    ) {
+
+        fun get(): List<HistoryItem> {
+            val list = mutableListOf<HistoryItem>()
+            list.add(HistoryItem.Header(dateFormat, date))
+            for (event in events) {
+                list.add(event)
+            }
+            return list.toList()
+        }
+    }
+
+    private fun sort(list: List<HistoryItem>): List<HistoryItem.Event> {
+        return list
+            .filterIsInstance<HistoryItem.Event>()
+            .distinctBy { it.uniqueId }
+            .sortedWith { a, b ->
+                (b.timestampForSort - a.timestampForSort).toInt()
+            }
+    }
+
+    fun groupByDate(items: List<HistoryItem>): List<HistoryItem> {
+        val events = sort(items)
+        val output = arrayMapOf<String, ActionDateSection>()
+        for (event in events) {
+            val groupKey = getGroupKey(event.timestampForSort)
+            val date = event.timestampForSort
+            val section = output[groupKey] ?: ActionDateSection(date, DateHelper.formatTransactionsGroupDate(context, date), mutableListOf())
+            section.events.add(event)
+            output[groupKey] = section
+        }
+        return output.map { it.value.get() }.flatten().sortedWith { a, b ->
+            (b.timestampForSort - a.timestampForSort).toInt()
+        }.distinctBy { it.uniqueId }.toList()
+    }
+
+    private fun getGroupKey(timestamp: Long): String {
+        val ts = Instant.fromEpochSeconds(timestamp)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
+        val now = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
+
+        val monthsBetween = ts.until(now, DateTimeUnit.MONTH)
+
+        return if (monthsBetween < 1) {
+            dayMonthFormatter.format(ts.toJavaLocalDate())
+        } else {
+            monthYearFormatter.format(ts.toJavaLocalDate())
+        }
     }
 
     fun requestDecryptComment(
@@ -145,14 +222,6 @@ class HistoryHelper(
         return items
     }
 
-
-    fun formatDate(timestamp: Long): String {
-        if (timestamp == 0L) {
-            return ""
-        }
-        return DateHelper.formatTime(timestamp)
-    }
-
     suspend fun mapping(
         wallet: WalletEntity,
         event: AccountEvent,
@@ -213,7 +282,8 @@ class HistoryHelper(
     ): HistoryItem.Event {
 
         val simplePreview = action.simplePreview
-        val date = formatDate(timestamp)
+        val date = DateHelper.formatTransactionTime(timestamp)
+        val dateDetails = DateHelper.formatTransactionDetailsTime(timestamp)
 
         if (action.jettonSwap != null) {
             val jettonSwap = action.jettonSwap!!
@@ -254,6 +324,7 @@ class HistoryHelper(
                 coinIconUrl = jettonPreview.image,
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = isOut,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
@@ -303,6 +374,7 @@ class HistoryHelper(
                 coinIconUrl = jettonTransfer.jetton.image,
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = isOut,
                 address = accountAddress?.address?.toUserFriendly(
                     wallet = accountAddress.isWallet,
@@ -357,6 +429,7 @@ class HistoryHelper(
                 coinIconUrl = TokenEntity.TON.imageUri.toString(),
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = isOut,
                 address = accountAddress.address.toUserFriendly(
                     wallet = accountAddress.isWallet,
@@ -385,6 +458,7 @@ class HistoryHelper(
                 tokenCode = "TON",
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = true,
                 failed = action.status == Action.Status.failed,
             )
@@ -431,6 +505,7 @@ class HistoryHelper(
                 tokenCode = "NFT",
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = isOut,
                 failed = action.status == Action.Status.failed,
                 senderAddress = nftItemTransfer.sender?.address,
@@ -447,6 +522,7 @@ class HistoryHelper(
                 tokenCode = "TON",
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
@@ -468,6 +544,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 coinIconUrl = depositStake.implementation.iconURL,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
@@ -489,6 +566,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 coinIconUrl = jettonMint.jetton.image,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonMint.jetton.verification != JettonVerificationType.whitelist
@@ -511,6 +589,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 coinIconUrl = withdrawStakeRequest.implementation.iconURL,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
@@ -527,6 +606,7 @@ class HistoryHelper(
                 tokenCode = "",
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
@@ -549,11 +629,12 @@ class HistoryHelper(
                 tokenCode = tokenCode,
                 timestamp = timestamp,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
         } else if (action.type == Action.Type.unknown) {
-            return createUnknown(index, txId, action, date, timestamp, simplePreview)
+            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails)
         } else if (action.withdrawStake != null) {
             val withdrawStake = action.withdrawStake!!
 
@@ -572,6 +653,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 coinIconUrl = withdrawStake.implementation.iconURL,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
@@ -598,6 +680,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 nft = nftItem,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
@@ -618,6 +701,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 coinIconUrl = jettonBurn.jetton.image,
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonBurn.jetton.verification != JettonVerificationType.whitelist
@@ -636,6 +720,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 coinIconUrl = unsubscribe.beneficiary.iconURL ?: "",
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
@@ -656,11 +741,12 @@ class HistoryHelper(
                 timestamp = timestamp,
                 coinIconUrl = subscribe.beneficiary.iconURL ?: "",
                 date = date,
+                dateDetails = dateDetails,
                 isOut = false,
                 failed = action.status == Action.Status.failed,
             )
         } else {
-            return createUnknown(index, txId, action, date, timestamp, simplePreview)
+            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails)
         }
     }
 
@@ -671,6 +757,7 @@ class HistoryHelper(
         date: String,
         timestamp: Long,
         simplePreview: ActionSimplePreview,
+        dateDetails: String,
     ) = HistoryItem.Event(
         index = index,
         txId = txId,
@@ -681,6 +768,7 @@ class HistoryHelper(
         tokenCode = "TON",
         timestamp = timestamp,
         date = date,
+        dateDetails = dateDetails,
         isOut = false,
         failed = action.status == Action.Status.failed
     )

@@ -131,7 +131,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
         applyAccount(action.isOut, action.address, action.addressName?.ifPunycodeToUnicode())
         applyCurrency(action.currency, action.hiddenBalance)
-        applyDate(action.action, action.date)
+        applyDate(action.action, action.dateDetails)
 
         txView.setData(action.txId.shortHash, "")
         txView.setOnClickListener {

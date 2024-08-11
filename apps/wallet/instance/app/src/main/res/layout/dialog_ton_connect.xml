@@ -9,8 +9,7 @@
         android:id="@+id/loader"
         android:layout_width="42dp"
         android:layout_height="42dp"
-        android:layout_gravity="center"
-        android:background="@color/accentPurpleBlue"/>
+        android:layout_gravity="center"/>
 
     <uikit.widget.ColumnLayout
         android:id="@+id/app_content"

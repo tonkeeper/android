@@ -167,7 +167,6 @@ class BalanceHolder(
 
     private fun getTypeColor(type: Wallet.Type): Int {
         return when (type) {
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> context.accentPurpleColor
             Wallet.Type.Ledger -> context.accentGreenColor
             else -> context.accentOrangeColor
         }

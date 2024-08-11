@@ -45,7 +45,7 @@ sealed class HistoryItem(
             is Event -> this.timestamp - this.index
             is Loader -> this.date
             is App -> this.timestamp
-            else -> 0L
+            is Header -> this.date
         }
     }
 
@@ -54,7 +54,7 @@ sealed class HistoryItem(
             is Event -> "event_${this.txId}_${this.index}"
             is Loader -> "loader_${this.index}"
             is App -> "app_${this.timestamp}"
-            else -> ""
+            is Header -> "header_${this.title}"
         }
     }
 
@@ -172,6 +172,7 @@ sealed class HistoryItem(
         val nft: NftEntity? = null,
         val tokenCode: String? = null,
         val date: String = "",
+        val dateDetails: String = "",
         val pending: Boolean = false,
         val position: ListCell.Position = ListCell.Position.SINGLE,
         val coinIconUrl: String = "",

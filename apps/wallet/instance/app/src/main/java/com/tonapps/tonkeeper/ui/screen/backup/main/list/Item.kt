@@ -29,7 +29,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Item(TYPE_BACKUP) {
 
         val date: String by lazy {
-            DateHelper.formatHourYear(entity.date / 1000)
+            DateHelper.timestampToDateString(entity.date / 1000)
         }
     }
 

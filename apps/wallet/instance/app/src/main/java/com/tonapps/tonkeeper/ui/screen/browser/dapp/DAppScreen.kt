@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.RectF
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +18,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
@@ -31,6 +33,12 @@ import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -38,7 +46,10 @@ import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
+import uikit.extensions.getCurrentFocus
 import uikit.extensions.pinToBottomInsets
+import uikit.extensions.setPaddingBottom
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.webview.bridge.BridgeWebView
 import java.util.UUID
@@ -83,6 +94,9 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             }
         }
     }
+
+    private val _keyboardHeightFlow = MutableStateFlow(0)
+    private val keyboardHeightFlow = _keyboardHeightFlow.asStateFlow()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,10 +155,32 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
             headerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 topMargin = statusInsets.top
             }
-            // val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            // webView.translationY = -imeInsets.bottom.toFloat()
+            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            _keyboardHeightFlow.value = imeInsets.bottom
             insets
         }
+
+        combine(
+            keyboardHeightFlow,
+            webView.inputFocusFlow
+        ) { keyboardHeight, inputFocusRect ->
+            if (0 >= keyboardHeight) {
+                0f
+            } else {
+                val webViewHeight = webView.height
+                val inputBottom = inputFocusRect.bottom.dp
+                val keyboardHeightFloat = keyboardHeight.toFloat()
+                val visibleHeight = webViewHeight - keyboardHeightFloat
+                val coveredHeight = webViewHeight - visibleHeight
+                val neededTranslation = (inputBottom + coveredHeight) - webViewHeight
+                if (neededTranslation > 0) {
+                    val extraPadding = 20f
+                    -minOf(neededTranslation + extraPadding, keyboardHeightFloat)
+                } else {
+                    0f
+                }
+            }
+        }.onEach(webView::setTranslationY).launchIn(lifecycleScope)
     }
 
     override fun onDestroyView() {

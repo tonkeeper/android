@@ -45,7 +45,7 @@
     <string name="domain_link_button">Привязать домен</string>
     <string name="domain_renew_button">Продлить домен</string>
 
-    <string name="edit">Редактировать</string>
+    <string name="edit">Изменить</string>
     <string name="pinned">Закреплённые</string>
     <string name="all_assets">Все активы</string>
     <string name="sorted_by_price">По стоимости</string>

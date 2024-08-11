@@ -25,9 +25,9 @@ object HistoryItemDecoration: RecyclerView.ItemDecoration() {
             }
             return
         }
-        if (position == 0) {
+        /*if (position == 0) {
             return
-        }
+        }*/
         val holder = parent.findViewHolderForAdapterPosition(position) ?: return
         val item = (holder as? BaseListHolder<*>)?.item ?: return
 

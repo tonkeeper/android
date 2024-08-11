@@ -148,7 +148,7 @@ class EventsViewModel(
                 iconUri = Uri.parse(manifest.iconUrl),
                 title = manifest.name,
                 body = event.message,
-                date = DateHelper.formatTime(event.dateUnix),
+                date = DateHelper.timestampToDateString(event.dateUnix),
                 timestamp = event.dateUnix,
                 deepLink = event.link,
                 host = manifest.host
@@ -236,26 +236,10 @@ class EventsViewModel(
         items: List<HistoryItem>,
         more: Boolean
     ) {
-        val preparedItems = items.filter { it is HistoryItem.Event || it is HistoryItem.App }
-            .sortedBy { it.timestampForSort }
-            .reversed()
-
-        val uiItems = mutableListOf<HistoryItem>()
-        var currentDate: String? = null
-
-        for (item in preparedItems) {
-            val timestamp = item.timestampForSort
-            val dateFormat = DateHelper.formatDate(application, timestamp)
-            if (dateFormat != currentDate) {
-                uiItems.add(HistoryItem.Header(dateFormat, item.timestampForSort))
-                currentDate = dateFormat
-            }
-            uiItems.add(item)
-        }
-
-        _uiItemsFlow.value = uiItems.toList()
+        val uiItems = historyHelper.groupByDate(items)
+        _uiItemsFlow.value = uiItems
         if (!more) {
-            screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
+            screenCacheSource.set(CACHE_NAME, wallet.id, uiItems.toList())
         }
     }
 

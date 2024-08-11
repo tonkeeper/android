@@ -13,9 +13,9 @@ data class DAppManifestEntity(
     val url: String,
     val name: String,
     val iconUrl: String,
-    val termsOfUseUrl: String?,
-    val privacyPolicyUrl: String?,
-    val source: String,
+    val termsOfUseUrl: String? = null,
+    val privacyPolicyUrl: String? = null,
+    val source: String = "",
 ) : Parcelable {
 
     val host: String

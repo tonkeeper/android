@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
 import com.tonapps.tonkeeperx.R
 
@@ -14,7 +15,7 @@ class DetailsHolder(
 
     override fun onBind(item: Item.Details) {
         apyView.text = item.apyFormat
-        minDepositView.text = item.minDepositFormat
+        minDepositView.text = item.minDepositFormat.withCustomSymbol(context)
     }
 
 }

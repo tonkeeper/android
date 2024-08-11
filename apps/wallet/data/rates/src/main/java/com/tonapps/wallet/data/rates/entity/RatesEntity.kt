@@ -5,6 +5,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import kotlinx.parcelize.Parcelize
+import java.math.RoundingMode
 
 @Parcelize
 data class RatesEntity(
@@ -54,13 +55,21 @@ data class RatesEntity(
     }
 
     fun convert(token: String, value: Coins): Coins {
+        if (currency.code == token) {
+            return value
+        }
+
         val rate = rateValue(token)
         return (value * rate)
     }
 
     fun convertFromFiat(token: String, value: Coins): Coins {
+        if (currency.code == token) {
+            return value
+        }
+
         val rate = rateValue(token)
-        return (value / rate)
+        return value.div(rate, RoundingMode.HALF_DOWN)
     }
 
     fun getRate(token: String): Coins {

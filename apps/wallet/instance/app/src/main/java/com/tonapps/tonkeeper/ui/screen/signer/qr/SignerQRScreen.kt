@@ -51,6 +51,8 @@ class SignerQRScreen: BaseFragment(R.layout.fragment_signer_qr), BaseFragment.Bo
         contentView = view.findViewById(R.id.content)
         contentView.background = QRBackground(requireContext())
 
+        view.findViewById<View>(R.id.close).setOnClickListener { finish() }
+
         qrView = view.findViewById(R.id.qr)
         qrView.setContent(SignerApp.createSignUri(args.unsignedBody, args.publicKey))
 
@@ -62,7 +64,6 @@ class SignerQRScreen: BaseFragment(R.layout.fragment_signer_qr), BaseFragment.Bo
         cameraContainerView.round(cameraRadius)
 
         cameraView = view.findViewById(R.id.camera)
-
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 

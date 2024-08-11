@@ -1,6 +1,5 @@
 package com.tonapps.wallet.data.account
 
-import android.util.Log
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.wallet.data.account.entities.WalletEntity

@@ -102,7 +102,7 @@ class TransactionDetailView @JvmOverloads constructor(
             descriptionView.visibility = GONE
         } else {
             descriptionView.visibility = VISIBLE
-            descriptionView.text = description.toString().ifPunycodeToUnicode()
+            descriptionView.text = description
         }
     }
 

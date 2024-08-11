@@ -20,6 +20,8 @@ import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
 import com.tonapps.tonkeeper.ui.screen.send.SendScreen
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
@@ -160,6 +162,8 @@ class RootActivity: NavigationActivity() {
                 }
             }
             is RootEvent.OpenBackups -> add(BackupScreen.newInstance())
+            is RootEvent.Staking -> add(StakingScreen.newInstance())
+            is RootEvent.StakingPool -> add(StakeViewerScreen.newInstance(event.poolAddress, ""))
             else -> { }
         }
     }

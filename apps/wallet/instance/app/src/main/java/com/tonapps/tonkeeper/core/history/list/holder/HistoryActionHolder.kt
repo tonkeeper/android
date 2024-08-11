@@ -9,6 +9,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.iconRes
@@ -133,7 +134,7 @@ class HistoryActionHolder(
         if (item.hiddenBalance) {
             amountView.text = HIDDEN_BALANCE
         } else {
-            amountView.text = item.value
+            amountView.text = item.value.withCustomSymbol(context)
         }
 
 
@@ -144,7 +145,7 @@ class HistoryActionHolder(
             if (item.hiddenBalance) {
                 amount2View.text = HIDDEN_BALANCE
             } else {
-                amount2View.text = item.value2
+                amount2View.text = item.value2.withCustomSymbol(context)
             }
         }
     }

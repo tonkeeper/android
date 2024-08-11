@@ -7,6 +7,7 @@ import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.widget.RemoteViews
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.extensions.getDiffColor
 import com.tonapps.tonkeeper.koin.koin
@@ -75,7 +76,7 @@ class WidgetRateProvider: Widget() {
         val removeView = RemoteViews(context.packageName, R.layout.widget_rate)
         removeView.setOnClickPendingIntent(R.id.content, defaultPendingIntent)
         removeView.setTextViewText(R.id.update_date, context.getString(Localization.widget_updated, entity.date))
-        removeView.setTextViewText(R.id.price, entity.price)
+        removeView.setTextViewText(R.id.price, entity.price.withCustomSymbol(context))
         removeView.setTextViewText(R.id.diff, diff)
         manager.updateAppWidget(id, removeView)
     }

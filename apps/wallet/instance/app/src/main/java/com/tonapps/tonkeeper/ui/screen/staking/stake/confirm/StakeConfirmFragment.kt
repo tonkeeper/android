@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
@@ -48,19 +49,19 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
         }
 
         collectFlow(stakeViewModel.fiatFormatFlow) { fiatFormat ->
-            amountView.description = fiatFormat
+            amountView.description = fiatFormat.withCustomSymbol(requireContext())
         }
 
         collectFlow(stakeViewModel.amountFormatFlow) { amountFormat ->
-            amountView.value = amountFormat
+            amountView.value = amountFormat.withCustomSymbol(requireContext())
         }
 
         collectFlow(stakeViewModel.selectedPoolFlow, ::applyPool)
 
         collectFlow(stakeViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
             feeView.setDefault()
-            feeView.value = feeFormat
-            feeView.description = feeFiatFormat
+            feeView.value = feeFormat.withCustomSymbol(requireContext())
+            feeView.description = feeFiatFormat.withCustomSymbol(requireContext())
             button.isEnabled = true
         }
 

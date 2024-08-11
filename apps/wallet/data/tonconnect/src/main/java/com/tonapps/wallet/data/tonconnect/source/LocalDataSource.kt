@@ -50,8 +50,6 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
                 "$CONNECT_COLUMN_OBJECT BLOB," +
                 "$CONNECT_COLUMN_URL TEXT" +
                 ");")
-        db.execSQL("CREATE INDEX idx_walletId ON $CONNECT_TABLE_NAME($CONNECT_COLUMN_WALLET_ID);")
-        db.execSQL("CREATE INDEX idx_url ON $CONNECT_TABLE_NAME($CONNECT_COLUMN_URL);")
     }
 
     private fun createAppTable(db: SQLiteDatabase) {

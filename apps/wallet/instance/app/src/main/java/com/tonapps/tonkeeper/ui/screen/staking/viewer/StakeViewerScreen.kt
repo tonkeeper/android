@@ -27,6 +27,8 @@ class StakeViewerScreen: BaseListFragment(), BaseFragment.SwipeBack {
         super.onViewCreated(view, savedInstanceState)
         setTitle(args.name)
         setAdapter(adapter)
+        collectFlow(stakeViewerViewModel.poolNameFlow, ::setTitle)
+
         stakeViewerViewModel.uiItemsFlow.catch {
             navigation?.toast(Localization.unknown_error)
             finish()

@@ -45,10 +45,12 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
 
     override fun onBind(item: Item.SetupSwitch) {
         switchView.doCheckedChanged = { checked, byUser ->
-            if (byUser && item.isPush) {
-                togglePush(item.walletId, checked)
-            } else if (byUser) {
-                toggleBiometric(checked)
+            if (byUser) {
+                if (item.settingsType == Item.SetupSwitch.TYPE_PUSH) {
+                    togglePush(item.walletId, checked)
+                } else if (item.settingsType == Item.SetupSwitch.TYPE_BIOMETRIC) {
+                    toggleBiometric(checked)
+                }
             }
         }
         itemView.background = item.position.drawable(context)

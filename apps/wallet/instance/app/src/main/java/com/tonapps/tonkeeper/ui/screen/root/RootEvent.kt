@@ -53,4 +53,8 @@ sealed class RootEvent {
     ): RootEvent()
 
     data object OpenBackups: RootEvent()
+
+    data object Staking: RootEvent()
+
+    data class StakingPool(val poolAddress: String): RootEvent()
 }

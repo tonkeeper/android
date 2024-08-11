@@ -4,17 +4,21 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.RectF
 import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.ConsoleMessage
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.LinkedList
 import java.util.Queue
+import kotlin.coroutines.resume
 
 open class WebViewFixed @JvmOverloads constructor(
     context: Context,
@@ -38,7 +42,6 @@ open class WebViewFixed @JvmOverloads constructor(
             super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
         }
         super.setBackgroundColor(Color.TRANSPARENT)
-
         if (0 != context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) {
             setWebContentsDebuggingEnabled(true)
         }
@@ -46,6 +49,22 @@ open class WebViewFixed @JvmOverloads constructor(
 
     override fun hasOverlappingRendering(): Boolean {
         return false
+    }
+
+    suspend fun getInputBottom(): Float = suspendCancellableCoroutine { continuation ->
+        val jsCode = "(function() {" +
+                "var focusedElement = document.activeElement;" +
+                "if (focusedElement && (focusedElement.tagName === 'INPUT' || focusedElement.tagName === 'TEXTAREA')) {" +
+                "   var rect = focusedElement.getBoundingClientRect();" +
+                "   return rect.bottom;" +
+                "} else {" +
+                "   return -1;" +
+                "}" +
+                "})()"
+        evaluateJavascript(jsCode) { value ->
+            val elementBottom = value.toFloatOrNull() ?: -1f
+            continuation.resume(elementBottom)
+        }
     }
 
     fun reset() {

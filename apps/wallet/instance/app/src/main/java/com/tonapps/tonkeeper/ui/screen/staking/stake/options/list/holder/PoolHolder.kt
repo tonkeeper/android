@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
@@ -51,6 +52,6 @@ class PoolHolder(
         descriptionView.text = "%s\n%s".format(
             context.getString(Localization.staking_minimum_deposit, item.minimumDepositFormat),
             item.entity.apy
-        )
+        ).withCustomSymbol(context)
     }
 }

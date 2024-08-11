@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
@@ -69,7 +70,7 @@ class BalanceHolder(
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
             balanceView.background = HiddenBalanceDrawable(context)
         } else {
-            balanceView.text = item.balance
+            balanceView.text = item.balance.withCustomSymbol(context)
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f)
             balanceView.background = null
         }
@@ -134,12 +135,12 @@ class BalanceHolder(
     }
 
     private fun setWalletType(type: Wallet.Type, version: WalletVersion) {
-        if (version == WalletVersion.V5R1 || version == WalletVersion.V5R1BETA) {
+        if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
             val color = context.accentGreenColor
             walletTypeView.visibility = View.VISIBLE
             walletTypeView.setTextColor(color)
             walletTypeView.backgroundTintList = color.withAlpha(.16f).stateList
-            if (version == WalletVersion.V5R1BETA) {
+            if (version == WalletVersion.V5BETA) {
                 walletTypeView.setText(Localization.w5beta)
             } else {
                 walletTypeView.setText(Localization.w5)
@@ -167,7 +168,6 @@ class BalanceHolder(
 
     private fun getTypeColor(type: Wallet.Type): Int {
         return when (type) {
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> context.accentPurpleColor
             Wallet.Type.Ledger -> context.accentGreenColor
             else -> context.accentOrangeColor
         }

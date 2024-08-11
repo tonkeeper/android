@@ -1,10 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list
 
-import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.facebook.common.util.UriUtil
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.Coins
@@ -274,7 +275,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             token: AccountTokenEntity,
             hiddenBalance: Boolean,
             testnet: Boolean,
-            currencyCode: String,
+            currencyCode: String
         ) : this(
             position = position,
             iconUri = token.imageUri,
@@ -467,17 +468,29 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val iconRes: Int,
         val textRes: Int,
         val enabled: Boolean,
-        val isPush: Boolean,
         val walletId: String,
+        val settingsType: Int
     ): Item(TYPE_SETUP_SWITCH) {
+
+        companion object {
+            const val TYPE_BIOMETRIC = 1
+            const val TYPE_PUSH = 2
+
+            @JvmField
+            val CREATOR = object : Parcelable.Creator<SetupSwitch> {
+                override fun createFromParcel(parcel: Parcel) = SetupSwitch(parcel)
+
+                override fun newArray(size: Int): Array<SetupSwitch?> = arrayOfNulls(size)
+            }
+        }
 
         constructor(parcel: Parcel) : this(
             parcel.readEnum(ListCell.Position::class.java)!!,
             parcel.readInt(),
             parcel.readInt(),
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat(),
-            parcel.readString()!!
+            parcel.readString()!!,
+            parcel.readInt()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -485,52 +498,51 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeInt(iconRes)
             dest.writeInt(textRes)
             dest.writeBooleanCompat(enabled)
-            dest.writeBooleanCompat(isPush)
             dest.writeString(walletId)
-        }
-
-        companion object CREATOR : Parcelable.Creator<SetupSwitch> {
-            override fun createFromParcel(parcel: Parcel) = SetupSwitch(parcel)
-
-            override fun newArray(size: Int): Array<SetupSwitch?> {
-                return arrayOfNulls(size)
-            }
+            dest.writeInt(settingsType)
         }
     }
 
     data class SetupLink(
         val position: ListCell.Position,
+        val walletId: String,
         val iconRes: Int,
         val textRes: Int,
         val link: String,
-        val external: Boolean,
         val blue: Boolean,
+        val settingsType: Int
     ): Item(TYPE_SETUP_LINK) {
+
+        companion object {
+            const val TYPE_NONE = 1
+            const val TYPE_TELEGRAM_CHANNEL = 2
+
+            @JvmField
+            val CREATOR = object : Parcelable.Creator<SetupLink> {
+                override fun createFromParcel(parcel: Parcel) = SetupLink(parcel)
+
+                override fun newArray(size: Int): Array<SetupLink?> = arrayOfNulls(size)
+            }
+        }
 
         constructor(parcel: Parcel) : this(
             parcel.readEnum(ListCell.Position::class.java)!!,
+            parcel.readString()!!,
             parcel.readInt(),
             parcel.readInt(),
             parcel.readString()!!,
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat()
+            parcel.readInt(),
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
             dest.writeEnum(position)
+            dest.writeString(walletId)
             dest.writeInt(iconRes)
             dest.writeInt(textRes)
             dest.writeString(link)
-            dest.writeBooleanCompat(external)
             dest.writeBooleanCompat(blue)
-        }
-
-        companion object CREATOR : Parcelable.Creator<SetupLink> {
-            override fun createFromParcel(parcel: Parcel) = SetupLink(parcel)
-
-            override fun newArray(size: Int): Array<SetupLink?> {
-                return arrayOfNulls(size)
-            }
+            dest.writeInt(settingsType)
         }
     }
 

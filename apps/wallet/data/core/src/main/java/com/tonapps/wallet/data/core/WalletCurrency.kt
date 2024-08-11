@@ -57,6 +57,9 @@ data class WalletCurrency(
             if (code.isNullOrBlank()) {
                 return DEFAULT
             }
+            if (code in CRYPTO) {
+                return WalletCurrency(code)
+            }
             if (code in FIAT) {
                 return WalletCurrency(code)
             }

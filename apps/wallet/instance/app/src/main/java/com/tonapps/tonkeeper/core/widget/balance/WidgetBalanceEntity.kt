@@ -16,7 +16,6 @@ data class WidgetBalanceEntity(
     @IgnoredOnParcel
     val shortAddress = walletAddress.shortAddress
 
-
     val name: String
         get() = label?.toString() ?: shortAddress
 }

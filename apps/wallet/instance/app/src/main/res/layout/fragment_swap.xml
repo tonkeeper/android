@@ -4,6 +4,11 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <uikit.widget.webview.bridge.BridgeWebView
+        android:id="@+id/web"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
     <uikit.widget.HeaderView
         android:id="@+id/header"
         android:layout_width="match_parent"
@@ -11,10 +16,5 @@
         android:layout_marginTop="4dp"
         android:action="@drawable/ic_close_16"
         app:ignoreSystemOffset="true"/>
-
-    <uikit.widget.webview.bridge.BridgeWebView
-        android:id="@+id/web"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
 
 </FrameLayout>

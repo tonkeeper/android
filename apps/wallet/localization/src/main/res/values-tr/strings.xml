@@ -9,9 +9,11 @@
     <string name="setup_finish_biometry">İşlemleri onaylamak için biyometriyi kullanın</string>
     <string name="setup_finish_backup">Cüzdan kurtarma ifadesini yedekleyin</string>
     <string name="setup_finish_telegram">Tonkeeper kanalına katıl</string>
+    <string name="contacts">Kişiler</string>
     <string name="step_1">Adım 1</string>
     <string name="step_2">Adım 2</string>
     <string name="step_3">Adım 3</string>
+    <string name="home_screen">Ana ekran</string>
     <string name="signer_step_1">Signer ile QR kodunu tarayın</string>
     <string name="signer_step_2">İşleminizi Signer\'da onaylayın</string>
     <string name="signer_step_3">İmzalayan\'dan imzalı işlem QR kodunu tarayın</string>
@@ -348,4 +350,7 @@
     <string name="intro_title"><annotation colorRes="textAccent">Tonkeeper</annotation>\'a hoş geldiniz</string>
     <string name="required_comment">Gerekli yorum</string>
     <string name="biometric_enabled">Biyometrik etkin</string>
+    <string name="sending_error">Gönderim hatası, daha sonra tekrar deneyin</string>
+    <string name="spam">Spam</string>
+    <string name="later">Daha sonra</string>
 </resources>

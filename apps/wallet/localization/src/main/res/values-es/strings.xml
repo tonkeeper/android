@@ -9,9 +9,11 @@
     <string name="setup_finish_biometry">Usa la biometría para aprobar transacciones</string>
     <string name="setup_finish_backup">Haz una copia de seguridad de la frase de recuperación del monedero</string>
     <string name="setup_finish_telegram">Únete al canal de Tonkeeper</string>
+    <string name="contacts">Contactos</string>
     <string name="step_1">Paso 1</string>
     <string name="step_2">Paso 2</string>
     <string name="step_3">Paso 3</string>
+    <string name="home_screen">Pantalla de inicio</string>
     <string name="signer_step_1">Escanea el código QR con Signer</string>
     <string name="signer_step_2">Confirme su transacción en Signer</string>
     <string name="signer_step_3">Escanee el código QR de la transacción firmada desde el Firmante</string>
@@ -348,4 +350,7 @@
     <string name="intro_title">Bienvenido a <annotation colorRes="textAccent">Tonkeeper</annotation></string>
     <string name="required_comment">Comentario requerido</string>
     <string name="biometric_enabled">Biométrico habilitado</string>
+    <string name="sending_error">Error de envío, inténtalo de nuevo más tarde</string>
+    <string name="spam">Spam</string>
+    <string name="later">Más tarde</string>
 </resources>

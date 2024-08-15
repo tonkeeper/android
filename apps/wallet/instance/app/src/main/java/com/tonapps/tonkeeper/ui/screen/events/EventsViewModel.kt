@@ -148,7 +148,7 @@ class EventsViewModel(
                 iconUri = Uri.parse(manifest.iconUrl),
                 title = manifest.name,
                 body = event.message,
-                date = DateHelper.timestampToDateString(event.dateUnix),
+                date = DateHelper.timestampToDateString(event.dateUnix, settingsRepository.getLocale()),
                 timestamp = event.dateUnix,
                 deepLink = event.link,
                 host = manifest.host

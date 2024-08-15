@@ -9,6 +9,7 @@ import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged
 import com.tonapps.icu.Coins
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.component.TokenPickerView
 import com.tonapps.tonkeeper.ui.component.coin.drawable.SuffixDrawable
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingConfig
@@ -120,7 +121,8 @@ class CoinInputView @JvmOverloads constructor(
         if (BigDecimal.ZERO == value) {
             clear()
         } else {
-            editText.setText(value.stripTrailingZeros().toPlainString().removeSuffix(".0"))
+            val text = value.stripTrailingZeros().toPlainString().removeSuffix(".0")
+            editText.setText(text.replace(".", CurrencyFormatter.monetaryDecimalSeparator))
         }
     }
 

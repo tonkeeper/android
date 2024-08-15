@@ -1,17 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
-import com.tonapps.tonkeeper.ui.screen.init.step.PushScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.SelectScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
+import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -21,6 +20,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
@@ -29,7 +29,7 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
         InitArgs(requireArguments())
     }
 
-    private val initViewModel: InitViewModel by viewModel { parametersOf(args.type) }
+    private val initViewModel: InitViewModel by viewModel { parametersOf(args) }
 
     private lateinit var headerView: HeaderView
     private lateinit var loaderContainerView: View
@@ -37,14 +37,8 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        args.name?.let {
+        args.labelName?.let {
             initViewModel.setLabelName(it)
-        }
-        args.publicKeyEd25519?.let {
-            initViewModel.setPublicKey(it)
-        }
-        args.ledgerConnectData?.let {
-            initViewModel.setLedgerConnectData(it)
         }
         args.accounts?.let {
             initViewModel.setAccounts(it)
@@ -69,10 +63,12 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
     }
 
     private fun onEvent(event: InitEvent) {
-        Log.d("InitViewModelLog", "onEvent: $event")
         when (event) {
             is InitEvent.Back -> popBackStack()
-            is InitEvent.Finish -> finish()
+            is InitEvent.Finish -> {
+                navigation?.add(NotificationsEnableScreen.newInstance())
+                finish()
+            }
             is InitEvent.Loading -> setLoading(event.loading)
         }
     }
@@ -85,7 +81,6 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
             InitRoute.WatchAccount -> WatchScreen.newInstance()
             InitRoute.LabelAccount -> LabelScreen.newInstance()
             InitRoute.SelectAccount -> SelectScreen.newInstance()
-            InitRoute.Push -> PushScreen.newInstance()
         }
 
         val transaction = childFragmentManager.beginTransaction()

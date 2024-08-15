@@ -9,9 +9,11 @@
     <string name="setup_finish_biometry">使用生物识别技术批准交易</string>
     <string name="setup_finish_backup">备份钱包恢复短语</string>
     <string name="setup_finish_telegram">加入Tonkeeper频道</string>
+    <string name="contacts">联系方式</string>
     <string name="step_1">步骤 1</string>
     <string name="step_2">第 2 步</string>
     <string name="step_3">步骤 3</string>
+    <string name="home_screen">主屏幕</string>
     <string name="signer_step_1">使用签名器扫描二维码</string>
     <string name="signer_step_2">在 Signer 中确认您的交易</string>
     <string name="signer_step_3">从签名者扫描已签名交易的二维码</string>
@@ -348,4 +350,7 @@
     <string name="intro_title">欢迎来到 <annotation colorRes="textAccent">Tonkeeper</annotation></string>
     <string name="required_comment">必填注释</string>
     <string name="biometric_enabled">已启用生物识别</string>
+    <string name="sending_error">发送错误，请稍后重试</string>
+    <string name="spam">垃圾邮件</string>
+    <string name="later">之后</string>
 </resources>

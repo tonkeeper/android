@@ -8,6 +8,7 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -18,7 +19,8 @@ import kotlinx.coroutines.flow.take
 class BackupViewModel(
     private val accountRepository: AccountRepository,
     private val backupRepository: BackupRepository,
-    private val passcodeManager: PasscodeManager
+    private val passcodeManager: PasscodeManager,
+    private val settingsRepository: SettingsRepository,
 ): ViewModel() {
 
     val uiItemsFlow = combine(backupRepository.stream, accountRepository.selectedWalletFlow) { backups, wallet ->
@@ -31,7 +33,7 @@ class BackupViewModel(
 
         for ((index, backup) in it.withIndex()) {
             val position = ListCell.getPosition(backupsCount, index)
-            items.add(Item.Backup(position, backup))
+            items.add(Item.Backup(position, backup, settingsRepository.getLocale()))
         }
         if (backupsCount > 0) {
             items.add(Item.Space)

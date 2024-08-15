@@ -36,7 +36,9 @@ import com.tonapps.wallet.data.tonconnect.entities.reply.DAppSuccessEntity
 import com.tonapps.wallet.data.tonconnect.source.LocalDataSource
 import com.tonapps.wallet.data.tonconnect.source.RemoteDataSource
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -319,10 +321,10 @@ class TonConnectRepository(
         wallet: WalletEntity,
         connect: DConnectEntity,
         firebaseToken: String
-    ) {
-        val proofToken = accountRepository.requestTonProofToken(wallet) ?: return
+    ): Boolean {
+        val proofToken = accountRepository.requestTonProofToken(wallet) ?: return false
         val url = connect.url
-        api.pushTonconnectSubscribe(
+        return api.pushTonconnectSubscribe(
             token = proofToken,
             appUrl = url,
             accountId = wallet.address,
@@ -336,16 +338,20 @@ class TonConnectRepository(
     private suspend fun subscribePush(
         connect: DConnectEntity,
         firebaseToken: String
-    ) {
-        val wallet = accountRepository.getWalletById(connect.walletId) ?: return
-        subscribePush(wallet, connect, firebaseToken)
+    ): Boolean {
+        val wallet = accountRepository.getWalletById(connect.walletId) ?: return false
+        return subscribePush(wallet, connect, firebaseToken)
     }
 
-    suspend fun updatePushToken(firebaseToken: String) = withContext(Dispatchers.IO) {
+    suspend fun subscribePush(
+        firebaseToken: String
+    ): Boolean = withContext(Dispatchers.IO) {
         val connections = localDataSource.getConnections()
+        val deferredList = mutableListOf<Deferred<Boolean>>()
         for (connect in connections) {
-            subscribePush(connect, firebaseToken)
+            deferredList.add(async { subscribePush(connect, firebaseToken) })
         }
+        deferredList.map { it.await() }.any { it }
     }
 
     suspend fun connectLedger(

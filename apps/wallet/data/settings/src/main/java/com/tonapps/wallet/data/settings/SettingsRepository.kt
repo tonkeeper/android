@@ -12,9 +12,7 @@ import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.data.settings.entities.NftPrefsEntity
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
-import com.tonapps.wallet.data.settings.folder.NftPrefsFolder
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
 import com.tonapps.wallet.localization.Language
@@ -26,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -60,9 +59,6 @@ class SettingsRepository(
     private val _languageFlow = MutableEffectFlow<Language>()
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _telegramChannelFlow = MutableStateFlow(true)
-    val telegramChannelFlow = _telegramChannelFlow.stateIn(scope, SharingStarted.Eagerly, true)
-
     private val _themeFlow = MutableEffectFlow<Theme>()
     val themeFlow = _themeFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
@@ -73,7 +69,7 @@ class SettingsRepository(
     val firebaseTokenFlow = _firebaseTokenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _countryFlow = MutableEffectFlow<String>()
-    val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull().map { fixCountryCode(it) }
 
     private val _biometricFlow = MutableStateFlow<Boolean?>(null)
     val biometricFlow = _biometricFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
@@ -84,13 +80,12 @@ class SettingsRepository(
     private val _searchEngineFlow = MutableEffectFlow<SearchEngine>()
     val searchEngineFlow = _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _walletPush = MutableStateFlow<Map<String, Boolean>?>(null)
-    val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    private val _walletPush = MutableEffectFlow<Unit>()
+    val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, Unit)
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
-    private val tokenPrefsFolder = TokenPrefsFolder(context)
-    private val walletPrefsFolder = WalletPrefsFolder(context)
-    private val nftPrefsFolder = NftPrefsFolder(context)
+    private val tokenPrefsFolder = TokenPrefsFolder(context, scope)
+    private val walletPrefsFolder = WalletPrefsFolder(context, scope)
     private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)
 
     val walletPrefsChangedFlow: Flow<Unit>
@@ -98,9 +93,6 @@ class SettingsRepository(
 
     val tokenPrefsChangedFlow: Flow<Unit>
         get() = tokenPrefsFolder.changedFlow
-
-    val nftPrefsChangedFlow: Flow<Unit>
-        get() = nftPrefsFolder.changedFlow
 
     val installId: String
         get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
@@ -186,7 +178,7 @@ class SettingsRepository(
             }
         }
 
-    var country: String = prefs.getString(COUNTRY_KEY, null) ?: context.locale.country
+    var country: String = fixCountryCode(prefs.getString(COUNTRY_KEY, null))
         set(value) {
             if (value != field) {
                 prefs.edit().putString(COUNTRY_KEY, value).apply()
@@ -206,6 +198,10 @@ class SettingsRepository(
             }
         }
 
+    fun getSpamStateTransaction(walletId: String, id: String) = walletPrefsFolder.getSpamStateTransaction(walletId, id)
+
+    fun isSpamTransaction(walletId: String, id: String) = getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
+
     fun isPurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.isPurchaseOpenConfirm(walletId, id)
 
     fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
@@ -214,12 +210,8 @@ class SettingsRepository(
 
     fun setPushWallet(walletId: String, value: Boolean) {
         walletPrefsFolder.setPushEnabled(walletId, value)
-
-        val map = (_walletPush.value ?: mapOf()).toMutableMap()
-        map[walletId] = value
-        _walletPush.tryEmit(map)
-
         rnLegacy.setNotificationsEnabled(walletId, value)
+        _walletPush.tryEmit(Unit)
     }
 
     fun isSetupHidden(walletId: String): Boolean = walletPrefsFolder.isSetupHidden(walletId)
@@ -232,6 +224,12 @@ class SettingsRepository(
     fun setTelegramChannel(walletId: String) {
         walletPrefsFolder.setTelegramChannel(walletId)
         rnLegacy.setHasOpenedTelegramChannel(walletId)
+    }
+
+    fun isTelegramChannel(walletId: String) = walletPrefsFolder.isTelegramChannel(walletId)
+
+    fun setLastBackupAt(walletId: String, date: Long) {
+        rnLegacy.setSetupLastBackupAt(walletId, date)
     }
 
     fun getLocale(): Locale {
@@ -250,20 +248,12 @@ class SettingsRepository(
         rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
     }
 
-    suspend fun setNftHidden(
+    suspend fun setTokenState(
         walletId: String,
-        nftAddress: String,
-        hidden: Boolean = true
+        tokenAddress: String,
+        state: TokenPrefsEntity.State
     ) = withContext(Dispatchers.IO) {
-        nftPrefsFolder.setHidden(walletId, nftAddress, hidden)
-    }
-
-    suspend fun setNftTrust(
-        walletId: String,
-        nftAddress: String,
-        trust: Boolean = true
-    ) = withContext(Dispatchers.IO) {
-        nftPrefsFolder.setTrust(walletId, nftAddress, trust)
+        tokenPrefsFolder.setState(walletId, tokenAddress, state)
     }
 
     fun setTokenPinned(walletId: String, tokenAddress: String, pinned: Boolean) {
@@ -289,16 +279,9 @@ class SettingsRepository(
     suspend fun getTokenPrefs(
         walletId: String,
         tokenAddress: String,
-        blacklist: Boolean,
+        blacklist: Boolean = false,
     ): TokenPrefsEntity = withContext(Dispatchers.IO) {
         tokenPrefsFolder.get(walletId, tokenAddress, blacklist)
-    }
-
-    suspend fun getNftPrefs(
-        walletId: String,
-        nftAddress: String
-    ): NftPrefsEntity = withContext(Dispatchers.IO) {
-        nftPrefsFolder.get(walletId, nftAddress)
     }
 
     init {
@@ -311,7 +294,6 @@ class SettingsRepository(
                 prefs.clear()
                 tokenPrefsFolder.clear()
                 walletPrefsFolder.clear()
-                nftPrefsFolder.clear()
 
                 val legacyValues = importFromLegacy()
                 biometric = legacyValues.biometric
@@ -337,7 +319,7 @@ class SettingsRepository(
             _searchEngineFlow.tryEmit(searchEngine)
             _biometricFlow.tryEmit(biometric)
             _lockscreenFlow.tryEmit(lockScreen)
-            _walletPush.tryEmit(mapOf())
+            _walletPush.tryEmit(Unit)
         }
     }
 
@@ -388,6 +370,15 @@ class SettingsRepository(
             if (setupDismissed) {
                 walletPrefsFolder.setupHide(walletId)
             }
+
+            val spamTransactions = rnLegacy.getSpamTransactions(walletId)
+            for (transactionId in spamTransactions.spam) {
+                walletPrefsFolder.setSpamStateTransaction(walletId, transactionId, SpamTransactionState.SPAM)
+            }
+
+            for (transactionId in spamTransactions.nonSpam) {
+                walletPrefsFolder.setSpamStateTransaction(walletId, transactionId, SpamTransactionState.NOT_SPAM)
+            }
         }
     }
 
@@ -397,6 +388,14 @@ class SettingsRepository(
             LocaleListCompat.getEmptyLocaleList()
         } else {
             LocaleListCompat.forLanguageTags(code)
+        }
+    }
+
+    private fun fixCountryCode(code: String?): String {
+        return if (code.isNullOrBlank()) {
+            getLocale().country
+        } else {
+            code
         }
     }
 

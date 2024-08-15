@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.staking.stake
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
@@ -12,7 +11,7 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
-import com.tonapps.tonkeeper.ui.screen.send.SendException
+import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository

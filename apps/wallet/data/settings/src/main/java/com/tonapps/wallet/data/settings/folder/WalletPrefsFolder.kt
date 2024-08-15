@@ -4,9 +4,11 @@ import android.content.Context
 import android.os.SystemClock
 import android.util.Log
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.settings.SpamTransactionState
 import com.tonapps.wallet.data.settings.entities.WalletPrefsEntity
+import kotlinx.coroutines.CoroutineScope
 
-internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, "wallet_prefs") {
+internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseSettingsFolder(context, scope, "wallet_prefs") {
 
     private companion object {
         private const val SORT_PREFIX = "sort_"
@@ -15,10 +17,29 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
         private const val SETUP_HIDDEN_PREFIX = "setup_hidden_"
         private const val LAST_UPDATED_PREFIX = "last_updated_"
         private const val TELEGRAM_CHANNEL_PREFIX = "telegram_channel_"
+        private const val SPAM_STATE_TRANSACTION_PREFIX = "spam_state_transaction_"
+    }
+
+    fun getSpamStateTransaction(
+        walletId: String,
+        id: String
+    ): SpamTransactionState {
+        val key = keySpamStateTransaction(walletId, id)
+        val value = getInt(key, 0)
+        return SpamTransactionState.entries.firstOrNull { it.state == value } ?: SpamTransactionState.UNKNOWN
+    }
+
+    fun setSpamStateTransaction(
+        walletId: String,
+        id: String,
+        state: SpamTransactionState
+    ) {
+        val key = keySpamStateTransaction(walletId, id)
+        putInt(key, state.state)
     }
 
     fun setLastUpdated(walletId: String) {
-        putLong(key(LAST_UPDATED_PREFIX, walletId), SystemClock.uptimeMillis(), false)
+        putLong(key(LAST_UPDATED_PREFIX, walletId), System.currentTimeMillis() / 1000, false)
     }
 
     fun getLastUpdated(walletId: String): Long {
@@ -71,6 +92,11 @@ internal class WalletPrefsFolder(context: Context): BaseSettingsFolder(context, 
                 putInt(keySort(walletId), index)
             }
         }
+    }
+
+    private fun keySpamStateTransaction(walletId: String, id: String): String {
+        val key = key(SPAM_STATE_TRANSACTION_PREFIX, walletId)
+        return "$key$id"
     }
 
     private fun keyPurchaseOpenConfirm(walletId: String, id: String): String {

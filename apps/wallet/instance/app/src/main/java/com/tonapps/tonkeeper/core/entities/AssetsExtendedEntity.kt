@@ -62,7 +62,7 @@ data class AssetsExtendedEntity(
         get() = prefs.pinned
 
     val hidden: Boolean
-        get() = prefs.hidden
+        get() = prefs.isHidden
 
     val index: Int
         get() = prefs.index

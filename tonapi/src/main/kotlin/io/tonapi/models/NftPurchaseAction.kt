@@ -36,7 +36,7 @@ import com.squareup.moshi.JsonClass
 data class NftPurchaseAction (
 
     @Json(name = "auction_type")
-    val auctionType: NftPurchaseAction.AuctionType,
+    val auctionType: String,
 
     @Json(name = "amount")
     val amount: Price,

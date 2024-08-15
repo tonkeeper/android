@@ -24,6 +24,7 @@ class GooglePushService: FirebaseMessagingService() {
     private val recentlyReceivedMessageIds = ArrayDeque<String>(10)
 
     private fun onPushReceived(extras: Bundle) {
+        Log.d("TONKeeperLog", "onPushReceived: $extras")
         val firebaseMessageId = extras.getString("google.message_id") ?: return
         if (alreadyReceivedMessage(firebaseMessageId)) {
             return

@@ -9,9 +9,11 @@
     <string name="setup_finish_biometry">Tranzaksiyalarni tasdiqlash uchun biometrikani qo\'llang</string>
     <string name="setup_finish_backup">Hamyonni tiklash iborasini zaxiralash</string>
     <string name="setup_finish_telegram">Tonkeeper kanaliga qo\'shiling</string>
+    <string name="contacts">Kontaktlar</string>
     <string name="step_1">1-qadam</string>
     <string name="step_2">2-qadam</string>
     <string name="step_3">3-qadam</string>
+    <string name="home_screen">Bosh ekran</string>
     <string name="signer_step_1">Signer bilan QR kodni skanerlang</string>
     <string name="signer_step_2">Signer orqali tranzaksiyani tasdiqlang</string>
     <string name="signer_step_3">Signer dan imzolangan tranzaksiya QR kodini skanerlang</string>
@@ -348,4 +350,7 @@
     <string name="intro_title"><annotation colorRes="textAccent">Tonkeeper</annotation>ga xush kelibsiz</string>
     <string name="required_comment">Sharh kerak</string>
     <string name="biometric_enabled">Biometrik yoqilgan</string>
+    <string name="sending_error">Yuborishda xatolik, keyinroq qayta urinib ko‘ring</string>
+    <string name="spam">Spam</string>
+    <string name="later">Keyinchalik</string>
 </resources>

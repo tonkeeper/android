@@ -9,9 +9,11 @@
     <string name="setup_finish_biometry">Gunakan biometrik untuk menyetujui transaksi</string>
     <string name="setup_finish_backup">Cadangkan frasa pemulihan dompet</string>
     <string name="setup_finish_telegram">Bergabung dengan saluran Tonkeeper</string>
+    <string name="contacts">Kontak</string>
     <string name="step_1">Langkah 1</string>
     <string name="step_2">Langkah 2</string>
     <string name="step_3">Langkah 3</string>
+    <string name="home_screen">Layar beranda</string>
     <string name="signer_step_1">Pindai kode QR dengan Signer</string>
     <string name="signer_step_2">Konfirmasikan transaksi Anda di Signer</string>
     <string name="signer_step_3">Pindai kode QR transaksi yang ditandatangani dari Signer</string>
@@ -348,4 +350,7 @@
     <string name="intro_title">Selamat datang di <annotation colorRes="textAccent">Tonkeeper</annotation></string>
     <string name="required_comment">Komentar yang diperlukan</string>
     <string name="biometric_enabled">Biometrik diaktifkan</string>
+    <string name="sending_error">Kesalahan pengiriman, coba lagi nanti</string>
+    <string name="spam">Spam</string>
+    <string name="later">Nanti</string>
 </resources>

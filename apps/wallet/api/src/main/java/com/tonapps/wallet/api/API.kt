@@ -69,6 +69,9 @@ class API(
     private val internalApi = InternalApi(context, defaultHttpClient)
     private val configRepository = ConfigRepository(context, scope, internalApi)
 
+    @Volatile
+    private var cachedCountry: String? = null
+
     val config: ConfigEntity
         get() {
             while (configRepository.configEntity == null) {
@@ -429,34 +432,35 @@ class API(
         }
     }
 
-    fun pushSubscribe(
+    suspend fun pushSubscribe(
         locale: Locale,
         firebaseToken: String,
         deviceId: String,
         accounts: List<String>
     ): Boolean {
-        return try {
-            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/plain/subscribe"
-            val accountsArray = JSONArray()
-            for (account in accounts) {
-                val jsonAccount = JSONObject()
-                jsonAccount.put("address", account)
-                accountsArray.put(jsonAccount)
-            }
-
-            val json = JSONObject()
-            json.put("locale", locale.toString())
-            json.put("device", deviceId)
-            json.put("token", firebaseToken)
-            json.put("accounts", accountsArray)
-
-            return tonAPIHttpClient.postJSON(url, json.toString()).isSuccessful
-        } catch (e: Throwable) {
-            false
+        val url = "${config.tonapiMainnetHost}/v1/internal/pushes/plain/subscribe"
+        val accountsArray = JSONArray()
+        for (account in accounts) {
+            val jsonAccount = JSONObject()
+            jsonAccount.put("address", account)
+            accountsArray.put(jsonAccount)
         }
+
+        val json = JSONObject()
+        json.put("locale", locale.toString())
+        json.put("device", deviceId)
+        json.put("token", firebaseToken)
+        json.put("accounts", accountsArray)
+
+        Log.d("TONKeeperLog", "json: $json")
+
+        return withRetry {
+            val response = tonAPIHttpClient.postJSON(url, json.toString())
+            response.isSuccessful
+        } ?: false
     }
 
-    fun pushTonconnectSubscribe(
+    suspend fun pushTonconnectSubscribe(
         token: String,
         appUrl: String,
         accountId: String,
@@ -465,24 +469,25 @@ class API(
         commercial: Boolean = true,
         silent: Boolean = true
     ): Boolean {
-        return try {
-            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
+        val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
 
-            val json = JSONObject()
-            json.put("app_url", appUrl)
-            json.put("account", accountId)
-            json.put("firebase_token", firebaseToken)
-            sessionId?.let { json.put("session_id", it) }
-            json.put("commercial", commercial)
-            json.put("silent", silent)
-            val data = json.toString().replace("\\/", "/")
+        val json = JSONObject()
+        json.put("app_url", appUrl)
+        json.put("account", accountId)
+        json.put("firebase_token", firebaseToken)
+        sessionId?.let { json.put("session_id", it) }
+        json.put("commercial", commercial)
+        json.put("silent", silent)
+        val data = json.toString().replace("\\/", "/").trim()
 
+        Log.d("TONKeeperLog", "json: $data")
+        Log.d("TONKeeperLog", "token: $token")
+
+        return withRetry {
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
                 set("X-TonConnect-Auth", token)
             }).isSuccessful
-        } catch (e: Throwable) {
-            false
-        }
+        } ?: false
     }
 
     fun pushTonconnectUnsubscribe(
@@ -566,7 +571,10 @@ class API(
     }
 
     suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
-        internalApi.resolveCountry()
+        if (cachedCountry == null) {
+            cachedCountry = internalApi.resolveCountry()
+        }
+        cachedCountry
     }
 
     suspend fun reportNtfSpam(

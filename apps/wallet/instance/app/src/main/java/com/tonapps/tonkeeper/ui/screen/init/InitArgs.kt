@@ -32,6 +32,9 @@ data class InitArgs(
         private const val ARG_ACCOUNTS = "accounts"
     }
 
+    val labelName: String?
+        get() = name ?: ledgerConnectData?.model?.productName
+
     constructor(bundle: Bundle) : this(
         type = bundle.getEnum(ARG_TYPE, Type.New),
         name = bundle.getString(ARG_NAME),

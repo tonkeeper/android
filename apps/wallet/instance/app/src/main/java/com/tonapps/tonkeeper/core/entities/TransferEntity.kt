@@ -59,7 +59,7 @@ data class TransferEntity(
 
     val sendMode: Int
         get() {
-            return if (max && isTon) TonSendMode.CARRY_ALL_REMAINING_BALANCE.value else (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
+            return if (max && isTon) (TonSendMode.CARRY_ALL_REMAINING_BALANCE.value + TonSendMode.IGNORE_ERRORS.value) else (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
         }
 
     private val coins: org.ton.block.Coins

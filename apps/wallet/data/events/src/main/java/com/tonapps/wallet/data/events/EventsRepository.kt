@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.events
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.prefs
 import com.tonapps.wallet.api.API
@@ -65,6 +66,11 @@ class EventsRepository(
             }
         }
     }
+
+    suspend fun get(
+        accountId: String,
+        testnet: Boolean
+    ) = getLocal(accountId, testnet) ?: getRemote(accountId, testnet)
 
     suspend fun getRemote(
         accountId: String,

@@ -4,6 +4,7 @@ import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.backup.entities.BackupEntity
+import java.util.Locale
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -26,10 +27,11 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Backup(
         val position: ListCell.Position,
         val entity: BackupEntity,
+        val locale: Locale,
     ): Item(TYPE_BACKUP) {
 
         val date: String by lazy {
-            DateHelper.timestampToDateString(entity.date / 1000)
+            DateHelper.timestampToDateString(entity.date / 1000, locale)
         }
     }
 

@@ -7,6 +7,8 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.emoji.ui.EmojiView
+import com.tonapps.extensions.max12
+import com.tonapps.extensions.max24
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.koin.accountRepository
@@ -51,7 +53,7 @@ class WalletHolder(
 
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)
         emojiView.setEmoji(item.emoji)
-        nameView.text = item.name
+        nameView.text = item.name.max24
         if (item.hiddenBalance) {
             balanceView.text = HIDDEN_BALANCE
         } else {

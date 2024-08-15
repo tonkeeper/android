@@ -138,8 +138,14 @@ class CountryPickerViewModel(
         api.resolveCountry()?.let {
             list.add(it)
         }
-        list.add(settingsRepository.country)
-        list.add(context.locale.country)
+        val country = settingsRepository.country
+        if (country.isNotBlank()) {
+            list.add(country)
+        }
+        val langCountry = settingsRepository.getLocale().country
+        if (langCountry.isNotBlank()) {
+            list.add(langCountry)
+        }
         return list.distinct()
     }
 }

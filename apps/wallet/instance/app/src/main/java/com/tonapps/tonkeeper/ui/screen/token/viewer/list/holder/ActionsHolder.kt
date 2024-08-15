@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder
 import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
-import com.tonapps.tonkeeper.ui.screen.send.SendScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.tonkeeperx.R

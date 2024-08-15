@@ -99,17 +99,13 @@ object CurrencyFormatter {
     fun format(
         currency: String = "",
         value: BigDecimal,
-        scale: Int = 0,
+        customScale: Int = 0,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
     ): CharSequence {
-        var bigDecimal = value.stripTrailingZeros()
-        if (scale > 0) {
-            bigDecimal = bigDecimal.setScale(scale, roundingMode)
-        } else if (bigDecimal.scale() > 0) {
-            bigDecimal = bigDecimal.setScale(getScale(value.abs()), roundingMode)
-        }
-        bigDecimal = bigDecimal.stripTrailingZeros()
+        val targetScale = getScale(value.abs())
+        val scale = if (targetScale > customScale) targetScale else customScale
+        val bigDecimal = value.stripTrailingZeros().setScale(scale, roundingMode).stripTrailingZeros()
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(bigDecimal)
         return format(currency, amount, replaceSymbol)
@@ -118,21 +114,21 @@ object CurrencyFormatter {
     fun format(
         currency: String = "",
         value: Coins,
-        scale: Int = 0,
+        customScale: Int = 0,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
     ): CharSequence {
-        return format(currency, value.value, scale, roundingMode, replaceSymbol)
+        return format(currency, value.value, customScale, roundingMode, replaceSymbol)
     }
 
     fun formatFiat(
         currency: String,
         value: Coins,
-        scale: Int = 2,
+        customScale: Int = 2,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
     ): CharSequence {
-        return format(currency, value, scale, roundingMode, replaceSymbol)
+        return format(currency, value, customScale, roundingMode, replaceSymbol)
     }
 
     private fun getScale(value: BigDecimal): Int {
@@ -190,6 +186,9 @@ object CurrencyFormatter {
     }
 
     fun CharSequence.withCustomSymbol(context: Context): CharSequence {
+        if (true) { // Not now... maybe in future
+            return this
+        }
         val startIndex = indexOf(TON_SYMBOL)
         val endIndex = startIndex + TON_SYMBOL.length
         if (startIndex == -1) {

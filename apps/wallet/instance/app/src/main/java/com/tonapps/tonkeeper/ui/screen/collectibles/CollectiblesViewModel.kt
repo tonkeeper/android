@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.collectibles
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
@@ -40,7 +41,7 @@ class CollectiblesViewModel(
             accountRepository.selectedWalletFlow,
             networkMonitor.isOnlineFlow,
             settingsRepository.hiddenBalancesFlow,
-            settingsRepository.nftPrefsChangedFlow
+            settingsRepository.tokenPrefsChangedFlow,
         ) { wallet, isOnline, hiddenBalances, _ ->
             loadItems(wallet, isOnline, hiddenBalances)
         }.launchIn(viewModelScope)
@@ -85,11 +86,11 @@ class CollectiblesViewModel(
     ): List<Item> {
         val items = mutableListOf<Item>()
         for (nft in list) {
-            val nftPref = settingsRepository.getNftPrefs(wallet.id, nft.address)
-            if (nftPref.hidden) {
+            val tokenPref = settingsRepository.getTokenPrefs(wallet.id, nft.address)
+            if (tokenPref.isHidden) {
                 continue
             }
-            if (!nft.isTrusted && nftPref.trust) {
+            if (!nft.isTrusted && tokenPref.isTrust) {
                 items.add(Item.Nft(nft.copy(isTrusted = true), hiddenBalances))
             } else {
                 items.add(Item.Nft(nft, hiddenBalances))

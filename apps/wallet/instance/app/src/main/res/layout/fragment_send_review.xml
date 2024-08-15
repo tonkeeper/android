@@ -119,7 +119,7 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             app:successLabel="@string/done"
-            app:errorLabel="@string/error"/>
+            app:errorLabel="@string/sending_error"/>
 
     </FrameLayout>
 

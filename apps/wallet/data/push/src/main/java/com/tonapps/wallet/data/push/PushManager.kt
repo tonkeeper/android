@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.push
 import android.app.Notification
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.locale
 import com.tonapps.network.getBitmap
@@ -20,6 +21,7 @@ import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -35,7 +37,6 @@ class PushManager(
     private val scope: CoroutineScope,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
-    private val eventsRepository: EventsRepository,
     private val tonConnectRepository: TonConnectRepository,
     private val api: API
 ) {
@@ -54,9 +55,10 @@ class PushManager(
     init {
         combine(
             settingsRepository.firebaseTokenFlow,
-            settingsRepository.walletPush,
-            ::subscribe
-        ).flowOn(Dispatchers.IO).launchIn(scope)
+            settingsRepository.walletPush
+        ) { token, _ ->
+            subscribe(token)
+        }.flowOn(Dispatchers.IO).launchIn(scope)
 
         accountRepository.selectedWalletFlow.onEach {
             _dAppPushFlow.value = getRemoteDAppEvents(it)
@@ -158,19 +160,31 @@ class PushManager(
     }
 
     private suspend fun subscribe(
-        firebaseToken: String,
-        walletPush: Map<String, Boolean>
-    ) {
+        firebaseToken: String
+    ) = withContext(Dispatchers.IO) {
+        val tcAppsDeferred = async { tonConnectRepository.subscribePush(firebaseToken) }
+        val walletDeferred = async { subscribeWalletPush(firebaseToken) }
+
+        if (!tcAppsDeferred.await()) {
+            Log.e("TONKeeperLog", "Failed to subscribe to TC apps push")
+        }
+
+        if (!walletDeferred.await()) {
+            Log.e("TONKeeperLog", "Failed to subscribe to wallet push")
+        }
+    }
+
+    private suspend fun subscribeWalletPush(
+        firebaseToken: String
+    ): Boolean {
         val wallets = accountRepository.getWallets()
-        val accounts = wallets.filter {
-            !it.testnet && settingsRepository.getPushWallet(it.id)
-        }.map {
+        val accounts = wallets.filter { !it.testnet && settingsRepository.getPushWallet(it.id) }.map {
             it.accountId.toUserFriendly(testnet = false)
         }
-        val enabledAccounts = walletPush.filterValues { it }.keys
-
-        api.pushSubscribe(context.locale, firebaseToken, settingsRepository.installId, accounts)
-
-        tonConnectRepository.updatePushToken(firebaseToken)
+        Log.d("TONKeeperLog", "accounts: $accounts")
+        if (accounts.isEmpty()) {
+            return true
+        }
+        return api.pushSubscribe(context.locale, firebaseToken, settingsRepository.installId, accounts)
     }
 }

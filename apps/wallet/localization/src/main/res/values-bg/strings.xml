@@ -10,9 +10,11 @@
     <string name="setup_finish_backup">Резервирайте възстановителната фраза на портфейла</string>
     <string name="setup_finish_telegram">Присъединете се към канала на Tonkeeper</string>
 
+    <string name="contacts">Контакти</string>
     <string name="step_1">Етап 1</string>
     <string name="step_2">Етап 2</string>
     <string name="step_3">Етап 3</string>
+    <string name="home_screen">Начален екран</string>
     <string name="signer_step_1">Сканирайте QR кода с Signer</string>
     <string name="signer_step_2">Потвърдете транзакцията си в Signer</string>
     <string name="signer_step_3">Сканирайте QR кода на подписаната транзакция от Signer</string>
@@ -42,6 +44,7 @@
     <string name="pinned">Прикрепено</string>
     <string name="all_assets">Всички активи</string>
     <string name="sorted_by_price">Сортирано по цена</string>
+    <string name="spam">Спам</string>
     <string name="staking_max_apy" translatable="false">MAX APY</string>
     <string name="staking_minimum_deposit">Минимален депозит %1$s.</string>
     <string name="staking_options">Опции</string>
@@ -360,6 +363,7 @@
     <string name="banner_top_button">Инсталирайте стабилната версия</string>
     <string name="signer_description">Отворете Signer » Изберете необходимия ключ » Сканирайте QR код</string>
     <string name="signer_open">Отворете Signer на това устройство</string>
+    <string name="later">По-късно</string>
     <string name="signer" translatable="false">Signer</string>
     <string name="choose_wallet_title">Изберете портфейл</string>
     <string name="choose_wallet_subtitle">Изберете портфейли, които искате да добавите.</string>
@@ -393,4 +397,5 @@
     <string name="bluetooth_permissions_alert_message">Моля, включете разрешенията за Bluetooth в настройките, за да използвате тази функция</string>
     <string name="bluetooth_permissions_alert_open_settings">Отворете Настройки</string>
     <string name="biometric_enabled">Биометричните са активирани</string>
+    <string name="sending_error">Грешка при изпращане, опитайте отново по-късно</string>
 </resources>

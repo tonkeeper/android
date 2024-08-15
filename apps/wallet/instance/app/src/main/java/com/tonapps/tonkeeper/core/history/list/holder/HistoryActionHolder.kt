@@ -23,6 +23,7 @@ import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
+import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
@@ -84,8 +85,16 @@ class HistoryActionHolder(
         }
 
         itemView.background = item.position.drawable(context)
-        titleView.setText(item.action.nameRes)
+        if (item.isScam) {
+            titleView.setText(Localization.spam)
+            subtitleView.setTextColor(amountColorTertiary)
+        } else {
+            titleView.setText(item.action.nameRes)
+            subtitleView.setTextColor(context.textSecondaryColor)
+        }
+
         subtitleView.text = item.subtitle
+
         dateView.text = item.date
 
         if (item.failed) {
@@ -102,7 +111,7 @@ class HistoryActionHolder(
         }
 
         bindPending(item.pending)
-        if (item.comment == null) {
+        if (item.comment == null || item.isScam) {
             commentView.visibility = View.GONE
         } else {
             bindComment(item.comment, item.txId, item.senderAddress ?: "")
@@ -126,7 +135,7 @@ class HistoryActionHolder(
     }
 
     private fun bindAmount(item: HistoryItem.Event) {
-        if (item.action == ActionType.WithdrawStakeRequest) {
+        if (item.isScam || item.action == ActionType.WithdrawStakeRequest) {
             amountView.setTextColor(amountColorTertiary)
         } else {
             amountView.setTextColor(getAmountColor(item.value))
@@ -137,13 +146,14 @@ class HistoryActionHolder(
             amountView.text = item.value.withCustomSymbol(context)
         }
 
-
         if (item.value2.isEmpty()) {
             amount2View.visibility = View.GONE
         } else {
             amount2View.visibility = View.VISIBLE
             if (item.hiddenBalance) {
                 amount2View.text = HIDDEN_BALANCE
+            } else if (item.isScam) {
+                amount2View.text = item.value2.toString()
             } else {
                 amount2View.text = item.value2.withCustomSymbol(context)
             }
@@ -183,7 +193,7 @@ class HistoryActionHolder(
     }
 
     private fun bindNft(item: HistoryItem.Event) {
-        if (!item.hasNft) {
+        if (!item.hasNft || item.isScam) {
             nftView.visibility = View.GONE
             return
         }

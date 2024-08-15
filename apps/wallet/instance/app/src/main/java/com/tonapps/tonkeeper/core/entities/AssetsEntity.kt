@@ -19,7 +19,7 @@ sealed class AssetsEntity(
             val pref = if (asset is Token) {
                 settingsRepository.getTokenPrefs(wallet.id, asset.token.address, asset.token.blacklist)
             } else {
-                TokenPrefsEntity(contains = false, index = -1)
+                TokenPrefsEntity()
             }
             AssetsExtendedEntity(asset, pref)
         }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator).map { it.raw }

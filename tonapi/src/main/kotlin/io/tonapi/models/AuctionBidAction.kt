@@ -36,7 +36,7 @@ import com.squareup.moshi.JsonClass
 data class AuctionBidAction (
 
     @Json(name = "auction_type")
-    val auctionType: AuctionBidAction.AuctionType,
+    val auctionType: String,
 
     @Json(name = "amount")
     val amount: Price,

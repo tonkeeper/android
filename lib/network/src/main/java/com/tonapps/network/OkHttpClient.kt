@@ -55,7 +55,7 @@ fun OkHttpClient.post(
     headers?.forEach { (key, value) ->
         builder.addHeader(key, value)
     }
-    return newCall(builder.build()).execute()
+    return execute(builder.build())
 }
 
 fun OkHttpClient.get(
@@ -66,7 +66,17 @@ fun OkHttpClient.get(
     headers?.forEach { (key, value) ->
         builder.addHeader(key, value)
     }
-    return newCall(builder.build()).execute().body?.string() ?: throw Exception("Empty response")
+    return execute(builder.build()).body?.string() ?: throw Exception("Empty response")
+}
+
+private fun OkHttpClient.execute(request: Request): Response {
+    val response = newCall(request).execute()
+    if (!response.isSuccessful) {
+        val data = response.body?.string() ?: ""
+
+        Log.e("TONKeeperLog", "Request failed: response=$response\ndata=$data")
+    }
+    return response
 }
 
 fun OkHttpClient.getBitmap(url: String): Bitmap {

@@ -21,18 +21,17 @@ import java.util.Locale
 
 object DateHelper {
 
-    fun formatTransactionDetailsTime(date: Long): String {
+    fun formatTransactionDetailsTime(date: Long, locale: Locale): String {
         val instant = Instant.fromEpochMilliseconds(date * 1000)
-        return formatTransactionDetailsTime(instant)
+        return formatTransactionDetailsTime(instant, locale)
     }
 
-    fun formatTransactionDetailsTime(date: Instant): String {
-        val locale = Locale.getDefault()
-        val shortMonth = formatDate(date, "MMM").replace(".", "") + ","
+    fun formatTransactionDetailsTime(date: Instant, locale: Locale): String {
+        val shortMonth = formatDate(date, "MMM", locale).replace(".", "") + ","
         val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
-        val time = formatDate(date, "HH:mm")
-        val day = formatDate(date, "d")
-        val year = formatDate(date, "yyyy")
+        val time = formatDate(date, "HH:mm", locale)
+        val day = formatDate(date, "d", locale)
+        val year = formatDate(date, "yyyy", locale)
         return if (isThisYear(date)) {
             "$day $month $time"
         } else {
@@ -40,27 +39,21 @@ object DateHelper {
         }
     }
 
-    fun timestampToDateString(timestamp: Long): String {
+    fun timestampToDateString(timestamp: Long, locale: Locale): String {
         val date = Instant.fromEpochSeconds(timestamp)
-        return formatDate(date, "yyyy-MM-dd")
+        return formatDate(date, "yyyy-MM-dd", locale)
     }
 
-    fun dateToTimestamp(dateString: String): Long {
-        val date = LocalDate.parse(dateString)
-        return date.atStartOfDayIn(TimeZone.UTC).epochSeconds
-    }
-
-    fun formatTransactionTime(date: Long): String {
+    fun formatTransactionTime(date: Long, locale: Locale): String {
         val instant = Instant.fromEpochMilliseconds(date * 1000)
-        return formatTransactionTime(instant)
+        return formatTransactionTime(instant, locale)
     }
 
-    fun formatTransactionTime(date: Instant): String {
-        val locale = Locale.getDefault()
-        val shortMonth = formatDate(date, "MMM").replace(".", "") + ","
+    fun formatTransactionTime(date: Instant, locale: Locale): String {
+        val shortMonth = formatDate(date, "MMM", locale).replace(".", "") + ","
         val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
-        val time = formatDate(date, "HH:mm")
-        val day = formatDate(date, "d")
+        val time = formatDate(date, "HH:mm", locale)
+        val day = formatDate(date, "d", locale)
         return if (isThisMonth(date)) {
             time
         } else {
@@ -68,14 +61,14 @@ object DateHelper {
         }
     }
 
-    fun formatTransactionsGroupDate(context: Context, timestamp: Long): String {
+    fun formatTransactionsGroupDate(context: Context, timestamp: Long, locale: Locale): String {
         val date = Instant.fromEpochMilliseconds(timestamp * 1000)
         return when {
             isToday(date) -> context.getString(Localization.today)
             isYesterday(date) -> context.getString(Localization.yesterday)
-            isThisMonth(date) -> formatDate(date, "d MMMM")
-            isThisYear(date) -> formatDate(date, "MMMM").capitalized
-            else -> formatDate(date, "MMMM yyyy").capitalized
+            isThisMonth(date) -> formatDate(date, "d MMMM", locale)
+            isThisYear(date) -> formatDate(date, "MMMM", locale).capitalized
+            else -> formatDate(date, "MMMM yyyy", locale).capitalized
         }
     }
 
@@ -99,31 +92,25 @@ object DateHelper {
         return now.minus(date, DateTimeUnit.MONTH, TimeZone.currentSystemDefault()) < 1
     }
 
-    private fun createFormatter(pattern: String): DateTimeFormatter {
+    private fun createFormatter(pattern: String, locale: Locale): DateTimeFormatter {
         return DateTimeFormatterBuilder()
             .appendPattern(pattern)
-            .toFormatter(Locale.getDefault())
+            .toFormatter(locale)
     }
 
-    fun formatDate(instant: Instant, formatString: String): String {
-        val formatter = createFormatter(formatString)
+    fun formatDate(instant: Instant, formatString: String, locale: Locale): String {
+        val formatter = createFormatter(formatString, locale)
         val zonedDateTime = instant.toJavaInstant().atZone(java.time.ZoneId.systemDefault())
         return formatter.format(zonedDateTime)
     }
 
-    fun formattedDate(unixTimestamp: Long): String {
+    fun formattedDate(unixTimestamp: Long, locale: Locale): String {
         if (0 >= unixTimestamp) {
             return ""
         }
+        val formatString = "MMM d, HH:mm"
         val instant = Instant.fromEpochMilliseconds(unixTimestamp * 1000)
-        val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-
-        val month = dateTime.month.name.take(3)
-        val day = dateTime.dayOfMonth
-        val hour = dateTime.hour.toString().padStart(2, '0')
-        val minute = dateTime.minute.toString().padStart(2, '0')
-
-        return "$month $day, $hour:$minute"
+        return formatDate(instant, formatString, locale).capitalized
     }
 
 }

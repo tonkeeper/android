@@ -15,7 +15,7 @@ import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
-import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsScreen
+import com.tonapps.tonkeeper.ui.screen.notifications.manage.NotificationsManageScreen
 import com.tonapps.tonkeeper.ui.screen.settings.legal.LegalScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
@@ -70,7 +70,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             is Item.SearchEngine -> searchPicker(item)
             is Item.DeleteWatchAccount -> deleteWatchAccount()
             is Item.Rate -> openRate()
-            is Item.Notifications -> navigation?.add(NotificationsScreen.newInstance())
+            is Item.Notifications -> navigation?.add(NotificationsManageScreen.newInstance())
             is Item.FAQ -> navigation?.openURL(item.url, true)
             else -> return
         }

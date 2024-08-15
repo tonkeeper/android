@@ -59,6 +59,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     private val historyHelper: HistoryHelper by inject()
 
     private lateinit var iconView: FrescoView
+    private lateinit var spamView: View
     private lateinit var amountView: AppCompatTextView
     private lateinit var currencyView: AppCompatTextView
     private lateinit var dateView: AppCompatTextView
@@ -84,30 +85,32 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             finish()
         }
 
-        iconView = view.findViewById(R.id.icon)!!
-        amountView = view.findViewById(R.id.amount)!!
-        currencyView = view.findViewById(R.id.currency)!!
-        dateView = view.findViewById(R.id.date)!!
-        unverifiedView = view.findViewById(R.id.unverified)!!
+        iconView = view.findViewById(R.id.icon)
+        amountView = view.findViewById(R.id.amount)
+        spamView = view.findViewById(R.id.spam)
+        spamView.visibility = if (action.isScam) View.VISIBLE else View.GONE
+        currencyView = view.findViewById(R.id.currency)
+        dateView = view.findViewById(R.id.date)
+        unverifiedView = view.findViewById(R.id.unverified)
         unverifiedView.setOnClickListener {
             navigation?.add(TokenUnverifiedScreen.newInstance())
         }
 
-        dataView = view.findViewById(R.id.data)!!
+        dataView = view.findViewById(R.id.data)
 
-        feeView = view.findViewById(R.id.fee)!!
+        feeView = view.findViewById(R.id.fee)
         feeView.title = getString(Localization.fee)
 
-        commentView = view.findViewById(R.id.comment)!!
+        commentView = view.findViewById(R.id.comment)
         commentView.title = getString(Localization.comment)
 
-        accountNameView = view.findViewById(R.id.account_name)!!
-        accountAddressView = view.findViewById(R.id.account_address)!!
+        accountNameView = view.findViewById(R.id.account_name)
+        accountAddressView = view.findViewById(R.id.account_address)
 
-        txView = view.findViewById(R.id.tx)!!
+        txView = view.findViewById(R.id.tx)
         txView.title = getString(Localization.transaction)
 
-        explorerButton = view.findViewById(R.id.open_explorer)!!
+        explorerButton = view.findViewById(R.id.open_explorer)
 
         unverifiedView.visibility = if (action.unverifiedToken) {
             View.VISIBLE
@@ -125,7 +128,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
 
         applyIcon(action.coinIconUrl)
-        if (action.comment != null) {
+        if (action.comment != null && !action.isScam) {
             applyComment(action.comment!!)
         } else {
             commentView.visibility = View.GONE

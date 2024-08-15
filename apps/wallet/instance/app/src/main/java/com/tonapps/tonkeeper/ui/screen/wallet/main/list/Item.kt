@@ -1,11 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
 import com.facebook.common.util.UriUtil
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.Coins

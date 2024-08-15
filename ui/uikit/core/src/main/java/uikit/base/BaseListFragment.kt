@@ -13,12 +13,13 @@ import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.topScrolled
 import uikit.widget.HeaderView
+import uikit.widget.SimpleRecyclerView
 
 open class BaseListFragment: BaseFragment(R.layout.fragment_list) {
 
     private lateinit var headerContainer: FrameLayout
     private lateinit var headerView: HeaderView
-    private lateinit var listView: RecyclerView
+    private lateinit var listView: SimpleRecyclerView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -64,8 +65,10 @@ open class BaseListFragment: BaseFragment(R.layout.fragment_list) {
     }
 
     fun setTouchHelperCallback(callback: ItemTouchHelper.SimpleCallback) {
-        ItemTouchHelper(callback).attachToRecyclerView(listView)
+        listView.setTouchHelper(ItemTouchHelper(callback))
     }
+
+    fun getTouchHelper() = listView.getTouchHelper()
 
     fun setListPadding(left: Int, top: Int, right: Int, bottom: Int) {
         listView.setPadding(left, top, right, bottom)

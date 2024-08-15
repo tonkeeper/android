@@ -7,6 +7,7 @@ import android.util.Log
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.packageInfo
+import com.tonapps.extensions.withRetry
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
@@ -79,9 +80,15 @@ internal class InternalApi(
         }
     }
 
-    fun resolveCountry(): String? {
+    suspend fun resolveCountry(): String? {
         return try {
-            JSONObject(okHttpClient.get("https://api.country.is/")).getString("country")
+            val data = withRetry { okHttpClient.get("https://api.country.is/") } ?: return null
+            val country = JSONObject(data).getString("country")
+            if (country.isNullOrBlank()) {
+                null
+            } else {
+                country
+            }
         } catch (e: Throwable) {
             null
         }

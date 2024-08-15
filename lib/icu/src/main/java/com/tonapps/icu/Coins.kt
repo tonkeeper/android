@@ -190,6 +190,16 @@ data class Coins(
 
     fun toDouble(): Double = value.toDouble()
 
+    fun diff(coins: Coins): Float {
+        if (coins.isZero || isZero) {
+            return 0f
+        }
+        val percentage = coins.value.divide(value, 4, RoundingMode.HALF_UP)
+            .multiply(BigDecimal("100"))
+            .setScale(2, RoundingMode.HALF_UP)
+        return percentage.toFloat()
+    }
+
     override fun describeContents(): Int {
         return 0
     }

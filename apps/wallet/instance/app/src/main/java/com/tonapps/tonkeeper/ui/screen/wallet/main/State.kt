@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
-import android.content.Context
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.DEFAULT_DECIMALS
 import com.tonapps.icu.Coins.Companion.sumOf
@@ -277,7 +276,6 @@ sealed class State {
     data class Settings(
         val hiddenBalance: Boolean,
         val config: ConfigEntity,
-        val status: Item.Status,
-        val telegramChannel: Boolean,
+        val status: Item.Status
     ): State()
 }

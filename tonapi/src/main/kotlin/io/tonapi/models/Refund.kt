@@ -30,7 +30,7 @@ import com.squareup.moshi.JsonClass
 data class Refund (
 
     @Json(name = "type")
-    val type: Refund.Type,
+    val type: String,
 
     @Json(name = "origin")
     val origin: kotlin.String

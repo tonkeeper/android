@@ -5,14 +5,13 @@ import android.view.ViewGroup
 import com.tonapps.tonkeeper.extensions.openCamera
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
-import com.tonapps.tonkeeper.ui.screen.send.SendScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
-import uikit.navigation.Navigation
 
 class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.view_wallet_actions) {
 

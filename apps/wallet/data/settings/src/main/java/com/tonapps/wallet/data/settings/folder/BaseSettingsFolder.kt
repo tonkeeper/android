@@ -5,17 +5,22 @@ import android.content.SharedPreferences
 import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getByteArray
+import com.tonapps.extensions.state
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.shareIn
 
 internal abstract class BaseSettingsFolder(
-    private val context: Context,
-    private val name: String
+    context: Context,
+    scope: CoroutineScope,
+    name: String
 ) {
 
     private val prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE)
 
     private val _changedFlow = MutableEffectFlow<Unit>()
-    val changedFlow = _changedFlow.asSharedFlow()
+    val changedFlow = _changedFlow.shareIn(scope, SharingStarted.Lazily, 1)
 
     init {
         notifyChanged()

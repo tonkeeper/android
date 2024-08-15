@@ -14,6 +14,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
@@ -54,6 +55,7 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.webview.bridge.BridgeWebView
 import java.util.UUID
 import kotlin.coroutines.resume
+import kotlin.math.abs
 
 class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
 
@@ -73,12 +75,13 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
 
     private val webViewCallback = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            val refererUri = request.requestHeaders["Referer"]?.toUri()
             val url = request.url.normalizeTONSites()
             if (url.scheme != "https") {
                 navigation?.openURL(url.toString(), true)
                 return true
             }
-            return rootViewModel.processDeepLink(url, false)
+            return rootViewModel.processDeepLink(url, false, refererUri)
         }
 
         override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
@@ -138,7 +141,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
 
         webView.jsBridge = DAppBridge(
             send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
-            connect = { _, request -> tonConnectAuth(request) },
+            connect = { _, request -> tonConnectAuth(webView.url?.toUri(), request) },
             restoreConnection = { dAppViewModel.restoreConnection(args.url) },
             disconnect = { dAppViewModel.disconnect() }
         )
@@ -226,6 +229,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
     }
 
     private suspend fun tonConnectAuth(
+        sourceUri: Uri?,
         request: DAppPayloadEntity
     ): String? = suspendCancellableCoroutine { continuation ->
         val id = UUID.randomUUID().toString()
@@ -236,13 +240,14 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
                 continuation.resume(null)
             }
         }
-        openAuth(id, request)
+        openAuth(sourceUri, id, request)
     }
 
-    private fun openAuth(id: String, request: DAppPayloadEntity) {
+    private fun openAuth(sourceUri: Uri?, id: String, request: DAppPayloadEntity) {
         val entity = DAppRequestEntity(
             id = id,
             r = request.toJSON().toString(),
+            source = sourceUri,
         )
         navigation?.add(TCAuthFragment.newInstance(entity, id, true))
     }

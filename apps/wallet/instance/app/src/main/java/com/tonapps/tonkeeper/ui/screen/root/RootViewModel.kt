@@ -161,6 +161,12 @@ class RootViewModel(
             AnalyticsHelper.setConfig(context, config)
             AnalyticsHelper.trackEvent("launch_app")
         }
+
+        settingsRepository.countryFlow.take(1).filter { it.isBlank() }.map {
+            api.resolveCountry()
+        }.filterNotNull().onEach {
+            settingsRepository.country = it
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 
     private suspend fun initShortcuts(
@@ -296,15 +302,15 @@ class RootViewModel(
         }
     }.take(1)
 
-    fun processDeepLink(uri: Uri, fromQR: Boolean): Boolean {
+    fun processDeepLink(uri: Uri, fromQR: Boolean, refSource: Uri?): Boolean {
         if (DeepLink.isSupportedUri(uri)) {
-            resolveDeepLink(uri, fromQR)
+            resolveDeepLink(uri, fromQR, refSource)
             return true
         }
         return false
     }
 
-    private fun resolveDeepLink(uri: Uri, fromQR: Boolean) {
+    private fun resolveDeepLink(uri: Uri, fromQR: Boolean, refSource: Uri?) {
         if (uri.host == "signer") {
             collectFlow(hasWalletFlow.take(1)) {
                 delay(1000)
@@ -314,7 +320,7 @@ class RootViewModel(
         }
         accountRepository.selectedWalletFlow.take(1).onEach { wallet ->
             delay(1000)
-            resolveOther(uri, wallet)
+            resolveOther(refSource, uri, wallet)
         }.launchIn(viewModelScope)
     }
 
@@ -327,13 +333,17 @@ class RootViewModel(
         }
     }
 
-    private fun resolveOther(_uri: Uri, wallet: WalletEntity) {
+    private fun resolveOther(
+        refSource: Uri?,
+        _uri: Uri,
+        wallet: WalletEntity
+    ) {
         val url = _uri.toString().replace("ton://", "https://app.tonkeeper.com/").replace("tonkeeper://", "https://app.tonkeeper.com/")
         val uri = Uri.parse(url)
         val path = uri.path
 
         if (DeepLink.isTonConnectUri(uri)) {
-            resolveTonConnect(uri, wallet)
+            resolveTonConnect(uri, wallet, refSource)
         } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
             _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString()))
         } else if (path?.startsWith("/staking") == true) {
@@ -398,14 +408,15 @@ class RootViewModel(
 
     private fun resolveTonConnect(
         uri: Uri,
-        wallet: WalletEntity
+        wallet: WalletEntity,
+        source: Uri?
     ) {
         try {
             if (!wallet.hasPrivateKey && !wallet.isLedger) {
                 toast(Localization.not_supported)
                 return
             }
-            val request = DAppRequestEntity(uri)
+            val request = DAppRequestEntity(source, uri)
             _eventFlow.tryEmit(RootEvent.TonConnect(request))
         } catch (e: Throwable) {
             toast(Localization.invalid_link)

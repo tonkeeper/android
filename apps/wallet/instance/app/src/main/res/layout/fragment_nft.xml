@@ -36,6 +36,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.Label1"
                     android:text="@string/report_spam"/>
 
@@ -49,6 +50,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.Label1"
                     android:text="@string/not_spam"/>
             </uikit.widget.RowLayout>

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
+import com.tonapps.wallet.data.rn.data.RNSpamTransactions
 import com.tonapps.wallet.data.rn.data.RNTC
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.data.RNWallet
@@ -121,6 +122,37 @@ class RNLegacy(
         }
     }
 
+    fun getSpamTransactions(walletId: String): RNSpamTransactions {
+        val key = keySpamTransactions(walletId)
+        val json = sql.getJSONObject(key) ?: return RNSpamTransactions(walletId)
+        val spam = mutableListOf<String>()
+        val nonSpam = mutableListOf<String>()
+        for (transactionId in json.keys()) {
+            if (json.optBoolean(transactionId)) {
+                spam.add(transactionId)
+            } else {
+                nonSpam.add(transactionId)
+            }
+        }
+        return RNSpamTransactions(walletId, spam.toList(), nonSpam.toList())
+    }
+
+    fun setSpamTransactions(walletId: String, data: RNSpamTransactions) {
+        val json = JSONObject()
+        for (transactionId in data.spam) {
+            json.put(transactionId, true)
+        }
+        for (transactionId in data.nonSpam) {
+            json.put(transactionId, false)
+        }
+        val key = keySpamTransactions(walletId)
+        sql.setJSONObject(key, json)
+    }
+
+    private fun keySpamTransactions(walletId: String): String {
+        return "${walletId}/local-scam"
+    }
+
     fun getValue(key: String): String? {
         return sql.getValue(key)
     }
@@ -129,7 +161,10 @@ class RNLegacy(
         return sql.getJSONObject(key)
     }
 
-    fun setJSONValue(key: String, value: JSONObject) {
+    fun setJSONValue(key: String, value: JSONObject, v: Int = -1) {
+        if (v >= 0) {
+            value.put("__version", v)
+        }
         sql.setJSONObject(key, value)
     }
 
@@ -185,18 +220,32 @@ class RNLegacy(
         return Pair(setupDismissed, hasOpenedTelegramChannel)
     }
 
+    fun setSetupLastBackupAt(walletId: String, date: Long) {
+        val json = getSetupJSON(walletId)
+        json.put("lastBackupAt", date)
+        setSetupJSON(walletId, json)
+    }
+
     fun setSetupDismissed(walletId: String) {
-        val key = "${walletId}/setup"
-        val json = getJSONValue(key) ?: JSONObject()
+        val json = getSetupJSON(walletId)
         json.put("setupDismissed", true)
-        setJSONValue(key, json)
+        setSetupJSON(walletId, json)
     }
 
     fun setHasOpenedTelegramChannel(walletId: String) {
-        val key = "${walletId}/setup"
-        val json = getJSONValue(key) ?: JSONObject()
+        val json = getSetupJSON(walletId)
         json.put("hasOpenedTelegramChannel", true)
-        setJSONValue(key, json)
+        setSetupJSON(walletId, json)
+    }
+
+    private fun getSetupJSON(walletId: String): JSONObject {
+        val key = "${walletId}/setup"
+        return getJSONValue(key) ?: JSONObject()
+    }
+
+    private fun setSetupJSON(walletId: String, json: JSONObject) {
+        val key = "${walletId}/setup"
+        setJSONValue(key, json, 1)
     }
 
     fun getNotificationsEnabled(walletId: String): Boolean {

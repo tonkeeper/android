@@ -74,13 +74,17 @@ class WalletViewModel(
     private val _stateMainFlow = MutableStateFlow<State.Main?>(null)
     private val stateMainFlow = _stateMainFlow.asStateFlow().filterNotNull()
 
+    private val updateWalletSettings = combine(
+        settingsRepository.tokenPrefsChangedFlow,
+        settingsRepository.walletPrefsChangedFlow
+    ) { _, _ -> }
+
     private val _stateSettingsFlow = combine(
         settingsRepository.hiddenBalancesFlow,
         api.configFlow,
         statusFlow,
-        settingsRepository.telegramChannelFlow,
-    ) { hiddenBalance, config, status, telegramChannel ->
-        State.Settings(hiddenBalance, config, status, telegramChannel)
+    ) { hiddenBalance, config, status ->
+        State.Settings(hiddenBalance, config, status)
     }.distinctUntilChanged()
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
@@ -122,7 +126,7 @@ class WalletViewModel(
             settingsRepository.currencyFlow,
             backupRepository.stream,
             networkMonitor.isOnlineFlow,
-            settingsRepository.walletPrefsChangedFlow,
+            updateWalletSettings,
         ) { wallet, currency, backups, isOnline, _ ->
             if (isOnline) {
                 setStatus(Status.Updating)
@@ -157,7 +161,7 @@ class WalletViewModel(
             alertNotificationsFlow,
             pushManager.dAppPushFlow,
             _stateSettingsFlow,
-            settingsRepository.walletPrefsChangedFlow,
+            updateWalletSettings,
         ) { state, alerts, dAppNotifications, settings, _ ->
             val status = settings.status /* if (settings.status == Status.NoInternet) {
                 settings.status
@@ -176,7 +180,7 @@ class WalletViewModel(
                     pushEnabled = context.hasPushPermission() && settingsRepository.getPushWallet(state.wallet.id),
                     biometryEnabled = settingsRepository.biometric,
                     hasBackup = state.hasBackup,
-                    showTelegramChannel = settings.telegramChannel
+                    showTelegramChannel = settingsRepository.isTelegramChannel(state.wallet.id)
                 )
             }
 
@@ -190,7 +194,7 @@ class WalletViewModel(
                 alerts = alerts,
                 dAppNotifications = State.DAppNotifications(dAppEvents, apps),
                 setup = uiSetup,
-                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated)
+                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale())
             )
             _uiItemsFlow.value = uiItems
             setCached(state.wallet, uiItems)

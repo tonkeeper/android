@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
+import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
 import android.text.SpannableString
@@ -12,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.view.SimpleDraweeView
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.tonconnect.models.TCData
@@ -63,8 +65,9 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
     private val callbackKey: String? by lazy { arguments?.getString(CALLBACK_KEY) }
     private val fromBrowser: Boolean by lazy { arguments?.getBoolean(FROM_BROWSER_KEY) ?: false }
+    private val request: DAppRequestEntity by lazy { arguments?.getParcelableCompat(REQUEST_KEY)!! }
 
-    private val viewModel: TCAuthViewModel by viewModel { parametersOf(arguments?.getParcelable(REQUEST_KEY)!!) }
+    private val viewModel: TCAuthViewModel by viewModel { parametersOf(request) }
 
     private lateinit var closeView: View
     private lateinit var loaderView: LoaderView
@@ -162,7 +165,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
     private fun setSuccess(result: DAppEventSuccessEntity) {
         connectProcessView.state = ProcessTaskView.State.SUCCESS
-        finalDelay()
+        finalDelay(request.backUri)
         callbackKey?.let {
             navigation?.setFragmentResult(it, Bundle().apply {
                 putString(REPLY_ARG, result.toJSON().toString())
@@ -172,7 +175,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
 
     private fun setFailure() {
         connectProcessView.state = ProcessTaskView.State.FAILED
-        finalDelay()
+        finalDelay(request.backUri)
     }
 
     private fun cancelCallback() {
@@ -181,9 +184,18 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
         }
     }
 
-    private fun finalDelay() {
+    private fun finalDelay(uri: Uri?) {
+        if (!fromBrowser && uri != null) {
+            redirectTo(uri)
+        }
         postDelayed(1000) {
             finish()
         }
+    }
+
+    private fun redirectTo(uri: Uri) {
+        try {
+            navigation?.openURL(uri.toString(), true)
+        } catch (ignored: Throwable) { }
     }
 }

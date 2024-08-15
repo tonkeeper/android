@@ -9,9 +9,11 @@
     <string name="setup_finish_biometry">Використовуйте біометрію для підтвердження транзакцій</string>
     <string name="setup_finish_backup">Зробіть резервну копію фрази для відновлення гаманця</string>
     <string name="setup_finish_telegram">Приєднуйтесь до каналу Tonkeeper</string>
+    <string name="contacts">Контакти</string>
     <string name="step_1">Крок 1</string>
     <string name="step_2">Крок 2</string>
     <string name="step_3">Крок 3</string>
+    <string name="home_screen">Головний екран</string>
     <string name="signer_step_1">Відскануйте QR-код за допомогою Signer</string>
     <string name="signer_step_2">Підтвердьте свою транзакцію в Signer</string>
     <string name="signer_step_3">Відскануйте QR-код підписаної транзакції від Signer</string>
@@ -348,4 +350,7 @@
     <string name="intro_title">Вітаємо в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
     <string name="required_comment">Обов\'язковий коментар</string>
     <string name="biometric_enabled">Біометрія включена</string>
+    <string name="sending_error">Помилка відправки, спробуйте пізніше</string>
+    <string name="spam">Спам</string>
+    <string name="later">Пізніше</string>
 </resources>

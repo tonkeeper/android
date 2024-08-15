@@ -13,12 +13,13 @@ import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
+import uikit.extensions.reject
 import uikit.extensions.setColor
 import uikit.widget.CheckBoxView
 
 class Holder(
     parent: ViewGroup,
-    private val onClick: (AccountItem) -> Unit
+    private val onClick: (AccountItem) -> Boolean
 ): BaseListHolder<AccountItem>(parent, R.layout.view_select_wallet) {
 
     private val addressView = findViewById<AppCompatTextView>(R.id.address)
@@ -27,7 +28,12 @@ class Holder(
 
     override fun onBind(item: AccountItem) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setOnClickListener {
+            if (!onClick(item)) {
+                itemView.reject()
+            }
+        }
+
         itemView.isEnabled = !item.ledgerAdded
         addressView.text = item.address.shortAddress
         selectedView.checked = item.selected

@@ -5,7 +5,6 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthViewModel
-import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
@@ -26,8 +25,10 @@ import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
-import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsViewModel
-import com.tonapps.tonkeeper.ui.screen.send.SendViewModel
+import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableViewModel
+import com.tonapps.tonkeeper.ui.screen.notifications.manage.NotificationsManageViewModel
+import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsViewModel
+import com.tonapps.tonkeeper.ui.screen.send.main.SendViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
@@ -55,7 +56,6 @@ val koinModel = module {
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
     single { SettingsRepository(get(), get(), get()) }
     single { NetworkMonitor(get(), get()) }
-    single(createdAtStart = true) { PushManager(get(), get(), get(), get(), get(), get(), get()) }
     single { SignManager(get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get(), get(), get(), get(), get(), get()) }
 
@@ -84,9 +84,9 @@ val koinModel = module {
     viewModel { BrowserSearchViewModel(get(), get(), get(), get()) }
     viewModel { parameters -> DAppViewModel(url = parameters.get(), get(), get()) }
     viewModel { ChangePasscodeViewModel(get(), get()) }
-    viewModel { NotificationsViewModel(get(), get(), get()) }
+    viewModel { NotificationsManageViewModel(get(), get(), get()) }
     viewModel { parameters -> TokenViewModel(get(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { BackupViewModel(get(), get(), get()) }
+    viewModel { BackupViewModel(get(), get(), get(), get()) }
     viewModel { BackupCheckViewModel(get(), get()) }
     viewModel { TokensManageViewModel(get(), get(), get()) }
     viewModel { parameters -> SendViewModel(get(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
@@ -99,4 +99,6 @@ val koinModel = module {
     viewModel { parameters -> NftViewModel(nft = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> StakeViewerViewModel(address = parameters.get(), get(), get(), get(), get()) }
     viewModel { parameters -> UnStakeViewModel(address = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { SendContactsViewModel(get(), get()) }
+    viewModel { NotificationsEnableViewModel(get(), get()) }
 }

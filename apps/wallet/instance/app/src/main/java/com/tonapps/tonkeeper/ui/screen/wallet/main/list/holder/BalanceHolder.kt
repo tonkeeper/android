@@ -125,10 +125,10 @@ class BalanceHolder(
             walletAddressView.text = address.shortAddress
             walletAddressView.setTextColor(context.textSecondaryColor)
             walletAddressView.setOnClickListener {
-                if (walletType == Wallet.Type.Default) {
-                    context.copyWithToast(address)
-                } else {
+                if (walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Watch) {
                     context.copyWithToast(address, getTypeColor(walletType))
+                } else {
+                    context.copyWithToast(address)
                 }
             }
         }
@@ -140,11 +140,7 @@ class BalanceHolder(
             walletTypeView.visibility = View.VISIBLE
             walletTypeView.setTextColor(color)
             walletTypeView.backgroundTintList = color.withAlpha(.16f).stateList
-            if (version == WalletVersion.V5BETA) {
-                walletTypeView.setText(Localization.w5beta)
-            } else {
-                walletTypeView.setText(Localization.w5)
-            }
+            walletTypeView.setText(if (version == WalletVersion.V5BETA) Localization.w5beta else Localization.w5)
             return
         }
 
@@ -169,6 +165,7 @@ class BalanceHolder(
     private fun getTypeColor(type: Wallet.Type): Int {
         return when (type) {
             Wallet.Type.Ledger -> context.accentGreenColor
+            Wallet.Type.Signer, Wallet.Type.SignerQR -> context.accentPurpleColor
             else -> context.accentOrangeColor
         }
     }

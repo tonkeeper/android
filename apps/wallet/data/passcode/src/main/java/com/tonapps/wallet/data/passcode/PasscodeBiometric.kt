@@ -16,7 +16,7 @@ object PasscodeBiometric {
 
     fun isAvailableOnDevice(context: Context): Boolean {
         val authStatus = BiometricManager.from(context).canAuthenticate(authenticators)
-        return authStatus == BiometricManager.BIOMETRIC_SUCCESS || authStatus == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
+        return authStatus == BiometricManager.BIOMETRIC_SUCCESS // || authStatus == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
     }
 
     suspend fun showPrompt(

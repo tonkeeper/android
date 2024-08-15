@@ -126,7 +126,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
         }
         val url = getUrlFromBarcode(barcode) ?: return
         readyUrl = true
-        if (rootViewModel.processDeepLink(Uri.parse(url), true)) {
+        if (rootViewModel.processDeepLink(Uri.parse(url), true, null)) {
             finish()
         }
     }

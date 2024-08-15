@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.core.history.list.item
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
@@ -12,7 +11,6 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.tonkeeper.core.history.ActionType
-import com.tonapps.tonkeeper.helper.DateFormat
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
@@ -98,14 +96,13 @@ sealed class HistoryItem(
         val date: Long,
     ): HistoryItem(TYPE_HEADER) {
 
-        constructor(timestamp: Long) : this(
-            title = DateFormat.monthWithDate(timestamp),
-            date = timestamp
+        constructor(parcel: Parcel) : this(
+            parcel.readString()!!,
+            parcel.readLong()
         )
 
-        constructor(parcel: Parcel) : this(parcel.readLong())
-
         override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeString(title)
             dest.writeLong(date)
         }
 
@@ -185,7 +182,8 @@ sealed class HistoryItem(
         val lt: Long = 0L,
         val failed: Boolean,
         val hiddenBalance: Boolean = false,
-        val unverifiedToken: Boolean = false
+        val unverifiedToken: Boolean = false,
+        val isScam: Boolean
     ): HistoryItem(TYPE_ACTION) {
 
         @Parcelize
@@ -258,7 +256,8 @@ sealed class HistoryItem(
             lt = parcel.readLong(),
             failed = parcel.readBooleanCompat(),
             hiddenBalance = parcel.readBooleanCompat(),
-            unverifiedToken = parcel.readBooleanCompat()
+            unverifiedToken = parcel.readBooleanCompat(),
+            isScam = parcel.readBooleanCompat(),
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -289,6 +288,7 @@ sealed class HistoryItem(
             dest.writeBooleanCompat(failed)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(unverifiedToken)
+            dest.writeBooleanCompat(isScam)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

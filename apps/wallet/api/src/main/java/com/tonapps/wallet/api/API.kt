@@ -8,11 +8,9 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.unicodeToPunycode
-import com.tonapps.extensions.withRetry
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
 import com.tonapps.network.SSLSocketFactoryTcpNoDelay
-import com.tonapps.network.SocketFactoryTcpNoDelay
 import com.tonapps.network.get
 import com.tonapps.network.interceptor.AcceptLanguageInterceptor
 import com.tonapps.network.interceptor.AuthorizationInterceptor
@@ -30,9 +28,9 @@ import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
+import io.tonapi.models.AccountStatus
 import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.EmulateMessageToWalletRequestParamsInner
-import io.tonapi.models.Event
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
@@ -48,7 +46,6 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
-import org.koin.androidx.viewmodel.lazyResolveViewModel
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import org.ton.crypto.hex
@@ -63,7 +60,11 @@ class API(
     val defaultHttpClient = baseOkHttpClientBuilder().build()
 
     private val tonAPIHttpClient: OkHttpClient by lazy {
-        createTonAPIHttpClient(context, config.tonApiV2Key)
+        createTonAPIHttpClient(
+            context = context,
+            tonApiV2Key = config.tonApiV2Key,
+            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost)
+        )
     }
 
     private val internalApi = InternalApi(context, defaultHttpClient)
@@ -183,13 +184,15 @@ class API(
     suspend fun getTonBalance(
         accountId: String,
         testnet: Boolean
-    ): BalanceEntity {
-        val account = getAccount(accountId, testnet) ?: return BalanceEntity(
+    ): BalanceEntity? {
+        val account = getAccount(accountId, testnet) ?: return null
+        val initializedAccount = account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
+        return BalanceEntity(
             token = TokenEntity.TON,
-            value = Coins.ZERO,
-            walletAddress = accountId
+            value = Coins.of(account.balance),
+            walletAddress = accountId,
+            initializedAccount = initializedAccount
         )
-        return BalanceEntity(TokenEntity.TON, Coins.of(account.balance), accountId)
     }
 
     suspend fun getJetton(
@@ -207,18 +210,14 @@ class API(
         accountId: String,
         testnet: Boolean,
         currency: String? = null
-    ): List<BalanceEntity> {
-        try {
-            val jettonsBalances = withRetry {
-                accounts(testnet).getAccountJettonsBalances(
-                    accountId = accountId,
-                    currencies = currency?.let { listOf(it) }
-                ).balances
-            } ?: return emptyList()
-            return jettonsBalances.map { BalanceEntity(it) }.filter { it.value.isPositive }
-        } catch (e: Throwable) {
-            return emptyList()
-        }
+    ): List<BalanceEntity>? {
+        val jettonsBalances = withRetry {
+            accounts(testnet).getAccountJettonsBalances(
+                accountId = accountId,
+                currencies = currency?.let { listOf(it) }
+            ).balances
+        } ?: return null
+        return jettonsBalances.map { BalanceEntity(it) }.filter { it.value.isPositive }
     }
 
     suspend fun resolveAddressOrName(
@@ -248,40 +247,35 @@ class API(
         }
     }
 
-    fun getRates(currency: String, tokens: List<String>): Map<String, TokenRates> {
-        return try {
+    suspend fun getRates(currency: String, tokens: List<String>): Map<String, TokenRates>? {
+        val currencies = listOf(currency)
+        return withRetry {
             rates().getRates(
                 tokens = tokens,
-                currencies = listOf(currency
-                )).rates
-        } catch (e: Throwable) {
-            mapOf()
+                currencies = currencies
+            ).rates
         }
     }
 
-    fun getNft(address: String, testnet: Boolean): NftItem? {
-        return try {
-            nft(testnet).getNftItemByAddress(address)
-        } catch (e: Throwable) {
-            null
+    suspend fun getNft(address: String, testnet: Boolean): NftItem? {
+        return withRetry { nft(testnet).getNftItemByAddress(address) }
+    }
+
+    suspend fun getNftItems(
+        address: String,
+        testnet: Boolean,
+        limit: Int = 1000
+    ): List<NftItem>? {
+        return withRetry {
+            accounts(testnet).getAccountNftItems(
+                accountId = address,
+                limit = limit,
+                indirectOwnership = true,
+            ).nftItems
         }
     }
 
-    suspend fun getNftItems(address: String, testnet: Boolean, limit: Int = 1000): List<NftItem> {
-        return try {
-            withRetry {
-                accounts(testnet).getAccountNftItems(
-                    accountId = address,
-                    limit = limit,
-                    indirectOwnership = true,
-                ).nftItems
-            } ?: emptyList()
-        } catch (e: Throwable) {
-            emptyList()
-        }
-    }
-
-    suspend fun getPublicKey(
+    private suspend fun getPublicKey(
         accountId: String,
         testnet: Boolean
     ): PublicKeyEd25519? {
@@ -439,6 +433,7 @@ class API(
         accounts: List<String>
     ): Boolean {
         val url = "${config.tonapiMainnetHost}/v1/internal/pushes/plain/subscribe"
+
         val accountsArray = JSONArray()
         for (account in accounts) {
             val jsonAccount = JSONObject()
@@ -452,7 +447,26 @@ class API(
         json.put("token", firebaseToken)
         json.put("accounts", accountsArray)
 
-        Log.d("TONKeeperLog", "json: $json")
+        return withRetry {
+            val response = tonAPIHttpClient.postJSON(url, json.toString())
+            response.isSuccessful
+        } ?: false
+    }
+
+    suspend fun pushUnsubscribe(
+        deviceId: String,
+        account: String
+    ): Boolean {
+        val url = "${config.tonapiMainnetHost}/v1/internal/pushes/plain/unsubscribe"
+
+        val jsonAccount = JSONObject()
+        jsonAccount.put("address", account)
+
+        val json = JSONObject()
+        json.put("device", deviceId)
+        json.put("accounts", JSONArray().apply {
+            put(jsonAccount)
+        })
 
         return withRetry {
             val response = tonAPIHttpClient.postJSON(url, json.toString())
@@ -617,11 +631,12 @@ class API(
 
         private fun createTonAPIHttpClient(
             context: Context,
-            tonApiV2Key: String
+            tonApiV2Key: String,
+            allowDomains: List<String>
         ): OkHttpClient {
             return baseOkHttpClientBuilder()
                 .addInterceptor(AcceptLanguageInterceptor(context.locale))
-                .addInterceptor(AuthorizationInterceptor.bearer(tonApiV2Key))
+                .addInterceptor(AuthorizationInterceptor.bearer(tonApiV2Key, allowDomains))
                 .build()
         }
     }

@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.Wallet
@@ -103,6 +104,7 @@ class WalletHolder(
             Wallet.Type.Ledger -> Localization.ledger
             else -> throw IllegalArgumentException("Unknown wallet type: $type")
         }
+        typeView.backgroundTintList = context.backgroundContentTintColor.withAlpha(.16f).stateList
         typeView.setText(resId)
     }
 }

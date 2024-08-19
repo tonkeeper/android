@@ -7,5 +7,5 @@ sealed class InitRoute {
     data object WatchAccount: InitRoute()
     data object LabelAccount: InitRoute()
     data object SelectAccount: InitRoute()
-    // data object Push: InitRoute()
+    data object Push: InitRoute()
 }

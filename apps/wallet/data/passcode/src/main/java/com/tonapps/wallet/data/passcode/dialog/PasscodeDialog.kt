@@ -1,9 +1,8 @@
 package com.tonapps.wallet.data.passcode.dialog
 
 import android.content.Context
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
-import com.tonapps.extensions.viewModel
 import com.tonapps.wallet.data.passcode.PasscodeHelper
 import com.tonapps.wallet.data.passcode.R
 import com.tonapps.wallet.data.passcode.ui.PasscodeView

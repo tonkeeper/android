@@ -377,21 +377,21 @@ class LedgerConnectionViewModel(
             val deferredTokens = mutableListOf<Deferred<List<AccountTokenEntity>>>()
             for (account in ledgerData.accounts) {
                 deferredTokens.add(async {
-                    tokenRepository.getRemote(
+                    tokenRepository.get(
                         settingsRepository.currency,
                         account.address.toAccountId(),
                         false
-                    )
+                    ) ?: emptyList()
                 })
             }
 
             val deferredCollectibles = mutableListOf<Deferred<List<NftEntity>>>()
             for (account in ledgerData.accounts) {
                 deferredCollectibles.add(async {
-                    collectiblesRepository.getRemoteNftItems(
+                    collectiblesRepository.get(
                         account.address.toAccountId(),
                         false
-                    )
+                    ) ?: emptyList()
                 })
             }
 

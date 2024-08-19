@@ -59,6 +59,7 @@
                         android:id="@+id/address_book"
                         android:layout_width="28dp"
                         android:layout_height="28dp"
+                        android:layout_gravity="center"
                         android:tint="?attr/accentBlueColor"
                         android:src="@drawable/ic_address_book_28"/>
 

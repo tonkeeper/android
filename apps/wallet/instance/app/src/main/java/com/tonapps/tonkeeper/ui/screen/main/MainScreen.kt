@@ -5,6 +5,7 @@ import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.extensions.removeAllFragments
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -32,7 +33,7 @@ import uikit.widget.BottomTabsView
 
 class MainScreen: BaseFragment(R.layout.fragment_main) {
 
-    abstract class Child(@LayoutRes layoutId: Int): BaseFragment(layoutId) {
+    abstract class Child(@LayoutRes layoutId: Int): BaseWalletScreen(layoutId) {
 
         val mainViewModel: MainViewModel by lazy {
             requireParentFragment().getViewModel()

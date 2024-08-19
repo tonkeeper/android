@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.token
 
 import android.content.Context
+import android.util.Log
 import androidx.collection.ArrayMap
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
@@ -36,7 +37,7 @@ class TokenRepository(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): Coins {
+    ): Coins? {
         return totalBalanceCache[cacheKey(accountId, testnet)] ?: loadTotalBalances(currency, accountId, testnet)
     }
 
@@ -44,8 +45,8 @@ class TokenRepository(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): Coins {
-        val tokens = get(currency, accountId, testnet)
+    ): Coins? {
+        val tokens = get(currency, accountId, testnet) ?: return null
         var fiatBalance = Coins.of(0)
         if (testnet) {
             fiatBalance = tokens.first().balance.value
@@ -62,7 +63,7 @@ class TokenRepository(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): List<AccountTokenEntity> {
+    ): List<AccountTokenEntity>? {
         val tokens = getLocal(currency, accountId, testnet)
         if (tokens.isNotEmpty()) {
             return tokens
@@ -74,8 +75,8 @@ class TokenRepository(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): List<AccountTokenEntity> = withContext(Dispatchers.IO) {
-        val balances = load(currency, accountId, testnet)
+    ): List<AccountTokenEntity>? = withContext(Dispatchers.IO) {
+        val balances = load(currency, accountId, testnet) ?: return@withContext null
         if (testnet) {
             return@withContext buildTokens(currency, balances, RatesEntity.empty(currency), true)
         }
@@ -90,7 +91,7 @@ class TokenRepository(
         accountId: String,
         testnet: Boolean
     ): List<AccountTokenEntity> = withContext(Dispatchers.IO) {
-        val balances = cache(accountId, testnet)
+        val balances = cache(accountId, testnet) ?: return@withContext emptyList()
         if (testnet) {
             return@withContext buildTokens(currency, balances, RatesEntity.empty(currency), true)
         }
@@ -162,27 +163,21 @@ class TokenRepository(
     private fun cache(
         accountId: String,
         testnet: Boolean
-    ): List<BalanceEntity> {
-        return localDataSource.getCache(cacheKey(accountId, testnet)) ?: emptyList()
+    ): List<BalanceEntity>? {
+        val key = cacheKey(accountId, testnet)
+        return localDataSource.getCache(key)
     }
 
     private suspend fun load(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): List<BalanceEntity> = withContext(Dispatchers.IO) {
-        if (testnet) {
-            val balances = remoteDataSource.load(currency, accountId, true)
-            totalBalanceCache.remove(cacheKey(accountId, true))
-            return@withContext balances
-        }
-
-        val rates = async { ratesRepository.load(currency, TokenEntity.TON.symbol) }
-        val balances = remoteDataSource.load(currency, accountId, false)
+    ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
+        val balances = remoteDataSource.load(currency, accountId, testnet) ?: return@withContext null
+        ratesRepository.load(currency, TokenEntity.TON.symbol)
         insertRates(currency, balances)
-        localDataSource.setCache(cacheKey(accountId, false), balances)
-        rates.await()
-        totalBalanceCache.remove(cacheKey(accountId, false))
+        localDataSource.setCache(cacheKey(accountId, testnet), balances)
+        totalBalanceCache.remove(cacheKey(accountId, testnet))
         balances
     }
 

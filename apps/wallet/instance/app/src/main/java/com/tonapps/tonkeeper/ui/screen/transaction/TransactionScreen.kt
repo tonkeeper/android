@@ -26,6 +26,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
@@ -86,9 +87,11 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
 
         iconView = view.findViewById(R.id.icon)
+
         amountView = view.findViewById(R.id.amount)
         spamView = view.findViewById(R.id.spam)
         spamView.visibility = if (action.isScam) View.VISIBLE else View.GONE
+
         currencyView = view.findViewById(R.id.currency)
         dateView = view.findViewById(R.id.date)
         unverifiedView = view.findViewById(R.id.unverified)
@@ -126,8 +129,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             feeView.setData(action.fee!!.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
         }
 
+        if (action.isScam) {
+            applyIcon(null)
+        } else {
+            applyIcon(action.coinIconUrl)
+        }
 
-        applyIcon(action.coinIconUrl)
         if (action.comment != null && !action.isScam) {
             applyComment(action.comment!!)
         } else {

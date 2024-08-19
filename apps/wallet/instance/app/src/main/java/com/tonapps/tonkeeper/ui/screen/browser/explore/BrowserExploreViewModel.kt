@@ -1,7 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.browser.explore
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
@@ -14,11 +15,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 
 class BrowserExploreViewModel(
+    app: Application,
     private val accountRepository: AccountRepository,
     private val browserRepository: BrowserRepository,
     private val api: API,
     private val settings: SettingsRepository
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow()

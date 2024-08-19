@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.browser.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -10,6 +11,7 @@ import androidx.core.view.updateLayoutParams
 import com.aptabase.Aptabase
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.flagEmoji
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchScreen
@@ -23,9 +25,9 @@ import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.navigation.Navigation.Companion.navigation
 
-class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
+class BrowserMainScreen : BaseWalletScreen(R.layout.fragment_browser_main) {
 
-    private val mainViewModel: BrowserMainViewModel by viewModel()
+    override val viewModel: BrowserMainViewModel by viewModel()
 
     private val exploreScreen = BrowserExploreScreen.newInstance()
     private val connectedScreen = BrowserConnectedScreen.newInstance()
@@ -90,9 +92,9 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
         ViewCompat.setOnApplyWindowInsetsListener(view, ::onApplyWindowInsets)
         setTab(tabs.first())
 
-        collectFlow(mainViewModel.childTopScrolled, headerDrawable::setDivider)
-        collectFlow(mainViewModel.childBottomScrolled, footerDrawable::setDivider)
-        collectFlow(mainViewModel.countryFlow) { country ->
+        collectFlow(viewModel.childTopScrolled, headerDrawable::setDivider)
+        collectFlow(viewModel.childBottomScrolled, footerDrawable::setDivider)
+        collectFlow(viewModel.countryFlow) { country ->
             countryView.text = country.flagEmoji
         }
     }

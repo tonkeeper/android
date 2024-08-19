@@ -43,7 +43,7 @@ class PasscodeScreen: BaseFragment(R.layout.fragment_init_passcode)  {
 
     private fun setPasscode(code: String) {
         if (reEnter) {
-            initViewModel.reEnterPasscode(requireContext(), code)
+            initViewModel.reEnterPasscode(code)
         } else {
             initViewModel.setPasscode(code)
         }

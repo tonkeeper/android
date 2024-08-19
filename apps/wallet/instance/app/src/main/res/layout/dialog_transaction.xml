@@ -67,7 +67,7 @@
         android:singleLine="true"
         android:paddingHorizontal="8dp"
         android:paddingVertical="4dp"
-        android:background="@drawable/bg_wallet_type"
+        android:background="@drawable/bg_content_tint_8"
         android:backgroundTint="?attr/accentOrangeColor"
         android:textAppearance="@style/TextAppearance.Label2"
         android:textColor="?attr/textPrimaryColor"/>

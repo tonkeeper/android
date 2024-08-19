@@ -20,8 +20,7 @@ internal class LocalDataSource(
     context: Context
 ): BlobDataSource<AccountEvents>(
     context = context,
-    path = "events",
-    lruInitialCapacity = 12
+    path = "events"
 ) {
 
     companion object {

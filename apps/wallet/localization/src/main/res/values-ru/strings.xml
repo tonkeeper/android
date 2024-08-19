@@ -309,7 +309,7 @@
     <string name="logout_confirmation">У меня есть резервная копия фразы восстановления кошелька %1$s</string>
     <string name="back_up_now">Скопировать сейчас</string>
     <string name="last_updated">Обновлён в %1$s</string>
-    <string name="max">Максимум</string>
+    <string name="max">Макс</string>
 
     <string name="contacts">Контакты</string>
     <string name="step_1">Шаг 1</string>

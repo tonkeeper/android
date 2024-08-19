@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
@@ -15,10 +17,11 @@ import kotlinx.coroutines.flow.take
 import uikit.extensions.collectFlow
 
 class DAppViewModel(
+    app: Application,
     private val url: String,
     private val accountRepository: AccountRepository,
     private val tonConnectRepository: TonConnectRepository
-): ViewModel() {
+): BaseWalletVM(app) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getApp() = accountRepository.selectedWalletFlow.mapLatest {

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
 import android.content.Context
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64

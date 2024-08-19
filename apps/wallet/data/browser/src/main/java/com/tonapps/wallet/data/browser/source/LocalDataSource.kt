@@ -8,8 +8,7 @@ import com.tonapps.wallet.data.core.BlobDataSource
 
 internal class LocalDataSource(context: Context): BlobDataSource<BrowserDataEntity>(
     context = context,
-    path = "browser_data",
-    lruInitialCapacity = 2
+    path = "browser_data"
 ) {
     override fun onMarshall(data: BrowserDataEntity) = data.toByteArray()
 

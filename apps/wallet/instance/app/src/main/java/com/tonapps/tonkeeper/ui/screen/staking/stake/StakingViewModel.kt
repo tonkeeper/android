@@ -86,7 +86,7 @@ class StakingViewModel(
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
     val tokenFlow = accountRepository.selectedWalletFlow.map { wallet ->
-        tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
+        tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
     }.map { it.firstOrNull() }.filterNotNull().flowOn(Dispatchers.IO)
 
     private val ratesFlow = tokenFlow.map { token ->

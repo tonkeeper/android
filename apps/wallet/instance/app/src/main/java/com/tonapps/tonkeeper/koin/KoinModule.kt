@@ -59,36 +59,40 @@ val koinModel = module {
     single { SignManager(get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get(), get(), get(), get(), get(), get()) }
 
+    factory { (viewModel: com.tonapps.tonkeeper.ui.base.BaseWalletVM) ->
+        // TODO
+    }
+
     uiAdapter { WalletAdapter(get()) }
     uiAdapter { WalletPickerAdapter() }
 
     viewModel { parameters -> NameViewModel(mode = parameters.get(), get(), get(), get()) }
-    viewModel { parameters -> InitViewModel(get(), parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> InitViewModel(get(), get(), parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
     viewModel { RootViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(get(), get()) }
     viewModel { WalletViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(get()) }
-    viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { EditNameViewModel(get()) }
     viewModel { LanguageViewModel(get()) }
     viewModel { SecurityViewModel(get(), get(), get()) }
     viewModel { ThemeViewModel(get()) }
     viewModel { EventsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(request = parameters.get(), get(), get(), get()) }
-    viewModel { CollectiblesViewModel(get(), get(), get(), get()) }
-    viewModel { parameters -> ActionViewModel(args = parameters.get(), get(), get(), get()) }
-    viewModel { BrowserExploreViewModel(get(), get(), get(), get()) }
+    viewModel { CollectiblesViewModel(get(), get(), get(), get(), get()) }
+    viewModel { parameters -> ActionViewModel(get(), args = parameters.get(), get(), get(), get()) }
+    viewModel { BrowserExploreViewModel(get(), get(), get(), get(), get()) }
     viewModel { BrowserConnectedViewModel(get(), get()) }
-    viewModel { BrowserMainViewModel(get()) }
+    viewModel { BrowserMainViewModel(get(), get()) }
     viewModel { BrowserSearchViewModel(get(), get(), get(), get()) }
-    viewModel { parameters -> DAppViewModel(url = parameters.get(), get(), get()) }
+    viewModel { parameters -> DAppViewModel(get(), url = parameters.get(), get(), get()) }
     viewModel { ChangePasscodeViewModel(get(), get()) }
     viewModel { NotificationsManageViewModel(get(), get(), get()) }
     viewModel { parameters -> TokenViewModel(get(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BackupViewModel(get(), get(), get(), get()) }
     viewModel { BackupCheckViewModel(get(), get()) }
-    viewModel { TokensManageViewModel(get(), get(), get()) }
+    viewModel { TokensManageViewModel(get(), get(), get(), get()) }
     viewModel { parameters -> SendViewModel(get(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(get(), get(), get()) }
     viewModel { CountryPickerViewModel(get(), get(), get()) }
@@ -99,6 +103,6 @@ val koinModel = module {
     viewModel { parameters -> NftViewModel(nft = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> StakeViewerViewModel(address = parameters.get(), get(), get(), get(), get()) }
     viewModel { parameters -> UnStakeViewModel(address = parameters.get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { SendContactsViewModel(get(), get()) }
+    viewModel { SendContactsViewModel(get(), get(), get(), get()) }
     viewModel { NotificationsEnableViewModel(get(), get()) }
 }

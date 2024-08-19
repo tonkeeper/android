@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
 import com.tonapps.wallet.api.API
@@ -60,7 +61,7 @@ class WalletViewModel(
     private val backupRepository: BackupRepository,
     private val stakingRepository: StakingRepository,
     private val ratesRepository: RatesRepository,
-): AndroidViewModel(app) {
+): BaseWalletVM(app) {
 
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
 
@@ -142,12 +143,14 @@ class WalletViewModel(
             val walletCurrency = getCurrency(wallet, currency)
 
             val localAssets = getLocalAssets(walletCurrency, wallet)
+            Log.d("WalletViewLog", "localAssets: $localAssets")
             if (localAssets != null) {
                 _stateMainFlow.value = State.Main(wallet = wallet, assets = localAssets, hasBackup)
             }
 
             if (isOnline) {
                 val remoteAssets = getRemoteAssets(walletCurrency, wallet)
+                Log.d("WalletViewLog", "remoteAssets: $remoteAssets")
                 if (remoteAssets != null) {
                     _stateMainFlow.value = State.Main(wallet, remoteAssets, hasBackup)
                     settingsRepository.setWalletLastUpdated(wallet.id)
@@ -238,7 +241,11 @@ class WalletViewModel(
         wallet: WalletEntity
     ): State.Assets? = withContext(Dispatchers.IO) {
         val tokens = tokenRepository.getLocal(currency, wallet.accountId, wallet.testnet)
-        val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+        if (tokens.isEmpty()) {
+            return@withContext null
+        }
+        val initializedAccount = tokens.firstOrNull()?.balance?.initializedAccount ?: false
+        val staking = stakingRepository.get(wallet.accountId, wallet.testnet, initializedAccount = initializedAccount)
         buildStateTokens(wallet, currency, tokens, staking, true)
     }
 
@@ -247,8 +254,9 @@ class WalletViewModel(
         wallet: WalletEntity
     ): State.Assets? = withContext(Dispatchers.IO) {
         try {
-            val tokens = tokenRepository.getRemote(currency, wallet.accountId, wallet.testnet)
-            val staking = stakingRepository.get(wallet.accountId, wallet.testnet, ignoreCache = true)
+            val tokens = tokenRepository.getRemote(currency, wallet.accountId, wallet.testnet) ?: return@withContext null
+            val initializedAccount = tokens.first().balance.initializedAccount
+            val staking = stakingRepository.get(wallet.accountId, wallet.testnet, ignoreCache = true, initializedAccount = initializedAccount)
             buildStateTokens(wallet, currency, tokens, staking, false)
         } catch (e: Throwable) {
             Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()

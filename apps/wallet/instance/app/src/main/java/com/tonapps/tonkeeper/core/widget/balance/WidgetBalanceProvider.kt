@@ -35,7 +35,7 @@ class WidgetBalanceProvider: Widget() {
         val tokenRepository = koin.get<TokenRepository>()
         scope.launch(Dispatchers.IO) {
             val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch displayPlaceholder(context, manager, id)
-            val tokens = tokenRepository.get(settingsRepository.currency, wallet.address, wallet.testnet)
+            val tokens = tokenRepository.get(settingsRepository.currency, wallet.address, wallet.testnet) ?: return@launch displayPlaceholder(context, manager, id)
             val token = tokens.firstOrNull { it.isTon } ?: return@launch displayPlaceholder(context, manager, id)
             val balanceFormat = CurrencyFormatter.format("TON", token.balance.value)
             val fiatBalance = CurrencyFormatter.formatFiat(settingsRepository.currency.code, token.fiat)

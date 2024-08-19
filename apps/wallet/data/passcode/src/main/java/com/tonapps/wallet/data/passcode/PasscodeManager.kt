@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.passcode
 
 import android.content.Context
 import android.graphics.Color
+import androidx.fragment.app.FragmentActivity
 import com.tonapps.extensions.bestMessage
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog

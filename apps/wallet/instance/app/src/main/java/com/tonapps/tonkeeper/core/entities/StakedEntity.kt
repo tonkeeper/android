@@ -30,7 +30,8 @@ data class StakedEntity(
                 }?.balance ?: BalanceEntity(
                     token = TokenEntity.TON,
                     value = staking.getAmount(pool),
-                    walletAddress = pool.address
+                    walletAddress = pool.address,
+                    initializedAccount = true,
                 )
                 list.add(StakedEntity(
                     pool = pool,

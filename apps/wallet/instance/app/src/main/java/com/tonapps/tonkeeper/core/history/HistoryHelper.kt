@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.core.history
 import android.content.Context
 import android.util.Log
 import androidx.collection.arrayMapOf
+import androidx.fragment.app.FragmentActivity
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.withMinus
@@ -145,18 +146,18 @@ class HistoryHelper(
     }
 
     fun requestDecryptComment(
-        context: Context,
+        activity: Context,
         comment: HistoryItem.Event.Comment,
         txId: String,
         senderAddress: String,
     ): Flow<HistoryItem.Event.Comment> = accountRepository.selectedWalletFlow.take(1).map {
         if (settingsRepository.showEncryptedCommentModal) {
             val noShowAgain = withContext(Dispatchers.Main) {
-                EncryptedCommentScreen.show(context)
+                EncryptedCommentScreen.show(activity)
             } ?: throw Exception("User canceled")
             settingsRepository.showEncryptedCommentModal = !noShowAgain
         }
-        if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
+        if (!passcodeManager.confirmation(activity, context.getString(Localization.app_name))) {
             throw Exception("Wrong passcode")
         }
         it
@@ -290,7 +291,7 @@ class HistoryHelper(
         return@withContext items
     }
 
-    private fun action(
+    private suspend fun action(
         index: Int,
         txId: String,
         wallet: WalletEntity,

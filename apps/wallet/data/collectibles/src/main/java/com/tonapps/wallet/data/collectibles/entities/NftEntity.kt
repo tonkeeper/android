@@ -21,7 +21,7 @@ data class NftEntity(
     val inSale: Boolean,
     val dns: String?,
     val isTrusted: Boolean,
-    val suspicious: Boolean,
+    val suspicious: Boolean
 ): Parcelable {
 
     val id: String

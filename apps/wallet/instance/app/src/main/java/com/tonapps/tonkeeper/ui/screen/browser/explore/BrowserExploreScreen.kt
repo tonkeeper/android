@@ -2,9 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.browser.explore
 
 import android.graphics.Rect
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
@@ -20,9 +22,10 @@ import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.HeaderView
 
-class BrowserExploreScreen : BaseFragment(R.layout.fragment_browser_explore) {
+class BrowserExploreScreen : BaseWalletScreen(R.layout.fragment_browser_explore) {
 
-    private val exploreViewModel: BrowserExploreViewModel by viewModel()
+    override val viewModel: BrowserExploreViewModel by viewModel()
+
     private val mainViewModel: BrowserMainViewModel by lazy {
         requireParentFragment().getViewModel()
     }
@@ -39,7 +42,7 @@ class BrowserExploreScreen : BaseFragment(R.layout.fragment_browser_explore) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(exploreViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

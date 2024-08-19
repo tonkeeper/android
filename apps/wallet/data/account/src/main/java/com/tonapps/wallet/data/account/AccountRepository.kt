@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.account
 
 import android.content.Context
 import android.util.Log
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
@@ -136,7 +137,7 @@ class AccountRepository(
             database.insertAccounts(wallets)
             for (wallet in wallets) {
                 val token = rnLegacy.getTonProof(wallet.id) ?: continue
-                storageSource.setTonProofToken(wallet.id, token)
+                storageSource.setTonProofToken(wallet.publicKey, token)
             }
             setSelectedWallet(selectedId)
         }
@@ -190,18 +191,22 @@ class AccountRepository(
         if (!wallet.hasPrivateKey) {
             return@withContext null
         }
-        val token = storageSource.getTonProofToken(wallet.id)
+        val token = storageSource.getTonProofToken(wallet.publicKey)
         if (token != null) {
             return@withContext token
         }
         val tonProofToken = createTonProofToken(wallet) ?: return@withContext null
-        saveTonProof(wallet.id, tonProofToken)
+        saveTonProof(wallet, tonProofToken)
         tonProofToken
     }
 
-    private suspend fun saveTonProof(id: String, token: String) = withContext(Dispatchers.IO) {
-        storageSource.setTonProofToken(id, token)
-        rnLegacy.setTonProof(id, token)
+    private suspend fun saveTonProof(wallet: WalletEntity, token: String) = withContext(Dispatchers.IO) {
+        storageSource.setTonProofToken(wallet.publicKey, token)
+
+        val wallets = getWalletByPublicKey(wallet.publicKey, wallet.testnet)
+        for (w in wallets) {
+            rnLegacy.setTonProof(w.id, token)
+        }
     }
 
     suspend fun getWallets() = database.getAccounts()
@@ -300,7 +305,7 @@ class AccountRepository(
 
     suspend fun addNewWallet(label: Wallet.Label, mnemonic: List<String>): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
-        return addWallet(label, publicKey, Wallet.Type.Default, WalletVersion.V5R1)
+        return addWallet(label, publicKey, Wallet.Type.Default, WalletVersion.V5R1, true)
     }
 
     private suspend fun addWallet(
@@ -308,6 +313,7 @@ class AccountRepository(
         publicKey: PublicKeyEd25519,
         type: Wallet.Type,
         version: WalletVersion,
+        new: Boolean = false,
     ): WalletEntity {
         val entity = WalletEntity(
             id = newWalletId(),
@@ -317,22 +323,25 @@ class AccountRepository(
             label = label
         )
 
-        insertWallets(listOf(entity))
+        insertWallets(listOf(entity), new)
         return entity
     }
 
-    private suspend fun insertWallets(list: List<WalletEntity>) {
+    private suspend fun insertWallets(list: List<WalletEntity>, new: Boolean = false) {
         database.insertAccounts(list)
         for (wallet in list) {
             addWalletToRN(wallet)
-            requestTonProofToken(wallet)
+            if (!new && wallet.hasPrivateKey) {
+                requestTonProofToken(wallet)
+            }
         }
     }
 
     private suspend fun createTonProofToken(wallet: WalletEntity): String? {
         return try {
-            val secretKey = vaultSource.getPrivateKey(wallet.publicKey) ?: throw Exception("private key not found")
-            val contract = wallet.contract
+            val publicKey = wallet.publicKey
+            val contract = BaseWalletContract.create(publicKey, WalletVersion.V4R2.title, wallet.testnet)
+            val secretKey = vaultSource.getPrivateKey(publicKey) ?: throw Exception("private key not found")
             val address = contract.address
             val payload = api.tonconnectPayload() ?: throw Exception("payload not found")
             val proof = WalletProof.signTonkeeper(
@@ -367,12 +376,6 @@ class AccountRepository(
         }
     }
 
-    fun deleteSelected() {
-        scope.launch {
-            selectedId?.let { delete(it) }
-        }
-    }
-
     suspend fun delete(id: String) = withContext(scope.coroutineContext) {
         database.deleteAccount(id)
         setSelectedWallet(database.getFirstAccountId())
@@ -383,15 +386,20 @@ class AccountRepository(
         setSelectedWallet(null)
     }
 
-    suspend fun getWalletByAccountId(accountId: String, testnet: Boolean = false): WalletEntity? {
-        val wallets = database.getAccounts()
-        val wallet = wallets.firstOrNull {
-            it.accountId.equals(accountId, ignoreCase = true)
-        } ?: return null
-        if (wallet.testnet == testnet) {
-            return wallet
+    suspend fun getWalletsByAccountId(accountId: String, testnet: Boolean): List<WalletEntity> {
+        return database.getAccounts().filter {
+            it.accountId.equals(accountId, ignoreCase = true) && it.testnet == testnet
         }
-        return null
+    }
+
+    suspend fun getWalletByPublicKey(publicKey: PublicKeyEd25519, testnet: Boolean): List<WalletEntity> {
+        return database.getAccounts().filter {
+            it.publicKey == publicKey && it.testnet == testnet
+        }
+    }
+
+    suspend fun getWalletByAccountId(accountId: String, testnet: Boolean): WalletEntity? {
+        return getWalletsByAccountId(accountId, testnet).firstOrNull()
     }
 
     suspend fun getWalletById(id: String): WalletEntity? {

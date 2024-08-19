@@ -1,9 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.manage
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
@@ -22,10 +25,11 @@ import kotlinx.coroutines.flow.take
 import uikit.extensions.collectFlow
 
 class TokensManageViewModel(
+    app: Application,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val tokensFlow = combine(
         accountRepository.selectedWalletFlow,

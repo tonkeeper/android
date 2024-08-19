@@ -9,6 +9,7 @@ import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -36,7 +37,7 @@ import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 
 class EventsViewModel(
-    private val application: Application,
+    app: Application,
     private val accountRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val networkMonitor: NetworkMonitor,
@@ -45,7 +46,7 @@ class EventsViewModel(
     private val historyHelper: HistoryHelper,
     private val screenCacheSource: ScreenCacheSource,
     private val settingsRepository: SettingsRepository
-): AndroidViewModel(application) {
+): BaseWalletVM(app) {
 
     private val _isUpdatingFlow = MutableStateFlow(false)
     val isUpdatingFlow = _isUpdatingFlow.asSharedFlow()

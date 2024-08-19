@@ -108,9 +108,9 @@ object DateHelper {
         if (0 >= unixTimestamp) {
             return ""
         }
-        val formatString = "MMM d, HH:mm"
+        val formatString = "d MMM, HH:mm"
         val instant = Instant.fromEpochMilliseconds(unixTimestamp * 1000)
-        return formatDate(instant, formatString, locale).capitalized
+        return formatDate(instant, formatString, locale)
     }
 
 }

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.Holder
@@ -17,16 +18,16 @@ import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 
-class TokensManageScreen: BaseListFragment(), BaseFragment.BottomSheet {
+class TokensManageScreen: BaseListWalletScreen(), BaseFragment.BottomSheet {
 
-    private val tokensManageViewModel: TokensManageViewModel by viewModel()
+    override val viewModel: TokensManageViewModel by viewModel()
     private val adapter: Adapter by lazy {
-        Adapter(tokensManageViewModel::onPinChange, tokensManageViewModel::onHiddenChange, ::onDrag)
+        Adapter(viewModel::onPinChange, viewModel::onHiddenChange, ::onDrag)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(tokensManageViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     private fun onDrag(holder: TokenHolder) {
@@ -64,7 +65,7 @@ class TokensManageScreen: BaseListFragment(), BaseFragment.BottomSheet {
                 super.clearView(recyclerView, viewHolder)
                 val item = (viewHolder as? Holder<*>)?.item ?: return
                 if (item is Item.Token && item.pinned) {
-                    tokensManageViewModel.changeOrder(item.address, viewHolder.bindingAdapterPosition)
+                    viewModel.changeOrder(item.address, viewHolder.bindingAdapterPosition)
                 }
             }
 

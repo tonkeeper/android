@@ -23,18 +23,18 @@ class RatesRepository(
         return localDataSource.get(currency).filter(tokens)
     }
 
-    fun load(currency: WalletCurrency, token: String) {
+    suspend fun load(currency: WalletCurrency, token: String) {
         load(currency, mutableListOf(token))
     }
 
-    private fun load(currency: WalletCurrency, tokens: MutableList<String>) {
+    private suspend fun load(currency: WalletCurrency, tokens: MutableList<String>) {
         if (!tokens.contains(TokenEntity.TON.address)) {
             tokens.add(TokenEntity.TON.address)
         }
         if (!tokens.contains(TokenEntity.USDT.address)) {
             tokens.add(TokenEntity.USDT.address)
         }
-        val rates = api.getRates(currency.code, tokens)
+        val rates = api.getRates(currency.code, tokens) ?: return
         insertRates(currency, rates)
     }
 

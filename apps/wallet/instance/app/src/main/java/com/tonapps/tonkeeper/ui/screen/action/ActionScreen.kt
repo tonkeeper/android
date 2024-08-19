@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
@@ -29,13 +30,13 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
 
-class ActionScreen: BaseFragment(R.layout.fragment_action), BaseFragment.Modal {
+class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Modal {
 
     private val args: ActionArgs by lazy {
         ActionArgs(requireArguments())
     }
 
-    private val actionViewModel: ActionViewModel by viewModel { parametersOf(args) }
+    override val viewModel: ActionViewModel by viewModel { parametersOf(args) }
     private val adapter = HistoryAdapter()
 
     private lateinit var walletView: AppCompatTextView
@@ -75,7 +76,7 @@ class ActionScreen: BaseFragment(R.layout.fragment_action), BaseFragment.Modal {
         cancelButton = view.findViewById(R.id.cancel)
         cancelButton.setOnClickListener { finish() }
 
-        collectFlow(actionViewModel.walletFlow, ::applyWallet)
+        collectFlow(viewModel.walletFlow, ::applyWallet)
     }
 
     private fun confirm() {
@@ -83,7 +84,7 @@ class ActionScreen: BaseFragment(R.layout.fragment_action), BaseFragment.Modal {
         processView.visibility = View.VISIBLE
         processView.state = ProcessTaskView.State.LOADING
 
-        actionViewModel.sign(requireContext()).catch {
+        viewModel.sign(requireContext()).catch {
             setFailed()
         }.onEach(::setSuccess).launchIn(lifecycleScope)
     }

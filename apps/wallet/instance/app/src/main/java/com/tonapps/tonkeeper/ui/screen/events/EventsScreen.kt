@@ -23,12 +23,12 @@ import uikit.widget.HeaderView
 
 class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
 
-    private val eventsViewModel: EventsViewModel by viewModel()
+    override val viewModel: EventsViewModel by viewModel()
 
     private val legacyAdapter = HistoryAdapter()
     private val paginationListener = object : ListPaginationListener() {
         override fun onLoadMore() {
-            eventsViewModel.loadMore()
+            viewModel.loadMore()
         }
     }
 
@@ -60,23 +60,23 @@ class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
                 openQRCode()
             }
         }
-        collectFlow(eventsViewModel.isUpdatingFlow) { updating ->
+        collectFlow(viewModel.isUpdatingFlow) { updating ->
             if (updating) {
                 headerView.setSubtitle(Localization.updating)
             } else {
                 headerView.setSubtitle(null)
             }
         }
-        collectFlow(eventsViewModel.uiItemsFlow, ::setItems)
+        collectFlow(viewModel.uiItemsFlow, ::setItems)
     }
 
     override fun scrollUp() {
         super.scrollUp()
-        eventsViewModel.update()
+        viewModel.update()
     }
 
     private fun openQRCode() {
-        collectFlow(eventsViewModel.openQRCode()) { walletEntity ->
+        collectFlow(viewModel.openQRCode()) { walletEntity ->
             navigation?.add(
                 QRScreen.newInstance(
                     walletEntity.address,

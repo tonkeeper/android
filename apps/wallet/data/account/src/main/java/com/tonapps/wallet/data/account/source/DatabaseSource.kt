@@ -101,7 +101,7 @@ internal class DatabaseSource(
     }
 
     suspend fun getAccounts(): List<WalletEntity> = withContext(scope.coroutineContext) {
-        val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX FROM $WALLET_TABLE_NAME LIMIT 100;"
+        val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX FROM $WALLET_TABLE_NAME LIMIT 1000;"
         val cursor = readableDatabase.rawQuery(query, null)
         readAccounts(cursor)
     }

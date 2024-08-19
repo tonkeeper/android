@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.list
 
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.send.contacts.list.holder.LatestHolder
 import com.tonapps.tonkeeper.ui.screen.send.contacts.list.holder.MyWalletHolder
 import com.tonapps.tonkeeper.ui.screen.send.contacts.list.holder.SpaceHolder
@@ -19,5 +20,10 @@ class Adapter(
             Item.TYPE_LATEST_CONTACT -> LatestHolder(parent, onClick)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerView.isNestedScrollingEnabled = true
     }
 }

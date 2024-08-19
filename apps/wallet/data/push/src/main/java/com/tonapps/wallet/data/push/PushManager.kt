@@ -84,7 +84,7 @@ class PushManager(
         }
         scope.launch(Dispatchers.IO) {
             try {
-                val wallet = accountRepository.getWalletByAccountId(push.account) ?: throw IllegalStateException("Wallet not found")
+                val wallet = accountRepository.getWalletByAccountId(push.account, false) ?: throw IllegalStateException("Wallet not found")
                 val connect = tonConnectRepository.getConnect(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
                 val manifest = tonConnectRepository.getManifest(connect.url) ?: throw IllegalStateException("Manifest not found")
                 localDataSource.insert(wallet.id, push)
@@ -124,7 +124,7 @@ class PushManager(
     fun handleWalletPush(push: WalletPushEntity) {
         scope.launch(Dispatchers.IO) {
             try {
-                val wallet = accountRepository.getWalletByAccountId(push.account) ?: throw IllegalStateException("Wallet not found")
+                val wallet = accountRepository.getWalletByAccountId(push.account, false) ?: throw IllegalStateException("Wallet not found")
                 displayWalletPush(push, wallet)
             } catch (ignored: Throwable) {}
         }
@@ -178,13 +178,25 @@ class PushManager(
         firebaseToken: String
     ): Boolean {
         val wallets = accountRepository.getWallets()
-        val accounts = wallets.filter { !it.testnet && settingsRepository.getPushWallet(it.id) }.map {
-            it.accountId.toUserFriendly(testnet = false)
-        }
-        Log.d("TONKeeperLog", "accounts: $accounts")
+        val accounts = wallets.filter {
+            !it.testnet && settingsRepository.getPushWallet(it.id)
+        }.map {
+            it.accountId.toUserFriendly(testnet = false, bounceable = true)
+        }.distinct()
+
         if (accounts.isEmpty()) {
             return true
         }
         return api.pushSubscribe(context.locale, firebaseToken, settingsRepository.installId, accounts)
+    }
+
+    suspend fun unsubscribeWalletPush(wallet: WalletEntity) {
+        val wallets = accountRepository.getWalletsByAccountId(wallet.accountId, wallet.testnet).filter {
+            settingsRepository.getPushWallet(it.id)
+        }
+        if (wallets.isNotEmpty()) {
+            return
+        }
+        api.pushUnsubscribe(settingsRepository.installId, wallet.accountId)
     }
 }

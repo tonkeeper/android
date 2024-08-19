@@ -54,7 +54,7 @@ class TokenViewModel(
 
     init {
         collectFlow(accountRepository.selectedWalletFlow) { wallet ->
-            val list = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
+            val list = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: return@collectFlow
             val token = list.firstOrNull { it.address == tokenAddress } ?: return@collectFlow
             val data = TokenData(token, wallet)
             _tokenFlow.value = TokenData(token, wallet)

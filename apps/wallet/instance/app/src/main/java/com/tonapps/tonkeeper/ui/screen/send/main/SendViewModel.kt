@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 import android.app.Application
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
@@ -14,6 +13,7 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.SendNftHelper
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
@@ -77,7 +77,7 @@ class SendViewModel(
     private val ratesRepository: RatesRepository,
     private val passcodeManager: PasscodeManager,
     private val collectiblesRepository: CollectiblesRepository,
-): AndroidViewModel(app) {
+): BaseWalletVM(app) {
 
     private val isNft: Boolean
         get() = nftAddress.isNotBlank()
@@ -119,14 +119,14 @@ class SendViewModel(
     }.flowOn(Dispatchers.IO).state(viewModelScope)
 
     private val tokensFlow = accountRepository.selectedWalletFlow.map { wallet ->
-        tokenRepository.get(currency, wallet.accountId, wallet.testnet)
+        tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: emptyList()
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val selectedTokenFlow = combine(
         tokensFlow,
         userInputFlow.map { it.token }.distinctUntilChanged()
     ) { tokens, selectedToken ->
-        tokens.find { it.address == selectedToken.address } ?: AccountTokenEntity.EMPTY
+        tokens?.find { it.address == selectedToken.address } ?: AccountTokenEntity.EMPTY
     }.distinctUntilChanged().flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, AccountTokenEntity.EMPTY)
 
     private val ratesTokenFlow = selectedTokenFlow.map { token ->
@@ -202,7 +202,7 @@ class SendViewModel(
         val remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, 2, RoundingMode.DOWN, false)
 
         SendAmountState(
-            remainingFormat = context.getString(Localization.remaining_balance, remainingFormat),
+            remainingFormat = getString(Localization.remaining_balance, remainingFormat),
             converted = converted.stripTrailingZeros(),
             convertedFormat = CurrencyFormatter.format(convertedCode, converted, 2, RoundingMode.DOWN, false),
             insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
@@ -240,13 +240,14 @@ class SendViewModel(
         if (!amountCurrency) {
             amount
         } else {
-            val converted = rates.convertFromFiat(token.address, amount)
+            /*val converted = rates.convertFromFiat(token.address, amount)
             val diff = token.balance.value.diff(converted)
             if (99.7f >= diff || 100.3f >= diff) {
                 token.balance.value
             } else {
                 converted
-            }
+            }*/
+            rates.convertFromFiat(token.address, amount)
         }
     }
 
@@ -313,6 +314,7 @@ class SendViewModel(
         if (isNft) {
             loadNft()
         }
+        Log.d("SendViewModelLog", "activity: $activity")
     }
 
     fun initializeTokenAndAmount(tokenAddress: String, amountNano: Long) {

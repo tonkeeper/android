@@ -11,8 +11,7 @@ import java.util.concurrent.TimeUnit
 
 internal class LocalDataSource(context: Context): BlobDataSource<StakingEntity>(
     context = context,
-    path = "staking",
-    lruInitialCapacity = 2
+    path = "staking"
 ) {
 
     override fun onMarshall(data: StakingEntity) = data.toByteArray()

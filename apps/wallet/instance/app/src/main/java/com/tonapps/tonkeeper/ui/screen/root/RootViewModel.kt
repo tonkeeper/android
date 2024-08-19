@@ -399,7 +399,7 @@ class RootViewModel(
 
     private fun showTransaction(accountId: String, hash: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val wallet = accountRepository.getWalletByAccountId(accountId) ?: return@launch
+            val wallet = accountRepository.getWalletByAccountId(accountId, false) ?: return@launch
             val event = api.getTransactionEvents(wallet.accountId, wallet.testnet, hash) ?: return@launch
             val item = historyHelper.mapping(wallet, event).find { it is HistoryItem.Event } as? HistoryItem.Event ?: return@launch
             _eventFlow.tryEmit(RootEvent.Transaction(item))
@@ -446,7 +446,7 @@ class RootViewModel(
         } else {
             settingsRepository.currency
         }
-        val totalBalance = tokenRepository.getTotalBalances(currency, accountId, testnet)
+        val totalBalance = tokenRepository.getTotalBalances(currency, accountId, testnet) ?: return context.getString(Localization.unknown)
         return CurrencyFormatter.formatFiat(currency.code, totalBalance)
     }
 }

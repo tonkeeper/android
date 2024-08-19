@@ -2,14 +2,10 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.RectF
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.ConsoleMessage
-import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -18,14 +14,13 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
-import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
@@ -36,28 +31,18 @@ import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
-import uikit.base.BaseFragment
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
-import uikit.extensions.dp
-import uikit.extensions.getCurrentFocus
-import uikit.extensions.pinToBottomInsets
-import uikit.extensions.setPaddingBottom
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.webview.bridge.BridgeWebView
 import java.util.UUID
 import kotlin.coroutines.resume
-import kotlin.math.abs
 
-class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
+class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
 
     private lateinit var headerDrawable: HeaderDrawable
     private lateinit var headerView: View
@@ -71,7 +56,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
 
     private val args: DAppArgs by lazy { DAppArgs(requireArguments()) }
     private val rootViewModel: RootViewModel by activityViewModel()
-    private val dAppViewModel: DAppViewModel by viewModel { parametersOf(args.url) }
+    override val viewModel: DAppViewModel by viewModel { parametersOf(args.url) }
 
     private val webViewCallback = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -142,8 +127,8 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
         webView.jsBridge = DAppBridge(
             send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
             connect = { _, request -> tonConnectAuth(webView.url?.toUri(), request) },
-            restoreConnection = { dAppViewModel.restoreConnection(args.url) },
-            disconnect = { dAppViewModel.disconnect() }
+            restoreConnection = { viewModel.restoreConnection(args.url) },
+            disconnect = { viewModel.disconnect() }
         )
         webView.loadUrl(args.url)
 
@@ -159,11 +144,14 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
                 topMargin = statusInsets.top
             }
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            _keyboardHeightFlow.value = imeInsets.bottom
+            // _keyboardHeightFlow.value = imeInsets.bottom
+            refreshView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                bottomMargin = imeInsets.bottom
+            }
             insets
         }
 
-        combine(
+        /*combine(
             keyboardHeightFlow,
             webView.inputFocusFlow
         ) { keyboardHeight, inputFocusRect ->
@@ -183,7 +171,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
                     0f
                 }
             }
-        }.onEach(webView::setTranslationY).launchIn(lifecycleScope)
+        }.onEach(webView::setTranslationY).launchIn(lifecycleScope)*/
     }
 
     override fun onDestroyView() {
@@ -192,7 +180,7 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
     }
 
     private fun requestMenu(view: View) {
-        collectFlow(dAppViewModel.getApp()) { openMenu(view, it) }
+        collectFlow(viewModel.getApp()) { openMenu(view, it) }
     }
 
     private fun openMenu(view: View, app: DConnectEntity?) {
@@ -213,10 +201,10 @@ class DAppScreen: BaseFragment(R.layout.fragment_dapp) {
     private fun actionClick(id: Long) {
         when (id) {
             REFRESH_ID -> webView.reload()
-            MUTE_ID -> dAppViewModel.mute()
+            MUTE_ID -> viewModel.mute()
             SHARE_ID -> shareLink()
             COPY_ID -> requireContext().copyToClipboard(args.url)
-            DISCONNECT_ID -> dAppViewModel.disconnect()
+            DISCONNECT_ID -> viewModel.disconnect()
         }
     }
 

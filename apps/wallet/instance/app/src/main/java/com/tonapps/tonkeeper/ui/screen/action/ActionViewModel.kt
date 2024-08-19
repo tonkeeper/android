@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.action
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -7,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -23,11 +25,12 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
 class ActionViewModel(
+    app: Application,
     private val args: ActionArgs,
     private val accountRepository: AccountRepository,
     private val passcodeManager: PasscodeManager,
     private val api: API,
-) : ViewModel() {
+) : BaseWalletVM(app) {
 
     private val _walletFlow = MutableStateFlow<WalletEntity?>(null)
     val walletFlow = _walletFlow.asStateFlow().filterNotNull()

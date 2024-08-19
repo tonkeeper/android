@@ -1,12 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
+import androidx.fragment.app.Fragment
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
+import com.tonapps.tonkeeper.ui.screen.init.step.PushScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.SelectScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
@@ -23,13 +27,13 @@ import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
+class InitScreen: BaseWalletScreen(R.layout.fragment_init), BaseFragment.SwipeBack {
 
     private val args: InitArgs by lazy {
         InitArgs(requireArguments())
     }
 
-    private val initViewModel: InitViewModel by viewModel { parametersOf(args) }
+    override val viewModel: InitViewModel by viewModel { parametersOf(args) }
 
     private lateinit var headerView: HeaderView
     private lateinit var loaderContainerView: View
@@ -37,11 +41,18 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        args.labelName?.let {
-            initViewModel.setLabelName(it)
+        args.labelName?.let { viewModel.setLabelName(it) }
+        args.accounts?.let { viewModel.setAccounts(it) }
+        childFragmentManager.addFragmentOnAttachListener { _, fragment ->
+            onChildFragment(fragment)
         }
-        args.accounts?.let {
-            initViewModel.setAccounts(it)
+    }
+
+    private fun onChildFragment(fragment: Fragment) {
+        if (fragment is PushScreen) {
+            headerView.background = null
+        } else {
+            headerView.setBackgroundResource(uikit.R.drawable.bg_page_gradient)
         }
     }
 
@@ -49,8 +60,8 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.setBackgroundResource(uikit.R.drawable.bg_page_gradient)
-        headerView.doOnCloseClick = { initViewModel.routePopBackStack() }
-        headerView.doOnLayout { initViewModel.setUiTopOffset(it.measuredHeight) }
+        headerView.doOnCloseClick = { viewModel.routePopBackStack() }
+        headerView.doOnLayout { viewModel.setUiTopOffset(it.measuredHeight) }
 
         loaderContainerView = view.findViewById(R.id.loader_container)
         loaderContainerView.setOnClickListener { }
@@ -58,17 +69,14 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
         loaderIconView = view.findViewById(R.id.loader_icon)
 
-        collectFlow(initViewModel.eventFlow, ::onEvent)
-        collectFlow(initViewModel.routeFlow, ::onRoute)
+        collectFlow(viewModel.eventFlow, ::onEvent)
+        collectFlow(viewModel.routeFlow, ::onRoute)
     }
 
     private fun onEvent(event: InitEvent) {
         when (event) {
             is InitEvent.Back -> popBackStack()
-            is InitEvent.Finish -> {
-                navigation?.add(NotificationsEnableScreen.newInstance())
-                finish()
-            }
+            is InitEvent.Finish -> finish()
             is InitEvent.Loading -> setLoading(event.loading)
         }
     }
@@ -81,6 +89,7 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
             InitRoute.WatchAccount -> WatchScreen.newInstance()
             InitRoute.LabelAccount -> LabelScreen.newInstance()
             InitRoute.SelectAccount -> SelectScreen.newInstance()
+            InitRoute.Push -> PushScreen.newInstance()
         }
 
         val transaction = childFragmentManager.beginTransaction()
@@ -102,7 +111,7 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
     }
 
     override fun onBackPressed(): Boolean {
-        initViewModel.routePopBackStack()
+        viewModel.routePopBackStack()
         return false
     }
 

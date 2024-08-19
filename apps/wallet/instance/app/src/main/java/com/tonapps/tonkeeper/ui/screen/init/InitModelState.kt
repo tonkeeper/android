@@ -11,6 +11,11 @@ import org.ton.api.pub.PublicKeyEd25519
 
 class InitModelState(private val savedStateHandle: SavedStateHandle) {
 
+    data class PublicKey(
+        val new: Boolean = false,
+        val publicKey: PublicKeyEd25519
+    )
+
     companion object {
         private const val PASSCODE_KEY = "passcode"
         private const val LABEL_KEY = "label"
@@ -19,6 +24,7 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         private const val ACCOUNTS = "accounts"
         private const val PUBLIC_KEY = "public_key"
         private const val LEDGER_CONNECT_DATA = "ledger_connect_data"
+        private const val ENABLE_PUSH_KEY = "enable_push"
     }
 
     var passcode: String?
@@ -41,14 +47,17 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         get() = savedStateHandle[ACCOUNTS]
         set(value) = savedStateHandle.set(ACCOUNTS, value)
 
-    var publicKey: PublicKeyEd25519?
+    var publicKey: PublicKey?
         get() {
-            val value = savedStateHandle.get<String>(PUBLIC_KEY) ?: return null
-            return value.safePublicKey()
+            return savedStateHandle.get<PublicKey>(PUBLIC_KEY)
         }
-        set(value) = savedStateHandle.set(PUBLIC_KEY, value?.base64())
+        set(value) = savedStateHandle.set(PUBLIC_KEY, value)
 
     var ledgerConnectData: LedgerConnectData?
         get() = savedStateHandle[LEDGER_CONNECT_DATA]
         set(value) = savedStateHandle.set(LEDGER_CONNECT_DATA, value)
+
+    var enablePush: Boolean
+        get() = savedStateHandle[ENABLE_PUSH_KEY] ?: false
+        set(value) = savedStateHandle.set(ENABLE_PUSH_KEY, value)
 }

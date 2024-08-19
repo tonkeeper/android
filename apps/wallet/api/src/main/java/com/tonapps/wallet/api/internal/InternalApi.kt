@@ -3,14 +3,12 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
-import android.util.Log
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
-import com.tonapps.extensions.packageInfo
-import com.tonapps.extensions.withRetry
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
+import com.tonapps.wallet.api.withRetry
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import java.util.Locale
@@ -41,7 +39,7 @@ internal class InternalApi(
         path: String,
         testnet: Boolean,
         platform: String = "android", // "android_x"
-        build: String = "4.8.4", //context.packageInfo.versionName.removeSuffix("-debug")
+        build: String = "4.9.0", // context.packageInfo.versionName.removeSuffix("-debug"), //
         locale: Locale,
     ): JSONObject {
         val url = endpoint(path, testnet, platform, build)

@@ -10,6 +10,7 @@ import android.view.View
 import androidx.core.net.toUri
 import com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
@@ -34,9 +35,9 @@ import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.item.ItemTextView
 
-class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
+class SettingsScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
 
-    private val settingsViewModel: SettingsViewModel by viewModel()
+    override val viewModel: SettingsViewModel by viewModel()
 
     private val searchEngineMenu: ActionSheet by lazy {
         ActionSheet(requireContext())
@@ -49,7 +50,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
         setTitle(getString(Localization.settings))
         setAdapter(adapter)
 
-        collectFlow(settingsViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     private fun onClickItem(item: Item) {
@@ -105,7 +106,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             searchEngineMenu.addItem(searchEngine.id, searchEngine.title, icon = checkedIcon)
         }
         searchEngineMenu.doOnItemClick = {
-            settingsViewModel.setSearchEngine(SearchEngine.byId(it.id))
+            viewModel.setSearchEngine(SearchEngine.byId(it.id))
         }
         searchEngineMenu.show(itemView.dataView)
     }
@@ -129,21 +130,21 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
 
     private fun signOut(label: Wallet.Label) {
         val dialog = SignOutDialog(requireContext())
-        dialog.show(label) {
-            settingsViewModel.signOut()
-            finish()
-        }
+        dialog.show(label) { signOut() }
     }
 
     private fun deleteWatchAccount() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setMessage(Localization.delete_watch_account_alert)
-        builder.setNegativeButton(Localization.delete) {
-            settingsViewModel.signOut()
-            finish()
-        }
+        builder.setNegativeButton(Localization.delete) { signOut() }
         builder.setPositiveButton(Localization.cancel)
         builder.show()
+    }
+
+    private fun signOut() {
+        collectFlow(viewModel.signOut()) {
+            finish()
+        }
     }
 
     companion object {

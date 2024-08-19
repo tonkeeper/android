@@ -72,11 +72,17 @@ fun OkHttpClient.get(
 private fun OkHttpClient.execute(request: Request): Response {
     val response = newCall(request).execute()
     if (!response.isSuccessful) {
-        val data = response.body?.string() ?: ""
-
-        Log.e("TONKeeperLog", "Request failed: response=$response\ndata=$data")
+        throw OkHttpError(response)
     }
     return response
+}
+
+class OkHttpError(
+    private val response: Response
+) : Exception(response.toString()) {
+
+    val statusCode: Int
+        get() = response.code
 }
 
 fun OkHttpClient.getBitmap(url: String): Bitmap {

@@ -22,7 +22,6 @@ class PurchaseRepository(
 ) : BlobDataSource<PurchaseDataEntity>(
     context = context,
     path = "purchase",
-    lruInitialCapacity = 2,
     timeout = TimeUnit.DAYS.toMillis(1)
 ) {
 

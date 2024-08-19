@@ -21,7 +21,8 @@ data class AccountTokenEntity(
             BalanceEntity(
                 TokenEntity.TON,
                 Coins.ZERO,
-                ""
+                "",
+                false
             )
         )
     }

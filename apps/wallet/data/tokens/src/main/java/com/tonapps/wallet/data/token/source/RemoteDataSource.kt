@@ -20,28 +20,24 @@ internal class RemoteDataSource(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): List<BalanceEntity> = withContext(Dispatchers.IO) {
-        val entities = mutableListOf<BalanceEntity>()
+    ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
+        val tonBalanceDeferred = async { api.getTonBalance(accountId, testnet) }
+        val jettonBalancesDeferred = async { api.getJettonsBalances(accountId, testnet, currency.code) }
+        val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
+        val jettons = jettonBalancesDeferred.await()?.toMutableList() ?: mutableListOf()
 
-        val tonBalanceDeferred = async {
-            api.getTonBalance(accountId, testnet)
-        }
-
-        val jettonBalancesDeferred = async {
-            api.getJettonsBalances(accountId, testnet, currency.code)
-        }
-
-        entities.add(tonBalanceDeferred.await())
-        val jettons = jettonBalancesDeferred.await().toMutableList()
         val usdtIndex = jettons.indexOfFirst {
             it.token.address == TokenEntity.USDT.address
         }
 
+        val entities = mutableListOf<BalanceEntity>()
+        entities.add(tonBalance)
         if (usdtIndex == -1 && !testnet) {
             entities.add(BalanceEntity(
                 token = TokenEntity.USDT,
                 value = Coins.ZERO,
-                walletAddress = accountId
+                walletAddress = accountId,
+                initializedAccount = tonBalance.initializedAccount
             ))
         } else if (usdtIndex >= 0) {
             jettons[usdtIndex] = jettons[usdtIndex].copy(

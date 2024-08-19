@@ -13,17 +13,15 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
 class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
 
-    private val collectiblesViewModel: CollectiblesViewModel by viewModel()
+    override val viewModel: CollectiblesViewModel by viewModel()
 
     private val adapter = Adapter()
 
@@ -53,7 +51,7 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
             }
         }
 
-        collectFlow(collectiblesViewModel.isUpdatingFlow) { updating ->
+        collectFlow(viewModel.uiUpdatingFlow) { updating ->
             if (updating) {
                 headerView.setSubtitle(Localization.updating)
             } else {
@@ -61,14 +59,14 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
             }
         }
 
-        collectFlow(collectiblesViewModel.uiItemsFlow, ::setItems)
-        collectFlow(collectiblesViewModel.changeWalletFlow) {
+        collectFlow(viewModel.uiItemsFlow, ::setItems)
+        /*collectFlow(viewModel.changeWalletFlow) {
             getRecyclerView()?.scrollToPosition(0)
-        }
+        }*/
     }
 
     private fun openQRCode() {
-        collectFlow(collectiblesViewModel.openQRCode()) { walletEntity ->
+        collectFlow(viewModel.openQRCode()) { walletEntity ->
             navigation?.add(QRScreen.newInstance(walletEntity.address, TokenEntity.TON, walletEntity.type))
         }
     }

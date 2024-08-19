@@ -1,9 +1,8 @@
 package com.tonapps.wallet.data.staking.source
 
-import com.tonapps.extensions.withRetry
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.withRetry
 import com.tonapps.wallet.data.staking.StakingPool
-import com.tonapps.wallet.data.staking.StakingUtils
 import com.tonapps.wallet.data.staking.entities.PoolDetailsEntity
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
@@ -19,10 +18,17 @@ internal class RemoteDataSource(
 
     suspend fun load(
         accountId: String,
-        testnet: Boolean
+        testnet: Boolean,
+        initializedAccount: Boolean
     ): StakingEntity = withContext(Dispatchers.IO) {
         val poolsDeferred = async { loadPools(accountId, testnet) }
-        val infoDeferred = async { loadInfo(accountId, testnet) }
+        val infoDeferred = async {
+            if (initializedAccount) {
+                loadInfo(accountId, testnet)
+            } else {
+                emptyList()
+            }
+        }
         StakingEntity(
             pools = poolsDeferred.await(),
             info = infoDeferred.await()

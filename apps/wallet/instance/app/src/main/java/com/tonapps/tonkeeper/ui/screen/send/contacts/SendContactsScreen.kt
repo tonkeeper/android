@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.send.contacts
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.screen.send.contacts.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.send.contacts.list.Item
 import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
@@ -12,19 +13,19 @@ import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class SendContactsScreen: BaseListFragment(), BaseFragment.BottomSheet {
+class SendContactsScreen: BaseListWalletScreen(), BaseFragment.BottomSheet {
 
     private val requestKey: String by lazy { arguments?.getString(ARG_REQUEST_KEY)!! }
 
     private val adapter = Adapter { selectContact(it) }
 
-    private val sendContactsViewModel: SendContactsViewModel by viewModel()
+    override val viewModel: SendContactsViewModel by viewModel()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setTitle(getString(Localization.contacts))
         setAdapter(adapter)
-        collectFlow(sendContactsViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     private fun selectContact(item: Item) {

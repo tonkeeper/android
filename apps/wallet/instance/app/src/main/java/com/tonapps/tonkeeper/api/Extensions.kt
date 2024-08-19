@@ -69,35 +69,6 @@ val PoolImplementationType.icon: Int
 val PoolImplementationType.iconURL: String
     get() = "res:/${icon}"
 
-suspend fun <R> withRetry(
-    times: Int = 5,
-    delay: Long = 1000,
-    block: () -> R
-): R? {
-    for (i in 0 until times) {
-        try {
-            return block()
-        } catch (e: Throwable) {
-            Log.e("RetryErrorLog", "error", e)
-        }
-        delay(delay)
-    }
-    return null
-}
-
-@OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T> toJSON(obj: T?): String {
-    if (obj == null) {
-        return ""
-    }
-    return Serializer.moshi.adapter<T>().toJson(obj)
-}
-
-@OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T> fromJSON(json: String): T {
-    return Serializer.moshi.adapter<T>().fromJson(json)!!
-}
-
 val AccountEvent.fee: Long
     get() {
         if (0 > extra) {

@@ -9,6 +9,7 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -18,6 +19,7 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Language
 import com.tonapps.wallet.localization.Localization
@@ -26,15 +28,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import uikit.extensions.getString
 
 class SettingsViewModel(
     application: Application,
     private val accountRepository: AccountRepository,
-    private val settings: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     private val api: API,
     private val backupRepository: BackupRepository,
-): AndroidViewModel(application) {
+    private val pushManager: PushManager,
+): BaseWalletVM(application) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }
@@ -42,9 +48,9 @@ class SettingsViewModel(
     init {
         combine(
             accountRepository.selectedWalletFlow,
-            settings.currencyFlow,
-            settings.languageFlow,
-            settings.searchEngineFlow,
+            settingsRepository.currencyFlow,
+            settingsRepository.languageFlow,
+            settingsRepository.searchEngineFlow,
             backupRepository.stream,
         ) { wallet, currency, language, searchEngine, backups ->
             val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
@@ -53,12 +59,13 @@ class SettingsViewModel(
     }
 
     fun setSearchEngine(searchEngine: SearchEngine?) {
-        settings.searchEngine = searchEngine ?: SearchEngine.GOOGLE
+        settingsRepository.searchEngine = searchEngine ?: SearchEngine.GOOGLE
     }
 
-    fun signOut() {
+    fun signOut() = accountRepository.selectedWalletFlow.take(1).map { wallet ->
         AnalyticsHelper.trackEvent("delete_wallet")
-        accountRepository.deleteSelected()
+        settingsRepository.setPushWallet(wallet.id, false)
+        pushManager.unsubscribeWalletPush(wallet)
     }
 
     private suspend fun hasW5(wallet: WalletEntity): Boolean {
@@ -117,7 +124,7 @@ class SettingsViewModel(
         uiItems.add(Item.Legal(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
-        if (wallet.type == Wallet.Type.Watch) {
+        if (!wallet.hasPrivateKey) {
             uiItems.add(Item.DeleteWatchAccount(ListCell.Position.SINGLE))
         } else {
             uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label))

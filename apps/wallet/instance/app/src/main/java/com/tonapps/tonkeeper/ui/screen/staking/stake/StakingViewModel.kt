@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.staking.stake
 
+import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
@@ -11,6 +12,7 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -54,6 +56,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class StakingViewModel(
+    app: Application,
     address: String,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
@@ -62,7 +65,7 @@ class StakingViewModel(
     private val passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
     private val api: API,
-) : ViewModel() {
+) : BaseWalletVM(app) {
 
     data class AvailableUiState(
         val balanceFormat: CharSequence,

@@ -291,7 +291,7 @@ class HistoryHelper(
         return@withContext items
     }
 
-    private suspend fun action(
+    private fun action(
         index: Int,
         txId: String,
         wallet: WalletEntity,
@@ -487,6 +487,7 @@ class HistoryHelper(
             )
         } else if (action.nftItemTransfer != null) {
             val nftItemTransfer = action.nftItemTransfer!!
+
             val isOut = !wallet.isMyAddress(nftItemTransfer.recipient?.address ?: "-")
             val sender = nftItemTransfer.sender ?: action.simplePreview.accounts.firstOrNull()
 

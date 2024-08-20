@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -16,9 +17,9 @@ import uikit.widget.HeaderView
 import uikit.widget.TextHeaderView
 import uikit.widget.WordInput
 
-class BackupCheckScreen: BaseFragment(R.layout.fragment_backup_check), BaseFragment.SwipeBack {
+class BackupCheckScreen: BaseWalletScreen(R.layout.fragment_backup_check), BaseFragment.SwipeBack {
 
-    private val backupCheckViewModel: BackupCheckViewModel by viewModel()
+    override val viewModel: BackupCheckViewModel by viewModel()
 
     private val args: BackupCheckArgs by lazy { BackupCheckArgs(requireArguments()) }
 
@@ -73,7 +74,7 @@ class BackupCheckScreen: BaseFragment(R.layout.fragment_backup_check), BaseFragm
 
     private fun saveBackup() {
         if (button.isEnabled) {
-            backupCheckViewModel.saveBackup(args.backupId).onEach {
+            viewModel.saveBackup(args.backupId).onEach {
                 finish()
             }.launchIn(lifecycleScope)
         }

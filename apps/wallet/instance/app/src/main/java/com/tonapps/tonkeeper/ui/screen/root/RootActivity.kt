@@ -13,11 +13,11 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
+import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
-import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
@@ -39,15 +39,13 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
-import uikit.extensions.activity
 import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.navigation.NavigationActivity
 
-class RootActivity: NavigationActivity() {
+class RootActivity: BaseWalletActivity() {
 
-    private val rootViewModel: RootViewModel by viewModel()
+    override val viewModel: RootViewModel by viewModel()
     private val legacyRN: RNLegacy by inject()
 
     private lateinit var uiHandler: Handler
@@ -57,11 +55,11 @@ class RootActivity: NavigationActivity() {
     private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(rootViewModel.theme.resId)
+        setTheme(viewModel.theme.resId)
         super.onCreate(savedInstanceState)
         legacyRN.setActivity(this)
-        windowInsetsController.isAppearanceLightStatusBars = rootViewModel.theme.light
-        windowInsetsController.isAppearanceLightNavigationBars = rootViewModel.theme.light
+        windowInsetsController.isAppearanceLightStatusBars = viewModel.theme.light
+        windowInsetsController.isAppearanceLightNavigationBars = viewModel.theme.light
         uiHandler = Handler(mainLooper)
 
         handleIntent(intent)
@@ -80,12 +78,12 @@ class RootActivity: NavigationActivity() {
             insets
         }
 
-        collectFlow(rootViewModel.tonConnectEventsFlow, ::onDAppEvent)
-        collectFlow(rootViewModel.hasWalletFlow) { init(it) }
-        collectFlow(rootViewModel.eventFlow) { event(it) }
-        collectFlow(rootViewModel.passcodeFlow, ::passcodeFlow)
+        collectFlow(viewModel.tonConnectEventsFlow, ::onDAppEvent)
+        collectFlow(viewModel.hasWalletFlow) { init(it) }
+        collectFlow(viewModel.eventFlow) { event(it) }
+        collectFlow(viewModel.passcodeFlow, ::passcodeFlow)
 
-        collectFlow(rootViewModel.themeFlow) {
+        collectFlow(viewModel.themeFlow) {
             recreate()
         }
     }
@@ -122,16 +120,16 @@ class RootActivity: NavigationActivity() {
             val param = DAppEventEntity.parseParam(params.get(i))
             val request = SignRequestEntity(param)
             try {
-                val boc = rootViewModel.requestSign(this, event.wallet, request)
-                rootViewModel.tonconnectBoc(event.id, event.connect, boc)
+                val boc = viewModel.requestSign(this, event.wallet, request)
+                viewModel.tonconnectBoc(event.id, event.connect, boc)
             } catch (e: Throwable) {
-                rootViewModel.tonconnectReject(event.id, event.connect)
+                viewModel.tonconnectReject(event.id, event.connect)
             }
         }
     }
 
     private fun checkPasscode(code: String) {
-        rootViewModel.checkPasscode(this, code).catch {
+        viewModel.checkPasscode(this, code).catch {
             lockPasscodeView.setError()
         }.onEach {
             lockPasscodeView.setSuccess()
@@ -202,7 +200,7 @@ class RootActivity: NavigationActivity() {
         builder.setTitle(Localization.sign_out_all_title)
         builder.setMessage(Localization.sign_out_all_description)
         builder.setNegativeButton(Localization.sign_out) {
-            rootViewModel.signOut()
+            viewModel.signOut()
             setIntroFragment()
         }
         builder.setPositiveButton(Localization.cancel)
@@ -257,6 +255,6 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun processDeepLink(uri: Uri) {
-        rootViewModel.processDeepLink(uri, false, getReferrer())
+        viewModel.processDeepLink(uri, false, getReferrer())
     }
 }

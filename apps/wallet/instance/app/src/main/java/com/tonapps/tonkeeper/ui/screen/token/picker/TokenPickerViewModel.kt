@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -22,10 +23,11 @@ import kotlinx.coroutines.flow.flowOn
 import uikit.extensions.context
 
 class TokenPickerViewModel(
+    app: Application,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _selectedTokenFlow = MutableStateFlow<TokenEntity?>(null)
     private val selectedTokenFlow = _selectedTokenFlow.asStateFlow().filterNotNull()

@@ -126,7 +126,7 @@ class SendViewModel(
         tokensFlow,
         userInputFlow.map { it.token }.distinctUntilChanged()
     ) { tokens, selectedToken ->
-        tokens?.find { it.address == selectedToken.address } ?: AccountTokenEntity.EMPTY
+        tokens.find { it.address == selectedToken.address } ?: AccountTokenEntity.EMPTY
     }.distinctUntilChanged().flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, AccountTokenEntity.EMPTY)
 
     private val ratesTokenFlow = selectedTokenFlow.map { token ->

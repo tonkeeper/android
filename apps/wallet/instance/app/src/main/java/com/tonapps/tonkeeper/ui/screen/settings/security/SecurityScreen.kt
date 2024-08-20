@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
@@ -15,9 +16,9 @@ import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 import uikit.widget.item.ItemSwitchView
 
-class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.SwipeBack {
+class SecurityScreen: BaseWalletScreen(R.layout.fragment_security), BaseFragment.SwipeBack {
 
-    private val securityViewModel: SecurityViewModel by viewModel()
+    override val viewModel: SecurityViewModel by viewModel()
 
     private lateinit var headerView: HeaderView
     private lateinit var biometricView: ItemSwitchView
@@ -30,7 +31,7 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
         headerView.doOnCloseClick = { finish() }
 
         biometricView = view.findViewById(R.id.biometric)
-        biometricView.setChecked(securityViewModel.biometric, false)
+        biometricView.setChecked(viewModel.biometric, false)
         biometricView.doOnCheckedChanged = { checked, byUser ->
             if (byUser) {
                 enableBiometric(checked)
@@ -47,10 +48,10 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
         biometricDescriptionView.visibility = biometricVisibility
 
         lockScreenView = view.findViewById(R.id.lock_screen)
-        lockScreenView.setChecked(securityViewModel.lockScreen, false)
+        lockScreenView.setChecked(viewModel.lockScreen, false)
         lockScreenView.doOnCheckedChanged = { checked, byUser ->
             if (byUser) {
-                securityViewModel.lockScreen = checked
+                viewModel.lockScreen = checked
             }
         }
 
@@ -59,7 +60,7 @@ class SecurityScreen: BaseFragment(R.layout.fragment_security), BaseFragment.Swi
     }
 
     private fun enableBiometric(value: Boolean) {
-        securityViewModel.enableBiometric(requireContext(), value).catch {
+        viewModel.enableBiometric(requireContext(), value).catch {
             biometricView.setChecked(newChecked = false, byUser = true)
         }.launchIn(lifecycleScope)
     }

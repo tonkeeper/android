@@ -29,8 +29,8 @@ class PurchaseRepository(
         testnet: Boolean,
         country: String,
         locale: Locale,
-    ): Pair<List<PurchaseCategoryEntity>, List<PurchaseCategoryEntity>> {
-        val data = get(testnet, locale)
+    ): Pair<List<PurchaseCategoryEntity>, List<PurchaseCategoryEntity>>? {
+        val data = get(testnet, locale) ?: return null
         val methods = data.getCountry(country).methods
         return filterMethods(data.buy, methods) to filterMethods(data.sell, methods)
     }
@@ -54,23 +54,23 @@ class PurchaseRepository(
     }
 
     fun getMethod(id: String, testnet: Boolean, locale: Locale): PurchaseMethodEntity? {
-        val data = get(testnet, locale)
+        val data = get(testnet, locale) ?: return null
         val methods = (data.buy + data.sell).map { it.items }.flatten()
         return methods.find { it.id == id }
     }
 
-    private fun get(testnet: Boolean, locale: Locale): PurchaseDataEntity {
+    private fun get(testnet: Boolean, locale: Locale): PurchaseDataEntity? {
         val key = cacheKey(testnet, locale)
         var data = getCache(key)
-        if (true) { // data == null
-            data = load(testnet, locale)
+        if (data == null) {
+            data = load(testnet, locale) ?: return null
             setCache(key, data)
         }
-        return data!!
+        return data
     }
 
-    private fun load(testnet: Boolean, locale: Locale): PurchaseDataEntity {
-        val json = api.getFiatMethods(testnet, locale)
+    private fun load(testnet: Boolean, locale: Locale): PurchaseDataEntity? {
+        val json = api.getFiatMethods(testnet, locale) ?: return null
         return PurchaseDataEntity(json)
     }
 

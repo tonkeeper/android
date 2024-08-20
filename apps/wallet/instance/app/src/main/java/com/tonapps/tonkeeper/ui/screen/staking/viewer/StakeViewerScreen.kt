@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Adapter
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -17,19 +18,19 @@ import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class StakeViewerScreen: BaseListFragment(), BaseFragment.SwipeBack {
+class StakeViewerScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
 
     private val args: StakeViewerArgs by lazy { StakeViewerArgs(requireArguments()) }
-    private val stakeViewerViewModel: StakeViewerViewModel by viewModel { parametersOf(args.address) }
+    override val viewModel: StakeViewerViewModel by viewModel { parametersOf(args.address) }
     private val adapter = Adapter()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setTitle(args.name)
         setAdapter(adapter)
-        collectFlow(stakeViewerViewModel.poolNameFlow, ::setTitle)
+        collectFlow(viewModel.poolNameFlow, ::setTitle)
 
-        stakeViewerViewModel.uiItemsFlow.catch {
+        viewModel.uiItemsFlow.catch {
             navigation?.toast(Localization.unknown_error)
             finish()
         }.onEach(adapter::submitList).launchIn(lifecycleScope)

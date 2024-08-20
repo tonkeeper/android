@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.staking.unstake
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.toRawAddress
@@ -10,6 +11,7 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingEvent
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel.AvailableUiState
 import com.tonapps.wallet.api.API
@@ -41,6 +43,7 @@ import org.ton.contract.wallet.WalletTransferBuilder
 import uikit.extensions.collectFlow
 
 class UnStakeViewModel(
+    app: Application,
     private val address: String,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
@@ -48,7 +51,7 @@ class UnStakeViewModel(
     private val settingsRepository: SettingsRepository,
     private val ratesRepository: RatesRepository,
     private val api: API,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     data class AvailableUiState(
         val balanceFormat: CharSequence,

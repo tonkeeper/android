@@ -6,6 +6,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -20,10 +21,11 @@ import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragment.BottomSheet {
+class TokenPickerScreen: BaseWalletScreen(R.layout.fragment_token_picker), BaseFragment.BottomSheet {
 
     private val requestKey: String by lazy { requireArguments().getString(ARG_REQUEST_KEY)!! }
-    private val tokenPickerViewModel: TokenPickerViewModel by viewModel()
+
+    override val viewModel: TokenPickerViewModel by viewModel()
 
     private val adapter = Adapter { item ->
         val token = item.raw.balance.token
@@ -38,8 +40,8 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        tokenPickerViewModel.setSelectedToken(requireArguments().getParcelableCompat<TokenEntity>(ARG_SELECTED_TOKEN)!!)
-        collectFlow(tokenPickerViewModel.uiItems, adapter::submitList)
+        viewModel.setSelectedToken(requireArguments().getParcelableCompat<TokenEntity>(ARG_SELECTED_TOKEN)!!)
+        collectFlow(viewModel.uiItems, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -51,7 +53,7 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
         searchContainer.background = headerDrawable
 
         searchInput = view.findViewById(R.id.search_input)
-        searchInput.doOnTextChanged { text, _, _, _ -> tokenPickerViewModel.search(text.toString().trim()) }
+        searchInput.doOnTextChanged { text, _, _, _ -> viewModel.search(text.toString().trim()) }
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
@@ -61,7 +63,7 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
     }
 
     private fun returnToken(token: TokenEntity) {
-        tokenPickerViewModel.setSelectedToken(token)
+        viewModel.setSelectedToken(token)
         navigation?.setFragmentResult(requestKey, Bundle().apply {
             putParcelable(TOKEN, token)
         })

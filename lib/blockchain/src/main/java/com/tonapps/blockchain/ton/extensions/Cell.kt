@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton.extensions
 
+import android.util.Log
 import io.ktor.util.encodeBase64
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
@@ -20,6 +21,9 @@ fun String.parseCell(): Cell {
 }
 
 fun String.safeParseCell(): Cell? {
+    if (this.isBlank()) {
+        return null
+    }
     return try {
         parseCell()
     } catch (e: Throwable) {

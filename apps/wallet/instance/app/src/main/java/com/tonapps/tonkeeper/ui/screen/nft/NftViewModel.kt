@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.nft
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
@@ -19,11 +21,12 @@ import kotlinx.coroutines.flow.take
 import uikit.extensions.collectFlow
 
 class NftViewModel(
+    app: Application,
     private val nft: NftEntity,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val api: API,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _trustFlow = MutableStateFlow<Boolean?>(null)
     val trustFlow = _trustFlow.asStateFlow().filterNotNull()

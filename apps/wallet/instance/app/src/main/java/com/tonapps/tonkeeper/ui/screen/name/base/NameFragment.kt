@@ -11,6 +11,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.emoji.ui.EmojiView
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.name.adapter.ColorAdapter
 import com.tonapps.tonkeeper.ui.screen.name.adapter.EmojiAdapter
@@ -33,17 +34,17 @@ import uikit.extensions.withAlpha
 import uikit.widget.InputView
 import uikit.widget.LoaderView
 
-abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name) {
+abstract class NameFragment(mode: NameMode): BaseWalletScreen(R.layout.fragment_name) {
 
     companion object {
         private const val MODE_KEY = "mode"
     }
 
     private val mode: NameMode by lazy { requireArguments().getInt(MODE_KEY) }
-    private val nameViewModel: NameViewModel by viewModel { parametersOf(mode) }
+    override val viewModel: NameViewModel by viewModel { parametersOf(mode) }
 
-    private val colorAdapter: ColorAdapter by lazy { ColorAdapter(nameViewModel::setColor) }
-    private val emojiAdapter: EmojiAdapter by lazy { EmojiAdapter(nameViewModel::setEmoji) }
+    private val colorAdapter: ColorAdapter by lazy { ColorAdapter(viewModel::setColor) }
+    private val emojiAdapter: EmojiAdapter by lazy { EmojiAdapter(viewModel::setEmoji) }
 
     private lateinit var walletName: InputView
     private lateinit var walletColor: View
@@ -63,7 +64,7 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        nameViewModel.loadEmojiPack()
+        viewModel.loadEmojiPack()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -123,8 +124,8 @@ abstract class NameFragment(mode: NameMode): BaseFragment(R.layout.fragment_name
             nextButton.isEnabled = it.isNotEmpty()
         }
 
-        collectFlow(nameViewModel.emojiFlow, emojiAdapter::submitList)
-        collectFlow(nameViewModel.walletLabelFlow, ::applyWalletLabel)
+        collectFlow(viewModel.emojiFlow, emojiAdapter::submitList)
+        collectFlow(viewModel.walletLabelFlow, ::applyWalletLabel)
     }
 
     private fun setExtrasAlpha(alpha: Float) {

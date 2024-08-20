@@ -22,6 +22,9 @@ import java.util.Locale
 object DateHelper {
 
     fun formatTransactionDetailsTime(date: Long, locale: Locale): String {
+        if (0 >= date) {
+            return ""
+        }
         val instant = Instant.fromEpochMilliseconds(date * 1000)
         return formatTransactionDetailsTime(instant, locale)
     }
@@ -45,6 +48,9 @@ object DateHelper {
     }
 
     fun formatTransactionTime(date: Long, locale: Locale): String {
+        if (0 >= date) {
+            return ""
+        }
         val instant = Instant.fromEpochMilliseconds(date * 1000)
         return formatTransactionTime(instant, locale)
     }

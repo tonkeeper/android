@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
@@ -60,7 +61,7 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
 
     private val webViewCallback = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-            val refererUri = request.requestHeaders["Referer"]?.toUri()
+            val refererUri = request.requestHeaders?.get("Referer")?.toUri()
             val url = request.url.normalizeTONSites()
             if (url.scheme != "https") {
                 navigation?.openURL(url.toString(), true)
@@ -82,9 +83,6 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
             }
         }
     }
-
-    private val _keyboardHeightFlow = MutableStateFlow(0)
-    private val keyboardHeightFlow = _keyboardHeightFlow.asStateFlow()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

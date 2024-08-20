@@ -18,6 +18,7 @@ import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.tonconnect.models.TCData
 import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
@@ -38,7 +39,7 @@ import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
 
-class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Modal {
+class TCAuthFragment: BaseWalletScreen(R.layout.dialog_ton_connect), BaseFragment.Modal {
 
     companion object {
 
@@ -67,7 +68,7 @@ class TCAuthFragment: BaseFragment(R.layout.dialog_ton_connect), BaseFragment.Mo
     private val fromBrowser: Boolean by lazy { arguments?.getBoolean(FROM_BROWSER_KEY) ?: false }
     private val request: DAppRequestEntity by lazy { arguments?.getParcelableCompat(REQUEST_KEY)!! }
 
-    private val viewModel: TCAuthViewModel by viewModel { parametersOf(request) }
+    override val viewModel: TCAuthViewModel by viewModel { parametersOf(request) }
 
     private lateinit var closeView: View
     private lateinit var loaderView: LoaderView

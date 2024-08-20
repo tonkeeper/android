@@ -16,7 +16,7 @@ open class HistoryAdapter(
 ) : BaseListAdapter() {
 
     init {
-        super.setHasStableIds(true)
+        // super.setHasStableIds(true)
     }
 
     override fun getItemId(position: Int): Long {

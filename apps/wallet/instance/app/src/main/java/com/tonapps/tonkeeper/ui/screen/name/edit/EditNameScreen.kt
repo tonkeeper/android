@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.component.label.LabelEditorView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.Wallet
@@ -14,9 +15,9 @@ import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.widget.HeaderView
 
-class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.BottomSheet {
+class EditNameScreen: BaseWalletScreen(R.layout.fragment_name_edit), BaseFragment.BottomSheet {
 
-    private val editNameViewModel: EditNameViewModel by viewModel()
+    override val viewModel: EditNameViewModel by viewModel()
 
     private lateinit var editorView: LabelEditorView
 
@@ -31,7 +32,7 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
         view.doKeyboardAnimation { offset, progress, _ ->
             editorView.setBottomOffset(offset, progress)
         }
-        collectFlow(editNameViewModel.uiLabelFlow, ::setLabel)
+        collectFlow(viewModel.uiLabelFlow, ::setLabel)
     }
 
     override fun onResume() {
@@ -40,7 +41,7 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
     }
 
     override fun onPause() {
-        editNameViewModel.save(editorView.name, editorView.emoji, editorView.color)
+        viewModel.save(editorView.name, editorView.emoji, editorView.color)
         super.onPause()
     }
 
@@ -53,7 +54,7 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
     }
 
     private fun saveLabel(name: String, emoji: String, color: Int) {
-        editNameViewModel.save(name, emoji, color)
+        viewModel.save(name, emoji, color)
         finish()
     }
 

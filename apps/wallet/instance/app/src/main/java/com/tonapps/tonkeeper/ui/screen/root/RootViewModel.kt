@@ -24,6 +24,7 @@ import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.tonkeeper.sign.SignManager
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
@@ -79,7 +80,7 @@ import uikit.extensions.context
 import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
-    application: Application,
+    app: Application,
     private val passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
@@ -92,7 +93,7 @@ class RootViewModel(
     private val walletPickerAdapter: WalletPickerAdapter,
     private val tokenRepository: TokenRepository,
     private val purchaseRepository: PurchaseRepository
-): AndroidViewModel(application) {
+): BaseWalletVM(app) {
 
     data class Passcode(
         val show: Boolean,
@@ -131,7 +132,7 @@ class RootViewModel(
         ) { state, _ ->
             if (state is AccountRepository.SelectedState.Empty) {
                 _hasWalletFlow.tryEmit(false)
-                ShortcutManagerCompat.removeAllDynamicShortcuts(application)
+                ShortcutManagerCompat.removeAllDynamicShortcuts(context)
             } else if (state is AccountRepository.SelectedState.Wallet) {
                 val items = screenCacheSource.getWalletScreen(state.wallet) ?: listOf(Item.Skeleton(true))
                 submitWalletList(items)

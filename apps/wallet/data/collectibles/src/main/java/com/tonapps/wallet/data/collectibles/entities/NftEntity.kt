@@ -6,6 +6,7 @@ import android.util.Log
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.entity.AccountEntity
 import io.tonapi.models.NftItem
+import io.tonapi.models.NftItemTransferAction
 import io.tonapi.models.TrustType
 import kotlinx.parcelize.Parcelize
 

@@ -8,6 +8,7 @@ import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
@@ -23,18 +24,19 @@ import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 
-class PickerScreen: BaseListFragment(), BaseFragment.Modal {
+class PickerScreen: BaseListWalletScreen(), BaseFragment.Modal {
 
     override val scaleBackground: Boolean = true
 
-    private val pickerViewModel: PickerViewModel by viewModel()
+    override val viewModel: PickerViewModel by viewModel()
+
     private val adapter: WalletPickerAdapter by inject()
 
     private lateinit var actionButton: AppCompatTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(pickerViewModel.walletChangedFlow) {
+        collectFlow(viewModel.walletChangedFlow) {
             finish()
         }
     }
@@ -44,7 +46,7 @@ class PickerScreen: BaseListFragment(), BaseFragment.Modal {
         val horizontalOffset = requireContext().getDimensionPixelSize(uikit.R.dimen.cornerMedium)
 
         actionButton = createActionButton(view.context)
-        actionButton.setOnClickListener { pickerViewModel.toggleEditMode() }
+        actionButton.setOnClickListener { viewModel.toggleEditMode() }
         addViewHeader(actionButton, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, 32.dp, Gravity.CENTER_VERTICAL).also {
             it.marginEnd = horizontalOffset
             it.marginStart = horizontalOffset
@@ -79,7 +81,7 @@ class PickerScreen: BaseListFragment(), BaseFragment.Modal {
                 super.clearView(recyclerView, viewHolder)
                 val item = (viewHolder as? Holder<*>)?.item ?: return
                 if (item is Item.Wallet && item.editMode) {
-                    pickerViewModel.saveOrder(adapter.rebuild())
+                    viewModel.saveOrder(adapter.rebuild())
                 }
             }
 
@@ -87,7 +89,7 @@ class PickerScreen: BaseListFragment(), BaseFragment.Modal {
 
         })
 
-        collectFlow(pickerViewModel.editModeFlow, ::applyEditMove)
+        collectFlow(viewModel.editModeFlow, ::applyEditMove)
     }
 
     private fun applyEditMove(edit: Boolean) {

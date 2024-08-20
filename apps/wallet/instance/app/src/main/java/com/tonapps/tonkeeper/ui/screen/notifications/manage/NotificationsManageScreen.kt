@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.notifications.manage
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Adapter
 import com.tonapps.tonkeeperx.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -10,14 +11,15 @@ import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 import uikit.widget.SimpleRecyclerView
 
-class NotificationsManageScreen: BaseFragment(R.layout.fragment_notifications_manage), BaseFragment.SwipeBack {
+class NotificationsManageScreen: BaseWalletScreen(R.layout.fragment_notifications_manage), BaseFragment.SwipeBack {
 
-    private val notificationsManageViewModel: NotificationsManageViewModel by viewModel()
+    override val viewModel: NotificationsManageViewModel by viewModel()
+
     private val adapter = Adapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(notificationsManageViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

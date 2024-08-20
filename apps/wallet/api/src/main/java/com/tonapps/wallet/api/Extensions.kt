@@ -1,13 +1,13 @@
 package com.tonapps.wallet.api
 
+import android.os.SystemClock
 import io.tonapi.infrastructure.Serializer
 import com.squareup.moshi.adapter
 import io.tonapi.infrastructure.ClientException
 import android.util.Log
 import com.tonapps.network.OkHttpError
 import kotlinx.coroutines.delay
-import java.io.InterruptedIOException
-import java.net.SocketException
+import kotlinx.coroutines.CancellationException
 
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> toJSON(obj: T?): String {
@@ -22,25 +22,28 @@ inline fun <reified T> fromJSON(json: String): T {
     return Serializer.moshi.adapter<T>().fromJson(json)!!
 }
 
-suspend fun <R> withRetry(
+fun <R> withRetry(
     times: Int = 5,
     delay: Long = 300,
-    block: () -> R
+    retryBlock: () -> R
 ): R? {
-    for (i in 0 until times) {
+    repeat(times) {
         try {
-            return block()
+            return retryBlock()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
+            if (e is ClientException && e.statusCode != 429 && 500 >= e.statusCode) {
+                return null
+            } else if (e is OkHttpError && e.statusCode != 429 && 500 >= e.statusCode) {
+                return null
+            }
             Log.e("TONKeeperLog", "error request", e)
-            if (e is ClientException && e.statusCode != 429 && 500 > e.statusCode) {
-                return null
-            } else if (e is OkHttpError && e.statusCode != 429 && 500 > e.statusCode) {
-                return null
-            }/* else if (e is InterruptedIOException || e is SocketException) {
+            /*else if (e is InterruptedIOException || e is SocketException) {
                 return null
             }*/
         }
-        delay(delay)
+        SystemClock.sleep(delay)
     }
     return null
 }

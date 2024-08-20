@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.TokenAdapter
 import com.tonapps.tonkeeperx.R
@@ -30,15 +31,17 @@ import uikit.extensions.setRightDrawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
+class TokenScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
 
     private val args: TokenArgs by lazy { TokenArgs(requireArguments()) }
-    private val tokenViewModel: TokenViewModel by viewModel { parametersOf(args.address) }
+
+    override val viewModel: TokenViewModel by viewModel { parametersOf(args.address) }
+
     private val tokenAdapter = TokenAdapter()
     private val historyAdapter = HistoryAdapter()
     private val paginationListener = object : ListPaginationListener() {
         override fun onLoadMore() {
-            tokenViewModel.loadMore()
+            viewModel.loadMore()
         }
     }
 
@@ -77,9 +80,9 @@ class TokenScreen: BaseListFragment(), BaseFragment.SwipeBack {
         })
         addScrollListener(paginationListener)
 
-        collectFlow(tokenViewModel.tokenFlow, ::applyToken)
-        collectFlow(tokenViewModel.uiItemsFlow, tokenAdapter::submitList)
-        collectFlow(tokenViewModel.uiHistoryFlow, historyAdapter::submitList)
+        collectFlow(viewModel.tokenFlow, ::applyToken)
+        collectFlow(viewModel.uiItemsFlow, tokenAdapter::submitList)
+        collectFlow(viewModel.uiHistoryFlow, historyAdapter::submitList)
 
         headerView = view.findViewById(R.id.header)
     }

@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.settings.theme
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.theme.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.core.Theme
@@ -12,8 +14,9 @@ import kotlinx.coroutines.flow.map
 import uikit.extensions.collectFlow
 
 class ThemeViewModel(
+    app: Application,
     private val settingsRepository: SettingsRepository
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }

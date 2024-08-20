@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.manage
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
@@ -17,17 +19,18 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.take
 
 class NotificationsManageViewModel(
+    app: Application,
     private val accountRepository: AccountRepository,
     private val tonConnectRepository: TonConnectRepository,
     private val settingsRepository: SettingsRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
         combine(
-            accountRepository.selectedWalletFlow,
+            accountRepository.selectedWalletFlow.take(1),
             tonConnectRepository.connectionsFlow.take(1)
         ) { wallet, apps ->
             val myApps = apps.filter { it.walletId == wallet.id }

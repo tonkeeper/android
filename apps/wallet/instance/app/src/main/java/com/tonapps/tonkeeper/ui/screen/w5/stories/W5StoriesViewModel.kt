@@ -1,11 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.w5.stories
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.backup.BackupRepository
@@ -26,11 +28,12 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
 class W5StoriesViewModel(
+    app: Application,
     private val accountRepository: AccountRepository,
     private val passcodeManager: PasscodeManager,
     private val backupRepository: BackupRepository,
     private val rnLegacy: RNLegacy,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val stories = StoryEntity.all
 

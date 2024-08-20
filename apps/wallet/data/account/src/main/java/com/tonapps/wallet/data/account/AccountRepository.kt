@@ -413,16 +413,14 @@ class AccountRepository(
     suspend fun getSeqno(
         wallet: WalletEntity
     ): Int = withContext(Dispatchers.IO) {
-        try {
-            api.getAccountSeqno(wallet.accountId, wallet.testnet)
-        } catch (e: Throwable) {
-            0
-        }
+        api.getAccountSeqno(wallet.accountId, wallet.testnet)
     }
 
-    suspend fun getValidUntil(testnet: Boolean): Long {
+    suspend fun getValidUntil(
+        testnet: Boolean
+    ): Long = withContext(Dispatchers.IO) {
         val seconds = api.getServerTime(testnet)
-        return seconds + (5 * 30L) // 5 minutes
+        seconds + (5 * 30L) // 5 minutes
     }
 
     fun messageBody(

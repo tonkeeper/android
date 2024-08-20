@@ -1,9 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.staking.viewer
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.StakedEntity
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -19,12 +21,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class StakeViewerViewModel(
+    app: Application,
     address: String,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
     private val ratesRepository: RatesRepository,
     private val settingsRepository: SettingsRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val currency = settingsRepository.currency
 

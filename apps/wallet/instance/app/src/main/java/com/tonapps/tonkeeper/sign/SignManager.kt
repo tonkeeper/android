@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.sign
 
 import android.os.CancellationSignal
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -76,8 +77,21 @@ class SignManager(
     ): HistoryHelper.Details? {
         val rates = ratesRepository.getRates(currency, "TON")
         val seqno = accountRepository.getSeqno(wallet)
-        val cell = accountRepository.createSignedMessage(wallet, seqno, EmptyPrivateKeyEd25519, request.validUntil, request.transfers)
+
+        val validUntil = if (0 >= request.validUntil) {
+            accountRepository.getValidUntil(wallet.testnet)
+        } else {
+            request.validUntil
+        }
+
         return try {
+            val cell = accountRepository.createSignedMessage(
+                wallet = wallet,
+                seqno = seqno,
+                privateKeyEd25519 = EmptyPrivateKeyEd25519,
+                validUntil = validUntil,
+                transfers = request.transfers
+            )
             val emulated = api.emulate(cell, wallet.testnet) ?: return null
             historyHelper.create(wallet, emulated, rates)
         } catch (e: Throwable) {

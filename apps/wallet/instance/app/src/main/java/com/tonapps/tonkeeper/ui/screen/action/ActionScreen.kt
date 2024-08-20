@@ -51,11 +51,13 @@ class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Mod
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         walletView = view.findViewById(R.id.action_wallet)
+
         closeView = view.findViewById(R.id.action_close)
         closeView.setOnClickListener { finish() }
 
         actionsView = view.findViewById(R.id.actions)
         actionsView.adapter = adapter
+
         adapter.submitList(args.historyItems)
 
         feeView = view.findViewById(R.id.fee)
@@ -110,7 +112,10 @@ class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Mod
     }
 
     private fun applyWallet(wallet: WalletEntity) {
-        walletView.text = "${getString(Localization.wallet)}: ${wallet.label.getTitle(requireContext(), walletView)}"
+        val builder = SpannableStringBuilder(getString(Localization.wallet))
+        builder.append(": ")
+        builder.append(wallet.label.getTitle(requireContext(), walletView))
+        walletView.text = builder
     }
 
     companion object {

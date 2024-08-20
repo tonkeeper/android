@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
@@ -28,9 +29,10 @@ import uikit.extensions.isMaxScrollReached
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 
-class BrowserSearchScreen: BaseFragment(R.layout.fragment_browser_search) {
+class BrowserSearchScreen: BaseWalletScreen(R.layout.fragment_browser_search) {
 
-    private val searchViewModel: BrowserSearchViewModel by viewModel()
+    override val viewModel: BrowserSearchViewModel by viewModel()
+
     private val adapter = Adapter { title, url ->
         val host = Uri.parse(url).host ?: url
         navigation?.add(DAppScreen.newInstance(title, host, url))
@@ -66,7 +68,7 @@ class BrowserSearchScreen: BaseFragment(R.layout.fragment_browser_search) {
         }
 
         searchInput = view.findViewById(R.id.search_input)
-        searchInput.doAfterTextChanged { searchViewModel.query(it.toString()) }
+        searchInput.doAfterTextChanged { viewModel.query(it.toString()) }
         contentView = view.findViewById(R.id.content)
 
         placeholderView = view.findViewById(R.id.placeholder)
@@ -74,7 +76,7 @@ class BrowserSearchScreen: BaseFragment(R.layout.fragment_browser_search) {
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
 
-        collectFlow(searchViewModel.uiItemsFlow) {
+        collectFlow(viewModel.uiItemsFlow) {
             submitList(it)
             placeholderView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
         }

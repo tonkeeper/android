@@ -31,7 +31,7 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
 
-class MainScreen: BaseFragment(R.layout.fragment_main) {
+class MainScreen: BaseWalletScreen(R.layout.fragment_main) {
 
     abstract class Child(@LayoutRes layoutId: Int): BaseWalletScreen(layoutId) {
 
@@ -84,7 +84,8 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
         }
     }
 
-    private val mainViewModel: MainViewModel by viewModel()
+    override val viewModel: MainViewModel by viewModel()
+
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private var currentFragment: BaseFragment? = null
@@ -107,12 +108,12 @@ class MainScreen: BaseFragment(R.layout.fragment_main) {
                 navigation?.add(PickerScreen.newInstance())
             }
         }
-        collectFlow(mainViewModel.childBottomScrolled, bottomTabsView::setDivider)
+        collectFlow(viewModel.childBottomScrolled, bottomTabsView::setDivider)
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().map { mainDeepLinks[it.link] }.filterNotNull(), this::forceSelectTab)
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.Swap>()) {
             navigation?.add(SwapScreen.newInstance(it.uri, it.address, it.from, it.to))
         }
-        collectFlow(mainViewModel.browserTabEnabled) { enabled ->
+        collectFlow(viewModel.browserTabEnabled) { enabled ->
             if (enabled) {
                 bottomTabsView.showItem(R.id.browser)
             } else {

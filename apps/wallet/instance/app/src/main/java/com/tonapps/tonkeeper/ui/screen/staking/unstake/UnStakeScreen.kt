@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.unstake
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.commit
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingEvent
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen.ChildFragment
@@ -26,7 +27,7 @@ import uikit.extensions.hideKeyboard
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class UnStakeScreen: BaseFragment(R.layout.fragment_unstake), BaseFragment.BottomSheet {
+class UnStakeScreen: BaseWalletScreen(R.layout.fragment_unstake), BaseFragment.BottomSheet {
 
     abstract class ChildFragment(layoutId: Int): SimpleFragment<UnStakeScreen>(layoutId) {
 
@@ -42,7 +43,7 @@ class UnStakeScreen: BaseFragment(R.layout.fragment_unstake), BaseFragment.Botto
     }
 
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
-    private val unStakeViewModel: UnStakeViewModel by viewModel { parametersOf(poolAddress) }
+    override val viewModel: UnStakeViewModel by viewModel { parametersOf(poolAddress) }
 
     private lateinit var headerView: HeaderView
 
@@ -52,7 +53,7 @@ class UnStakeScreen: BaseFragment(R.layout.fragment_unstake), BaseFragment.Botto
         headerView.doOnActionClick = { finish() }
 
         applyPrimaryScreen()
-        collectFlow(unStakeViewModel.eventFlow, ::onEvent)
+        collectFlow(viewModel.eventFlow, ::onEvent)
 
         view.doKeyboardAnimation(::onKeyboardAnimation)
     }

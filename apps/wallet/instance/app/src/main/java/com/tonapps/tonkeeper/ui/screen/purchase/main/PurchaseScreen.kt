@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.extensions.countryEmoji
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
@@ -24,9 +25,10 @@ import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import kotlin.coroutines.resume
 
-class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.BottomSheet {
+class PurchaseScreen: BaseWalletScreen(R.layout.fragment_purchase), BaseFragment.BottomSheet {
 
-    private val purchaseViewModel: PurchaseViewModel by viewModel()
+    override val viewModel: PurchaseViewModel by viewModel()
+
     private val adapter: Adapter by lazy { Adapter(::open) }
     private val confirmDialog: PurchaseConfirmDialog by lazy {
         PurchaseConfirmDialog(requireContext())
@@ -39,7 +41,7 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(purchaseViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,10 +52,10 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
         }
 
         tabBuyView = view.findViewById(R.id.tab_buy)
-        tabBuyView.setOnClickListener { purchaseViewModel.setTab(PurchaseViewModel.Tab.BUY) }
+        tabBuyView.setOnClickListener { viewModel.setTab(PurchaseViewModel.Tab.BUY) }
 
         tabSellView = view.findViewById(R.id.tab_sell)
-        tabSellView.setOnClickListener { purchaseViewModel.setTab(PurchaseViewModel.Tab.SELL) }
+        tabSellView.setOnClickListener { viewModel.setTab(PurchaseViewModel.Tab.SELL) }
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
@@ -61,11 +63,11 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
 
         view.findViewById<View>(R.id.close).setOnClickListener { finish() }
 
-        collectFlow(purchaseViewModel.countryFlow) { country ->
+        collectFlow(viewModel.countryFlow) { country ->
             countryView.text = country.countryEmoji
         }
 
-        collectFlow(purchaseViewModel.tabFlow, ::applyTab)
+        collectFlow(viewModel.tabFlow, ::applyTab)
     }
 
     private fun applyTab(tab: PurchaseViewModel.Tab) {
@@ -80,11 +82,11 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
 
     private fun open(method: PurchaseMethodEntity) {
         combine(
-            purchaseViewModel.open(method),
-            purchaseViewModel.walletFlow
+            viewModel.open(method),
+            viewModel.walletFlow
         ) { showConfirmDialog, wallet ->
             if (showConfirmDialog && !confirmDialog(method)) {
-                purchaseViewModel.disableConfirmDialog(wallet, method)
+                viewModel.disableConfirmDialog(wallet, method)
             }
             navigation?.add(PurchaseWebScreen.newInstance(method))
             finish()

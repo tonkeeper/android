@@ -1,19 +1,22 @@
 package com.tonapps.tonkeeper.ui.screen.settings.passcode
 
+import android.app.Application
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class ChangePasscodeViewModel(
+    app: Application,
     private val passcodeManager: PasscodeManager,
     savedStateHandle: SavedStateHandle
-): ViewModel() {
+): BaseWalletVM(app) {
 
     enum class Step {
         Current, New, Confirm, Saved

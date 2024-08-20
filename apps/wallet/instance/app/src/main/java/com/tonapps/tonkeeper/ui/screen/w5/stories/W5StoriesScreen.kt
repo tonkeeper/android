@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -20,9 +21,9 @@ import uikit.extensions.round
 import uikit.widget.FrescoView
 import uikit.widget.RowLayout
 
-class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
+class W5StoriesScreen: BaseWalletScreen(R.layout.fragment_w5_stories) {
 
-    private val w5StoriesViewModel: W5StoriesViewModel by viewModel()
+    override val viewModel: W5StoriesViewModel by viewModel()
 
     private lateinit var contentView: FrameLayout
     private lateinit var linesView: RowLayout
@@ -42,9 +43,9 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
                     val x = event.x
                     val width = v.width
                     if (x < width / 2) {
-                        w5StoriesViewModel.prevStory()
+                        viewModel.prevStory()
                     } else {
-                        w5StoriesViewModel.nextStory()
+                        viewModel.nextStory()
                     }
                 }
             }
@@ -71,7 +72,7 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
             insets
         }
 
-        collectFlow(w5StoriesViewModel.storyFlow, ::applyStory)
+        collectFlow(viewModel.storyFlow, ::applyStory)
     }
 
     private fun applyLines() {
@@ -79,7 +80,7 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
     }
 
     private fun addWallet() {
-        w5StoriesViewModel.addWallet(requireContext()).catch {
+        viewModel.addWallet(requireContext()).catch {
 
         }.onEach {
             finish()

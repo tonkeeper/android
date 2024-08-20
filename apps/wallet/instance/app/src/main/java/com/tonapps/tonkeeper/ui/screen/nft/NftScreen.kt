@@ -12,6 +12,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
@@ -40,13 +41,11 @@ import uikit.widget.ColumnLayout
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
 
-class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
+class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomSheet {
 
-    private val nftEntity: NftEntity by lazy {
-        requireArguments().getParcelableCompat(ARG_ENTITY)!!
-    }
+    override val viewModel: NftViewModel by viewModel{ parametersOf(nftEntity) }
 
-    private val nftViewModel: NftViewModel by viewModel{ parametersOf(nftEntity) }
+    private val nftEntity: NftEntity by lazy { requireArguments().getParcelableCompat(ARG_ENTITY)!! }
 
     private val verificationIcon: Drawable by lazy {
         getDrawable(UIKitIcon.ic_verification_16, requireContext().accentBlueColor)
@@ -155,7 +154,7 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
         }
         setAddress(view, nftEntity.userFriendlyAddress)
 
-        collectFlow(nftViewModel.trustFlow) {
+        collectFlow(viewModel.trustFlow) {
             if (it) {
                 showTrustState()
             } else {
@@ -213,7 +212,7 @@ class NftScreen: BaseFragment(R.layout.fragment_nft), BaseFragment.BottomSheet {
     }
 
     private fun reportSpam(spam: Boolean) {
-        collectFlow(nftViewModel.reportSpam(spam)) {
+        collectFlow(viewModel.reportSpam(spam)) {
             finish()
         }
     }

@@ -112,11 +112,11 @@ fun Context.drawable(
     id: Int,
     @ColorInt color: Int = Color.TRANSPARENT
 ): Drawable {
-    val drawable = ResourcesCompat.getDrawable(resources, id, theme) ?: ColorDrawable(Color.TRANSPARENT)
+    val drawable = ResourcesCompat.getDrawable(resources, id, theme)?.mutate() ?: ColorDrawable(Color.TRANSPARENT)
     if (color != Color.TRANSPARENT) {
         drawable.setTint(color)
     }
-    return drawable.mutate()
+    return drawable
 }
 
 fun Context.getCurrentFocus(): View? {

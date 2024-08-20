@@ -108,11 +108,11 @@ class API(
 
     fun rates() = provider.rates.get(false)
 
-    suspend fun getAlertNotifications() = withRetry {
+    fun getAlertNotifications() = withRetry {
         internalApi.getNotifications()
     } ?: emptyList()
 
-    private suspend fun isOkStatus(testnet: Boolean): Boolean {
+    private fun isOkStatus(testnet: Boolean): Boolean {
         try {
             val status = withRetry {
                 provider.blockchain.get(testnet).status()
@@ -129,7 +129,7 @@ class API(
         }
     }
 
-    suspend fun getEvents(
+    fun getEvents(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
@@ -143,7 +143,7 @@ class API(
         )
     }
 
-    suspend fun getSingleEvent(
+    fun getSingleEvent(
         eventId: String,
         testnet: Boolean
     ): List<AccountEvent>? {
@@ -181,7 +181,7 @@ class API(
         )
     }
 
-    suspend fun getTonBalance(
+    fun getTonBalance(
         accountId: String,
         testnet: Boolean
     ): BalanceEntity? {
@@ -195,7 +195,7 @@ class API(
         )
     }
 
-    suspend fun getJetton(
+    fun getJetton(
         accountId: String,
         testnet: Boolean
     ): TokenEntity? {
@@ -206,7 +206,7 @@ class API(
         return TokenEntity(jetton)
     }
 
-    suspend fun getJettonsBalances(
+    fun getJettonsBalances(
         accountId: String,
         testnet: Boolean,
         currency: String? = null
@@ -220,7 +220,7 @@ class API(
         return jettonsBalances.map { BalanceEntity(it) }.filter { it.value.isPositive }
     }
 
-    suspend fun resolveAddressOrName(
+    fun resolveAddressOrName(
         query: String,
         testnet: Boolean
     ): AccountDetailsEntity? {
@@ -232,7 +232,7 @@ class API(
         }
     }
 
-    suspend fun resolvePublicKey(
+    fun resolvePublicKey(
         pk: PublicKeyEd25519,
         testnet: Boolean
     ): List<AccountDetailsEntity> {
@@ -247,7 +247,7 @@ class API(
         }
     }
 
-    suspend fun getRates(currency: String, tokens: List<String>): Map<String, TokenRates>? {
+    fun getRates(currency: String, tokens: List<String>): Map<String, TokenRates>? {
         val currencies = listOf(currency)
         return withRetry {
             rates().getRates(
@@ -257,11 +257,11 @@ class API(
         }
     }
 
-    suspend fun getNft(address: String, testnet: Boolean): NftItem? {
+    fun getNft(address: String, testnet: Boolean): NftItem? {
         return withRetry { nft(testnet).getNftItemByAddress(address) }
     }
 
-    suspend fun getNftItems(
+    fun getNftItems(
         address: String,
         testnet: Boolean,
         limit: Int = 1000
@@ -275,7 +275,7 @@ class API(
         }
     }
 
-    private suspend fun getPublicKey(
+    private fun getPublicKey(
         accountId: String,
         testnet: Boolean
     ): PublicKeyEd25519? {
@@ -285,7 +285,7 @@ class API(
         return PublicKeyEd25519(hex(hex))
     }
 
-    suspend fun safeGetPublicKey(
+    fun safeGetPublicKey(
         accountId: String,
         testnet: Boolean
     ) = getPublicKey(accountId, testnet) ?: EmptyPrivateKeyEd25519.publicKey()
@@ -317,7 +317,7 @@ class API(
         return tonAPIHttpClient.sse(url)
     }
 
-    suspend fun tonconnectPayload(): String? {
+    fun tonconnectPayload(): String? {
         try {
             val url = "${config.tonapiMainnetHost}/v2/tonconnect/payload"
             val json = withRetry {
@@ -329,7 +329,7 @@ class API(
         }
     }
 
-    suspend fun tonconnectProof(address: String, proof: String): String {
+    fun tonconnectProof(address: String, proof: String): String {
         val url = "${config.tonapiMainnetHost}/v2/wallet/auth/proof"
         val data = "{\"address\":\"$address\",\"proof\":$proof}"
         val response = withRetry {
@@ -399,12 +399,10 @@ class API(
         testnet: Boolean
     ) = sendToBlockchain(cell.base64(), testnet)
 
-    suspend fun getAccountSeqno(
+    fun getAccountSeqno(
         accountId: String,
         testnet: Boolean,
-    ): Int = withContext(Dispatchers.IO) {
-        wallet(testnet).getAccountSeqno(accountId).seqno
-    }
+    ): Int = withRetry { wallet(testnet).getAccountSeqno(accountId).seqno } ?: 0
 
     suspend fun resolveAccount(
         value: String,
@@ -420,13 +418,11 @@ class API(
         return getAccount(domain, testnet) ?: getAccount(domain.unicodeToPunycode(), testnet)
     }
 
-    private suspend fun getAccount(accountId: String, testnet: Boolean): Account? {
-        return withRetry {
-            accounts(testnet).getAccount(accountId)
-        }
+    private fun getAccount(accountId: String, testnet: Boolean): Account? {
+        return withRetry { accounts(testnet).getAccount(accountId) }
     }
 
-    suspend fun pushSubscribe(
+    fun pushSubscribe(
         locale: Locale,
         firebaseToken: String,
         deviceId: String,
@@ -453,7 +449,7 @@ class API(
         } ?: false
     }
 
-    suspend fun pushUnsubscribe(
+    fun pushUnsubscribe(
         deviceId: String,
         account: String
     ): Boolean {
@@ -474,7 +470,7 @@ class API(
         } ?: false
     }
 
-    suspend fun pushTonconnectSubscribe(
+    fun pushTonconnectSubscribe(
         token: String,
         appUrl: String,
         accountId: String,
@@ -493,9 +489,6 @@ class API(
         json.put("commercial", commercial)
         json.put("silent", silent)
         val data = json.toString().replace("\\/", "/").trim()
-
-        Log.d("TONKeeperLog", "json: $data")
-        Log.d("TONKeeperLog", "token: $token")
 
         return withRetry {
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
@@ -547,8 +540,8 @@ class API(
         return internalApi.getBrowserApps(testnet, locale)
     }
 
-    fun getFiatMethods(testnet: Boolean, locale: Locale): JSONObject {
-        return internalApi.getFiatMethods(testnet, locale)
+    fun getFiatMethods(testnet: Boolean, locale: Locale): JSONObject? {
+        return withRetry { internalApi.getFiatMethods(testnet, locale) }
     }
 
     fun getTransactionEvents(accountId: String, testnet: Boolean, eventId: String): AccountEvent? {
@@ -576,13 +569,9 @@ class API(
         }
     }
 
-    suspend fun getServerTime(testnet: Boolean): Int = withContext(Dispatchers.IO) {
-        try {
-            liteServer(testnet).getRawTime().time
-        } catch (e: Throwable) {
-            (System.currentTimeMillis() / 1000).toInt()
-        }
-    }
+    fun getServerTime(testnet: Boolean) = withRetry {
+        liteServer(testnet).getRawTime().time
+    } ?: (System.currentTimeMillis() / 1000).toInt()
 
     suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
         if (cachedCountry == null) {

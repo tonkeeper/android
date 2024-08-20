@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.purchase.main
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
@@ -12,15 +14,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 
 class PurchaseViewModel(
+    app: Application,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val purchaseRepository: PurchaseRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     enum class Tab {
         BUY, SELL
@@ -37,7 +41,7 @@ class PurchaseViewModel(
         settingsRepository.countryFlow,
     ) { wallet, country ->
         purchaseRepository.get(wallet.testnet, country, settingsRepository.getLocale())
-    }.flowOn(Dispatchers.IO)
+    }.filterNotNull().flowOn(Dispatchers.IO)
 
     val uiItemsFlow = combine(dataFlow, tabFlow) { (buy, sell), tab ->
         val categories = if (tab == Tab.BUY) buy else sell

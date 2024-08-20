@@ -19,10 +19,9 @@ class CollectiblesRepository(
     private val api: API
 ) {
 
-
     private val localDataSource = LocalDataSource(context)
 
-    suspend fun getNft(accountId: String, testnet: Boolean, address: String): NftEntity? {
+    fun getNft(accountId: String, testnet: Boolean, address: String): NftEntity? {
         val nft = localDataSource.getSingle(accountId, testnet, address)
         if (nft != null) {
             return nft

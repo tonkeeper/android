@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
@@ -18,13 +19,13 @@ import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class BackupScreen: BaseListFragment(), BaseFragment.SwipeBack {
+class BackupScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
 
     private val attentionDialog: BackupAttentionDialog by lazy {
         BackupAttentionDialog(requireContext())
     }
 
-    private val backupViewModel: BackupViewModel by viewModel()
+    override val viewModel: BackupViewModel by viewModel()
 
     private val adapter = Adapter { item ->
         when (item) {
@@ -43,7 +44,7 @@ class BackupScreen: BaseListFragment(), BaseFragment.SwipeBack {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(backupViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -53,7 +54,7 @@ class BackupScreen: BaseListFragment(), BaseFragment.SwipeBack {
     }
 
     private fun openRecoveryPhrase(backup: Boolean = false, backupId: Long = 0) {
-        backupViewModel.getRecoveryPhrase(requireContext()).catch {
+        viewModel.getRecoveryPhrase(requireContext()).catch {
             navigation?.toast(Localization.authorization_required)
         }.filterNotNull().onEach {
             navigation?.add(PhraseScreen.newInstance(it, backup, backupId))

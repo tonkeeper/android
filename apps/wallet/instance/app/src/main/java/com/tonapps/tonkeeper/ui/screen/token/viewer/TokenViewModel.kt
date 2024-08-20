@@ -1,12 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.token.viewer
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ChartEntity
@@ -30,7 +32,7 @@ import okhttp3.internal.toImmutableList
 import uikit.extensions.collectFlow
 
 class TokenViewModel(
-    private val application: Application,
+    app: Application,
     private val tokenAddress: String,
     private val tokenRepository: TokenRepository,
     private val settingsRepository: SettingsRepository,
@@ -38,7 +40,7 @@ class TokenViewModel(
     private val api: API,
     private val eventsRepository: EventsRepository,
     private val historyHelper: HistoryHelper,
-): AndroidViewModel(application) {
+): BaseWalletVM(app) {
 
     private val _tokenFlow = MutableStateFlow<TokenData?>(null)
     val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
@@ -69,7 +71,7 @@ class TokenViewModel(
 
     private suspend fun load(data: TokenData) = withContext(Dispatchers.IO) {
         if (data.verified) {
-            async { loadHistory(data.address, data.wallet) }
+            loadHistory(data.address, data.wallet)
             loadMonthChart(data.address)
         } else {
             loadHistory(data.address, data.wallet)

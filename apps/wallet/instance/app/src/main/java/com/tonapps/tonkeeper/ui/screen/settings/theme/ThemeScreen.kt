@@ -5,6 +5,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.settings.theme.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
@@ -14,12 +15,12 @@ import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 
-class ThemeScreen: BaseFragment(R.layout.fragment_theme), BaseFragment.SwipeBack {
+class ThemeScreen: BaseWalletScreen(R.layout.fragment_theme), BaseFragment.SwipeBack {
 
-    private val themeViewModel: ThemeViewModel by viewModel()
+    override val viewModel: ThemeViewModel by viewModel()
 
     private val adapter = Adapter { item ->
-        themeViewModel.setTheme(item.theme.resId)
+        viewModel.setTheme(item.theme.resId)
     }
 
     private lateinit var headerView: HeaderView
@@ -32,7 +33,7 @@ class ThemeScreen: BaseFragment(R.layout.fragment_theme), BaseFragment.SwipeBack
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
-        collectFlow(themeViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     companion object {

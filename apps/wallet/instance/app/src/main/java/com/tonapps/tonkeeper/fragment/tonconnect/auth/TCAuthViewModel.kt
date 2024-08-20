@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.fragment.tonconnect.auth
 
+import android.app.Application
 import android.content.Context
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
@@ -7,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.tonkeeper.core.tonconnect.models.TCData
 import com.tonapps.tonkeeper.extensions.signLedgerProof
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.ProofDomainEntity
 import com.tonapps.wallet.data.account.entities.ProofEntity
@@ -36,11 +38,12 @@ import org.ton.crypto.base64
 import uikit.extensions.collectFlow
 
 class TCAuthViewModel(
+    app: Application,
     private val request: DAppRequestEntity,
     private val accountRepository: AccountRepository,
     private val passcodeManager: PasscodeManager,
     private val tonConnectRepository: TonConnectRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _dataState = MutableStateFlow<TCData?>(null)
     val dataState = _dataState.asStateFlow().filterNotNull()
@@ -72,7 +75,7 @@ class TCAuthViewModel(
         context: Context,
         allowPush: Boolean,
         type: DConnectEntity.Type,
-    ): Flow<DAppEventSuccessEntity> = accountRepository.selectedWalletFlow.flatMapLatest { wallet ->
+    ): Flow<DAppEventSuccessEntity> = accountRepository.selectedWalletFlow.take(1).flatMapLatest { wallet ->
         if (wallet.isLedger) {
             flowOf(wallet)
         } else {

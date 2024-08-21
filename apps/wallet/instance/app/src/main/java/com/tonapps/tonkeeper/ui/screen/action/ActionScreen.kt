@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
@@ -26,7 +27,6 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
 
@@ -93,16 +93,18 @@ class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Mod
 
     private suspend fun setFailed() = withContext(Dispatchers.Main) {
         processView.state = ProcessTaskView.State.FAILED
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
         delay(2500)
         finish()
     }
 
     private suspend fun setSuccess(boc: String) = withContext(Dispatchers.Main) {
         processView.state = ProcessTaskView.State.SUCCESS
-        delay(2500)
         navigation?.setFragmentResult(args.resultKey, Bundle().apply {
             putString(BOC_KEY, boc)
         })
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        delay(2500)
         super.finish()
     }
 

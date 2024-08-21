@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.tonconnect.source
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.SQLiteHelper
@@ -36,8 +37,8 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
 
     private fun createManifestTable(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $MANIFEST_TABLE_NAME (" +
-                "$MANIFEST_COLUMN_URL TEXT UNIQUE," +
-                "$MANIFEST_COLUMN_SOURCE_URL TEXT UNIQUE," +
+                "$MANIFEST_COLUMN_URL TEXT," +
+                "$MANIFEST_COLUMN_SOURCE_URL TEXT," +
                 "$MANIFEST_COLUMN_OBJECT BLOB" +
                 ");")
         db.execSQL("CREATE INDEX idx_url ON $MANIFEST_TABLE_NAME($MANIFEST_COLUMN_URL);")
@@ -80,7 +81,9 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "tonconn
         value.put(MANIFEST_COLUMN_URL, manifest.url)
         value.put(MANIFEST_COLUMN_SOURCE_URL, sourceUrl.removeSuffix("/"))
         value.put(MANIFEST_COLUMN_OBJECT, manifest.toByteArray())
-        writableDatabase.insert(MANIFEST_TABLE_NAME, null, value)
+        try {
+            writableDatabase.insertOrThrow(MANIFEST_TABLE_NAME, null, value)
+        } catch (ignored: Exception) {}
     }
 
     fun addConnect(connect: DConnectEntity) {

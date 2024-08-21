@@ -29,9 +29,7 @@ import uikit.widget.HeaderView
 
 class InitScreen: BaseWalletScreen(R.layout.fragment_init), BaseFragment.SwipeBack {
 
-    private val args: InitArgs by lazy {
-        InitArgs(requireArguments())
-    }
+    private val args: InitArgs by lazy { InitArgs(requireArguments()) }
 
     override val viewModel: InitViewModel by viewModel { parametersOf(args) }
 
@@ -42,7 +40,7 @@ class InitScreen: BaseWalletScreen(R.layout.fragment_init), BaseFragment.SwipeBa
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         args.labelName?.let { viewModel.setLabelName(it) }
-        args.accounts?.let { viewModel.setAccounts(it) }
+        args.accounts?.let { viewModel.setAccounts(it.toList()) }
         childFragmentManager.addFragmentOnAttachListener { _, fragment ->
             onChildFragment(fragment)
         }

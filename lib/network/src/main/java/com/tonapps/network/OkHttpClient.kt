@@ -25,6 +25,7 @@ import org.json.JSONObject
 private fun requestBuilder(url: String): Request.Builder {
     val builder = Request.Builder()
     builder.url(url)
+    builder.addHeader("Connection", "close")
     return builder
 }
 
@@ -66,7 +67,8 @@ fun OkHttpClient.get(
     headers?.forEach { (key, value) ->
         builder.addHeader(key, value)
     }
-    return execute(builder.build()).body?.string() ?: throw Exception("Empty response")
+    val response = execute(builder.build())
+    return response.body?.string() ?: throw Exception("Empty response")
 }
 
 private fun OkHttpClient.execute(request: Request): Response {
@@ -79,7 +81,7 @@ private fun OkHttpClient.execute(request: Request): Response {
 
 class OkHttpError(
     private val response: Response
-) : Exception(response.toString()) {
+) : Exception("HTTP error: ${response.code}") {
 
     val statusCode: Int
         get() = response.code

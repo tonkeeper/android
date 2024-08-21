@@ -77,6 +77,8 @@
             android:layout_marginTop="@dimen/offsetExtraExtraSmall"
             android:textAppearance="@style/TextAppearance.Body1"
             android:textColor="?attr/textSecondaryColor"
+            android:singleLine="false"
+            android:lines="2"
             android:gravity="center"/>
 
         <uikit.widget.RowLayout

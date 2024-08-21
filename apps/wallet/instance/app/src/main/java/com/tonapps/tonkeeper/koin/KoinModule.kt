@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthViewModel
 import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
+import com.tonapps.tonkeeper.ui.screen.add.imprt.ImportWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedViewModel
@@ -18,6 +19,7 @@ import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
@@ -69,7 +71,7 @@ val koinModel = module {
     uiAdapter { WalletPickerAdapter() }
 
     viewModel { parameters -> NameViewModel(androidApplication(), mode = parameters.get(), get(), get()) }
-    viewModel { parameters -> InitViewModel(androidApplication(), get(), parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> InitViewModel(androidApplication(), args = parameters.get<InitArgs>(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(androidApplication(), get(), get()) }
     viewModel { RootViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(androidApplication(), get(), get()) }
@@ -107,4 +109,5 @@ val koinModel = module {
     viewModel { parameters -> UnStakeViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SendContactsViewModel(androidApplication(), get(), get(), get()) }
     viewModel { NotificationsEnableViewModel(get(), get()) }
+    viewModel { ImportWalletViewModel(androidApplication(), get()) }
 }

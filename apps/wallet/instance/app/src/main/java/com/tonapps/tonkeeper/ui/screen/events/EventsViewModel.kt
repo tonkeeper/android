@@ -174,6 +174,7 @@ class EventsViewModel(
         if (_isUpdatingFlow.value) {
             return
         }
+
         val lastLt = lastLt() ?: return
         withUpdating {
             val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@withUpdating

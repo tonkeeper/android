@@ -23,7 +23,6 @@ import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.HapticHelper
-import uikit.base.BaseFragment
 import uikit.extensions.bottomBarsOffset
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation

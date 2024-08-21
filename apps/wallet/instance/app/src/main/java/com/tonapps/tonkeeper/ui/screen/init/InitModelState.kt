@@ -1,9 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.lifecycle.SavedStateHandle
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.ton.extensions.publicKey
 import com.tonapps.blockchain.ton.extensions.safePublicKey
+import com.tonapps.extensions.readBooleanCompat
+import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.security.hex
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.data.account.Wallet
@@ -14,7 +21,27 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
     data class PublicKey(
         val new: Boolean = false,
         val publicKey: PublicKeyEd25519
-    )
+    ): Parcelable {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readBooleanCompat(),
+            parcel.readString()!!.publicKey()
+        )
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.writeBooleanCompat(new)
+            parcel.writeString(publicKey.hex())
+        }
+
+        override fun describeContents(): Int {
+            return 0
+        }
+
+        companion object CREATOR : Parcelable.Creator<PublicKey> {
+            override fun createFromParcel(parcel: Parcel) = PublicKey(parcel)
+            override fun newArray(size: Int): Array<PublicKey?> = arrayOfNulls(size)
+        }
+    }
 
     companion object {
         private const val PASSCODE_KEY = "passcode"

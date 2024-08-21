@@ -87,7 +87,7 @@ data class NftEntity(
         verified = item.approvedBy.isNotEmpty(),
         inSale = item.sale != null,
         dns = item.dns,
-        isTrusted = item.trust == TrustType.whitelist,
-        suspicious = item.trust == TrustType.none || item.trust == TrustType.blacklist
+        isTrusted = item.trust == "whitelist",
+        suspicious = item.trust == "none" || item.trust == "blacklist"
     )
 }

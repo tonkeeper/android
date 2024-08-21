@@ -60,13 +60,13 @@ class CollectiblesRepository(
         return localDataSource.get(address, testnet)
     }
 
-    private suspend fun getRemoteNftItems(
+    private fun getRemoteNftItems(
         address: String,
         testnet: Boolean
     ): List<NftEntity>? {
         val nftItems = api.getNftItems(address, testnet) ?: return null
         val items = nftItems.filter {
-            it.trust != TrustType.blacklist && it.metadata["render_type"] != "hidden"
+            it.trust != "blacklist" && it.metadata["render_type"] != "hidden"
         }.map { NftEntity(it, testnet) }
 
         localDataSource.save(address, testnet, items.toList())

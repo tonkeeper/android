@@ -86,10 +86,9 @@ class PushManager(
             try {
                 val wallet = accountRepository.getWalletByAccountId(push.account, false) ?: throw IllegalStateException("Wallet not found")
                 val connect = tonConnectRepository.getConnect(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
-                val manifest = tonConnectRepository.getManifest(connect.url) ?: throw IllegalStateException("Manifest not found")
                 localDataSource.insert(wallet.id, push)
-                val largeIcon = api.defaultHttpClient.getBitmap(manifest.iconUrl)
-                displayAppPush(connect, manifest, push, wallet, largeIcon)
+                val largeIcon = api.defaultHttpClient.getBitmap(connect.manifest.iconUrl)
+                displayAppPush(connect, connect.manifest, push, wallet, largeIcon)
 
                 if (accountRepository.selectedWalletFlow.firstOrNull() == wallet) {
                     val old = _dAppPushFlow.value ?: emptyList()

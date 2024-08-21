@@ -57,7 +57,6 @@ import kotlin.properties.Delegates
 @OptIn(FlowPreview::class)
 class InitViewModel(
     app: Application,
-    private val scope: CoroutineScope,
     args: InitArgs,
     private val passcodeManager: PasscodeManager,
     private val accountRepository: AccountRepository,
@@ -89,7 +88,7 @@ class InitViewModel(
         .debounce(1000)
         .filter { it.isNotBlank() }
         .map {
-            val account = api.resolveAddressOrName(it.lowercase(), testnet)
+            val account = api.resolveAddressOrName(it, testnet)
             if (account == null || !account.active) {
                 setWatchAccount(null)
                 return@map null
@@ -150,7 +149,7 @@ class InitViewModel(
 
     private fun withLoading(block: suspend () -> Unit) {
         setLoading(true)
-        scope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             block()
             setLoading(false)
         }
@@ -221,7 +220,7 @@ class InitViewModel(
         for (account in list) {
             items.add(account)
         }
-        setAccounts(items)
+        setAccounts(items.toList())
 
         if (items.size > 1) {
             routeTo(InitRoute.SelectAccount)
@@ -283,17 +282,16 @@ class InitViewModel(
     }
 
     private fun getAccounts(): List<AccountItem> {
-        val list = (savedState.accounts ?: emptyList())
-        return list.filter { it.selected }
+        return (savedState.accounts ?: emptyList())
     }
 
     fun setAccounts(accounts: List<AccountItem>) {
-        savedState.accounts = accounts
-        _accountsFlow.tryEmit(accounts)
+        savedState.accounts = accounts.toList()
+        _accountsFlow.tryEmit(accounts.toList())
     }
 
     private fun getSelectedAccounts(): List<AccountItem> {
-        return getAccounts().filter { it.selected }
+        return getAccounts().toList().filter { it.selected }
     }
 
     fun setLabel(name: String, emoji: String, color: Int) {
@@ -410,6 +408,10 @@ class InitViewModel(
 
     private suspend fun importWallet(context: Context): List<WalletEntity> = withContext(Dispatchers.IO) {
         val versions = getSelectedAccounts().map { it.walletVersion }
+        if (versions.isEmpty()) {
+            throw IllegalStateException("Wallet versions are not set")
+        }
+
         val mnemonic = savedState.mnemonic ?: throw IllegalStateException("Mnemonic is not set")
         if (!TonMnemonic.isValid(mnemonic)) {
             throw IllegalStateException("Invalid mnemonic")

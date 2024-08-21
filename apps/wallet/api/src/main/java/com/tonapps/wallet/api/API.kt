@@ -408,18 +408,24 @@ class API(
         value: String,
         testnet: Boolean,
     ): Account? = withContext(Dispatchers.IO) {
-        if (value.isValidTonAddress()) {
+        /*if (value.isValidTonAddress()) {
             return@withContext getAccount(value, testnet)
         }
-        return@withContext resolveDomain(value.lowercase().trim(), testnet)
+        return@withContext resolveDomain(value.lowercase().trim(), testnet)*/
+        getAccount(value, testnet)
     }
 
-    private suspend fun resolveDomain(domain: String, testnet: Boolean): Account? {
+    /*private suspend fun resolveDomain(domain: String, testnet: Boolean): Account? {
         return getAccount(domain, testnet) ?: getAccount(domain.unicodeToPunycode(), testnet)
-    }
+    }*/
 
     private fun getAccount(accountId: String, testnet: Boolean): Account? {
-        return withRetry { accounts(testnet).getAccount(accountId) }
+        val normalizedAccountId = if (accountId.endsWith(".ton")) {
+            accountId.lowercase().trim().unicodeToPunycode()
+        } else {
+            accountId
+        }
+        return withRetry { accounts(testnet).getAccount(normalizedAccountId) }
     }
 
     fun pushSubscribe(
@@ -625,8 +631,15 @@ class API(
         ): OkHttpClient {
             return baseOkHttpClientBuilder()
                 .addInterceptor(AcceptLanguageInterceptor(context.locale))
-                .addInterceptor(AuthorizationInterceptor.bearer(tonApiV2Key, allowDomains))
-                .build()
+                .addInterceptor(AuthorizationInterceptor.bearer(
+                    token = tonApiV2Key,
+                    allowDomains = allowDomains,
+                    ignorePaths = listOf(
+                        "/v1/internal/pushes/tonconnect",
+                        "/v1/internal/pushes/plain/unsubscribe",
+                        "/v1/internal/pushes/plain/subscribe"
+                    )
+                )).build()
         }
     }
 }

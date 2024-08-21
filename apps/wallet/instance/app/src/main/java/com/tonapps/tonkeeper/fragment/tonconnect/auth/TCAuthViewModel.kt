@@ -53,7 +53,7 @@ class TCAuthViewModel(
     }
 
     private fun requestData(wallet: WalletEntity) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val manifest = tonConnectRepository.getManifest(request.payload.manifestUrl) ?: return@launch
 
             val data = TCData(

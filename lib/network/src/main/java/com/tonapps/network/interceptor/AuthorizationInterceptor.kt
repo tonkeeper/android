@@ -9,10 +9,15 @@ class AuthorizationInterceptor(
     private val type: Type = Type.NONE,
     private val token: String,
     private val allowDomains: List<String>,
+    private val ignorePaths: List<String> = emptyList()
 ): Interceptor {
 
     companion object {
-        fun bearer(token: String, allowDomains: List<String>) = AuthorizationInterceptor(Type.BEARER, token, allowDomains)
+        fun bearer(
+            token: String,
+            allowDomains: List<String>,
+            ignorePaths: List<String> = emptyList()
+        ) = AuthorizationInterceptor(Type.BEARER, token, allowDomains, ignorePaths)
     }
 
     enum class Type {
@@ -31,10 +36,15 @@ class AuthorizationInterceptor(
         }
     }
 
+    private fun isIgnorePath(path: String): Boolean {
+        return ignorePaths.contains(path)
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
-        val domain = original.url.host
-        if (domains.isNotEmpty() && !domains.contains(domain)) {
+        val url = original.url
+        val domain = url.host
+        if ((domains.isNotEmpty() && !domains.contains(domain)) || isIgnorePath(url.encodedPath)) {
             return chain.proceed(original)
         }
 

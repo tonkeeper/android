@@ -60,7 +60,7 @@ data class NftItem (
     val approvedBy: kotlin.collections.List<NftItem.ApprovedBy>,
 
     @Json(name = "trust")
-    val trust: TrustType,
+    val trust: String,
 
     @Json(name = "owner")
     val owner: AccountAddress? = null,

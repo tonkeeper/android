@@ -40,7 +40,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         swapView.isEnabled = item.walletType != Wallet.Type.Watch && !item.disableSwap
         sendView.isEnabled = item.walletType != Wallet.Type.Watch
         scanView.isEnabled = item.walletType != Wallet.Type.Watch
-        stakeView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet
+        stakeView.isEnabled = false // item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet
         buyOrSellView.isEnabled = item.walletType != Wallet.Type.Testnet && !item.disableSwap
     }
 

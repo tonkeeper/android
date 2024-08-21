@@ -219,12 +219,12 @@ class TonConnectRepository(
         }
     }
 
-    suspend fun getManifest(sourceUrl: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
+    suspend fun getManifest(manifestUrl: String): DAppManifestEntity? = withContext(Dispatchers.IO) {
         try {
-            val local = localDataSource.getManifest(sourceUrl)
+            val local = localDataSource.getManifest(manifestUrl)
             if (local == null) {
-                val remote = remoteDataSource.loadManifest(sourceUrl)
-                localDataSource.setManifest(sourceUrl, remote)
+                val remote = remoteDataSource.loadManifest(manifestUrl)
+                localDataSource.setManifest(manifestUrl, remote)
                 remote
             } else {
                 local

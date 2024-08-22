@@ -52,8 +52,8 @@ data class Item(
         val ledger = Item(
             id = LEDGER_WALLET_ID,
             iconResId = R.drawable.ic_ledger_28,
-            titleResId = Localization.ledger_subtitle,
-            subtitleResId = Localization.ledger_title
+            titleResId = Localization.ledger_title,
+            subtitleResId = Localization.ledger_subtitle
         )
     }
 

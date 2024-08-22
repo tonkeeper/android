@@ -1,18 +1,11 @@
 package com.tonapps.wallet.data.collectibles
 
 import android.content.Context
-import android.util.Log
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.collectibles.entities.NftListResult
 import com.tonapps.wallet.data.collectibles.source.LocalDataSource
-import com.tonapps.wallet.data.core.entity.DataEntity
-import io.tonapi.models.TrustType
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
-import java.util.concurrent.Flow
 
 class CollectiblesRepository(
     private val context: Context,
@@ -29,7 +22,7 @@ class CollectiblesRepository(
         return api.getNft(address, testnet)?.let { NftEntity(it, testnet) }
     }
 
-    suspend fun get(address: String, testnet: Boolean): List<NftEntity>? {
+    fun get(address: String, testnet: Boolean): List<NftEntity>? {
         val local = localDataSource.get(address, testnet)
         if (local.isEmpty()) {
             return getRemoteNftItems(address, testnet)

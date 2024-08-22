@@ -156,6 +156,7 @@ open class HeaderView @JvmOverloads constructor(
     private fun setDrawableForView(view: AppCompatImageView, @DrawableRes resId: Int) {
         if (resId == 0) {
             view.alpha = 0f
+            view.setOnClickListener(null)
         } else {
             view.setImageResource(resId)
             view.alpha = 1f

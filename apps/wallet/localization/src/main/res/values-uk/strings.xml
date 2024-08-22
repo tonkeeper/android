@@ -64,6 +64,7 @@
     <string name="manual_backup_check">Перевірити резервну копію</string>
     <string name="backup_check">Перевірка резервної копії</string>
     <string name="backup_check_subtitle">Перевіримо, чи все у вас правильно. Введіть слова %1$d, %2$d та %3$d.</string>
+    <string name="slide_to_confirm">Підтвердити</string>
     <string name="refresh">Оновити</string>
     <string name="mute">Вимкнути звук</string>
     <string name="disconnect">Відключити</string>
@@ -324,6 +325,9 @@
     <string name="choose_wallet_title">Виберіть гаманець</string>
     <string name="choose_wallet_subtitle">Виберіть гаманці, які хочете додати.</string>
     <string name="choose_wallet_already_added">Вже додано</string>
+    <string name="hide_collection">Сховати колекцію</string>
+    <string name="hide_and_report_collection">Сховати і повідомити</string>
+    <string name="open_tonviewer">Відкрити в Tonviewer</string>
     <string name="customize">Налаштувати</string>
     <string name="customize_wallet_title">Налаштуйте свій Гаманець</string>
     <string name="customize_wallet_subtitle">Назва гаманця та іконка зберігаються локально на вашому пристрої.</string>

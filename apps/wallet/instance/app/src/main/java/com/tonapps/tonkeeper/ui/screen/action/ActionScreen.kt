@@ -29,6 +29,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
+import uikit.widget.SlideActionView
 
 class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Modal {
 
@@ -43,10 +44,8 @@ class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Mod
     private lateinit var closeView: View
     private lateinit var actionsView: SimpleRecyclerView
     private lateinit var feeView: AppCompatTextView
-    private lateinit var buttonsView: View
-    private lateinit var confirmButton: Button
-    private lateinit var cancelButton: Button
     private lateinit var processView: ProcessTaskView
+    private lateinit var slideView: SlideActionView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -70,21 +69,18 @@ class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Mod
         feeView.text = builder
 
         processView = view.findViewById(R.id.process)
-        buttonsView = view.findViewById(R.id.buttons)
 
-        confirmButton = view.findViewById(R.id.confirm)
-        confirmButton.setOnClickListener { confirm() }
-
-        cancelButton = view.findViewById(R.id.cancel)
-        cancelButton.setOnClickListener { finish() }
+        slideView = view.findViewById(R.id.slide)
+        slideView.doOnDone = { confirm() }
 
         collectFlow(viewModel.walletFlow, ::applyWallet)
     }
 
     private fun confirm() {
-        buttonsView.visibility = View.GONE
+        slideView.visibility = View.GONE
         processView.visibility = View.VISIBLE
         processView.state = ProcessTaskView.State.LOADING
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
         viewModel.sign(requireContext()).catch {
             setFailed()
@@ -116,7 +112,7 @@ class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Mod
     private fun applyWallet(wallet: WalletEntity) {
         val builder = SpannableStringBuilder(getString(Localization.wallet))
         builder.append(": ")
-        builder.append(wallet.label.getTitle(requireContext(), walletView))
+        builder.append(wallet.label.getTitle(requireContext(), walletView, 16))
         walletView.text = builder
     }
 

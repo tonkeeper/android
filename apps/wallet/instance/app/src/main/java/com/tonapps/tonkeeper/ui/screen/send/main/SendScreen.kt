@@ -10,12 +10,14 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.extensions.short4
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.signer.SingerResultContract
 import com.tonapps.tonkeeper.extensions.clipboardText
+import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
@@ -414,7 +416,7 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
     }
 
     private fun applyTransaction(transaction: SendTransaction) {
-        reviewWalletView.value = transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView)
+        reviewWalletView.value = transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView, 16)
         applyTransactionAccount(transaction.destination)
         applyTransactionAmount(transaction.amount)
         applyTransactionComment(transaction.comment, transaction.encryptedComment)
@@ -453,7 +455,8 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
         } else {
             reviewRecipientView.value = destination.name
             reviewRecipientAddressView.visibility = View.VISIBLE
-            reviewRecipientAddressView.value = shortAddress
+            reviewRecipientAddressView.value = destination.displayAddress.short4
+            reviewRecipientAddressView.setOnClickListener { requireContext().copyToClipboard(destination.displayAddress) }
         }
     }
 

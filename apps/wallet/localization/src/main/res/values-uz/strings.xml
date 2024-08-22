@@ -64,6 +64,7 @@
     <string name="manual_backup_check">Zaxiralarni tekshirish</string>
     <string name="backup_check">Zaxira tekshiruvi</string>
     <string name="backup_check_subtitle">Keling, hammasi to\'g\'ri ekanligini ko\'rib chiqamiz. %1$d, %2$d va %3$d so\'zlarni kiriting.</string>
+    <string name="slide_to_confirm">Tasdiqlash uchun suring</string>
     <string name="refresh">Yangilash</string>
     <string name="mute">Ovozini o\'chirish</string>
     <string name="disconnect">Aloqani uzish</string>
@@ -324,6 +325,9 @@
     <string name="choose_wallet_title">Hamyonni tanlang</string>
     <string name="choose_wallet_subtitle">Qo\'shmoqchi bo\'lgan hamyonlarni tanlang.</string>
     <string name="choose_wallet_already_added">Allaqachon qo\'shilgan</string>
+    <string name="hide_collection">To\'plamni yashirish</string>
+    <string name="hide_and_report_collection">Yashirish va hisobot berish</string>
+    <string name="open_tonviewer">Tonviewer-da oching</string>
     <string name="customize">Moslashtirish</string>
     <string name="customize_wallet_title">Hamyoningizni sozlang</string>
     <string name="customize_wallet_subtitle">Hamyon nomi va belgisi qurilmangizda mahalliy saqlanadi.</string>

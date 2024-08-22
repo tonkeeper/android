@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
+import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.SendNftHelper
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
@@ -178,10 +179,10 @@ class SendViewModel(
         ratesTokenFlow,
         uiInputAmountCurrency,
     ) { token, amount, rates, amountCurrency ->
-        val (decimals, balance, currencyCode) = if (amountCurrency) {
-            Triple(currency.decimals, token.fiat, currency.code)
+        val (balance, currencyCode) = if (amountCurrency) {
+            Pair(token.fiat, currency.code)
         } else {
-            Triple(token.decimals, token.balance.value, token.symbol)
+            Pair(token.balance.value, token.symbol)
         }
 
         val remaining = balance - amount
@@ -314,7 +315,6 @@ class SendViewModel(
         if (isNft) {
             loadNft()
         }
-        Log.d("SendViewModelLog", "activity: $activity")
     }
 
     fun initializeTokenAndAmount(tokenAddress: String, amountNano: Long) {
@@ -383,7 +383,10 @@ class SendViewModel(
 
     private fun loadNft() {
         accountRepository.selectedWalletFlow.take(1).map { wallet ->
-            collectiblesRepository.getNft(wallet.accountId, wallet.testnet, nftAddress)
+            collectiblesRepository.getNft(wallet.accountId, wallet.testnet, nftAddress)?.let {
+                val pref = settingsRepository.getTokenPrefs(wallet.id, it.address)
+                it.with(pref)
+            }
         }.flowOn(Dispatchers.IO).filterNotNull().onEach(::userInputNft).launchIn(viewModelScope)
     }
 

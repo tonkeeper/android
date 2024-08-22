@@ -7,12 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.flattenFirst
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.data.core.entity.Result
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -66,17 +68,21 @@ class CollectiblesViewModel(
     ) = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
 
         val uiItems = mutableListOf<Item>()
-        result.list?.let {
-            for (nft in it) {
-                val tokenPref = settingsRepository.getTokenPrefs(wallet.id, nft.address)
-                if (tokenPref.isHidden) {
+        result.list?.let { list ->
+            for (nft in list) {
+                val isHiddenCollection = nft.collection?.address?.let {
+                    settingsRepository.getTokenPrefs(wallet.id, it).isHidden
+                } ?: false
+
+                if (isHiddenCollection) {
                     continue
                 }
-                if (!nft.isTrusted && tokenPref.isTrust) {
-                    uiItems.add(Item.Nft(nft.copy(isTrusted = true), hiddenBalances))
-                } else {
-                    uiItems.add(Item.Nft(nft, hiddenBalances))
+
+                val nftPref = settingsRepository.getTokenPrefs(wallet.id, nft.address)
+                if (nftPref.isHidden) {
+                    continue
                 }
+                uiItems.add(Item.Nft(nft.with(nftPref), hiddenBalances))
             }
         }
 

@@ -9,7 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:ignoreSystemOffset="true"
-        android:icon="@drawable/ic_chevron_down_16"/>
+        android:icon="@drawable/ic_chevron_down_16"
+        android:action="@drawable/ic_ellipsis_16"/>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/content"

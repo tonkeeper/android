@@ -150,7 +150,6 @@ class WalletViewModel(
 
             if (isOnline) {
                 val remoteAssets = getRemoteAssets(walletCurrency, wallet)
-                Log.d("WalletViewLog", "remoteAssets: $remoteAssets")
                 if (remoteAssets != null) {
                     _stateMainFlow.value = State.Main(wallet, remoteAssets, hasBackup)
                     settingsRepository.setWalletLastUpdated(wallet.id)
@@ -297,7 +296,7 @@ class WalletViewModel(
         wallet: WalletEntity,
         events: List<AppPushEntity>
     ): List<DConnectEntity> {
-        if (events.isEmpty()) {
+        if (true) { // events.isEmpty()
             return emptyList()
         }
         val dappUrls = events.map { it.dappUrl }

@@ -26,6 +26,7 @@ import io.tonapi.models.ActionSimplePreview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.tonapps.tonkeeper.api.totalFees
+import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
 import com.tonapps.uikit.list.ListCell
@@ -291,7 +292,7 @@ class HistoryHelper(
         return@withContext items
     }
 
-    private fun action(
+    private suspend fun action(
         index: Int,
         txId: String,
         wallet: WalletEntity,
@@ -509,7 +510,10 @@ class HistoryHelper(
                 accountId = wallet.accountId,
                 testnet = wallet.testnet,
                 address = nftItemTransfer.nft
-            )
+            )?.let {
+                val pref = settingsRepository.getTokenPrefs(wallet.id, it.address)
+                it.with(pref)
+            }
 
             val comment = HistoryItem.Event.Comment.create(
                 nftItemTransfer.comment,
@@ -700,7 +704,10 @@ class HistoryHelper(
                 accountId = wallet.accountId,
                 testnet = wallet.testnet,
                 address = nftPurchase.nft.address
-            )
+            )?.let {
+                val pref = settingsRepository.getTokenPrefs(wallet.id, it.address)
+                it.with(pref)
+            }
 
             return HistoryItem.Event(
                 index = index,

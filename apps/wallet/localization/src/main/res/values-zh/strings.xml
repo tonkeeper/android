@@ -64,6 +64,7 @@
     <string name="manual_backup_check">检查备份</string>
     <string name="backup_check">备份检查</string>
     <string name="backup_check_subtitle">让我们看看你是否一切正确。请输入单词 %1$d、%2$d 和 %3$d。</string>
+    <string name="slide_to_confirm">滑动确认</string>
     <string name="refresh">刷新</string>
     <string name="mute">静音</string>
     <string name="disconnect">断开连接</string>
@@ -324,6 +325,9 @@
     <string name="choose_wallet_title">选择钱包</string>
     <string name="choose_wallet_subtitle">选择您想添加的钱包。</string>
     <string name="choose_wallet_already_added">已添加</string>
+    <string name="hide_collection">隐藏收藏</string>
+    <string name="hide_and_report_collection">隐藏并举报</string>
+    <string name="open_tonviewer">在 Tonviewer 中打开</string>
     <string name="customize">自定义</string>
     <string name="customize_wallet_title">自定义您的钱包</string>
     <string name="customize_wallet_subtitle">钱包名称和图标存储在您的设备上。</string>

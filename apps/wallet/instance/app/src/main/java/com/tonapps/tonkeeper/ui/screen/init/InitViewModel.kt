@@ -274,7 +274,7 @@ class InitViewModel(
         }
 
         savedState.watchAccount = account
-        setLabelName(account?.name ?: "Wallet")
+        setLabelName(account?.name ?: "Tonkeeper")
     }
 
     fun getWatchAccount(): AccountDetailsEntity? {
@@ -371,14 +371,14 @@ class InitViewModel(
                     }
                 }
 
+                val selectedWalletId = wallets.minByOrNull { it.version }!!.id
+                accountRepository.setSelectedWallet(selectedWalletId)
+
                 if (savedState.enablePush) {
                     for (wallet in wallets) {
                         settingsRepository.setPushWallet(wallet.id, savedState.enablePush)
                     }
                 }
-
-                val selectedWalletId = wallets.minByOrNull { it.version }!!.id
-                accountRepository.setSelectedWallet(selectedWalletId)
 
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {

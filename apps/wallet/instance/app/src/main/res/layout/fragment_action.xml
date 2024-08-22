@@ -51,7 +51,8 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="@dimen/offsetExtraSmall">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="wrap_content"
@@ -74,41 +75,16 @@
         android:id="@+id/process"
         android:layout_width="match_parent"
         android:layout_height="@dimen/itemHeight"
-        android:layout_marginTop="@dimen/offsetMedium"
+        android:layout_marginVertical="@dimen/offsetMedium"
         android:visibility="gone"
         app:successLabel="@string/done"
         app:errorLabel="@string/error"/>
 
-    <uikit.widget.RowLayout
-        android:id="@+id/buttons"
+    <uikit.widget.SlideActionView
+        android:id="@+id/slide"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/itemHeight"
-        android:layout_marginTop="@dimen/offsetMedium">
-
-        <Button
-            style="@style/Widget.App.Button.Secondary"
-            android:id="@+id/cancel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="?attr/buttonSecondaryForegroundColor"
-            android:text="@string/cancel"/>
-
-        <View
-            android:layout_width="@dimen/offsetMedium"
-            android:layout_height="0dp"/>
-
-        <Button
-            style="@style/Widget.App.Button"
-            android:id="@+id/confirm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="?attr/buttonPrimaryForegroundColor"
-            android:text="@string/confirm"/>
-
-    </uikit.widget.RowLayout>
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="@dimen/offsetMedium"
+        android:text="@string/slide_to_confirm"/>
 
 </uikit.widget.ColumnLayout>

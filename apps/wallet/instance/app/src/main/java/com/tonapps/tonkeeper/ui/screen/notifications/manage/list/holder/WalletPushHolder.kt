@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.manage.list.holder
 
+import android.util.Log
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item

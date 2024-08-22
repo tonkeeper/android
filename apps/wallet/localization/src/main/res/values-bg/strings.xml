@@ -74,6 +74,7 @@
     <string name="backup_check">Проверка на резервното копие</string>
     <string name="backup_check_subtitle">Нека видим дали сте запомнили всичко. Въведете думи %1$d, %2$d и %3$d.</string>
 
+    <string name="slide_to_confirm">Потвърждение</string>
     <string name="refresh">Обновяване</string>
     <string name="mute">Заглушаване</string>
     <string name="disconnect">Прекъсване</string>
@@ -369,6 +370,9 @@
     <string name="choose_wallet_subtitle">Изберете портфейли, които искате да добавите.</string>
     <string name="choose_wallet_already_added">Вече добавено</string>
 
+    <string name="hide_collection">Скриване на колекцията</string>
+    <string name="hide_and_report_collection">Скрий се и докладвай</string>
+    <string name="open_tonviewer">Отворете в Tonviewer</string>
     <string name="customize">Персонализиране</string>
     <string name="customize_wallet_title">Персонализирайте вашия портфейл</string>
     <string name="customize_wallet_subtitle">Името на портфейла и иконата се съхраняват локално на вашето устройство.</string>

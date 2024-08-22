@@ -2,12 +2,10 @@ package com.tonapps.wallet.data.collectibles.entities
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.entity.AccountEntity
+import com.tonapps.wallet.data.core.Trust
 import io.tonapi.models.NftItem
-import io.tonapi.models.NftItemTransferAction
-import io.tonapi.models.TrustType
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -21,8 +19,7 @@ data class NftEntity(
     val verified: Boolean,
     val inSale: Boolean,
     val dns: String?,
-    val isTrusted: Boolean,
-    val suspicious: Boolean
+    val trust: Trust,
 ): Parcelable {
 
     val id: String
@@ -61,6 +58,12 @@ data class NftEntity(
         getImageUri(512, 1024) ?: previews.last().url.let { Uri.parse(it) }
     }
 
+    val isTrusted: Boolean
+        get() = trust == Trust.whitelist
+
+    val suspicious: Boolean
+        get() =  trust == Trust.none || trust == Trust.blacklist
+
     private fun getImage(minSize: Int, maxSize: Int): NftPreviewEntity? {
         return previews.find {
             if (minSize > it.width || minSize > it.height) {
@@ -87,7 +90,6 @@ data class NftEntity(
         verified = item.approvedBy.isNotEmpty(),
         inSale = item.sale != null,
         dns = item.dns,
-        isTrusted = item.trust == "whitelist",
-        suspicious = item.trust == "none" || item.trust == "blacklist"
+        trust = Trust(item.trust),
     )
 }

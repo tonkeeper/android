@@ -78,11 +78,8 @@ class PushManager(
         return@withContext items
     }
 
-    fun handleAppPush(push: AppPushEntity) {
-        if (alreadyReceiveAppPush(push.from)) {
-            return
-        }
-        scope.launch(Dispatchers.IO) {
+    suspend fun handleAppPush(push: AppPushEntity): Boolean = withContext(Dispatchers.IO) {
+        if (!alreadyReceiveAppPush(push.from)) {
             try {
                 val wallet = accountRepository.getWalletByAccountId(push.account, false) ?: throw IllegalStateException("Wallet not found")
                 val connect = tonConnectRepository.getConnect(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
@@ -94,8 +91,10 @@ class PushManager(
                     val old = _dAppPushFlow.value ?: emptyList()
                     _dAppPushFlow.value = old + push
                 }
+                return@withContext true
             } catch (ignored: Throwable) {}
         }
+        return@withContext false
     }
 
     private suspend fun displayAppPush(
@@ -120,13 +119,18 @@ class PushManager(
         helper.display(notificationId, builder.build())
     }
 
-    fun handleWalletPush(push: WalletPushEntity) {
-        scope.launch(Dispatchers.IO) {
-            try {
-                val wallet = accountRepository.getWalletByAccountId(push.account, false) ?: throw IllegalStateException("Wallet not found")
-                displayWalletPush(push, wallet)
-            } catch (ignored: Throwable) {}
-        }
+    fun displayNotification(notification: Notification) {
+        val id = helper.newId()
+        helper.display(id, notification)
+    }
+
+    suspend fun handleWalletPush(push: WalletPushEntity) = withContext(Dispatchers.IO) {
+        try {
+            val wallet = accountRepository.getWalletByAccountId(push.account, false) ?: throw IllegalStateException("Wallet not found")
+            displayWalletPush(push, wallet)
+            return@withContext true
+        } catch (ignored: Throwable) {}
+        return@withContext false
     }
 
     private suspend fun displayWalletPush(

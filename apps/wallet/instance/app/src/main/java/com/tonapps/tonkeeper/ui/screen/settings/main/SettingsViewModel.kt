@@ -21,6 +21,7 @@ import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.localization.Language
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +41,7 @@ class SettingsViewModel(
     private val api: API,
     private val backupRepository: BackupRepository,
     private val pushManager: PushManager,
+    private val tonConnectRepository: TonConnectRepository,
 ): BaseWalletVM(application) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
@@ -64,6 +66,8 @@ class SettingsViewModel(
 
     fun signOut() = accountRepository.selectedWalletFlow.take(1).map { wallet ->
         AnalyticsHelper.trackEvent("delete_wallet")
+        tonConnectRepository.deleteApps(wallet, settingsRepository.firebaseToken)
+        accountRepository.delete(wallet.id)
         settingsRepository.setPushWallet(wallet.id, false)
         pushManager.unsubscribeWalletPush(wallet)
     }

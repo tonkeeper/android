@@ -12,6 +12,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
@@ -23,6 +24,7 @@ import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -36,7 +38,6 @@ import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.inflate
 import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ColumnLayout
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
@@ -153,13 +154,14 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
             setOwner(view, it)
         }
         setAddress(view, nftEntity.userFriendlyAddress)
+        setTrust(nftEntity.trust)
+    }
 
-        collectFlow(viewModel.trustFlow) {
-            if (it) {
-                showTrustState()
-            } else {
-                showUnverifiedState()
-            }
+    private fun setTrust(trust: Trust) {
+        when (trust) {
+            Trust.whitelist -> showTrustState()
+            Trust.graylist -> showGrayState()
+            else -> showUnverifiedState()
         }
     }
 
@@ -192,12 +194,45 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
         return view.findViewById(R.id.nft_button)
     }
 
+    private fun showGrayState() {
+        headerView.doOnActionClick = { showGrayMenu(it) }
+    }
+
+    private fun showGrayMenu(view: View) {
+        val actionSheet = ActionSheet(requireContext())
+        actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
+        actionSheet.addItem(HIDE_AND_REPORT_ID, Localization.hide_and_report_collection, UIKitIcon.ic_block_16)
+        actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
+        actionSheet.doOnItemClick = { item ->
+            when (item.id) {
+                HIDE_NFT_ID -> hideCollection()
+                HIDE_AND_REPORT_ID -> reportSpam(true)
+                VIEWER_ID -> openTonViewer()
+            }
+        }
+        actionSheet.show(view)
+    }
+
+    private fun showMenu(view: View) {
+        val actionSheet = ActionSheet(requireContext())
+        actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
+        actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
+        actionSheet.doOnItemClick = { item ->
+            when (item.id) {
+                HIDE_NFT_ID -> hideCollection()
+                VIEWER_ID -> openTonViewer()
+            }
+        }
+        actionSheet.show(view)
+    }
+
     private fun showUnverifiedState() {
         spamView.visibility = View.VISIBLE
         val color = requireContext().accentOrangeColor
         val icon = requireContext().drawable(UIKitIcon.ic_information_circle_16, color)
 
         headerView.setSubtitle(Localization.nft_unverified)
+        headerView.doOnActionClick = { showGrayMenu(it) }
         with(headerView.subtitleView) {
             visibility = View.VISIBLE
             compoundDrawablePadding = 8.dp
@@ -209,12 +244,25 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
     private fun showTrustState() {
         spamView.visibility = View.GONE
         headerView.setSubtitle(null)
+        headerView.doOnActionClick = { showMenu(it) }
     }
 
     private fun reportSpam(spam: Boolean) {
+        setTrust(if (spam) Trust.blacklist else Trust.whitelist)
         collectFlow(viewModel.reportSpam(spam)) {
             finish()
         }
+    }
+
+    private fun hideCollection() {
+        collectFlow(viewModel.hideCollection()) {
+            finish()
+        }
+    }
+
+    private fun openTonViewer() {
+        val url = "https://tonviewer.com/${nftEntity.address}"
+        navigation?.openURL(url, true)
     }
 
     private fun setOwner(view: View, address: String) {
@@ -247,6 +295,10 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
     }
 
     companion object {
+
+        private const val HIDE_NFT_ID = 1L
+        private const val HIDE_AND_REPORT_ID = 2L
+        private const val VIEWER_ID = 3L
 
         private const val ARG_ENTITY = "entity"
 

@@ -64,6 +64,7 @@
     <string name="manual_backup_check">Periksa Cadangan</string>
     <string name="backup_check">Pemeriksaan Cadangan</string>
     <string name="backup_check_subtitle">Mari kita lihat apakah Anda sudah benar. Masukkan kata %1$d, %2$d, dan %3$d.</string>
+    <string name="slide_to_confirm">Geser untuk Konfirmasi</string>
     <string name="refresh">Segarkan</string>
     <string name="mute">Bisukan</string>
     <string name="disconnect">Putuskan Koneksi</string>
@@ -324,6 +325,9 @@
     <string name="choose_wallet_title">Pilih dompet</string>
     <string name="choose_wallet_subtitle">Pilih dompet yang ingin Anda tambahkan.</string>
     <string name="choose_wallet_already_added">Sudah ditambahkan</string>
+    <string name="hide_collection">Sembunyikan koleksi</string>
+    <string name="hide_and_report_collection">Sembunyikan dan laporkan</string>
+    <string name="open_tonviewer">Buka di Tonviewer</string>
     <string name="customize">Sesuaikan</string>
     <string name="customize_wallet_title">Sesuaikan Dompet Anda</string>
     <string name="customize_wallet_subtitle">Nama dan ikon dompet disimpan secara lokal di perangkat Anda.</string>

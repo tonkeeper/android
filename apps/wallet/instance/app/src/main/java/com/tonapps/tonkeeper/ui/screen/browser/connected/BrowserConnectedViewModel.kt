@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.Dispatchers
@@ -16,11 +17,13 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 
 class BrowserConnectedViewModel(
     app: Application,
     private val accountRepository: AccountRepository,
-    private val tonConnectRepository: TonConnectRepository
+    private val tonConnectRepository: TonConnectRepository,
+    private val settingsRepository: SettingsRepository,
 ): BaseWalletVM(app) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
@@ -40,6 +43,9 @@ class BrowserConnectedViewModel(
     }
 
     fun deleteConnect(connect: DConnectEntity) {
-        tonConnectRepository.disconnect(connect)
+        accountRepository.selectedWalletFlow.take(1).onEach {
+            tonConnectRepository.disconnect(it, connect, settingsRepository.firebaseToken)
+        }
+
     }
 }

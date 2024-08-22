@@ -14,6 +14,7 @@
     <string name="staked">Стейкинг</string>
     <string name="unstake_amount">Сумма снятия ставки</string>
     <string name="sending_error">Ошибка отправки. Попробуйте позже</string>
+    <string name="slide_to_confirm">Подтвердить</string>
 
     <string name="unverified_token_description">Токен выглядит подозрительно по одной или нескольким причинам.</string>
     <string name="unverified_token_reason_1">Низкая ликвидность. У токена может быть какая-то стоимость, но она крайне мала.</string>
@@ -364,6 +365,9 @@
     <string name="signer_open">Открыть Signer на этом устройстве</string>
     <string name="add_wallet">Добавить кошелек</string>
     <string name="wallets">Кошельки</string>
+    <string name="hide_collection">Скрыть коллекцию</string>
+    <string name="hide_and_report_collection">Скрыть и жалоба</string>
+    <string name="open_tonviewer">Открыть в Tonviewer</string>
     <string name="customize">Персонализировать</string>
     <string name="customize_wallet_title">Персонализируйте кошелек</string>
     <string name="customize_wallet_subtitle">Имя и значок кошелька хранятся локально на вашем устройстве.</string>

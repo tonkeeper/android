@@ -72,7 +72,7 @@ class TonConnectRepository(
 
     val eventsFlow = events.flow(connectionsFlow).onEach {
         if (it.method == "disconnect") {
-            disconnect(it.connect)
+            disconnect(it.wallet, it.connect, "")
         }
     }.filterNotNull().flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
 
@@ -94,7 +94,6 @@ class TonConnectRepository(
     }
 
     private suspend fun migrationFromRN() = withContext(Dispatchers.IO) {
-        Log.d("TonConnectRepository", "migrationFromRN")
         try {
             val tcApps = rnLegacy.getTCApps()
             for (app in tcApps.mainnet) {
@@ -103,10 +102,7 @@ class TonConnectRepository(
             for (apps in tcApps.testnet) {
                 migrationTCFromRN(apps, true)
             }
-            Log.d("TonConnectRepository", "done!")
-        } catch (e: Throwable) {
-            Log.e("TonConnectRepository", "migrationFromRN", e)
-        }
+        } catch (ignored: Throwable) {}
     }
 
     private suspend fun addTCMigrationToRN(apps: List<DConnectEntity>) = withContext(Dispatchers.IO) {
@@ -150,9 +146,7 @@ class TonConnectRepository(
             testnetApps.add(RNTCApps(entry.key, entry.value))
         }
 
-        val data = RNTC(mainnetApps, testnetApps)
-        Log.d("TonConnectRepository", "addTCMigrationToRN: $data")
-        rnLegacy.setTCApps(data)
+        rnLegacy.setTCApps(RNTC(mainnetApps, testnetApps))
     }
 
     private suspend fun migrationTCFromRN(apps: RNTCApps, testnet: Boolean) {
@@ -180,7 +174,6 @@ class TonConnectRepository(
                     url = manifest.url,
                     manifest = manifest,
                 )
-                Log.d("TonConnectRepository", "connect: $connect")
                 localDataSource.addConnect(connect)
             }
         }
@@ -203,9 +196,15 @@ class TonConnectRepository(
         }
     }
 
-    fun disconnect(connect: DConnectEntity) {
+    suspend fun disconnect(
+        wallet: WalletEntity,
+        connect: DConnectEntity,
+        firebaseToken: String?
+    ) = withContext(Dispatchers.IO) {
         localDataSource.deleteConnect(connect.walletId, connect.url)
         _connectionsFlow.value = _connectionsFlow.value?.filter { connect.clientId != it.clientId }
+
+        unsubscribePush(wallet, connect, firebaseToken ?: "")
     }
 
     fun getApps(urls: List<String>, wallet: WalletEntity): List<DConnectEntity> {
@@ -216,6 +215,24 @@ class TonConnectRepository(
         val apps = localDataSource.getConnections().filter { it.walletId == wallet.id }
         return apps.find {
             Uri.parse(it.url).host == Uri.parse(url).host
+        }
+    }
+
+    fun getApps(wallet: WalletEntity): List<DConnectEntity> {
+        val apps = localDataSource.getConnections()
+        return apps.filter { it.accountId == wallet.accountId }
+    }
+
+    suspend fun deleteApps(
+        wallet: WalletEntity,
+        firebaseToken: String?
+    ) {
+        val apps = getApps(wallet)
+        if (apps.isEmpty()) {
+            return
+        }
+        for (app in apps) {
+            unsubscribePush(wallet, app, firebaseToken ?: "")
         }
     }
 

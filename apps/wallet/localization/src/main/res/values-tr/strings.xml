@@ -64,6 +64,7 @@
     <string name="manual_backup_check">Yedeklemeyi Kontrol Et</string>
     <string name="backup_check">Yedek Kontrolü</string>
     <string name="backup_check_subtitle">Bakalım her şeyi doğru yapmış mısın. %1$d, %2$d ve %3$d kelimelerini gir.</string>
+    <string name="slide_to_confirm">Onaylamak için Kaydırın</string>
     <string name="refresh">Yenile</string>
     <string name="mute">Sessiz</string>
     <string name="disconnect">Bağlantıyı Kes</string>
@@ -324,6 +325,9 @@
     <string name="choose_wallet_title">Cüzdanı seç</string>
     <string name="choose_wallet_subtitle">Eklemek istediğiniz cüzdanları seçin.</string>
     <string name="choose_wallet_already_added">Zaten eklendi</string>
+    <string name="hide_collection">Koleksiyonu gizle</string>
+    <string name="hide_and_report_collection">Gizle ve bildir</string>
+    <string name="open_tonviewer">Tonviewer\'da aç</string>
     <string name="customize">Özelleştir</string>
     <string name="customize_wallet_title">Cüzdanınızı Özelleştirin</string>
     <string name="customize_wallet_subtitle">Cüzdan adı ve simgesi cihazınızda yerel olarak saklanır.</string>

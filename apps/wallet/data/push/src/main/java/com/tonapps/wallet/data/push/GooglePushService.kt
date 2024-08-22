@@ -1,41 +1,52 @@
 package com.tonapps.wallet.data.push
 
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.annotation.WorkerThread
-import com.google.firebase.messaging.Constants
-import com.google.firebase.messaging.Constants.MessagePayloadKeys
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.push.entities.WalletPushEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.koin.android.ext.android.inject
 import kotlin.coroutines.resume
 
 class GooglePushService: FirebaseMessagingService() {
 
+    private lateinit var scopeMain: CoroutineScope
+
     private val pushManager: PushManager by inject()
     private val settingsRepository: SettingsRepository by inject()
     private val recentlyReceivedMessageIds = ArrayDeque<String>(10)
 
-    private fun onPushReceived(extras: Bundle) {
-        Log.d("TONKeeperLog", "onPushReceived: $extras")
-        val firebaseMessageId = extras.getString("google.message_id") ?: return
+    override fun onCreate() {
+        super.onCreate()
+        scopeMain = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    }
+
+    private suspend fun onPushProcess(message: RemoteMessage): Boolean {
+        return try {
+            message.toIntent().extras?.let { onPushProcess(it) } ?: false
+        } catch (ignored: Throwable) {
+            false
+        }
+    }
+
+    private suspend fun onPushProcess(extras: Bundle): Boolean {
+        val firebaseMessageId = extras.getString("google.message_id") ?: return false
         if (alreadyReceivedMessage(firebaseMessageId)) {
-            return
+            return true
         }
 
-        val pushType = extras.getString("type") ?: return
-        when (pushType) {
+        val pushType = extras.getString("type") ?: return false
+        return when (pushType) {
             TYPE_DAPP -> pushManager.handleAppPush(AppPushEntity(extras))
-            TYPE_BRIDGE_DAPP_NOTIFICATION -> {
-
-            }
             else -> pushManager.handleWalletPush(WalletPushEntity(extras))
         }
     }
@@ -51,32 +62,27 @@ class GooglePushService: FirebaseMessagingService() {
         return false
     }
 
-    override fun handleIntent(intent: Intent) {
-        super.handleIntent(intent)
-        // bad hack to handle push messages from firebase
-        if (intent.action == "com.google.android.c2dm.intent.RECEIVE") {
-            val messageType = intent.getStringExtra(MessagePayloadKeys.MESSAGE_TYPE) ?: Constants.MessageTypes.MESSAGE
-            if (messageType == Constants.MessageTypes.MESSAGE) {
-                intent.extras?.let {
-                    onPushReceived(it)
-                }
-            }
-        }
-    }
-
     @WorkerThread
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
-        try {
-            message.toIntent().extras?.let {
-                onPushReceived(it)
+        /*scopeMain.launch(Dispatchers.IO) {
+            val processed = onPushProcess(message)
+            if (!processed) {
+                message.notification?.let {
+                    // pushManager.displayNotification(it.)
+                }
             }
-        } catch (ignored: Throwable) {}
+        }*/
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         settingsRepository.firebaseToken = token
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scopeMain.cancel()
     }
 
     companion object {

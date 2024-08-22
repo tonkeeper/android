@@ -27,7 +27,7 @@ sealed class Wallet {
             get() = accountName.isBlank() && emoji.isBlank()
 
         val name: String
-            get() = accountName.ifBlank { "Wallet" }
+            get() = accountName.ifBlank { "Tonkeeper" }
 
         val title: CharSequence?
             get() = if (isEmpty) {

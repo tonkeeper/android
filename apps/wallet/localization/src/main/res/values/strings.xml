@@ -83,6 +83,7 @@
     <string name="backup_check">Backup Check</string>
     <string name="backup_check_subtitle">Let\'s see if you\'ve got everything right. Enter words %1$d, %2$d, and %3$d.</string>
 
+    <string name="slide_to_confirm">Slide to Confirm</string>
     <string name="refresh">Refresh</string>
     <string name="mute">Mute</string>
     <string name="disconnect">Disconnect</string>
@@ -379,6 +380,10 @@
     <string name="choose_wallet_title">Choose wallet</string>
     <string name="choose_wallet_subtitle">Choose wallets you want to add.</string>
     <string name="choose_wallet_already_added">Already added</string>
+
+    <string name="hide_collection">Hide collection</string>
+    <string name="hide_and_report_collection">Hide and report</string>
+    <string name="open_tonviewer">Open in Tonviewer</string>
 
     <string name="customize">Customize</string>
     <string name="customize_wallet_title">Customize your Wallet</string>

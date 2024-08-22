@@ -64,6 +64,7 @@
     <string name="manual_backup_check">Verificar Respaldo</string>
     <string name="backup_check">Verificación de respaldo</string>
     <string name="backup_check_subtitle">Vamos a ver si tienes todo correcto. Ingresa las palabras %1$d, %2$d y %3$d.</string>
+    <string name="slide_to_confirm">Deslice para confirmar</string>
     <string name="refresh">Actualizar</string>
     <string name="mute">Silenciar</string>
     <string name="disconnect">Desconectar</string>
@@ -324,6 +325,9 @@
     <string name="choose_wallet_title">Elige cartera</string>
     <string name="choose_wallet_subtitle">Elige las carteras que quieres agregar.</string>
     <string name="choose_wallet_already_added">Ya añadido</string>
+    <string name="hide_collection">Ocultar colección</string>
+    <string name="hide_and_report_collection">Ocultar y reportar</string>
+    <string name="open_tonviewer">Abierto en Tonviewer</string>
     <string name="customize">Personalizar</string>
     <string name="customize_wallet_title">Personaliza tu Cartera</string>
     <string name="customize_wallet_subtitle">El nombre y el icono de la billetera se almacenan localmente en su dispositivo.</string>

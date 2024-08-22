@@ -77,7 +77,7 @@ val koinModel = module {
     viewModel { PickerViewModel(androidApplication(), get(), get()) }
     viewModel { WalletViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(androidApplication(), get()) }
-    viewModel { SettingsViewModel(androidApplication(), get(), get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
     viewModel { EditNameViewModel(androidApplication(), get()) }
     viewModel { LanguageViewModel(androidApplication(), get()) }
     viewModel { SecurityViewModel(androidApplication(), get(), get(), get()) }
@@ -87,10 +87,10 @@ val koinModel = module {
     viewModel { CollectiblesViewModel(androidApplication(), get(), get(), get(), get()) }
     viewModel { parameters -> ActionViewModel(androidApplication(), args = parameters.get(), get(), get(), get()) }
     viewModel { BrowserExploreViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { BrowserConnectedViewModel(androidApplication(), get(), get()) }
+    viewModel { BrowserConnectedViewModel(androidApplication(), get(), get(), get()) }
     viewModel { BrowserMainViewModel(androidApplication(), get()) }
     viewModel { BrowserSearchViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { parameters -> DAppViewModel(androidApplication(), url = parameters.get(), get(), get()) }
+    viewModel { parameters -> DAppViewModel(androidApplication(), url = parameters.get(), get(), get(), get()) }
     viewModel { ChangePasscodeViewModel(androidApplication(), get(), get()) }
     viewModel { NotificationsManageViewModel(androidApplication(), get(), get(), get()) }
     viewModel { parameters -> TokenViewModel(androidApplication(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }

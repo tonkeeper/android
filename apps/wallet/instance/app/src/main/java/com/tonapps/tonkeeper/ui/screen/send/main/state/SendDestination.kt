@@ -33,6 +33,15 @@ sealed class SendDestination {
             }
         }
 
+        val displayAddress: String
+            get() {
+                return if (name.isNullOrBlank()) {
+                    query
+                } else {
+                    address.toString(userFriendly = true, bounceable = isBounce)
+                }
+            }
+
         constructor(
             query: String,
             publicKey: PublicKeyEd25519,

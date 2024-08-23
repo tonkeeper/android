@@ -180,26 +180,32 @@ class PushManager(
     private suspend fun subscribeWalletPush(
         firebaseToken: String
     ): Boolean {
-        val wallets = accountRepository.getWallets()
-        val accounts = wallets.filter {
-            !it.testnet && settingsRepository.getPushWallet(it.id)
-        }.map {
-            it.accountId.toUserFriendly(testnet = false, bounceable = true)
-        }.distinct()
+        val wallets = accountRepository.getWallets().filter { !it.testnet }
 
-        if (accounts.isEmpty()) {
-            return true
-        }
-        return api.pushSubscribe(context.locale, firebaseToken, settingsRepository.installId, accounts)
-    }
+        val enabledAccounts = mutableListOf<String>()
+        val disabledAccounts = mutableListOf<String>()
 
-    suspend fun unsubscribeWalletPush(wallet: WalletEntity) {
-        val wallets = accountRepository.getWalletsByAccountId(wallet.accountId, wallet.testnet).filter {
-            settingsRepository.getPushWallet(it.id)
+        for (wallet in wallets) {
+            val address = wallet.accountId.toUserFriendly(testnet = false, bounceable = true)
+            if (settingsRepository.getPushWallet(wallet.id)) {
+                enabledAccounts.add(address)
+            } else {
+                disabledAccounts.add(address)
+            }
         }
-        if (wallets.isNotEmpty()) {
-            return
-        }
-        api.pushUnsubscribe(settingsRepository.installId, wallet.accountId)
+
+        val subscribed = api.pushSubscribe(
+            locale = context.locale,
+            firebaseToken = firebaseToken,
+            deviceId = settingsRepository.installId,
+            accounts = enabledAccounts.distinct()
+        )
+
+        val unsubscribed = api.pushUnsubscribe(
+            deviceId = settingsRepository.installId,
+            accounts = disabledAccounts.distinct()
+        )
+
+        return subscribed && unsubscribed
     }
 }

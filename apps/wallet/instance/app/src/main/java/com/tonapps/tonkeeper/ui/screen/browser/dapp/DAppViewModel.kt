@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.push.GooglePushService
+import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
@@ -34,9 +36,12 @@ class DAppViewModel(
     }.flowOn(Dispatchers.IO).take(1)
 
     fun mute() {
-        collectFlow(getApp().filterNotNull()) { app ->
-            tonConnectRepository.setPushEnabled(app, false)
-        }
+        combine(
+            getApp().filterNotNull(),
+            accountRepository.selectedWalletFlow.take(1),
+        ) { app, wallet ->
+            tonConnectRepository.setPushEnabled(wallet, app, false, GooglePushService.requestToken())
+        }.launchIn(viewModelScope)
     }
 
     fun disconnect() {

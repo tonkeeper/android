@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper
 
 import android.app.Application
+import android.content.res.Configuration
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
@@ -9,6 +10,7 @@ import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel
 import com.tonapps.wallet.api.apiModule
 import com.tonapps.wallet.data.account.accountModule
@@ -52,6 +54,11 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         initFresco()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        CurrencyFormatter.onConfigurationChanged(newConfig)
     }
 
     private fun initFresco() {

@@ -9,13 +9,15 @@ import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
 
-class Adapter: BaseListAdapter() {
+class Adapter(
+    private val onToggleCallback: (String, Boolean) -> Unit
+): BaseListAdapter() {
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when(viewType) {
             Item.TYPE_WALLET -> WalletPushHolder(parent)
             Item.TYPE_SPACE -> SpaceHolder(parent)
             Item.TYPE_APPS_HEADER -> AppsHeaderHolder(parent)
-            Item.TYPE_APP -> AppHolder(parent)
+            Item.TYPE_APP -> AppHolder(parent, onToggleCallback)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

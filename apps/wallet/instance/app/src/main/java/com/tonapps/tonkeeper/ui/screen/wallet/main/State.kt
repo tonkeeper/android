@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
+import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.DEFAULT_DECIMALS
 import com.tonapps.icu.Coins.Companion.sumOf
@@ -158,7 +159,7 @@ sealed class State {
             config: ConfigEntity,
             setupTypes: List<SetupType>
         ): List<Item> {
-            if (1 >= setupTypes.size) {
+            if (1 >= setupTypes.size && !setupTypes.contains(SetupType.Backup)) {
                 return emptyList()
             }
             val uiItems = mutableListOf<Item>()

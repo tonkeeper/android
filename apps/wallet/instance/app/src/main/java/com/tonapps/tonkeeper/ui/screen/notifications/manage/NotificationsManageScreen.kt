@@ -15,7 +15,9 @@ class NotificationsManageScreen: BaseWalletScreen(R.layout.fragment_notification
 
     override val viewModel: NotificationsManageViewModel by viewModel()
 
-    private val adapter = Adapter()
+    private val adapter = Adapter { url, enabled ->
+        viewModel.enabledPush(url, enabled)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

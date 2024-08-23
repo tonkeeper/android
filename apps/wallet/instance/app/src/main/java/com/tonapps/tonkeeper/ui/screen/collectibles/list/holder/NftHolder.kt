@@ -19,6 +19,7 @@ import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.getDimension
 import uikit.extensions.round
@@ -52,14 +53,15 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
             titleView.text = item.title
         }
         saleBadgeView.visibility = if (item.sale) View.VISIBLE else View.GONE
-        setCollectionName(item.collectionName, item.isTrusted, item.hiddenBalance)
+        setCollectionName(item.collectionName, item.trust, item.hiddenBalance)
     }
 
     private fun setCollectionName(
         collectionName: String?,
-        isTrusted: Boolean,
+        trust: Trust,
         hiddenBalance: Boolean
     ) {
+        val isTrusted = trust == Trust.whitelist || trust == Trust.graylist
         if (isTrusted) {
             collectionView.setTextColor(context.textSecondaryColor)
         } else {

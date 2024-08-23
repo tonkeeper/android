@@ -179,20 +179,36 @@ class TonConnectRepository(
         }
     }
 
-    fun setPushEnabled(walletId: String, url: String, enabled: Boolean) {
-        val connect = localDataSource.getConnect(walletId, url) ?: return
-        if (connect.enablePush != enabled) {
-            setPushEnabled(connect, enabled)
-        }
+    fun setPushEnabled(
+        wallet: WalletEntity,
+        url: String,
+        enabled: Boolean,
+        firebaseToken: String?
+    ) {
+        val connect = localDataSource.getConnect(wallet.id, url) ?: return
+        setPushEnabled(wallet, connect, enabled, firebaseToken)
     }
 
-    fun setPushEnabled(connect: DConnectEntity, enabled: Boolean) {
-        if (connect.enablePush != enabled) {
-            val newConnect = connect.copy(enablePush = enabled)
-            localDataSource.updateConnect(newConnect)
-            _connectionsFlow.value = _connectionsFlow.value?.map {
-                if (it.clientId == connect.clientId) newConnect else it
-            }
+    fun setPushEnabled(
+        wallet: WalletEntity,
+        connect: DConnectEntity,
+        enabled: Boolean,
+        firebaseToken: String?
+    ) {
+        val newConnect = connect.copy(enablePush = enabled)
+        localDataSource.updateConnect(newConnect)
+        _connectionsFlow.value = _connectionsFlow.value?.map {
+            if (it.clientId == connect.clientId) newConnect else it
+        }
+
+        scope.launch(Dispatchers.IO) {
+            subscribePush(
+                wallet = wallet,
+                connect = newConnect,
+                firebaseToken = firebaseToken,
+                commercial = enabled,
+                silent = false
+            )
         }
     }
 
@@ -337,8 +353,14 @@ class TonConnectRepository(
     private suspend fun subscribePush(
         wallet: WalletEntity,
         connect: DConnectEntity,
-        firebaseToken: String
+        firebaseToken: String?,
+        commercial: Boolean,
+        silent: Boolean
     ): Boolean {
+        if (firebaseToken == null) {
+            return false
+        }
+
         val proofToken = accountRepository.requestTonProofToken(wallet) ?: return false
         val url = connect.url
         return api.pushTonconnectSubscribe(
@@ -347,26 +369,28 @@ class TonConnectRepository(
             accountId = wallet.address,
             firebaseToken = firebaseToken,
             sessionId = connect.clientId,
-            commercial = true,
-            silent = false,
+            commercial = commercial,
+            silent = silent,
         )
     }
 
     private suspend fun subscribePush(
         connect: DConnectEntity,
-        firebaseToken: String
+        firebaseToken: String,
+        commercial: Boolean,
+        silent: Boolean
     ): Boolean {
         val wallet = accountRepository.getWalletById(connect.walletId) ?: return false
-        return subscribePush(wallet, connect, firebaseToken)
+        return subscribePush(wallet, connect, firebaseToken, commercial, silent)
     }
 
     suspend fun subscribePush(
-        firebaseToken: String
+        firebaseToken: String,
     ): Boolean = withContext(Dispatchers.IO) {
         val connections = localDataSource.getConnections()
         val deferredList = mutableListOf<Deferred<Boolean>>()
         for (connect in connections) {
-            deferredList.add(async { subscribePush(connect, firebaseToken) })
+            deferredList.add(async { subscribePush(connect, firebaseToken, connect.enablePush, false) })
         }
         deferredList.map { it.await() }.any { it }
     }
@@ -378,9 +402,9 @@ class TonConnectRepository(
         requestItems: List<DAppItemEntity>,
         firebaseToken: String?,
         type: Type,
-        proofEntity: ProofEntity?
+        proofEntity: ProofEntity?,
+        enablePush: Boolean,
     ): DAppEventSuccessEntity = withContext(Dispatchers.IO) {
-        val enablePush = firebaseToken != null
         val app = newApp(
             wallet = wallet,
             manifest = manifest,
@@ -392,7 +416,7 @@ class TonConnectRepository(
         val res = DAppEventSuccessEntity(items)
         send(app, res.toJSON())
         firebaseToken?.let {
-            subscribePush(wallet, app, it)
+            subscribePush(wallet, app, it, enablePush, false)
         }
         res.copy()
     }
@@ -405,22 +429,28 @@ class TonConnectRepository(
         requestItems: List<DAppItemEntity>,
         firebaseToken: String?,
         type: Type,
+        enablePush: Boolean,
     ): DAppEventSuccessEntity = withContext(Dispatchers.IO) {
-        val enablePush = firebaseToken != null
-        val app = newApp(
-            wallet = wallet,
-            manifest = manifest,
-            clientId = clientId,
-            enablePush = enablePush,
-            type = type
-        )
-        val items = createItems(app, wallet, privateKey, requestItems)
-        val res = DAppEventSuccessEntity(items)
-        send(app, res.toJSON())
-        firebaseToken?.let {
-            subscribePush(wallet, app, it)
+        try {
+            val app = newApp(
+                wallet = wallet,
+                manifest = manifest,
+                clientId = clientId,
+                enablePush = enablePush,
+                type = type
+            )
+            val items = createItems(app, wallet, privateKey, requestItems)
+            val res = DAppEventSuccessEntity(items)
+            send(app, res.toJSON())
+            firebaseToken?.let {
+                subscribePush(wallet, app, it, enablePush, false)
+            }
+            Log.d("TonConnectRepository", "connect success")
+            res.copy()
+        } catch (e: Throwable) {
+            Log.e("TonConnectRepository", "connect error", e)
+            DAppEventSuccessEntity(emptyList())
         }
-        res.copy()
     }
 
     suspend fun autoConnect(

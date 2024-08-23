@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Tonkeeper X</string>
+    <string name="app_name" translatable="false">Tonkeeper</string>
     <string name="ton" translatable="false">TON</string>
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>

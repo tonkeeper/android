@@ -434,6 +434,9 @@ class API(
         deviceId: String,
         accounts: List<String>
     ): Boolean {
+        if (accounts.isEmpty()) {
+            return true
+        }
         val url = "${config.tonapiMainnetHost}/v1/internal/pushes/plain/subscribe"
 
         val accountsArray = JSONArray()
@@ -457,18 +460,24 @@ class API(
 
     fun pushUnsubscribe(
         deviceId: String,
-        account: String
+        accounts: List<String>
     ): Boolean {
+        if (accounts.isEmpty()) {
+            return true
+        }
+
         val url = "${config.tonapiMainnetHost}/v1/internal/pushes/plain/unsubscribe"
 
-        val jsonAccount = JSONObject()
-        jsonAccount.put("address", account)
+        val accountsArray = JSONArray()
+        for (account in accounts) {
+            val jsonAccount = JSONObject()
+            jsonAccount.put("address", account)
+            accountsArray.put(jsonAccount)
+        }
 
         val json = JSONObject()
         json.put("device", deviceId)
-        json.put("accounts", JSONArray().apply {
-            put(jsonAccount)
-        })
+        json.put("accounts", accountsArray)
 
         return withRetry {
             val response = tonAPIHttpClient.postJSON(url, json.toString())
@@ -482,8 +491,8 @@ class API(
         accountId: String,
         firebaseToken: String,
         sessionId: String?,
-        commercial: Boolean = true,
-        silent: Boolean = true
+        commercial: Boolean,
+        silent: Boolean
     ): Boolean {
         val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
 
@@ -499,6 +508,7 @@ class API(
         return withRetry {
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
                 set("X-TonConnect-Auth", token)
+                set("Connection", "close")
             }).isSuccessful
         } ?: false
     }
@@ -516,10 +526,13 @@ class API(
             json.put("app_url", appUrl)
             json.put("account", accountId)
             json.put("firebase_token", firebaseToken)
+            json.put("commercial", false)
+            json.put("silent", true)
             val data = json.toString().replace("\\/", "/")
 
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
                 set("X-TonConnect-Auth", token)
+                set("Connection", "close")
             }).isSuccessful
         } catch (e: Throwable) {
             false
@@ -602,11 +615,6 @@ class API(
     companion object {
 
         const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"
-
-        val JSON = Json {
-            prettyPrint = true
-            ignoreUnknownKeys = true
-        }
 
         private val socketFactoryTcpNoDelay = SSLSocketFactoryTcpNoDelay()
 

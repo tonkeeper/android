@@ -82,11 +82,7 @@ class TCAuthViewModel(
             passcode(context).map { wallet }
         }
     }.combine(dataState) { wallet, data ->
-        val firebaseToken = if (allowPush) {
-            GooglePushService.requestToken()
-        } else {
-            null
-        }
+        val firebaseToken = GooglePushService.requestToken()
 
         if (wallet.isLedger) {
             val proofItem = data.items.find { it.name == DAppItemEntity.TON_PROOF }
@@ -109,10 +105,10 @@ class TCAuthViewModel(
                 )
             }
 
-            tonConnectRepository.connectLedger(wallet, data.manifest, data.clientId, data.items, firebaseToken, type, proof)
+            tonConnectRepository.connectLedger(wallet, data.manifest, data.clientId, data.items, firebaseToken, type, proof, allowPush)
         } else {
             val privateKey = accountRepository.getPrivateKey(wallet.id)
-            tonConnectRepository.connect(wallet, privateKey, data.manifest, data.clientId, data.items, firebaseToken, type)
+            tonConnectRepository.connect(wallet, privateKey, data.manifest, data.clientId, data.items, firebaseToken, type, allowPush)
         }
     }.take(1).flowOn(Dispatchers.IO)
 

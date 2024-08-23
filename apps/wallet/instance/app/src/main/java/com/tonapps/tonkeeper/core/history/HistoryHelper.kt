@@ -250,9 +250,8 @@ class HistoryHelper(
         hiddenBalances: Boolean = false
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val items = mutableListOf<HistoryItem>()
-        val nonSpamEvents = events.filter { !settingsRepository.isSpamTransaction(wallet.id, it.eventId) }
 
-        for (event in nonSpamEvents) {
+        for (event in events) {
             val pending = event.inProgress
 
             val actions = event.actions
@@ -264,15 +263,16 @@ class HistoryHelper(
 
             val chunkItems = mutableListOf<HistoryItem>()
             for ((actionIndex, action) in actions.withIndex()) {
-
                 val timestamp = if (removeDate) 0 else event.timestamp
+                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
+
                 val item = action(
                     index = actionIndex,
                     txId = event.eventId,
                     wallet = wallet,
                     action = action,
                     timestamp = timestamp,
-                    isScam = event.isScam
+                    isScam = isScam
                 )
                 chunkItems.add(item.copy(
                     pending = pending,

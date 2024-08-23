@@ -66,10 +66,9 @@ class SettingsViewModel(
 
     fun signOut() = accountRepository.selectedWalletFlow.take(1).map { wallet ->
         AnalyticsHelper.trackEvent("delete_wallet")
+        settingsRepository.setPushWallet(wallet.id, false)
         tonConnectRepository.deleteApps(wallet, settingsRepository.firebaseToken)
         accountRepository.delete(wallet.id)
-        settingsRepository.setPushWallet(wallet.id, false)
-        pushManager.unsubscribeWalletPush(wallet)
     }
 
     private suspend fun hasW5(wallet: WalletEntity): Boolean {

@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 
 class NotificationsManageViewModel(
@@ -51,6 +53,13 @@ class NotificationsManageViewModel(
                 uiItems.add(Item.Space)
             }
             _uiItemsFlow.value = uiItems
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }
+
+    fun enabledPush(url: String, enabled: Boolean) {
+        accountRepository.selectedWalletFlow.take(1).onEach { wallet ->
+            val token = GooglePushService.requestToken()
+            tonConnectRepository.setPushEnabled(wallet, url, enabled, token)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 }

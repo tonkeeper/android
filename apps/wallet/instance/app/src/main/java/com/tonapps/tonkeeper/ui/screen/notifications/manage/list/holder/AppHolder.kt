@@ -10,9 +10,10 @@ import uikit.extensions.drawable
 import uikit.widget.FrescoView
 import uikit.widget.SwitchView
 
-class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_notifications_app) {
-
-    private val tonConnectRepository: TonConnectRepository? by lazy { context.tonConnectRepository }
+class AppHolder(
+    parent: ViewGroup,
+    private val onToggleCallback: (String, Boolean) -> Unit
+): Holder<Item.App>(parent, R.layout.view_notifications_app) {
 
     private val iconView = findViewById<FrescoView>(R.id.icon)
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
@@ -31,7 +32,7 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_notif
         pushView.setChecked(item.pushEnabled, false)
         pushView.doCheckedChanged = { isChecked, byUser ->
             if (byUser) {
-                tonConnectRepository?.setPushEnabled(item.walletId, item.url, isChecked)
+                onToggleCallback.invoke(item.url, isChecked)
             }
         }
     }

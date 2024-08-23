@@ -25,7 +25,6 @@ import org.json.JSONObject
 private fun requestBuilder(url: String): Request.Builder {
     val builder = Request.Builder()
     builder.url(url)
-    builder.addHeader("Connection", "close")
     return builder
 }
 

@@ -143,7 +143,6 @@ class WalletViewModel(
             val walletCurrency = getCurrency(wallet, currency)
 
             val localAssets = getLocalAssets(walletCurrency, wallet)
-            Log.d("WalletViewLog", "localAssets: $localAssets")
             if (localAssets != null) {
                 _stateMainFlow.value = State.Main(wallet = wallet, assets = localAssets, hasBackup)
             }

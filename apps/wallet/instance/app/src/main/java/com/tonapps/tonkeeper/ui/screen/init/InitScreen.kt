@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
@@ -33,6 +34,10 @@ class InitScreen: BaseWalletScreen(R.layout.fragment_init), BaseFragment.SwipeBa
 
     override val viewModel: InitViewModel by viewModel { parametersOf(args) }
 
+    private val backStackChangedListener = FragmentManager.OnBackStackChangedListener {
+        childFragmentManager.fragments.lastOrNull()?.let { onChildFragment(it) }
+    }
+
     private lateinit var headerView: HeaderView
     private lateinit var loaderContainerView: View
     private lateinit var loaderIconView: View
@@ -41,9 +46,6 @@ class InitScreen: BaseWalletScreen(R.layout.fragment_init), BaseFragment.SwipeBa
         super.onCreate(savedInstanceState)
         args.labelName?.let { viewModel.setLabelName(it) }
         args.accounts?.let { viewModel.setAccounts(it.toList()) }
-        childFragmentManager.addFragmentOnAttachListener { _, fragment ->
-            onChildFragment(fragment)
-        }
     }
 
     private fun onChildFragment(fragment: Fragment) {
@@ -69,6 +71,13 @@ class InitScreen: BaseWalletScreen(R.layout.fragment_init), BaseFragment.SwipeBa
 
         collectFlow(viewModel.eventFlow, ::onEvent)
         collectFlow(viewModel.routeFlow, ::onRoute)
+
+        childFragmentManager.addOnBackStackChangedListener(backStackChangedListener)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        childFragmentManager.removeOnBackStackChangedListener(backStackChangedListener)
     }
 
     private fun onEvent(event: InitEvent) {

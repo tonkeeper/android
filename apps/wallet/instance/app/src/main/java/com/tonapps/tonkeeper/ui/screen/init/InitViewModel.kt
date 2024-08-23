@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.AndroidSecureRandom
@@ -33,7 +32,7 @@ import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
-import kotlinx.coroutines.CoroutineScope
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -274,7 +273,11 @@ class InitViewModel(
         }
 
         savedState.watchAccount = account
-        setLabelName(account?.name ?: "Tonkeeper")
+
+        val isFirstWallet = accountRepository.selectedStateFlow.value == AccountRepository.SelectedState.Empty
+        val defaultTitle = getString(if (isFirstWallet) Localization.app_name else Localization.wallet)
+
+        setLabelName(account?.name ?: defaultTitle)
     }
 
     fun getWatchAccount(): AccountDetailsEntity? {

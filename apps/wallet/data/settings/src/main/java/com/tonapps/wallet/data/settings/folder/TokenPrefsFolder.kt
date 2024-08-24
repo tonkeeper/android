@@ -36,15 +36,13 @@ internal class TokenPrefsFolder(context: Context, scope: CoroutineScope): BaseSe
     }
 
     fun getPinned(walletId: String, tokenAddress: String): Boolean {
-        return getBoolean(keyPinned(walletId, tokenAddress))
+        val defValue = tokenAddress.equals("0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe", ignoreCase = true) || tokenAddress.equals("ton", ignoreCase = true)
+        return getBoolean(keyPinned(walletId, tokenAddress), defValue)
     }
 
     fun getIndex(walletId: String, tokenAddress: String): Int {
         return getInt(keySort(walletId, tokenAddress))
     }
-
-    // val pinned = if (hidden) false else getBoolean(keyPinned(walletId, tokenAddress), tokenAddress.equals("0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe", ignoreCase = true) || tokenAddress.equals("ton", ignoreCase = true))
-    //
 
     fun setPinned(walletId: String, tokenAddress: String, pinned: Boolean) {
         putBoolean(keyPinned(walletId, tokenAddress), pinned)

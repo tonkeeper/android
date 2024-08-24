@@ -7,6 +7,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
+import androidx.core.os.LocaleListCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -62,7 +63,6 @@ class RootActivity: BaseWalletActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(viewModel.theme.resId)
         super.onCreate(savedInstanceState)
-        Log.d("RootViewModel", "onCreate: $viewModel")
         legacyRN.setActivity(this)
         windowInsetsController.isAppearanceLightStatusBars = viewModel.theme.light
         windowInsetsController.isAppearanceLightNavigationBars = viewModel.theme.light
@@ -90,9 +90,13 @@ class RootActivity: BaseWalletActivity() {
         collectFlow(viewModel.passcodeFlow, ::passcodeFlow)
 
         collectFlow(viewModel.themeFlow) {
-            viewModelStore.clear()
-            recreate() // Call after theme change
+            recreate()
         }
+    }
+
+    override fun recreate() {
+        viewModelStore.clear()
+        super.recreate()
     }
 
     private fun passcodeFlow(config: RootViewModel.Passcode) {

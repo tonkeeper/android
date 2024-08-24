@@ -4,12 +4,16 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.whenCreated
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
@@ -36,6 +40,7 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
@@ -57,6 +62,7 @@ class RootActivity: BaseWalletActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(viewModel.theme.resId)
         super.onCreate(savedInstanceState)
+        Log.d("RootViewModel", "onCreate: $viewModel")
         legacyRN.setActivity(this)
         windowInsetsController.isAppearanceLightStatusBars = viewModel.theme.light
         windowInsetsController.isAppearanceLightNavigationBars = viewModel.theme.light
@@ -84,7 +90,8 @@ class RootActivity: BaseWalletActivity() {
         collectFlow(viewModel.passcodeFlow, ::passcodeFlow)
 
         collectFlow(viewModel.themeFlow) {
-            recreate()
+            viewModelStore.clear()
+            recreate() // Call after theme change
         }
     }
 

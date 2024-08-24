@@ -130,13 +130,3 @@ fun Context.getCurrentFocusEditText(): EditText? {
 fun Context.hideKeyboard() {
     (activity?.currentFocus as? EditText)?.hideKeyboard()
 }
-
-fun Context.showError(e: Throwable) {
-    Log.e("AppErrorLog", "error", e)
-    val bestMessage = e.localizedMessage ?: e.message ?: toString()
-    if (navigation == null) {
-        Toast.makeText(this, bestMessage, Toast.LENGTH_LONG).show()
-    } else {
-        navigation?.toast(bestMessage, false, Color.RED)
-    }
-}

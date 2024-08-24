@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
 import androidx.security.crypto.EncryptedSharedPreferences
@@ -67,4 +68,9 @@ val Context.activity: ComponentActivity?
         }
         return null
     }
+
+
+fun Context.logError(e: Throwable) {
+    //
+}
 

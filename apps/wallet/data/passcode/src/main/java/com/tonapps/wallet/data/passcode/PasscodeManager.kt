@@ -1,9 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.graphics.Color
-import androidx.fragment.app.FragmentActivity
-import com.tonapps.extensions.bestMessage
+import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -13,9 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import uikit.extensions.showError
 import uikit.navigation.Navigation
-import uikit.navigation.Navigation.Companion.navigation
 
 class PasscodeManager(
     private val accountRepository: AccountRepository,
@@ -61,7 +57,7 @@ class PasscodeManager(
                 migration(context, code)
                 true
             } catch (e: Throwable) {
-                context.showError(e)
+                context.logError(e)
                 false
             }
         }
@@ -81,7 +77,7 @@ class PasscodeManager(
                 }
                 true
             } catch (e: Throwable) {
-                context.showError(e)
+                context.logError(e)
                 false
             }
         }
@@ -132,7 +128,7 @@ class PasscodeManager(
             migration(context, passcode)
             true
         } catch (e: Throwable) {
-            context.showError(e)
+            context.logError(e)
             false
         }
     }

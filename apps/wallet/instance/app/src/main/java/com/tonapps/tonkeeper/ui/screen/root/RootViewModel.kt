@@ -100,6 +100,8 @@ class RootViewModel(
         val biometric: Boolean,
     )
 
+    private val selectedWalletFlow: Flow<WalletEntity> = accountRepository.selectedWalletFlow
+
     private val _hasWalletFlow = MutableEffectFlow<Boolean?>()
     val hasWalletFlow = _hasWalletFlow.asSharedFlow().filterNotNull()
 
@@ -117,6 +119,7 @@ class RootViewModel(
     val tonConnectEventsFlow = tonConnectRepository.eventsFlow
 
     init {
+        Log.d("RootViewModel", "init")
         combine(
             settingsRepository.biometricFlow.take(1),
             settingsRepository.lockscreenFlow.take(1)
@@ -141,7 +144,7 @@ class RootViewModel(
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
         combine(
-            accountRepository.selectedWalletFlow,
+            selectedWalletFlow,
             settingsRepository.hiddenBalancesFlow
         ) { wallet, hiddenBalance ->
             val wallets = accountRepository.getWallets()
@@ -156,8 +159,11 @@ class RootViewModel(
             settingsRepository.firebaseToken = GooglePushService.requestToken()
         }
 
-        collectFlow(accountRepository.selectedWalletFlow, ::applyAnalyticsKeys)
-        collectFlow(accountRepository.selectedWalletFlow, ::initShortcuts)
+        collectFlow(selectedWalletFlow) { wallet ->
+            applyAnalyticsKeys(wallet)
+            initShortcuts(wallet)
+        }
+
         collectFlow(api.configFlow.take(1)) { config ->
             AnalyticsHelper.setConfig(context, config)
             AnalyticsHelper.trackEvent("launch_app")
@@ -242,7 +248,7 @@ class RootViewModel(
         context: Context,
         request: SignRequestEntity
     ): String {
-        val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: throw Exception("wallet is null")
+        val wallet = selectedWalletFlow.firstOrNull() ?: throw Exception("wallet is null")
         return requestSign(context, wallet, request)
     }
 
@@ -271,7 +277,7 @@ class RootViewModel(
         url: String,
         json: JSONObject
     ): String? {
-        val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
+        val wallet = selectedWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
         val app = tonConnectRepository.getConnect(url, wallet) ?: throw IllegalStateException("No app")
         val event = DAppEventEntity(wallet.copy(), app.copy(), json)
         if (event.method != "sendTransaction") {
@@ -319,7 +325,7 @@ class RootViewModel(
             }
             return
         }
-        accountRepository.selectedWalletFlow.take(1).onEach { wallet ->
+        selectedWalletFlow.take(1).onEach { wallet ->
             delay(1000)
             resolveOther(refSource, uri, wallet)
         }.launchIn(viewModelScope)
@@ -392,7 +398,7 @@ class RootViewModel(
 
     private fun showTransaction(hash: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
+            val wallet = selectedWalletFlow.firstOrNull() ?: return@launch
             val item = historyHelper.getEvent(wallet, hash).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return@launch
             _eventFlow.tryEmit(RootEvent.Transaction(item))
         }

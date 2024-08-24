@@ -22,6 +22,9 @@ data class StakedEntity(
             staking: StakingEntity,
             tokens: List<AccountTokenEntity>
         ): List<StakedEntity> {
+            if (true) {
+                return emptyList()
+            }
             val list = mutableListOf<StakedEntity>()
             val activePools = getActivePools(staking, tokens)
             for (pool in activePools) {

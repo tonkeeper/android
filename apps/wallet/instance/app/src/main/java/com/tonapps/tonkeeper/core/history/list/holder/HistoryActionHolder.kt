@@ -9,6 +9,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
+import com.tonapps.extensions.logError
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -35,7 +36,6 @@ import uikit.extensions.clearDrawables
 import uikit.extensions.drawable
 import uikit.extensions.reject
 import uikit.extensions.setLeftDrawable
-import uikit.extensions.showError
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
@@ -185,7 +185,7 @@ class HistoryActionHolder(
         val scope = lifecycleScope ?: return
         val flow = context.historyHelper?.requestDecryptComment(context, comment, txId, senderAddress) ?: return
         flow.catch {
-            context.showError(it)
+            context.logError(it)
             commentView.reject()
         }.onEach {
             bindComment(it, txId, senderAddress)

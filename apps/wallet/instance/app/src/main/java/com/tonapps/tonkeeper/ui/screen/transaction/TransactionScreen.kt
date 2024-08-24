@@ -9,6 +9,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.ifPunycodeToUnicode
+import com.tonapps.extensions.logError
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.shortHash
@@ -34,7 +35,6 @@ import uikit.base.BaseFragment
 import uikit.extensions.drawable
 import uikit.extensions.reject
 import uikit.extensions.setColor
-import uikit.extensions.showError
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 
@@ -208,7 +208,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     private fun decryptComment(comment: HistoryItem.Event.Comment) {
         historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.senderAddress ?: "").catch {
-            context?.showError(it)
+            context?.logError(it)
             commentView.reject()
         }.onEach {
             applyComment(it)

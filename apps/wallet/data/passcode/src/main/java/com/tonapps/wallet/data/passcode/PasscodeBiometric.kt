@@ -1,7 +1,6 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.util.Log
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat

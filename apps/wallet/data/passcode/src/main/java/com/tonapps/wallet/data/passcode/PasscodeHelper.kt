@@ -1,13 +1,11 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.graphics.Color
-import com.tonapps.extensions.bestMessage
+import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import uikit.navigation.Navigation.Companion.navigation
 
 class PasscodeHelper(
     private val store: PasscodeStore,
@@ -46,7 +44,7 @@ class PasscodeHelper(
             store.setPinCode(code)
             true
         } catch (e: Throwable) {
-            context.navigation?.toast(e.bestMessage, false, Color.RED)
+            context.logError(e)
             false
         }
     }

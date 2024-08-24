@@ -70,6 +70,12 @@ class ToastView @JvmOverloads constructor(
     }
 
     fun show(text: CharSequence, loading: Boolean, color: Int = context.backgroundContentTintColor) {
+        val isUIThread = Thread.currentThread() == android.os.Looper.getMainLooper().thread
+        if (!isUIThread) {
+            post { show(text, loading, color) }
+            return
+        }
+
         val data = Data(loading, text, if (color == Color.TRANSPARENT) context.backgroundContentTintColor else color)
         val cancelCurrent = currentData?.let {
             it.text == text && it.color == (if (color == Color.TRANSPARENT) context.backgroundContentTintColor else color)

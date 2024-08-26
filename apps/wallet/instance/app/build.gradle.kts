@@ -11,7 +11,7 @@ android {
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = 27 // Build.minSdkVersion
+        minSdk = Build.minSdkVersion
     }
 
     buildFeatures {

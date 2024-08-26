@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ton_keeper"
-        minSdk = 27 // Build.minSdkVersion
+        minSdk = Build.minSdkVersion
         targetSdk = 34
         versionCode = 600
         versionName = "X"

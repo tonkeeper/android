@@ -82,6 +82,14 @@
                 <data android:host="app.tonkeeper.com"/>
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.tonapps.tonkeeper.core.signer.SignerHiddenActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="false"
+            android:enabled="true"
+            android:fitsSystemWindows="true"
+            android:theme="@style/Theme.Hidden">
+        </activity>
         <receiver
             android:name="com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider"
             android:exported="true"

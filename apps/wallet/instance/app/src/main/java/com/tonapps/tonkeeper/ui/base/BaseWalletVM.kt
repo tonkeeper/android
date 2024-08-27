@@ -2,11 +2,13 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.app.Application
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
 import java.lang.ref.WeakReference
+import java.util.concurrent.Executor
 
 abstract class BaseWalletVM(
     app: Application
@@ -22,6 +24,10 @@ abstract class BaseWalletVM(
 
     val context: Context
         get() = activity ?: getApplication()
+
+    val executor: Executor by lazy {
+        ContextCompat.getMainExecutor(context)
+    }
 
     fun attachActivity(activity: FragmentActivity) {
         activityRef = WeakReference(activity)

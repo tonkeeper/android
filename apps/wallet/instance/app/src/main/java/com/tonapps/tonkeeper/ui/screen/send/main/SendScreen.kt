@@ -492,14 +492,14 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
         }
 
         collectFlow(viewModel.signerData()) { (publicKey, unsignedBody) ->
-            navigation?.add(SignerQRScreen.newInstance(publicKey, unsignedBody, text, signerQRRequestKey))
+            // navigation?.add(SignerQRScreen.newInstance(publicKey, unsignedBody, text, signerQRRequestKey))
         }
     }
 
     private fun openSigner() {
         AnalyticsHelper.trackEvent("send_transaction")
         collectFlow(viewModel.signerData()) { (publicKey, unsignedBody) ->
-            signerLauncher.launch(SingerResultContract.Input(unsignedBody, publicKey))
+            // signerLauncher.launch(SingerResultContract.Input(unsignedBody, publicKey))
         }
     }
 

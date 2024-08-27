@@ -5,6 +5,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.collectibles.entities.NftListResult
 import com.tonapps.wallet.data.collectibles.source.LocalDataSource
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 
 class CollectiblesRepository(
@@ -44,7 +45,7 @@ class CollectiblesRepository(
                 emit(NftListResult(cache = false, list = remote))
             }
         } catch (ignored: Throwable) { }
-    }
+    }.cancellable()
 
     private fun getLocalNftItems(
         address: String,

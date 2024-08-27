@@ -56,6 +56,7 @@ class ChartView @JvmOverloads constructor(
         canvas.drawPath(path, gradientPaint)
     }
 
+    
     private fun buildPath() {
         path.reset()
 

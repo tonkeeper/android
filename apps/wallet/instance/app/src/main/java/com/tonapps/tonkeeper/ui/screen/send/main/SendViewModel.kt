@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
@@ -62,7 +61,6 @@ import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import uikit.extensions.collectFlow
-import uikit.extensions.context
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.RoundingMode

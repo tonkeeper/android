@@ -17,24 +17,21 @@ object CurrencyFormatter {
         "ar", "fa", "ur", "hi", "bn", "ta", "th", "lo", "my", "si"
     )
 
-    private var format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        CurrencyFormat(Locale.getDefault(Locale.Category.FORMAT))
-    } else {
-        CurrencyFormat(Locale.getDefault())
-    }
+    private var format = CurrencyFormat(Locale.getDefault(Locale.Category.FORMAT))
 
     val monetaryDecimalSeparator: String
         get() = format.monetaryDecimalSeparator
 
     fun onConfigurationChanged(newConfig: Configuration) {
-        val newLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) newConfig.locales[0] else newConfig.locale
+        val newLocale = newConfig.locales[0]
         onLocaleChanged(newLocale)
     }
 
     private fun onLocaleChanged(newLocale: Locale) {
-        if (newLocale.language != "en" && customDigitLocales.contains(newLocale.language)) {
+        val newLanguage = newLocale.language
+        if (newLanguage != "en" && customDigitLocales.contains(newLanguage)) {
             onLocaleChanged(Locale.US)
-        } else if (newLocale.language != format.locale.language) {
+        } else if (newLanguage != format.locale.language) {
             format = CurrencyFormat(newLocale)
         }
     }

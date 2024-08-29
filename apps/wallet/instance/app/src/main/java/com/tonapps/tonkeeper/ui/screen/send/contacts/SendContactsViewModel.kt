@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
+import com.tonapps.tonkeeper.core.history.recipient
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.contacts.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -33,10 +34,10 @@ class SendContactsViewModel(
 
     private suspend fun getMyWallets(currentWallet: WalletEntity): List<Item.MyWallet> {
         val wallets = accountRepository.getWallets().filter {
-            it.address != currentWallet.address && it.type != Wallet.Type.Watch && it.type != Wallet.Type.Testnet
+            it.type != Wallet.Type.Watch && it.testnet == currentWallet.testnet && it.address != currentWallet.address
         }.map {
             WalletExtendedEntity( it, settingsRepository.getWalletPrefs(it.id))
-        }.sortedBy { it.index }.map { it.raw }
+        }.sortedBy { it.index }.map { it.raw }.toList()
 
         return wallets.mapIndexed { index, wallet ->
             val position = ListCell.getPosition(wallets.size, index)
@@ -44,12 +45,13 @@ class SendContactsViewModel(
         }
     }
 
-    private suspend fun getLatestContacts(currentWallet: WalletEntity): List<Item.LatestContact> {
+    private suspend fun getLatestContacts(
+        currentWallet: WalletEntity
+    ): List<Item.LatestContact> {
         val accountEvents = eventsRepository.get(currentWallet.accountId, currentWallet.testnet) ?: return emptyList()
         val actions = accountEvents.events.map { it.actions }.flatten()
-        val accounts = actions.map { it.simplePreview }
-            .map { it.accounts }
-            .flatten()
+        val accounts = actions.mapNotNull { it.recipient }
+            .filter { it.isWallet && currentWallet.accountId.equals(it.address.toRawAddress(), ignoreCase = true) }
             .distinctBy { it.address }
 
         val latestAccounts = accounts.filter {

@@ -19,6 +19,14 @@ android {
         targetSdk = 34
         versionCode = 600
         versionName = "X"
+
+        ndk {
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("armeabi")
+            abiFilters.add("x86")
+            abiFilters.add("x86_64")
+        }
     }
 
     buildFeatures {

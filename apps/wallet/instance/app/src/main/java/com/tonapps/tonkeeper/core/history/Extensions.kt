@@ -5,6 +5,9 @@ import androidx.annotation.StringRes
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import io.tonapi.models.AccountAddress
+import io.tonapi.models.Action
 
 @get:DrawableRes
 val ActionType.iconRes: Int
@@ -41,3 +44,6 @@ val ActionType.nameRes: Int
         ActionType.UnSubscribe -> Localization.unsubscribed
         ActionType.Subscribe -> Localization.subscribed
     }
+
+val Action.recipient: AccountAddress?
+    get() = tonTransfer?.recipient ?: jettonTransfer?.recipient ?: nftItemTransfer?.recipient

@@ -22,6 +22,7 @@ object Dependence {
         const val cronet = "com.google.android.gms:play-services-cronet:18.0.1"
         const val cronetOkhttp = "com.google.net.cronet:cronet-okhttp:0.1.0"
         const val review = "com.google.android.play:review-ktx:2.0.1"
+        const val billing = "com.android.billingclient:billing-ktx:7.0.0"
     }
 
     object UI {

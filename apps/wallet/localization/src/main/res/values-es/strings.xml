@@ -357,4 +357,5 @@
     <string name="sending_error">Error de envío, inténtalo de nuevo más tarde</string>
     <string name="spam">Spam</string>
     <string name="later">Más tarde</string>
+    <string name="testers_chat">Reportar error (chat en Telegram)</string>
 </resources>

@@ -357,4 +357,5 @@
     <string name="sending_error">发送错误，请稍后重试</string>
     <string name="spam">垃圾邮件</string>
     <string name="later">之后</string>
+    <string name="testers_chat">报告错误（在 Telegram 中聊天）</string>
 </resources>

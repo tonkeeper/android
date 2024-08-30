@@ -357,4 +357,5 @@
     <string name="sending_error">Gönderim hatası, daha sonra tekrar deneyin</string>
     <string name="spam">Spam</string>
     <string name="later">Daha sonra</string>
+    <string name="testers_chat">Hata bildir (Telegram\'da sohbet)</string>
 </resources>

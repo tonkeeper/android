@@ -357,4 +357,5 @@
     <string name="sending_error">Kesalahan pengiriman, coba lagi nanti</string>
     <string name="spam">Spam</string>
     <string name="later">Nanti</string>
+    <string name="testers_chat">Laporkan bug (obrolan di Telegram)</string>
 </resources>

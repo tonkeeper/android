@@ -402,4 +402,5 @@
     <string name="bluetooth_permissions_alert_open_settings">Отворете Настройки</string>
     <string name="biometric_enabled">Биометричните са активирани</string>
     <string name="sending_error">Грешка при изпращане, опитайте отново по-късно</string>
+    <string name="testers_chat">Докладване за грешка (чат в Telegram)</string>
 </resources>

@@ -357,4 +357,5 @@
     <string name="sending_error">Yuborishda xatolik, keyinroq qayta urinib ko‘ring</string>
     <string name="spam">Spam</string>
     <string name="later">Keyinchalik</string>
+    <string name="testers_chat">Xato haqida xabar berish (Telegramda suhbat)</string>
 </resources>

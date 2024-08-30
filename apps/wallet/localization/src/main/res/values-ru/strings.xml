@@ -401,4 +401,5 @@
     <string name="biometric_enabled">Биометрия включена</string>
     <string name="spam">Спам</string>
     <string name="later">Позже</string>
+    <string name="testers_chat">Сообщить об ошибке (чат в Telegram)</string>
 </resources>

@@ -357,4 +357,5 @@
     <string name="sending_error">Помилка відправки, спробуйте пізніше</string>
     <string name="spam">Спам</string>
     <string name="later">Пізніше</string>
+    <string name="testers_chat">Повідомити про баг (чат в Telegram)</string>
 </resources>

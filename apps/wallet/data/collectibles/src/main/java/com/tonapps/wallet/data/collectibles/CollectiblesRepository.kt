@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.collectibles
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.collectibles.entities.NftListResult
@@ -33,8 +34,6 @@ class CollectiblesRepository(
 
     fun getFlow(address: String, testnet: Boolean, isOnline: Boolean) = flow {
         try {
-            emit(NftListResult(cache = true))
-
             val local = getLocalNftItems(address, testnet)
             if (local.isNotEmpty()) {
                 emit(NftListResult(cache = true, list = local))

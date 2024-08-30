@@ -1,3 +1,7 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -18,7 +22,10 @@ android {
         minSdk = Build.minSdkVersion
         targetSdk = 34
         versionCode = 600
-        versionName = "X"
+
+        val currentDate = SimpleDateFormat("dd-MMM-yyyy", Locale.US).format(Date()).lowercase()
+
+        versionName = "$versionCode ($currentDate) X"
 
         ndk {
             abiFilters.add("arm64-v8a")

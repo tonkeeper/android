@@ -162,11 +162,15 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     override fun remove(fragment: Fragment) {
         if (supportFragmentManager.primaryNavigationFragment == fragment) {
             finish()
-        } else {
-            supportFragmentManager.commit {
-                remove(fragment)
-            }
+        } else if (!isStateSaved()) {
+            val transaction = supportFragmentManager.beginTransaction()
+            transaction.remove(fragment)
+            transaction.commitAllowingStateLoss()
         }
+    }
+
+    private fun isStateSaved(): Boolean {
+        return supportFragmentManager.isStateSaved || isFinishing || isDestroyed
     }
 
     private fun clearBackStack() {

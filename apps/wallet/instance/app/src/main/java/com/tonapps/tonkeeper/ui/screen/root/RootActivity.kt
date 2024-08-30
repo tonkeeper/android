@@ -7,6 +7,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
+import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -248,20 +249,49 @@ class RootActivity: BaseWalletActivity() {
         if (url.isBlank()) {
             return
         }
-
-        val uri = Uri.parse(url)
-
+        val uri = url.toUri()
         if (external) {
-            val action = if (url.startsWith("mailto:")) {
-                Intent.ACTION_SENDTO
-            } else {
-                Intent.ACTION_VIEW
-            }
-            val intent = Intent(action, uri)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
+            openExternalLink(uri)
         } else {
             processDeepLink(uri)
+        }
+    }
+
+    private fun openExternalLink(uri: Uri) {
+        return if (uri.host == "t.me") {
+            openTelegramLink(uri)
+        } else if (uri.scheme == "mailto") {
+            openEmail(uri)
+        } else {
+            openBrowser(uri)
+        }
+    }
+
+    private fun openTelegramLink(uri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.`package` = "org.telegram.messenger"
+        if (!safeStartActivity(intent)) {
+            openBrowser(uri)
+        }
+    }
+
+    private fun openBrowser(uri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        safeStartActivity(intent)
+    }
+
+    private fun openEmail(uri: Uri) {
+        val intent = Intent(Intent.ACTION_SENDTO, uri)
+        safeStartActivity(intent)
+    }
+
+    private fun safeStartActivity(intent: Intent): Boolean {
+        try {
+            startActivity(intent)
+            return true
+        } catch (e: Throwable) {
+            toast(Localization.unknown_error)
+            return false
         }
     }
 

@@ -12,10 +12,10 @@ object Dependence {
 
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
-        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.1"
-        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1"
-        const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.0"
-        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.5.1"
+        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.2"
+        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2"
+        const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
+        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.5.3"
     }
 
     object GooglePlay {
@@ -35,7 +35,7 @@ object Dependence {
     }
 
     object ML {
-        const val barcode = "com.google.mlkit:barcode-scanning:17.2.0"
+        const val barcode = "com.google.mlkit:barcode-scanning:17.3.0"
     }
 
     object AndroidX {
@@ -83,7 +83,7 @@ object Dependence {
     }
 
     object Firebase {
-        const val bom = "com.google.firebase:firebase-bom:33.1.2"
+        const val bom = "com.google.firebase:firebase-bom:33.2.0"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
         const val messaging = "com.google.firebase:firebase-messaging-ktx"

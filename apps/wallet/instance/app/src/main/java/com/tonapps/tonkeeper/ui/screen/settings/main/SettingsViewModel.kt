@@ -92,6 +92,9 @@ class SettingsViewModel(
         val hasW5 = hasW5(wallet)
         val uiItems = mutableListOf<Item>()
         uiItems.add(Item.Account(wallet))
+        uiItems.add(Item.Space)
+
+        uiItems.add(Item.Tester(ListCell.Position.SINGLE, "https://t.me/tonkeeper_android"))
 
         uiItems.add(Item.Space)
         if (!wallet.isExternal && !wallet.isWatchOnly) {

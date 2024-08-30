@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
@@ -44,39 +45,30 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
-            if (first) {
-
-            } else {
+            if (!first) {
                 openQRCode()
             }
         }
 
-        collectFlow(viewModel.uiUpdatingFlow) { updating ->
-            if (updating) {
+        collectFlow(viewModel.uiListStateFlow) { state ->
+            if (state is UiListState.Loading) {
+                adapter.applySkeleton()
                 headerView.setSubtitle(Localization.updating)
-            } else {
-                headerView.setSubtitle(null)
+            } else if (state is UiListState.Empty) {
+                setEmptyState()
+            } else if (state is UiListState.Items) {
+                setListState()
+                adapter.submitList(state.items)
+                if (!state.cache) {
+                    headerView.setSubtitle(null)
+                }
             }
         }
-
-        collectFlow(viewModel.uiItemsFlow, ::setItems)
-        /*collectFlow(viewModel.changeWalletFlow) {
-            getRecyclerView()?.scrollToPosition(0)
-        }*/
     }
 
     private fun openQRCode() {
         collectFlow(viewModel.openQRCode()) { walletEntity ->
             navigation?.add(QRScreen.newInstance(walletEntity.address, TokenEntity.TON, walletEntity.type))
-        }
-    }
-
-    private fun setItems(list: List<Item>) {
-        if (list.isEmpty()) {
-            setEmptyState()
-        } else {
-            setListState()
-            adapter.submitList(list)
         }
     }
 

@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -21,6 +22,7 @@ import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,7 +57,10 @@ class EventsViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
-        combine(accountRepository.selectedWalletFlow, eventsRepository.decryptedCommentFlow) { wallet, _ ->
+        combine(
+            accountRepository.selectedWalletFlow,
+            eventsRepository.decryptedCommentFlow
+        ) { wallet, _ ->
             loadEvents(wallet, false, updating = false)
         }.launchIn(viewModelScope)
 

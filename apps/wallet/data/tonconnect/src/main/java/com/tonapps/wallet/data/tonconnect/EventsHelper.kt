@@ -39,7 +39,11 @@ internal class EventsHelper(
         val message = event.json.getString("message")
         val app = apps.find { it.clientId == from } ?: return null
         val wallet = accountRepository.getWalletById(app.walletId) ?: return null
-        return DAppEventEntity(wallet, app, message.base64)
+        try {
+            return DAppEventEntity(wallet, app, message.base64)
+        } catch (e: Throwable) {
+            return null
+        }
     }
 
     private fun processEventId(id: String?): Boolean {

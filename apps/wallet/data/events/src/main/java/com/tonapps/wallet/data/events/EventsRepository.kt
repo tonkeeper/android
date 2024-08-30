@@ -8,6 +8,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.events.entities.AccountEventsResult
 import com.tonapps.wallet.data.events.entities.EventEntity
 import com.tonapps.wallet.data.events.source.LocalDataSource
 import com.tonapps.wallet.data.events.source.RemoteDataSource
@@ -16,7 +17,9 @@ import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
@@ -66,6 +69,24 @@ class EventsRepository(
             }
         }
     }
+
+    suspend fun getFlow(
+        accountId: String,
+        testnet: Boolean,
+        isOnline: Boolean
+    ) = flow {
+        try {
+            val local = getLocal(accountId, testnet)
+            if (local != null && local.events.isNotEmpty()) {
+                emit(AccountEventsResult(cache = true, events = local))
+            }
+
+            if (isOnline) {
+                val remote = getRemote(accountId, testnet) ?: return@flow
+                emit(AccountEventsResult(cache = false, events = remote))
+            }
+        } catch (ignored: Throwable) { }
+    }.cancellable()
 
     suspend fun get(
         accountId: String,

@@ -362,10 +362,14 @@ class SendViewModel(
         val amount = userInputFlow.value.amount
         val amountCurrency = userInputFlow.value.amountCurrency
         val balance = if (amountCurrency) token.fiat else token.balance.value
-        val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
-            .multiply(BigDecimal("100"))
-            .setScale(2, RoundingMode.HALF_UP)
-        return percentage > BigDecimal("95.00") && percentage <= BigDecimal("99.99")
+        try {
+            val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal("100"))
+                .setScale(2, RoundingMode.HALF_UP)
+            return percentage > BigDecimal("95.00") && percentage <= BigDecimal("99.99")
+        } catch (e: Throwable) {
+            return false
+        }
     }
 
     fun next() {

@@ -109,6 +109,17 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
+    data class Tester(
+        override val position: ListCell.Position,
+        val url: String
+    ): Icon(
+        titleRes = Localization.testers_chat,
+        iconRes = R.drawable.ic_telegram_28,
+        position = position,
+        secondaryIcon = false,
+        dot = true
+    )
+
     data class News(
         override val position: ListCell.Position,
         val url: String

@@ -66,6 +66,7 @@ class SettingsScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
             is Item.News -> navigation?.openURL(item.url, true)
             is Item.Support -> navigation?.openURL(item.url, true)
             is Item.Contact -> navigation?.openURL(item.url, true)
+            is Item.Tester -> navigation?.openURL(item.url, true)
             is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance())
             is Item.Logout -> signOut(item.label)
             is Item.SearchEngine -> searchPicker(item)

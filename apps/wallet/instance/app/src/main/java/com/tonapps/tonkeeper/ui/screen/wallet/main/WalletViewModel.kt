@@ -257,7 +257,6 @@ class WalletViewModel(
             val staking = stakingRepository.get(wallet.accountId, wallet.testnet, ignoreCache = true, initializedAccount = initializedAccount)
             buildStateTokens(wallet, currency, tokens, staking, false)
         } catch (e: Throwable) {
-            Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
             return@withContext null
         }
     }

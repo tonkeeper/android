@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <queries>
         <package android:name="com.tonapps.signer" />
+        <package android:name="org.telegram.messenger" />
     </queries>
 
     <uses-feature android:name="android.software.leanback" android:required="false" />

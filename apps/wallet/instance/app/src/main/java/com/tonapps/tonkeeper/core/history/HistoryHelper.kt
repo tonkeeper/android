@@ -1,9 +1,7 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
-import android.util.Log
 import androidx.collection.arrayMapOf
-import androidx.fragment.app.FragmentActivity
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.withMinus
@@ -45,20 +43,20 @@ import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
+import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatterBuilder
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 // TODO request refactoring
@@ -80,13 +78,22 @@ class HistoryHelper(
         const val MINUS_SYMBOL = "-"
         const val PLUS_SYMBOL = "+"
 
-        private val monthYearFormatter = DateTimeFormatterBuilder()
-            .appendPattern("MMMM yyyy")
-            .toFormatter(Locale.US)
+        private val monthYearFormatter = SimpleDateFormat("MMMM yyyy", Locale.US)
+        private val dayMonthFormatter = SimpleDateFormat("d MMMM", Locale.US)
 
-        private val dayMonthFormatter = DateTimeFormatterBuilder()
-            .appendPattern("d MMMM")
-            .toFormatter(Locale.US)
+        private fun getGroupKey(timestamp: Long): String {
+            val calendar = Calendar.getInstance()
+            calendar.timeInMillis = timestamp * 1000
+            val now = Calendar.getInstance()
+            val yearDiff = now.get(Calendar.YEAR) - calendar.get(Calendar.YEAR)
+            val monthDiff = yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
+
+            return if (monthDiff < 1) {
+                dayMonthFormatter.format(calendar.time)
+            } else {
+                monthYearFormatter.format(calendar.time)
+            }
+        }
     }
 
     private data class ActionDateSection(
@@ -127,23 +134,6 @@ class HistoryHelper(
         return output.map { it.value.get() }.flatten().sortedWith { a, b ->
             (b.timestampForSort - a.timestampForSort).toInt()
         }.distinctBy { it.uniqueId }.toList()
-    }
-
-    private fun getGroupKey(timestamp: Long): String {
-        val ts = Instant.fromEpochSeconds(timestamp)
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .date
-        val now = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .date
-
-        val monthsBetween = ts.until(now, DateTimeUnit.MONTH)
-
-        return if (monthsBetween < 1) {
-            dayMonthFormatter.format(ts.toJavaLocalDate())
-        } else {
-            monthYearFormatter.format(ts.toJavaLocalDate())
-        }
     }
 
     fun requestDecryptComment(

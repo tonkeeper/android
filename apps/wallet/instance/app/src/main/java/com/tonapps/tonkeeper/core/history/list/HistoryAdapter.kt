@@ -19,6 +19,10 @@ open class HistoryAdapter(
         // super.setHasStableIds(true)
     }
 
+    fun setEmpty() {
+        submitList(emptyList())
+    }
+
     override fun getItemId(position: Int): Long {
         val item = super.getItem(position) as? HistoryItem ?: return RecyclerView.NO_ID
         return item.timestampForSort

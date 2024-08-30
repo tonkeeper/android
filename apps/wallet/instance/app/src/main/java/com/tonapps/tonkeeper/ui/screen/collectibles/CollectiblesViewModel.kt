@@ -1,41 +1,31 @@
 package com.tonapps.tonkeeper.ui.screen.collectibles
 
 import android.app.Application
-import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.flattenFirst
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.extensions.with
+import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
-import com.tonapps.wallet.data.collectibles.entities.NftEntity
-import com.tonapps.wallet.data.core.Trust
-import com.tonapps.wallet.data.core.entity.Result
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flattenConcat
-import kotlinx.coroutines.flow.flattenMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.withContext
 
 class CollectiblesViewModel(
     app: Application,
@@ -45,48 +35,57 @@ class CollectiblesViewModel(
     private val settingsRepository: SettingsRepository
 ): BaseWalletVM(app) {
 
-    private val resultFlow = combine(
+    val uiListStateFlow = combine(
         accountRepository.selectedWalletFlow,
         networkMonitor.isOnlineFlow,
         settingsRepository.hiddenBalancesFlow,
         settingsRepository.tokenPrefsChangedFlow,
     ) { wallet, isOnline, hiddenBalances, _ ->
-        collectiblesFlow(
+        stateFlow(
             wallet = wallet,
             hiddenBalances = hiddenBalances,
             isOnline = isOnline
         )
-    }.flattenFirst()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null).filterNotNull().flattenFirst()
 
-    val uiItemsFlow = resultFlow.map { it.second }
-    val uiUpdatingFlow = resultFlow.map { it.first }
+    private fun stateFlow(
+        wallet: WalletEntity,
+        hiddenBalances: Boolean,
+        isOnline: Boolean
+    ): Flow<UiListState> = flow {
+        emit(UiListState.Loading)
+        emitAll(itemsFlow(wallet, hiddenBalances, isOnline))
+    }
 
-    private fun collectiblesFlow(
+    private fun itemsFlow(
         wallet: WalletEntity,
         hiddenBalances: Boolean,
         isOnline: Boolean,
-    ) = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
-
+    ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
         val uiItems = mutableListOf<Item>()
-        result.list?.let { list ->
-            for (nft in list) {
-                val isHiddenCollection = nft.collection?.address?.let {
-                    settingsRepository.getTokenPrefs(wallet.id, it).isHidden
-                } ?: false
+        for (nft in result.list) {
+            val isHiddenCollection = nft.collection?.address?.let {
+                settingsRepository.getTokenPrefs(wallet.id, it).isHidden
+            } ?: false
 
-                if (isHiddenCollection) {
-                    continue
-                }
-
-                val nftPref = settingsRepository.getTokenPrefs(wallet.id, nft.address)
-                if (nftPref.isHidden) {
-                    continue
-                }
-                uiItems.add(Item.Nft(nft.with(nftPref), hiddenBalances))
+            if (isHiddenCollection) {
+                continue
             }
+
+            val nftPref = settingsRepository.getTokenPrefs(wallet.id, nft.address)
+            if (nftPref.isHidden) {
+                continue
+            }
+            uiItems.add(Item.Nft(nft.with(nftPref), hiddenBalances))
         }
 
-        Pair(result.cache, uiItems.toList())
+        if (uiItems.isEmpty() && !result.cache) {
+            UiListState.Empty
+        } else if (uiItems.isEmpty()) {
+            UiListState.Loading
+        } else {
+            UiListState.Items(result.cache, uiItems.toList())
+        }
     }.flowOn(Dispatchers.IO)
 
     fun openQRCode() = accountRepository.selectedWalletFlow.take(1)

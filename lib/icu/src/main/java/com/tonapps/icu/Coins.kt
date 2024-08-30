@@ -44,7 +44,11 @@ data class Coins(
             value: String,
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
-            return of(value.toLong(), decimals)
+            if (value.length > 19) {
+                return of(BigInteger(value), decimals)
+            }
+            val long = value.toLongOrNull() ?: return ZERO
+            return of(long, decimals)
         }
 
         fun of(
@@ -52,6 +56,14 @@ data class Coins(
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
             return Coins(value, decimals)
+        }
+
+        fun of(
+            value: BigInteger,
+            decimals: Int = DEFAULT_DECIMALS
+        ): Coins {
+            val bigDecimal = BigDecimal(value)
+            return Coins(bigDecimal, decimals)
         }
 
         fun of(
@@ -161,9 +173,12 @@ data class Coins(
     operator fun times(other: Coins) = of(value * other.value, decimals)
 
     fun div(other: Coins, roundingMode: RoundingMode = RoundingMode.HALF_UP): Coins {
-        //  = of(value / other.value, decimals)
-        val result = value.divide(other.value, decimals, roundingMode)
-        return of(result, decimals)
+        try {
+            val result = value.divide(other.value, decimals, roundingMode)
+            return of(result, decimals)
+        } catch (e: Throwable) {
+            return ZERO
+        }
     }
 
     operator fun div(other: Coins): Coins {
@@ -187,8 +202,6 @@ data class Coins(
         val multipliedValue = value.multiply(multiplier)
         return multipliedValue.toLong()
     }
-
-    fun toDouble(): Double = value.toDouble()
 
     fun diff(coins: Coins): Float {
         if (coins.isZero || isZero) {

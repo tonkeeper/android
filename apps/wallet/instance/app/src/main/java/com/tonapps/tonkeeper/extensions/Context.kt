@@ -15,6 +15,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.text.bold
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.ui.screen.action.ActionScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.proof.LedgerProofScreen
@@ -23,6 +24,7 @@ import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -144,3 +146,33 @@ suspend fun Context.signLedgerTransaction(transaction: Transaction, walletId: St
             navigation?.add(LedgerSignScreen.newInstance(transaction, walletId, requestKey))
         }
     }
+
+
+fun Context.getWalletBadges(
+    type: Wallet.Type,
+    version: WalletVersion
+): CharSequence {
+    var builder = SpannableStringBuilder()
+
+    if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
+        val resId = if (version == WalletVersion.V5BETA) {
+            Localization.w5beta
+        } else {
+            Localization.w5
+        }
+        builder = builder.badgeGreen(this, resId)
+    }
+
+    if (type != Wallet.Type.Default) {
+        val resId = when (type) {
+            Wallet.Type.Watch -> Localization.watch_only
+            Wallet.Type.Testnet -> Localization.testnet
+            Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
+            Wallet.Type.Ledger -> Localization.ledger
+            else -> throw IllegalArgumentException("Unknown wallet type: $type")
+        }
+        builder = builder.badgeDefault(this, resId)
+    }
+
+    return builder
+}

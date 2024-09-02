@@ -60,12 +60,20 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
         button = view.findViewById(R.id.next_button)
         button.setOnClickListener { stakeViewModel.confirm() }
 
+        view.findViewById<View>(R.id.max).setOnClickListener { applyMax() }
+
         collectFlow(stakeViewModel.selectedPoolFlow, ::applyPoolInfo)
         collectFlow(stakeViewModel.availableUiStateFlow, ::applyAvailableState)
         collectFlow(stakeViewModel.fiatFormatFlow, ::applyFiat)
         collectFlow(stakeViewModel.apyFormatFlow.map {
             it.withCustomSymbol(requireContext())
         }, poolDescriptionView::setText)
+    }
+
+    private fun applyMax() {
+        collectFlow(stakeViewModel.requestMax()) {
+            amountView.setValue(it.value)
+        }
     }
 
     override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {
@@ -98,8 +106,8 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = false
         } else if (state.requestMinStake) {
-            availableView.text = getString(Localization.staking_minimum_deposit, state.minStakeFormat).withCustomSymbol(requireContext())
-            availableView.setTextColor(requireContext().textSecondaryColor)
+            availableView.text = getString(Localization.minimum_amount, state.minStakeFormat).withCustomSymbol(requireContext())
+            availableView.setTextColor(requireContext().accentRedColor)
             button.isEnabled = false
         } else {
             availableView.text = getString(Localization.remaining_balance, state.remainingFormat).withCustomSymbol(requireContext())

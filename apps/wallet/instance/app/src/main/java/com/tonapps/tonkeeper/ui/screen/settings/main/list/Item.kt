@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list
 
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
@@ -22,14 +23,16 @@ sealed class Item(type: Int): BaseListItem(type) {
         val title: String,
         val emoji: String,
         val color: Int,
-        val walletType: Wallet.Type
+        val walletType: Wallet.Type,
+        val walletVersion: WalletVersion,
     ): Item(TYPE_ACCOUNT) {
 
         constructor(wallet: WalletEntity) : this(
             title = wallet.label.name,
             emoji = wallet.label.emoji.toString(),
             color = wallet.label.color,
-            walletType = wallet.type
+            walletType = wallet.type,
+            walletVersion = wallet.version
         )
     }
 

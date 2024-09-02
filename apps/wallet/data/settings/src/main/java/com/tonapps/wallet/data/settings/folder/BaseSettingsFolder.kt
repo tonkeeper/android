@@ -2,7 +2,6 @@ package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getByteArray
 import com.tonapps.extensions.getIntArray
@@ -10,7 +9,6 @@ import com.tonapps.extensions.putIntArray
 import com.tonapps.extensions.state
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.shareIn
 
 internal abstract class BaseSettingsFolder(

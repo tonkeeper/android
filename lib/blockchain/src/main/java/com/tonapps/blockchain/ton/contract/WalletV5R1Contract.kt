@@ -1,9 +1,11 @@
 package com.tonapps.blockchain.ton.contract
 
+import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.WalletV5R1Contract.W5Context.Client
 import com.tonapps.blockchain.ton.contract.WalletV5R1Contract.W5Context.Custom
 import com.tonapps.blockchain.ton.extensions.storeBuilder
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeSeqAndValidUntil
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
@@ -118,10 +120,10 @@ class WalletV5R1Contract(
 
         val actions = packV5Actions(*gifts)
 
-        val opCode = if (internalMessage) 0x73696e74 else 0x7369676e
+        val opCode = if (internalMessage) TONOpCode.SIGNED_INTERNAL else TONOpCode.SIGNED_EXTERNAL
 
         return buildCell {
-            storeUInt(opCode, 32)
+            storeOpCode(opCode)
             storeUInt(context.serialized, 32)
             storeSeqAndValidUntil(seqno, validUntil)
             storeBuilder(actions)
@@ -135,7 +137,7 @@ class WalletV5R1Contract(
             val intMsg = CellRef(createIntMsg(gift))
 
             val msg = CellBuilder.beginCell().apply {
-                storeUInt(0x0ec3c86d, 32)
+                storeOpCode(TONOpCode.OUT_ACTION_SEND_MSG_TAG)
                 storeUInt(gift.sendMode, 8)
                 storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)
             }

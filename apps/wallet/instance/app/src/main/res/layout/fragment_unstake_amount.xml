@@ -63,7 +63,8 @@
                     android:paddingHorizontal="@dimen/offsetMedium"
                     android:gravity="center"
                     android:text="@string/max"
-                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:textAllCaps="true"
+                    android:textAppearance="@style/TextAppearance.Label2"
                     android:textColor="?attr/buttonSecondaryForegroundColor"/>
 
                 <View

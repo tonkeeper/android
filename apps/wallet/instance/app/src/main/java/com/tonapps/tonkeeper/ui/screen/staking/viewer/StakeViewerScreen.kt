@@ -24,16 +24,19 @@ class StakeViewerScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
     override val viewModel: StakeViewerViewModel by viewModel { parametersOf(args.address) }
     private val adapter = Adapter()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel.uiItemsFlow.catch {
+            navigation?.toast(Localization.unknown_error)
+            finish()
+        }.onEach(adapter::submitList).launchIn(lifecycleScope)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setTitle(args.name)
         setAdapter(adapter)
         collectFlow(viewModel.poolNameFlow, ::setTitle)
-
-        viewModel.uiItemsFlow.catch {
-            navigation?.toast(Localization.unknown_error)
-            finish()
-        }.onEach(adapter::submitList).launchIn(lifecycleScope)
     }
 
     companion object {

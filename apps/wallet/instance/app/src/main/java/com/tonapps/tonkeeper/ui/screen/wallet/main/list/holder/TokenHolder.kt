@@ -13,7 +13,7 @@ import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.withDefaultBadge
 import uikit.widget.FrescoView
 
 class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_cell_jetton) {
@@ -30,10 +30,15 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             navigation?.add(TokenScreen.newInstance(item.address, item.name, item.symbol))
         }
         if (item.blacklist) {
-            titleView.text = "FAKE"
+            titleView.text = getString(Localization.fake)
             iconView.clear(null)
         } else {
-            titleView.text = item.symbol
+            val text = if (item.isUSDT) {
+                item.symbol.withDefaultBadge(context, Localization.ton)
+            } else {
+                item.symbol
+            }
+            titleView.text = text
             iconView.setImageURI(item.iconUri, this)
         }
 

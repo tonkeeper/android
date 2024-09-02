@@ -18,9 +18,11 @@ data class BalanceEntity(
 
     companion object {
 
-        fun empty(accountId: String) = BalanceEntity(
+        fun empty(accountId: String) = create(accountId, Coins.ZERO)
+
+        fun create(accountId: String, value: Coins) = BalanceEntity(
             token = TokenEntity.TON,
-            value = Coins.ZERO,
+            value = value,
             walletAddress = accountId,
             initializedAccount = false,
         )

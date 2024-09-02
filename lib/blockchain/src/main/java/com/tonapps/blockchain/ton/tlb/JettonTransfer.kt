@@ -1,5 +1,7 @@
 package com.tonapps.blockchain.ton.tlb
 
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
 import org.ton.cell.CellBuilder
@@ -45,7 +47,7 @@ private object JettonTransferTlbConstructor : TlbConstructor<JettonTransfer>(
     override fun storeTlb(
         cellBuilder: CellBuilder, value: JettonTransfer
     ) = cellBuilder {
-        storeUInt(0xf8a7ea5, 32)
+        storeOpCode(TONOpCode.JETTON_TRANSFER)
         storeUInt(value.queryId, 64)
         storeTlb(Coins, value.coins)
         storeTlb(MsgAddressInt, value.toAddress)

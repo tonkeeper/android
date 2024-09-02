@@ -1,5 +1,7 @@
 package com.tonapps.ledger.ton
 
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.ledger.transport.Transport
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -224,7 +226,7 @@ class TonTransport(private val transport: Transport) {
 
             is TonPayloadFormat.NftTransfer -> {
                 hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x02)
-                var cell = CellBuilder.beginCell().storeUInt(0x5fcc3d14, 32)
+                var cell = CellBuilder.beginCell().storeOpCode(TONOpCode.NFT_TRANSFER)
                 var bytes = ByteArray(0)
 
                 transaction.payload.queryId?.let { queryId ->
@@ -266,7 +268,7 @@ class TonTransport(private val transport: Transport) {
 
             is TonPayloadFormat.JettonBurn -> {
                 hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x03)
-                var cell = CellBuilder.beginCell().storeUInt(0x595f07bc, 32)
+                var cell = CellBuilder.beginCell().storeOpCode(TONOpCode.LIQUID_TF_BURN)
                 var bytes = ByteArray(0)
 
                 transaction.payload.queryId?.let { queryId ->
@@ -459,7 +461,7 @@ class TonTransport(private val transport: Transport) {
 
             is TonPayloadFormat.TonstakersDeposit -> {
                 hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x07)
-                var cell = CellBuilder.beginCell().storeUInt(0x47d54391, 32)
+                var cell = CellBuilder.beginCell().storeOpCode(TONOpCode.LIQUID_TF_DEPOSIT)
                 var bytes = ByteArray(0)
 
                 transaction.payload.queryId?.let { queryId ->

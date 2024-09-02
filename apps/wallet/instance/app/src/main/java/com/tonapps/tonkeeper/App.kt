@@ -38,6 +38,10 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
     companion object {
 
         lateinit var instance: App
+
+        fun applyConfiguration(newConfig: Configuration) {
+            CurrencyFormatter.onConfigurationChanged(newConfig)
+        }
     }
 
     override fun onCreate() {
@@ -59,7 +63,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        CurrencyFormatter.onConfigurationChanged(newConfig)
+        applyConfiguration(newConfig)
     }
 
     private fun initFresco() {

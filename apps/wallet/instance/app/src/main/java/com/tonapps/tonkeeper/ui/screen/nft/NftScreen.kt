@@ -155,6 +155,15 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
         }
         setAddress(view, nftEntity.userFriendlyAddress)
         setTrust(nftEntity.trust)
+
+        collectFlow(viewModel.hasPrivateKeyFlow) { hasPrivateKey ->
+            if (!hasPrivateKey) {
+                buttonsContainer.visibility = View.GONE
+                domainLinkButton.visibility = View.GONE
+                domainRenewButton.visibility = View.GONE
+                transferButton.visibility = View.GONE
+            }
+        }
     }
 
     private fun setTrust(trust: Trust) {

@@ -1,21 +1,18 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.net.toUri
-import androidx.core.os.LocaleListCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.whenCreated
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
@@ -43,7 +40,6 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.dialog.alert.AlertDialog
@@ -94,11 +90,18 @@ class RootActivity: BaseWalletActivity() {
         collectFlow(viewModel.themeFlow) {
             recreate()
         }
+
+        App.applyConfiguration(resources.configuration)
     }
 
     override fun recreate() {
         viewModelStore.clear()
         super.recreate()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        App.applyConfiguration(newConfig)
     }
 
     private fun passcodeFlow(config: RootViewModel.Passcode) {
@@ -278,8 +281,9 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun openBrowser(uri: Uri) {
-        val intent = Intent(Intent.ACTION_VIEW, uri)
-        safeStartActivity(intent)
+        add(WebScreen.newInstance(uri))
+        // val intent = Intent(Intent.ACTION_VIEW, uri)
+        // safeStartActivity(intent)
     }
 
     private fun openEmail(uri: Uri) {

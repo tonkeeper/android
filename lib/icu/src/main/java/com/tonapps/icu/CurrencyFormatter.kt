@@ -36,6 +36,15 @@ object CurrencyFormatter {
         }
     }
 
+    fun formatPercent(
+        value: BigDecimal,
+        customScale: Int = 2,
+        roundingMode: RoundingMode = RoundingMode.DOWN,
+    ): CharSequence {
+        val format = format(value = value, customScale = customScale, roundingMode = roundingMode)
+        return "$format%"
+    }
+
     fun format(
         currency: String = "",
         value: BigDecimal,

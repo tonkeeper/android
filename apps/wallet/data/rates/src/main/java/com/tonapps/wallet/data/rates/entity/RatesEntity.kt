@@ -14,6 +14,7 @@ data class RatesEntity(
 ): Parcelable {
 
     companion object {
+
         fun empty(currency: WalletCurrency): RatesEntity {
             return RatesEntity(currency, hashMapOf())
         }
@@ -24,6 +25,19 @@ data class RatesEntity(
 
     private val isUSD: Boolean
         get() = currency.code == "USD"
+
+    fun hasToken(token: String): Boolean {
+        return map.containsKey(token)
+    }
+
+    fun hasTokens(tokens: List<String>): Boolean {
+        for (token in tokens) {
+            if (!hasToken(token)) {
+                return false
+            }
+        }
+        return true
+    }
 
     fun merge(rates: List<RateEntity>): RatesEntity {
         val newMap = map.toMutableMap()
@@ -52,6 +66,10 @@ data class RatesEntity(
 
     fun rateDiff(token: String): RateDiffEntity? {
         return rate(token)?.diff
+    }
+
+    fun convertTON(value: Coins): Coins {
+        return convert(TokenEntity.TON.address, value)
     }
 
     fun convert(token: String, value: Coins): Coins {

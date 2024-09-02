@@ -2,7 +2,10 @@ package com.tonapps.wallet.data.core.entity
 
 import android.os.Parcelable
 import android.util.Log
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.loadOpCode
 import com.tonapps.blockchain.ton.extensions.safeParseCell
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.toTlb
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
@@ -49,13 +52,12 @@ data class RawMessageEntity(
 
     private fun rebuildBodyWithCustomExcessesAccount(body: Cell, excessesAddress: AddrStd): Cell {
         val slice = body.beginParse()
-        val opCode = slice.loadUInt32()
-        var builder = CellBuilder.beginCell()
-        return when (opCode.toInt()) {
+        val builder = CellBuilder.beginCell()
+        return when (slice.loadOpCode()) {
             // stonfi swap
-            0x25938561 -> {
+            TONOpCode.STONFI_SWAP -> {
                 builder
-                    .storeUInt(0x25938561, 32)
+                    .storeOpCode(TONOpCode.STONFI_SWAP)
                     .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
                     .storeTlb(Coins, slice.loadTlb(Coins.tlbCodec()))
                     .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
@@ -72,9 +74,9 @@ data class RawMessageEntity(
                 builder.endCell()
             }
             // nft transfer
-            0x5fcc3d14 -> body
+            TONOpCode.NFT_TRANSFER -> body
             // jetton transfer
-            0xf8a7ea5 -> body
+            TONOpCode.JETTON_TRANSFER -> body
             else -> body
         }
     }

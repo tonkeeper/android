@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import android.text.SpannableStringBuilder
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +15,9 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.tonkeeper.extensions.badgeGreen
+import com.tonapps.tonkeeper.extensions.badgeOrange
+import com.tonapps.tonkeeper.extensions.badgePurple
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
@@ -50,7 +55,6 @@ class BalanceHolder(
     private val batteryView = itemView.findViewById<BatteryView>(R.id.wallet_battery)
     private val walletAddressView = itemView.findViewById<AppCompatTextView>(R.id.wallet_address)
     private val walletLoaderView = itemView.findViewById<LoaderView>(R.id.wallet_loader)
-    private val walletTypeView = itemView.findViewById<AppCompatTextView>(R.id.wallet_type)
     private val backupIconView = itemView.findViewById<AppCompatImageView>(R.id.backup_icon)
 
     init {
@@ -60,7 +64,6 @@ class BalanceHolder(
         }
         walletLoaderView.setColor(context.iconSecondaryColor)
         walletLoaderView.setTrackColor(context.iconSecondaryColor.withAlpha(.32f))
-        walletTypeView.backgroundTintList = context.accentOrangeColor.withAlpha(.16f).stateList
         backupIconView.setOnClickListener {
             Navigation.from(context)?.add(BackupScreen.newInstance())
         }
@@ -106,14 +109,20 @@ class BalanceHolder(
             batteryView.visibility = View.GONE
         }
 
-        setWalletType(item.walletType, item.walletVersion)
-        setWalletState(item.status, item.address, item.walletType, item.lastUpdatedFormat)
+        setWalletState(
+            state = item.status,
+            address = item.address,
+            walletType = item.walletType,
+            walletVersion = item.walletVersion,
+            lastUpdatedFormat = item.lastUpdatedFormat
+        )
     }
 
     private fun setWalletState(
         state: Item.Status,
         address: String,
         walletType: Wallet.Type,
+        walletVersion: WalletVersion,
         lastUpdatedFormat: String,
     ) {
         if (state == Item.Status.LastUpdated) {
@@ -138,7 +147,7 @@ class BalanceHolder(
             walletAddressView.setTextColor(context.accentOrangeColor)
         } else {
             walletLoaderView.visibility = View.GONE
-            walletAddressView.text = address.shortAddress
+            setWalletAddressWithType(address.shortAddress, walletType, walletVersion)
             walletAddressView.setTextColor(context.textSecondaryColor)
             walletAddressView.setOnClickListener {
                 if (walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Watch) {
@@ -150,32 +159,32 @@ class BalanceHolder(
         }
     }
 
-    private fun setWalletType(type: Wallet.Type, version: WalletVersion) {
+    private fun setWalletAddressWithType(
+        address: String,
+        type: Wallet.Type,
+        version: WalletVersion
+    ) {
+        var builder = SpannableStringBuilder(address.shortAddress)
+
         if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
-            val color = context.accentGreenColor
-            walletTypeView.visibility = View.VISIBLE
-            walletTypeView.setTextColor(color)
-            walletTypeView.backgroundTintList = color.withAlpha(.16f).stateList
-            walletTypeView.setText(if (version == WalletVersion.V5BETA) Localization.w5beta else Localization.w5)
-            return
-        }
-
-        val resId = when (type) {
-            Wallet.Type.Watch -> Localization.watch_only
-            Wallet.Type.Testnet -> Localization.testnet
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
-            Wallet.Type.Ledger -> Localization.ledger
-            else -> {
-                walletTypeView.visibility = View.GONE
-                return
+            val resId = if (version == WalletVersion.V5BETA) {
+                Localization.w5beta
+            } else {
+                Localization.w5
             }
+            builder = builder.badgeGreen(context, resId)
         }
 
-        val color = getTypeColor(type)
-        walletTypeView.visibility = View.VISIBLE
-        walletTypeView.setTextColor(color)
-        walletTypeView.backgroundTintList = color.withAlpha(.16f).stateList
-        walletTypeView.setText(resId)
+        builder = when (type) {
+            Wallet.Type.Signer, Wallet.Type.SignerQR -> builder.badgePurple(context, Localization.signer)
+            Wallet.Type.Ledger -> builder.badgeGreen(context, Localization.ledger)
+            Wallet.Type.Testnet -> builder.badgeOrange(context, Localization.testnet)
+            Wallet.Type.Watch -> builder.badgeOrange(context, Localization.watch_only)
+            Wallet.Type.Default -> builder
+            Wallet.Type.Lockup -> builder
+        }
+
+        walletAddressView.text = builder
     }
 
     private fun getTypeColor(type: Wallet.Type): Int {

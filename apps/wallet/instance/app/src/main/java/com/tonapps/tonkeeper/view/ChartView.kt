@@ -49,7 +49,6 @@ class ChartView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        Log.d("ChartViewLog", "draw chart")
         val lineWidthPart = linePaint.strokeWidth / 2f
         canvas.translate(-lineWidthPart, lineWidthPart)
         canvas.drawPath(path, linePaint)

@@ -21,7 +21,7 @@ sealed class AssetsEntity(
             } else {
                 TokenPrefsEntity()
             }
-            AssetsExtendedEntity(asset, pref)
+            AssetsExtendedEntity(asset, pref, wallet.accountId)
         }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator).map { it.raw }
     }
 

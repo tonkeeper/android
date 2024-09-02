@@ -88,14 +88,15 @@
             android:textAppearance="@style/TextAppearance.H3"
             android:textColor="?attr/textPrimaryColor"/>
 
-        <com.google.android.flexbox.FlexboxLayout
+        <uikit.widget.FlexboxWithGapLayout
             android:id="@+id/links"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:gapVertical="8dp"
+            app:gapHorizontal="8dp"
             app:flexDirection="row"
             app:flexWrap="wrap"
             app:layout_flexGrow="1"/>
-
 
     </uikit.widget.ColumnLayout>
 

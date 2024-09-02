@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.staking.entities
 import android.os.Parcelable
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.staking.StakingPool
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -14,10 +15,11 @@ data class PoolInfoEntity(
     val details: PoolDetailsEntity,
 ): Parcelable {
 
+    @IgnoredOnParcel
     val apy = pools.maxOfOrNull { it.apy } ?: BigDecimal.ZERO
+
+    @IgnoredOnParcel
     val minStake = pools.minOfOrNull { it.minStake } ?: Coins.ZERO
-    val apyPercent = apy.setScale(2, RoundingMode.DOWN).stripTrailingZeros()
-    val apyFormat = "APY ≈ ${apyPercent}%"
 
     val name: String
         get() = implementation.name

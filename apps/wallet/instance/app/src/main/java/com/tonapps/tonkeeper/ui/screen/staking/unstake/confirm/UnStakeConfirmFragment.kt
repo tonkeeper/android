@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.extensions.short12
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
@@ -44,11 +46,29 @@ class UnStakeConfirmFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unst
         button = view.findViewById(R.id.button)
         taskView = view.findViewById(R.id.task)
 
+        button.setOnClickListener { unStake() }
+
         collectFlow(unStakeViewModel.walletFlow) { wallet ->
-            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView)
+            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView, 12)
         }
 
         collectFlow(unStakeViewModel.poolFlow, ::applyPool)
+        collectFlow(unStakeViewModel.taskStateFlow, ::setTaskState)
+
+        collectFlow(unStakeViewModel.amountFormatFlow) { amountFormat ->
+            amountView.value = amountFormat.withCustomSymbol(requireContext())
+        }
+
+        collectFlow(unStakeViewModel.fiatFormatFlow) { fiatFormat ->
+            amountView.description = fiatFormat.withCustomSymbol(requireContext())
+        }
+
+        collectFlow(unStakeViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
+            feeView.setDefault()
+            feeView.value = "≈ " + feeFormat.withCustomSymbol(requireContext())
+            feeView.description = "≈ " + feeFiatFormat.withCustomSymbol(requireContext())
+            button.isEnabled = true
+        }
     }
 
     override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {
@@ -57,9 +77,15 @@ class UnStakeConfirmFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unst
         taskView.translationY = -offset.toFloat()
     }
 
+    private fun unStake() {
+        collectFlow(unStakeViewModel.unStake(requireContext())) {
+
+        }
+    }
+
     private fun applyPool(pool: PoolEntity) {
         iconView.setLocalRes(StakingPool.getIcon(pool.implementation))
-        recipientView.value = pool.name
+        recipientView.value = pool.name.short12
     }
 
     private fun setTaskState(state: ProcessTaskView.State) {

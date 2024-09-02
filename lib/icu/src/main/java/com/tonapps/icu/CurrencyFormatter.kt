@@ -67,13 +67,21 @@ object CurrencyFormatter {
 
     fun formatFiat(
         currency: String,
-        value: Coins,
+        value: BigDecimal,
         customScale: Int = 2,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
     ): CharSequence {
         return format(currency, value, customScale, roundingMode, replaceSymbol)
     }
+
+    fun formatFiat(
+        currency: String,
+        value: Coins,
+        customScale: Int = 2,
+        roundingMode: RoundingMode = RoundingMode.DOWN,
+        replaceSymbol: Boolean = true,
+    ) = formatFiat(currency, value.value, customScale, roundingMode, replaceSymbol)
 
     fun CharSequence.withCustomSymbol(context: Context): CharSequence {
         if (true) { // Not now... maybe in future

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
+import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.uikit.icon.UIKitIcon
@@ -18,7 +19,7 @@ import uikit.widget.SimpleRecyclerView
 abstract class BaseListWalletScreen: BaseWalletScreen(R.layout.fragment_list) {
 
     private lateinit var headerContainer: FrameLayout
-    private lateinit var headerView: HeaderView
+    protected lateinit var headerView: HeaderView
     private lateinit var listView: SimpleRecyclerView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -33,11 +34,17 @@ abstract class BaseListWalletScreen: BaseWalletScreen(R.layout.fragment_list) {
             headerView.setIgnoreSystemOffset()
             headerView.setAction(UIKitIcon.ic_close_16)
             headerView.doOnActionClick = { finish() }
+        } else if (parentFragment != null) {
+            headerView.setIgnoreSystemOffset()
         }
 
         listView = view.findViewById(R.id.list)
         listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(R.dimen.cornerMedium))
         collectFlow(listView.topScrolled, headerView::setDivider)
+    }
+
+    fun hideHeaderContainer() {
+        headerContainer.visibility = View.GONE
     }
 
     fun addViewHeader(view: View, params: FrameLayout.LayoutParams? = null) {
@@ -72,6 +79,15 @@ abstract class BaseListWalletScreen: BaseWalletScreen(R.layout.fragment_list) {
 
     fun setListPadding(left: Int, top: Int, right: Int, bottom: Int) {
         listView.setPadding(left, top, right, bottom)
+    }
+
+    fun updateListPadding(
+        left: Int = listView.paddingLeft,
+        top: Int = listView.paddingTop,
+        right: Int = listView.paddingRight,
+        bottom: Int = listView.paddingBottom
+    ) {
+        listView.updatePadding(left, top, right, bottom)
     }
 
     fun setActionIcon(@DrawableRes resId: Int, onClick: (view: View) -> Unit) {

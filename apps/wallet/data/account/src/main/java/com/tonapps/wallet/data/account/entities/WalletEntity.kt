@@ -4,6 +4,7 @@ import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
@@ -32,7 +33,7 @@ data class WalletEntity(
     data class Ledger(
         val deviceId: String,
         val accountIndex: Int
-    ): Parcelable
+    ) : Parcelable
 
     val contract: BaseWalletContract by lazy {
         val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value
@@ -69,15 +70,21 @@ data class WalletEntity(
         return address.toRawAddress().equals(accountId, ignoreCase = true)
     }
 
+    fun isSupportedFeature(feature: WalletFeature): Boolean {
+        return contract.isSupportedFeature(feature)
+    }
+
     fun createBody(
         seqno: Int,
         validUntil: Long,
-        gifts: List<WalletTransfer>
+        gifts: List<WalletTransfer>,
+        internalMessage: Boolean = false,
     ): Cell {
         return contract.createTransferUnsignedBody(
             validUntil = validUntil,
             seqno = seqno,
-            gifts = gifts.toTypedArray()
+            gifts = gifts.toTypedArray(),
+            internalMessage = internalMessage,
         )
     }
 

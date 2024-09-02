@@ -1,5 +1,7 @@
 package com.tonapps.blockchain.ton.contract
 
+import com.tonapps.blockchain.ton.tlb.CellStringTlbConstructor
+import kotlinx.io.bytestring.ByteString
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
@@ -91,6 +93,12 @@ abstract class BaseWalletContract(
         SmartContract.address(workchain, stateInit)
     }
 
+    abstract val features: WalletFeature
+
+    fun isSupportedFeature(feature: WalletFeature): Boolean {
+        return features.contains(feature)
+    }
+
     abstract fun getStateCell(): Cell
 
     abstract fun getCode(): Cell
@@ -100,7 +108,7 @@ abstract class BaseWalletContract(
     abstract fun createTransferUnsignedBody(
         validUntil: Long,
         seqno: Int,
-        internalMessage: Boolean = true,
+        internalMessage: Boolean = false,
         queryId: BigInteger? = null,
         vararg gifts: WalletTransfer
     ): Cell
@@ -199,6 +207,22 @@ abstract class BaseWalletContract(
         val cell = buildCell {
             storeTlb(Message.tlbCodec(AnyTlbConstructor), message)
         }
+        return cell
+    }
+
+    fun createBatteryBody(address: MsgAddressInt? = null, appliedPromo: String? = null): Cell {
+        val cell = buildCell {
+            storeUInt(0xb7b2515f, 32)
+            storeBit(address != null)
+            if (address != null) {
+                storeTlb(MsgAddressInt, address)
+            }
+            storeBit(appliedPromo.isNullOrEmpty())
+            if (!appliedPromo.isNullOrEmpty()) {
+                storeTlb(CellStringTlbConstructor, ByteString(*appliedPromo.encodeToByteArray()))
+            }
+        }
+
         return cell
     }
 }

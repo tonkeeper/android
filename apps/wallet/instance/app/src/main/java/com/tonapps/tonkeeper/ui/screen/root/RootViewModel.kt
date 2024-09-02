@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
@@ -41,6 +40,7 @@ import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.purchase.PurchaseRepository
+import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
@@ -66,7 +66,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
@@ -120,7 +119,6 @@ class RootViewModel(
     val tonConnectEventsFlow = tonConnectRepository.eventsFlow
 
     init {
-        Log.d("RootViewModel", "init")
         combine(
             settingsRepository.biometricFlow.take(1),
             settingsRepository.lockscreenFlow.take(1)
@@ -247,19 +245,23 @@ class RootViewModel(
 
     suspend fun requestSign(
         context: Context,
-        request: SignRequestEntity
+        request: SignRequestEntity,
+        batteryTxType: BatteryTransaction? = null,
+        forceRelayer: Boolean = false,
     ): String {
         val wallet = selectedWalletFlow.firstOrNull() ?: throw Exception("wallet is null")
-        return requestSign(context, wallet, request)
+        return requestSign(context, wallet, request, batteryTxType, forceRelayer)
     }
 
     suspend fun requestSign(
         context: Context,
         wallet: WalletEntity,
-        request: SignRequestEntity
+        request: SignRequestEntity,
+        batteryTxType: BatteryTransaction? = null,
+        forceRelayer: Boolean = false,
     ): String {
         val navigation = context.navigation ?: throw Exception("navigation is null")
-        return signManager.action(navigation, wallet, request)
+        return signManager.action(navigation, wallet, request, batteryTxType = batteryTxType, forceRelayer = forceRelayer)
     }
 
     suspend fun tonconnectBridgeEvent(
@@ -384,6 +386,9 @@ class RootViewModel(
             val ft = uri.getQueryParameter("ft") ?: "TON"
             val tt = uri.getQueryParameter("tt")
             _eventFlow.tryEmit(RootEvent.Swap(api.config.swapUri, wallet.address, ft, tt))
+        } else if (path?.startsWith("/battery") == true) {
+            val promocode = uri.getQueryParameter("promocode")
+            _eventFlow.tryEmit(RootEvent.Battery(promocode))
         } else if (path?.startsWith("/buy-ton") == true || uri.path == "/exchange" || uri.path == "/exchange/") {
             _eventFlow.tryEmit(RootEvent.BuyOrSell())
         } else if (path?.startsWith("/exchange") == true) {

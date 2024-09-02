@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -10,6 +11,10 @@ import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
 import com.tonapps.tonkeeper.ui.screen.add.imprt.ImportWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckViewModel
+import com.tonapps.tonkeeper.ui.screen.battery.BatteryViewModel
+import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
+import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
+import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreViewModel
@@ -53,6 +58,7 @@ import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val koinModel = module {
@@ -60,8 +66,9 @@ val koinModel = module {
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
     single { SettingsRepository(get(), get(), get()) }
     single { NetworkMonitor(get(), get()) }
-    single { SignManager(get(), get(), get(), get(), get()) }
+    single { SignManager(get(), get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get(), get(), get(), get(), get(), get()) }
+    singleOf(::BillingManager)
 
     factory { (viewModel: com.tonapps.tonkeeper.ui.base.BaseWalletVM) ->
         // TODO
@@ -75,7 +82,7 @@ val koinModel = module {
     viewModel { MainViewModel(androidApplication(), get(), get()) }
     viewModel { RootViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(androidApplication(), get(), get()) }
-    viewModel { WalletViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { WalletViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(androidApplication(), get()) }
     viewModel { SettingsViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
     viewModel { EditNameViewModel(androidApplication(), get()) }
@@ -85,7 +92,7 @@ val koinModel = module {
     viewModel { EventsViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(androidApplication(), request = parameters.get(), get(), get(), get()) }
     viewModel { CollectiblesViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { parameters -> ActionViewModel(androidApplication(), args = parameters.get(), get(), get(), get()) }
+    viewModel { parameters -> ActionViewModel(androidApplication(), args = parameters.get(), get(), get(), get(), get()) }
     viewModel { BrowserExploreViewModel(androidApplication(), get(), get(), get(), get()) }
     viewModel { BrowserConnectedViewModel(androidApplication(), get(), get(), get()) }
     viewModel { BrowserMainViewModel(androidApplication(), get()) }
@@ -97,7 +104,7 @@ val koinModel = module {
     viewModel { BackupViewModel(androidApplication(), get(), get(), get(), get()) }
     viewModel { BackupCheckViewModel(androidApplication(), get(), get()) }
     viewModel { TokensManageViewModel(androidApplication(), get(), get(), get()) }
-    viewModel { parameters -> SendViewModel(androidApplication(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> SendViewModel(androidApplication(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { TokenPickerViewModel(androidApplication(), get(), get(), get()) }
     viewModel { CountryPickerViewModel(androidApplication(), get(), get()) }
     viewModel { parameters -> StakingViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
@@ -110,4 +117,8 @@ val koinModel = module {
     viewModel { SendContactsViewModel(androidApplication(), get(), get(), get()) }
     viewModel { NotificationsEnableViewModel(get(), get()) }
     viewModel { ImportWalletViewModel(androidApplication(), get()) }
+    viewModel { BatteryViewModel(androidApplication()) }
+    viewModel { BatterySettingsViewModel(androidApplication(), get(), get(), get(), get()) }
+    viewModel { BatteryRefillViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> BatteryRechargeViewModel(androidApplication(), args = parameters.get(), get(), get(), get(), get(), get(), get()) }
 }

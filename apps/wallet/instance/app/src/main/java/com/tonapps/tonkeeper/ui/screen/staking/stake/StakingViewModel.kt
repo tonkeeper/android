@@ -3,8 +3,10 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.flattenFirst
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.Transaction
@@ -33,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -43,7 +46,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
@@ -88,9 +94,11 @@ class StakingViewModel(
     private val _eventFlow = MutableEffectFlow<StakingEvent>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
-    val tokenFlow = accountRepository.selectedWalletFlow.map { wallet ->
+    private val tokenFlow = accountRepository.selectedWalletFlow.map { wallet ->
         tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
-    }.map { it.firstOrNull() }.filterNotNull().flowOn(Dispatchers.IO)
+    }.mapNotNull { it.firstOrNull() }
+        .flowOn(Dispatchers.IO)
+        .shareIn(viewModelScope, SharingStarted.Lazily, 1)
 
     private val ratesFlow = tokenFlow.map { token ->
         ratesRepository.getRates(settingsRepository.currency, token.address)
@@ -118,7 +126,7 @@ class StakingViewModel(
                 balanceFormat = balanceFormat,
                 remainingFormat = CurrencyFormatter.format(token.symbol, remaining),
                 minStakeFormat = minStakeFormat,
-                insufficientBalance = !remaining.isPositive,
+                insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
                 requestMinStake = pool.minStake > amount
             )
         }
@@ -129,7 +137,7 @@ class StakingViewModel(
     }
 
     val fiatFormatFlow = fiatFlow.map {
-        CurrencyFormatter.format(settingsRepository.currency.code, it)
+        CurrencyFormatter.format(settingsRepository.currency.code, it, replaceSymbol = false)
     }
 
     val amountFormatFlow = combine(amountFlow, tokenFlow) { amount, token ->
@@ -139,18 +147,22 @@ class StakingViewModel(
     val apyFormatFlow = combine(
         amountFlow,
         selectedPoolFlow,
-        tokenFlow,
         poolsFlow
-    ) { amount, pool, token, pools ->
+    ) { amount, pool, pools ->
         val info = pools.find { it.implementation == pool.implementation } ?: return@combine ""
-        if (amount == Coins.ZERO) {
-            info.apyFormat
+        val apyFormat = CurrencyFormatter.formatPercent(info.apy)
+        if (amount.isPositive) {
+            val earning = amount.multiply(pool.apy).divide(100)
+            "%s ≈ %s · %s".format(
+                getString(Localization.staking_apy),
+                apyFormat,
+                CurrencyFormatter.format(TokenEntity.TON.symbol, earning)
+            )
         } else {
-            val earnings = amount.value.multiply(pool.apy)
-                .divide(BigDecimal(100), RoundingMode.HALF_UP)
-
-            val coinsFormat = CurrencyFormatter.format(token.symbol, Coins.of(earnings))
-            "${info.apyFormat} · $coinsFormat"
+            "%s ≈ %s".format(
+                getString(Localization.staking_apy),
+                apyFormat
+            )
         }
     }
 
@@ -174,6 +186,10 @@ class StakingViewModel(
             }
         }
         updateAmount(0.0)
+    }
+
+    fun requestMax() = tokenFlow.take(1).map {
+        it.balance.value
     }
 
     fun updateAmount(amount: Double) {
@@ -213,10 +229,7 @@ class StakingViewModel(
         val queryId = TransferEntity.newWalletQueryId()
         when (pool.implementation) {
             StakingPool.Implementation.Whales -> StakingUtils.createWhalesAddStakeCommand(queryId)
-            StakingPool.Implementation.LiquidTF -> StakingUtils.createLiquidTfAddStakeCommand(
-                queryId
-            )
-
+            StakingPool.Implementation.LiquidTF -> StakingUtils.createLiquidTfAddStakeCommand(queryId)
             StakingPool.Implementation.TF -> StakingUtils.createTfAddStakeCommand()
             else -> throw IllegalStateException("Unsupported pool implementation: ${pool.implementation}")
         }
@@ -278,65 +291,58 @@ class StakingViewModel(
         Pair(params.seqno, transaction)
     }.flowOn(Dispatchers.IO)
 
-    fun requestFee() =
-        combine(walletFlow.take(1), unsignedBodyFlow()) { wallet, (seqno, unsignedBody) ->
-            val contract = wallet.contract
-            val message = contract.createTransferMessageCell(
-                address = contract.address,
-                privateKey = EmptyPrivateKeyEd25519,
-                seqno = seqno,
-                unsignedBody = unsignedBody,
-            )
-            api.emulate(message, wallet.testnet)?.totalFees ?: 0L
-        }.take(1).flowOn(Dispatchers.IO)
+    private fun requestFee() = combine(
+        walletFlow.take(1),
+        unsignedBodyFlow()
+    ) { wallet, (seqno, unsignedBody) ->
+        val contract = wallet.contract
+        val message = contract.createTransferMessageCell(
+            address = contract.address,
+            privateKey = EmptyPrivateKeyEd25519,
+            seqno = seqno,
+            unsignedBody = unsignedBody,
+        )
+        api.emulate(message, wallet.testnet)?.totalFees ?: 0L
+    }.flowOn(Dispatchers.IO)
 
-    fun requestFeeFormat() =
-        combine(ratesFlow.take(1), requestFee(), tokenFlow.take(1)) { rates, fee, token ->
-            val currency = settingsRepository.currency
-            val coins = Coins.of(fee)
-            val converted = rates.convert(token.address, coins)
-            Pair(
-                CurrencyFormatter.format(TokenEntity.TON.symbol, coins, TokenEntity.TON.decimals),
-                CurrencyFormatter.format(currency.code, converted, currency.decimals)
-            )
-        }.take(1)
+    fun requestFeeFormat() = combine(
+        ratesFlow.take(1),
+        requestFee(),
+        tokenFlow.take(1)
+    ) { rates, fee, token ->
+        val currency = settingsRepository.currency
+        val coins = Coins.of(fee)
+        val converted = rates.convert(token.address, coins)
+        Pair(
+            CurrencyFormatter.format(TokenEntity.TON.symbol, coins, TokenEntity.TON.decimals),
+            CurrencyFormatter.format(currency.code, converted, currency.decimals)
+        )
+    }
 
-    fun stake(context: Context) = walletFlow.take(1).flatMapLatest { wallet ->
-        val passcodeFlow = if (!wallet.isLedger) {
-            passcodeManager.confirmationFlow(context, context.getString(Localization.app_name))
-                .take(1)
-        } else {
-            flowOf(Unit)
-        }
-
-        val stakeFlow = if (wallet.isLedger) {
+    fun stake(context: Context) = walletFlow.take(1).map { wallet ->
+        if (wallet.isLedger) {
             createLedgerStakeFlow(context, wallet)
         } else {
             createStakeFlow(wallet)
         }
-
-        combine(
-            passcodeFlow,
-            stakeFlow,
-        ) { _, _ -> }.catch { e ->
-            taskStateFlow.tryEmit(
-                if (e.instanceOf(SendException.Cancelled::class)) {
-                    ProcessTaskView.State.DEFAULT
-                } else {
-                    ProcessTaskView.State.FAILED
-                }
-            )
-        }.flowOn(Dispatchers.IO).onEach {
-            taskStateFlow.tryEmit(ProcessTaskView.State.SUCCESS)
-            delay(3000)
-            _eventFlow.tryEmit(StakingEvent.Finish)
-        }
+    }.flattenFirst().flowOn(Dispatchers.IO).catch { e ->
+        taskStateFlow.tryEmit(
+            if (e.instanceOf(SendException.Cancelled::class)) {
+                ProcessTaskView.State.DEFAULT
+            } else {
+                ProcessTaskView.State.FAILED
+            }
+        )
+    }.onEach {
+        taskStateFlow.tryEmit(ProcessTaskView.State.SUCCESS)
+        delay(3000)
+        _eventFlow.tryEmit(StakingEvent.Finish)
     }
 
-    private fun createLedgerStakeFlow(context: Context, wallet: WalletEntity) = combine(
-        flowOf(wallet),
-        ledgerTransactionFlow().take(1)
-    ) { wallet, (seqno, transaction) ->
+    private fun createLedgerStakeFlow(
+        context: Context,
+        wallet: WalletEntity
+    ) = ledgerTransactionFlow().map { (seqno, transaction) ->
         taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
 
         val signedBody = context.signLedgerTransaction(transaction, wallet.id)
@@ -350,10 +356,11 @@ class StakingViewModel(
         }
     }
 
-    private fun createStakeFlow(wallet: WalletEntity) = combine(
-        flowOf(wallet),
-        unsignedBodyFlow().take(1)
-    ) { wallet, (seqno, unsignedBody) ->
+    private fun createStakeFlow(wallet: WalletEntity) = unsignedBodyFlow().map { (seqno, unsignedBody) ->
+        if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
+            throw SendException.Cancelled()
+        }
+
         taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
 
         val contract = wallet.contract

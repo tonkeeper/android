@@ -48,10 +48,8 @@ class PoolHolder(
             View.GONE
         }
 
+        radioView.isClickable = false
         radioView.checked = item.selected
-        descriptionView.text = "%s\n%s".format(
-            context.getString(Localization.staking_minimum_deposit, item.minimumDepositFormat),
-            item.entity.apy
-        ).withCustomSymbol(context)
+        descriptionView.text = item.getDescription(context).withCustomSymbol(context)
     }
 }

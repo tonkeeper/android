@@ -8,6 +8,11 @@
         <attr name="ignoreSystemOffset" format="boolean"/>
     </declare-styleable>
 
+    <declare-styleable name="FlexboxWithGapLayout">
+        <attr name="gapVertical" format="dimension|reference"/>
+        <attr name="gapHorizontal" format="dimension|reference"/>
+    </declare-styleable>
+
     <declare-styleable name="IntroBlockView">
         <attr name="android:icon" format="reference"/>
         <attr name="android:title" format="string|reference"/>

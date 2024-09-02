@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.icu.Coins
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
@@ -15,6 +16,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -268,26 +270,22 @@ class WalletViewModel(
         staking: StakingEntity,
         fromCache: Boolean
     ): State.Assets? {
-        val staked = StakedEntity.create(staking, tokens)
-        val stakedTokens = staked.map { it.balance.token }.filter { !it.isTon }.map { it.address }
-        val rates = ratesRepository.getRates(currency, stakedTokens + "TON")
-        val filteredTokens = tokens.filter {
-            !stakedTokens.contains(it.address)
+        val fiatRates = ratesRepository.getTONRates(currency)
+        val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
+        val liquid = staked.find { it.isTonstakers }?.liquidToken
+
+        val filteredTokens = if (liquid == null) {
+            tokens
+        } else {
+            tokens.filter { !liquid.token.address.contains(it.address)  }
         }
-        val stakedWithFiat = staked.map {
-            val tokenAddress = it.balance.token.address
-            it.copy(
-                fiatBalance = rates.convert(tokenAddress, it.balance.value),
-                fiatReadyWithdraw = rates.convert(tokenAddress, it.readyWithdraw),
-            )
-        }
-        if (filteredTokens.isEmpty() && stakedWithFiat.isEmpty()) {
+        if (filteredTokens.isEmpty() && staked.isEmpty()) {
             return null
         }
 
-        val assets = (filteredTokens.map { AssetsEntity.Token(it) } + stakedWithFiat.map { AssetsEntity.Staked(it) }).sortedBy { it.fiat }.reversed()
+        val assets = (filteredTokens.map { AssetsEntity.Token(it) } + staked.map { AssetsEntity.Staked(it) }).sortedBy { it.fiat }.reversed()
 
-        return State.Assets(currency, assets.sort(wallet, settingsRepository), fromCache, rates)
+        return State.Assets(currency, assets.sort(wallet, settingsRepository), fromCache, fiatRates)
     }
 
     private fun getApps(

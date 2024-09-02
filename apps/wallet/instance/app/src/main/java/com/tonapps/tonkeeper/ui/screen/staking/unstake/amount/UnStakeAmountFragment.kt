@@ -37,6 +37,8 @@ class UnStakeAmountFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unsta
         button = view.findViewById(R.id.next_button)
         button.setOnClickListener { unStakeViewModel.confirm() }
 
+        view.findViewById<View>(R.id.max).setOnClickListener { applyMax() }
+
         collectFlow(unStakeViewModel.availableUiStateFlow, ::applyAvailableState)
     }
 
@@ -58,6 +60,12 @@ class UnStakeAmountFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unsta
         currencyView.text = state.fiatFormat
     }
 
+    private fun applyMax() {
+        collectFlow(unStakeViewModel.requestMax()) {
+            amountView.setValue(it)
+        }
+    }
+
     override fun onVisibleState(visible: Boolean) {
         super.onVisibleState(visible)
         if (visible) {
@@ -73,7 +81,6 @@ class UnStakeAmountFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unsta
     }
 
     override fun getTitle() = requireContext().getString(Localization.unstake)
-
 
     companion object {
 

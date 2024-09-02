@@ -35,7 +35,7 @@ internal class RemoteDataSource(
         )
     }
 
-    private suspend fun loadInfo(
+    private fun loadInfo(
         accountId: String,
         testnet: Boolean
     ): List<StakingInfoEntity> {
@@ -45,7 +45,7 @@ internal class RemoteDataSource(
         return list.map { StakingInfoEntity(it) }
     }
 
-    private suspend fun loadPools(
+    private fun loadPools(
         accountId: String,
         testnet: Boolean
     ): List<PoolInfoEntity> {

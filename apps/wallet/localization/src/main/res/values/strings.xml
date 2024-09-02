@@ -4,8 +4,10 @@
     <string name="toncoin" translatable="false">Toncoin</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
     <string name="w5beta" translatable="false">W5 Beta</string>
+    <string name="fake" translatable="false">FAKE</string>
     <string name="ok" translatable="false">OK</string>
     <string name="w5" translatable="false">W5</string>
+    <string name="staking_apy" translatable="false">APY</string>
     <string name="w5_wallet">Wallet W5</string>
     <string name="nft_unverified">Unverified NFT</string>
     <string name="report_spam">Report spam</string>
@@ -50,6 +52,8 @@
 
     <string name="w5_add_wallet">Add W5 Wallet</string>
 
+    <string name="minimum_amount">Minimum %1$s</string>
+    <string name="stake_tonstakers_description">When you stake TON in a Tonstakers pool, you receive a token called tsTON that represents your share in the pool. As the pool accumulates profits, your tsTON represents larger amount of TON.</string>
     <string name="edit">Edit</string>
     <string name="pinned">Pinned</string>
     <string name="all_assets">All Assets</string>
@@ -57,7 +61,6 @@
     <string name="staking_max_apy" translatable="false">MAX APY</string>
     <string name="staking_minimum_deposit">Minimum deposit %1$s.</string>
     <string name="staking_options">Options</string>
-    <string name="staking_apy" translatable="false">APY</string>
     <string name="staking_minimal_deposit">Minimal deposit</string>
     <string name="staking_details_description">Staking is based on smart contracts by third parties. Tonkeeper is not responsible for staking experience.</string>
     <string name="staking_links">Links</string>

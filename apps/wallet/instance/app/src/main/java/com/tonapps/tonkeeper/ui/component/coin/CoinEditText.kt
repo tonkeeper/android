@@ -5,6 +5,8 @@ import android.util.AttributeSet
 import androidx.appcompat.R
 import androidx.core.widget.doAfterTextChanged
 import com.tonapps.icu.Coins
+import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.extensions.setBigDecimal
 import com.tonapps.tonkeeper.ui.component.coin.drawable.SuffixDrawable
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingConfig
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingFilter
@@ -13,6 +15,7 @@ import uikit.extensions.dp
 import uikit.extensions.replaceAll
 import uikit.extensions.setRightDrawable
 import uikit.widget.input.InputTextView
+import java.math.BigDecimal
 
 class CoinEditText @JvmOverloads constructor(
     context: Context,
@@ -59,6 +62,10 @@ class CoinEditText @JvmOverloads constructor(
         } else {
             editable.replaceAll(value.toString().removeSuffix(".0"))
         }
+    }
+
+    fun setValue(value: BigDecimal) {
+        setBigDecimal(value)
     }
 
     fun clear() {

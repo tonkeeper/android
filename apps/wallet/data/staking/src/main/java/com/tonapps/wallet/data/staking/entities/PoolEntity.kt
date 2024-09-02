@@ -20,6 +20,9 @@ data class PoolEntity(
     val liquidJettonMaster: String?
 ): Parcelable {
 
+    val isTonstakers: Boolean
+        get() = implementation == StakingPool.Implementation.LiquidTF
+
     constructor(
         info: PoolInfo
     ): this(

@@ -191,6 +191,14 @@ data class Coins(
 
     operator fun dec() = Coins(value - ONE.value, decimals)
 
+    fun multiply(other: Coins) = of(value.multiply(other.value), decimals)
+
+    fun multiply(other: BigDecimal) = of(value.multiply(other), decimals)
+
+    fun divide(divisor: Coins, roundingMode: RoundingMode = RoundingMode.HALF_DOWN) = of(value.divide(divisor.value, roundingMode))
+
+    fun divide(divisor: Int, roundingMode: RoundingMode = RoundingMode.HALF_DOWN) = of(value.divide(BigDecimal(divisor), roundingMode))
+
     override operator fun compareTo(other: Coins) = value.compareTo(other.value)
 
     fun abs() = Coins(value.abs(), decimals)

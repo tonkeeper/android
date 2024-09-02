@@ -63,8 +63,9 @@
                     android:background="@drawable/bg_button_secondary_18"
                     android:paddingHorizontal="@dimen/offsetMedium"
                     android:gravity="center"
+                    android:textAllCaps="true"
                     android:text="@string/max"
-                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:textAppearance="@style/TextAppearance.Label2"
                     android:textColor="?attr/buttonSecondaryForegroundColor"/>
 
                 <View

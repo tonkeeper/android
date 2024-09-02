@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.staking
 
-import kotlinx.coroutines.flow.Flow
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.cell.Cell
@@ -40,7 +41,7 @@ object StakingUtils {
         queryId: BigInteger
     ): Cell {
         return buildCell {
-            storeUInt(3665837821, 32)
+            storeOpCode(TONOpCode.WHALES_DEPOSIT)
             storeUInt(queryId, 64)
             storeTlb(Coins, Coins.ofNano(100000))
         }
@@ -77,7 +78,7 @@ object StakingUtils {
         }
 
         return buildCell {
-            storeUInt(0x595f07bc, 32)
+            storeOpCode(TONOpCode.LIQUID_TF_BURN)
             storeUInt(queryId, 64)
             storeTlb(Coins, amount)
             storeTlb(AddrStd, address)

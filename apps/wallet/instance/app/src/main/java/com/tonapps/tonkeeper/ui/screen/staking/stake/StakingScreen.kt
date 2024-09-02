@@ -86,10 +86,17 @@ class StakingScreen: BaseWalletScreen(R.layout.fragment_stake), BaseFragment.Bot
     private fun addFragment(fragment: ChildFragment) {
         (childFragmentManager.fragments.lastOrNull() as? ChildFragment)?.visibleState = false
 
-        childFragmentManager.commit {
+        val transaction = childFragmentManager.beginTransaction()
+        transaction.setCustomAnimations(uikit.R.anim.fragment_enter_from_right, uikit.R.anim.fragment_exit_to_left, uikit.R.anim.fragment_enter_from_left, uikit.R.anim.fragment_exit_to_right)
+        transaction.replace(fragmentContainerId, fragment)
+        transaction.addToBackStack(fragment.toString())
+        transaction.commit()
+
+        /*childFragmentManager.commit {
+            setCustomAnimations(uikit.R.anim.fragment_enter_from_right, uikit.R.anim.fragment_exit_to_left, uikit.R.anim.fragment_enter_from_left, uikit.R.anim.fragment_exit_to_right)
             add(fragmentContainerId, fragment)
             runOnCommit { updateHeader() }
-        }
+        }*/
     }
 
     fun backFragment(): Boolean {
@@ -115,7 +122,13 @@ class StakingScreen: BaseWalletScreen(R.layout.fragment_stake), BaseFragment.Bot
         }
     }
 
-    override fun onBackPressed() = !backFragment()
+    override fun onBackPressed(): Boolean {
+        if (childFragmentManager.backStackEntryCount > 1) {
+            childFragmentManager.popBackStack()
+            return false
+        }
+        return super.onBackPressed()
+    }
 
     private fun updateHeader() {
         val fragments = childFragmentManager.fragments

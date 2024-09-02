@@ -23,9 +23,9 @@ android {
         targetSdk = 34
         versionCode = 600
 
-        val currentDate = SimpleDateFormat("dd-MMM-yyyy", Locale.US).format(Date()).lowercase()
+        // val currentDate = SimpleDateFormat("dd-MMM-yyyy", Locale.US).format(Date()).lowercase()
 
-        versionName = "$versionCode ($currentDate) X"
+        versionName = "X" // $versionCode ($currentDate)
 
         ndk {
             abiFilters.add("arm64-v8a")

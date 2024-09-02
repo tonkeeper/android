@@ -1,10 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.staking.stake.options.list
 
+import android.content.Context
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.localization.Localization
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -21,12 +23,14 @@ sealed class Item(type: Int): BaseListItem(type) {
             for ((index, pool) in pools.withIndex()) {
                 val position = ListCell.getPosition(pools.size, index)
                 val minimumDepositFormat = CurrencyFormatter.format("TON", pool.minStake)
+                val apyFormat = CurrencyFormatter.formatPercent(pool.apy)
                 items.add(Pool(
                     entity = pool,
                     position = position,
                     selected = selectedPool.implementation == pool.implementation,
                     minimumDepositFormat = minimumDepositFormat,
-                    maxApy = index == 0
+                    maxApy = index == 0,
+                    apyFormat = apyFormat
                 ))
             }
             items.add(Space)
@@ -42,7 +46,16 @@ sealed class Item(type: Int): BaseListItem(type) {
         val selected: Boolean,
         val minimumDepositFormat: CharSequence,
         val maxApy: Boolean,
-    ): Item(TYPE_POOL)
+        val apyFormat: CharSequence,
+    ): Item(TYPE_POOL) {
+
+        fun getDescription(context: Context): String {
+            val lines = mutableListOf<String>()
+            lines.add(context.getString(Localization.staking_minimum_deposit, minimumDepositFormat))
+            lines.add("${context.getString(Localization.staking_apy)} ≈ $apyFormat")
+            return lines.joinToString("\n")
+        }
+    }
 
     data object Space: Item(TYPE_SPACE)
 }

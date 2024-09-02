@@ -105,8 +105,8 @@ val koinModel = module {
     viewModel { W5StoriesViewModel(androidApplication(), get(), get(), get(), get()) }
     viewModel { PurchaseViewModel(androidApplication(), get(), get(), get()) }
     viewModel { parameters -> NftViewModel(androidApplication(), nft = parameters.get(), get(), get(), get()) }
-    viewModel { parameters -> StakeViewerViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get()) }
-    viewModel { parameters -> UnStakeViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> StakeViewerViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> UnStakeViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SendContactsViewModel(androidApplication(), get(), get(), get()) }
     viewModel { NotificationsEnableViewModel(get(), get()) }
     viewModel { ImportWalletViewModel(androidApplication(), get()) }

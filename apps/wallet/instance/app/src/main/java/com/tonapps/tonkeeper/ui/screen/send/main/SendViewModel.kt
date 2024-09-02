@@ -405,7 +405,7 @@ class SendViewModel(
         Coins.of(fee)
     }
 
-    private fun eventFee(
+    private suspend fun eventFee(
         coins: Coins
     ): SendEvent.Fee? {
         return try {

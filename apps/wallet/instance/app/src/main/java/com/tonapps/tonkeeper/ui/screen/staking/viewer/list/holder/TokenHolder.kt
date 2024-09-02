@@ -1,19 +1,20 @@
-package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
+package com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder
 
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.buildRateString
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
-import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
-import uikit.extensions.withDefaultBadge
+import uikit.navigation.Navigation
 import uikit.widget.FrescoView
 
 class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_cell_jetton) {
@@ -24,21 +25,20 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
     private val balanceView = findViewById<AppCompatTextView>(R.id.balance)
     private val balanceFiatView = findViewById<AppCompatTextView>(R.id.balance_currency)
 
+    init {
+        itemView.background = ListCell.Position.SINGLE.drawable(context)
+    }
+
     override fun onBind(item: Item.Token) {
-        itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
-            navigation?.add(TokenScreen.newInstance(item.address, item.name, item.symbol))
+            Navigation.from(context)?.add(TokenScreen.newInstance(item.address, item.name, item.symbol))
         }
+
         if (item.blacklist) {
             titleView.text = getString(Localization.fake)
             iconView.clear(null)
         } else {
-            val text = if (item.isUSDT) {
-                item.symbol.withDefaultBadge(context, Localization.ton)
-            } else {
-                item.symbol
-            }
-            titleView.text = text
+            titleView.text = item.symbol
             iconView.setImageURI(item.iconUri, this)
         }
 

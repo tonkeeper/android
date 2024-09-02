@@ -5,25 +5,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.emoji.ui.EmojiView
-import com.tonapps.extensions.max12
-import com.tonapps.extensions.max24
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
+import com.tonapps.tonkeeper.extensions.getWalletBadges
 import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.accentGreenColor
-import com.tonapps.uikit.color.backgroundContentTintColor
-import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
-import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
-import uikit.extensions.withAlpha
 
 class WalletHolder(
     parent: ViewGroup
@@ -32,9 +23,9 @@ class WalletHolder(
     private val colorView = findViewById<View>(R.id.wallet_color)
     private val emojiView = findViewById<EmojiView>(R.id.wallet_emoji)
     private val nameView = findViewById<AppCompatTextView>(R.id.wallet_name)
+    private val typesView = findViewById<AppCompatTextView>(R.id.wallet_types)
     private val balanceView = findViewById<AppCompatTextView>(R.id.wallet_balance)
     private val checkView = findViewById<AppCompatImageView>(R.id.check)
-    private val typeView = findViewById<AppCompatTextView>(R.id.wallet_type)
     private val editView = findViewById<View>(R.id.edit)
     private val pencilView = findViewById<View>(R.id.pencil)
 
@@ -54,7 +45,9 @@ class WalletHolder(
 
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)
         emojiView.setEmoji(item.emoji)
-        nameView.text = item.name.max24
+        nameView.text = item.name
+        typesView.text = context.getWalletBadges(item.walletType, item.walletVersion)
+
         if (item.hiddenBalance) {
             balanceView.text = HIDDEN_BALANCE
         } else {
@@ -74,37 +67,5 @@ class WalletHolder(
             editView.visibility = View.GONE
             checkView.visibility = View.VISIBLE
         }
-
-        setType(item.walletType, item.walletVersion)
-    }
-
-    private fun setType(type: Wallet.Type, version: WalletVersion) {
-        if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
-            val color = context.accentGreenColor
-            typeView.visibility = View.VISIBLE
-            if (version == WalletVersion.V5BETA) {
-                typeView.setText(Localization.w5beta)
-            } else {
-                typeView.setText(Localization.w5)
-            }
-            typeView.setTextColor(color)
-            typeView.backgroundTintList = color.withAlpha(.16f).stateList
-            return
-        }
-
-        if (type == Wallet.Type.Default) {
-            typeView.visibility = View.GONE
-            return
-        }
-        typeView.visibility = View.VISIBLE
-        val resId = when (type) {
-            Wallet.Type.Watch -> Localization.watch_only
-            Wallet.Type.Testnet -> Localization.testnet
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
-            Wallet.Type.Ledger -> Localization.ledger
-            else -> throw IllegalArgumentException("Unknown wallet type: $type")
-        }
-        typeView.backgroundTintList = context.backgroundContentTintColor.withAlpha(.16f).stateList
-        typeView.setText(resId)
     }
 }

@@ -39,6 +39,7 @@ class TokensManageViewModel(
             AssetsExtendedEntity(
                 raw = AssetsEntity.Token(token),
                 prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
+                accountId = wallet.accountId,
             )
         }.filter { !it.isTon }
     }

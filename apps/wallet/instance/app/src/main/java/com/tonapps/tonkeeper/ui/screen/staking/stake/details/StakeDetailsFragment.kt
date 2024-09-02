@@ -34,7 +34,7 @@ class StakeDetailsFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
         super.onViewCreated(view, savedInstanceState)
         linkDrawable = requireContext().drawable(UIKitIcon.ic_globe_16)
         val apyView = view.findViewById<AppCompatTextView>(R.id.pool_apy)
-        apyView.text = "≈ ${pool.apy}%"
+        apyView.text = "≈ ${CurrencyFormatter.formatPercent(pool.apy)}"
 
         val minDepositView = view.findViewById<AppCompatTextView>(R.id.pool_min_deposit)
         minDepositView.text = CurrencyFormatter.format(TokenEntity.TON.symbol, pool.minStake)

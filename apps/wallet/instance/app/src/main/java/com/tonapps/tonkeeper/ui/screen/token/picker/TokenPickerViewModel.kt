@@ -47,7 +47,8 @@ class TokenPickerViewModel(
         val sortedTokens = tokens.map {
             AssetsExtendedEntity(
                 raw = AssetsEntity.Token(it),
-                prefs = settingsRepository.getTokenPrefs(wallet.id, it.address, it.blacklist)
+                prefs = settingsRepository.getTokenPrefs(wallet.id, it.address, it.blacklist),
+                accountId = wallet.accountId,
             )
         }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator)
 

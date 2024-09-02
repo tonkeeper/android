@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
@@ -24,6 +25,7 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
     private lateinit var recipientView: TransactionDetailView
     private lateinit var amountView: TransactionDetailView
     private lateinit var feeView: TransactionDetailView
+    private lateinit var reviewApyView: TransactionDetailView
     private lateinit var button: Button
     private lateinit var taskView: ProcessTaskView
 
@@ -39,13 +41,15 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
         feeView = view.findViewById(R.id.review_fee)
         feeView.setLoading()
 
+        reviewApyView = view.findViewById(R.id.review_apy)
+
         button = view.findViewById(R.id.button)
         taskView = view.findViewById(R.id.task)
 
         button.setOnClickListener { stake() }
 
         collectFlow(stakeViewModel.walletFlow) { wallet ->
-            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView)
+            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView, 12)
         }
 
         collectFlow(stakeViewModel.fiatFormatFlow) { fiatFormat ->
@@ -60,8 +64,8 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
 
         collectFlow(stakeViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
             feeView.setDefault()
-            feeView.value = feeFormat.withCustomSymbol(requireContext())
-            feeView.description = feeFiatFormat.withCustomSymbol(requireContext())
+            feeView.value = "≈ " + feeFormat.withCustomSymbol(requireContext())
+            feeView.description = "≈ " + feeFiatFormat.withCustomSymbol(requireContext())
             button.isEnabled = true
         }
 
@@ -109,6 +113,7 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
     private fun applyPool(pool: PoolEntity) {
         iconView.setLocalRes(StakingPool.getIcon(pool.implementation))
         recipientView.value = pool.name
+        reviewApyView.value = "≈ ${CurrencyFormatter.formatPercent(pool.apy)}"
     }
 
     override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {

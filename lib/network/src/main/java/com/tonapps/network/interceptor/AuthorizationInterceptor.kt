@@ -8,16 +8,14 @@ import okhttp3.Response
 class AuthorizationInterceptor(
     private val type: Type = Type.NONE,
     private val token: String,
-    private val allowDomains: List<String>,
-    private val ignorePaths: List<String> = emptyList()
+    private val allowDomains: List<String>
 ): Interceptor {
 
     companion object {
         fun bearer(
             token: String,
-            allowDomains: List<String>,
-            ignorePaths: List<String> = emptyList()
-        ) = AuthorizationInterceptor(Type.BEARER, token, allowDomains, ignorePaths)
+            allowDomains: List<String>
+        ) = AuthorizationInterceptor(Type.BEARER, token, allowDomains)
     }
 
     enum class Type {
@@ -36,15 +34,11 @@ class AuthorizationInterceptor(
         }
     }
 
-    private fun isIgnorePath(path: String): Boolean {
-        return ignorePaths.contains(path)
-    }
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
         val url = original.url
         val domain = url.host
-        if ((domains.isNotEmpty() && !domains.contains(domain)) || isIgnorePath(url.encodedPath)) {
+        if ((domains.isNotEmpty() && !domains.contains(domain))) {
             return chain.proceed(original)
         }
 

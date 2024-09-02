@@ -641,12 +641,7 @@ class API(
                 .addInterceptor(AcceptLanguageInterceptor(context.locale))
                 .addInterceptor(AuthorizationInterceptor.bearer(
                     token = tonApiV2Key,
-                    allowDomains = allowDomains,
-                    ignorePaths = listOf(
-                        "/v1/internal/pushes/tonconnect",
-                        "/v1/internal/pushes/plain/unsubscribe",
-                        "/v1/internal/pushes/plain/subscribe"
-                    )
+                    allowDomains = allowDomains
                 )).build()
         }
     }

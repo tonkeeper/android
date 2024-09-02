@@ -281,8 +281,9 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun openBrowser(uri: Uri) {
-        val intent = Intent(Intent.ACTION_VIEW, uri)
-        safeStartActivity(intent)
+        add(WebScreen.newInstance(uri))
+        // val intent = Intent(Intent.ACTION_VIEW, uri)
+        // safeStartActivity(intent)
     }
 
     private fun openEmail(uri: Uri) {

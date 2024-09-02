@@ -2,6 +2,6 @@
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
 3    package="com.tonapps.wallet.data.battery" >
 4
-5    <uses-sdk android:minSdkVersion="23" />
+5    <uses-sdk android:minSdkVersion="24" />
 6
 7</manifest>

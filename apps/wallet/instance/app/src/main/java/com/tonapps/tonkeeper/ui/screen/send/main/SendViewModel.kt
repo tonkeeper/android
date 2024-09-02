@@ -468,7 +468,8 @@ class SendViewModel(
     }
 
     private suspend fun eventFee(
-        coins: Coins
+        coins: Coins,
+        isBattery: Boolean,
     ): SendEvent.Fee? {
         return try {
             val code = TokenEntity.TON.symbol

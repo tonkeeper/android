@@ -2,8 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.app.Application
 import android.util.Log
-import android.widget.Toast
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
 import com.tonapps.network.NetworkMonitor
@@ -17,7 +15,6 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository

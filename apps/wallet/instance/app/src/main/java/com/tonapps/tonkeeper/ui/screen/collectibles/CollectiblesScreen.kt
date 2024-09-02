@@ -44,11 +44,7 @@ class CollectiblesScreen: MainScreen.Child(R.layout.fragment_main_list) {
         listView.adapter = adapter
 
         emptyView = view.findViewById(R.id.empty)
-        emptyView.doOnButtonClick = { first ->
-            if (!first) {
-                openQRCode()
-            }
-        }
+        emptyView.doOnButtonClick = { openQRCode() }
 
         collectFlow(viewModel.uiListStateFlow) { state ->
             if (state is UiListState.Loading) {

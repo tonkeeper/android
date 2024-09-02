@@ -411,7 +411,7 @@ class BatteryRechargeViewModel(
         }
     }
 
-    private fun getPacks(
+    private suspend fun getPacks(
         rechargeMethod: RechargeMethodEntity,
         token: AccountTokenEntity,
         willBePaidManually: Boolean,

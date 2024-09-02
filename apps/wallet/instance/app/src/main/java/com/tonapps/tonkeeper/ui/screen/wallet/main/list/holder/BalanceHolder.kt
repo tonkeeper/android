@@ -109,8 +109,6 @@ class BalanceHolder(
             batteryView.visibility = View.GONE
         }
 
-        setWalletType(item.walletType, item.walletVersion)
-        setWalletState(item.status, item.address, item.walletType, item.lastUpdatedFormat)
         setWalletState(
             state = item.status,
             address = item.address,

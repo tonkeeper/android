@@ -140,6 +140,7 @@ object Dependence {
             const val passcode = ":apps:wallet:data:passcode"
             const val staking = ":apps:wallet:data:staking"
             const val purchase = ":apps:wallet:data:purchase"
+            const val battery = ":apps:wallet:data:battery"
         }
 
     }

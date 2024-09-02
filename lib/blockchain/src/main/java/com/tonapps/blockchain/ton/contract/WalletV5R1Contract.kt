@@ -66,8 +66,9 @@ class WalletV5R1Contract(
                 storeInt(id, 31)
             }
         }
-
     }
+
+    override val features: WalletFeature = WalletFeature.GASLESS and WalletFeature.SIGNED_INTERNALS
 
     constructor(publicKey: PublicKeyEd25519, network: TonNetwork) : this(
         publicKey = publicKey,
@@ -117,8 +118,10 @@ class WalletV5R1Contract(
 
         val actions = packV5Actions(*gifts)
 
+        val opCode = if (internalMessage) 0x73696e74 else 0x7369676e
+
         return buildCell {
-            storeUInt(0x7369676e, 32)
+            storeUInt(opCode, 32)
             storeUInt(context.serialized, 32)
             storeSeqAndValidUntil(seqno, validUntil)
             storeBuilder(actions)

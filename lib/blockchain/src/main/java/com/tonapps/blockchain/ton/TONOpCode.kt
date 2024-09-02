@@ -1,6 +1,7 @@
 package com.tonapps.blockchain.ton
 
 enum class TONOpCode(val code: Long) {
+    UNKNOWN(0),
     OUT_ACTION_SEND_MSG_TAG(0x0ec3c86d),
     SIGNED_EXTERNAL(0x7369676e),
     SIGNED_INTERNAL(0x73696e74),

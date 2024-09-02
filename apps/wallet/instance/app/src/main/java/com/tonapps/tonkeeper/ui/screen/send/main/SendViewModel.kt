@@ -314,8 +314,12 @@ class SendViewModel(
         builder.setComment(comment, encryptedComment)
         builder.setValidUntil(sendMetadata.validUntil)
         if (isNft) {
-            val amount =
-                getNftTotalAmount(wallet, sendMetadata, transaction.destination.address, comment)
+            val amount = getNftTotalAmount(
+                wallet = wallet,
+                sendMetadata = sendMetadata,
+                destination = transaction.destination.address,
+                comment = comment
+            )
             builder.setNftAddress(nftAddress)
             builder.setBounceable(true)
             builder.setAmount(amount)

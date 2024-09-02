@@ -52,7 +52,7 @@ object StakingUtils {
         amount: Coins
     ): Cell {
         return buildCell {
-            storeUInt(3665837821, 32)
+            storeOpCode(TONOpCode.WHALES_WITHDRAW)
             storeUInt(queryId, 64)
             storeTlb(Coins, Coins.ofNano(100000))
             storeTlb(Coins, amount)
@@ -61,7 +61,7 @@ object StakingUtils {
 
     fun createLiquidTfAddStakeCommand(queryId: BigInteger): Cell {
         return buildCell {
-            storeUInt(0x47d54391, 32)
+            storeOpCode(TONOpCode.LIQUID_TF_DEPOSIT)
             storeUInt(queryId, 64)
             storeUInt(0x000000000005b7ce, 64)
         }

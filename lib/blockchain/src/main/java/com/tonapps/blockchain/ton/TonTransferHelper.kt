@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton
 
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
@@ -46,7 +47,7 @@ object TonTransferHelper {
         val payload = body(body)
 
         return buildCell {
-            storeUInt(0xf8a7ea5, 32)
+            storeOpCode(TONOpCode.JETTON_TRANSFER)
             storeUInt(queryId, 64)
             storeTlb(Coins, coins)
             storeTlb(MsgAddressInt, toAddress)
@@ -72,7 +73,7 @@ object TonTransferHelper {
         val payload = body(body)
 
         return buildCell {
-            storeUInt(0x5fcc3d14, 32)
+            storeOpCode(TONOpCode.NFT_TRANSFER)
             storeUInt(queryId, 64)
             storeTlb(MsgAddressInt, newOwnerAddress)
             storeTlb(MsgAddressInt, excessesAddress)

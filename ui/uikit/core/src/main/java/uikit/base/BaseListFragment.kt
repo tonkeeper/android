@@ -30,7 +30,7 @@ open class BaseListFragment: BaseFragment(R.layout.fragment_list) {
             headerView.setIcon(UIKitIcon.ic_chevron_left_16)
             headerView.doOnCloseClick = { finish() }
         } else if (this is BottomSheet || this is Modal) {
-            headerView.setIgnoreSystemOffset()
+            headerView.ignoreSystemOffset = true
             headerView.setAction(UIKitIcon.ic_close_16)
             headerView.doOnActionClick = { finish() }
         }

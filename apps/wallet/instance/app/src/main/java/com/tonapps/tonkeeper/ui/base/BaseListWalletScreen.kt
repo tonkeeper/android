@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.base
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
@@ -31,11 +32,13 @@ abstract class BaseListWalletScreen: BaseWalletScreen(R.layout.fragment_list) {
             headerView.setIcon(UIKitIcon.ic_chevron_left_16)
             headerView.doOnCloseClick = { finish() }
         } else if (this is BottomSheet || this is Modal) {
-            headerView.setIgnoreSystemOffset()
+            headerView.ignoreSystemOffset = true
             headerView.setAction(UIKitIcon.ic_close_16)
             headerView.doOnActionClick = { finish() }
         } else if (parentFragment != null) {
-            headerView.setIgnoreSystemOffset()
+            headerView.ignoreSystemOffset = true
+        } else {
+            headerView.ignoreSystemOffset = false
         }
 
         listView = view.findViewById(R.id.list)

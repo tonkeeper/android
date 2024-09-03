@@ -10,6 +10,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.Wallet
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
@@ -17,7 +18,9 @@ import uikit.widget.HeaderView
 
 class EditNameScreen: BaseWalletScreen(R.layout.fragment_name_edit), BaseFragment.BottomSheet {
 
-    override val viewModel: EditNameViewModel by viewModel()
+    private val walletId: String by lazy { arguments?.getString(ARG_WALLET_ID) ?: "" }
+
+    override val viewModel: EditNameViewModel by viewModel { parametersOf(walletId) }
 
     private lateinit var editorView: LabelEditorView
 
@@ -64,6 +67,15 @@ class EditNameScreen: BaseWalletScreen(R.layout.fragment_name_edit), BaseFragmen
     }
 
     companion object {
-        fun newInstance() = EditNameScreen()
+
+        private const val ARG_WALLET_ID = "wallet_id"
+
+        fun newInstance(walletId: String? = null): EditNameScreen {
+            val fragment = EditNameScreen()
+            fragment.arguments = Bundle().apply {
+                putString(ARG_WALLET_ID, walletId)
+            }
+            return fragment
+        }
     }
 }

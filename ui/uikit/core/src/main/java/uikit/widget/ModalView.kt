@@ -1,22 +1,15 @@
 package uikit.widget
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.WindowInsets
-import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.animation.doOnEnd
-import androidx.core.animation.doOnStart
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
-import androidx.core.view.doOnNextLayout
 import androidx.core.view.marginBottom
 import androidx.core.view.updateMargins
-import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import uikit.R
@@ -77,8 +70,7 @@ class ModalView @JvmOverloads constructor(
     var scaleBackground: Boolean = false
 
     private val parentRootView: View? by lazy {
-        val v = context.activity?.findViewById<View>(R.id.root_container)
-        v
+        context.activity?.findViewById(R.id.root_container)
     }
 
     init {

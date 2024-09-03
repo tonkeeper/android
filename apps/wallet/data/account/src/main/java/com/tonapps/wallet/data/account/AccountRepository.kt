@@ -171,11 +171,24 @@ class AccountRepository(
         rnLegacy.addWallet(rnWallet)
     }
 
-    fun editLabel(name: String, emoji: CharSequence, color: Int) {
+    fun editLabel(
+        walletId: String,
+        name: String,
+        emoji: CharSequence,
+        color: Int
+    ) {
         scope.launch(scope.coroutineContext) {
-            val wallet = getSelectedWallet() ?: return@launch
+            val selectedWallet = getSelectedWallet() ?: return@launch
+            val isEditSelectedWallet = walletId.isBlank() || walletId == selectedWallet.id
+            val wallet = if (isEditSelectedWallet) {
+                selectedWallet
+            } else {
+                getWalletById(walletId) ?: return@launch
+            }
+
             val newLabel = Wallet.Label(name, emoji, color)
             _selectedStateFlow.value = SelectedState.Wallet(wallet.copy(label = newLabel))
+
             database.editAccount(wallet.id, Wallet.Label(name, emoji, color))
             rnLegacy.edit(wallet.id, name, RNWallet.fixEmoji(emoji), color)
         }
@@ -331,7 +344,7 @@ class AccountRepository(
         }
     }
 
-    private suspend fun createTonProofToken(wallet: WalletEntity): String? {
+    private fun createTonProofToken(wallet: WalletEntity): String? {
         return try {
             val publicKey = wallet.publicKey
             val contract = BaseWalletContract.create(publicKey, WalletVersion.V4R2.title, wallet.testnet)

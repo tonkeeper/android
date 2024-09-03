@@ -41,7 +41,18 @@ open class HeaderView @JvmOverloads constructor(
     private val rightContentView: LinearLayoutCompat
 
     private val barHeight = context.getDimensionPixelSize(R.dimen.barHeight)
-    private var ignoreSystemOffset = false
+
+    var ignoreSystemOffset = false
+        set(value) {
+            if (field != value) {
+                field = value
+                if (value) {
+                    setPaddingTop(0)
+                }
+                requestLayout()
+            }
+        }
+
     private var topOffset: Int = 0
         set(value) {
             if (field != value) {
@@ -116,14 +127,11 @@ open class HeaderView @JvmOverloads constructor(
         }
     }
 
-    fun setIgnoreSystemOffset(value: Boolean = true) {
-        ignoreSystemOffset = value
-    }
-
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         if (ignoreSystemOffset) {
             return super.onApplyWindowInsets(insets)
         }
+
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
         val statusInsets = compatInsets.getInsets(WindowInsetsCompat.Type.statusBars())
         topOffset = statusInsets.top
@@ -212,7 +220,7 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     fun setTitleGravity(gravity: Int) {
-        val layoutParams = titleView.layoutParams as LinearLayoutCompat.LayoutParams
+        val layoutParams = titleView.layoutParams as LayoutParams
         layoutParams.gravity = gravity
         titleView.gravity = gravity
     }
@@ -230,7 +238,8 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(barHeight + topOffset, MeasureSpec.EXACTLY))
+        val size = if (ignoreSystemOffset) barHeight else barHeight + topOffset
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY))
     }
 
 }

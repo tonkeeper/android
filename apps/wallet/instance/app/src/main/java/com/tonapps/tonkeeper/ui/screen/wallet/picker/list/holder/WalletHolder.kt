@@ -29,12 +29,6 @@ class WalletHolder(
     private val editView = findViewById<View>(R.id.edit)
     private val pencilView = findViewById<View>(R.id.pencil)
 
-    init {
-        pencilView.setOnClickListener {
-            navigation?.add(EditNameScreen.newInstance())
-        }
-    }
-
     override fun onBind(item: Item.Wallet) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
@@ -63,6 +57,9 @@ class WalletHolder(
         if (item.editMode) {
             editView.visibility = View.VISIBLE
             checkView.visibility = View.GONE
+            pencilView.setOnClickListener {
+                navigation?.add(EditNameScreen.newInstance(item.walletId))
+            }
         } else {
             editView.visibility = View.GONE
             checkView.visibility = View.VISIBLE

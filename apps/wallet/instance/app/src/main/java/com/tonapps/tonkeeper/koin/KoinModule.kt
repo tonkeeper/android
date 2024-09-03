@@ -85,7 +85,7 @@ val koinModel = module {
     viewModel { WalletViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CurrencyViewModel(androidApplication(), get()) }
     viewModel { SettingsViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
-    viewModel { EditNameViewModel(androidApplication(), get()) }
+    viewModel { parameters -> EditNameViewModel(androidApplication(), walletId = parameters.get(), get()) }
     viewModel { LanguageViewModel(androidApplication(), get()) }
     viewModel { SecurityViewModel(androidApplication(), get(), get(), get()) }
     viewModel { ThemeViewModel(androidApplication(), get()) }

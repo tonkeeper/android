@@ -11,6 +11,7 @@ plugins {
     id("kotlinx-serialization")
     id("kotlin-kapt")
     id("androidx.baselineprofile")
+    id("com.google.firebase.firebase-perf")
 }
 
 android {

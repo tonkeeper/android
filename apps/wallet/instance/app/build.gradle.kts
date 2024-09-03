@@ -79,6 +79,7 @@ dependencies {
     implementation(Dependence.Firebase.analytics)
     implementation(Dependence.Firebase.crashlytics)
     implementation(Dependence.Firebase.messaging)
+    implementation(Dependence.Firebase.performance)
 
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Module.blur))

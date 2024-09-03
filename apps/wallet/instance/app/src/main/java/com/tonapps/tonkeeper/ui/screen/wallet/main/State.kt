@@ -115,6 +115,7 @@ sealed class State {
                         message = null,
                         fiat = staked.fiatBalance,
                         fiatFormat = CurrencyFormatter.formatFiat(currencyCode, staked.fiatBalance),
+                        hiddenBalance = hiddenBalance
                     )
                     uiItems.add(item)
                 } else if (asset is AssetsEntity.Token) {

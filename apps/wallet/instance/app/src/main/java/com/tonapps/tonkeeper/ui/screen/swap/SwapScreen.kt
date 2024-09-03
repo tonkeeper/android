@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.swap
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.webkit.WebViewClient
 import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -22,7 +23,7 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
 
     private val rootViewModel: RootViewModel by activityViewModel()
 
-    private lateinit var headerView: HeaderView
+    private lateinit var closeView: View
     private lateinit var webView: BridgeWebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,8 +33,8 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        headerView = view.findViewById(R.id.header)
-        headerView.doOnActionClick = { finish() }
+        closeView = view.findViewById(R.id.close)
+        closeView.setOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web)
         webView.clipToPadding = false
@@ -44,6 +45,21 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
             close = ::finish,
             sendTransaction = ::sing
         )
+        webView.addClientCallback(object : WebViewClient() {
+            override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                hideCloseView()
+            }
+        })
+    }
+
+    private fun hideCloseView() {
+        if (closeView.visibility == View.GONE) {
+            return
+        }
+        closeView.postDelayed({
+            closeView.visibility = View.GONE
+        }, 1000)
     }
 
     private fun getUri(): Uri {

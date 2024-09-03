@@ -99,6 +99,7 @@ class TokenViewModel(
             balance = CurrencyFormatter.format(token.symbol, token.balance, token.token.decimals),
             fiat = CurrencyFormatter.format(settingsRepository.currency.code, token.fiat),
             iconUri = token.iconUri,
+            hiddenBalance = settingsRepository.hiddenBalances,
         ))
         items.add(
             Item.Actions(

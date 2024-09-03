@@ -223,6 +223,7 @@ class API(
         testnet: Boolean
     ): BalanceEntity? {
         val account = getAccount(accountId, testnet) ?: return null
+        account.currenciesBalance
         val initializedAccount = account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
         return BalanceEntity(
             token = TokenEntity.TON,
@@ -510,7 +511,10 @@ class API(
         return getAccount(domain, testnet) ?: getAccount(domain.unicodeToPunycode(), testnet)
     }*/
 
-    private fun getAccount(accountId: String, testnet: Boolean): Account? {
+    private fun getAccount(
+        accountId: String,
+        testnet: Boolean
+    ): Account? {
         val normalizedAccountId = if (accountId.endsWith(".ton")) {
             accountId.lowercase().trim().unicodeToPunycode()
         } else {

@@ -58,7 +58,8 @@ class TokenPickerViewModel(
                 position = ListCell.getPosition(sortedTokens.size, index),
                 raw = token,
                 selected = token.address == selectedToken.address,
-                balance = CurrencyFormatter.format(token.symbol, token.balance.value)
+                balance = CurrencyFormatter.format(token.symbol, token.balance.value),
+                hiddenBalance = settingsRepository.hiddenBalances
             )
         }
     }.flowOn(Dispatchers.IO)

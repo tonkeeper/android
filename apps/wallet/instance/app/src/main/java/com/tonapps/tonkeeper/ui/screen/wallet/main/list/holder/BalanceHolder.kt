@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.setPadding
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
@@ -42,6 +43,7 @@ import uikit.HapticHelper
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 import uikit.extensions.expandTouchArea
+import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation
 import uikit.widget.LoaderView
@@ -78,10 +80,14 @@ class BalanceHolder(
             balanceView.text = HIDDEN_BALANCE
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
             balanceView.background = HiddenBalanceDrawable(context)
+            balanceView.setPaddingHorizontal(12.dp)
+            balanceView.translationY = 6f.dp
         } else {
             balanceView.text = item.balance.withCustomSymbol(context)
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f)
             balanceView.background = null
+            balanceView.setPadding(0)
+            balanceView.translationY = 0f
         }
 
         val requestBackup =
@@ -198,9 +204,11 @@ class BalanceHolder(
     private class HiddenBalanceDrawable(context: Context) : BaseDrawable() {
 
         private val radius = 20f.dp
+
         private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = context.resolveColor(UIKitColor.buttonSecondaryBackgroundColor)
         }
+
         private val rect = RectF()
 
         override fun draw(canvas: Canvas) {
@@ -212,7 +220,7 @@ class BalanceHolder(
             rect.left = bounds.left.toFloat()
             rect.top = bounds.top.toFloat()
             rect.right = bounds.right.toFloat()
-            rect.bottom = bounds.bottom.toFloat() - 14f.dp
+            rect.bottom = bounds.bottom.toFloat() - 12f.dp
         }
 
     }

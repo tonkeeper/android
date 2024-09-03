@@ -19,6 +19,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val balance: CharSequence,
         val fiat: CharSequence,
         val iconUri: Uri,
+        val hiddenBalance: Boolean,
     ): Item(TYPE_BALANCE)
 
     data class Actions(

@@ -213,6 +213,7 @@ class SendViewModel(
             insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
             currencyCode = if (amountCurrency) currencyCode else "",
             amountCurrency = amountCurrency,
+            hiddenBalance = settingsRepository.hiddenBalances
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SendAmountState())
 

@@ -144,13 +144,14 @@ class RootViewModel(
 
         combine(
             selectedWalletFlow,
-            settingsRepository.hiddenBalancesFlow
-        ) { wallet, hiddenBalance ->
+            settingsRepository.hiddenBalancesFlow,
+            settingsRepository.currencyFlow,
+        ) { wallet, hiddenBalance, currency ->
             val wallets = accountRepository.getWallets()
                 .map { WalletExtendedEntity( it, settingsRepository.getWalletPrefs(it.id)) }
                 .sortedBy { it.index }
                 .map { it.raw }
-            val balances = getBalances(wallets)
+            val balances = getBalances(wallets, currency)
             walletPickerAdapter.submitList(WalletPickerAdapter.map(wallets, wallet, balances, hiddenBalance))
         }.launchIn(viewModelScope)
 
@@ -441,25 +442,22 @@ class RootViewModel(
     }
 
     private suspend fun getBalances(
-        wallets: List<WalletEntity>
+        wallets: List<WalletEntity>,
+        currency: WalletCurrency
     ): List<CharSequence> = withContext(Dispatchers.IO) {
         val list = mutableListOf<Deferred<CharSequence>>()
         for (wallet in wallets) {
-            list.add(async { getBalance(wallet.accountId, wallet.testnet) })
+            list.add(async { getBalance(wallet.accountId, wallet.testnet, currency) })
         }
         list.map { it.await() }
     }
 
     private suspend fun getBalance(
         accountId: String,
-        testnet: Boolean
+        testnet: Boolean,
+        currency: WalletCurrency
     ): CharSequence {
-        val currency = if (testnet) {
-            WalletCurrency.TON
-        } else {
-            settingsRepository.currency
-        }
         val totalBalance = tokenRepository.getTotalBalances(currency, accountId, testnet) ?: return context.getString(Localization.unknown)
-        return CurrencyFormatter.formatFiat(currency.code, totalBalance)
+        return CurrencyFormatter.formatFiat(if (testnet) WalletCurrency.TON.code else currency.code, totalBalance)
     }
 }

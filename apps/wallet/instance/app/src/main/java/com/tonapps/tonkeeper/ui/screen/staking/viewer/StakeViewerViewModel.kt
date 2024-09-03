@@ -62,7 +62,8 @@ class StakeViewerViewModel(
             balance = amount,
             balanceFormat = CurrencyFormatter.format(tonCode, amount, customScale = 4),
             fiat = fiat,
-            fiatFormat = CurrencyFormatter.formatFiat(currency.code, fiat)
+            fiatFormat = CurrencyFormatter.formatFiat(currency.code, fiat),
+            hiddenBalance = settingsRepository.hiddenBalances,
         ))
         uiItems.add(Item.Actions(address))
 

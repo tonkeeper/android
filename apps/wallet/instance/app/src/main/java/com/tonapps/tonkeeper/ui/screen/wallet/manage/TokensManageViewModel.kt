@@ -49,6 +49,7 @@ class TokensManageViewModel(
 
     init {
         tokensFlow.map { tokens ->
+            val hiddenBalance = settingsRepository.hiddenBalances
             val pinnedTokens = tokens.filter { it.pinned }.sortedBy {
                 it.index
             }
@@ -58,7 +59,11 @@ class TokensManageViewModel(
             if (pinnedTokens.isNotEmpty()) {
                 items.add(Item.Title(Localization.pinned))
                 for ((index, token) in pinnedTokens.withIndex()) {
-                    items.add(Item.Token(ListCell.getPosition(pinnedTokens.size, index), token))
+                    items.add(Item.Token(
+                        position = ListCell.getPosition(pinnedTokens.size, index),
+                        token = token,
+                        hiddenBalance = hiddenBalance
+                    ))
                 }
             }
 
@@ -66,7 +71,11 @@ class TokensManageViewModel(
                 items.add(Item.Space)
                 items.add(Item.Title(Localization.all_assets, Localization.sorted_by_price))
                 for ((index, token) in otherTokens.withIndex()) {
-                    items.add(Item.Token(ListCell.getPosition(otherTokens.size, index), token))
+                    items.add(Item.Token(
+                        position = ListCell.getPosition(otherTokens.size, index),
+                        token = token,
+                        hiddenBalance = hiddenBalance
+                    ))
                 }
             }
 

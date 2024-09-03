@@ -6,6 +6,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import uikit.extensions.drawable
 import uikit.widget.FrescoView
 
@@ -24,7 +25,7 @@ class TokenHolder(
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
         titleView.text = item.symbol
-        balanceView.text = item.balance.withCustomSymbol(context)
+        balanceView.text = if (item.hiddenBalance) HIDDEN_BALANCE else item.balance.withCustomSymbol(context)
         checkView.visibility = if (item.selected) View.VISIBLE else View.GONE
     }
 

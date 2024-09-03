@@ -13,6 +13,7 @@ import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.localization.Localization
@@ -102,7 +103,7 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
             availableView.setTextColor(requireContext().accentRedColor)
             button.isEnabled = false
         } else if (state.remainingFormat == state.balanceFormat) {
-            availableView.text = getString(Localization.available_balance, state.balanceFormat).withCustomSymbol(requireContext())
+            availableView.text = if (state.hiddenBalance) HIDDEN_BALANCE else getString(Localization.available_balance, state.balanceFormat).withCustomSymbol(requireContext())
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = false
         } else if (state.requestMinStake) {

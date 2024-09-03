@@ -39,6 +39,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.map
@@ -519,7 +520,7 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
             maxView.visibility = View.GONE
         } else {
             statusView.setTextColor(requireContext().textSecondaryColor)
-            statusView.text = state.remainingFormat.withCustomSymbol(requireContext())
+            statusView.text = if (state.hiddenBalance) HIDDEN_BALANCE else state.remainingFormat.withCustomSymbol(requireContext())
             maxView.visibility = View.VISIBLE
         }
     }

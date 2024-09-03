@@ -79,6 +79,7 @@ class StakingViewModel(
         val minStakeFormat: CharSequence,
         val insufficientBalance: Boolean,
         val requestMinStake: Boolean,
+        val hiddenBalance: Boolean
     )
 
     val poolsFlow = accountRepository.selectedWalletFlow.map { wallet ->
@@ -119,6 +120,7 @@ class StakingViewModel(
                 minStakeFormat = minStakeFormat,
                 insufficientBalance = false,
                 requestMinStake = false,
+                hiddenBalance = settingsRepository.hiddenBalances,
             )
         } else {
             val remaining = balance - amount
@@ -127,7 +129,8 @@ class StakingViewModel(
                 remainingFormat = CurrencyFormatter.format(token.symbol, remaining),
                 minStakeFormat = minStakeFormat,
                 insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
-                requestMinStake = pool.minStake > amount
+                requestMinStake = pool.minStake > amount,
+                hiddenBalance = settingsRepository.hiddenBalances,
             )
         }
     }

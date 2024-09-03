@@ -14,6 +14,7 @@ import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import uikit.extensions.drawable
 import uikit.widget.FrescoView
 
@@ -45,7 +46,11 @@ class TokenHolder(
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
         titleView.text = item.symbol
-        balanceView.text = item.balanceFormat.withCustomSymbol(context)
+        balanceView.text = if (item.hiddenBalance) {
+            HIDDEN_BALANCE
+        } else {
+            item.balanceFormat.withCustomSymbol(context)
+        }
 
         pinnedView.setOnClickListener {
             val pinned = !item.pinned

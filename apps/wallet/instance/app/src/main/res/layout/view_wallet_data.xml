@@ -20,6 +20,7 @@
                 android:id="@+id/wallet_balance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:fontFamily="@font/montserrat_semi_bold"
                 android:gravity="center"
                 android:singleLine="true"

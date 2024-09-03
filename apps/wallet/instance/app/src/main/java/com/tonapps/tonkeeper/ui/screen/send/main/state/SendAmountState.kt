@@ -9,4 +9,5 @@ data class SendAmountState(
     val insufficientBalance: Boolean = false,
     val currencyCode: String = "",
     val amountCurrency: Boolean = false,
+    val hiddenBalance: Boolean = false,
 )

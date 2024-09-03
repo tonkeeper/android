@@ -6,6 +6,8 @@
 
 -keep class io.tonapi.** { *; }
 
+-keep class io.batteryapi.** { *; }
+
 -keep class com.google.j2objc.annotations.** { *; }
 
 # Keep enum values to ensure correct deserialization

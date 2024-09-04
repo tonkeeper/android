@@ -98,4 +98,13 @@ abstract class BaseListWalletScreen: BaseWalletScreen(R.layout.fragment_list) {
         headerView.doOnActionClick = onClick
     }
 
+    fun setCloseIcon(@DrawableRes resId: Int, onClick: () -> Unit) {
+        headerView.setIcon(resId)
+        headerView.doOnCloseClick = onClick
+    }
+
+    fun setHeaderBackground(@DrawableRes resId: Int) {
+        headerView.setBackgroundResource(resId)
+    }
+
 }

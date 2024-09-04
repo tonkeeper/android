@@ -2,11 +2,21 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="@dimen/offsetMedium">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:title="@string/unstake"
+        android:action="@drawable/ic_close_16"/>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/barHeight"
+        android:paddingHorizontal="@dimen/offsetMedium">
 
         <uikit.widget.ColumnLayout
             android:layout_width="match_parent"
@@ -91,7 +101,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_marginBottom="@dimen/offsetMedium"
+        android:layout_margin="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
         android:textColor="?attr/textPrimaryColor"
         android:enabled="false"

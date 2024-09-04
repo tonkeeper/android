@@ -17,14 +17,16 @@ data class PoolEntity(
     val verified: Boolean,
     val cycleStart: Long,
     val cycleEnd: Long,
-    val liquidJettonMaster: String?
+    val liquidJettonMaster: String?,
+    val maxApy: Boolean,
 ): Parcelable {
 
     val isTonstakers: Boolean
         get() = implementation == StakingPool.Implementation.LiquidTF
 
     constructor(
-        info: PoolInfo
+        info: PoolInfo,
+        maxApy: Boolean
     ): this(
         address = info.address,
         name = info.name,
@@ -34,7 +36,8 @@ data class PoolEntity(
         verified = info.verified,
         cycleStart = info.cycleStart,
         cycleEnd = info.cycleEnd,
-        liquidJettonMaster = info.liquidJettonMaster
+        liquidJettonMaster = info.liquidJettonMaster,
+        maxApy = maxApy
     )
 
 }

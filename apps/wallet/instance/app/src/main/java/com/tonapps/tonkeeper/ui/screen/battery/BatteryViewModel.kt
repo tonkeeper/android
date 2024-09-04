@@ -25,9 +25,6 @@ class BatteryViewModel(
     private val _routeFlow = MutableEffectFlow<BatteryRoute>() // with "_" writable only inside
     val routeFlow = _routeFlow.asSharedFlow().filterNotNull() // without "_" read-only for outside
 
-    private val _titleFlow = MutableStateFlow<CharSequence?>(null)
-    val titleFlow = _titleFlow.asStateFlow()
-
     init {
         routeToRefill()
     }
@@ -38,9 +35,5 @@ class BatteryViewModel(
 
     private fun routeToRefill() {
         _routeFlow.tryEmit(BatteryRoute.Refill)
-    }
-
-    fun setTitle(title: CharSequence?) {
-        _titleFlow.value = title
     }
 }

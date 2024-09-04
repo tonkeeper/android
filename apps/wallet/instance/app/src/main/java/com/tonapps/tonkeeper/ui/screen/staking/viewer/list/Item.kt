@@ -35,6 +35,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Details(
         val apyFormat: String,
         val minDepositFormat: CharSequence,
+        val maxApy: Boolean,
     ): Item(TYPE_DETAILS)
 
     data class Links(

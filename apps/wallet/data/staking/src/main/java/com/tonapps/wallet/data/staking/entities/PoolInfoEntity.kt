@@ -24,6 +24,9 @@ data class PoolInfoEntity(
     val name: String
         get() = implementation.name
 
+    val maxApy: Boolean
+        get() = pools.any { it.maxApy }
+
     val cycleStart: Long
         get() = pools.minOfOrNull { it.cycleStart } ?: 0
 }

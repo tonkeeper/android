@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
@@ -14,10 +15,12 @@ import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.collectFlow
+import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
+import uikit.widget.HeaderView
 
-class UnStakeAmountFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unstake_amount) {
+class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen, UnStakeViewModel>(R.layout.fragment_unstake_amount) {
 
     private lateinit var amountView: CoinEditText
     private lateinit var availableView: AppCompatTextView
@@ -26,20 +29,23 @@ class UnStakeAmountFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unsta
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val headerView = view.findViewById<HeaderView>(R.id.header)
+        headerView.doOnActionClick = { finish() }
+
         amountView = view.findViewById(R.id.unstake_amount)
         amountView.suffix = "TON"
-        amountView.doOnValueChange = unStakeViewModel::updateAmount
+        amountView.doOnValueChange = primaryViewModel::updateAmount
 
         currencyView = view.findViewById(R.id.unstake_currency)
 
         availableView = view.findViewById(R.id.available)
 
         button = view.findViewById(R.id.next_button)
-        button.setOnClickListener { unStakeViewModel.confirm() }
+        button.setOnClickListener { primaryViewModel.confirm() }
 
         view.findViewById<View>(R.id.max).setOnClickListener { applyMax() }
 
-        collectFlow(unStakeViewModel.availableUiStateFlow, ::applyAvailableState)
+        collectFlow(primaryViewModel.availableUiStateFlow, ::applyAvailableState)
     }
 
     private fun applyAvailableState(state: UnStakeViewModel.AvailableUiState) {
@@ -61,7 +67,7 @@ class UnStakeAmountFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unsta
     }
 
     private fun applyMax() {
-        collectFlow(unStakeViewModel.requestMax()) {
+        collectFlow(primaryViewModel.requestMax()) {
             amountView.setValue(it)
         }
     }

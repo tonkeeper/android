@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.staking.stake.options.list
 
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.holder.PoolHolder
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.holder.SpaceHolder
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.holder.TitleHolder
@@ -20,5 +21,10 @@ class Adapter(
             Item.TYPE_POOL -> PoolHolder(parent, onClick)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerView.isNestedScrollingEnabled = true
     }
 }

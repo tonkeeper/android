@@ -96,7 +96,8 @@ class StakeViewerViewModel(
         uiItems.add(Item.Space)
         uiItems.add(Item.Details(
             apyFormat = "≈ $apyFormat",
-            minDepositFormat = CurrencyFormatter.format(tonCode, staked.pool.minStake)
+            minDepositFormat = CurrencyFormatter.format(tonCode, staked.pool.minStake),
+            maxApy = staked.maxApy
         ))
         uiItems.add(Item.Space)
         uiItems.add(Item.Description(Localization.staking_details_description))

@@ -188,6 +188,7 @@ class StakingViewModel(
                 selectPool(it)
             }
         }
+        _eventFlow.tryEmit(StakingEvent.OpenAmount)
         updateAmount(0.0)
     }
 

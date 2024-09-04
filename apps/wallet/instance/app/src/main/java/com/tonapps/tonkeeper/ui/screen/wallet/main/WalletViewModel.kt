@@ -148,7 +148,6 @@ class WalletViewModel(
             val walletCurrency = getCurrency(wallet, currency)
 
             val localAssets = getLocalAssets(walletCurrency, wallet)
-            Log.d("WalletViewLog", "localAssets: $localAssets")
             val batteryBalance = getBatteryBalance(wallet)
             if (localAssets != null) {
                 _stateMainFlow.value = State.Main(
@@ -166,7 +165,6 @@ class WalletViewModel(
 
             if (isOnline) {
                 val remoteAssets = getRemoteAssets(walletCurrency, wallet)
-                Log.d("WalletViewLog", "remoteAssets: $remoteAssets")
                 val batteryBalance = getBatteryBalance(wallet, true)
                 if (remoteAssets != null) {
                     _stateMainFlow.value = State.Main(

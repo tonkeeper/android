@@ -52,7 +52,12 @@ internal class RemoteDataSource(
         val response = withRetry {
             api.staking(testnet).getStakingPools(accountId, includeUnverified = false)
         } ?: return emptyList()
-        val pools = response.pools.map { PoolEntity(it) }.map {
+
+        val maxApyImplementation = response.pools.maxByOrNull { it.apy }?.implementation
+
+        val pools = response.pools.map {
+            PoolEntity(it, maxApyImplementation == it.implementation)
+        }.map {
             if (it.implementation != StakingPool.Implementation.Whales) {
                 it
             } else {

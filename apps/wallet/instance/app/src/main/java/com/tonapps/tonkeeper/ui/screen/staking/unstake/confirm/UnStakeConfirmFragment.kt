@@ -7,7 +7,9 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.short12
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.staking.StakingPool
@@ -16,9 +18,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 import uikit.widget.FrescoView
+import uikit.widget.HeaderView
 import uikit.widget.ProcessTaskView
 
-class UnStakeConfirmFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unstake_confirm) {
+class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen, UnStakeViewModel>(R.layout.fragment_unstake_confirm) {
 
     private lateinit var iconView: FrescoView
     private lateinit var walletView: TransactionDetailView
@@ -31,6 +34,10 @@ class UnStakeConfirmFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unst
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val headerView = view.findViewById<HeaderView>(R.id.header)
+        headerView.doOnCloseClick = { popBackStack() }
+        headerView.doOnActionClick = { finish() }
+
         iconView = view.findViewById(R.id.icon)
         iconView.setCircular()
 
@@ -48,22 +55,22 @@ class UnStakeConfirmFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unst
 
         button.setOnClickListener { unStake() }
 
-        collectFlow(unStakeViewModel.walletFlow) { wallet ->
+        collectFlow(primaryViewModel.walletFlow) { wallet ->
             walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView, 12)
         }
 
-        collectFlow(unStakeViewModel.poolFlow, ::applyPool)
-        collectFlow(unStakeViewModel.taskStateFlow, ::setTaskState)
+        collectFlow(primaryViewModel.poolFlow, ::applyPool)
+        collectFlow(primaryViewModel.taskStateFlow, ::setTaskState)
 
-        collectFlow(unStakeViewModel.amountFormatFlow) { amountFormat ->
+        collectFlow(primaryViewModel.amountFormatFlow) { amountFormat ->
             amountView.value = amountFormat.withCustomSymbol(requireContext())
         }
 
-        collectFlow(unStakeViewModel.fiatFormatFlow) { fiatFormat ->
+        collectFlow(primaryViewModel.fiatFormatFlow) { fiatFormat ->
             amountView.description = fiatFormat.withCustomSymbol(requireContext())
         }
 
-        collectFlow(unStakeViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
+        collectFlow(primaryViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
             feeView.setDefault()
             feeView.value = "≈ " + feeFormat.withCustomSymbol(requireContext())
             feeView.description = "≈ " + feeFiatFormat.withCustomSymbol(requireContext())
@@ -78,7 +85,7 @@ class UnStakeConfirmFragment: UnStakeScreen.ChildFragment(R.layout.fragment_unst
     }
 
     private fun unStake() {
-        collectFlow(unStakeViewModel.unStake(requireContext())) {
+        collectFlow(primaryViewModel.unStake(requireContext())) {
 
         }
     }

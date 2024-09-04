@@ -29,7 +29,7 @@ sealed class Item(type: Int): BaseListItem(type) {
                     position = position,
                     selected = selectedPool.implementation == pool.implementation,
                     minimumDepositFormat = minimumDepositFormat,
-                    maxApy = index == 0,
+                    maxApy = pool.maxApy,
                     apyFormat = apyFormat
                 ))
             }

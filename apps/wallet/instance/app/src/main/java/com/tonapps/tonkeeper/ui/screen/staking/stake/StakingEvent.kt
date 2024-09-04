@@ -7,6 +7,7 @@ import io.tonapi.models.PoolInfo
 
 sealed class StakingEvent {
     data object OpenOptions: StakingEvent()
+    data object OpenAmount: StakingEvent()
     data class OpenDetails(
         val pool: PoolInfoEntity
     ): StakingEvent()

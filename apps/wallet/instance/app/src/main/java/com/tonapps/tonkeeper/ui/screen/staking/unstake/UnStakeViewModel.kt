@@ -131,6 +131,7 @@ class UnStakeViewModel(
     val poolFlow = stakeFlow.map { it.pool }
 
     init {
+        _eventFlow.tryEmit(UnStakeEvent.RouteToAmount)
         updateAmount(0.0)
     }
 

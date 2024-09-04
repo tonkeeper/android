@@ -7,7 +7,11 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.staking.StakingPool
@@ -18,7 +22,7 @@ import uikit.extensions.collectFlow
 import uikit.widget.FrescoView
 import uikit.widget.ProcessTaskView
 
-class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_confirm) {
+class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_confirm) {
 
     private lateinit var iconView: FrescoView
     private lateinit var walletView: TransactionDetailView
@@ -48,32 +52,32 @@ class StakeConfirmFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
 
         button.setOnClickListener { stake() }
 
-        collectFlow(stakeViewModel.walletFlow) { wallet ->
+        collectFlow(primaryViewModel.walletFlow) { wallet ->
             walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView, 12)
         }
 
-        collectFlow(stakeViewModel.fiatFormatFlow) { fiatFormat ->
+        collectFlow(primaryViewModel.fiatFormatFlow) { fiatFormat ->
             amountView.description = fiatFormat.withCustomSymbol(requireContext())
         }
 
-        collectFlow(stakeViewModel.amountFormatFlow) { amountFormat ->
+        collectFlow(primaryViewModel.amountFormatFlow) { amountFormat ->
             amountView.value = amountFormat.withCustomSymbol(requireContext())
         }
 
-        collectFlow(stakeViewModel.selectedPoolFlow, ::applyPool)
+        collectFlow(primaryViewModel.selectedPoolFlow, ::applyPool)
 
-        collectFlow(stakeViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
+        collectFlow(primaryViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
             feeView.setDefault()
             feeView.value = "≈ " + feeFormat.withCustomSymbol(requireContext())
             feeView.description = "≈ " + feeFiatFormat.withCustomSymbol(requireContext())
             button.isEnabled = true
         }
 
-        collectFlow(stakeViewModel.taskStateFlow, ::setTaskState)
+        collectFlow(primaryViewModel.taskStateFlow, ::setTaskState)
     }
 
     private fun stake() {
-        collectFlow(stakeViewModel.stake(requireContext())) {
+        collectFlow(primaryViewModel.stake(requireContext())) {
 
         }
     }

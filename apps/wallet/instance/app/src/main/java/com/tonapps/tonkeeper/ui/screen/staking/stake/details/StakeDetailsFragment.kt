@@ -10,28 +10,52 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.google.android.flexbox.FlexboxLayout
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.stake.amount.StakeAmountFragment
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.localization.Localization
+import uikit.extensions.applyBottomInsets
 import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.inflate
+import uikit.extensions.pinToBottomInsets
 import uikit.extensions.setLeftDrawable
+import uikit.extensions.withGreenBadge
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.widget.HeaderView
 
-class StakeDetailsFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_details) {
+class StakeDetailsFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_details) {
 
     private val poolInfo: PoolInfoEntity by lazy { requireArguments().getParcelableCompat(POOL_KEY)!! }
     private val pool: PoolEntity by lazy { poolInfo.pools.first() }
 
+    private lateinit var poolApyTitleView: AppCompatTextView
     private lateinit var linkDrawable: Drawable
     private lateinit var linksView: FlexboxLayout
+    private lateinit var button: Button
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val headerView = view.findViewById<HeaderView>(R.id.header)
+        headerView.doOnCloseClick = { popBackStack() }
+        headerView.doOnActionClick = { finish() }
+        headerView.title = poolInfo.name
+
+        poolApyTitleView = view.findViewById(R.id.pool_apy_title)
+        if (pool.maxApy) {
+            poolApyTitleView.text = getString(Localization.staking_apy).withGreenBadge(requireContext(), Localization.staking_max_apy)
+        } else {
+            poolApyTitleView.text = getString(Localization.staking_apy)
+        }
+
         linkDrawable = requireContext().drawable(UIKitIcon.ic_globe_16)
         val apyView = view.findViewById<AppCompatTextView>(R.id.pool_apy)
         apyView.text = "≈ ${CurrencyFormatter.formatPercent(pool.apy)}"
@@ -42,11 +66,12 @@ class StakeDetailsFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
         linksView = view.findViewById(R.id.links)
         applyLinks(poolInfo.details.getLinks(pool.address))
 
-        val chooseButton = view.findViewById<Button>(R.id.choose_button)
-        chooseButton.setOnClickListener {
-            stakeViewModel.selectPool(pool)
-            finish()
+        button = view.findViewById(R.id.choose_button)
+        button.setOnClickListener {
+            primaryViewModel.selectPool(pool)
+            popBackStack(StakeAmountFragment.TAG)
         }
+        button.applyBottomInsets()
     }
 
     private fun applyLinks(links: List<String>) {
@@ -58,11 +83,13 @@ class StakeDetailsFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_
             linkView.setLeftDrawable(linkDrawable)
             linkView.setOnClickListener { navigation?.openURL(link, true) }
             linksView.addView(linkView)
-            linksView.addView(View(context), ViewGroup.LayoutParams(8.dp, 0))
         }
     }
 
-    override fun getTitle() = pool.name
+    override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {
+        super.onKeyboardAnimation(offset, progress, isShowing)
+        button.translationY = -offset.toFloat()
+    }
 
     companion object {
         private const val POOL_KEY = "pool"

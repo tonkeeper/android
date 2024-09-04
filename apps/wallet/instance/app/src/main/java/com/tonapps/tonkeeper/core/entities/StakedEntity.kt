@@ -24,6 +24,9 @@ data class StakedEntity(
     val isTonstakers: Boolean
         get() = pool.isTonstakers
 
+    val maxApy: Boolean
+        get() = pool.maxApy
+
     companion object {
 
         suspend fun create(

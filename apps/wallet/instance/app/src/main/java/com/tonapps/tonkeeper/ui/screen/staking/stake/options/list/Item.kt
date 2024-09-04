@@ -20,6 +20,31 @@ sealed class Item(type: Int): BaseListItem(type) {
             selectedPool: PoolEntity,
         ): List<Item> {
             val items = mutableListOf<Item>()
+            val liquid = pools.filter { it.pools.size == 1 }
+            val other = pools.filter { it.pools.size > 1 }
+
+            items.add(Space)
+            items.add(Title(Localization.liquid_staking))
+            items.add(Space)
+            items.addAll(build(liquid, selectedPool))
+            items.add(Space)
+
+            if (other.isNotEmpty()) {
+                items.add(Space)
+                items.add(Title(Localization.other))
+                items.add(Space)
+                items.addAll(build(other, selectedPool))
+                items.add(Space)
+            }
+
+            return items.toList()
+        }
+
+        private fun build(
+            pools: List<PoolInfoEntity>,
+            selectedPool: PoolEntity
+        ): List<Pool> {
+            val items = mutableListOf<Pool>()
             for ((index, pool) in pools.withIndex()) {
                 val position = ListCell.getPosition(pools.size, index)
                 val minimumDepositFormat = CurrencyFormatter.format("TON", pool.minStake)
@@ -33,8 +58,7 @@ sealed class Item(type: Int): BaseListItem(type) {
                     apyFormat = apyFormat
                 ))
             }
-            items.add(Space)
-            return items
+            return items.toList()
         }
     }
 

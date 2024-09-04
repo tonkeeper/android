@@ -16,9 +16,11 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.amount.StakeAmountFragment
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
+import com.tonapps.tonkeeper.ui.screen.swap.SwapArgs
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.staking.entities.PoolDetailsEntity
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.localization.Localization
@@ -34,8 +36,7 @@ import uikit.widget.HeaderView
 
 class StakeDetailsFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_details) {
 
-    private val poolInfo: PoolInfoEntity by lazy { requireArguments().getParcelableCompat(POOL_KEY)!! }
-    private val pool: PoolEntity by lazy { poolInfo.pools.first() }
+    private val args: StakeDetailsArgs by lazy { StakeDetailsArgs(requireArguments()) }
 
     private lateinit var poolApyTitleView: AppCompatTextView
     private lateinit var linkDrawable: Drawable
@@ -47,10 +48,10 @@ class StakeDetailsFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
         val headerView = view.findViewById<HeaderView>(R.id.header)
         headerView.doOnCloseClick = { popBackStack() }
         headerView.doOnActionClick = { finish() }
-        headerView.title = poolInfo.name
+        headerView.title = args.name
 
         poolApyTitleView = view.findViewById(R.id.pool_apy_title)
-        if (pool.maxApy) {
+        if (args.maxApy) {
             poolApyTitleView.text = getString(Localization.staking_apy).withGreenBadge(requireContext(), Localization.staking_max_apy)
         } else {
             poolApyTitleView.text = getString(Localization.staking_apy)
@@ -58,17 +59,17 @@ class StakeDetailsFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
 
         linkDrawable = requireContext().drawable(UIKitIcon.ic_globe_16)
         val apyView = view.findViewById<AppCompatTextView>(R.id.pool_apy)
-        apyView.text = "≈ ${CurrencyFormatter.formatPercent(pool.apy)}"
+        apyView.text = "≈ ${CurrencyFormatter.formatPercent(args.apy)}"
 
         val minDepositView = view.findViewById<AppCompatTextView>(R.id.pool_min_deposit)
-        minDepositView.text = CurrencyFormatter.format(TokenEntity.TON.symbol, pool.minStake)
+        minDepositView.text = CurrencyFormatter.format(TokenEntity.TON.symbol, args.minStake)
 
         linksView = view.findViewById(R.id.links)
-        applyLinks(poolInfo.details.getLinks(pool.address))
+        applyLinks(args.links)
 
         button = view.findViewById(R.id.choose_button)
         button.setOnClickListener {
-            primaryViewModel.selectPool(pool)
+            primaryViewModel.selectPool(args.pool)
             popBackStack(StakeAmountFragment.TAG)
         }
         button.applyBottomInsets()
@@ -92,13 +93,12 @@ class StakeDetailsFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
     }
 
     companion object {
-        private const val POOL_KEY = "pool"
-
-        fun newInstance(pool: PoolInfoEntity): StakeDetailsFragment {
+        fun newInstance(
+            info: PoolInfoEntity,
+            poolAddress: String
+        ): StakeDetailsFragment {
             val fragment = StakeDetailsFragment()
-            fragment.arguments = Bundle().apply {
-                putParcelable(POOL_KEY, pool)
-            }
+            fragment.setArgs(StakeDetailsArgs(info, poolAddress))
             return fragment
         }
     }

@@ -2,11 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.staking.unstake
 
 import android.app.Application
 import android.content.Context
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.flattenFirst
 import com.tonapps.icu.Coins
@@ -20,8 +18,6 @@ import com.tonapps.tonkeeper.extensions.signLedgerTransaction
 import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
-import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingEvent
-import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel.AvailableUiState
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -48,7 +44,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext

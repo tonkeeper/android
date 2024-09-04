@@ -34,25 +34,12 @@ class StakingScreen: BaseHolderWalletScreen(), BaseFragment.BottomSheet {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        collectFlow(viewModel.eventFlow, ::onEvent)
+        setFragment(StakeAmountFragment.newInstance())
     }
 
     override fun onDragging() {
         super.onDragging()
         requireContext().hideKeyboard()
-    }
-
-    private fun onEvent(event: StakingEvent) {
-        when(event) {
-            is StakingEvent.OpenAmount -> setFragment(StakeAmountFragment.newInstance())
-            is StakingEvent.OpenOptions -> setFragment(StakeOptionsFragment.newInstance())
-            is StakingEvent.OpenDetails -> setFragment(StakeDetailsFragment.newInstance(event.pool))
-            is StakingEvent.OpenConfirm -> setFragment(StakeConfirmFragment.newInstance())
-            is StakingEvent.Finish -> {
-                navigation?.openURL("tonkeeper://activity")
-                finish()
-            }
-        }
     }
 
     companion object {

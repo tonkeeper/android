@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake
 
 import android.app.Application
 import android.content.Context
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
@@ -27,7 +26,6 @@ import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.StakingUtils
 import com.tonapps.wallet.data.staking.entities.PoolEntity
-import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import io.ktor.util.reflect.instanceOf
@@ -42,14 +40,11 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
@@ -58,8 +53,6 @@ import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
 import uikit.extensions.collectFlow
 import uikit.widget.ProcessTaskView
-import java.math.BigDecimal
-import java.math.RoundingMode
 
 class StakingViewModel(
     app: Application,
@@ -91,9 +84,6 @@ class StakingViewModel(
 
     private val _selectedPoolFlow = MutableStateFlow<PoolEntity?>(null)
     val selectedPoolFlow = _selectedPoolFlow.asStateFlow().filterNotNull()
-
-    private val _eventFlow = MutableEffectFlow<StakingEvent>()
-    val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
     private val tokenFlow = accountRepository.selectedWalletFlow.map { wallet ->
         tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
@@ -171,8 +161,6 @@ class StakingViewModel(
 
     val walletFlow = accountRepository.selectedWalletFlow
 
-    val taskStateFlow = MutableEffectFlow<ProcessTaskView.State>()
-
     init {
         collectFlow(poolsFlow) { pools ->
             if (_selectedPoolFlow.value != null) {
@@ -188,7 +176,6 @@ class StakingViewModel(
                 selectPool(it)
             }
         }
-        _eventFlow.tryEmit(StakingEvent.OpenAmount)
         updateAmount(0.0)
     }
 
@@ -202,19 +189,6 @@ class StakingViewModel(
 
     fun selectPool(pool: PoolEntity) {
         _selectedPoolFlow.value = pool
-    }
-
-    fun details(pool: PoolInfoEntity) {
-        _eventFlow.tryEmit(StakingEvent.OpenDetails(pool))
-    }
-
-    fun openOptions() {
-        _eventFlow.tryEmit(StakingEvent.OpenOptions)
-    }
-
-    fun confirm() {
-        val pool = _selectedPoolFlow.value ?: return
-        _eventFlow.tryEmit(StakingEvent.OpenConfirm(pool, Coins.of(_amountFlow.value)))
     }
 
     private suspend fun getSendParams(
@@ -329,26 +303,12 @@ class StakingViewModel(
         } else {
             createStakeFlow(wallet)
         }
-    }.flattenFirst().flowOn(Dispatchers.IO).catch { e ->
-        taskStateFlow.tryEmit(
-            if (e.instanceOf(SendException.Cancelled::class)) {
-                ProcessTaskView.State.DEFAULT
-            } else {
-                ProcessTaskView.State.FAILED
-            }
-        )
-    }.onEach {
-        taskStateFlow.tryEmit(ProcessTaskView.State.SUCCESS)
-        delay(3000)
-        _eventFlow.tryEmit(StakingEvent.Finish)
-    }
+    }.flattenFirst().flowOn(Dispatchers.IO)
 
     private fun createLedgerStakeFlow(
         context: Context,
         wallet: WalletEntity
     ) = ledgerTransactionFlow().map { (seqno, transaction) ->
-        taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
-
         val signedBody = context.signLedgerTransaction(transaction, wallet.id)
             ?: throw SendException.Cancelled()
 
@@ -364,8 +324,6 @@ class StakingViewModel(
         if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
             throw SendException.Cancelled()
         }
-
-        taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
 
         val contract = wallet.contract
         val privateKey = accountRepository.getPrivateKey(wallet.id)

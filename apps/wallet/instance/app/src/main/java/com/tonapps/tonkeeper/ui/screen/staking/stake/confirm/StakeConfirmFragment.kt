@@ -8,6 +8,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
@@ -16,7 +17,11 @@ import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolEntity
+import io.ktor.util.reflect.instanceOf
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 import uikit.widget.FrescoView
@@ -72,14 +77,19 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
             feeView.description = "≈ " + feeFiatFormat.withCustomSymbol(requireContext())
             button.isEnabled = true
         }
-
-        collectFlow(primaryViewModel.taskStateFlow, ::setTaskState)
     }
 
     private fun stake() {
-        collectFlow(primaryViewModel.stake(requireContext())) {
-
-        }
+        setTaskState(ProcessTaskView.State.LOADING)
+        primaryViewModel.stake(requireContext()).catch { e ->
+            val state = if (e is SendException.Cancelled) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
+            setTaskState(state)
+        }.onEach {
+            setTaskState(ProcessTaskView.State.SUCCESS)
+            navigation?.openURL("tonkeeper://activity")
+            delay(2000)
+            finish()
+        }.launchIn(lifecycleScope)
     }
 
     private fun setTaskState(state: ProcessTaskView.State) {
@@ -105,7 +115,7 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
     private fun setFailedState() {
         taskView.state = ProcessTaskView.State.FAILED
         lifecycleScope.launch {
-            delay(3000)
+            delay(2000)
             setDefaultState()
         }
     }

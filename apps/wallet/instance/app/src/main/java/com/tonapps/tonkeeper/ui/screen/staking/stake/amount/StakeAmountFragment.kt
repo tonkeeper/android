@@ -9,6 +9,8 @@ import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.stake.confirm.StakeConfirmFragment
+import com.tonapps.tonkeeper.ui.screen.staking.stake.options.StakeOptionsFragment
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeperx.R
@@ -54,7 +56,7 @@ class StakeAmountFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, S
         currencyView = view.findViewById(R.id.stake_currency)
 
         poolItemView = view.findViewById(R.id.pool_item)
-        poolItemView.setOnClickListener { primaryViewModel.openOptions() }
+        poolItemView.setOnClickListener { setFragment(StakeOptionsFragment.newInstance()) }
 
         poolIconView = view.findViewById(R.id.pool_icon)
         poolIconView.setCircular()
@@ -68,7 +70,7 @@ class StakeAmountFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, S
         availableView = view.findViewById(R.id.available)
 
         button = view.findViewById(R.id.next_button)
-        button.setOnClickListener { primaryViewModel.confirm() }
+        button.setOnClickListener { setFragment(StakeConfirmFragment.newInstance()) }
 
         view.findViewById<View>(R.id.max).setOnClickListener { applyMax() }
 
@@ -128,7 +130,9 @@ class StakeAmountFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, S
 
     private fun applyPoolInfo(pool: PoolEntity) {
         poolIconView.setLocalRes(StakingPool.getIcon(pool.implementation))
-        poolTitleView.setText(StakingPool.getTitle(pool.implementation))
+        poolTitleView.text = pool.name.ifBlank {
+            getString(StakingPool.getTitle(pool.implementation))
+        }
         poolMaxApyView.visibility = if (pool.maxApy) View.VISIBLE else View.GONE
     }
 

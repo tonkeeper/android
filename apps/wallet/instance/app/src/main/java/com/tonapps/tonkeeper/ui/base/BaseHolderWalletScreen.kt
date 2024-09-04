@@ -9,6 +9,7 @@ import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeperx.R
 import uikit.base.SimpleFragment
 import uikit.extensions.doKeyboardAnimation
+import uikit.navigation.Navigation
 
 abstract class BaseHolderWalletScreen: BaseWalletScreen(R.layout.fragment_holder) {
 
@@ -63,6 +64,9 @@ abstract class BaseHolderWalletScreen: BaseWalletScreen(R.layout.fragment_holder
     abstract class ChildFragment<P: BaseHolderWalletScreen, VM: BaseWalletVM>(
         layoutId: Int
     ): SimpleFragment<P>(layoutId), Child<P, VM> {
+
+        val navigation: Navigation?
+            get() = primaryFragment.navigation
 
         @Suppress("UNCHECKED_CAST")
         override val primaryFragment: P

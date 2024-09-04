@@ -53,6 +53,8 @@
 
     <string name="w5_add_wallet">Add W5 Wallet</string>
 
+    <string name="liquid_staking">Liquid Staking</string>
+    <string name="other">Other</string>
     <string name="minimum_amount">Minimum %1$s</string>
     <string name="stake_tonstakers_description">When you stake TON in a Tonstakers pool, you receive a token called tsTON that represents your share in the pool. As the pool accumulates profits, your tsTON represents larger amount of TON.</string>
     <string name="edit">Edit</string>

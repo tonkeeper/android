@@ -62,4 +62,13 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"/>
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/arrow"
+        android:layout_width="16dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_chevron_right_12"
+        android:scaleType="centerInside"
+        android:tint="?attr/iconTertiaryColor"/>
+
 </uikit.widget.RowLayout>

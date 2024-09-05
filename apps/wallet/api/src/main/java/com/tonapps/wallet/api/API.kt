@@ -7,6 +7,7 @@ import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.icu.Coins
@@ -55,6 +56,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import org.ton.crypto.hex
 import java.util.Locale
@@ -391,6 +393,17 @@ class API(
         if (!response.isSuccessful) {
             throw Exception("Failed sending event: ${response.code}")
         }
+    }
+
+    suspend fun estimateGaslessCost(
+        tonProofToken: String,
+        jettonMaster: String,
+        cell: Cell,
+        testnet: Boolean,
+    ) = withContext(Dispatchers.IO) {
+        val request = io.batteryapi.models.EstimateGaslessCostRequest(cell.base64(), false)
+
+        battery(testnet).estimateGaslessCost(jettonMaster, request, tonProofToken).commission
     }
 
     suspend fun emulateWithBattery(

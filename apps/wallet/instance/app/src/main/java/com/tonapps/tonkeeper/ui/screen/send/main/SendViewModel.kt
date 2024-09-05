@@ -79,7 +79,7 @@ class SendViewModel(
     private val passcodeManager: PasscodeManager,
     private val collectiblesRepository: CollectiblesRepository,
     private val batteryRepository: BatteryRepository,
-): BaseWalletVM(app) {
+) : BaseWalletVM(app) {
 
     private val isNft: Boolean
         get() = nftAddress.isNotBlank()
@@ -104,12 +104,12 @@ class SendViewModel(
     private var lastTransferEntity: TransferEntity? = null
 
     private var isBattery = false
+    private var isGasless = false
+    private var gaslessFee = Coins.ZERO
 
     val walletTypeFlow = accountRepository.selectedWalletFlow.map { it.type }
 
-    private val userInputAddressFlow = userInputFlow
-        .map { it.address }
-        .distinctUntilChanged()
+    private val userInputAddressFlow = userInputFlow.map { it.address }.distinctUntilChanged()
         .debounce { if (it.isEmpty()) 0 else 600 }
 
     private val destinationFlow = combine(
@@ -127,11 +127,11 @@ class SendViewModel(
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val selectedTokenFlow = combine(
-        tokensFlow,
-        userInputFlow.map { it.token }.distinctUntilChanged()
+        tokensFlow, userInputFlow.map { it.token }.distinctUntilChanged()
     ) { tokens, selectedToken ->
         tokens.find { it.address == selectedToken.address } ?: AccountTokenEntity.EMPTY
-    }.distinctUntilChanged().flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, AccountTokenEntity.EMPTY)
+    }.distinctUntilChanged().flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AccountTokenEntity.EMPTY)
 
     private val ratesTokenFlow = selectedTokenFlow.map { token ->
         ratesRepository.getRates(currency, token.address)
@@ -149,7 +149,8 @@ class SendViewModel(
     val uiRequiredMemoFlow =
         destinationFlow.map { it as? SendDestination.Account }.map { it?.memoRequired == true }
 
-    val uiExistingTargetFlow = destinationFlow.map { it as? SendDestination.Account }.map { it?.existing == true }
+    val uiExistingTargetFlow =
+        destinationFlow.map { it as? SendDestination.Account }.map { it?.existing == true }
 
     val uiEncryptedCommentAvailableFlow = combine(
         uiRequiredMemoFlow,
@@ -168,9 +169,9 @@ class SendViewModel(
 
     private val uiInputComment = userInputFlow.map { it.comment }.distinctUntilChanged()
 
-    private val uiInputAmountCurrency = userInputFlow.map { it.amountCurrency }
-        .distinctUntilChanged()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    private val uiInputAmountCurrency =
+        userInputFlow.map { it.amountCurrency }.distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
@@ -204,12 +205,15 @@ class SendViewModel(
             rates.convertFromFiat(token.address, token.fiat - amount)
         }
 
-        val remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, 2, RoundingMode.DOWN, false)
+        val remainingFormat =
+            CurrencyFormatter.format(token.symbol, remainingToken, 2, RoundingMode.DOWN, false)
 
         SendAmountState(
             remainingFormat = getString(Localization.remaining_balance, remainingFormat),
             converted = converted.stripTrailingZeros(),
-            convertedFormat = CurrencyFormatter.format(convertedCode, converted, 2, RoundingMode.DOWN, false),
+            convertedFormat = CurrencyFormatter.format(
+                convertedCode, converted, 2, RoundingMode.DOWN, false
+            ),
             insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
             currencyCode = if (amountCurrency) currencyCode else "",
             amountCurrency = amountCurrency,
@@ -245,8 +249,7 @@ class SendViewModel(
     ) { token, amount, rates, amountCurrency ->
         if (!amountCurrency) {
             amount
-        } else {
-            /*val converted = rates.convertFromFiat(token.address, amount)
+        } else {/*val converted = rates.convertFromFiat(token.address, amount)
             val diff = token.balance.value.diff(converted)
             if (99.7f >= diff || 100.3f >= diff) {
                 token.balance.value
@@ -266,11 +269,7 @@ class SendViewModel(
             value = amount,
             converted = rates.convert(token.address, amount),
             format = CurrencyFormatter.format(
-                token.symbol,
-                amount,
-                token.decimals,
-                RoundingMode.UP,
-                false
+                token.symbol, amount, token.decimals, RoundingMode.UP, false
             ),
             convertedFormat = CurrencyFormatter.format(
                 currency.code,
@@ -369,8 +368,7 @@ class SendViewModel(
     }
 
     private suspend fun getDestinationAccount(
-        address: String,
-        testnet: Boolean
+        address: String, testnet: Boolean
     ) = withContext(Dispatchers.IO) {
         val accountDeferred = async { api.resolveAccount(address, testnet) }
         val publicKeyDeferred = async { api.safeGetPublicKey(address, testnet) }
@@ -388,8 +386,7 @@ class SendViewModel(
         val balance = if (amountCurrency) token.fiat else token.balance.value
         try {
             val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal("100"))
-                .setScale(2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal("100")).setScale(2, RoundingMode.HALF_UP)
             return percentage > BigDecimal("95.00") && percentage <= BigDecimal("99.99")
         } catch (e: Throwable) {
             return false
@@ -402,7 +399,10 @@ class SendViewModel(
             return
         }
         _uiEventFlow.tryEmit(SendEvent.Confirm)
-        transferFlow.take(1).map { calculateFee(it) }.map { (coins, isBattery) -> eventFee(coins, isBattery) }.filterNotNull().onEach {
+        transferFlow.take(1).map { transfer ->
+            val (coins, isSupportGasless) = calculateFee(transfer)
+            eventFee(transfer, coins, isSupportGasless)
+        }.filterNotNull().onEach {
             _uiEventFlow.tryEmit(it)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
@@ -433,6 +433,7 @@ class SendViewModel(
     private suspend fun calculateFee(
         transfer: TransferEntity,
         retryWithoutRelayer: Boolean = false,
+        ignoreGasless: Boolean = false,
     ): Pair<Coins, Boolean> = withContext(Dispatchers.IO) {
         val fakePrivateKey = if (transfer.commentEncrypted) {
             PrivateKeyEd25519()
@@ -441,13 +442,21 @@ class SendViewModel(
         }
         val wallet = transfer.wallet
         val withRelayer = shouldAttemptWithRelayer(transfer)
+        val tonProofToken = accountRepository.requestTonProofToken(wallet)
+        val batteryConfig = batteryRepository.getConfig(wallet.testnet)
+        val tokenAddress = transfer.token.token.address
+        val excessesAddress = batteryConfig.excessesAddress
+        val isSupportsGasless =
+            tonProofToken != null && excessesAddress != null && !transfer.token.isTon && batteryConfig.rechargeMethods.any {
+                it.supportGasless && it.jettonMaster == tokenAddress
+            }
+        val isPreferGasless = batteryRepository.getPreferGasless(wallet.testnet)
 
-        if (withRelayer && !retryWithoutRelayer) {
+        if (withRelayer && !retryWithoutRelayer && tonProofToken != null) {
             try {
                 if (api.config.isBatteryDisabled) {
                     throw IllegalStateException("Battery is disabled")
                 }
-                val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("Can't find TonProof token")
 
                 val message = transfer.toSignedMessage(fakePrivateKey, true)
                 val (consequences, withBattery) = batteryRepository.emulate(
@@ -458,42 +467,87 @@ class SendViewModel(
                 ) ?: throw IllegalStateException("Failed to emulate battery")
 
                 isBattery = withBattery
-                Pair(Coins.of(consequences.totalFees), withBattery)
+                isGasless = false
+
+                Pair(Coins.of(consequences.totalFees), isSupportsGasless)
             } catch (e: Throwable) {
-                calculateFee(transfer, true)
+                calculateFee(transfer, ignoreGasless = true)
+            }
+        } else if (!ignoreGasless && isPreferGasless && isSupportsGasless && tonProofToken != null && excessesAddress != null) {
+            try {
+                val message = transfer.toSignedMessage(
+                    fakePrivateKey,
+                    internalMessage = true,
+                    additionalGifts = listOf(
+                        transfer.gaslessInternalGift(
+                            coins = Coins.ONE,
+                            batteryAddress = excessesAddress
+                        )
+                    )
+                )
+
+                val commission = api.estimateGaslessCost(
+                    tonProofToken = tonProofToken,
+                    jettonMaster = tokenAddress,
+                    cell = message,
+                    testnet = wallet.testnet
+                )
+
+                isBattery = false
+                isGasless = true
+                gaslessFee = Coins.of(commission)
+
+                Pair(gaslessFee, true)
+            } catch (e: Throwable) {
+                calculateFee(transfer, ignoreGasless = true)
             }
         } else {
             val message = transfer.toSignedMessage(fakePrivateKey, false)
             val fee = api.emulate(message, transfer.wallet.testnet)?.totalFees ?: 0
 
             isBattery = false
+            isGasless = false
 
-            Pair(Coins.of(fee), false)
+            Pair(Coins.of(fee), isSupportsGasless)
         }
     }
 
     private suspend fun eventFee(
+        transfer: TransferEntity,
         coins: Coins,
-        isBattery: Boolean,
+        isSupportGasless: Boolean,
     ): SendEvent.Fee? {
         return try {
-            val code = TokenEntity.TON.symbol
+            val feeToken = if (isGasless) transfer.token.token else TokenEntity.TON
+            val code = feeToken.symbol
             val rates = ratesRepository.getRates(currency, code)
             val converted = rates.convert(code, coins)
 
             SendEvent.Fee(
                 value = coins,
-                format = CurrencyFormatter.format(code, coins, TokenEntity.TON.decimals),
+                format = CurrencyFormatter.format(code, coins, feeToken.decimals),
                 convertedFormat = CurrencyFormatter.format(
-                    currency.code,
-                    converted,
-                    currency.decimals
+                    currency.code, converted, currency.decimals
                 ),
                 isBattery = isBattery,
+                isGasless = isGasless,
+                isSupportGasless = isSupportGasless,
+                tokenSymbol = transfer.token.token.symbol,
             )
         } catch (e: Throwable) {
             null
         }
+    }
+
+    fun toggleGasless() {
+        transferFlow.take(1).map { transfer ->
+            val isPreferGasless = !batteryRepository.getPreferGasless(transfer.wallet.testnet)
+            batteryRepository.setPreferGasless(transfer.wallet.testnet, isPreferGasless)
+            val (coins, isSupportGasless) = calculateFee(transfer)
+            eventFee(transfer, coins, isSupportGasless)
+        }.filterNotNull().onEach {
+            _uiEventFlow.tryEmit(it)
+        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 
     fun userInputEncryptedComment(encrypted: Boolean) {
@@ -513,12 +567,10 @@ class SendViewModel(
     }
 
     fun userInputTokenByAddress(tokenAddress: String) {
-        combine(
-            accountRepository.selectedWalletFlow.take(1),
+        combine(accountRepository.selectedWalletFlow.take(1),
             tokensFlow.filter { it.isNotEmpty() }.map { list ->
                 list.find { it.address == tokenAddress }
-            }.map { it?.balance?.token }
-        ) { wallet, token ->
+            }.map { it?.balance?.token }) { wallet, token ->
             token ?: tokenRepository.getToken(tokenAddress, wallet.testnet) ?: TokenEntity.TON
         }.take(1).flowOn(Dispatchers.IO).onEach { token ->
             userInputToken(token)
@@ -570,16 +622,14 @@ class SendViewModel(
     }
 
     fun signerData() = combine(
-        accountRepository.selectedWalletFlow.take(1),
-        transferFlow.take(1)
+        accountRepository.selectedWalletFlow.take(1), transferFlow.take(1)
     ) { wallet, transfer ->
         lastTransferEntity = transfer
         Pair(wallet.publicKey, transfer.getUnsignedBody())
     }
 
     fun ledgerData() = combine(
-        accountRepository.selectedWalletFlow.take(1),
-        transferFlow.take(1)
+        accountRepository.selectedWalletFlow.take(1), transferFlow.take(1)
     ) { wallet, transfer ->
         lastTransferEntity = transfer
         Pair(wallet.id, transfer.getLedgerTransaction())
@@ -610,15 +660,35 @@ class SendViewModel(
                 throw SendException.WrongPasscode()
             }
             val privateKey = accountRepository.getPrivateKey(wallet.id)
-            val excessesAddress = if (isBattery) batteryRepository.getConfig(wallet.testnet).excessesAddress else null
+
+            if (isGasless) {
+                val batteryAddress = batteryRepository.getConfig(wallet.testnet).excessesAddress
+                    ?: throw SendException.FailedToSendTransaction()
+                val message = transfer.toSignedMessage(
+                    privateKey,
+                    internalMessage = true,
+                    excessesAddress = batteryAddress,
+                    additionalGifts = listOf(
+                        transfer.gaslessInternalGift(
+                            coins = gaslessFee,
+                            batteryAddress = batteryAddress
+                        )
+                    ),
+                )
+                return@map Pair(message, wallet)
+            }
+
+            val excessesAddress =
+                if (isBattery || isGasless) batteryRepository.getConfig(wallet.testnet).excessesAddress else null
             val boc = transfer.toSignedMessage(privateKey, isBattery, excessesAddress)
             Pair(boc, wallet)
         }.sendTransfer()
     }
 
     private suspend fun sendToBlockchain(message: Cell, wallet: WalletEntity) {
-        val success = if (isBattery) {
-            val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("Can't find TonProof token")
+        val success = if (isBattery || isGasless) {
+            val tonProofToken = accountRepository.requestTonProofToken(wallet)
+                ?: throw IllegalStateException("Can't find TonProof token")
             api.sendToBlockchainWithBattery(message, tonProofToken, wallet.testnet)
         } else {
             api.sendToBlockchain(message, wallet.testnet)

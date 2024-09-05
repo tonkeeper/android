@@ -477,4 +477,5 @@
     <string name="battery_refund_title">Charge History</string>
     <string name="battery_refund_subtitle">Recharges and refunds</string>
     <string name="promocode_hint">Promo Code</string>
+    <string name="gasless_switch_label">Tap to pay in %1$s</string>
 </resources>

@@ -122,4 +122,17 @@ class BatteryRepository(
         localDataSource.setAppliedPromo(testnet, promo)
     }
 
+    suspend fun getPreferGasless(
+        testnet: Boolean,
+    ): Boolean = withContext(Dispatchers.IO) {
+        localDataSource.getPreferGasless(testnet)
+    }
+
+    suspend fun setPreferGasless(
+        testnet: Boolean,
+        value: Boolean,
+    ) = withContext(Dispatchers.IO) {
+        localDataSource.setPreferGasless(testnet, value)
+    }
+
 }

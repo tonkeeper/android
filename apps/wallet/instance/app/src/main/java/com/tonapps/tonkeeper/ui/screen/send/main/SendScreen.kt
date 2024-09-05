@@ -10,6 +10,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.short4
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.ledger.ton.Transaction
@@ -355,7 +356,7 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
 
     private fun onEvent(event: SendEvent) {
         when (event) {
-            is SendEvent.Failed -> setFailed()
+            is SendEvent.Failed -> setFailed(event.throwable)
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> setLoading()
             is SendEvent.Fee -> setFee(event)
@@ -395,7 +396,8 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
         processTaskView.state = ProcessTaskView.State.LOADING
     }
 
-    private fun setFailed() {
+    private fun setFailed(throwable: Throwable) {
+        processTaskView.setFailedLabel(throwable.getUserMessage(requireContext()) ?: getString(Localization.error))
         processTaskView.state = ProcessTaskView.State.FAILED
         postDelayed(4000, ::setDefault)
     }

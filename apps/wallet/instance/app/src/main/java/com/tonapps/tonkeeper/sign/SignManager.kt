@@ -4,11 +4,13 @@ import android.os.CancellationSignal
 import android.util.Log
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.ui.screen.action.ActionScreen
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
@@ -59,16 +61,16 @@ class SignManager(
 
         val boc = getBoc(navigation, wallet, request, details, canceller, isBattery) ?: throw IllegalArgumentException("Failed boc")
         AnalyticsHelper.trackEvent("send_transaction")
-        val success = if (isBattery) {
+        val state = if (isBattery) {
             val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("Can't find TonProof token")
             api.sendToBlockchainWithBattery(boc, tonProofToken, wallet.testnet)
         } else {
             api.sendToBlockchain(boc, wallet.testnet)
         }
-        if (success) {
+        if (state == SendBlockchainState.SUCCESS) {
             AnalyticsHelper.trackEvent("send_success")
         } else {
-            throw Exception("Failed to send transaction")
+            throw SendBlockchainException.fromState(state)
         }
         return boc
     }

@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.transaction
 
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
+import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
@@ -10,6 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.logError
+import com.tonapps.extensions.max12
+import com.tonapps.extensions.max24
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.shortHash
@@ -22,8 +26,11 @@ import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -32,6 +39,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
+import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.reject
 import uikit.extensions.setColor
@@ -60,6 +68,9 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     private val historyHelper: HistoryHelper by inject()
 
     private lateinit var iconView: FrescoView
+    private lateinit var iconSwapView: View
+    private lateinit var iconSwap1View: FrescoView
+    private lateinit var iconSwap2View: FrescoView
     private lateinit var spamView: View
     private lateinit var amountView: AppCompatTextView
     private lateinit var currencyView: AppCompatTextView
@@ -72,6 +83,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     private lateinit var accountAddressView: TransactionDetailView
     private lateinit var explorerButton: AppCompatTextView
     private lateinit var unverifiedView: View
+    private lateinit var amount2View: AppCompatTextView
 
     private val lockDrawable: Drawable by lazy {
         val drawable = requireContext().drawable(UIKitIcon.ic_lock_16)
@@ -87,10 +99,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
 
         iconView = view.findViewById(R.id.icon)
+        iconSwapView = view.findViewById(R.id.icon_swap)
+
+        iconSwap1View = view.findViewById(R.id.icon_swap1)
+        iconSwap2View = view.findViewById(R.id.icon_swap2)
 
         amountView = view.findViewById(R.id.amount)
         spamView = view.findViewById(R.id.spam)
         spamView.visibility = if (action.isScam) View.VISIBLE else View.GONE
+
+        amount2View = view.findViewById(R.id.amount2)
 
         currencyView = view.findViewById(R.id.currency)
         dateView = view.findViewById(R.id.date)
@@ -102,7 +120,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         dataView = view.findViewById(R.id.data)
 
         feeView = view.findViewById(R.id.fee)
-        feeView.title = getString(Localization.fee)
+        feeView.title = if (action.refund == null) getString(Localization.fee) else getString(Localization.refund)
 
         commentView = view.findViewById(R.id.comment)
         commentView.title = getString(Localization.comment)
@@ -126,22 +144,21 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             feeView.setData(HIDDEN_BALANCE, HIDDEN_BALANCE)
         } else {
             amountView.text = action.value.withCustomSymbol(requireContext())
-            feeView.setData(action.fee!!.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
-        }
-
-        if (action.isScam) {
-            applyIcon(null)
-        } else {
-            applyIcon(action.coinIconUrl)
+            if (action.refund != null) {
+                feeView.setData(action.refund!!.withCustomSymbol(requireContext()), action.refundInCurrency!!.withCustomSymbol(requireContext()))
+            } else {
+                feeView.setData(action.fee!!.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
+            }
         }
 
         if (action.comment != null && !action.isScam) {
             applyComment(action.comment!!)
         } else {
             commentView.visibility = View.GONE
+            feeView.position = ListCell.Position.LAST
         }
 
-        applyAccount(action.isOut, action.address, action.addressName?.ifPunycodeToUnicode())
+        applyAccount(action.isOut, action.senderAddress, action.addressName?.ifPunycodeToUnicode())
         applyCurrency(action.currency, action.hiddenBalance)
         applyDate(action.action, action.dateDetails)
 
@@ -165,6 +182,33 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
 
         updateDataView()
+
+        if (action.isScam) {
+            iconView.visibility = View.GONE
+            iconSwapView.visibility = View.GONE
+        } else if (action.isSwap) {
+            iconView.visibility = View.GONE
+            iconSwap1View.setImageURI(Uri.parse(action.coinIconUrl), this)
+            iconSwap2View.setImageURI(Uri.parse(action.coinIconUrl2), this)
+            amount2View.visibility = View.VISIBLE
+            amount2View.text = action.value2.withCustomSymbol(requireContext())
+        } else if (action.hasNft) {
+            iconSwapView.visibility = View.GONE
+            val nft = action.nft!!
+            iconView.setImageURI(nft.mediumUri, null)
+            iconView.setRound(16f.dp)
+            currencyView.visibility = View.VISIBLE
+            currencyView.text = nft.collectionName
+            amount2View.visibility = View.VISIBLE
+            amount2View.text = nft.name
+            amount2View.setTextColor(requireContext().textPrimaryColor)
+        } else if (action.coinIconUrl.isNotBlank()) {
+            iconSwapView.visibility = View.GONE
+            iconView.setImageURI(Uri.parse(action.coinIconUrl), null)
+        } else {
+            iconSwapView.visibility = View.GONE
+            iconView.visibility = View.GONE
+        }
     }
 
     private fun applyDate(actionType: ActionType, date: String) {
@@ -182,15 +226,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             } else {
                 currencyView.text = currency.withCustomSymbol(requireContext())
             }
-        }
-    }
-
-    private fun applyIcon(icon: String?) {
-        if (icon.isNullOrBlank()) {
-            iconView.visibility = View.GONE
-        } else {
-            iconView.visibility = View.VISIBLE
-            iconView.setImageURI(icon)
         }
     }
 
@@ -237,7 +272,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     private fun applyAccountWithName(out: Boolean, address: String, name: String) {
         accountNameView.visibility = View.VISIBLE
         accountNameView.title = getAccountTitle(out)
-        accountNameView.setData(name, "")
+        accountNameView.setData(name.max24, "")
         accountNameView.setOnClickListener {
             context?.copyWithToast(name)
         }

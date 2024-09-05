@@ -14,7 +14,16 @@ import java.util.Locale
 object CurrencyFormatter {
 
     private val customDigitLocales = listOf(
-        "ar", "fa", "ur", "hi", "bn", "ta", "th", "lo", "my", "si"
+        Locale("ar"),
+        Locale("fa"),
+        Locale("ur"),
+        Locale("hi"),
+        Locale("bn"),
+        Locale("ta"),
+        Locale("th"),
+        Locale("lo"),
+        Locale("my"),
+        Locale("si")
     )
 
     private var format = CurrencyFormat(Locale.getDefault(Locale.Category.FORMAT))
@@ -29,8 +38,8 @@ object CurrencyFormatter {
 
     private fun onLocaleChanged(newLocale: Locale) {
         val newLanguage = newLocale.language
-        if (newLanguage != "en" && customDigitLocales.contains(newLanguage)) {
-            onLocaleChanged(Locale.US)
+        if (newLanguage.equals(Locale.ENGLISH.language) && customDigitLocales.any { it.language.equals(newLanguage) }) {
+            onLocaleChanged(Locale.ENGLISH)
         } else if (newLanguage != format.locale.language) {
             format = CurrencyFormat(newLocale)
         }

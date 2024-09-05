@@ -34,6 +34,14 @@ class FrescoView @JvmOverloads constructor(
         setImageURI(UriUtil.getUriForResourceId(resId))
     }
 
+    override fun setImageURI(uriString: String?, callerContext: Any?) {
+        if (uriString == null) {
+            clear(callerContext)
+        } else {
+            super.setImageURI(Uri.parse(uriString), callerContext)
+        }
+    }
+
     override fun setImageURI(uri: Uri, callerContext: Any?) {
         if (UriUtil.isLocalResourceUri(uri)) {
             loadLocalUri(uri, callerContext)

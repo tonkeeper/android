@@ -33,6 +33,12 @@ val String.max12: String
         return substring(0, 12) + "…"
     }
 
+val String.max18: String
+    get() {
+        if (length < 18) return this
+        return substring(0, 18) + "…"
+    }
+
 val String.max24: String
     get() {
         if (length < 24) return this

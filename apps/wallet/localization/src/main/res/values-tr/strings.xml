@@ -87,7 +87,7 @@
     <string name="comment_encrypted_hint">Sadece alıcıya ve size görünür olacak.</string>
     <string name="decrypt_comment">Şifreyi Çöz</string>
     <string name="sign_out">Oturumu kapat</string>
-    <string name="delete_watch_account_alert">İzleme hesabını sil?</string>
+    <string name="delete_account_alert">Hesabı silmek istiyor musunuz?</string>
     <string name="delete">Sil</string>
     <string name="delete_watch_account">Saat hesabını sil</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nTüm Cüzdanlardan Çıkış Yap?</string>
@@ -397,4 +397,5 @@
     <string name="battery_refund_title">Şarj Geçmişi</string>
     <string name="battery_refund_subtitle">Şarjlar ve iadeler</string>
     <string name="promocode_hint">Promosyon Kodu</string>
+    <string name="refund">Geri ödemek</string>
 </resources>

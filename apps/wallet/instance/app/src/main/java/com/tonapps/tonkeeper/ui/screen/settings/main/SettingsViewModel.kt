@@ -133,10 +133,10 @@ class SettingsViewModel(
         uiItems.add(Item.Legal(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
-        if (!wallet.hasPrivateKey) {
+        if (wallet.type == Wallet.Type.Watch) {
             uiItems.add(Item.DeleteWatchAccount(ListCell.Position.SINGLE))
         } else {
-            uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label))
+            uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label, !wallet.hasPrivateKey))
         }
         uiItems.add(Item.Space)
         uiItems.add(Item.Logo)

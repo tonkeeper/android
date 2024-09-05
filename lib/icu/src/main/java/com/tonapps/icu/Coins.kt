@@ -70,6 +70,9 @@ data class Coins(
             value: Long,
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
+            if (value == 0L) {
+                return ZERO
+            }
             val bigDecimal = safeBigDecimal(value).movePointLeft(decimals)
             return Coins(bigDecimal, decimals)
         }

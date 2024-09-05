@@ -10,6 +10,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.with
@@ -19,6 +20,7 @@ import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -617,15 +619,15 @@ class SendViewModel(
     }
 
     private suspend fun sendToBlockchain(message: Cell, wallet: WalletEntity) {
-        val success = if (isBattery) {
+        val state = if (isBattery) {
             val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("Can't find TonProof token")
             api.sendToBlockchainWithBattery(message, tonProofToken, wallet.testnet)
         } else {
             api.sendToBlockchain(message, wallet.testnet)
         }
 
-        if (!success) {
-            throw SendException.FailedToSendTransaction()
+        if (state != SendBlockchainState.SUCCESS) {
+            throw SendBlockchainException.fromState(state)
         }
     }
 
@@ -634,7 +636,7 @@ class SendViewModel(
             sendToBlockchain(boc, wallet)
             AnalyticsHelper.trackEvent("send_success")
         }.catch {
-            _uiEventFlow.tryEmit(SendEvent.Failed)
+            _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }.flowOn(Dispatchers.IO).onEach {
             _uiEventFlow.tryEmit(SendEvent.Success)
         }.launchIn(viewModelScope)

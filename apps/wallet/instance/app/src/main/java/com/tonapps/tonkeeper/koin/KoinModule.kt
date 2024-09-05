@@ -23,6 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
+import com.tonapps.tonkeeper.ui.screen.dev.DevViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
@@ -121,4 +122,5 @@ val koinModel = module {
     viewModel { BatterySettingsViewModel(androidApplication(), get(), get(), get(), get()) }
     viewModel { BatteryRefillViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> BatteryRechargeViewModel(androidApplication(), args = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { DevViewModel(androidApplication()) }
 }

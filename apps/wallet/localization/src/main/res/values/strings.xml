@@ -112,7 +112,7 @@
     <string name="decrypt_comment">Decrypt</string>
 
     <string name="sign_out">Sign out</string>
-    <string name="delete_watch_account_alert">Delete watch account?</string>
+    <string name="delete_account_alert">Delete account?</string>
     <string name="delete">Delete</string>
     <string name="delete_watch_account">Delete watch account</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nSign Out of All Wallets?</string>
@@ -477,4 +477,5 @@
     <string name="battery_refund_title">Charge History</string>
     <string name="battery_refund_subtitle">Recharges and refunds</string>
     <string name="promocode_hint">Promo Code</string>
+    <string name="refund">Refund</string>
 </resources>

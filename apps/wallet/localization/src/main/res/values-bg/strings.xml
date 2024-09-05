@@ -101,7 +101,7 @@
     <string name="decrypt_comment">Дешифриране</string>
 
     <string name="sign_out">Изход</string>
-    <string name="delete_watch_account_alert">Изтриване на наблюдателен акаунт?</string>
+    <string name="delete_account_alert">Изтриване на акаунт?</string>
     <string name="delete">Изтриване</string>
     <string name="delete_watch_account">Изтриване на наблюдателен акаунт</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nИзход от всички портфейли?</string>
@@ -442,4 +442,5 @@
     <string name="battery_refund_title">История на таксуването</string>
     <string name="battery_refund_subtitle">Презареждания и възстановяване на средства</string>
     <string name="promocode_hint">Промо код</string>
+    <string name="refund">Възстановяване</string>
 </resources>

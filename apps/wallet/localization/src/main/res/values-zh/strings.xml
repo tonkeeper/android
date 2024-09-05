@@ -87,7 +87,7 @@
     <string name="comment_encrypted_hint">仅接收者和您可见。</string>
     <string name="decrypt_comment">解密</string>
     <string name="sign_out">登出</string>
-    <string name="delete_watch_account_alert">删除观察账户？</string>
+    <string name="delete_account_alert">刪除帳戶？</string>
     <string name="delete">删除</string>
     <string name="delete_watch_account">删除观察账户</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\n登出所有钱包？</string>
@@ -395,4 +395,5 @@
     <string name="battery_refund_title">收费记录</string>
     <string name="battery_refund_subtitle">充值和退款</string>
     <string name="promocode_hint">促销代码</string>
+    <string name="refund">退款</string>
 </resources>

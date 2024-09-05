@@ -30,10 +30,8 @@ import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
-import uikit.base.BaseListFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.item.ItemTextView
 
 class SettingsScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
@@ -70,9 +68,9 @@ class SettingsScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
             is Item.Tester -> navigation?.openURL(item.url, true)
             is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance())
             is Item.Battery -> navigation?.add(BatteryScreen.newInstance())
-            is Item.Logout -> signOut(item.label)
+            is Item.Logout -> if (item.delete) deleteAccount() else signOut(item.label)
             is Item.SearchEngine -> searchPicker(item)
-            is Item.DeleteWatchAccount -> deleteWatchAccount()
+            is Item.DeleteWatchAccount -> deleteAccount()
             is Item.Rate -> openRate()
             is Item.Notifications -> navigation?.add(NotificationsManageScreen.newInstance())
             is Item.FAQ -> navigation?.openURL(item.url, true)
@@ -136,9 +134,9 @@ class SettingsScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
         dialog.show(label) { signOut() }
     }
 
-    private fun deleteWatchAccount() {
+    private fun deleteAccount() {
         val builder = AlertDialog.Builder(requireContext())
-        builder.setMessage(Localization.delete_watch_account_alert)
+        builder.setMessage(Localization.delete_account_alert)
         builder.setNegativeButton(Localization.delete) { signOut() }
         builder.setPositiveButton(Localization.cancel)
         builder.show()

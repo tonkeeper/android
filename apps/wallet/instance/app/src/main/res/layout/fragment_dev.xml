@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="Dev"
+        app:ignoreSystemOffset="true"
+        android:icon="@drawable/ic_chevron_left_16"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="@dimen/offsetMedium">
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/locale"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="Context locale"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/android_version"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="Android version"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/device_model"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="Device model"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/screen_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="Screen size"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/device_root"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="Rooted device"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/device_strongbox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="Strongbox supported"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/device_adb"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="ADB enabled"/>
+
+            </uikit.widget.ColumnLayout>
+
+        </uikit.widget.ColumnLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</uikit.widget.ColumnLayout>

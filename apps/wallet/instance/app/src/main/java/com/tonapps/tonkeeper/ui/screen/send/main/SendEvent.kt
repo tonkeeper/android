@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 import com.tonapps.icu.Coins
 
 sealed class SendEvent {
-    data object Failed: SendEvent()
+    data class Failed(val throwable: Throwable): SendEvent()
     data object Success: SendEvent()
     data object Loading: SendEvent()
     data object InsufficientBalance: SendEvent()

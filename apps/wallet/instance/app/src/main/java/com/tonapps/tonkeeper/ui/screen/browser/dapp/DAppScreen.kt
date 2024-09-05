@@ -59,6 +59,9 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
     private val rootViewModel: RootViewModel by activityViewModel()
     override val viewModel: DAppViewModel by viewModel { parametersOf(args.url) }
 
+    private val currentUrl: String
+        get() = webView.url ?: args.url
+
     private val webViewCallback = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             val refererUri = request.requestHeaders?.get("Referer")?.toUri()
@@ -70,23 +73,29 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
             return rootViewModel.processDeepLink(url, false, refererUri)
         }
 
-        override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+        override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
             refreshView.isRefreshing = true
+            applyHost(url)
         }
 
-        override fun onPageFinished(view: WebView, url: String?) {
+        override fun onPageFinished(view: WebView, url: String) {
             super.onPageFinished(view, url)
             refreshView.isRefreshing = false
-            if (args.title.isNullOrBlank()) {
-                titleView.text = view.title
-            }
+            titleView.text = view.title
+            applyHost(url)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AnalyticsHelper.trackEventClickDApp(args.url)
+    }
+
+    private fun applyHost(url: String) {
+        url.toUri().host?.let {
+            hostView.text = it
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -142,34 +151,11 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
                 topMargin = statusInsets.top
             }
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            // _keyboardHeightFlow.value = imeInsets.bottom
             refreshView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 bottomMargin = imeInsets.bottom
             }
             insets
         }
-
-        /*combine(
-            keyboardHeightFlow,
-            webView.inputFocusFlow
-        ) { keyboardHeight, inputFocusRect ->
-            if (0 >= keyboardHeight) {
-                0f
-            } else {
-                val webViewHeight = webView.height
-                val inputBottom = inputFocusRect.bottom.dp
-                val keyboardHeightFloat = keyboardHeight.toFloat()
-                val visibleHeight = webViewHeight - keyboardHeightFloat
-                val coveredHeight = webViewHeight - visibleHeight
-                val neededTranslation = (inputBottom + coveredHeight) - webViewHeight
-                if (neededTranslation > 0) {
-                    val extraPadding = 20f
-                    -minOf(neededTranslation + extraPadding, keyboardHeightFloat)
-                } else {
-                    0f
-                }
-            }
-        }.onEach(webView::setTranslationY).launchIn(lifecycleScope)*/
     }
 
     override fun onDestroyView() {
@@ -201,14 +187,14 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
             REFRESH_ID -> webView.reload()
             MUTE_ID -> viewModel.mute()
             SHARE_ID -> shareLink()
-            COPY_ID -> requireContext().copyToClipboard(args.url)
+            COPY_ID -> requireContext().copyToClipboard(currentUrl)
             DISCONNECT_ID -> viewModel.disconnect()
         }
     }
 
     private fun shareLink() {
         val sendIntent = Intent(Intent.ACTION_SEND)
-        sendIntent.putExtra(Intent.EXTRA_TEXT, args.url)
+        sendIntent.putExtra(Intent.EXTRA_TEXT, currentUrl)
         sendIntent.type = "text/plain"
         val shareIntent = Intent.createChooser(sendIntent, null)
         startActivity(shareIntent)

@@ -54,6 +54,37 @@
         android:layout_marginBottom="22dp"
         app:roundAsCircle="true"
         android:layout_gravity="center"/>
+    
+    <uikit.widget.RowLayout
+        android:id="@+id/icon_swap"
+        android:layout_width="wrap_content"
+        android:layout_height="78dp"
+        android:layout_marginBottom="22dp"
+        android:layout_gravity="center">
+
+        <uikit.widget.FrescoView
+            android:id="@+id/icon_swap1"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center"
+            app:roundAsCircle="true"/>
+
+        <FrameLayout
+            android:layout_width="78dp"
+            android:layout_height="78dp"
+            android:layout_gravity="center"
+            android:layout_marginLeft="-16dp"
+            android:background="@drawable/bg_oval"
+            android:backgroundTint="?attr/backgroundPageColor">
+            <uikit.widget.FrescoView
+                android:id="@+id/icon_swap2"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                app:roundAsCircle="true"/>
+        </FrameLayout>
+
+    </uikit.widget.RowLayout>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/spam"
@@ -71,6 +102,16 @@
         android:backgroundTint="?attr/accentOrangeColor"
         android:textAppearance="@style/TextAppearance.Label2"
         android:textColor="?attr/textPrimaryColor"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/amount2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:singleLine="true"
+        android:visibility="gone"
+        android:textAppearance="@style/TextAppearance.H2"
+        android:textColor="?attr/textTertiaryColor"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/amount"

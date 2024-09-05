@@ -87,7 +87,7 @@
     <string name="comment_encrypted_hint">Faqat qabul qiluvchi va sizga ko\'rinadi.</string>
     <string name="decrypt_comment">Shifrdan chiqarish</string>
     <string name="sign_out">Chiqish</string>
-    <string name="delete_watch_account_alert">Tomosha hisobini o\'chirish?</string>
+    <string name="delete_account_alert">Hisob o\'chirilsinmi?</string>
     <string name="delete">O\'chirish</string>
     <string name="delete_watch_account">Kuzatuv hisobini oʻchirish</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nBarcha Hamyonlardan Chiqilsinmi?</string>
@@ -397,4 +397,5 @@
     <string name="battery_refund_title">Zaryad tarixi</string>
     <string name="battery_refund_subtitle">To\'lovlar va to\'lovlarni qaytarish</string>
     <string name="promocode_hint">Kupon kodi</string>
+    <string name="refund">To\'lovni qaytarish</string>
 </resources>

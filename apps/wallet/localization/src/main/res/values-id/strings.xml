@@ -87,7 +87,7 @@
     <string name="comment_encrypted_hint">Hanya akan terlihat oleh penerima dan Anda.</string>
     <string name="decrypt_comment">Dekripsi</string>
     <string name="sign_out">Keluar</string>
-    <string name="delete_watch_account_alert">Hapus akun watch?</string>
+    <string name="delete_account_alert">Hapus akun?</string>
     <string name="delete">Hapus</string>
     <string name="delete_watch_account">Hapus akun tontonan</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nKeluar dari Semua Dompet?</string>
@@ -395,4 +395,5 @@
     <string name="battery_refund_title">Riwayat Pengisian Daya</string>
     <string name="battery_refund_subtitle">Isi ulang dan pengembalian dana</string>
     <string name="promocode_hint">Kode Promo</string>
+    <string name="refund">Pengembalian</string>
 </resources>

@@ -87,7 +87,7 @@
     <string name="comment_encrypted_hint">Буде видно лише отримувачу та вам.</string>
     <string name="decrypt_comment">Розшифрувати</string>
     <string name="sign_out">Вийти</string>
-    <string name="delete_watch_account_alert">Видалити обліковий запис спостереження?</string>
+    <string name="delete_account_alert">Видалити обліковий запис?</string>
     <string name="delete">Видалити</string>
     <string name="delete_watch_account">Видалити обліковий запис спостереження</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nВийти з усіх гаманців?</string>
@@ -401,4 +401,5 @@
     <string name="battery_refund_title">Історія зарядів</string>
     <string name="battery_refund_subtitle">Поповнення та повернення коштів</string>
     <string name="promocode_hint">Промокод</string>
+    <string name="refund">Повернення</string>
 </resources>

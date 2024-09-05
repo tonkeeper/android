@@ -105,7 +105,7 @@ val koinModel = module {
     viewModel { BackupCheckViewModel(androidApplication(), get(), get()) }
     viewModel { TokensManageViewModel(androidApplication(), get(), get(), get()) }
     viewModel { parameters -> SendViewModel(androidApplication(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { TokenPickerViewModel(androidApplication(), get(), get(), get()) }
+    viewModel { parameters -> TokenPickerViewModel(androidApplication(), selectedToken = parameters.get(), allowedTokens = parameters.get(), get(), get(), get()) }
     viewModel { CountryPickerViewModel(androidApplication(), get(), get()) }
     viewModel { parameters -> StakingViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(androidApplication(), get(), get(), get(), get(), get()) }

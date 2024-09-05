@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.tlb.JettonTransfer
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
@@ -42,17 +44,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
@@ -102,6 +109,11 @@ class BatteryRechargeViewModel(
 
     private val _selectedPackTypeFlow = MutableStateFlow<RechargePackType?>(null)
     private val _customAmountFlow = MutableStateFlow(false)
+
+    val supportedTokens = accountRepository.selectedWalletFlow.take(1).map { wallet ->
+        val batteryConfig = getBatteryConfig(wallet)
+        getSupportedTokens(wallet, batteryConfig.rechargeMethods)
+    }.filter { it.isNotEmpty() }.shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     private val selectedFlow = combine(
         _selectedPackTypeFlow,
@@ -221,19 +233,23 @@ class BatteryRechargeViewModel(
             } else {
                 promoStateFlow.tryEmit(PromoState.Applied(appliedPromo))
             }
-
-            if (args.token == null) {
-                val batteryConfig = getBatteryConfig(wallet)
-                val supportedTokens = getSupportedTokens(wallet, batteryConfig.rechargeMethods)
-                _tokenFlow.tryEmit(supportedTokens.first())
-            } else {
-                _tokenFlow.tryEmit(args.token)
-            }
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+
+        if (args.token != null) {
+            _tokenFlow.tryEmit(args.token)
+        } else {
+            collectFlow(supportedTokens.take(1)) { supportedTokens ->
+                _tokenFlow.tryEmit(supportedTokens.first())
+            }
+        }
     }
 
-    fun setToken(token: AccountTokenEntity) {
-        _tokenFlow.tryEmit(token)
+    fun setToken(token: TokenEntity) {
+        supportedTokens.take(1).filterList {
+            it.address.equalsAddress(token.address)
+        }.map { it.first() }.onEach { selectedToken ->
+            _tokenFlow.tryEmit(selectedToken)
+        }.launchIn(viewModelScope)
     }
 
     fun updateAddress(address: String) {
@@ -254,9 +270,10 @@ class BatteryRechargeViewModel(
         _selectedPackTypeFlow.tryEmit(null)
     }
 
-    fun onContinue() = combine(stateFlow, destinationFlow) { state, destination ->
-        val wallet = state.first
-        val token = state.second
+    fun onContinue() = combine(
+        stateFlow,
+        destinationFlow
+    ) { (wallet, token), destination ->
         val rechargeMethod = getRechargeMethod(wallet, token)
         val config = getBatteryConfig(wallet)
         val batteryMaxInputAmount = rechargeMethod.fromTon(api.config.batteryMaxInputAmount)

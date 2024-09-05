@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.ui.screen.token.picker.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.applyNavBottomPadding
@@ -23,9 +24,11 @@ import uikit.widget.HeaderView
 
 class TokenPickerScreen: BaseWalletScreen(R.layout.fragment_token_picker), BaseFragment.BottomSheet {
 
-    private val requestKey: String by lazy { requireArguments().getString(ARG_REQUEST_KEY)!! }
+    private val args: TokenPickerArgs by lazy { TokenPickerArgs(requireArguments()) }
 
-    override val viewModel: TokenPickerViewModel by viewModel()
+    override val viewModel: TokenPickerViewModel by viewModel {
+        parametersOf(args.selectedToken, args.allowedTokens)
+    }
 
     private val adapter = Adapter { item ->
         val token = item.raw.balance.token
@@ -39,8 +42,6 @@ class TokenPickerScreen: BaseWalletScreen(R.layout.fragment_token_picker), BaseF
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        viewModel.setSelectedToken(requireArguments().getParcelableCompat<TokenEntity>(ARG_SELECTED_TOKEN)!!)
         collectFlow(viewModel.uiItems, adapter::submitList)
     }
 
@@ -63,8 +64,7 @@ class TokenPickerScreen: BaseWalletScreen(R.layout.fragment_token_picker), BaseF
     }
 
     private fun returnToken(token: TokenEntity) {
-        viewModel.setSelectedToken(token)
-        navigation?.setFragmentResult(requestKey, Bundle().apply {
+        navigation?.setFragmentResult(args.requestKey, Bundle().apply {
             putParcelable(TOKEN, token)
         })
         finish()
@@ -78,18 +78,13 @@ class TokenPickerScreen: BaseWalletScreen(R.layout.fragment_token_picker), BaseF
     companion object {
         const val TOKEN = "token"
 
-        private const val ARG_SELECTED_TOKEN = "selected_token"
-        private const val ARG_REQUEST_KEY = "request_key"
-
         fun newInstance(
             requestKey: String,
-            selectedToken: TokenEntity
+            selectedToken: TokenEntity,
+            allowedTokens: List<String> = emptyList()
         ): TokenPickerScreen {
             val screen = TokenPickerScreen()
-            screen.arguments = Bundle().apply {
-                putString(ARG_REQUEST_KEY, requestKey)
-                putParcelable(ARG_SELECTED_TOKEN, selectedToken)
-            }
+            screen.setArgs(TokenPickerArgs(requestKey, selectedToken, allowedTokens))
             return screen
         }
     }

@@ -40,6 +40,10 @@
 
     <string name="w5_add_wallet">Добавете W5 портфейл</string>
 
+    <string name="liquid_staking">Течен залог</string>
+    <string name="other">Други</string>
+    <string name="minimum_amount">Минимум %1$s</string>
+    <string name="stake_tonstakers_description">Когато заложите TON в пул на Tonstakers, получавате токен, наречен tsTON, който представлява вашия дял в пул. Тъй като пулът натрупва печалби, вашият tsTON представлява по-голямо количество TON.</string>
     <string name="edit">Редактиране</string>
     <string name="pinned">Прикрепено</string>
     <string name="all_assets">Всички активи</string>
@@ -414,6 +418,7 @@
     <string name="battery_refill_gift">Батерия като подарък</string>
     <string name="battery_refill_gift_subtitle">Споделете с приятели</string>
     <string name="battery_supported_transaction">Поддържани транзакции</string>
+    <string name="transactions">Транзакции</string>
     <string name="battery_settings">Настройки на батерията</string>
     <string name="battery_will_be_paid">Ще бъде платено: %1$s</string>
     <string name="battery_nft">изпращане на NFT</string>
@@ -428,4 +433,13 @@
     <string name="will_be_paid_with_battery">Ще бъде платено с батерията</string>
     <string name="battery_settings_title">Настройки на батерията</string>
     <string name="battery_settings_subtitle">Избраните транзакции ще бъдат платени с батерията Tonkeeper.</string>
+    <string name="battery_recharge_title">Презареждане</string>
+    <string name="battery_gift_title">Подарък</string>
+    <string name="battery_other_title">Други</string>
+    <string name="battery_other_subtitle">Въведете сумата ръчно</string>
+    <string name="battery_max_input_amount">Максималната въведена сума е %1$s</string>
+    <string name="battery_please_wait">Батерията ще се зареди след няколко минути</string>
+    <string name="battery_refund_title">История на таксуването</string>
+    <string name="battery_refund_subtitle">Презареждания и възстановяване на средства</string>
+    <string name="promocode_hint">Промо код</string>
 </resources>

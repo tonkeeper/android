@@ -47,6 +47,10 @@
     <string name="domain_link_button">Привязать домен</string>
     <string name="domain_renew_button">Продлить домен</string>
 
+    <string name="liquid_staking">Ликвидный стейкинг</string>
+    <string name="other">Другое</string>
+    <string name="minimum_amount">Минимум %1$s</string>
+    <string name="stake_tonstakers_description">Когда вы делаете ставку TON в пуле Tonstakers, вы получаете токен под названием tsTON, который представляет вашу долю в пуле. По мере того, как пул накапливает прибыль, ваш tsTON представляет большее количество TON.</string>
     <string name="edit">Изменить</string>
     <string name="pinned">Закреплённые</string>
     <string name="all_assets">Все активы</string>
@@ -416,6 +420,7 @@
     <string name="battery_refill_gift">Батарейка в подарок</string>
     <string name="battery_refill_gift_subtitle">Поделись с друзьями</string>
     <string name="battery_supported_transaction">Поддерживаемые транзакции</string>
+    <string name="transactions">Транзакции</string>
     <string name="battery_settings">Настройки батарейки</string>
     <string name="battery_will_be_paid">Будут оплачены: %1$s</string>
     <string name="battery_nft">отправка NFT</string>

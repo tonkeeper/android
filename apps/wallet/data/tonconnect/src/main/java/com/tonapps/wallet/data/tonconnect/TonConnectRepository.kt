@@ -508,7 +508,7 @@ class TonConnectRepository(
                     domain = connect.domain,
                     address = wallet.contract.address,
                     privateWalletKey = privateKey,
-                    stateInit = wallet.contract.getStateCell().base64()
+                    stateInit = wallet.contract.stateInitCell().base64()
                 ))
             }
         }

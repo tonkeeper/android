@@ -355,7 +355,7 @@ class AccountRepository(
                 address = address,
                 secretKey = secretKey,
                 payload = payload,
-                stateInit = contract.getStateCell().base64()
+                stateInit = contract.stateInitCell().base64()
             )
             api.tonconnectProof(address.toAccountId(), proof.string(false))
         } catch (e: Throwable) {

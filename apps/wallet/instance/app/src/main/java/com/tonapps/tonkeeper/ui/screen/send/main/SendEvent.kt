@@ -14,7 +14,7 @@ sealed class SendEvent {
         val convertedFormat: CharSequence,
         val isBattery: Boolean,
         val isGasless: Boolean,
-        val isSupportGasless: Boolean,
+        val showGaslessToggle: Boolean,
         val tokenSymbol: String,
     ): SendEvent()
 }

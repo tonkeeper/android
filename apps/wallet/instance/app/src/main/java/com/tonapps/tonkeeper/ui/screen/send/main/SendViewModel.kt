@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.state
@@ -20,9 +21,9 @@ import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
@@ -105,7 +106,7 @@ class SendViewModel(
 
     private var isBattery = false
     private var isGasless = false
-    private var gaslessFee = Coins.ZERO
+    private var gaslessFee = "0"
 
     val walletTypeFlow = accountRepository.selectedWalletFlow.map { it.type }
 
@@ -399,10 +400,10 @@ class SendViewModel(
             return
         }
         _uiEventFlow.tryEmit(SendEvent.Confirm)
-        transferFlow.take(1).map { transfer ->
+        combine(transferFlow, tokensFlow) { transfer, tokens ->
             val (coins, isSupportGasless) = calculateFee(transfer)
-            eventFee(transfer, coins, isSupportGasless)
-        }.filterNotNull().onEach {
+            eventFee(transfer, tokens, coins, isSupportGasless)
+        }.take(1).filterNotNull().onEach {
             _uiEventFlow.tryEmit(it)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
@@ -446,10 +447,11 @@ class SendViewModel(
         val batteryConfig = batteryRepository.getConfig(wallet.testnet)
         val tokenAddress = transfer.token.token.address
         val excessesAddress = batteryConfig.excessesAddress
+        val isGaslessToken = !transfer.token.isTon && batteryConfig.rechargeMethods.any {
+            it.supportGasless && it.jettonMaster == tokenAddress
+        }
         val isSupportsGasless =
-            tonProofToken != null && excessesAddress != null && !transfer.token.isTon && batteryConfig.rechargeMethods.any {
-                it.supportGasless && it.jettonMaster == tokenAddress
-            }
+            wallet.isSupportedFeature(WalletFeature.GASLESS) && tonProofToken != null && excessesAddress != null && isGaslessToken
         val isPreferGasless = batteryRepository.getPreferGasless(wallet.testnet)
 
         if (withRelayer && !retryWithoutRelayer && tonProofToken != null) {
@@ -471,7 +473,7 @@ class SendViewModel(
 
                 Pair(Coins.of(consequences.totalFees), isSupportsGasless)
             } catch (e: Throwable) {
-                calculateFee(transfer, ignoreGasless = true)
+                calculateFee(transfer, retryWithoutRelayer = true)
             }
         } else if (!ignoreGasless && isPreferGasless && isSupportsGasless && tonProofToken != null && excessesAddress != null) {
             try {
@@ -480,24 +482,24 @@ class SendViewModel(
                     internalMessage = true,
                     additionalGifts = listOf(
                         transfer.gaslessInternalGift(
-                            coins = Coins.ONE,
-                            batteryAddress = excessesAddress
+                            jettonAmount = "1", batteryAddress = excessesAddress
                         )
-                    )
+                    ),
+                    excessesAddress = excessesAddress,
                 )
 
                 val commission = api.estimateGaslessCost(
                     tonProofToken = tonProofToken,
                     jettonMaster = tokenAddress,
                     cell = message,
-                    testnet = wallet.testnet
+                    testnet = wallet.testnet,
                 )
 
                 isBattery = false
                 isGasless = true
-                gaslessFee = Coins.of(commission)
+                gaslessFee = commission
 
-                Pair(gaslessFee, true)
+                Pair(Coins.ofNano(commission, transfer.token.token.decimals), true)
             } catch (e: Throwable) {
                 calculateFee(transfer, ignoreGasless = true)
             }
@@ -514,24 +516,28 @@ class SendViewModel(
 
     private suspend fun eventFee(
         transfer: TransferEntity,
+        tokens: List<AccountTokenEntity>,
         coins: Coins,
         isSupportGasless: Boolean,
     ): SendEvent.Fee? {
         return try {
             val feeToken = if (isGasless) transfer.token.token else TokenEntity.TON
-            val code = feeToken.symbol
-            val rates = ratesRepository.getRates(currency, code)
-            val converted = rates.convert(code, coins)
+            val rates = ratesRepository.getRates(currency, feeToken.address)
+            val converted = rates.convert(feeToken.address, coins)
+
+            val ton =
+                tokens.find { it.isTon } ?: throw IllegalStateException("Can't find TON token")
+            val hasEnoughTonBalance = ton.balance.value >= TransferEntity.BASE_FORWARD_AMOUNT
 
             SendEvent.Fee(
                 value = coins,
-                format = CurrencyFormatter.format(code, coins, feeToken.decimals),
+                format = CurrencyFormatter.format(feeToken.symbol, coins, feeToken.decimals),
                 convertedFormat = CurrencyFormatter.format(
                     currency.code, converted, currency.decimals
                 ),
                 isBattery = isBattery,
                 isGasless = isGasless,
-                isSupportGasless = isSupportGasless,
+                showGaslessToggle = isSupportGasless && hasEnoughTonBalance,
                 tokenSymbol = transfer.token.token.symbol,
             )
         } catch (e: Throwable) {
@@ -540,12 +546,12 @@ class SendViewModel(
     }
 
     fun toggleGasless() {
-        transferFlow.take(1).map { transfer ->
+        combine(transferFlow, tokensFlow) { transfer, tokens ->
             val isPreferGasless = !batteryRepository.getPreferGasless(transfer.wallet.testnet)
             batteryRepository.setPreferGasless(transfer.wallet.testnet, isPreferGasless)
             val (coins, isSupportGasless) = calculateFee(transfer)
-            eventFee(transfer, coins, isSupportGasless)
-        }.filterNotNull().onEach {
+            eventFee(transfer, tokens, coins, isSupportGasless)
+        }.take(1).filterNotNull().onEach {
             _uiEventFlow.tryEmit(it)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
@@ -670,8 +676,7 @@ class SendViewModel(
                     excessesAddress = batteryAddress,
                     additionalGifts = listOf(
                         transfer.gaslessInternalGift(
-                            coins = gaslessFee,
-                            batteryAddress = batteryAddress
+                            jettonAmount = gaslessFee, batteryAddress = batteryAddress
                         )
                     ),
                 )

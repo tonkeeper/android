@@ -59,7 +59,7 @@ internal class LocalDataSource(
     }
 
     fun getPreferGasless(testnet: Boolean): Boolean {
-        return encryptedPrefs.getBoolean(gaslessKey(testnet), false)
+        return encryptedPrefs.getBoolean(gaslessKey(testnet), true)
     }
 
     fun setPreferGasless(testnet: Boolean, value: Boolean) {

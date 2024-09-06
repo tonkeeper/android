@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.core.entities
 
-import android.util.Log
 import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
@@ -117,7 +116,10 @@ data class TransferEntity(
         excessesAddress: AddrStd,
         additionalGifts: List<WalletTransfer>
     ): Array<WalletTransfer> {
-        return arrayOf(getWalletTransfer(privateKey, excessesAddress)) + additionalGifts.toTypedArray()
+        val gifts = mutableListOf<WalletTransfer>()
+        gifts.add(getWalletTransfer(privateKey, excessesAddress))
+        gifts.addAll(additionalGifts)
+        return gifts.toTypedArray()
     }
 
     fun getUnsignedBody(
@@ -130,7 +132,7 @@ data class TransferEntity(
             validUntil = validUntil,
             seqno = seqno,
             gifts = getGifts(privateKey, excessesAddress = excessesAddress ?: contract.address, additionalGifts),
-            internalMessage = internalMessage ?: false,
+            internalMessage = internalMessage,
         )
     }
 
@@ -247,7 +249,7 @@ data class TransferEntity(
         )
     }
 
-    fun gaslessInternalGift(coins: Coins, batteryAddress: AddrStd): WalletTransfer {
+    fun gaslessInternalGift(jettonAmount: String, batteryAddress: AddrStd): WalletTransfer {
         if (isTon || isNft) {
             throw IllegalArgumentException("Gasless internal gift is not supported for TON and NFT transfers")
         }
@@ -255,7 +257,7 @@ data class TransferEntity(
         val builder = WalletTransferBuilder()
         builder.bounceable = true
         builder.body = TonTransferHelper.jetton(
-            coins = org.ton.block.Coins.ofNano(coins.toLong()),
+            coins = org.ton.block.Coins.ofNano(BigInteger(jettonAmount)),
             toAddress = batteryAddress,
             responseAddress = batteryAddress,
             queryId = queryId,
@@ -263,8 +265,6 @@ data class TransferEntity(
         )
         builder.coins = TRANSFER_PRICE
         builder.destination = AddrStd.parse(token.walletAddress)
-        builder.sendMode = TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value
-        builder.stateInit = stateInit
 
         return builder.build()
     }
@@ -338,7 +338,8 @@ data class TransferEntity(
 
     companion object {
 
-        private val TRANSFER_PRICE = org.ton.block.Coins.ofNano(Coins.of(0.064, 9).toLong())
+        val BASE_FORWARD_AMOUNT = Coins.of(0.064, 9)
+        private val TRANSFER_PRICE = org.ton.block.Coins.ofNano(BASE_FORWARD_AMOUNT.toLong())
 
         fun newWalletQueryId(): BigInteger {
             return try {

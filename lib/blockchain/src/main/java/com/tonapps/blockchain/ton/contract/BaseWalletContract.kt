@@ -93,6 +93,12 @@ abstract class BaseWalletContract(
         SmartContract.address(workchain, stateInit)
     }
 
+    fun stateInitCell(): Cell {
+        return CellBuilder.createCell {
+            storeTlb(StateInit.tlbCodec(), stateInit)
+        }
+    }
+
     abstract val features: WalletFeature
 
     fun isSupportedFeature(feature: WalletFeature): Boolean {

@@ -41,7 +41,6 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -55,7 +54,7 @@ import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.expandTouchArea
 import uikit.extensions.hideKeyboard
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setEndDrawable
 import uikit.span.ClickableSpanCompat
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
@@ -477,13 +476,13 @@ class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bo
                 "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
             reviewRecipientFeeView.subtitle = if (event.isBattery) {
                 getString(Localization.will_be_paid_with_battery)
-            } else if (event.isSupportGasless) {
+            } else if (event.showGaslessToggle) {
                 val symbol = if (event.isGasless) TokenEntity.TON.symbol else event.tokenSymbol
                 getString(Localization.gasless_switch_label, symbol)
             } else {
                 null
             }
-            if (event.isSupportGasless) {
+            if (event.showGaslessToggle) {
                 reviewRecipientFeeView.subtitleView.setOnClickListener {
                     reviewRecipientFeeView.setLoading()
                     confirmButton.isEnabled = false
@@ -491,6 +490,9 @@ class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bo
                 }
                 reviewRecipientFeeView.subtitleView.expandTouchArea(8.dp)
                 reviewRecipientFeeView.subtitleView.isEnabled = true
+                reviewRecipientFeeView.subtitleView.setEndDrawable(UIKitIcon.ic_chevron_right_12)
+            } else {
+                reviewRecipientFeeView.subtitleView.setEndDrawable(null)
             }
             reviewRecipientFeeView.subtitleView.isEnabled = true
             reviewRecipientFeeView.setDefault()

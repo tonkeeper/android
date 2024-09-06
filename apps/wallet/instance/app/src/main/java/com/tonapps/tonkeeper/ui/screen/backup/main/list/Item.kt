@@ -14,6 +14,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_BACKUP = 3
         const val TYPE_SPACE = 4
         const val TYPE_MANUAL_BACKUP = 5
+        const val TYPE_MANUAL_ACCENT_BACKUP = 6
+        const val TYPE_ALERT = 7
     }
 
     data object Header: Item(TYPE_HEADER)
@@ -23,6 +25,13 @@ sealed class Item(type: Int): BaseListItem(type) {
     data object Space: Item(TYPE_SPACE)
 
     data object ManualBackup: Item(TYPE_MANUAL_BACKUP)
+
+    data object ManualAccentBackup: Item(TYPE_MANUAL_ACCENT_BACKUP)
+
+    data class Alert(
+        val balanceFormat: CharSequence,
+        val red: Boolean,
+    ): Item(TYPE_ALERT)
 
     data class Backup(
         val position: ListCell.Position,

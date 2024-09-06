@@ -113,6 +113,7 @@
 
     <string name="sign_out">Sign out</string>
     <string name="delete_account_alert">Delete account?</string>
+    <string name="backup_alert_message">Your balance is %1$s, and it\'s only protected by a recovery phrase you haven\'t written down yet. Backup the phrase to avoid losing funds in case of device issues.</string>
     <string name="delete">Delete</string>
     <string name="delete_watch_account">Delete watch account</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nSign Out of All Wallets?</string>

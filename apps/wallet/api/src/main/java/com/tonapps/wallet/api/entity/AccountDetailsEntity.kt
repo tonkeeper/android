@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import io.tonapi.models.Account
@@ -49,7 +50,7 @@ data class AccountDetailsEntity(
             interfaces ?: return WalletVersion.UNKNOWN
             return if(interfaces.contains("wallet_v5_beta")) {
                 WalletVersion.V5BETA
-            } else if (interfaces.contains("wallet_v5")) {
+            } else if (interfaces.contains("wallet_v5") || interfaces.contains("wallet_v5r1")) {
                 WalletVersion.V5R1
             } else if (interfaces.contains("wallet_v4r2")) {
                 WalletVersion.V4R2

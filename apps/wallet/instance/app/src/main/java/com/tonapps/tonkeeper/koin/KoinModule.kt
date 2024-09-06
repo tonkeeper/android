@@ -102,7 +102,7 @@ val koinModel = module {
     viewModel { ChangePasscodeViewModel(androidApplication(), get(), get()) }
     viewModel { NotificationsManageViewModel(androidApplication(), get(), get(), get()) }
     viewModel { parameters -> TokenViewModel(androidApplication(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { BackupViewModel(androidApplication(), get(), get(), get(), get()) }
+    viewModel { BackupViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BackupCheckViewModel(androidApplication(), get(), get()) }
     viewModel { TokensManageViewModel(androidApplication(), get(), get(), get()) }
     viewModel { parameters -> SendViewModel(androidApplication(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }

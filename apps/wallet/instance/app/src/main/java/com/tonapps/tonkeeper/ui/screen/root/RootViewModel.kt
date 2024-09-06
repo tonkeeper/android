@@ -182,7 +182,7 @@ class RootViewModel(
         val wallets = accountRepository.getWallets()
         val list = mutableListOf<ShortcutInfoCompat>()
         if (!currentWallet.testnet) {
-            list.add(ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "ton://"))
+            list.add(ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "tonkeeper://send"))
         }
         list.addAll(walletShortcutsFromWallet(currentWallet, wallets))
         ShortcutManagerCompat.setDynamicShortcuts(context, list.take(3))
@@ -357,6 +357,8 @@ class RootViewModel(
             resolveTonConnect(uri, wallet, refSource)
         } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
             _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString()))
+        } else if (path?.startsWith("/send") == true) {
+            _eventFlow.tryEmit(RootEvent.OpenSend)
         } else if (path?.startsWith("/staking") == true) {
             _eventFlow.tryEmit(RootEvent.Staking)
         } else if (path?.startsWith("/pool/") == true) {

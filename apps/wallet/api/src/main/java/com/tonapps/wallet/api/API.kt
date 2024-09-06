@@ -286,7 +286,7 @@ class API(
     }
 
     fun getRates(currency: String, tokens: List<String>): Map<String, TokenRates>? {
-        val currencies = listOf(currency)
+        val currencies = listOf(currency, "TON")
         return withRetry {
             rates().getRates(
                 tokens = tokens,

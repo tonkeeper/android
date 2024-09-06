@@ -34,16 +34,23 @@
                 android:layout_marginLeft="8dp"
                 app:emptyState="accent"
                 android:visibility="gone" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/backup_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="bottom"
+            
+            <FrameLayout
+                android:id="@+id/backup_icon_container"
+                android:layout_width="44dp"
+                android:layout_height="56dp"
                 android:layout_marginLeft="6dp"
-                android:layout_marginBottom="12dp"
-                android:visibility="gone"
-                android:src="@drawable/ic_information_circle_24"/>
+                android:visibility="gone">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/backup_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="bottom"
+                    android:layout_marginBottom="12dp"
+                    android:src="@drawable/ic_information_circle_24"/>
+
+            </FrameLayout>
             
         </uikit.widget.RowLayout>
 

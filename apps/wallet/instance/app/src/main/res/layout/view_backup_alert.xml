@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.AppCompatTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/alert"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="@dimen/offsetMedium"
+    android:paddingVertical="12dp"
+    android:background="@drawable/bg_content"
+    android:textAppearance="@style/TextAppearance.Body2"/>

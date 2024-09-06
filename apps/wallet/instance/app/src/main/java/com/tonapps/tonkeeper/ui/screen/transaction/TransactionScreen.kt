@@ -146,8 +146,10 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             amountView.text = action.value.withCustomSymbol(requireContext())
             if (action.refund != null) {
                 feeView.setData(action.refund!!.withCustomSymbol(requireContext()), action.refundInCurrency!!.withCustomSymbol(requireContext()))
-            } else {
+            } else if (action.fee != null) {
                 feeView.setData(action.fee!!.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
+            } else {
+                feeView.visibility = View.GONE
             }
         }
 

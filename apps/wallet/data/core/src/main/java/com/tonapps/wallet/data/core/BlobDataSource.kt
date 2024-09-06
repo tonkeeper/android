@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 abstract class BlobDataSource<D>(
-    context: Context,
-    path: String,
+    private val context: Context,
+    private val path: String,
     private val timeout: Long = TimeUnit.DAYS.toMillis(90)
 ) {
 
@@ -30,8 +30,6 @@ abstract class BlobDataSource<D>(
             }
         }
     }
-
-    private val diskFolder = context.cacheFolder(path)
 
     fun getCache(key: String): D? {
         return getDiskCache(key)
@@ -58,7 +56,7 @@ abstract class BlobDataSource<D>(
     }
 
     private fun diskFile(key: String): File {
-        return diskFolder.file("${key}.dat")
+        return context.cacheFolder(path).file("${key}.dat")
     }
 
     private fun readDiskCache(key: String): ByteArray? {

@@ -1,14 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
-import android.util.Log
 import com.tonapps.icu.Coins
-import com.tonapps.icu.Coins.Companion.DEFAULT_DECIMALS
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.BalanceType
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
-import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.BalanceType
 import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
@@ -65,14 +63,10 @@ sealed class State {
             }
         }
 
-        fun getBalanceType(wallet: WalletEntity): BalanceType {
+        fun getBalanceType(wallet: WalletEntity): Int {
             val balanceFiat = getTotalBalanceFiat(wallet)
             val balanceTON = rates.convertFromFiat(TokenEntity.TON.address, balanceFiat)
-            return when {
-                balanceTON >= Coins.of(20.0, DEFAULT_DECIMALS) -> BalanceType.Huge
-                balanceTON >= Coins.of(2.0, DEFAULT_DECIMALS) -> BalanceType.Positive
-                else -> BalanceType.Zero
-            }
+            return BalanceType.getBalanceType(balanceTON)
         }
 
         fun getTotalBalanceFormat(
@@ -93,7 +87,7 @@ sealed class State {
         private val totalBalanceFormat: CharSequence
             get() = assets.getTotalBalanceFormat(wallet)
 
-        private val balanceType: BalanceType
+        private val balanceType: Int
             get() = assets.getBalanceType(wallet)
 
         private fun uiItemsTokens(hiddenBalance: Boolean): List<Item> {
@@ -172,9 +166,6 @@ sealed class State {
             config: ConfigEntity,
             setupTypes: List<SetupType>
         ): List<Item> {
-            if (1 >= setupTypes.size && !setupTypes.contains(SetupType.Backup)) {
-                return emptyList()
-            }
             val uiItems = mutableListOf<Item>()
             uiItems.add(Item.SetupTitle(
                 walletId = walletId,

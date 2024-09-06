@@ -169,6 +169,7 @@ class RootActivity: BaseWalletActivity() {
                 amountNano = event.amount?.toLongOrNull() ?: 0L,
                 text = event.text
             )
+            is RootEvent.OpenSend -> openSend()
             is RootEvent.Transaction -> this.navigation?.add(TransactionScreen.newInstance(event.event))
             is RootEvent.BuyOrSell -> {
                 if (event.methodEntity == null) {

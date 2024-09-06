@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -125,12 +126,10 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
         closeView.setOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web_view)
-
         webView.clipToPadding = false
         webView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
             headerDrawable.setDivider(scrollY > 0)
         }
-
         webView.jsBridge = DAppBridge(
             send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
             connect = { _, request -> tonConnectAuth(webView.url?.toUri(), request) },
@@ -143,6 +142,10 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
         refreshView.setColorSchemeColors(requireContext().tabBarActiveIconColor)
         refreshView.setOnRefreshListener {
             webView.reload()
+        }
+
+        collectFlow(webView.scrollFlow) { scroll ->
+            refreshView.isEnabled = scroll == 0
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->

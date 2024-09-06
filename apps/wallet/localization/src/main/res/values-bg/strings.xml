@@ -52,6 +52,7 @@
     <string name="staking_max_apy" translatable="false">MAX APY</string>
     <string name="staking_minimum_deposit">Минимален депозит %1$s.</string>
     <string name="staking_options">Опции</string>
+    <string name="gasless_switch_label">Докоснете, за да платите в %1$s</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="staking_minimal_deposit">Минимален депозит</string>
     <string name="staking_details_description">Стейкингът е базиран на умни договори от трети страни. Tonkeeper не носи отговорност за изживяването по време на стейкинг.</string>
@@ -125,6 +126,7 @@
     <string name="wallet_initialized">Портфейлът е инициализиран</string>
     <string name="bid">Залог</string>
     <string name="theme">Тема</string>
+    <string name="backup_alert_message">Вашият баланс е %1$s и е защитен само от фраза за възстановяване, която още не сте записали. Архивирайте фразата, за да избегнете загуба на средства в случай на проблеми с устройството.</string>
     <string name="testnet" translatable="false">Testnet</string>
     <string name="unstake_request">Искане за изтегляне на стейк</string>
     <string name="domain_renew">Подновяване на домейн</string>
@@ -443,4 +445,17 @@
     <string name="battery_refund_subtitle">Презареждания и възстановяване на средства</string>
     <string name="promocode_hint">Промо код</string>
     <string name="refund">Възстановяване</string>
+
+    <plurals name="battery_nft">
+        <item quantity="one">≈ %1$s NFT трансфер</item>
+        <item quantity="other">≈ %1$s NFT трансфери</item>
+    </plurals>
+    <plurals name="battery_swap">
+        <item quantity="one">≈ %1$s размяна чрез Tonkeeper</item>
+        <item quantity="other">≈ %1$s суапове чрез Tonkeeper</item>
+    </plurals>
+    <plurals name="battery_jetton">
+        <item quantity="one">≈ %1$s трансфер на токен</item>
+        <item quantity="other">≈ %1$s трансфера на токен</item>
+    </plurals>
 </resources>

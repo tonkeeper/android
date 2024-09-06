@@ -396,4 +396,16 @@
     <string name="battery_refund_subtitle">充值和退款</string>
     <string name="promocode_hint">促销代码</string>
     <string name="refund">退款</string>
+    <string name="gasless_switch_label">%1$s 后即可轻触付款</string>
+    <string name="backup_alert_message">您的余额为 %1$s，并且仅受您尚未记下的恢复短语保护。请备份该短语，以免在设备出现问题时丢失资金。</string>
+
+    <plurals name="battery_nft">
+        <item quantity="other">≈ %1$s NFT 转移</item>
+    </plurals>
+    <plurals name="battery_swap">
+        <item quantity="other">≈ %1$s 通过 Tonkeeper 进行交换</item>
+    </plurals>
+    <plurals name="battery_jetton">
+        <item quantity="other">≈ %1$s 代币转移</item>
+    </plurals>
 </resources>

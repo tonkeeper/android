@@ -398,4 +398,19 @@
     <string name="battery_refund_subtitle">Şarjlar ve iadeler</string>
     <string name="promocode_hint">Promosyon Kodu</string>
     <string name="refund">Geri ödemek</string>
+    <string name="gasless_switch_label">%1$s ile ödeme yapmak için dokunun</string>
+    <string name="backup_alert_message">Bakiyeniz %1$s ve henüz yazmadığınız bir kurtarma ifadesiyle korunuyor. Cihaz sorunları durumunda para kaybetmemek için ifadeyi yedekleyin.</string>
+
+    <plurals name="battery_nft">
+        <item quantity="one">≈ %1$s NFT transferi</item>
+        <item quantity="other">≈ %1$s NFT transferi</item>
+    </plurals>
+    <plurals name="battery_swap">
+        <item quantity="one">≈ %1$s Tonkeeper üzerinden takas</item>
+        <item quantity="other">≈ %1$s Tonkeeper üzerinden takaslar</item>
+    </plurals>
+    <plurals name="battery_jetton">
+        <item quantity="one">≈ %1$s token transferi</item>
+        <item quantity="other">≈ %1$s token transferi</item>
+    </plurals>
 </resources>

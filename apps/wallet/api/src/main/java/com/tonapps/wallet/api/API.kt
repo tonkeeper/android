@@ -132,7 +132,7 @@ class API(
 
     fun battery(testnet: Boolean) = batteryApi.get(testnet)
 
-    suspend fun getBatteryConfig(testnet: Boolean): Config? {
+    fun getBatteryConfig(testnet: Boolean): Config? {
         return withRetry { battery(testnet).getConfig() }
     }
 
@@ -395,24 +395,26 @@ class API(
         }
     }
 
-    suspend fun estimateGaslessCost(
+    fun estimateGaslessCost(
         tonProofToken: String,
         jettonMaster: String,
         cell: Cell,
         testnet: Boolean,
-    ) = withContext(Dispatchers.IO) {
+    ): String? {
         val request = io.batteryapi.models.EstimateGaslessCostRequest(cell.base64(), false)
 
-        battery(testnet).estimateGaslessCost(jettonMaster, request, tonProofToken).commission
+        return withRetry {
+            battery(testnet).estimateGaslessCost(jettonMaster, request, tonProofToken).commission
+        }
     }
 
-    suspend fun emulateWithBattery(
+    fun emulateWithBattery(
         tonProofToken: String,
         cell: Cell,
         testnet: Boolean
     ) = emulateWithBattery(tonProofToken, cell.base64(), testnet)
 
-    suspend fun emulateWithBattery(
+    fun emulateWithBattery(
         tonProofToken: String,
         boc: String,
         testnet: Boolean

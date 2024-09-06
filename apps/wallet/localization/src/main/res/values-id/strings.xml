@@ -396,4 +396,16 @@
     <string name="battery_refund_subtitle">Isi ulang dan pengembalian dana</string>
     <string name="promocode_hint">Kode Promo</string>
     <string name="refund">Pengembalian</string>
+    <string name="gasless_switch_label">Ketuk untuk membayar dalam %1$s</string>
+    <string name="backup_alert_message">Saldo Anda adalah %1$s, dan saldo tersebut hanya dilindungi oleh frasa pemulihan yang belum Anda tulis. Cadangkan frasa tersebut untuk menghindari kehilangan dana jika terjadi masalah pada perangkat.</string>
+
+    <plurals name="battery_nft">
+        <item quantity="other">≈ %1$s NFT transfer</item>
+    </plurals>
+    <plurals name="battery_swap">
+        <item quantity="other">≈ %1$s pertukaran melalui Tonkeeper</item>
+    </plurals>
+    <plurals name="battery_jetton">
+        <item quantity="other">≈ %1$s transfer token</item>
+    </plurals>
 </resources>

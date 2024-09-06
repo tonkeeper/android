@@ -398,4 +398,19 @@
     <string name="battery_refund_subtitle">Recargas y reembolsos</string>
     <string name="promocode_hint">Código promocional</string>
     <string name="refund">Reembolso</string>
+    <string name="gasless_switch_label">Toque para pagar en %1$s</string>
+    <string name="backup_alert_message">Tu saldo es %1$s y solo está protegido por una frase de recuperación que aún no has escrito. Haz una copia de seguridad de la frase para evitar perder fondos en caso de problemas con el dispositivo.</string>
+
+    <plurals name="battery_nft">
+        <item quantity="one">≈ %1$s transferencia de NFT</item>
+        <item quantity="other">≈ %1$s transferencias de NFT</item>
+    </plurals>
+    <plurals name="battery_swap">
+        <item quantity="one">≈ %1$s intercambio a través de Tonkeeper</item>
+        <item quantity="other">≈ %1$s intercambios a través de Tonkeeper</item>
+    </plurals>
+    <plurals name="battery_jetton">
+        <item quantity="one">≈ %1$s transferencia de token</item>
+        <item quantity="other">≈ %1$s transferencias de tokens</item>
+    </plurals>
 </resources>

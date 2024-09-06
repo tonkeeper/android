@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.battery.source
 import android.content.Context
 import androidx.core.content.edit
 import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.extensions.prefs
 import com.tonapps.security.Security
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
@@ -15,13 +16,12 @@ internal class LocalDataSource(
 
     companion object {
         private const val NAME = "battery"
-        private const val KEY_ALIAS = "_com_tonapps_battery_master_key_"
     }
 
     private val balance = BlobDataSource.simple<BatteryBalanceEntity>(context, "battery_balance")
     private val configStore = BlobDataSource.simple<BatteryConfigEntity>(context, "battery_config")
 
-    private val encryptedPrefs = Security.pref(context, KEY_ALIAS, NAME)
+    private val prefs = context.prefs(NAME)
 
     fun setConfig(testnet: Boolean, entity: BatteryConfigEntity) {
         configStore.setCache(configCacheKey(testnet), entity)
@@ -49,21 +49,21 @@ internal class LocalDataSource(
     }
 
     fun getAppliedPromo(testnet: Boolean): String? {
-        return encryptedPrefs.getString(promoKey(testnet), null)
+        return prefs.getString(promoKey(testnet), null)
     }
 
     fun setAppliedPromo(testnet: Boolean, promo: String) {
-        encryptedPrefs.edit {
+        prefs.edit {
             putString(promoKey(testnet), promo)
         }
     }
 
     fun getPreferGasless(testnet: Boolean): Boolean {
-        return encryptedPrefs.getBoolean(gaslessKey(testnet), true)
+        return prefs.getBoolean(gaslessKey(testnet), true)
     }
 
     fun setPreferGasless(testnet: Boolean, value: Boolean) {
-        encryptedPrefs.edit {
+        prefs.edit {
             putBoolean(gaslessKey(testnet), value)
         }
     }

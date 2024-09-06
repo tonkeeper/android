@@ -7,6 +7,7 @@ import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.icu.Coins
@@ -55,6 +56,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import org.ton.crypto.hex
 import java.util.Locale
@@ -130,7 +132,7 @@ class API(
 
     fun battery(testnet: Boolean) = batteryApi.get(testnet)
 
-    suspend fun getBatteryConfig(testnet: Boolean): Config? {
+    fun getBatteryConfig(testnet: Boolean): Config? {
         return withRetry { battery(testnet).getConfig() }
     }
 
@@ -393,13 +395,26 @@ class API(
         }
     }
 
-    suspend fun emulateWithBattery(
+    fun estimateGaslessCost(
+        tonProofToken: String,
+        jettonMaster: String,
+        cell: Cell,
+        testnet: Boolean,
+    ): String? {
+        val request = io.batteryapi.models.EstimateGaslessCostRequest(cell.base64(), false)
+
+        return withRetry {
+            battery(testnet).estimateGaslessCost(jettonMaster, request, tonProofToken).commission
+        }
+    }
+
+    fun emulateWithBattery(
         tonProofToken: String,
         cell: Cell,
         testnet: Boolean
     ) = emulateWithBattery(tonProofToken, cell.base64(), testnet)
 
-    suspend fun emulateWithBattery(
+    fun emulateWithBattery(
         tonProofToken: String,
         boc: String,
         testnet: Boolean

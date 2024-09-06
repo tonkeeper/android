@@ -402,4 +402,25 @@
     <string name="battery_refund_subtitle">Поповнення та повернення коштів</string>
     <string name="promocode_hint">Промокод</string>
     <string name="refund">Повернення</string>
+    <string name="gasless_switch_label">Торкніться, щоб оплатити %1$s</string>
+    <string name="backup_alert_message">Ваш баланс становить %1$s, і він захищений лише фразою відновлення, яку ви ще не записали. Створіть резервну копію фрази, щоб уникнути втрати коштів у разі проблем із пристроєм.</string>
+
+    <plurals name="battery_nft">
+        <item quantity="one">≈ %1$s переказ NFT</item>
+        <item quantity="few">≈ %1$s перекази NFT</item>
+        <item quantity="many">≈ %1$s переказів NFT</item>
+        <item quantity="other">≈ %1$s переказів NFT</item>
+    </plurals>
+    <plurals name="battery_swap">
+        <item quantity="one">≈ %1$s обмін через Tonkeeper</item>
+        <item quantity="few">≈ %1$s обміни через Tonkeeper</item>
+        <item quantity="many">≈ %1$s обмінів через Tonkeeper</item>
+        <item quantity="other">≈ %1$s обмінів через Tonkeeper</item>
+    </plurals>
+    <plurals name="battery_jetton">
+        <item quantity="one">≈ %1$s переказ токена</item>
+        <item quantity="few">≈ %1$s перекази токена</item>
+        <item quantity="many">≈ %1$s переказів токена</item>
+        <item quantity="other">≈ %1$s переказів токена</item>
+    </plurals>
 </resources>

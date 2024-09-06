@@ -42,7 +42,6 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -54,8 +53,9 @@ import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
 import uikit.extensions.drawable
+import uikit.extensions.expandTouchArea
 import uikit.extensions.hideKeyboard
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setEndDrawable
 import uikit.span.ClickableSpanCompat
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
@@ -64,7 +64,7 @@ import uikit.widget.ProcessTaskView
 import uikit.widget.SlideBetweenView
 import java.util.UUID
 
-class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.BottomSheet {
+class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.BottomSheet {
 
     private val args: SendArgs by lazy { SendArgs(requireArguments()) }
     private val signerQRRequestKey: String by lazy { "send_${UUID.randomUUID()}" }
@@ -125,7 +125,8 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
         }
 
         navigation?.setFragmentResultListener(contractsRequestKey) { bundle ->
-            val contact = bundle.getParcelableCompat<SendContact>("contact") ?: return@setFragmentResultListener
+            val contact = bundle.getParcelableCompat<SendContact>("contact")
+                ?: return@setFragmentResultListener
             addressInput.text = contact.address
         }
     }
@@ -284,10 +285,7 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
     }
 
     fun initializeArgs(
-        targetAddress: String?,
-        amountNano: Long,
-        text: String?,
-        tokenAddress: String
+        targetAddress: String?, amountNano: Long, text: String?, tokenAddress: String
     ) {
         viewModel.initializeTokenAndAmount(
             tokenAddress = tokenAddress,
@@ -419,7 +417,8 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
     }
 
     private fun applyTransaction(transaction: SendTransaction) {
-        reviewWalletView.value = transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView, 16)
+        reviewWalletView.value =
+            transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView, 16)
         applyTransactionAccount(transaction.destination)
         applyTransactionAmount(transaction.amount)
         applyTransactionComment(transaction.comment, transaction.encryptedComment)
@@ -446,7 +445,8 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
         }
         reviewRecipientAmountView.visibility = View.VISIBLE
         reviewRecipientAmountView.value = amount.format.withCustomSymbol(requireContext())
-        reviewRecipientAmountView.description = amount.convertedFormat.withCustomSymbol(requireContext())
+        reviewRecipientAmountView.description =
+            amount.convertedFormat.withCustomSymbol(requireContext())
     }
 
     private fun applyTransactionAccount(destination: SendDestination.Account) {
@@ -459,18 +459,44 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
             reviewRecipientView.value = destination.name
             reviewRecipientAddressView.visibility = View.VISIBLE
             reviewRecipientAddressView.value = destination.displayAddress.short4
-            reviewRecipientAddressView.setOnClickListener { requireContext().copyToClipboard(destination.displayAddress) }
+            reviewRecipientAddressView.setOnClickListener {
+                requireContext().copyToClipboard(
+                    destination.displayAddress
+                )
+            }
         }
     }
 
     private fun setFee(event: SendEvent.Fee?) {
         if (event == null) {
             reviewRecipientFeeView.setLoading()
+            reviewRecipientFeeView.subtitleView.isEnabled = false
             confirmButton.isEnabled = false
         } else {
             reviewRecipientFeeView.value = "≈ ${event.format}".withCustomSymbol(requireContext())
-            reviewRecipientFeeView.description = "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
-            reviewRecipientFeeView.subtitle = if (event.isBattery) getString(Localization.will_be_paid_with_battery) else null
+            reviewRecipientFeeView.description =
+                "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
+            reviewRecipientFeeView.subtitle = if (event.isBattery) {
+                getString(Localization.will_be_paid_with_battery)
+            } else if (event.showGaslessToggle) {
+                val symbol = if (event.isGasless) TokenEntity.TON.symbol else event.tokenSymbol
+                getString(Localization.gasless_switch_label, symbol)
+            } else {
+                null
+            }
+            if (event.showGaslessToggle) {
+                reviewRecipientFeeView.subtitleView.setOnClickListener {
+                    reviewRecipientFeeView.setLoading()
+                    confirmButton.isEnabled = false
+                    viewModel.toggleGasless()
+                }
+                reviewRecipientFeeView.subtitleView.expandTouchArea(8.dp)
+                reviewRecipientFeeView.subtitleView.isEnabled = true
+                reviewRecipientFeeView.subtitleView.setEndDrawable(UIKitIcon.ic_chevron_right_12)
+            } else {
+                reviewRecipientFeeView.subtitleView.setEndDrawable(null)
+            }
+            reviewRecipientFeeView.subtitleView.isEnabled = true
             reviewRecipientFeeView.setDefault()
             confirmButton.isEnabled = true
         }
@@ -496,7 +522,11 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
         }
 
         collectFlow(viewModel.signerData()) { (publicKey, unsignedBody) ->
-            navigation?.add(SignerQRScreen.newInstance(publicKey, unsignedBody, text, signerQRRequestKey))
+            navigation?.add(
+                SignerQRScreen.newInstance(
+                    publicKey, unsignedBody, text, signerQRRequestKey
+                )
+            )
         }
     }
 
@@ -554,13 +584,17 @@ class SendScreen: BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bot
             nftAddress: String? = null
         ): SendScreen {
             val screen = SendScreen()
-            screen.setArgs(SendArgs(targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""))
+            screen.setArgs(
+                SendArgs(
+                    targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""
+                )
+            )
             return screen
         }
 
         private class InsufficientBalanceDialog(
             context: Context
-        ): ModalDialog(context, R.layout.dialog_insufficient_balance) {
+        ) : ModalDialog(context, R.layout.dialog_insufficient_balance) {
 
             init {
                 findViewById<HeaderView>(R.id.header)?.doOnActionClick = { dismiss() }

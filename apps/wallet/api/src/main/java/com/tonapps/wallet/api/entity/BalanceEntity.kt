@@ -34,6 +34,9 @@ data class BalanceEntity(
     val isTon: Boolean
         get() = token.isTon
 
+    val decimals: Int
+        get() = token.decimals
+
     constructor(jettonBalance: JettonBalance) : this(
         token = TokenEntity(jettonBalance.jetton),
         value = Coins.of(BigDecimal(jettonBalance.balance).movePointLeft(jettonBalance.jetton.decimals), jettonBalance.jetton.decimals),

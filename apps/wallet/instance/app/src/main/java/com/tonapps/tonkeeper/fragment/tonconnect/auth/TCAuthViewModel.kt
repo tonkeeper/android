@@ -101,7 +101,7 @@ class TCAuthViewModel(
                     domain = domain,
                     payload = proofItem.payload ?: "",
                     signature = base64(signature),
-                    stateInit = wallet.contract.getStateCell().base64(),
+                    stateInit = wallet.contract.stateInitCell().base64(),
                 )
             }
 

@@ -16,6 +16,7 @@ import androidx.core.view.setPadding
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.tonkeeper.core.BalanceType
 import com.tonapps.tonkeeper.extensions.badgeGreen
 import com.tonapps.tonkeeper.extensions.badgeOrange
 import com.tonapps.tonkeeper.extensions.badgePurple
@@ -57,6 +58,7 @@ class BalanceHolder(
     private val batteryView = itemView.findViewById<BatteryView>(R.id.wallet_battery)
     private val walletAddressView = itemView.findViewById<AppCompatTextView>(R.id.wallet_address)
     private val walletLoaderView = itemView.findViewById<LoaderView>(R.id.wallet_loader)
+    private val backupIconContainerView = itemView.findViewById<View>(R.id.backup_icon_container)
     private val backupIconView = itemView.findViewById<AppCompatImageView>(R.id.backup_icon)
 
     init {
@@ -66,7 +68,7 @@ class BalanceHolder(
         }
         walletLoaderView.setColor(context.iconSecondaryColor)
         walletLoaderView.setTrackColor(context.iconSecondaryColor.withAlpha(.32f))
-        backupIconView.setOnClickListener {
+        backupIconContainerView.setOnClickListener {
             Navigation.from(context)?.add(BackupScreen.newInstance())
         }
         batteryView.expandTouchArea(left = 0, top = 10.dp, right = 24.dp, bottom = 10.dp)
@@ -93,17 +95,17 @@ class BalanceHolder(
         val requestBackup =
             (item.walletType == Wallet.Type.Default || item.walletType == Wallet.Type.Lockup) && !item.hasBackup
 
-        if (requestBackup && item.balanceType == Item.BalanceType.Huge) {
+        if (requestBackup && item.balanceType == BalanceType.Huge) {
             balanceView.setTextColor(context.accentRedColor)
             backupIconView.imageTintList = context.accentRedColor.stateList
-            backupIconView.visibility = View.VISIBLE
-        } else if (requestBackup && item.balanceType == Item.BalanceType.Positive) {
+            backupIconContainerView.visibility = View.VISIBLE
+        } else if (requestBackup && item.balanceType == BalanceType.Positive) {
             balanceView.setTextColor(context.accentOrangeColor)
             backupIconView.imageTintList = context.accentOrangeColor.stateList
-            backupIconView.visibility = View.VISIBLE
+            backupIconContainerView.visibility = View.VISIBLE
         } else {
             balanceView.setTextColor(context.textPrimaryColor)
-            backupIconView.visibility = View.GONE
+            backupIconContainerView.visibility = View.GONE
         }
 
 

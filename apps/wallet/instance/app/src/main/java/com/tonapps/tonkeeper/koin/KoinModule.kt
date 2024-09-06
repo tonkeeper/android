@@ -23,6 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
+import com.tonapps.tonkeeper.ui.screen.dev.DevViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
@@ -101,11 +102,11 @@ val koinModel = module {
     viewModel { ChangePasscodeViewModel(androidApplication(), get(), get()) }
     viewModel { NotificationsManageViewModel(androidApplication(), get(), get(), get()) }
     viewModel { parameters -> TokenViewModel(androidApplication(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { BackupViewModel(androidApplication(), get(), get(), get(), get()) }
+    viewModel { BackupViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BackupCheckViewModel(androidApplication(), get(), get()) }
     viewModel { TokensManageViewModel(androidApplication(), get(), get(), get()) }
     viewModel { parameters -> SendViewModel(androidApplication(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { TokenPickerViewModel(androidApplication(), get(), get(), get()) }
+    viewModel { parameters -> TokenPickerViewModel(androidApplication(), selectedToken = parameters.get(), allowedTokens = parameters.get(), get(), get(), get()) }
     viewModel { CountryPickerViewModel(androidApplication(), get(), get()) }
     viewModel { parameters -> StakingViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(androidApplication(), get(), get(), get(), get(), get()) }
@@ -121,4 +122,5 @@ val koinModel = module {
     viewModel { BatterySettingsViewModel(androidApplication(), get(), get(), get(), get()) }
     viewModel { BatteryRefillViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> BatteryRechargeViewModel(androidApplication(), args = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { DevViewModel(androidApplication()) }
 }

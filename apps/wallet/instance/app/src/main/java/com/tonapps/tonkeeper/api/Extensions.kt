@@ -6,6 +6,8 @@ import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.max12
+import com.tonapps.extensions.max18
+import com.tonapps.extensions.max24
 import com.tonapps.extensions.short12
 import com.tonapps.extensions.short6
 import com.tonapps.extensions.short8
@@ -108,15 +110,16 @@ val JettonSwapAction.ton: Long
         return tonIn ?: tonOut ?: 0
     }
 
-fun AccountAddress.getNameOrAddress(testnet: Boolean): String {
-    if (!name.isNullOrBlank()) {
-        val accountName = name!!.ifPunycodeToUnicode()
-        return accountName
+fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): String {
+    if (name.isNullOrBlank()) {
+        val value = address.toUserFriendly(
+            wallet = isWallet,
+            testnet = testnet
+        )
+        return if (short) value.shortAddress else value
     }
-    return address.toUserFriendly(
-        wallet = isWallet,
-        testnet = testnet
-    ).shortAddress
+    val value = name!!.ifPunycodeToUnicode()
+    return if (short) value.max18 else value
 }
 
 val AccountAddress.iconURL: String?

@@ -7,7 +7,7 @@ import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
 sealed class AssetsEntity(
-    val fiat: Coins
+    val fiat: Coins,
 ) {
 
     companion object {

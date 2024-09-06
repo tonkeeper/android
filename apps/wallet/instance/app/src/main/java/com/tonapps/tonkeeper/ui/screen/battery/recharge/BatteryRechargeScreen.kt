@@ -19,10 +19,15 @@ import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
+import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -38,6 +43,7 @@ class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
 
     private val args: RechargeArgs by lazy { RechargeArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
+    private val tokenRequestKey: String by lazy { "token_${UUID.randomUUID()}" }
 
     private val rootViewModel: RootViewModel by activityViewModel()
 
@@ -57,16 +63,22 @@ class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
     private lateinit var tokenTitleView: AppCompatTextView
 
     private val addressInput: InputView?
-        get() = findListItemView(0)?.findViewById<InputView>(R.id.address)
+        get() = findListItemView(0)?.findViewById(R.id.address)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         collectFlow(viewModel.uiItemsFlow, adapter::submitList)
 
         navigation?.setFragmentResultListener(contractsRequestKey) { bundle ->
-            val contact = bundle.getParcelableCompat<SendContact>("contact")
-                ?: return@setFragmentResultListener
-            addressInput?.text = contact.address
+            bundle.getParcelableCompat<SendContact>("contact")?.let {
+                addressInput?.text = it.address
+            }
+        }
+
+        navigation?.setFragmentResultListener(tokenRequestKey) { bundle ->
+            bundle.getParcelableCompat<TokenEntity>(TokenPickerScreen.TOKEN)?.let {
+                viewModel.setToken(it)
+            }
         }
     }
 
@@ -106,7 +118,16 @@ class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
     }
 
     private fun openTokenSelector() {
-        Log.d("BatteryRechargeScreen", "openTokenSelector")
+        combine(
+            viewModel.supportedTokens.take(1),
+            viewModel.tokenFlow.take(1)
+        ) { allowedTokens, selectedToken ->
+            navigation?.add(TokenPickerScreen.newInstance(
+                requestKey = tokenRequestKey,
+                selectedToken = selectedToken.balance.token,
+                allowedTokens = allowedTokens.map { it.address }
+            ))
+        }.launchIn(lifecycleScope)
     }
 
     private fun showError(message: String? = null) {
@@ -147,7 +168,8 @@ class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
     companion object {
 
         fun newInstance(
-            token: AccountTokenEntity? = null, isGift: Boolean = false
+            token: AccountTokenEntity? = null,
+            isGift: Boolean = false
         ): BatteryRechargeScreen {
             val args = RechargeArgs(token, isGift)
             val fragment = BatteryRechargeScreen()

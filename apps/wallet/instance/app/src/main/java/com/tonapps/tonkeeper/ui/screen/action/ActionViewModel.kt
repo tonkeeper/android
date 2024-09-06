@@ -7,10 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.ledger.ton.Transaction
+import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
@@ -79,9 +81,10 @@ class ActionViewModel(
                         contract.createTransferMessageCell(contract.address, seqno, signedBody)
                     boc = message.base64()
                     if (!isLast) {
+                        val state = api.sendToBlockchain(message, wallet.testnet)
                         Log.d("ActionViewModel", "Sending transaction to blockchain")
-                        if (!api.sendToBlockchain(message, wallet.testnet)) {
-                            throw SendException.FailedToSendTransaction()
+                        if (state != SendBlockchainState.SUCCESS) {
+                            throw SendBlockchainException.fromState(state)
                         }
                     }
                 }

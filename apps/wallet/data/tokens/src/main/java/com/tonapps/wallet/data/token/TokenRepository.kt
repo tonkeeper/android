@@ -31,7 +31,7 @@ class TokenRepository(
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
 
-    suspend fun getToken(accountId: String, testnet: Boolean) = remoteDataSource.getJetton(accountId, testnet)
+    fun getToken(accountId: String, testnet: Boolean) = remoteDataSource.getJetton(accountId, testnet)
 
     suspend fun getTotalBalances(
         currency: WalletCurrency,
@@ -78,12 +78,21 @@ class TokenRepository(
     ): List<AccountTokenEntity>? = withContext(Dispatchers.IO) {
         val balances = load(currency, accountId, testnet) ?: return@withContext null
         if (testnet) {
-            return@withContext buildTokens(currency, balances, RatesEntity.empty(currency), true)
+            return@withContext buildTokens(
+                currency = currency,
+                balances = balances,
+                fiatRates = RatesEntity.empty(currency),
+                testnet = true
+            )
         }
-        val rates = ratesRepository.getRates(currency, balances.map {
-            it.token.address
-        })
-        buildTokens(currency, balances, rates, false)
+
+        val fiatRates = ratesRepository.getRates(currency, balances.map { it.token.address })
+        buildTokens(
+            currency = currency,
+            balances = balances,
+            fiatRates = fiatRates,
+            testnet = false
+        )
     }
 
     suspend fun getLocal(
@@ -93,38 +102,47 @@ class TokenRepository(
     ): List<AccountTokenEntity> = withContext(Dispatchers.IO) {
         val balances = cache(accountId, testnet) ?: return@withContext emptyList()
         if (testnet) {
-            return@withContext buildTokens(currency, balances, RatesEntity.empty(currency), true)
+            return@withContext buildTokens(
+                currency = currency,
+                balances = balances,
+                fiatRates = RatesEntity.empty(currency),
+                testnet = true
+            )
         }
 
-        val rates = ratesRepository.cache(currency, balances.map {
-            it.token.address
-        })
-        if (rates.isEmpty) {
+        val fiatRates = ratesRepository.cache(currency, balances.map { it.token.address })
+
+        if (fiatRates.isEmpty) {
             emptyList()
         } else {
-            buildTokens(currency, balances, rates, false)
+            buildTokens(
+                currency = currency,
+                balances = balances,
+                fiatRates = fiatRates,
+                testnet = false
+            )
         }
     }
 
     private fun buildTokens(
         currency: WalletCurrency,
         balances: List<BalanceEntity>,
-        rates: RatesEntity,
+        fiatRates: RatesEntity,
         testnet: Boolean
     ): List<AccountTokenEntity> {
         val verified = mutableListOf<AccountTokenEntity>()
         val unverified = mutableListOf<AccountTokenEntity>()
         for (balance in balances) {
             val tokenAddress = balance.token.address
-            val tokenRate = TokenRateEntity(
+            val fiatRate = TokenRateEntity(
                 currency = currency,
-                fiat = rates.convert(tokenAddress, balance.value),
-                rate = rates.getRate(tokenAddress),
-                rateDiff24h = rates.getDiff24h(tokenAddress)
+                fiat = fiatRates.convert(tokenAddress, balance.value),
+                rate = fiatRates.getRate(tokenAddress),
+                rateDiff24h = fiatRates.getDiff24h(tokenAddress)
             )
             val token = AccountTokenEntity(
                 balance = balance,
-                rate = tokenRate
+                fiatRate = fiatRate
             )
             if (token.verified) {
                 verified.add(token)

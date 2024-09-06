@@ -136,11 +136,11 @@ class API(
         return withRetry { battery(testnet).getConfig() }
     }
 
-    suspend fun getBatteryRechargeMethods(testnet: Boolean): RechargeMethods? {
+    fun getBatteryRechargeMethods(testnet: Boolean): RechargeMethods? {
         return withRetry { battery(testnet).getRechargeMethods(false) }
     }
 
-    suspend fun getBatteryBalance(
+    fun getBatteryBalance(
         tonProofToken: String,
         testnet: Boolean,
         units: UnitsGetBalance = UnitsGetBalance.ton
@@ -148,11 +148,11 @@ class API(
         return withRetry { battery(testnet).getBalance(tonProofToken, units) }
     }
 
-    suspend fun getAlertNotifications() = withRetry {
+    fun getAlertNotifications() = withRetry {
         internalApi.getNotifications()
     } ?: emptyList()
 
-    suspend fun isOkStatus(testnet: Boolean): Boolean {
+    private fun isOkStatus(testnet: Boolean): Boolean {
         try {
             val status = withRetry {
                 provider.blockchain.get(testnet).status()
@@ -288,7 +288,7 @@ class API(
     }
 
     fun getRates(currency: String, tokens: List<String>): Map<String, TokenRates>? {
-        val currencies = listOf(currency)
+        val currencies = listOf(currency, "TON")
         return withRetry {
             rates().getRates(
                 tokens = tokens,
@@ -471,32 +471,32 @@ class API(
         boc: String,
         tonProofToken: String,
         testnet: Boolean,
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): SendBlockchainState = withContext(Dispatchers.IO) {
         if (!isOkStatus(testnet)) {
-            return@withContext false
+            return@withContext SendBlockchainState.STATUS_ERROR
         }
 
         val request = io.batteryapi.models.EmulateMessageToWalletRequest(boc)
 
         withRetry {
             battery(testnet).sendMessage(tonProofToken, request)
-            true
-        } ?: false
+            SendBlockchainState.SUCCESS
+        } ?: SendBlockchainState.UNKNOWN_ERROR
     }
 
     suspend fun sendToBlockchain(
         boc: String,
         testnet: Boolean
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): SendBlockchainState = withContext(Dispatchers.IO) {
         if (!isOkStatus(testnet)) {
-            return@withContext false
+            return@withContext SendBlockchainState.STATUS_ERROR
         }
 
         val request = SendBlockchainMessageRequest(boc)
         withRetry {
             blockchain(testnet).sendBlockchainMessage(request)
-            true
-        } ?: false
+            SendBlockchainState.SUCCESS
+        } ?: SendBlockchainState.UNKNOWN_ERROR
     }
 
     suspend fun sendToBlockchain(

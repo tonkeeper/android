@@ -69,6 +69,7 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
             settingsRepository?.setPushWallet(walletId, true)
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val activity = context.activity ?: return
+            switchView.setChecked(newChecked = false, byUser = false)
             ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
     }

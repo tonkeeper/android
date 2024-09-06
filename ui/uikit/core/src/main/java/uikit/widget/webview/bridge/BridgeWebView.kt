@@ -17,7 +17,10 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -46,9 +49,12 @@ class BridgeWebView @JvmOverloads constructor(
         }
 
     private val _inputFocusFlow = MutableStateFlow(RectF())
+    private val _scrollFlow = MutableStateFlow(0)
 
     @OptIn(FlowPreview::class)
     val inputFocusFlow = _inputFocusFlow.asStateFlow().debounce(32)
+
+    val scrollFlow = _scrollFlow.asSharedFlow()
 
     private val clientCallbacks = mutableListOf<WebViewClient>()
     private val jsExecuteQueue = LinkedList<String>()
@@ -66,7 +72,6 @@ class BridgeWebView @JvmOverloads constructor(
                 clientCallbacks.forEach { it.onPageStarted(view, url, favicon) }
             }
 
-            @RequiresApi(Build.VERSION_CODES.N)
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 return clientCallbacks.map { it.shouldOverrideUrlLoading(view, request) }.firstOrNull() ?: false
             }
@@ -76,8 +81,9 @@ class BridgeWebView @JvmOverloads constructor(
                 clientCallbacks.forEach { it.onPageFinished(view, url) }
             }
         }
-
         applyInputFocusHandler()
+        applyScrollListener()
+        initBridge()
     }
 
     @SuppressLint("JavascriptInterface")
@@ -111,6 +117,25 @@ class BridgeWebView @JvmOverloads constructor(
             @JavascriptInterface
             fun onElementBlurred() {
                 _inputFocusFlow.value = RectF()
+            }
+        }, interfaceName)
+        executeJS(script)
+    }
+
+    private fun applyScrollListener() {
+        val interfaceName = "AndroidScrollHandler"
+        val script = """
+            (function() {
+                window.addEventListener('scroll', function(e) {
+                    window.$interfaceName.onScroll(e.target.scrollTop);
+                }, true);
+            })();
+        """.trimIndent()
+
+        addJavascriptInterface(object {
+            @JavascriptInterface
+            fun onScroll(value: Int) {
+                _scrollFlow.value = value
             }
         }, interfaceName)
         executeJS(script)

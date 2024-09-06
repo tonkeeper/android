@@ -163,7 +163,8 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data class Logout(
         override val position: ListCell.Position,
-        val label: Wallet.Label
+        val label: Wallet.Label,
+        val delete: Boolean,
     ): Icon(
         titleRes = Localization.log_out,
         iconRes = R.drawable.ic_door_28,

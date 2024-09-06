@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.AndroidSecureRandom

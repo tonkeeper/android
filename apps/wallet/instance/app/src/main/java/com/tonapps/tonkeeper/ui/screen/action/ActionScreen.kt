@@ -7,6 +7,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.tonapps.extensions.getUserMessage
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -75,11 +76,12 @@ class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Mod
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
         viewModel.sign(requireContext()).catch {
-            setFailed()
+            setFailed(it)
         }.onEach(::setSuccess).launchIn(lifecycleScope)
     }
 
-    private suspend fun setFailed() = withContext(Dispatchers.Main) {
+    private suspend fun setFailed(throwable: Throwable) = withContext(Dispatchers.Main) {
+        processView.setFailedLabel(throwable.getUserMessage(requireContext()) ?: getString(Localization.error))
         processView.state = ProcessTaskView.State.FAILED
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
         delay(2500)

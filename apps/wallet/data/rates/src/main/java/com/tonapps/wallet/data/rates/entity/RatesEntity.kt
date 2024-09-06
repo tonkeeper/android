@@ -73,7 +73,7 @@ data class RatesEntity(
     }
 
     fun convert(token: String, value: Coins): Coins {
-        if (currency.code == token) {
+        if (currency.code == token || value == Coins.ZERO) {
             return value
         }
 

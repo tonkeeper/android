@@ -74,12 +74,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         LastUpdated,
     }
 
-    enum class BalanceType {
-        Zero,
-        Positive,
-        Huge,
-    }
-
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(type)
         marshall(dest, flags)
@@ -135,7 +129,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val status: Status,
         val hiddenBalance: Boolean,
         val hasBackup: Boolean,
-        val balanceType: BalanceType,
+        val balanceType: Int,
         val lastUpdatedFormat: String,
         val batteryBalance: Coins,
         val showBattery: Boolean,
@@ -150,7 +144,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readEnum(Status::class.java)!!,
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
-            parcel.readEnum(BalanceType::class.java)!!,
+            parcel.readInt(),
             parcel.readString()!!,
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat(),
@@ -165,7 +159,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeEnum(status)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(hasBackup)
-            dest.writeEnum(balanceType)
+            dest.writeInt(balanceType)
             dest.writeString(lastUpdatedFormat)
             dest.writeParcelable(batteryBalance, flags)
             dest.writeBooleanCompat(showBattery)

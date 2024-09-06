@@ -15,6 +15,7 @@ import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import io.tonapi.models.EncryptedComment
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
 sealed class HistoryItem(
@@ -173,6 +174,7 @@ sealed class HistoryItem(
         val pending: Boolean = false,
         val position: ListCell.Position = ListCell.Position.SINGLE,
         val coinIconUrl: String = "",
+        val coinIconUrl2: String = "",
         val fee: CharSequence? = null,
         val feeInCurrency: CharSequence? = null,
         val isOut: Boolean,
@@ -183,7 +185,9 @@ sealed class HistoryItem(
         val failed: Boolean,
         val hiddenBalance: Boolean = false,
         val unverifiedToken: Boolean = false,
-        val isScam: Boolean
+        val isScam: Boolean,
+        val refund: CharSequence? = null,
+        val refundInCurrency: CharSequence? = null,
     ): HistoryItem(TYPE_ACTION) {
 
         @Parcelize
@@ -210,7 +214,7 @@ sealed class HistoryItem(
                         return Comment(localText)
                     }
                     val data = encrypted ?: return null
-                    if (data.encryptionType == "simple") {
+                    if (data.encryptionType == "simple" && data.cipherText.isNotBlank()) {
                         return Comment(Type.Simple, data.cipherText)
                     }
                     return null
@@ -226,8 +230,17 @@ sealed class HistoryItem(
             )
         }
 
+        @IgnoredOnParcel
+        val isSwap: Boolean
+            get() = action == ActionType.Swap
+
+        @IgnoredOnParcel
         val hasNft: Boolean
             get() = nft != null
+
+        @IgnoredOnParcel
+        val isTon: Boolean
+            get() = tokenCode == "TON"
 
         constructor(parcel: Parcel) : this(
             index = parcel.readInt(),
@@ -247,6 +260,7 @@ sealed class HistoryItem(
             pending = parcel.readBooleanCompat(),
             position = parcel.readEnum(ListCell.Position::class.java)!!,
             coinIconUrl = parcel.readString()!!,
+            coinIconUrl2 = parcel.readString()!!,
             fee = parcel.readCharSequenceCompat(),
             feeInCurrency = parcel.readCharSequenceCompat(),
             isOut = parcel.readBooleanCompat(),
@@ -258,6 +272,8 @@ sealed class HistoryItem(
             hiddenBalance = parcel.readBooleanCompat(),
             unverifiedToken = parcel.readBooleanCompat(),
             isScam = parcel.readBooleanCompat(),
+            refund = parcel.readCharSequenceCompat(),
+            refundInCurrency = parcel.readCharSequenceCompat()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -278,6 +294,7 @@ sealed class HistoryItem(
             dest.writeBooleanCompat(pending)
             dest.writeEnum(position)
             dest.writeString(coinIconUrl)
+            dest.writeString(coinIconUrl2)
             dest.writeCharSequenceCompat(fee)
             dest.writeCharSequenceCompat(feeInCurrency)
             dest.writeBooleanCompat(isOut)
@@ -289,6 +306,8 @@ sealed class HistoryItem(
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(unverifiedToken)
             dest.writeBooleanCompat(isScam)
+            dest.writeCharSequenceCompat(refund)
+            dest.writeCharSequenceCompat(refundInCurrency)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

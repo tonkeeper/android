@@ -58,7 +58,7 @@ class BrowserSearchScreen: BaseWalletScreen(R.layout.fragment_browser_search) {
         footerDrawable.setColor(requireContext().backgroundTransparentColor)
 
         searchContainer = view.findViewById(R.id.search_container)
-        searchContainer.doKeyboardAnimation { offset, progress, isShowing ->
+        searchContainer.doKeyboardAnimation { offset, _, isShowing ->
             view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 bottomMargin = offset
             }
@@ -70,6 +70,8 @@ class BrowserSearchScreen: BaseWalletScreen(R.layout.fragment_browser_search) {
         searchInput = view.findViewById(R.id.search_input)
         searchInput.doAfterTextChanged { viewModel.query(it.toString()) }
         contentView = view.findViewById(R.id.content)
+
+        view.findViewById<View>(R.id.search_icon).setOnClickListener { searchInput.hideKeyboard() }
 
         placeholderView = view.findViewById(R.id.placeholder)
 

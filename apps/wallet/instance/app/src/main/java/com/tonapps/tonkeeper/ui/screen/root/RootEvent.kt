@@ -48,6 +48,8 @@ sealed class RootEvent {
         val jettonAddress: String?
     ): RootEvent()
 
+    data object OpenSend: RootEvent()
+
     data class Transaction(
         val event: HistoryItem.Event
     ): RootEvent()

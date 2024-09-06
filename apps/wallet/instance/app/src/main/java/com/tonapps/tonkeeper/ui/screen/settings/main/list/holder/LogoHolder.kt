@@ -1,15 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list.holder
 
-import android.content.pm.PackageInfo
-import android.os.Build
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.extensions.appVersionCode
 import com.tonapps.extensions.appVersionName
-import com.tonapps.extensions.packageInfo
+import com.tonapps.tonkeeper.ui.screen.dev.DevScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
+import uikit.navigation.Navigation
 
 class LogoHolder(
     parent: ViewGroup,
@@ -17,6 +16,12 @@ class LogoHolder(
 ): Holder<Item.Logo>(parent, R.layout.view_settings_logo, onClick) {
 
     private val versionView = findViewById<AppCompatTextView>(R.id.version)
+
+    init {
+        itemView.setOnClickListener {
+            Navigation.from(context)?.add(DevScreen.newInstance())
+        }
+    }
 
     override fun onBind(item: Item.Logo) {
         versionView.text = context.getString(Localization.version, context.appVersionName, context.appVersionCode)

@@ -24,19 +24,29 @@ import uikit.extensions.context
 
 class TokenPickerViewModel(
     app: Application,
+    selectedToken: TokenEntity,
+    allowedTokens: List<String>,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
 ): BaseWalletVM(app) {
 
-    private val _selectedTokenFlow = MutableStateFlow<TokenEntity?>(null)
+    private val _selectedTokenFlow = MutableStateFlow(selectedToken)
     private val selectedTokenFlow = _selectedTokenFlow.asStateFlow().filterNotNull()
 
     private val _queryFlow = MutableStateFlow("")
     private val queryFlow = _queryFlow.asSharedFlow()
 
-    private val tokensFlow = combine(accountRepository.selectedWalletFlow, settingsRepository.currencyFlow) { wallet, currency ->
-        tokenRepository.getLocal(currency, wallet.accountId, wallet.testnet)
+    private val tokensFlow = combine(
+        accountRepository.selectedWalletFlow,
+        settingsRepository.currencyFlow
+    ) { wallet, currency ->
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: emptyList()
+        if (allowedTokens.isNotEmpty()) {
+            tokens.filter { allowedTokens.contains(it.address) }
+        } else {
+            tokens
+        }
     }
 
     private val searchTokensFlow = combine(tokensFlow, queryFlow) { tokens, query ->
@@ -63,10 +73,6 @@ class TokenPickerViewModel(
             )
         }
     }.flowOn(Dispatchers.IO)
-
-    fun setSelectedToken(token: TokenEntity) {
-        _selectedTokenFlow.value = token
-    }
 
     fun search(query: String) {
         _queryFlow.tryEmit(query)

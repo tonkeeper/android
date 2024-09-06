@@ -86,7 +86,7 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
     }
 
     fun isPushEnabled(walletId: String): Boolean {
-        return getBoolean(keyPush(walletId), true)
+        return getBoolean(keyPush(walletId), false)
     }
 
     fun setPushEnabled(walletId: String, enabled: Boolean) {

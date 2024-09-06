@@ -1,9 +1,11 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
+import android.util.Log
 import androidx.collection.arrayMapOf
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.max24
 import com.tonapps.extensions.withMinus
 import com.tonapps.extensions.withPlus
 import com.tonapps.icu.CurrencyFormatter
@@ -13,6 +15,7 @@ import com.tonapps.tonkeeper.api.getNameOrAddress
 import com.tonapps.tonkeeper.api.iconURL
 import com.tonapps.tonkeeper.api.jettonPreview
 import com.tonapps.tonkeeper.api.parsedAmount
+import com.tonapps.tonkeeper.api.refund
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
 import com.tonapps.tonkeeper.api.ton
@@ -268,10 +271,13 @@ class HistoryHelper(
 
             val actions = event.actions
             val fee = Coins.of(event.fee)
+            val refund = Coins.of(event.refund)
+
             val currency = settingsRepository.currency
 
             val rates = ratesRepository.getRates(currency, TokenEntity.TON.symbol)
             val feeInCurrency = rates.convert(TokenEntity.TON.symbol, fee)
+            val refundInCurrency = rates.convert(TokenEntity.TON.symbol, refund)
 
             val chunkItems = mutableListOf<HistoryItem>()
             for ((actionIndex, action) in actions.withIndex()) {
@@ -289,8 +295,10 @@ class HistoryHelper(
                 chunkItems.add(item.copy(
                     pending = pending,
                     position = ListCell.getPosition(actions.size + positionExtra, actionIndex),
-                    fee = CurrencyFormatter.format(TokenEntity.TON.symbol, fee, TokenEntity.TON.decimals),
-                    feeInCurrency = CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
+                    fee = if (fee.isPositive) CurrencyFormatter.format(TokenEntity.TON.symbol, fee, TokenEntity.TON.decimals) else null,
+                    feeInCurrency = if (fee.isPositive) CurrencyFormatter.formatFiat(currency.code, feeInCurrency) else null,
+                    refund = if (refund.isPositive) CurrencyFormatter.format(TokenEntity.TON.symbol, refund, TokenEntity.TON.decimals) else null,
+                    refundInCurrency = if (fee.isPositive) CurrencyFormatter.formatFiat(currency.code, refundInCurrency) else null,
                     lt = event.lt,
                     hiddenBalance = hiddenBalances
                 ))
@@ -349,11 +357,12 @@ class HistoryHelper(
                 iconURL = "",
                 action = ActionType.Swap,
                 title = simplePreview.name,
-                subtitle = jettonSwap.router.getNameOrAddress(wallet.testnet),
+                subtitle = jettonSwap.router.getNameOrAddress(wallet.testnet, true),
                 value = value.withPlus,
                 value2 = value2.withMinus,
                 tokenCode = tokenCode,
-                coinIconUrl = jettonPreview.image,
+                coinIconUrl = jettonSwap.jettonMasterIn?.image ?: TokenEntity.TON.imageUri.toString(),
+                coinIconUrl2 = jettonSwap.jettonMasterOut?.image ?: TokenEntity.TON.imageUri.toString(),
                 timestamp = timestamp,
                 date = date,
                 dateDetails = dateDetails,
@@ -400,7 +409,7 @@ class HistoryHelper(
                 iconURL = accountAddress?.iconURL ?: "",
                 action = itemAction,
                 title = simplePreview.name,
-                subtitle = accountAddress?.getNameOrAddress(wallet.testnet) ?: "",
+                subtitle = accountAddress?.getNameOrAddress(wallet.testnet, true) ?: "",
                 comment = comment,
                 value = value,
                 tokenCode = "",
@@ -456,7 +465,7 @@ class HistoryHelper(
                 iconURL = accountAddress.iconURL,
                 action = itemAction,
                 title = simplePreview.name,
-                subtitle = accountAddress.getNameOrAddress(wallet.testnet),
+                subtitle = accountAddress.getNameOrAddress(wallet.testnet, true),
                 comment = comment,
                 value = value,
                 tokenCode = "TON",
@@ -488,7 +497,7 @@ class HistoryHelper(
                 iconURL = executor.iconURL,
                 action = ActionType.CallContract,
                 title = simplePreview.name,
-                subtitle = executor.getNameOrAddress(wallet.testnet),
+                subtitle = executor.getNameOrAddress(wallet.testnet, true),
                 value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
@@ -511,11 +520,11 @@ class HistoryHelper(
             if (isOut) {
                 itemAction = ActionType.NftSend
                 iconURL = nftItemTransfer.recipient?.iconURL
-                subtitle = sender?.getNameOrAddress(wallet.testnet) ?: ""
+                subtitle = sender?.getNameOrAddress(wallet.testnet, true) ?: ""
             } else {
                 itemAction = ActionType.NftReceived
                 iconURL = nftItemTransfer.sender?.iconURL
-                subtitle = sender?.getNameOrAddress(wallet.testnet) ?: ""
+                subtitle = sender?.getNameOrAddress(wallet.testnet, true) ?: ""
             }
 
             val nftItem = collectiblesRepository.getNft(
@@ -549,7 +558,8 @@ class HistoryHelper(
                 dateDetails = dateDetails,
                 isOut = isOut,
                 failed = action.status == Action.Status.failed,
-                senderAddress = sender?.address,
+                senderAddress = sender?.address?.toUserFriendly(testnet = wallet.testnet),
+                addressName = sender?.name,
                 isScam = isScam,
             )
         } else if (action.contractDeploy != null) {
@@ -581,7 +591,7 @@ class HistoryHelper(
                 txId = txId,
                 action = ActionType.DepositStake,
                 title = simplePreview.name,
-                subtitle = depositStake.pool.getNameOrAddress(wallet.testnet),
+                subtitle = depositStake.pool.getNameOrAddress(wallet.testnet, true),
                 value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
@@ -628,7 +638,7 @@ class HistoryHelper(
                 txId = txId,
                 action = ActionType.WithdrawStakeRequest,
                 title = simplePreview.name,
-                subtitle = withdrawStakeRequest.pool.getNameOrAddress(wallet.testnet),
+                subtitle = withdrawStakeRequest.pool.getNameOrAddress(wallet.testnet, true),
                 value = value,
                 tokenCode = "TON",
                 timestamp = timestamp,
@@ -647,7 +657,7 @@ class HistoryHelper(
                 txId = txId,
                 action = ActionType.DomainRenewal,
                 title = simplePreview.name,
-                subtitle = domainRenew.domain,
+                subtitle = domainRenew.domain.max24,
                 value = MINUS_SYMBOL,
                 tokenCode = "",
                 timestamp = timestamp,
@@ -659,7 +669,7 @@ class HistoryHelper(
             )
         } else if (action.auctionBid != null) {
             val auctionBid = action.auctionBid!!
-            val subtitle = auctionBid.nft?.title ?: auctionBid.bidder.getNameOrAddress(wallet.testnet)
+            val subtitle = auctionBid.nft?.title?.max24 ?: auctionBid.bidder.getNameOrAddress(wallet.testnet, true)
 
             val amount = Coins.ofNano(auctionBid.amount.value)
             val tokenCode = auctionBid.amount.tokenName
@@ -695,7 +705,7 @@ class HistoryHelper(
                 iconURL = withdrawStake.implementation.iconURL,
                 action = ActionType.WithdrawStake,
                 title = simplePreview.name,
-                subtitle = withdrawStake.pool.getNameOrAddress(wallet.testnet),
+                subtitle = withdrawStake.pool.getNameOrAddress(wallet.testnet, true),
                 value = value.withPlus,
                 tokenCode = "TON",
                 timestamp = timestamp,
@@ -726,7 +736,7 @@ class HistoryHelper(
                 txId = txId,
                 action = ActionType.NftPurchase,
                 title = simplePreview.name,
-                subtitle = nftPurchase.buyer.getNameOrAddress(wallet.testnet),
+                subtitle = nftPurchase.buyer.getNameOrAddress(wallet.testnet, true),
                 value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
@@ -748,7 +758,7 @@ class HistoryHelper(
                 txId = txId,
                 action = ActionType.JettonBurn,
                 title = simplePreview.name,
-                subtitle = jettonBurn.sender.getNameOrAddress(wallet.testnet),
+                subtitle = jettonBurn.sender.getNameOrAddress(wallet.testnet, true),
                 value = value.withMinus,
                 tokenCode = jettonBurn.jetton.symbol,
                 timestamp = timestamp,
@@ -768,7 +778,7 @@ class HistoryHelper(
                 txId = txId,
                 action = ActionType.UnSubscribe,
                 title = simplePreview.name,
-                subtitle = unsubscribe.beneficiary.getNameOrAddress(wallet.testnet),
+                subtitle = unsubscribe.beneficiary.getNameOrAddress(wallet.testnet, true),
                 value = MINUS_SYMBOL,
                 tokenCode = "TON",
                 timestamp = timestamp,
@@ -790,7 +800,7 @@ class HistoryHelper(
                 txId = txId,
                 action = ActionType.Subscribe,
                 title = simplePreview.name,
-                subtitle = subscribe.beneficiary.getNameOrAddress(wallet.testnet),
+                subtitle = subscribe.beneficiary.getNameOrAddress(wallet.testnet, true),
                 value = value.withMinus,
                 tokenCode = "TON",
                 timestamp = timestamp,
@@ -820,7 +830,7 @@ class HistoryHelper(
         txId = txId,
         action = ActionType.Unknown,
         title = simplePreview.name,
-        subtitle = action.simplePreview.description,
+        subtitle = action.simplePreview.description.max24,
         value = MINUS_SYMBOL,
         tokenCode = "TON",
         timestamp = timestamp,

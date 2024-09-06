@@ -35,6 +35,10 @@
     <string name="w5_story_description_4">Старі акаунти та W5 використовують однакову фразу для відновлення – при відновленні акаунтів на новому пристрої обидва, старі й нові, з\'являться автоматично.</string>
     <string name="w5_story_description_5">Стандарт W5 знаходиться в бета-версії – безгазові транзакції є експериментальною функцією для тестування – не переміщуйте всі активи до гаманця W5 до фінального випуску.</string>
     <string name="w5_add_wallet">Додати W5 Гаманець</string>
+    <string name="liquid_staking">Ліквідний стейкинг</string>
+    <string name="other">Інше</string>
+    <string name="minimum_amount">Мінімум %1$s</string>
+    <string name="stake_tonstakers_description">Коли ви робите ставку TON у пулі Tonstakers, ви отримуєте токен під назвою tsTON, який представляє вашу частку в пулі. Оскільки пул накопичує прибуток, ваш tsTON представляє більшу кількість TON.</string>
     <string name="edit">Редагувати</string>
     <string name="pinned">Закріплено</string>
     <string name="all_assets">Усі активи</string>
@@ -83,7 +87,7 @@
     <string name="comment_encrypted_hint">Буде видно лише отримувачу та вам.</string>
     <string name="decrypt_comment">Розшифрувати</string>
     <string name="sign_out">Вийти</string>
-    <string name="delete_watch_account_alert">Видалити обліковий запис спостереження?</string>
+    <string name="delete_account_alert">Видалити обліковий запис?</string>
     <string name="delete">Видалити</string>
     <string name="delete_watch_account">Видалити обліковий запис спостереження</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nВийти з усіх гаманців?</string>
@@ -371,6 +375,7 @@
     <string name="battery_refill_gift">Подарунок батареї</string>
     <string name="battery_refill_gift_subtitle">Поділитися з друзями</string>
     <string name="battery_supported_transaction">Підтримувані транзакції</string>
+    <string name="transactions">Транзакції</string>
     <string name="battery_settings">Налаштування батареї</string>
     <string name="battery_will_be_paid">Буде сплачено: %1$s</string>
     <string name="battery_nft">Трансфери NFT</string>
@@ -387,4 +392,14 @@
     <string name="will_be_paid_with_battery">Буде сплачено батареєю</string>
     <string name="battery_settings_title">Налаштування батареї</string>
     <string name="battery_settings_subtitle">Вибрані транзакції будуть сплачені батареєю Tonkeeper.</string>
+    <string name="battery_recharge_title">Перезарядка</string>
+    <string name="battery_gift_title">Подарунок</string>
+    <string name="battery_other_title">Інше</string>
+    <string name="battery_other_subtitle">Введіть суму вручну</string>
+    <string name="battery_max_input_amount">Максимальна сума введення – %1$s</string>
+    <string name="battery_please_wait">Батарея зарядиться за кілька хвилин</string>
+    <string name="battery_refund_title">Історія зарядів</string>
+    <string name="battery_refund_subtitle">Поповнення та повернення коштів</string>
+    <string name="promocode_hint">Промокод</string>
+    <string name="refund">Повернення</string>
 </resources>

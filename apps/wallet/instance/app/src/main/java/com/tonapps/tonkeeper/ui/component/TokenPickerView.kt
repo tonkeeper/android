@@ -29,7 +29,7 @@ class TokenPickerView @JvmOverloads constructor(
 
     private val iconView: FrescoView
     private val titleView: AppCompatTextView
-    private val pickerRequestKey = "token_picker_$id"
+    private val pickerRequestKey = "token.picker.view@$id"
     private val pickerCallback: (Bundle) -> Unit = { bundle ->
         bundle.getParcelableCompat<TokenEntity>(TokenPickerScreen.TOKEN)?.let {
             token = it

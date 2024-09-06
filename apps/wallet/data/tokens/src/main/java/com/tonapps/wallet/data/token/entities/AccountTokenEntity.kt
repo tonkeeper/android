@@ -12,7 +12,7 @@ import kotlinx.parcelize.Parcelize
 data class AccountTokenEntity(
     val balance: BalanceEntity,
     @IgnoredOnParcel
-    var rate: TokenRateEntity? = null,
+    private var fiatRate: TokenRateEntity? = null,
 ): Parcelable {
 
     companion object {
@@ -49,13 +49,13 @@ data class AccountTokenEntity(
         get() = address == TokenEntity.USDT.address
 
     val fiat: Coins
-        get() = rate?.fiat ?: Coins.ZERO
+        get() = fiatRate?.fiat ?: Coins.ZERO
 
     val rateNow: Coins
-        get() = rate?.rate ?: Coins.ZERO
+        get() = fiatRate?.rate ?: Coins.ZERO
 
     val rateDiff24h: String
-        get() = rate?.rateDiff24h ?: ""
+        get() = fiatRate?.rateDiff24h ?: ""
 
     val verified: Boolean
         get() = balance.token.verification == TokenEntity.Verification.whitelist

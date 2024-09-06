@@ -35,6 +35,10 @@
     <string name="w5_story_description_4">Las cuentas antiguas y W5 usan la misma frase de recuperación: al restaurar cuentas en un nuevo dispositivo, ambas, las antiguas y las nuevas, aparecerán automáticamente.</string>
     <string name="w5_story_description_5">El estándar W5 está en beta – las transacciones sin gas son una función experimental para probar – no mueva todos los activos a la billetera W5 hasta el lanzamiento final.</string>
     <string name="w5_add_wallet">Agregar billetera W5</string>
+    <string name="liquid_staking">Replanteo líquido</string>
+    <string name="other">Otro</string>
+    <string name="minimum_amount">Mínimo %1$s</string>
+    <string name="stake_tonstakers_description">Cuando haces staking de TON en un pool de Tonstakers, recibes un token llamado tsTON que representa tu participación en el pool. A medida que el pool acumula ganancias, tu tsTON representa una mayor cantidad de TON.</string>
     <string name="edit">Editar</string>
     <string name="pinned">Fijado</string>
     <string name="all_assets">Todos los activos</string>
@@ -83,7 +87,7 @@
     <string name="comment_encrypted_hint">Solo será visible para el destinatario y para ti.</string>
     <string name="decrypt_comment">Descifrar</string>
     <string name="sign_out">Cerrar sesión</string>
-    <string name="delete_watch_account_alert">¿Eliminar cuenta de seguimiento?</string>
+    <string name="delete_account_alert">¿Eliminar cuenta?</string>
     <string name="delete">Eliminar</string>
     <string name="delete_watch_account">Eliminar cuenta de vigilancia</string>
     <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\n¿Cerrar sesión de todas las billeteras?</string>
@@ -369,6 +373,7 @@
     <string name="battery_refill_gift">Regalo de batería</string>
     <string name="battery_refill_gift_subtitle">Comparte con amigos</string>
     <string name="battery_supported_transaction">Transacciones soportadas</string>
+    <string name="transactions">Actas</string>
     <string name="battery_settings">Configuración de la batería</string>
     <string name="battery_will_be_paid">Se pagará: %1$s</string>
     <string name="battery_nft">Transferencias de NFT</string>
@@ -383,4 +388,14 @@
     <string name="will_be_paid_with_battery">Se pagará con la batería</string>
     <string name="battery_settings_title">Configuración de la batería</string>
     <string name="battery_settings_subtitle">Las transacciones seleccionadas serán pagadas por la batería de Tonkeeper.</string>
+    <string name="battery_recharge_title">Recargar</string>
+    <string name="battery_gift_title">Regalo</string>
+    <string name="battery_other_title">Otro</string>
+    <string name="battery_other_subtitle">Introduzca el importe manualmente</string>
+    <string name="battery_max_input_amount">La cantidad máxima de entrada es %1$s</string>
+    <string name="battery_please_wait">La batería se cargará en unos minutos.</string>
+    <string name="battery_refund_title">Historial de carga</string>
+    <string name="battery_refund_subtitle">Recargas y reembolsos</string>
+    <string name="promocode_hint">Código promocional</string>
+    <string name="refund">Reembolso</string>
 </resources>

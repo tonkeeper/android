@@ -10,12 +10,14 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.totalFees
+import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -315,8 +317,9 @@ class StakingViewModel(
         val contract = wallet.contract
         val message = contract.createTransferMessageCell(contract.address, seqno, signedBody)
 
-        if (!api.sendToBlockchain(message, wallet.testnet)) {
-            throw SendException.FailedToSendTransaction()
+        val state = api.sendToBlockchain(message, wallet.testnet)
+        if (state != SendBlockchainState.SUCCESS) {
+            throw SendBlockchainException.fromState(state)
         }
     }
 
@@ -334,8 +337,9 @@ class StakingViewModel(
             unsignedBody = unsignedBody
         )
 
-        if (!api.sendToBlockchain(message, wallet.testnet)) {
-            throw SendException.FailedToSendTransaction()
+        val state = api.sendToBlockchain(message, wallet.testnet)
+        if (state != SendBlockchainState.SUCCESS) {
+            throw SendBlockchainException.fromState(state)
         }
     }
 }

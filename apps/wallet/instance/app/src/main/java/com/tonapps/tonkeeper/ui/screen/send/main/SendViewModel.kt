@@ -11,6 +11,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.with
@@ -20,6 +21,7 @@ import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
@@ -110,7 +112,9 @@ class SendViewModel(
 
     val walletTypeFlow = accountRepository.selectedWalletFlow.map { it.type }
 
-    private val userInputAddressFlow = userInputFlow.map { it.address }.distinctUntilChanged()
+    private val userInputAddressFlow = userInputFlow
+        .map { it.address }
+        .distinctUntilChanged()
         .debounce { if (it.isEmpty()) 0 else 600 }
 
     private val destinationFlow = combine(
@@ -128,11 +132,11 @@ class SendViewModel(
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val selectedTokenFlow = combine(
-        tokensFlow, userInputFlow.map { it.token }.distinctUntilChanged()
+        tokensFlow,
+        userInputFlow.map { it.token }.distinctUntilChanged()
     ) { tokens, selectedToken ->
         tokens.find { it.address == selectedToken.address } ?: AccountTokenEntity.EMPTY
-    }.distinctUntilChanged().flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, AccountTokenEntity.EMPTY)
+    }.distinctUntilChanged().flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, AccountTokenEntity.EMPTY)
 
     private val ratesTokenFlow = selectedTokenFlow.map { token ->
         ratesRepository.getRates(currency, token.address)
@@ -170,9 +174,9 @@ class SendViewModel(
 
     private val uiInputComment = userInputFlow.map { it.comment }.distinctUntilChanged()
 
-    private val uiInputAmountCurrency =
-        userInputFlow.map { it.amountCurrency }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    private val uiInputAmountCurrency = userInputFlow.map { it.amountCurrency }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
@@ -206,15 +210,12 @@ class SendViewModel(
             rates.convertFromFiat(token.address, token.fiat - amount)
         }
 
-        val remainingFormat =
-            CurrencyFormatter.format(token.symbol, remainingToken, 2, RoundingMode.DOWN, false)
+        val remainingFormat = CurrencyFormatter.format(token.symbol, remainingToken, 2, RoundingMode.DOWN, false)
 
         SendAmountState(
             remainingFormat = getString(Localization.remaining_balance, remainingFormat),
             converted = converted.stripTrailingZeros(),
-            convertedFormat = CurrencyFormatter.format(
-                convertedCode, converted, 2, RoundingMode.DOWN, false
-            ),
+            convertedFormat = CurrencyFormatter.format(convertedCode, converted, 2, RoundingMode.DOWN, false),
             insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
             currencyCode = if (amountCurrency) currencyCode else "",
             amountCurrency = amountCurrency,
@@ -250,7 +251,8 @@ class SendViewModel(
     ) { token, amount, rates, amountCurrency ->
         if (!amountCurrency) {
             amount
-        } else {/*val converted = rates.convertFromFiat(token.address, amount)
+        } else {
+            /*val converted = rates.convertFromFiat(token.address, amount)
             val diff = token.balance.value.diff(converted)
             if (99.7f >= diff || 100.3f >= diff) {
                 token.balance.value
@@ -270,7 +272,11 @@ class SendViewModel(
             value = amount,
             converted = rates.convert(token.address, amount),
             format = CurrencyFormatter.format(
-                token.symbol, amount, token.decimals, RoundingMode.UP, false
+                token.symbol,
+                amount,
+                token.decimals,
+                RoundingMode.UP,
+                false
             ),
             convertedFormat = CurrencyFormatter.format(
                 currency.code,
@@ -369,7 +375,8 @@ class SendViewModel(
     }
 
     private suspend fun getDestinationAccount(
-        address: String, testnet: Boolean
+        address: String,
+        testnet: Boolean
     ) = withContext(Dispatchers.IO) {
         val accountDeferred = async { api.resolveAccount(address, testnet) }
         val publicKeyDeferred = async { api.safeGetPublicKey(address, testnet) }
@@ -387,7 +394,8 @@ class SendViewModel(
         val balance = if (amountCurrency) token.fiat else token.balance.value
         try {
             val percentage = amount.value.divide(balance.value, 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal("100")).setScale(2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal("100"))
+                .setScale(2, RoundingMode.HALF_UP)
             return percentage > BigDecimal("95.00") && percentage <= BigDecimal("99.99")
         } catch (e: Throwable) {
             return false
@@ -400,10 +408,13 @@ class SendViewModel(
             return
         }
         _uiEventFlow.tryEmit(SendEvent.Confirm)
-        combine(transferFlow, tokensFlow) { transfer, tokens ->
+        combine(
+            transferFlow.take(1),
+            tokensFlow.take(1)
+        ) { transfer, tokens ->
             val (coins, isSupportGasless) = calculateFee(transfer)
             eventFee(transfer, tokens, coins, isSupportGasless)
-        }.take(1).filterNotNull().onEach {
+        }.filterNotNull().onEach {
             _uiEventFlow.tryEmit(it)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
@@ -691,7 +702,7 @@ class SendViewModel(
     }
 
     private suspend fun sendToBlockchain(message: Cell, wallet: WalletEntity) {
-        val success = if (isBattery || isGasless) {
+        val state = if (isBattery || isGasless) {
             val tonProofToken = accountRepository.requestTonProofToken(wallet)
                 ?: throw IllegalStateException("Can't find TonProof token")
             api.sendToBlockchainWithBattery(message, tonProofToken, wallet.testnet)
@@ -699,8 +710,8 @@ class SendViewModel(
             api.sendToBlockchain(message, wallet.testnet)
         }
 
-        if (!success) {
-            throw SendException.FailedToSendTransaction()
+        if (state != SendBlockchainState.SUCCESS) {
+            throw SendBlockchainException.fromState(state)
         }
     }
 
@@ -709,7 +720,7 @@ class SendViewModel(
             sendToBlockchain(boc, wallet)
             AnalyticsHelper.trackEvent("send_success")
         }.catch {
-            _uiEventFlow.tryEmit(SendEvent.Failed)
+            _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }.flowOn(Dispatchers.IO).onEach {
             _uiEventFlow.tryEmit(SendEvent.Success)
         }.launchIn(viewModelScope)

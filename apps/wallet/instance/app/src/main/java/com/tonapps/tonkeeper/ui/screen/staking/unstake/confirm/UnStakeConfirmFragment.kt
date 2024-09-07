@@ -55,9 +55,7 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
 
         button.setOnClickListener { unStake() }
 
-        collectFlow(primaryViewModel.walletFlow) { wallet ->
-            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView, 12)
-        }
+        walletView.value = primaryFragment.screenContext.wallet.label.getTitle(requireContext(), walletView.valueView, 12)
 
         collectFlow(primaryViewModel.poolFlow, ::applyPool)
         collectFlow(primaryViewModel.taskStateFlow, ::setTaskState)
@@ -85,9 +83,7 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
     }
 
     private fun unStake() {
-        collectFlow(primaryViewModel.unStake(requireContext())) {
-
-        }
+        primaryViewModel.unStake(requireContext())
     }
 
     private fun applyPool(pool: PoolEntity) {

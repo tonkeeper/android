@@ -30,7 +30,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Item(TYPE_BALANCE)
 
     data class Actions(
-        val poolAddress: String
+        val poolAddress: String,
+        val wallet: WalletEntity,
     ): Item(TYPE_ACTIONS)
 
     data class Details(

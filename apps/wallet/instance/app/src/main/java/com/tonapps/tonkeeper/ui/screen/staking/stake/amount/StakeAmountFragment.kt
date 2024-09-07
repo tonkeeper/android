@@ -56,7 +56,7 @@ class StakeAmountFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, S
         currencyView = view.findViewById(R.id.stake_currency)
 
         poolItemView = view.findViewById(R.id.pool_item)
-        poolItemView.setOnClickListener { setFragment(StakeOptionsFragment.newInstance()) }
+        poolItemView.setOnClickListener { setFragment(StakeOptionsFragment.newInstance(primaryFragment.screenContext.wallet)) }
 
         poolIconView = view.findViewById(R.id.pool_icon)
         poolIconView.setCircular()

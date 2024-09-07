@@ -11,22 +11,27 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingRepository
+import com.tonapps.wallet.data.staking.entities.PoolDetailsEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class StakeViewerViewModel(
     app: Application,
-    address: String,
-    private val accountRepository: AccountRepository,
+    private val wallet: WalletEntity,
+    private val poolAddress: String,
     private val stakingRepository: StakingRepository,
     private val ratesRepository: RatesRepository,
     private val settingsRepository: SettingsRepository,
@@ -34,19 +39,12 @@ class StakeViewerViewModel(
 ): BaseWalletVM(app) {
 
     private val currency = settingsRepository.currency
-
-    private val poolFlow = accountRepository.selectedWalletFlow.map { wallet ->
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: throw IllegalArgumentException("Tokens not found")
-        val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
-        val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
-        val item = staked.find { it.pool.address.equalsAddress(address) } ?: throw IllegalArgumentException("Pool not found")
-        val details = staking.getDetails(item.pool.implementation) ?: throw IllegalArgumentException("Details not found")
-        Triple(item, details, wallet)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null).filterNotNull()
+    private val _poolFlow = MutableStateFlow<Pair<StakedEntity, PoolDetailsEntity>?>(null)
+    private val poolFlow = _poolFlow.asStateFlow().filterNotNull()
 
     val poolNameFlow = poolFlow.map { it.first.pool.name }
 
-    val uiItemsFlow = poolFlow.map { (staked, details, wallet) ->
+    val uiItemsFlow = poolFlow.map { (staked, details) ->
         val tonCode = TokenEntity.TON.symbol
         val rates = ratesRepository.getRates(currency, listOfNotNull(
             tonCode, staked.liquidToken?.token?.address
@@ -65,7 +63,7 @@ class StakeViewerViewModel(
             fiatFormat = CurrencyFormatter.formatFiat(currency.code, fiat),
             hiddenBalance = settingsRepository.hiddenBalances,
         ))
-        uiItems.add(Item.Actions(address))
+        uiItems.add(Item.Actions(poolAddress, wallet))
 
         staked.liquidToken?.let { liquidToken ->
             val tokenAddress = liquidToken.token.address
@@ -103,9 +101,19 @@ class StakeViewerViewModel(
         uiItems.add(Item.Space)
         uiItems.add(Item.Description(Localization.staking_details_description))
         uiItems.add(Item.Space)
-        uiItems.add(Item.Links(details.getLinks(address)))
+        uiItems.add(Item.Links(details.getLinks(poolAddress)))
         uiItems
     }.flowOn(Dispatchers.IO)
 
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: return@launch
+            val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+            val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
+            val item = staked.find { it.pool.address.equalsAddress(poolAddress) } ?: return@launch
+            val details = staking.getDetails(item.pool.implementation) ?: return@launch
+            _poolFlow.value = Pair(item, details)
+        }
+    }
 
 }

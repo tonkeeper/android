@@ -11,10 +11,11 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragmen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.pool.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.staking.stake.pool.list.Item
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import uikit.extensions.collectFlow
 
-class StakePoolFragment: BaseHolderWalletScreen.ChildListScreen<ScreenContext.None, StakingScreen, StakingViewModel>(ScreenContext.None) {
+class StakePoolFragment(wallet: WalletEntity): BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, StakingScreen, StakingViewModel>(ScreenContext.Wallet(wallet)) {
 
     private val info: PoolInfoEntity by lazy { requireArguments().getParcelableCompat(ARG_INFO)!! }
 
@@ -41,11 +42,9 @@ class StakePoolFragment: BaseHolderWalletScreen.ChildListScreen<ScreenContext.No
 
         private const val ARG_INFO = "info"
 
-        fun newInstance(info: PoolInfoEntity): StakePoolFragment {
-            val fragment = StakePoolFragment()
-            fragment.arguments = Bundle().apply {
-                putParcelable(ARG_INFO, info)
-            }
+        fun newInstance(wallet: WalletEntity, info: PoolInfoEntity): StakePoolFragment {
+            val fragment = StakePoolFragment(wallet)
+            fragment.putParcelableArg(ARG_INFO, info)
             return fragment
         }
 

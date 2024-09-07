@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.combine
@@ -24,7 +25,7 @@ import kotlinx.coroutines.flow.onEach
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 
-class StakeOptionsFragment: BaseHolderWalletScreen.ChildListScreen<ScreenContext.None, StakingScreen, StakingViewModel>(ScreenContext.None) {
+class StakeOptionsFragment(wallet: WalletEntity): BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, StakingScreen, StakingViewModel>(ScreenContext.Wallet(wallet)) {
 
     private val adapter = Adapter { info ->
         openPool(info)
@@ -51,7 +52,7 @@ class StakeOptionsFragment: BaseHolderWalletScreen.ChildListScreen<ScreenContext
 
     private fun openPool(info: PoolInfoEntity) {
         if (info.pools.size > 1) {
-            setFragment(StakePoolFragment.newInstance(info))
+            setFragment(StakePoolFragment.newInstance(screenContext.wallet, info))
         } else {
             val singlePool = info.pools.firstOrNull() ?: return
             setFragment(StakeDetailsFragment.newInstance(info, singlePool.address))
@@ -59,6 +60,6 @@ class StakeOptionsFragment: BaseHolderWalletScreen.ChildListScreen<ScreenContext
     }
 
     companion object {
-        fun newInstance() = StakeOptionsFragment()
+        fun newInstance(wallet: WalletEntity) = StakeOptionsFragment(wallet)
     }
 }

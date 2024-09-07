@@ -24,7 +24,6 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
 
     init {
         scanView.setOnClickListener { navigation?.openCamera() }
-        stakeView.setOnClickListener { navigation?.add(StakingScreen.newInstance()) }
     }
 
     override fun onBind(item: Item.Actions) {
@@ -39,6 +38,9 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         }
         sendView.setOnClickListener {
             navigation?.add(SendScreen.newInstance(item.wallet))
+        }
+        stakeView.setOnClickListener {
+            navigation?.add(StakingScreen.newInstance(item.wallet))
         }
 
         swapView.isEnabled = item.walletType != Wallet.Type.Watch && !item.disableSwap

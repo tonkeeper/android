@@ -40,6 +40,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -48,6 +49,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
@@ -58,7 +60,8 @@ import uikit.widget.ProcessTaskView
 
 class UnStakeViewModel(
     app: Application,
-    private val address: String,
+    private val wallet: WalletEntity,
+    private val poolAddress: String,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
     private val tokenRepository: TokenRepository,
@@ -84,13 +87,11 @@ class UnStakeViewModel(
     private val _eventFlow = MutableEffectFlow<UnStakeEvent>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
-    val walletFlow = accountRepository.selectedWalletFlow
-
     val taskStateFlow = MutableEffectFlow<ProcessTaskView.State>()
 
-    private val stakeFlow = walletFlow.map { wallet ->
-        getStake(wallet)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null).filterNotNull()
+    private val _stakeFlow = MutableStateFlow<StakedEntity?>(null)
+    private val stakeFlow = _stakeFlow.asStateFlow().filterNotNull()
+
 
     val availableUiStateFlow = combine(
         amountFlow,
@@ -130,16 +131,17 @@ class UnStakeViewModel(
     init {
         _eventFlow.tryEmit(UnStakeEvent.RouteToAmount)
         updateAmount(0.0)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _stakeFlow.value = loadStake()
+        }
     }
 
     fun requestMax() = stakeFlow.take(1).map {
         it.balance.value
     }
 
-    fun requestFee() = combine(
-        walletFlow.take(1),
-        unsignedBodyFlow()
-    ) { wallet, (seqno, unsignedBody) ->
+    fun requestFee() = unsignedBodyFlow().map { (seqno, unsignedBody) ->
         val contract = wallet.contract
         val message = contract.createTransferMessageCell(
             address = contract.address,
@@ -174,10 +176,9 @@ class UnStakeViewModel(
     }
 
     private fun unsignedBodyFlow() = combine(
-        walletFlow.take(1),
         amountFlow.take(1),
         stakeFlow.take(1),
-    ) { wallet, amount, stake ->
+    ) { amount, stake ->
         val params = getSendParams(wallet)
         val gift = buildTransfer(wallet, amount, stake.pool, params)
         val body = wallet.contract.createTransferUnsignedBody(
@@ -189,10 +190,9 @@ class UnStakeViewModel(
     }.flowOn(Dispatchers.IO)
 
     private fun ledgerTransactionFlow() = combine(
-        walletFlow.take(1),
         amountFlow.take(1),
         stakeFlow.take(1),
-    ) { wallet, amount, stake ->
+    ) { amount, stake ->
         val params = getSendParams(wallet)
         val gift = buildTransfer(wallet, amount, stake.pool, params)
         val transaction = Transaction.fromWalletTransfer(gift, params.seqno, params.validUntil)
@@ -251,19 +251,31 @@ class UnStakeViewModel(
         )
     }
 
-    private suspend fun getStake(wallet: WalletEntity): StakedEntity {
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: throw IllegalArgumentException("Tokens not found")
-        val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
-        val staked = StakedEntity.create(staking, tokens, currency, ratesRepository) ?: throw IllegalArgumentException("Staked not found")
-        return staked.find { it.pool.address.equalsAddress(address) } ?: throw IllegalArgumentException("Pool not found")
+    private suspend fun loadStake(): StakedEntity? {
+        try {
+            val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: return null
+            val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+            val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
+            return staked.find { it.pool.address.equalsAddress(poolAddress) }
+        } catch (e: Throwable) {
+            return null
+        }
     }
 
-    fun unStake(context: Context) = walletFlow.take(1).map { wallet ->
-        if (wallet.isLedger) {
-            createLedgerStakeFlow(context, wallet)
-        } else {
-            createUnStakeFlow(wallet)
+    fun unStake(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (wallet.isLedger) {
+                createLedgerStakeFlow(context, wallet)
+            } else {
+                createUnStakeFlow(wallet)
+            }
         }
+
+    }
+
+    /*
+     = walletFlow.take(1).map { wallet ->
+
     }.flattenFirst().flowOn(Dispatchers.IO).catch { e ->
         taskStateFlow.tryEmit(
             if (e.instanceOf(SendException.Cancelled::class)) {
@@ -277,6 +289,7 @@ class UnStakeViewModel(
         delay(3000)
         _eventFlow.tryEmit(UnStakeEvent.Finish)
     }
+     */
 
     private fun createLedgerStakeFlow(
         context: Context,

@@ -36,7 +36,7 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
         }
 
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(StakeViewerScreen.newInstance(item.poolAddress, item.poolName))
+            Navigation.from(context)?.add(StakeViewerScreen.newInstance(item.wallet, item.poolAddress, item.poolName))
         }
     }
 }

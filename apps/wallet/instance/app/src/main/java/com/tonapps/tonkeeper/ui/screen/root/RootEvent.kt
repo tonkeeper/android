@@ -66,7 +66,7 @@ sealed class RootEvent {
 
     data class OpenBackups(val wallet: WalletEntity): RootEvent()
 
-    data object Staking: RootEvent()
+    data class Staking(val wallet: WalletEntity): RootEvent()
 
-    data class StakingPool(val poolAddress: String): RootEvent()
+    data class StakingPool(val wallet: WalletEntity, val poolAddress: String): RootEvent()
 }

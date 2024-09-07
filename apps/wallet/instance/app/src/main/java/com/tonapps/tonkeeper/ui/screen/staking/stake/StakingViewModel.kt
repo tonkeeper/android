@@ -28,7 +28,10 @@ import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.StakingUtils
 import com.tonapps.wallet.data.staking.entities.PoolEntity
+import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import io.ktor.util.reflect.instanceOf
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +51,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
@@ -58,7 +62,8 @@ import uikit.widget.ProcessTaskView
 
 class StakingViewModel(
     app: Application,
-    address: String,
+    private val wallet: WalletEntity,
+    private val poolAddress: String,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
     private val tokenRepository: TokenRepository,
@@ -77,9 +82,8 @@ class StakingViewModel(
         val hiddenBalance: Boolean
     )
 
-    val poolsFlow = accountRepository.selectedWalletFlow.map { wallet ->
-        stakingRepository.get(wallet.accountId, wallet.testnet).pools
-    }.flowOn(Dispatchers.IO).filter { it.isNotEmpty() }
+    private val _poolsFlow = MutableStateFlow<List<PoolInfoEntity>?>(null)
+    val poolsFlow = _poolsFlow.asStateFlow().filterNotNull().filter { it.isNotEmpty() }
 
     private val _amountFlow = MutableStateFlow(0.0)
     private val amountFlow = _amountFlow.map { Coins.of(it) }
@@ -87,11 +91,8 @@ class StakingViewModel(
     private val _selectedPoolFlow = MutableStateFlow<PoolEntity?>(null)
     val selectedPoolFlow = _selectedPoolFlow.asStateFlow().filterNotNull()
 
-    private val tokenFlow = accountRepository.selectedWalletFlow.map { wallet ->
-        tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
-    }.mapNotNull { it.firstOrNull() }
-        .flowOn(Dispatchers.IO)
-        .shareIn(viewModelScope, SharingStarted.Lazily, 1)
+    private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
+    val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 
     private val ratesFlow = tokenFlow.map { token ->
         ratesRepository.getRates(settingsRepository.currency, token.address)
@@ -161,15 +162,13 @@ class StakingViewModel(
         }
     }
 
-    val walletFlow = accountRepository.selectedWalletFlow
-
     init {
         collectFlow(poolsFlow) { pools ->
             if (_selectedPoolFlow.value != null) {
                 return@collectFlow
             }
 
-            val poolAddress = address.ifBlank {
+            val poolAddress = poolAddress.ifBlank {
                 pools.first().pools.first().address
             }
             pools.map { it.pools }.flatten().find {
@@ -179,6 +178,11 @@ class StakingViewModel(
             }
         }
         updateAmount(0.0)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _poolsFlow.value = stakingRepository.get(wallet.accountId, wallet.testnet).pools
+            _tokenFlow.value = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)?.firstOrNull()
+        }
     }
 
     fun requestMax() = tokenFlow.take(1).map {
@@ -244,11 +248,10 @@ class StakingViewModel(
     }
 
     private fun unsignedBodyFlow() = combine(
-        walletFlow.take(1),
         amountFlow.take(1),
         selectedPoolFlow.take(1),
         tokenFlow.take(1),
-    ) { wallet, amount, pool, token ->
+    ) { amount, pool, token ->
         val params = getSendParams(wallet)
         val gift = buildTransfer(wallet, amount, pool, token.balance.token, params)
         val body = wallet.contract.createTransferUnsignedBody(
@@ -260,21 +263,17 @@ class StakingViewModel(
     }.flowOn(Dispatchers.IO)
 
     private fun ledgerTransactionFlow() = combine(
-        walletFlow.take(1),
         amountFlow.take(1),
         selectedPoolFlow.take(1),
         tokenFlow.take(1),
-    ) { wallet, amount, pool, token ->
+    ) { amount, pool, token ->
         val params = getSendParams(wallet)
         val gift = buildTransfer(wallet, amount, pool, token.balance.token, params)
         val transaction = Transaction.fromWalletTransfer(gift, params.seqno, params.validUntil)
         Pair(params.seqno, transaction)
     }.flowOn(Dispatchers.IO)
 
-    private fun requestFee() = combine(
-        walletFlow.take(1),
-        unsignedBodyFlow()
-    ) { wallet, (seqno, unsignedBody) ->
+    private fun requestFee() = unsignedBodyFlow().map { (seqno, unsignedBody) ->
         val contract = wallet.contract
         val message = contract.createTransferMessageCell(
             address = contract.address,
@@ -299,13 +298,13 @@ class StakingViewModel(
         )
     }
 
-    fun stake(context: Context) = walletFlow.take(1).map { wallet ->
-        if (wallet.isLedger) {
-            createLedgerStakeFlow(context, wallet)
-        } else {
-            createStakeFlow(wallet)
-        }
-    }.flattenFirst().flowOn(Dispatchers.IO)
+    fun stake(
+        context: Context,
+    ) = (if (wallet.isLedger) {
+        createLedgerStakeFlow(context, wallet)
+    } else {
+        createStakeFlow(wallet)
+    }).flowOn(Dispatchers.IO)
 
     private fun createLedgerStakeFlow(
         context: Context,

@@ -360,9 +360,9 @@ class RootViewModel(
         } else if (path?.startsWith("/send") == true) {
             _eventFlow.tryEmit(RootEvent.OpenSend(wallet))
         } else if (path?.startsWith("/staking") == true) {
-            _eventFlow.tryEmit(RootEvent.Staking)
+            _eventFlow.tryEmit(RootEvent.Staking(wallet))
         } else if (path?.startsWith("/pool/") == true) {
-            _eventFlow.tryEmit(RootEvent.StakingPool(uri.pathSegments.last()))
+            _eventFlow.tryEmit(RootEvent.StakingPool(wallet, uri.pathSegments.last()))
         } else if (path?.startsWith("/action/") == true) {
             val actionId = uri.pathSegments.last()
             val accountAddress = uri.getQueryParameter("account")

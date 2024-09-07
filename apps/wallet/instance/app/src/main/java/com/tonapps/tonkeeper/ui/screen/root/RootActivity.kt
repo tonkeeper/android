@@ -181,8 +181,8 @@ class RootActivity: BaseWalletActivity() {
                 }
             }
             is RootEvent.OpenBackups -> add(BackupScreen.newInstance(event.wallet))
-            is RootEvent.Staking -> add(StakingScreen.newInstance())
-            is RootEvent.StakingPool -> add(StakeViewerScreen.newInstance(event.poolAddress, ""))
+            is RootEvent.Staking -> add(StakingScreen.newInstance(event.wallet))
+            is RootEvent.StakingPool -> add(StakeViewerScreen.newInstance(event.wallet, event.poolAddress, ""))
             is RootEvent.Battery -> add(BatteryScreen.newInstance(event.wallet, event.promocode))
             else -> { }
         }

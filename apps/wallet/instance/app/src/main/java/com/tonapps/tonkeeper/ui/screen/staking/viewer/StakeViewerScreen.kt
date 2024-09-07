@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Adapter
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -19,10 +20,14 @@ import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class StakeViewerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.SwipeBack {
+class StakeViewerScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
+
+    override val viewModel: StakeViewerViewModel by viewModel {
+        parametersOf(screenContext.wallet, args.address)
+    }
 
     private val args: StakeViewerArgs by lazy { StakeViewerArgs(requireArguments()) }
-    override val viewModel: StakeViewerViewModel by viewModel { parametersOf(args.address) }
+
     private val adapter = Adapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,8 +47,8 @@ class StakeViewerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.
 
     companion object {
 
-        fun newInstance(address: String, name: String): StakeViewerScreen {
-            val fragment = StakeViewerScreen()
+        fun newInstance(wallet: WalletEntity, address: String, name: String): StakeViewerScreen {
+            val fragment = StakeViewerScreen(wallet)
             fragment.setArgs(StakeViewerArgs(address, name))
             return fragment
         }

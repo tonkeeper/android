@@ -120,15 +120,14 @@ val koinModel = module {
     viewModel { parameters -> SendContactsViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> PurchaseViewModel(androidApplication(), wallet = parameters.get(), get(), get()) }
     viewModel { parameters -> NftViewModel(androidApplication(), wallet = parameters.get(), nft = parameters.get(), get(), get()) }
+    viewModel { parameters -> StakeViewerViewModel(androidApplication(), wallet = parameters.get(), poolAddress = parameters.get(), get(), get(), get(), get()) }
+    viewModel { parameters -> UnStakeViewModel(androidApplication(), wallet = parameters.get(), poolAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> StakingViewModel(androidApplication(), wallet = parameters.get(), poolAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
 
 
 
-
-    viewModel { parameters -> StakingViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(androidApplication(), get(), get(), get(), get(), get()) }
     viewModel { W5StoriesViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { parameters -> StakeViewerViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get()) }
-    viewModel { parameters -> UnStakeViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { NotificationsEnableViewModel(get(), get()) }
     viewModel { ImportWalletViewModel(androidApplication(), get()) }
     viewModel { BatteryViewModel(androidApplication()) }

@@ -222,6 +222,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val fiat: Coins,
         val fiatFormat: CharSequence,
         val hiddenBalance: Boolean,
+        val wallet: WalletEntity,
     ): Item(TYPE_STAKED) {
 
         val iconUri: Uri
@@ -237,7 +238,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readString(),
             parcel.readParcelableCompat()!!,
             parcel.readCharSequenceCompat()!!,
-            parcel.readBooleanCompat()
+            parcel.readBooleanCompat(),
+            parcel.readParcelableCompat()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -251,6 +253,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeParcelable(fiat, flags)
             dest.writeCharSequenceCompat(fiatFormat)
             dest.writeBooleanCompat(hiddenBalance)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<Stake> {

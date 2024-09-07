@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragmen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.StakeOptionsFragment
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -22,11 +23,13 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.hideKeyboard
 import uikit.widget.HeaderView
 
-class StakingScreen: BaseHolderWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.BottomSheet {
+class StakingScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
 
-    override val viewModel: StakingViewModel by viewModel { parametersOf(poolAddress) }
+    override val viewModel: StakingViewModel by viewModel {
+        parametersOf(screenContext.wallet, poolAddress)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,11 +50,9 @@ class StakingScreen: BaseHolderWalletScreen<ScreenContext.None>(ScreenContext.No
 
         private const val POOL_ADDRESS_KEY = "pool_address"
 
-        fun newInstance(poolAddress: String? = null): StakingScreen {
-            val fragment = StakingScreen()
-            fragment.arguments = Bundle().apply {
-                putString(POOL_ADDRESS_KEY, poolAddress)
-            }
+        fun newInstance(wallet: WalletEntity, poolAddress: String? = null): StakingScreen {
+            val fragment = StakingScreen(wallet)
+            fragment.putStringArg(POOL_ADDRESS_KEY, poolAddress)
             return fragment
         }
     }

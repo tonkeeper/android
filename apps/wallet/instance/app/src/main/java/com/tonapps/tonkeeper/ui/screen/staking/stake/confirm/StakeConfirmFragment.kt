@@ -57,9 +57,7 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
 
         button.setOnClickListener { stake() }
 
-        collectFlow(primaryViewModel.walletFlow) { wallet ->
-            walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView, 12)
-        }
+        walletView.value = primaryFragment.screenContext.wallet.label.getTitle(requireContext(), walletView.valueView, 12)
 
         collectFlow(primaryViewModel.fiatFormatFlow) { fiatFormat ->
             amountView.description = fiatFormat.withCustomSymbol(requireContext())

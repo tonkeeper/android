@@ -27,9 +27,10 @@ class HistoryAppHolder(
         itemView.setOnClickListener {
             Navigation.from(context)?.add(
                 DAppScreen.newInstance(
-                item.title,
-                item.host,
-                item.deepLink
+                    wallet = item.wallet,
+                    title = item.title,
+                    host = item.host,
+                    url = item.deepLink
             ))
         }
         imageView.setImageURI(item.iconUri, this)

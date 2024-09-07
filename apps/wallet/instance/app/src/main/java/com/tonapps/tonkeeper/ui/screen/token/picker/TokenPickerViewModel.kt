@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import kotlinx.coroutines.Dispatchers
@@ -20,13 +21,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import uikit.extensions.context
 
 class TokenPickerViewModel(
     app: Application,
+    wallet: WalletEntity,
     selectedToken: TokenEntity,
     allowedTokens: List<String>,
-    private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
 ): BaseWalletVM(app) {
@@ -37,10 +39,7 @@ class TokenPickerViewModel(
     private val _queryFlow = MutableStateFlow("")
     private val queryFlow = _queryFlow.asSharedFlow()
 
-    private val tokensFlow = combine(
-        accountRepository.selectedWalletFlow,
-        settingsRepository.currencyFlow
-    ) { wallet, currency ->
+    private val tokensFlow = settingsRepository.currencyFlow.map { currency ->
         val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: emptyList()
         if (allowedTokens.isNotEmpty()) {
             tokens.filter { allowedTokens.contains(it.address) }
@@ -53,7 +52,10 @@ class TokenPickerViewModel(
         tokens.filter { it.symbol.contains(query, ignoreCase = true) }
     }
 
-    val uiItems = combine(accountRepository.selectedWalletFlow, selectedTokenFlow, searchTokensFlow) { wallet, selectedToken, tokens ->
+    val uiItems = combine(
+        selectedTokenFlow,
+        searchTokensFlow
+    ) { selectedToken, tokens ->
         val sortedTokens = tokens.map {
             AssetsExtendedEntity(
                 raw = AssetsEntity.Token(it),

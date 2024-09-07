@@ -23,10 +23,12 @@ import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
@@ -44,7 +46,7 @@ import uikit.widget.webview.bridge.BridgeWebView
 import java.util.UUID
 import kotlin.coroutines.resume
 
-class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
+class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_dapp, ScreenContext.Wallet(wallet)) {
 
     private lateinit var headerDrawable: HeaderDrawable
     private lateinit var headerView: View
@@ -58,7 +60,9 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
 
     private val args: DAppArgs by lazy { DAppArgs(requireArguments()) }
     private val rootViewModel: RootViewModel by activityViewModel()
-    override val viewModel: DAppViewModel by viewModel { parametersOf(args.url) }
+    override val viewModel: DAppViewModel by viewModel {
+        parametersOf(screenContext.wallet, args.url)
+    }
 
     private val currentUrl: String
         get() = webView.url ?: args.url
@@ -133,7 +137,7 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
         webView.jsBridge = DAppBridge(
             send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
             connect = { _, request -> tonConnectAuth(webView.url?.toUri(), request) },
-            restoreConnection = { viewModel.restoreConnection(args.url) },
+            restoreConnection = { viewModel.restoreConnection() },
             disconnect = { viewModel.disconnect() }
         )
         webView.loadUrl(args.url)
@@ -167,7 +171,7 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
     }
 
     private fun requestMenu(view: View) {
-        collectFlow(viewModel.getApp()) { openMenu(view, it) }
+        collectFlow(viewModel.appFlow) { openMenu(view, it) }
     }
 
     private fun openMenu(view: View, app: DConnectEntity?) {
@@ -259,6 +263,7 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
         private const val DISCONNECT_ID = 5L
 
         fun newInstance(
+            wallet: WalletEntity,
             title: String? = null,
             host: String? = null,
             url: String
@@ -268,13 +273,14 @@ class DAppScreen: BaseWalletScreen(R.layout.fragment_dapp) {
             } else {
                 host
             }
-            return newInstance(DAppArgs(title, mustHost, Uri.parse(url)))
+            return newInstance(wallet, DAppArgs(title, mustHost, Uri.parse(url)))
         }
 
         fun newInstance(
+            wallet: WalletEntity,
             args: DAppArgs,
         ): DAppScreen {
-            val fragment = DAppScreen()
+            val fragment = DAppScreen(wallet)
             fragment.setArgs(args)
             return fragment
         }

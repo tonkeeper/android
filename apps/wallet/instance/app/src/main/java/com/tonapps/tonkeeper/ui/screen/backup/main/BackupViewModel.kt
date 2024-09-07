@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.extensions.filterList
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
@@ -31,9 +32,12 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class BackupViewModel(
     app: Application,
+    private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val backupRepository: BackupRepository,
     private val passcodeManager: PasscodeManager,
@@ -43,12 +47,9 @@ class BackupViewModel(
     private val tokenRepository: TokenRepository,
 ): BaseWalletVM(app) {
 
-    val uiItemsFlow = combine(
-        backupRepository.stream,
-        accountRepository.selectedWalletFlow.take(1)
-    ) { backups, wallet ->
-        Pair(backups.filter { it.walletId == wallet.id }, wallet)
-    }.map { (backups, wallet) ->
+    val uiItemsFlow = backupRepository.stream.filterList { backup ->
+        backup.walletId == wallet.id
+    }.map { backups ->
         val backupsCount = backups.size
         val balanceFiat = if (backupsCount > 0) Coins.ZERO else getTotalBalanceFiat(wallet)
         val balanceType = getBalanceType(balanceFiat)
@@ -78,10 +79,19 @@ class BackupViewModel(
     }.flowOn(Dispatchers.IO)
 
     fun getRecoveryPhrase(
-        context: Context
-    ) = accountRepository.selectedWalletFlow.take(1).combine(passcodeManager.confirmationFlow(context, context.getString(Localization.app_name))) { wallet, _ ->
-        accountRepository.getMnemonic(wallet.id)
-    }.take(1)
+        context: Context,
+        callback: (Array<String>) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val confirmed = passcodeManager.confirmation(context, getString(Localization.app_name))
+            if (confirmed) {
+                val words = accountRepository.getMnemonic(wallet.id) ?: return@launch
+                withContext(Dispatchers.Main) {
+                    callback(words)
+                }
+            }
+        }
+    }
 
     private suspend fun getBalanceType(
         balanceFiat: Coins,

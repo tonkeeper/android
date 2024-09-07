@@ -27,7 +27,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
     override fun onBind(item: Item.Token) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
-            navigation?.add(TokenScreen.newInstance(item.address, item.name, item.symbol))
+            navigation?.add(TokenScreen.newInstance(item.wallet, item.address, item.name, item.symbol))
         }
         if (item.blacklist) {
             titleView.text = getString(Localization.fake)

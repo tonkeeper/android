@@ -40,7 +40,7 @@ class WalletHolder(
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)
         emojiView.setEmoji(item.emoji)
         nameView.text = item.name
-        typesView.text = context.getWalletBadges(item.walletType, item.walletVersion)
+        typesView.text = context.getWalletBadges(item.wallet.type, item.wallet.version)
 
         if (item.hiddenBalance) {
             balanceView.text = HIDDEN_BALANCE
@@ -58,7 +58,7 @@ class WalletHolder(
             editView.visibility = View.VISIBLE
             checkView.visibility = View.GONE
             pencilView.setOnClickListener {
-                navigation?.add(EditNameScreen.newInstance(item.walletId))
+                navigation?.add(EditNameScreen.newInstance(item.wallet))
             }
         } else {
             editView.visibility = View.GONE

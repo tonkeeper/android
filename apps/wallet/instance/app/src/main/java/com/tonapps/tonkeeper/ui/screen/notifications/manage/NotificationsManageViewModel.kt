@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
@@ -17,12 +18,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 
 class NotificationsManageViewModel(
     app: Application,
-    private val accountRepository: AccountRepository,
+    private val wallet: WalletEntity,
     private val tonConnectRepository: TonConnectRepository,
     private val settingsRepository: SettingsRepository,
 ): BaseWalletVM(app) {
@@ -31,17 +34,14 @@ class NotificationsManageViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
-        combine(
-            accountRepository.selectedWalletFlow.take(1),
-            tonConnectRepository.connectionsFlow.take(1)
-        ) { wallet, apps ->
+        tonConnectRepository.connectionsFlow.take(1).map { apps ->
             val myApps = apps.filter { it.walletId == wallet.id }
             val uiItems = mutableListOf<Item>()
             uiItems.add(
                 Item.Wallet(
-                pushEnabled = settingsRepository.getPushWallet(wallet.id),
-                walletId = wallet.id
-            ))
+                    pushEnabled = settingsRepository.getPushWallet(wallet.id),
+                    walletId = wallet.id
+                ))
             uiItems.add(Item.Space)
             if (myApps.isNotEmpty()) {
                 uiItems.add(Item.AppsHeader)
@@ -57,9 +57,9 @@ class NotificationsManageViewModel(
     }
 
     fun enabledPush(url: String, enabled: Boolean) {
-        accountRepository.selectedWalletFlow.take(1).onEach { wallet ->
+        viewModelScope.launch(Dispatchers.IO) {
             val token = GooglePushService.requestToken()
             tonConnectRepository.setPushEnabled(wallet, url, enabled, token)
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        }
     }
 }

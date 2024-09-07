@@ -1,11 +1,15 @@
 package com.tonapps.tonkeeper.ui.screen.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.annotation.LayoutRes
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -17,6 +21,8 @@ import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletScreen
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
+import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
@@ -31,9 +37,12 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
 
-class MainScreen: BaseWalletScreen(R.layout.fragment_main) {
+class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, ScreenContext.None) {
 
-    abstract class Child(@LayoutRes layoutId: Int): BaseWalletScreen(layoutId) {
+    abstract class Child(
+        @LayoutRes layoutId: Int,
+        wallet: WalletEntity,
+    ): BaseWalletScreen<ScreenContext.Wallet>(layoutId, ScreenContext.Wallet(wallet)) {
 
         val mainViewModel: MainViewModel by lazy {
             requireParentFragment().getViewModel()
@@ -88,80 +97,87 @@ class MainScreen: BaseWalletScreen(R.layout.fragment_main) {
 
     private val rootViewModel: RootViewModel by activityViewModel()
 
-    private var currentFragment: BaseFragment? = null
+    private val fragments: MutableMap<Int, Fragment> = mutableMapOf()
 
-    private lateinit var fragments: Map<Int, BaseFragment>
     private lateinit var bottomTabsView: BottomTabsView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         childFragmentManager.removeAllFragments()
-        currentFragment = null
-        fragments = createMapFragments()
 
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
-        bottomTabsView.doOnClick = { itemId ->
-            setFragment(itemId, false)
-        }
         bottomTabsView.doOnLongClick = { itemId ->
             if (itemId == R.id.wallet) {
                 navigation?.add(PickerScreen.newInstance())
             }
         }
         collectFlow(viewModel.childBottomScrolled, bottomTabsView::setDivider)
-        collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().map { mainDeepLinks[it.link] }.filterNotNull(), this::forceSelectTab)
+
+        /*collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().map {
+            mainDeepLinks[it.link]
+        }.filterNotNull(), this::forceSelectTab)*/
+
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.Swap>()) {
             navigation?.add(SwapScreen.newInstance(it.uri, it.address, it.from, it.to))
         }
-        collectFlow(viewModel.browserTabEnabled) { enabled ->
-            if (enabled) {
-                bottomTabsView.showItem(R.id.browser)
+        collectFlow(viewModel.selectedWalletFlow) { wallet ->
+            val browserTabEnabled = (wallet.type == Wallet.Type.Default || wallet.isExternal)
+            bottomTabsView.toggleItem(R.id.browser, browserTabEnabled)
+            val itemId = if (childFragmentManager.fragments.isEmpty() || (!browserTabEnabled && bottomTabsView.selectedItemId == R.id.browser)) {
+                R.id.wallet
             } else {
-                bottomTabsView.hideItem(R.id.browser)
-                if (currentFragment is BrowserMainScreen) {
-                    forceSelectTab(R.id.wallet)
-                }
+                bottomTabsView.selectedItemId
             }
+            applyWallet(wallet)
+            setFragment(itemId, wallet)
+        }
+    }
+
+    private fun applyWallet(wallet: WalletEntity) {
+        if (fragments.isNotEmpty()) {
+            childFragmentManager.removeAllFragments()
+            fragments.clear()
         }
 
-        setFragment(R.id.wallet, false)
-    }
-
-    private fun fragmentByItemId(itemId: Int): BaseFragment {
-        return fragments[itemId] ?: throw IllegalArgumentException("Unknown itemId: $itemId")
-    }
-
-    fun forceSelectTab(itemId: Int) {
-        bottomTabsView.setItemChecked(itemId)
-        setFragment(itemId, true)
-    }
-
-    private fun setFragment(itemId: Int, force: Boolean) {
-        val tag = itemId.toString()
-        val isAlreadyFragment = childFragmentManager.findFragmentByTag(tag) != null
-
-        val newFragment = fragmentByItemId(itemId)
-        if (newFragment == currentFragment) {
-            (newFragment as? Child)?.scrollUp()
-            return
+        bottomTabsView.doOnClick = { itemId ->
+            setFragment(itemId, wallet)
         }
+    }
 
+    private fun getFragment(itemId: Int, wallet: WalletEntity): Fragment {
+        return fragments[itemId] ?: createFragment(itemId, wallet).also {
+            fragments[itemId] = it
+        }
+    }
+
+    private fun createFragment(itemId: Int, wallet: WalletEntity): Fragment {
+        val fragment = when(itemId) {
+            R.id.wallet -> WalletScreen.newInstance(wallet)
+            R.id.activity -> EventsScreen.newInstance(wallet)
+            R.id.collectibles -> CollectiblesScreen.newInstance(wallet)
+            R.id.browser -> BrowserMainScreen.newInstance(wallet)
+            else -> throw IllegalArgumentException("Unknown itemId: $itemId")
+        }
+        return fragment
+    }
+
+    private fun setFragment(itemId: Int, wallet: WalletEntity) {
+        setFragment(getFragment(itemId, wallet))
+    }
+
+    private fun setFragment(activeFragment: Fragment) {
         val transaction = childFragmentManager.beginTransaction()
-        currentFragment?.let { transaction.hide(it) }
-        if (isAlreadyFragment) {
-            transaction.show(newFragment)
-        } else {
-            transaction.add(R.id.child_fragment, newFragment, tag)
-        }
-        transaction.runOnCommit {
-            if (force && newFragment is Child) {
-                newFragment.scrollUp()
+        for (fragment in childFragmentManager.fragments) {
+            if (fragment != activeFragment) {
+                transaction.hide(fragment)
             }
         }
-        transaction.commitAllowingStateLoss()
-        bottomTabsView.setDivider(false)
-
-        currentFragment = newFragment
+        if (activeFragment.isAdded) {
+            transaction.show(activeFragment)
+        } else {
+            transaction.add(R.id.child_fragment, activeFragment)
+        }
+        transaction.commitNow()
     }
 
     override fun onResume() {
@@ -177,15 +193,6 @@ class MainScreen: BaseWalletScreen(R.layout.fragment_main) {
             "tonkeeper://browser" to R.id.browser,
             "tonkeeper://collectibles" to R.id.collectibles
         )
-
-        private fun createMapFragments(): Map<Int, BaseFragment> {
-            return mapOf(
-                R.id.wallet to WalletScreen.newInstance(),
-                R.id.activity to EventsScreen.newInstance(),
-                R.id.collectibles to CollectiblesScreen.newInstance(),
-                R.id.browser to BrowserMainScreen.newInstance()
-            )
-        }
 
         fun isSupportedDeepLink(uri: String): Boolean {
             return mainDeepLinks.containsKey(uri)

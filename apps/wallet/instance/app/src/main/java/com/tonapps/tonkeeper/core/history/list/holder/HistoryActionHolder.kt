@@ -202,7 +202,7 @@ class HistoryActionHolder(
         val nft = item.nft!!
         nftView.visibility = View.VISIBLE
         nftView.setOnClickListener {
-            Navigation.from(context)?.add(NftScreen.newInstance(nft))
+            Navigation.from(context)?.add(NftScreen.newInstance(item.wallet, nft))
         }
         loadNftImage(nft.mediumUri, item.hiddenBalance)
         if (item.hiddenBalance) {

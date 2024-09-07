@@ -14,6 +14,8 @@ abstract class BaseWalletVM(
     app: Application
 ): AndroidViewModel(app) {
 
+    class EmptyViewViewModel(app: Application): BaseWalletVM(app)
+
     private var activityRef: WeakReference<FragmentActivity>? = null
 
     val activity: FragmentActivity?

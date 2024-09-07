@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.passcode
 import android.os.Bundle
 import android.view.View
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.localization.Localization
@@ -11,7 +12,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 
-class ChangePasscodeScreen: BaseWalletScreen(R.layout.fragment_change_passcode), BaseFragment.SwipeBack {
+class ChangePasscodeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_change_passcode, ScreenContext.None), BaseFragment.SwipeBack {
 
     override val viewModel: ChangePasscodeViewModel by viewModel()
 

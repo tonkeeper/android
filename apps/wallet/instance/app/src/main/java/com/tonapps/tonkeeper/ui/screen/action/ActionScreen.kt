@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
@@ -31,7 +32,7 @@ import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 
-class ActionScreen: BaseWalletScreen(R.layout.fragment_action), BaseFragment.Modal {
+class ActionScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_action, ScreenContext.None), BaseFragment.Modal {
 
     private val args: ActionArgs by lazy {
         ActionArgs(requireArguments())

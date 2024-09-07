@@ -30,11 +30,13 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 import java.net.URLEncoder
 
 class BatteryRefillViewModel(
     app: Application,
+    private val wallet: WalletEntity,
     private val api: API,
     private val accountRepository: AccountRepository,
     private val batteryRepository: BatteryRepository,
@@ -46,11 +48,10 @@ class BatteryRefillViewModel(
     private val promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
 
     val uiItemsFlow = combine(
-        accountRepository.selectedWalletFlow,
         promoStateFlow,
         settingsRepository.walletPrefsChangedFlow,
         batteryRepository.balanceUpdatedFlow,
-    ) { wallet, promoState, _, _ ->
+    ) { promoState, _, _ ->
         val batteryBalance = getBatteryBalance(wallet)
 
         val uiItems = mutableListOf<Item>()
@@ -76,6 +77,7 @@ class BatteryRefillViewModel(
         uiItems.add(Item.Space)
         uiItems.add(
             Item.Refund(
+                wallet = wallet,
                 refundUrl = "${api.config.batteryRefundEndpoint}?token=${
                     URLEncoder.encode(
                         tonProofToken,
@@ -89,7 +91,7 @@ class BatteryRefillViewModel(
     }.flowOn(Dispatchers.IO)
 
     init {
-        accountRepository.selectedWalletFlow.take(1).map { wallet ->
+        viewModelScope.launch(Dispatchers.IO) {
             val appliedPromo = batteryRepository.getAppliedPromo(wallet.testnet)
 
             if (appliedPromo.isNullOrBlank()) {
@@ -97,7 +99,7 @@ class BatteryRefillViewModel(
             } else {
                 promoStateFlow.tryEmit(PromoState.Applied(appliedPromo))
             }
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        }
     }
 
     private fun uiItemBattery(
@@ -126,12 +128,13 @@ class BatteryRefillViewModel(
             val position = ListCell.getPosition(supportedTokens.size + 1, index)
             uiItems.add(
                 Item.RechargeMethod(
+                    wallet = wallet,
                     position = position,
                     token = supportToken
                 )
             )
         }
-        uiItems.add(Item.Gift(position = ListCell.Position.LAST))
+        uiItems.add(Item.Gift(wallet, position = ListCell.Position.LAST))
         return uiItems.toList()
     }
 
@@ -178,11 +181,11 @@ class BatteryRefillViewModel(
         }.sortedBy { it.fiat }.reversed()
     }
 
-    fun applyPromo(promo: String, isInitial: Boolean = false) =
-        accountRepository.selectedWalletFlow.take(1).map { wallet ->
+    fun applyPromo(promo: String, isInitial: Boolean = false) {
+        viewModelScope.launch(Dispatchers.IO) {
             if (promo.isEmpty()) {
                 promoStateFlow.tryEmit(PromoState.Default)
-                return@map
+                return@launch
             }
             val initialPromo = if (isInitial) promo else null
             promoStateFlow.tryEmit(PromoState.Loading(initialPromo = initialPromo))
@@ -196,5 +199,6 @@ class BatteryRefillViewModel(
             } catch (_: Exception) {
                 promoStateFlow.tryEmit(PromoState.Error)
             }
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        }
+    }
 }

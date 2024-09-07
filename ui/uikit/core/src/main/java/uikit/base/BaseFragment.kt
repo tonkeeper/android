@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Parcelable
 import android.text.SpannableString
 import android.view.LayoutInflater
 import android.view.View
@@ -112,8 +113,28 @@ open class BaseFragment(
 
     private var isFinished: Boolean = false
 
+    fun setArgs(bundle: Bundle) {
+        val args = arguments ?: Bundle()
+        args.putAll(bundle)
+        arguments = args
+    }
+
     fun setArgs(args: BaseArgs) {
-        arguments = args.toBundle()
+        setArgs(args.toBundle())
+    }
+
+    fun putParcelableArg(key: String, value: Parcelable) {
+        setArgs(Bundle().apply {
+            putParcelable(key, value)
+        })
+    }
+
+    fun putStringArg(key: String, value: String? = null) {
+        if (value != null) {
+            setArgs(Bundle().apply {
+                putString(key, value)
+            })
+        }
     }
 
     fun getSpannable(@StringRes id: Int): SpannableString {

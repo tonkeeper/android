@@ -8,6 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -21,7 +22,7 @@ import uikit.extensions.round
 import uikit.widget.FrescoView
 import uikit.widget.RowLayout
 
-class W5StoriesScreen: BaseWalletScreen(R.layout.fragment_w5_stories) {
+class W5StoriesScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_w5_stories, ScreenContext.None) {
 
     override val viewModel: W5StoriesViewModel by viewModel()
 

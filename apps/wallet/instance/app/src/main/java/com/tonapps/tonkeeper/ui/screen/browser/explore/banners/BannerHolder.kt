@@ -17,7 +17,7 @@ class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.l
 
     override fun onBind(item: BannerAppItem) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(DAppScreen.newInstance(item.name, item.host, item.url.toString()))
+            Navigation.from(context)?.add(DAppScreen.newInstance(item.wallet, item.name, item.host, item.url.toString()))
         }
 
         bgView.setImageURI(item.poster)

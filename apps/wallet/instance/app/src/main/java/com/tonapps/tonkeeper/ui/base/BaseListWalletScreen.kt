@@ -17,7 +17,12 @@ import uikit.extensions.topScrolled
 import uikit.widget.HeaderView
 import uikit.widget.SimpleRecyclerView
 
-abstract class BaseListWalletScreen: BaseWalletScreen(R.layout.fragment_list) {
+abstract class BaseListWalletScreen<C: ScreenContext>(
+    screenContext: C
+): BaseWalletScreen<C>(
+    layoutId = R.layout.fragment_list,
+    screenContext = screenContext
+) {
 
     private lateinit var headerContainer: FrameLayout
     protected lateinit var headerView: HeaderView

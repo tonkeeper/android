@@ -19,6 +19,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.core.tonconnect.models.TCData
 import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
@@ -39,7 +40,7 @@ import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
 
-class TCAuthFragment: BaseWalletScreen(R.layout.dialog_ton_connect), BaseFragment.Modal {
+class TCAuthFragment: BaseWalletScreen<ScreenContext.None>(R.layout.dialog_ton_connect, ScreenContext.None), BaseFragment.Modal {
 
     companion object {
 

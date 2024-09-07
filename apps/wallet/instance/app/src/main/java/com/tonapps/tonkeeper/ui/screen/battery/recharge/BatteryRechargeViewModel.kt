@@ -61,6 +61,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
 import uikit.extensions.collectFlow
@@ -68,6 +69,7 @@ import java.math.BigDecimal
 
 class BatteryRechargeViewModel(
     app: Application,
+    private val wallet: WalletEntity,
     private val args: RechargeArgs,
     private val accountRepository: AccountRepository,
     private val batteryRepository: BatteryRepository,
@@ -92,16 +94,15 @@ class BatteryRechargeViewModel(
 
     private val _destinationLoadingFlow = MutableStateFlow(false)
 
-    private val destinationFlow = combine(
-        accountRepository.selectedWalletFlow, addressDebounceFlow
-    ) { wallet, address ->
+    private val destinationFlow = addressDebounceFlow.map { address ->
         if (address.isEmpty()) {
-            return@combine SendDestination.Empty
+            SendDestination.Empty
+        } else {
+            _destinationLoadingFlow.tryEmit(true)
+            val destination = getDestinationAccount(address, wallet.testnet)
+            _destinationLoadingFlow.tryEmit(false)
+            destination
         }
-        _destinationLoadingFlow.tryEmit(true)
-        val destination = getDestinationAccount(address, wallet.testnet)
-        _destinationLoadingFlow.tryEmit(false)
-        destination
     }.flowOn(Dispatchers.IO).state(viewModelScope)
 
     private val _eventFlow = MutableEffectFlow<BatteryRechargeEvent>()
@@ -110,10 +111,8 @@ class BatteryRechargeViewModel(
     private val _selectedPackTypeFlow = MutableStateFlow<RechargePackType?>(null)
     private val _customAmountFlow = MutableStateFlow(false)
 
-    val supportedTokens = accountRepository.selectedWalletFlow.take(1).map { wallet ->
-        val batteryConfig = getBatteryConfig(wallet)
-        getSupportedTokens(wallet, batteryConfig.rechargeMethods)
-    }.filter { it.isNotEmpty() }.shareIn(viewModelScope, SharingStarted.Eagerly, 1)
+    private val _supportedTokensFlow = MutableStateFlow<List<AccountTokenEntity>?>(null)
+    val supportedTokensFlow = _supportedTokensFlow.asStateFlow().filterNotNull()
 
     private val selectedFlow = combine(
         _selectedPackTypeFlow,
@@ -123,8 +122,9 @@ class BatteryRechargeViewModel(
     }
 
     private val stateFlow = combine(
-        accountRepository.selectedWalletFlow, tokenFlow, promoStateFlow
-    ) { wallet, token, promoState ->
+        tokenFlow,
+        promoStateFlow
+    ) { token, promoState ->
         Triple(wallet, token, promoState)
     }
 
@@ -225,7 +225,7 @@ class BatteryRechargeViewModel(
     }
 
     init {
-        accountRepository.selectedWalletFlow.take(1).map { wallet ->
+        viewModelScope.launch(Dispatchers.IO) {
             val appliedPromo = batteryRepository.getAppliedPromo(wallet.testnet)
 
             if (appliedPromo.isNullOrBlank()) {
@@ -233,19 +233,22 @@ class BatteryRechargeViewModel(
             } else {
                 promoStateFlow.tryEmit(PromoState.Applied(appliedPromo))
             }
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+
+            val batteryConfig = getBatteryConfig(wallet)
+            _supportedTokensFlow.value = getSupportedTokens(wallet, batteryConfig.rechargeMethods)
+        }
 
         if (args.token != null) {
             _tokenFlow.tryEmit(args.token)
         } else {
-            collectFlow(supportedTokens.take(1)) { supportedTokens ->
+            collectFlow(supportedTokensFlow.take(1)) { supportedTokens ->
                 _tokenFlow.tryEmit(supportedTokens.first())
             }
         }
     }
 
     fun setToken(token: TokenEntity) {
-        supportedTokens.take(1).filterList {
+        supportedTokensFlow.take(1).filterList {
             it.address.equalsAddress(token.address)
         }.map { it.first() }.onEach { selectedToken ->
             _tokenFlow.tryEmit(selectedToken)
@@ -466,18 +469,20 @@ class BatteryRechargeViewModel(
         SendDestination.Account(address, publicKey, account)
     }
 
-    fun applyPromo(promo: String) = accountRepository.selectedWalletFlow.take(1).map { wallet ->
-        if (promo.isEmpty()) {
-            promoStateFlow.tryEmit(PromoState.Default)
-            return@map
+    fun applyPromo(promo: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (promo.isEmpty()) {
+                promoStateFlow.tryEmit(PromoState.Default)
+                return@launch
+            }
+            promoStateFlow.tryEmit(PromoState.Loading())
+            try {
+                api.battery(wallet.testnet).verifyPurchasePromo(promo)
+                batteryRepository.setAppliedPromo(wallet.testnet, promo)
+                promoStateFlow.tryEmit(PromoState.Applied(promo))
+            } catch (_: Exception) {
+                promoStateFlow.tryEmit(PromoState.Error)
+            }
         }
-        promoStateFlow.tryEmit(PromoState.Loading())
-        try {
-            api.battery(wallet.testnet).verifyPurchasePromo(promo)
-            batteryRepository.setAppliedPromo(wallet.testnet, promo)
-            promoStateFlow.tryEmit(PromoState.Applied(promo))
-        } catch (_: Exception) {
-            promoStateFlow.tryEmit(PromoState.Error)
-        }
-    }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }
 }

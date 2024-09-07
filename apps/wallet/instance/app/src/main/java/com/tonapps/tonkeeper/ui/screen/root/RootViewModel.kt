@@ -358,7 +358,7 @@ class RootViewModel(
         } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
             _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString()))
         } else if (path?.startsWith("/send") == true) {
-            _eventFlow.tryEmit(RootEvent.OpenSend)
+            _eventFlow.tryEmit(RootEvent.OpenSend(wallet))
         } else if (path?.startsWith("/staking") == true) {
             _eventFlow.tryEmit(RootEvent.Staking)
         } else if (path?.startsWith("/pool/") == true) {
@@ -373,6 +373,7 @@ class RootViewModel(
             }
         } else if (path?.startsWith("/transfer/") == true) {
             _eventFlow.tryEmit(RootEvent.Transfer(
+                wallet = wallet,
                 address = uri.pathSegments.last(),
                 amount = uri.getQueryParameter("amount"),
                 text = uri.getQueryParameter("text"),
@@ -391,15 +392,15 @@ class RootViewModel(
             _eventFlow.tryEmit(RootEvent.Swap(api.config.swapUri, wallet.address, ft, tt))
         } else if (path?.startsWith("/battery") == true) {
             val promocode = uri.getQueryParameter("promocode")
-            _eventFlow.tryEmit(RootEvent.Battery(promocode))
+            _eventFlow.tryEmit(RootEvent.Battery(wallet, promocode))
         } else if (path?.startsWith("/buy-ton") == true || uri.path == "/exchange" || uri.path == "/exchange/") {
-            _eventFlow.tryEmit(RootEvent.BuyOrSell())
+            _eventFlow.tryEmit(RootEvent.BuyOrSell(wallet))
         } else if (path?.startsWith("/exchange") == true) {
             val name = uri.pathSegments.lastOrNull() ?: return
             val method = purchaseRepository.getMethod(name, wallet.testnet, settingsRepository.getLocale())
-            _eventFlow.tryEmit(RootEvent.BuyOrSell(method))
+            _eventFlow.tryEmit(RootEvent.BuyOrSell(wallet, method))
         } else if (path?.startsWith("/backups") == true) {
-            _eventFlow.tryEmit(RootEvent.OpenBackups)
+            _eventFlow.tryEmit(RootEvent.OpenBackups(wallet))
         } else {
             toast(Localization.invalid_link)
         }

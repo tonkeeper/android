@@ -9,7 +9,11 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -19,17 +23,19 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
 import uikit.widget.webview.WebViewFixed
 
-class PurchaseWebScreen: BaseFragment(R.layout.fragment_purchase_web) {
+class PurchaseWebScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_purchase_web, ScreenContext.Wallet(wallet)) {
 
-    private val accountRepository: AccountRepository by inject()
-    private val settingsRepository: SettingsRepository by inject()
-    private val purchaseRepository: PurchaseRepository by inject()
+    override val viewModel: PurchaseWebViewModel by viewModel {
+        parametersOf(screenContext.wallet)
+    }
 
     private val method: PurchaseMethodEntity by lazy {
         requireArguments().getParcelableCompat(METHOD_KEY)!!
@@ -74,20 +80,7 @@ class PurchaseWebScreen: BaseFragment(R.layout.fragment_purchase_web) {
             }
         }
 
-        loadUrl()
-    }
-
-    private fun loadUrl() {
-        combine(
-            settingsRepository.countryFlow,
-            accountRepository.selectedWalletFlow
-        ) { country, wallet ->
-            purchaseRepository.replaceUrl(method.actionButton.url, wallet.address, country)
-        }.flowOn(Dispatchers.IO).onEach(::loadUrl).flowOn(Dispatchers.Main).launchIn(lifecycleScope)
-    }
-
-    private fun loadUrl(url: String) {
-        webView.loadUrl(url)
+        webView.loadUrl(viewModel.replaceUrl(method.actionButton.url))
     }
 
     override fun onPause() {
@@ -102,18 +95,16 @@ class PurchaseWebScreen: BaseFragment(R.layout.fragment_purchase_web) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        navigation?.add(PurchaseScreen.newInstance())
+        navigation?.add(PurchaseScreen.newInstance(screenContext.wallet))
         webView.destroy()
     }
 
     companion object {
         private const val METHOD_KEY = "method"
 
-        fun newInstance(method: PurchaseMethodEntity): PurchaseWebScreen {
-            val fragment = PurchaseWebScreen()
-            fragment.arguments = Bundle().apply {
-                putParcelable(METHOD_KEY, method)
-            }
+        fun newInstance(wallet: WalletEntity, method: PurchaseMethodEntity): PurchaseWebScreen {
+            val fragment = PurchaseWebScreen(wallet)
+            fragment.putParcelableArg(METHOD_KEY, method)
             return fragment
         }
     }

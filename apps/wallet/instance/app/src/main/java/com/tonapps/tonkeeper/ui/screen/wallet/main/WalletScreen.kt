@@ -10,16 +10,19 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.flow.filterNotNull
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 
-class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
+class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wallet, wallet) {
 
-    override val viewModel: WalletViewModel by viewModel()
+    override val viewModel: WalletViewModel by viewModel {
+        parametersOf(screenContext.wallet)
+    }
 
     private val adapter: WalletAdapter by inject()
 
@@ -35,7 +38,7 @@ class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance()) }
-        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance()) }
+        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(screenContext.wallet)) }
         headerView.doWalletSwipe = { right ->
             if (right) {
                 viewModel.prevWallet()
@@ -66,6 +69,6 @@ class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
     }
 
     companion object {
-        fun newInstance() = WalletScreen()
+        fun newInstance(wallet: WalletEntity) = WalletScreen(wallet)
     }
 }

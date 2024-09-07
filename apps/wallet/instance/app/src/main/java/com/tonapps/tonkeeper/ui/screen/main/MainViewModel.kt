@@ -19,18 +19,11 @@ class MainViewModel(
     private val api: API,
 ) : BaseWalletVM(app) {
 
-    private val _browserTabEnabledFlow = MutableStateFlow<Boolean?>(null)
-    val browserTabEnabled = _browserTabEnabledFlow.asStateFlow().filterNotNull()
 
     private val _childBottomScrolled = MutableEffectFlow<Boolean>()
     val childBottomScrolled = _childBottomScrolled.asSharedFlow()
 
-    init {
-        collectFlow(accountRepository.selectedWalletFlow) { wallet ->
-            _browserTabEnabledFlow.value =
-                !api.config.flags.disableDApps && (wallet.type == Wallet.Type.Default || wallet.isExternal)
-        }
-    }
+    val selectedWalletFlow = accountRepository.selectedWalletFlow
 
     fun setBottomScrolled(value: Boolean) {
         _childBottomScrolled.tryEmit(value)

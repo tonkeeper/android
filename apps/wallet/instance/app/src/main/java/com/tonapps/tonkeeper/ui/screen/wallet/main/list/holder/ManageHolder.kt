@@ -11,14 +11,12 @@ class ManageHolder(
     parent: ViewGroup
 ): Holder<Item.Manage>(parent, R.layout.view_wallet_manage) {
 
-    init {
-        findViewById<Button>(R.id.button).setOnClickListener {
-            Navigation.from(context)?.add(TokensManageScreen.newInstance())
-        }
-    }
+    private val button = findViewById<Button>(R.id.button)
 
     override fun onBind(item: Item.Manage) {
-
+        button.setOnClickListener {
+            Navigation.from(context)?.add(TokensManageScreen.newInstance(item.wallet))
+        }
     }
 
 }

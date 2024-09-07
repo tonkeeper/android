@@ -5,6 +5,7 @@ import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -23,14 +24,26 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Item(TYPE_BALANCE)
 
     data class Actions(
+        val wallet: WalletEntity,
         val swapUri: Uri,
-        val swap: Boolean,
-        val send: Boolean,
-        val walletAddress: String,
-        val tokenAddress: String,
         val token: TokenEntity,
-        val walletType: Wallet.Type,
-    ): Item(TYPE_ACTIONS)
+    ): Item(TYPE_ACTIONS) {
+
+        val walletAddress: String
+            get() = wallet.address
+
+        val tokenAddress: String
+            get() = token.address
+
+        val walletType: Wallet.Type
+            get() = wallet.type
+
+        val send: Boolean
+            get() = !wallet.isWatchOnly
+
+        val swap: Boolean
+            get() = token.verified && !wallet.isWatchOnly
+    }
 
     data class Price(
         val fiatPrice: CharSequence,

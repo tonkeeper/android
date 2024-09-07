@@ -7,13 +7,16 @@ import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
@@ -22,9 +25,11 @@ import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.HeaderView
 
-class BrowserExploreScreen : BaseWalletScreen(R.layout.fragment_browser_explore) {
+class BrowserExploreScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_explore, ScreenContext.Wallet(wallet)) {
 
-    override val viewModel: BrowserExploreViewModel by viewModel()
+    override val viewModel: BrowserExploreViewModel by viewModel {
+        parametersOf(screenContext.wallet)
+    }
 
     private val mainViewModel: BrowserMainViewModel by lazy {
         requireParentFragment().getViewModel()
@@ -132,6 +137,6 @@ class BrowserExploreScreen : BaseWalletScreen(R.layout.fragment_browser_explore)
 
         private const val SPAN_COUNT = 4
 
-        fun newInstance() = BrowserExploreScreen()
+        fun newInstance(wallet: WalletEntity) = BrowserExploreScreen(wallet)
     }
 }

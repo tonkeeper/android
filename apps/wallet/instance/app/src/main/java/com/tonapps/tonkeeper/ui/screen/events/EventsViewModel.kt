@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +41,7 @@ import uikit.extensions.collectFlow
 
 class EventsViewModel(
     app: Application,
-    private val accountRepository: AccountRepository,
+    private val wallet: WalletEntity,
     private val eventsRepository: EventsRepository,
     private val networkMonitor: NetworkMonitor,
     private val tonConnectRepository: TonConnectRepository,
@@ -57,31 +58,22 @@ class EventsViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
-        combine(
-            accountRepository.selectedWalletFlow,
-            eventsRepository.decryptedCommentFlow
-        ) { wallet, _ ->
-            loadEvents(wallet, false, updating = false)
-        }.launchIn(viewModelScope)
-
-        collectFlow(accountRepository.selectedWalletFlow.map { getCached(it) }.flowOn(Dispatchers.IO)) { items ->
-            if (!items.isNullOrEmpty()) {
-                _uiItemsFlow.value = items
+        viewModelScope.launch(Dispatchers.IO) {
+            getCached()?.let {
+                _uiItemsFlow.value = it
             }
         }
 
-        combine(
-            accountRepository.selectedWalletFlow,
-            networkMonitor.isOnlineFlow
-        ) { wallet, isOnline ->
-            loadEvents(wallet, isOnline, false)
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        eventsRepository.decryptedCommentFlow.onEach {
+            loadEvents(isOnline = false, updating = false)
+        }.launchIn(viewModelScope)
 
-        collectFlow(accountRepository.realtimeEventsFlow.map { it.wallet }) { wallet ->
-            loadEvents(wallet, true)
+        networkMonitor.isOnlineFlow.onEach { isOnline ->
+            loadEvents(isOnline = isOnline, updating = false)
         }
 
-        collectFlow(pushManager.dAppPushFlow.filterNotNull()) {
+
+        /*collectFlow(pushManager.dAppPushFlow.filterNotNull()) {
             val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
             loadEvents(wallet, true)
         }
@@ -98,20 +90,16 @@ class EventsViewModel(
 
             _uiItemsFlow.value = uiItems.toList()
             screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
-        }
+        }*/
     }
-
-    fun openQRCode() = accountRepository.selectedWalletFlow.take(1)
 
     fun update() {
         viewModelScope.launch(Dispatchers.IO) {
-            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
-            loadLast(wallet, true)
+            loadLast(true)
         }
     }
 
     private suspend fun loadLast(
-        wallet: WalletEntity,
         inProgress: Boolean
     ) = withContext(Dispatchers.IO) {
         val events = eventsRepository.getLast(wallet.accountId, wallet.testnet)?.events?.filter {
@@ -157,7 +145,8 @@ class EventsViewModel(
                 date = DateHelper.timestampToDateString(event.dateUnix, settingsRepository.getLocale()),
                 timestamp = event.dateUnix,
                 deepLink = event.link,
-                host = manifest.host
+                host = manifest.host,
+                wallet = wallet,
             ))
         }
         return items
@@ -182,32 +171,29 @@ class EventsViewModel(
 
         val lastLt = lastLt() ?: return
         withUpdating {
-            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@withUpdating
             val oldValues = _uiItemsFlow.value ?: emptyList()
             _uiItemsFlow.value = historyHelper.withLoadingItem(oldValues)
-            loadRemote(wallet, lastLt)
+            loadRemote(lastLt)
         }
     }
 
     private fun loadEvents(
-        wallet: WalletEntity,
         isOnline: Boolean,
         updating: Boolean = true
     ) {
         if (updating && isOnline) {
             withUpdating {
-                loadLocal(wallet)
-                loadRemote(wallet)
+                loadLocal()
+                loadRemote()
             }
         } else {
             viewModelScope.launch(Dispatchers.IO) {
-                loadLocal(wallet)
+                loadLocal()
             }
         }
-
     }
 
-    private suspend fun loadLocal(wallet: WalletEntity) {
+    private suspend fun loadLocal() {
         val accountEvents = eventsRepository.getLocal(wallet.accountId, wallet.testnet) ?: return
         val walletEventItems = mapping(wallet, accountEvents.events)
         if (walletEventItems.isNotEmpty()) {
@@ -215,7 +201,7 @@ class EventsViewModel(
         }
     }
 
-    private suspend fun loadRemote(wallet: WalletEntity, beforeLt: Long? = null) {
+    private suspend fun loadRemote(beforeLt: Long? = null) {
         val accountEvents = eventsRepository.getRemote(wallet.accountId, wallet.testnet, beforeLt) ?: return
         val walletEventItems = mapping(wallet, accountEvents.events)
         if (beforeLt == null) {
@@ -262,7 +248,7 @@ class EventsViewModel(
         }
     }
 
-    private fun getCached(wallet: WalletEntity): List<HistoryItem>? {
+    private fun getCached(): List<HistoryItem>? {
         val items: List<HistoryItem> = screenCacheSource.get(CACHE_NAME, wallet.id) {
             HistoryItem.createFromParcel(it)
         }

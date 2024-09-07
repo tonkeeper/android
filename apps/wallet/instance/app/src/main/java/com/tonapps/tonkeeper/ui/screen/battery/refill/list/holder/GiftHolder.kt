@@ -21,7 +21,7 @@ class GiftHolder(
 
     override fun onBind(item: Item.Gift) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { navigation?.add(BatteryRechargeScreen.newInstance(isGift = true)) }
+        itemView.setOnClickListener { navigation?.add(BatteryRechargeScreen.newInstance(item.wallet, isGift = true)) }
         giftImageView.visibility = View.VISIBLE
         titleView.text = context.getString(Localization.battery_refill_gift)
         subtitleView.text = context.getString(Localization.battery_refill_gift_subtitle)

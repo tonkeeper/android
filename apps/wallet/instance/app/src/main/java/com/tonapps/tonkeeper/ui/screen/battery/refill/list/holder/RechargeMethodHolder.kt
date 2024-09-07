@@ -19,7 +19,7 @@ class RechargeMethodHolder(
 
     override fun onBind(item: Item.RechargeMethod) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { navigation?.add(BatteryRechargeScreen.newInstance(item.token)) }
+        itemView.setOnClickListener { navigation?.add(BatteryRechargeScreen.newInstance(item.wallet, item.token)) }
         frescoView.setImageURI(item.imageUri, this)
         frescoView.visibility = View.VISIBLE
         titleView.text = context.getString(Localization.battery_refill_crypto, item.symbol)

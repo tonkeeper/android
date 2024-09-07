@@ -22,6 +22,7 @@ import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
@@ -39,6 +40,7 @@ import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
@@ -64,13 +66,15 @@ import uikit.widget.ProcessTaskView
 import uikit.widget.SlideBetweenView
 import java.util.UUID
 
-class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.BottomSheet {
+class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_send_new, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
     private val args: SendArgs by lazy { SendArgs(requireArguments()) }
     private val signerQRRequestKey: String by lazy { "send_${UUID.randomUUID()}" }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
 
-    override val viewModel: SendViewModel by viewModel { parametersOf(args.nftAddress) }
+    override val viewModel: SendViewModel by viewModel {
+        parametersOf(screenContext.wallet, args.nftAddress)
+    }
 
     private val signerResultContract = SingerResultContract()
     private val signerLauncher = registerForActivityResult(signerResultContract) {
@@ -160,6 +164,7 @@ class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bo
         view.findViewById<View>(R.id.address_book).setOnClickListener { openAddressBook() }
 
         amountView = view.findViewById(R.id.amount)
+        amountView.setWallet(screenContext.wallet)
         amountView.doOnValueChanged = viewModel::userInputAmount
         amountView.doOnTokenChanged = viewModel::userInputToken
         amountView.setOnDoneActionListener { commentInput.requestFocus() }
@@ -233,6 +238,20 @@ class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bo
             taskContainerView.translationY = -offset.toFloat()
         }
 
+        val walletType = screenContext.wallet.type
+        if (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup) {
+            confirmButton.setText(Localization.confirm)
+            confirmButton.setOnClickListener { confirmDefault() }
+        } else {
+            confirmButton.setText(Localization.continue_action)
+            when (walletType) {
+                Wallet.Type.Ledger -> confirmButton.setOnClickListener { openLedger() }
+                Wallet.Type.SignerQR -> confirmButton.setOnClickListener { openSignerQR() }
+                Wallet.Type.Signer -> confirmButton.setOnClickListener { openSigner() }
+                else -> { }
+            }
+        }
+
         collectFlow(viewModel.uiInputAddressErrorFlow) {
             addressInput.error = it
             addressInput.loading = false
@@ -245,20 +264,6 @@ class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bo
         collectFlow(viewModel.uiInputNftFlow, ::setNft)
         collectFlow(viewModel.uiButtonEnabledFlow, button::setEnabled)
         collectFlow(viewModel.uiTransactionFlow, ::applyTransaction)
-        collectFlow(viewModel.walletTypeFlow) { walletType ->
-            if (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup) {
-                confirmButton.setText(Localization.confirm)
-                confirmButton.setOnClickListener { confirmDefault() }
-                return@collectFlow
-            }
-            confirmButton.setText(Localization.continue_action)
-            when (walletType) {
-                Wallet.Type.Ledger -> confirmButton.setOnClickListener { openLedger() }
-                Wallet.Type.SignerQR -> confirmButton.setOnClickListener { openSignerQR() }
-                Wallet.Type.Signer -> confirmButton.setOnClickListener { openSigner() }
-                else -> throw IllegalArgumentException("Unsupported wallet type: $walletType")
-            }
-        }
 
         collectFlow(viewModel.uiInputEncryptedComment, ::applyCommentEncryptState)
         collectFlow(viewModel.uiRequiredMemoFlow) { memoRequired ->
@@ -275,7 +280,7 @@ class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bo
     }
 
     private fun openAddressBook() {
-        navigation?.add(SendContactsScreen.newInstance(contractsRequestKey))
+        navigation?.add(SendContactsScreen.newInstance(screenContext.wallet, contractsRequestKey))
         getCurrentFocus()?.hideKeyboard()
     }
 
@@ -577,13 +582,14 @@ class SendScreen : BaseWalletScreen(R.layout.fragment_send_new), BaseFragment.Bo
     companion object {
 
         fun newInstance(
+            wallet: WalletEntity,
             targetAddress: String? = null,
             tokenAddress: String = TokenEntity.TON.address,
             amountNano: Long = 0,
             text: String? = null,
             nftAddress: String? = null
         ): SendScreen {
-            val screen = SendScreen()
+            val screen = SendScreen(wallet)
             screen.setArgs(
                 SendArgs(
                     targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""

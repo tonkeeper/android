@@ -15,6 +15,7 @@ import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
@@ -88,7 +89,16 @@ class QRScreen: BaseFragment(R.layout.fragment_qr), BaseFragment.BottomSheet {
 
     companion object {
 
-        fun newInstance(address: String, token: TokenEntity, walletType: Wallet.Type): QRScreen {
+        fun newInstance(
+            wallet: WalletEntity,
+            token: TokenEntity
+        ) = newInstance(wallet.address, token, wallet.type)
+
+        fun newInstance(
+            address: String,
+            token: TokenEntity,
+            walletType: Wallet.Type
+        ): QRScreen {
             val screen = QRScreen()
             screen.setArgs(QRArgs(address, token, walletType))
             return screen

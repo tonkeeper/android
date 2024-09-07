@@ -5,6 +5,7 @@ import android.view.View
 import com.tonapps.extensions.locale
 import com.tonapps.security.Security
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
@@ -12,7 +13,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 
-class DevScreen: BaseWalletScreen(R.layout.fragment_dev), BaseFragment.BottomSheet {
+class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, ScreenContext.None), BaseFragment.BottomSheet {
 
     override val viewModel: DevViewModel by viewModel()
 

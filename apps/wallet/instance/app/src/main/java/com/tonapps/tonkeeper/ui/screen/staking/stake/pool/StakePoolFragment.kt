@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragment
@@ -13,7 +14,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import uikit.extensions.collectFlow
 
-class StakePoolFragment: BaseHolderWalletScreen.ChildListScreen<StakingScreen, StakingViewModel>() {
+class StakePoolFragment: BaseHolderWalletScreen.ChildListScreen<ScreenContext.None, StakingScreen, StakingViewModel>(ScreenContext.None) {
 
     private val info: PoolInfoEntity by lazy { requireArguments().getParcelableCompat(ARG_INFO)!! }
 

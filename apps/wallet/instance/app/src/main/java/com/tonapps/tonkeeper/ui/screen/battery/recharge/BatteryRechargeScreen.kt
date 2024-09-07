@@ -14,6 +14,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -22,6 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
@@ -39,7 +41,7 @@ import uikit.widget.FrescoView
 import uikit.widget.InputView
 import java.util.UUID
 
-class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
+class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
     private val args: RechargeArgs by lazy { RechargeArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
@@ -47,7 +49,9 @@ class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
 
     private val rootViewModel: RootViewModel by activityViewModel()
 
-    override val viewModel: BatteryRechargeViewModel by viewModel { parametersOf(args) }
+    override val viewModel: BatteryRechargeViewModel by viewModel {
+        parametersOf(screenContext.wallet, args)
+    }
 
     private val adapter = Adapter(
         onAddressChange = { viewModel.updateAddress(it) },
@@ -113,16 +117,17 @@ class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
     }
 
     private fun openAddressBook() {
-        navigation?.add(SendContactsScreen.newInstance(contractsRequestKey))
+        navigation?.add(SendContactsScreen.newInstance(screenContext.wallet, contractsRequestKey))
         getCurrentFocus()?.hideKeyboard()
     }
 
     private fun openTokenSelector() {
         combine(
-            viewModel.supportedTokens.take(1),
+            viewModel.supportedTokensFlow.take(1),
             viewModel.tokenFlow.take(1)
         ) { allowedTokens, selectedToken ->
             navigation?.add(TokenPickerScreen.newInstance(
+                wallet = screenContext.wallet,
                 requestKey = tokenRequestKey,
                 selectedToken = selectedToken.balance.token,
                 allowedTokens = allowedTokens.map { it.address }
@@ -168,12 +173,12 @@ class BatteryRechargeScreen : BaseListWalletScreen(), BaseFragment.BottomSheet {
     companion object {
 
         fun newInstance(
+            wallet: WalletEntity,
             token: AccountTokenEntity? = null,
             isGift: Boolean = false
         ): BatteryRechargeScreen {
-            val args = RechargeArgs(token, isGift)
-            val fragment = BatteryRechargeScreen()
-            fragment.setArgs(args)
+            val fragment = BatteryRechargeScreen(wallet)
+            fragment.setArgs(RechargeArgs(token, isGift))
             return fragment
         }
     }

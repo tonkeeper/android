@@ -5,27 +5,32 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class BackupScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
+class BackupScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
     private val attentionDialog: BackupAttentionDialog by lazy {
         BackupAttentionDialog(requireContext())
     }
 
-    override val viewModel: BackupViewModel by viewModel()
+    override val viewModel: BackupViewModel by viewModel {
+        parametersOf(screenContext.wallet)
+    }
 
     private val adapter = Adapter { item ->
         when (item) {
@@ -54,15 +59,13 @@ class BackupScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
     }
 
     private fun openRecoveryPhrase(backup: Boolean = false, backupId: Long = 0) {
-        viewModel.getRecoveryPhrase(requireContext()).catch {
-            navigation?.toast(Localization.authorization_required)
-        }.filterNotNull().onEach {
-            navigation?.add(PhraseScreen.newInstance(it, backup, backupId))
-        }.launchIn(lifecycleScope)
+        viewModel.getRecoveryPhrase(requireContext()) { words ->
+            navigation?.add(PhraseScreen.newInstance(screenContext.wallet, words, backup, backupId))
+        }
     }
 
     companion object {
-        fun newInstance() = BackupScreen()
+        fun newInstance(wallet: WalletEntity) = BackupScreen(wallet)
     }
 
 }

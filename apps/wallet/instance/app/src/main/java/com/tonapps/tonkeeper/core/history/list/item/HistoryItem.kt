@@ -13,6 +13,7 @@ import com.tonapps.extensions.writeEnum
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import io.tonapi.models.EncryptedComment
 import kotlinx.parcelize.IgnoredOnParcel
@@ -123,7 +124,8 @@ sealed class HistoryItem(
         val date: String,
         val host: String,
         val timestamp: Long,
-        val deepLink: String
+        val deepLink: String,
+        val wallet: WalletEntity,
     ): HistoryItem(TYPE_APP) {
 
         constructor(parcel: Parcel) : this(
@@ -133,7 +135,8 @@ sealed class HistoryItem(
             date = parcel.readString()!!,
             host = parcel.readString()!!,
             timestamp = parcel.readLong(),
-            deepLink = parcel.readString()!!
+            deepLink = parcel.readString()!!,
+            wallet = parcel.readParcelableCompat()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -144,6 +147,7 @@ sealed class HistoryItem(
             dest.writeString(host)
             dest.writeLong(timestamp)
             dest.writeString(deepLink)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<App> {
@@ -188,6 +192,7 @@ sealed class HistoryItem(
         val isScam: Boolean,
         val refund: CharSequence? = null,
         val refundInCurrency: CharSequence? = null,
+        val wallet: WalletEntity,
     ): HistoryItem(TYPE_ACTION) {
 
         @Parcelize
@@ -273,7 +278,8 @@ sealed class HistoryItem(
             unverifiedToken = parcel.readBooleanCompat(),
             isScam = parcel.readBooleanCompat(),
             refund = parcel.readCharSequenceCompat(),
-            refundInCurrency = parcel.readCharSequenceCompat()
+            refundInCurrency = parcel.readCharSequenceCompat(),
+            wallet = parcel.readParcelableCompat()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -308,6 +314,7 @@ sealed class HistoryItem(
             dest.writeBooleanCompat(isScam)
             dest.writeCharSequenceCompat(refund)
             dest.writeCharSequenceCompat(refundInCurrency)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

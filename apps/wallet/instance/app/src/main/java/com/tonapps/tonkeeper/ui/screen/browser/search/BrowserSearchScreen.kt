@@ -13,11 +13,13 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
@@ -29,13 +31,13 @@ import uikit.extensions.isMaxScrollReached
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 
-class BrowserSearchScreen: BaseWalletScreen(R.layout.fragment_browser_search) {
+class BrowserSearchScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_search, ScreenContext.Wallet(wallet)) {
 
     override val viewModel: BrowserSearchViewModel by viewModel()
 
     private val adapter = Adapter { title, url ->
         val host = Uri.parse(url).host ?: url
-        navigation?.add(DAppScreen.newInstance(title, host, url))
+        navigation?.add(DAppScreen.newInstance(screenContext.wallet, title, host, url))
         finish()
     }
 
@@ -102,6 +104,6 @@ class BrowserSearchScreen: BaseWalletScreen(R.layout.fragment_browser_search) {
     }
 
     companion object {
-        fun newInstance() = BrowserSearchScreen()
+        fun newInstance(wallet: WalletEntity) = BrowserSearchScreen(wallet)
     }
 }

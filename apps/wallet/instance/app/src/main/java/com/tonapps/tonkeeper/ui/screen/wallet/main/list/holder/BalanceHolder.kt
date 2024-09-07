@@ -68,16 +68,17 @@ class BalanceHolder(
         }
         walletLoaderView.setColor(context.iconSecondaryColor)
         walletLoaderView.setTrackColor(context.iconSecondaryColor.withAlpha(.32f))
-        backupIconContainerView.setOnClickListener {
-            Navigation.from(context)?.add(BackupScreen.newInstance())
-        }
         batteryView.expandTouchArea(left = 0, top = 10.dp, right = 24.dp, bottom = 10.dp)
-        batteryView.setOnClickListener {
-            Navigation.from(context)?.add(BatteryScreen.newInstance())
-        }
     }
 
     override fun onBind(item: Item.Balance) {
+        batteryView.setOnClickListener {
+            Navigation.from(context)?.add(BatteryScreen.newInstance(item.wallet))
+        }
+        backupIconContainerView.setOnClickListener {
+            Navigation.from(context)?.add(BackupScreen.newInstance(item.wallet))
+        }
+
         if (item.hiddenBalance) {
             balanceView.text = HIDDEN_BALANCE
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)

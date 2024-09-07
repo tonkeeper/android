@@ -1,14 +1,20 @@
 package com.tonapps.wallet.data.account.entities
 
+import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.ton.extensions.publicKey
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.extensions.readEnum
+import com.tonapps.extensions.readParcelableCompat
+import com.tonapps.extensions.writeEnum
 import com.tonapps.wallet.data.account.Wallet
 import kotlinx.parcelize.Parcelize
 import org.ton.api.pk.PrivateKeyEd25519
@@ -23,10 +29,16 @@ data class WalletEntity(
     val version: WalletVersion,
     val label: Wallet.Label,
     val ledger: Ledger? = null,
-) {
+): Parcelable {
 
     companion object {
-        const val WORKCHAIN = 0
+
+        @JvmField
+        val CREATOR = object : Parcelable.Creator<WalletEntity> {
+            override fun createFromParcel(parcel: Parcel) = WalletEntity(parcel)
+
+            override fun newArray(size: Int): Array<WalletEntity?> = arrayOfNulls(size)
+        }
     }
 
     @Parcelize
@@ -66,6 +78,15 @@ data class WalletEntity(
     val isExternal: Boolean
         get() = signer || isLedger
 
+    constructor(parcel: Parcel) : this(
+        id = parcel.readString()!!,
+        publicKey = parcel.readString()!!.publicKey(),
+        type = parcel.readEnum(Wallet.Type::class.java)!!,
+        version = parcel.readEnum(WalletVersion::class.java)!!,
+        label = parcel.readParcelableCompat()!!,
+        ledger = parcel.readParcelableCompat()!!
+    )
+
     fun isMyAddress(address: String): Boolean {
         return address.toRawAddress().equals(accountId, ignoreCase = true)
     }
@@ -99,5 +120,18 @@ data class WalletEntity(
             seqno = seqno,
             unsignedBody = body,
         )
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(id)
+        parcel.writeString(publicKey.hex())
+        parcel.writeEnum(type)
+        parcel.writeEnum(version)
+        parcel.writeParcelable(label, flags)
+        parcel.writeParcelable(ledger, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
     }
 }

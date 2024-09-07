@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.send.contacts
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.core.history.recipient
@@ -15,24 +16,35 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SendContactsViewModel(
     app: Application,
+    private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val settingsRepository: SettingsRepository,
 ): BaseWalletVM(app) {
 
-    val uiItemsFlow = accountRepository.selectedWalletFlow.map { currentWallet ->
-        val myWallets = getMyWallets(currentWallet)
-        val latestContacts = getLatestContacts(currentWallet)
-        myWallets + Item.Space + latestContacts
-    }.flowOn(Dispatchers.IO)
+    private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
+    val uiItemsFlow = _uiItemsFlow.asStateFlow()
 
-    private suspend fun getMyWallets(currentWallet: WalletEntity): List<Item.MyWallet> {
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            val myWallets = getMyWallets(wallet)
+            val latestContacts = getLatestContacts(wallet)
+            _uiItemsFlow.value = myWallets + Item.Space + latestContacts
+        }
+    }
+
+    private suspend fun getMyWallets(
+        currentWallet: WalletEntity
+    ): List<Item.MyWallet> {
         val wallets = accountRepository.getWallets().filter {
             it.type != Wallet.Type.Watch && it.testnet == currentWallet.testnet && it.address != currentWallet.address
         }.map {

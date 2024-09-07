@@ -4,6 +4,7 @@ import android.net.Uri
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import org.ton.api.pub.PublicKeyEd25519
@@ -19,6 +20,7 @@ sealed class RootEvent {
     ): RootEvent()
 
     data class BuyOrSell(
+        val wallet: WalletEntity,
         val methodEntity: PurchaseMethodEntity? = null
     ): RootEvent()
 
@@ -42,23 +44,27 @@ sealed class RootEvent {
     ): RootEvent()
 
     data class Transfer(
+        val wallet: WalletEntity,
         val address: String,
         val amount: String?,
         val text: String?,
         val jettonAddress: String?
     ): RootEvent()
 
-    data object OpenSend: RootEvent()
+    data class OpenSend(
+        val wallet: WalletEntity,
+    ): RootEvent()
 
     data class Transaction(
         val event: HistoryItem.Event
     ): RootEvent()
 
     data class Battery(
+        val wallet: WalletEntity,
         val promocode: String?
     ): RootEvent()
 
-    data object OpenBackups: RootEvent()
+    data class OpenBackups(val wallet: WalletEntity): RootEvent()
 
     data object Staking: RootEvent()
 

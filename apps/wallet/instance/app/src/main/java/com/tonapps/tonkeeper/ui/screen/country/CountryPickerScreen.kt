@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.country.list.Adapter
 import com.tonapps.tonkeeperx.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -16,7 +17,7 @@ import uikit.extensions.topScrolled
 import uikit.widget.HeaderView
 import uikit.widget.SearchInput
 
-class CountryPickerScreen: BaseWalletScreen(R.layout.fragment_country), BaseFragment.BottomSheet {
+class CountryPickerScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_country, ScreenContext.None), BaseFragment.BottomSheet {
 
     override val viewModel: CountryPickerViewModel by viewModel()
 

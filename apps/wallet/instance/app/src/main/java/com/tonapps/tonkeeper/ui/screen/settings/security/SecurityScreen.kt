@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
@@ -16,7 +17,7 @@ import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 import uikit.widget.item.ItemSwitchView
 
-class SecurityScreen: BaseWalletScreen(R.layout.fragment_security), BaseFragment.SwipeBack {
+class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_security, ScreenContext.None), BaseFragment.SwipeBack {
 
     override val viewModel: SecurityViewModel by viewModel()
 

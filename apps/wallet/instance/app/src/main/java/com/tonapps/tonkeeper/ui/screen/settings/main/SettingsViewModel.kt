@@ -24,6 +24,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.localization.Language
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -32,10 +33,13 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uikit.extensions.getString
 
 class SettingsViewModel(
     application: Application,
+    private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val api: API,
@@ -49,12 +53,11 @@ class SettingsViewModel(
 
     init {
         combine(
-            accountRepository.selectedWalletFlow,
             settingsRepository.currencyFlow,
             settingsRepository.languageFlow,
             settingsRepository.searchEngineFlow,
             backupRepository.stream,
-        ) { wallet, currency, language, searchEngine, backups ->
+        ) { currency, language, searchEngine, backups ->
             val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
             buildUiItems(wallet, currency, language, searchEngine, hasBackup)
         }.launchIn(viewModelScope)
@@ -64,11 +67,16 @@ class SettingsViewModel(
         settingsRepository.searchEngine = searchEngine ?: SearchEngine.GOOGLE
     }
 
-    fun signOut() = accountRepository.selectedWalletFlow.take(1).map { wallet ->
-        AnalyticsHelper.trackEvent("delete_wallet")
-        settingsRepository.setPushWallet(wallet.id, false)
-        tonConnectRepository.deleteApps(wallet, settingsRepository.firebaseToken)
-        accountRepository.delete(wallet.id)
+    fun signOut(callback: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            AnalyticsHelper.trackEvent("delete_wallet")
+            settingsRepository.setPushWallet(wallet.id, false)
+            tonConnectRepository.deleteApps(wallet, settingsRepository.firebaseToken)
+            accountRepository.delete(wallet.id)
+            withContext(Dispatchers.Main) {
+                callback()
+            }
+        }
     }
 
     private suspend fun hasW5(wallet: WalletEntity): Boolean {

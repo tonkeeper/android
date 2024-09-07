@@ -86,7 +86,8 @@ class StakeViewerViewModel(
                 verified = liquidToken.token.verification == TokenEntity.Verification.whitelist,
                 testnet = wallet.testnet,
                 hiddenBalance = settingsRepository.hiddenBalances,
-                blacklist = liquidToken.token.verification == TokenEntity.Verification.blacklist
+                blacklist = liquidToken.token.verification == TokenEntity.Verification.blacklist,
+                wallet = wallet,
             ))
             uiItems.add(Item.Space)
             uiItems.add(Item.Description(Localization.stake_tonstakers_description))

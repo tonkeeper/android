@@ -7,9 +7,11 @@ import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -22,12 +24,12 @@ import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class TokenPickerScreen: BaseWalletScreen(R.layout.fragment_token_picker), BaseFragment.BottomSheet {
+class TokenPickerScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_token_picker, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
     private val args: TokenPickerArgs by lazy { TokenPickerArgs(requireArguments()) }
 
     override val viewModel: TokenPickerViewModel by viewModel {
-        parametersOf(args.selectedToken, args.allowedTokens)
+        parametersOf(screenContext.wallet, args.selectedToken, args.allowedTokens)
     }
 
     private val adapter = Adapter { item ->
@@ -79,11 +81,12 @@ class TokenPickerScreen: BaseWalletScreen(R.layout.fragment_token_picker), BaseF
         const val TOKEN = "token"
 
         fun newInstance(
+            wallet: WalletEntity,
             requestKey: String,
             selectedToken: TokenEntity,
             allowedTokens: List<String> = emptyList()
         ): TokenPickerScreen {
-            val screen = TokenPickerScreen()
+            val screen = TokenPickerScreen(wallet)
             screen.setArgs(TokenPickerArgs(requestKey, selectedToken, allowedTokens))
             return screen
         }

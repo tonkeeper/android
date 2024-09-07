@@ -44,7 +44,7 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
 
     override fun onBind(item: Item.Nft) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(NftScreen.newInstance(item.entity))
+            Navigation.from(context)?.add(NftScreen.newInstance(item.wallet, item.entity))
         }
         loadImage(item.imageURI, item.hiddenBalance)
         if (item.hiddenBalance) {

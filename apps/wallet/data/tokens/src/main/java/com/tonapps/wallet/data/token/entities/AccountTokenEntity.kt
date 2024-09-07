@@ -58,8 +58,8 @@ data class AccountTokenEntity(
         get() = fiatRate?.rateDiff24h ?: ""
 
     val verified: Boolean
-        get() = balance.token.verification == TokenEntity.Verification.whitelist
+        get() = balance.token.verified
 
     val blacklist: Boolean
-        get() = balance.token.verification == TokenEntity.Verification.blacklist
+        get() = balance.token.blacklist
 }

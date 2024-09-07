@@ -10,6 +10,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
@@ -25,7 +26,7 @@ import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 
-class PickerScreen: BaseListWalletScreen(), BaseFragment.Modal {
+class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.Modal {
 
     override val scaleBackground: Boolean = true
 

@@ -18,6 +18,7 @@ import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingTextWatcher
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.dp
 import uikit.extensions.focusWithKeyboard
@@ -87,6 +88,10 @@ class CoinInputView @JvmOverloads constructor(
         tokenPickerView.doOnTokenChanged = ::onTokenChanged
         onTokenChanged(tokenPickerView.token)
         findViewById<View>(R.id.coin_input_container).setOnClickListener { focusWithKeyboard() }
+    }
+
+    fun setWallet(wallet: WalletEntity) {
+        tokenPickerView.setWallet(wallet)
     }
 
     private fun updateSuffix() {

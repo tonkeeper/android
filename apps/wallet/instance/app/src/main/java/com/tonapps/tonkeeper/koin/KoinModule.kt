@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthViewModel
 import com.tonapps.tonkeeper.sign.SignManager
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
 import com.tonapps.tonkeeper.ui.screen.add.imprt.ImportWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
@@ -35,6 +36,7 @@ import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
 import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableViewModel
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.NotificationsManageViewModel
+import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsViewModel
 import com.tonapps.tonkeeper.ui.screen.send.main.SendViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
@@ -71,56 +73,64 @@ val koinModel = module {
     single { HistoryHelper(get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::BillingManager)
 
-    factory { (viewModel: com.tonapps.tonkeeper.ui.base.BaseWalletVM) ->
+    factory { (viewModel: BaseWalletVM) ->
         // TODO
     }
 
     uiAdapter { WalletAdapter(get()) }
     uiAdapter { WalletPickerAdapter() }
 
+    viewModel { DevViewModel(androidApplication()) }
+    viewModel { ChangePasscodeViewModel(androidApplication(), get(), get()) }
+    viewModel { CountryPickerViewModel(androidApplication(), get(), get()) }
+    viewModel { CurrencyViewModel(androidApplication(), get()) }
+    viewModel { ThemeViewModel(androidApplication(), get()) }
+    viewModel { LanguageViewModel(androidApplication(), get()) }
+    viewModel { SecurityViewModel(androidApplication(), get(), get(), get()) }
+    viewModel { BrowserMainViewModel(androidApplication(), get()) }
+    viewModel { BrowserSearchViewModel(androidApplication(), get(), get(), get()) }
+
     viewModel { parameters -> NameViewModel(androidApplication(), mode = parameters.get(), get(), get()) }
     viewModel { parameters -> InitViewModel(androidApplication(), args = parameters.get<InitArgs>(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(androidApplication(), get(), get()) }
     viewModel { RootViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { PickerViewModel(androidApplication(), get(), get()) }
-    viewModel { WalletViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CurrencyViewModel(androidApplication(), get()) }
-    viewModel { SettingsViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
-    viewModel { parameters -> EditNameViewModel(androidApplication(), walletId = parameters.get(), get()) }
-    viewModel { LanguageViewModel(androidApplication(), get()) }
-    viewModel { SecurityViewModel(androidApplication(), get(), get(), get()) }
-    viewModel { ThemeViewModel(androidApplication(), get()) }
-    viewModel { EventsViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get()) }
+
+    viewModel { parameters -> WalletViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> SettingsViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> EditNameViewModel(androidApplication(), wallet = parameters.get(), get()) }
+    viewModel { parameters -> EventsViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> TCAuthViewModel(androidApplication(), request = parameters.get(), get(), get(), get()) }
-    viewModel { CollectiblesViewModel(androidApplication(), get(), get(), get(), get()) }
+    viewModel { parameters -> CollectiblesViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> ActionViewModel(androidApplication(), args = parameters.get(), get(), get(), get(), get()) }
-    viewModel { BrowserExploreViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { BrowserConnectedViewModel(androidApplication(), get(), get(), get()) }
-    viewModel { BrowserMainViewModel(androidApplication(), get()) }
-    viewModel { BrowserSearchViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { parameters -> DAppViewModel(androidApplication(), url = parameters.get(), get(), get(), get()) }
-    viewModel { ChangePasscodeViewModel(androidApplication(), get(), get()) }
-    viewModel { NotificationsManageViewModel(androidApplication(), get(), get(), get()) }
-    viewModel { parameters -> TokenViewModel(androidApplication(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { BackupViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { BackupCheckViewModel(androidApplication(), get(), get()) }
-    viewModel { TokensManageViewModel(androidApplication(), get(), get(), get()) }
-    viewModel { parameters -> SendViewModel(androidApplication(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { parameters -> TokenPickerViewModel(androidApplication(), selectedToken = parameters.get(), allowedTokens = parameters.get(), get(), get(), get()) }
-    viewModel { CountryPickerViewModel(androidApplication(), get(), get()) }
+    viewModel { parameters -> BrowserExploreViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get()) }
+    viewModel { parameters -> BrowserConnectedViewModel(androidApplication(), wallet = parameters.get(), get(), get()) }
+    viewModel { parameters -> DAppViewModel(androidApplication(), wallet = parameters.get(), url = parameters.get(), get(), get()) }
+    viewModel { parameters -> NotificationsManageViewModel(androidApplication(), wallet = parameters.get(), get(), get()) }
+    viewModel { parameters -> TokenViewModel(androidApplication(), wallet = parameters.get(), tokenAddress = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> BackupViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> BackupCheckViewModel(androidApplication(), wallet = parameters.get(), get()) }
+    viewModel { parameters -> TokensManageViewModel(androidApplication(), wallet = parameters.get(), get(), get()) }
+    viewModel { parameters -> SendViewModel(androidApplication(), wallet = parameters.get(), nftAddress = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> TokenPickerViewModel(androidApplication(), wallet = parameters.get(), selectedToken = parameters.get(), allowedTokens = parameters.get(), get(), get()) }
+    viewModel { parameters -> BatterySettingsViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get()) }
+    viewModel { parameters -> BatteryRefillViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> BatteryRechargeViewModel(androidApplication(), wallet = parameters.get(), args = parameters.get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { parameters -> PurchaseWebViewModel(androidApplication(), wallet = parameters.get(), get(), get()) }
+    viewModel { parameters -> SendContactsViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get()) }
+    viewModel { parameters -> PurchaseViewModel(androidApplication(), wallet = parameters.get(), get(), get()) }
+    viewModel { parameters -> NftViewModel(androidApplication(), wallet = parameters.get(), nft = parameters.get(), get(), get()) }
+
+
+
+
     viewModel { parameters -> StakingViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LedgerConnectionViewModel(androidApplication(), get(), get(), get(), get(), get()) }
     viewModel { W5StoriesViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { PurchaseViewModel(androidApplication(), get(), get(), get()) }
-    viewModel { parameters -> NftViewModel(androidApplication(), nft = parameters.get(), get(), get(), get()) }
     viewModel { parameters -> StakeViewerViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> UnStakeViewModel(androidApplication(), address = parameters.get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { SendContactsViewModel(androidApplication(), get(), get(), get()) }
     viewModel { NotificationsEnableViewModel(get(), get()) }
     viewModel { ImportWalletViewModel(androidApplication(), get()) }
     viewModel { BatteryViewModel(androidApplication()) }
-    viewModel { BatterySettingsViewModel(androidApplication(), get(), get(), get(), get()) }
-    viewModel { BatteryRefillViewModel(androidApplication(), get(), get(), get(), get(), get(), get()) }
-    viewModel { parameters -> BatteryRechargeViewModel(androidApplication(), args = parameters.get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { DevViewModel(androidApplication()) }
+    viewModel { BaseWalletVM.EmptyViewViewModel(androidApplication()) }
 }

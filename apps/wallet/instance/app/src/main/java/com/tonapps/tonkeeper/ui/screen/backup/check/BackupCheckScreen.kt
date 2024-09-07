@@ -5,23 +5,28 @@ import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.HeaderView
 import uikit.widget.TextHeaderView
 import uikit.widget.WordInput
 
-class BackupCheckScreen: BaseWalletScreen(R.layout.fragment_backup_check), BaseFragment.SwipeBack {
-
-    override val viewModel: BackupCheckViewModel by viewModel()
+class BackupCheckScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_backup_check, ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
     private val args: BackupCheckArgs by lazy { BackupCheckArgs(requireArguments()) }
+
+    override val viewModel: BackupCheckViewModel by viewModel {
+        parametersOf(screenContext.wallet)
+    }
 
     private val indexes: IntArray by lazy {
         val words = args.words
@@ -74,9 +79,7 @@ class BackupCheckScreen: BaseWalletScreen(R.layout.fragment_backup_check), BaseF
 
     private fun saveBackup() {
         if (button.isEnabled) {
-            viewModel.saveBackup(args.backupId).onEach {
-                finish()
-            }.launchIn(lifecycleScope)
+            viewModel.saveBackup(args.backupId) { finish() }
         }
     }
 
@@ -103,10 +106,11 @@ class BackupCheckScreen: BaseWalletScreen(R.layout.fragment_backup_check), BaseF
     companion object {
 
         fun newInstance(
+            wallet: WalletEntity,
             words: Array<String>,
             backupId: Long
         ): BackupCheckScreen {
-            val fragment = BackupCheckScreen()
+            val fragment = BackupCheckScreen(wallet)
             fragment.setArgs(BackupCheckArgs(words, backupId))
             return fragment
         }

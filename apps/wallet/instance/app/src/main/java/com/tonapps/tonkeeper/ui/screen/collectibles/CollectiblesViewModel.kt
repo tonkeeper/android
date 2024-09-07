@@ -29,18 +29,17 @@ import kotlinx.coroutines.flow.take
 
 class CollectiblesViewModel(
     app: Application,
-    private val accountRepository: AccountRepository,
+    private val wallet: WalletEntity,
     private val collectiblesRepository: CollectiblesRepository,
     private val networkMonitor: NetworkMonitor,
     private val settingsRepository: SettingsRepository
 ): BaseWalletVM(app) {
 
     val uiListStateFlow = combine(
-        accountRepository.selectedWalletFlow,
         networkMonitor.isOnlineFlow,
         settingsRepository.hiddenBalancesFlow,
         settingsRepository.tokenPrefsChangedFlow,
-    ) { wallet, isOnline, hiddenBalances, _ ->
+    ) { isOnline, hiddenBalances, _ ->
         stateFlow(
             wallet = wallet,
             hiddenBalances = hiddenBalances,
@@ -76,7 +75,7 @@ class CollectiblesViewModel(
             if (nftPref.isHidden) {
                 continue
             }
-            uiItems.add(Item.Nft(nft.with(nftPref), hiddenBalances))
+            uiItems.add(Item.Nft(wallet, nft.with(nftPref), hiddenBalances))
         }
 
         if (uiItems.isEmpty() && !result.cache) {
@@ -87,7 +86,5 @@ class CollectiblesViewModel(
             UiListState.Items(result.cache, uiItems.toList())
         }
     }.flowOn(Dispatchers.IO)
-
-    fun openQRCode() = accountRepository.selectedWalletFlow.take(1)
 
 }

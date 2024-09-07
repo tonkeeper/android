@@ -6,6 +6,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Adapter
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -18,7 +19,7 @@ import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class StakeViewerScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
+class StakeViewerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.SwipeBack {
 
     private val args: StakeViewerArgs by lazy { StakeViewerArgs(requireArguments()) }
     override val viewModel: StakeViewerViewModel by viewModel { parametersOf(args.address) }

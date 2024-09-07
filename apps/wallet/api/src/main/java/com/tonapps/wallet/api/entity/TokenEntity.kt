@@ -62,6 +62,12 @@ data class TokenEntity(
     val isUsdt: Boolean
         get() = address == USDT.address
 
+    val verified: Boolean
+        get() = verification == Verification.whitelist
+
+    val blacklist: Boolean
+        get() = verification == TokenEntity.Verification.blacklist
+
     constructor(jetton: JettonPreview) : this(
         address = jetton.address.toRawAddress(),
         name = jetton.name,

@@ -46,7 +46,8 @@ class BottomTabsView @JvmOverloads constructor(
 
     private val menu: MenuBuilder by lazy { MenuBuilder(context) }
     private val menuInflater: MenuInflater by lazy { MenuInflater(context) }
-    private var selectedItemId = 0
+
+    var selectedItemId = 0
         set(value) {
             if (field != value) {
                 field = value
@@ -86,6 +87,14 @@ class BottomTabsView @JvmOverloads constructor(
             if (view.tag == id) {
                 view.visibility = View.VISIBLE
             }
+        }
+    }
+
+    fun toggleItem(id: Int, show: Boolean) {
+        if (show) {
+            showItem(id)
+        } else {
+            hideItem(id)
         }
     }
 

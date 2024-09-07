@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.take
 
 class PurchaseViewModel(
     app: Application,
-    private val accountRepository: AccountRepository,
+    private val wallet: WalletEntity,
     private val settingsRepository: SettingsRepository,
     private val purchaseRepository: PurchaseRepository,
 ): BaseWalletVM(app) {
@@ -31,15 +31,11 @@ class PurchaseViewModel(
     }
 
     val countryFlow = settingsRepository.countryFlow
-    val walletFlow = accountRepository.selectedWalletFlow
 
     private val _tabFlow = MutableStateFlow(Tab.BUY)
     val tabFlow = _tabFlow.asStateFlow()
 
-    private val dataFlow = combine(
-        accountRepository.selectedWalletFlow,
-        settingsRepository.countryFlow,
-    ) { wallet, country ->
+    private val dataFlow = settingsRepository.countryFlow.map { country ->
         purchaseRepository.get(wallet.testnet, country, settingsRepository.getLocale())
     }.filterNotNull().flowOn(Dispatchers.IO)
 
@@ -60,9 +56,7 @@ class PurchaseViewModel(
         items
     }
 
-    fun open(method: PurchaseMethodEntity) = walletFlow.take(1).map { wallet ->
-        settingsRepository.isPurchaseOpenConfirm(wallet.id, method.id)
-    }
+    fun isPurchaseOpenConfirm(method: PurchaseMethodEntity) = settingsRepository.isPurchaseOpenConfirm(wallet.id, method.id)
 
     fun disableConfirmDialog(
         wallet: WalletEntity,

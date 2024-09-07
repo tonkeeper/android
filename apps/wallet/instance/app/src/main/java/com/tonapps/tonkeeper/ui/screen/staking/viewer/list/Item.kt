@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import com.tonapps.icu.Coins
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.staking.StakingPool
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -43,6 +44,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Item(TYPE_LINKS)
 
     data class Token(
+        val wallet: WalletEntity,
         val iconUri: Uri,
         val address: String,
         val symbol: String,

@@ -21,7 +21,10 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     override fun onBind(item: Item.Actions) {
         sendView.isEnabled = item.send
         sendView.setOnClickListener {
-            navigation?.add(SendScreen.newInstance(tokenAddress = item.tokenAddress))
+            navigation?.add(SendScreen.newInstance(
+                wallet = item.wallet,
+                tokenAddress = item.tokenAddress
+            ))
         }
         receiveView.setOnClickListener {
             navigation?.add(QRScreen.newInstance(item.walletAddress, item.token, item.walletType))

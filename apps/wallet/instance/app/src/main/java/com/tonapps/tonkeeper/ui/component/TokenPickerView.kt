@@ -11,6 +11,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.extensions.dp
 import uikit.extensions.getCurrentFocus
 import uikit.extensions.hideKeyboard
@@ -52,12 +53,15 @@ class TokenPickerView @JvmOverloads constructor(
         inflate(context, R.layout.view_token_picker, this)
         iconView = findViewById(R.id.token_icon)
         titleView = findViewById(R.id.token_title)
-        setOnClickListener { openPicker() }
         applyToken(token)
     }
 
-    private fun openPicker() {
-        navigation?.add(TokenPickerScreen.newInstance(pickerRequestKey, token))
+    fun setWallet(wallet: WalletEntity) {
+        setOnClickListener { openPicker(wallet) }
+    }
+
+    private fun openPicker(wallet: WalletEntity) {
+        navigation?.add(TokenPickerScreen.newInstance(wallet, pickerRequestKey, token))
         context.hideKeyboard()
     }
 

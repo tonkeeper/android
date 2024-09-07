@@ -6,21 +6,27 @@ import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.TokenHolder
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 
-class TokensManageScreen: BaseListWalletScreen(), BaseFragment.BottomSheet {
+class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
-    override val viewModel: TokensManageViewModel by viewModel()
+    override val viewModel: TokensManageViewModel by viewModel {
+        parametersOf(screenContext.wallet)
+    }
+
     private val adapter: Adapter by lazy {
         Adapter(viewModel::onPinChange, viewModel::onHiddenChange, ::onDrag)
     }
@@ -75,6 +81,6 @@ class TokensManageScreen: BaseListWalletScreen(), BaseFragment.BottomSheet {
     }
 
     companion object {
-        fun newInstance() = TokensManageScreen()
+        fun newInstance(wallet: WalletEntity) = TokensManageScreen(wallet)
     }
 }

@@ -9,7 +9,7 @@ import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListCell
 import uikit.extensions.dp
 
-object HistoryItemDecoration: RecyclerView.ItemDecoration() {
+class HistoryItemDecoration: RecyclerView.ItemDecoration() {
 
     override fun getItemOffsets(
         outRect: Rect,

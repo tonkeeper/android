@@ -31,7 +31,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
 
     override fun onBind(item: Item.Token) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(TokenScreen.newInstance(item.address, item.name, item.symbol))
+            Navigation.from(context)?.add(TokenScreen.newInstance(item.wallet, item.address, item.name, item.symbol))
         }
 
         if (item.blacklist) {

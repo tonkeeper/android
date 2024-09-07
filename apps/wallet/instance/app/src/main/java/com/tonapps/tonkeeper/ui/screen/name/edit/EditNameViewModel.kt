@@ -16,24 +16,13 @@ import kotlinx.coroutines.flow.take
 
 class EditNameViewModel(
     app: Application,
-    private val walletId: String,
+    private val wallet: WalletEntity,
     private val accountRepository: AccountRepository
 ): BaseWalletVM(app) {
 
-    private val walletFlow: Flow<WalletEntity> = if (walletId.isBlank()) {
-        accountRepository.selectedWalletFlow.take(1)
-    } else {
-        flow {
-            val wallet = accountRepository.getWalletById(walletId) ?: return@flow
-            emit(wallet)
-        }
-    }.shareIn(viewModelScope, SharingStarted.Eagerly, 1)
-
-    val uiLabelFlow = walletFlow.map { it.label }
-
     fun save(name: String, emoji: CharSequence, color: Int) {
         accountRepository.editLabel(
-            walletId = walletId,
+            walletId = wallet.id,
             name = name,
             emoji = emoji,
             color = color

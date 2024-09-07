@@ -20,16 +20,14 @@ import kotlinx.coroutines.flow.map
 
 class BatterySettingsViewModel(
     app: Application,
+    wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val batteryRepository: BatteryRepository,
     private val api: API,
 ): BaseWalletVM(app) {
 
-    val uiItemsFlow = combine(
-        accountRepository.selectedWalletFlow,
-        batteryRepository.balanceUpdatedFlow
-    ) { wallet, _ ->
+    val uiItemsFlow = batteryRepository.balanceUpdatedFlow.map { _ ->
         val config = api.config
         val batteryBalance = getBatteryBalance(wallet)
         val hasBalance = batteryBalance.balance.isPositive

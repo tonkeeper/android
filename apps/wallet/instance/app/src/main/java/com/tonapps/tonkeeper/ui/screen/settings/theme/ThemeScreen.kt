@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.settings.theme.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
@@ -15,7 +16,7 @@ import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 
-class ThemeScreen: BaseWalletScreen(R.layout.fragment_theme), BaseFragment.SwipeBack {
+class ThemeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_theme, ScreenContext.None), BaseFragment.SwipeBack {
 
     override val viewModel: ThemeViewModel by viewModel()
 

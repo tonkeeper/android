@@ -5,6 +5,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragment
@@ -23,7 +24,7 @@ import kotlinx.coroutines.flow.onEach
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 
-class StakeOptionsFragment: BaseHolderWalletScreen.ChildListScreen<StakingScreen, StakingViewModel>() {
+class StakeOptionsFragment: BaseHolderWalletScreen.ChildListScreen<ScreenContext.None, StakingScreen, StakingViewModel>(ScreenContext.None) {
 
     private val adapter = Adapter { info ->
         openPool(info)

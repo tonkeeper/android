@@ -13,17 +13,19 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
-class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
+class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_main_events_list, wallet) {
 
-    override val viewModel: EventsViewModel by viewModel()
+    override val viewModel: EventsViewModel by viewModel { parametersOf(screenContext.wallet) }
 
     private val legacyAdapter = HistoryAdapter()
     private val paginationListener = object : ListPaginationListener() {
@@ -50,12 +52,12 @@ class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
         listView = view.findViewById(R.id.list)
         listView.adapter = legacyAdapter
         listView.addOnScrollListener(paginationListener)
-        listView.addItemDecoration(HistoryItemDecoration)
+        listView.addItemDecoration(HistoryItemDecoration())
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
             if (first) {
-                navigation?.add(PurchaseScreen.newInstance())
+                navigation?.add(PurchaseScreen.newInstance(screenContext.wallet))
             } else {
                 openQRCode()
             }
@@ -76,15 +78,7 @@ class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
     }
 
     private fun openQRCode() {
-        collectFlow(viewModel.openQRCode()) { walletEntity ->
-            navigation?.add(
-                QRScreen.newInstance(
-                    walletEntity.address,
-                    TokenEntity.TON,
-                    walletEntity.type
-                )
-            )
-        }
+        navigation?.add(QRScreen.newInstance(screenContext.wallet, TokenEntity.TON))
     }
 
     private fun setItems(items: List<HistoryItem>) {
@@ -127,6 +121,6 @@ class EventsScreen : MainScreen.Child(R.layout.fragment_main_events_list) {
     }
 
     companion object {
-        fun newInstance() = EventsScreen()
+        fun newInstance(wallet: WalletEntity) = EventsScreen(wallet)
     }
 }

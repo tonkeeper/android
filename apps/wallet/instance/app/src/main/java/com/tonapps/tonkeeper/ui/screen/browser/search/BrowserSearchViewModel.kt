@@ -34,7 +34,6 @@ import uikit.extensions.collectFlow
 class BrowserSearchViewModel(
     app: Application,
     private val settingsRepository: SettingsRepository,
-    private val tonConnectRepository: TonConnectRepository,
     private val browserRepository: BrowserRepository,
     private val api: API
 ): BaseWalletVM(app) {

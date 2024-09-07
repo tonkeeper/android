@@ -31,6 +31,7 @@ import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
@@ -167,26 +168,28 @@ class RootActivity: BaseWalletActivity() {
                 targetAddress = event.address,
                 tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
                 amountNano = event.amount?.toLongOrNull() ?: 0L,
-                text = event.text
+                text = event.text,
+                wallet = event.wallet
             )
-            is RootEvent.OpenSend -> openSend()
+            is RootEvent.OpenSend -> openSend(event.wallet)
             is RootEvent.Transaction -> this.navigation?.add(TransactionScreen.newInstance(event.event))
             is RootEvent.BuyOrSell -> {
                 if (event.methodEntity == null) {
-                    add(PurchaseScreen.newInstance())
+                    add(PurchaseScreen.newInstance(event.wallet))
                 } else {
-                    add(PurchaseWebScreen.newInstance(event.methodEntity))
+                    add(PurchaseWebScreen.newInstance(event.wallet, event.methodEntity))
                 }
             }
-            is RootEvent.OpenBackups -> add(BackupScreen.newInstance())
+            is RootEvent.OpenBackups -> add(BackupScreen.newInstance(event.wallet))
             is RootEvent.Staking -> add(StakingScreen.newInstance())
             is RootEvent.StakingPool -> add(StakeViewerScreen.newInstance(event.poolAddress, ""))
-            is RootEvent.Battery -> add(BatteryScreen.newInstance(event.promocode))
+            is RootEvent.Battery -> add(BatteryScreen.newInstance(event.wallet, event.promocode))
             else -> { }
         }
     }
 
     private fun openSend(
+        wallet: WalletEntity,
         targetAddress: String? = null,
         tokenAddress: String = TokenEntity.TON.address,
         amountNano: Long = 0,
@@ -197,12 +200,14 @@ class RootActivity: BaseWalletActivity() {
         if (fragment == null) {
             add(
                 SendScreen.newInstance(
-                targetAddress = targetAddress,
-                tokenAddress = tokenAddress,
-                amountNano = amountNano,
-                text = text,
-                nftAddress = nftAddress,
-            ))
+                    wallet = wallet,
+                    targetAddress = targetAddress,
+                    tokenAddress = tokenAddress,
+                    amountNano = amountNano,
+                    text = text,
+                    nftAddress = nftAddress,
+                )
+            )
         } else {
             fragment.initializeArgs(
                 targetAddress = targetAddress,

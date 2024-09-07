@@ -14,6 +14,7 @@ import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
@@ -23,6 +24,7 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
@@ -42,11 +44,13 @@ import uikit.widget.ColumnLayout
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
 
-class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomSheet {
-
-    override val viewModel: NftViewModel by viewModel{ parametersOf(nftEntity) }
+class NftScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_nft, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
     private val nftEntity: NftEntity by lazy { requireArguments().getParcelableCompat(ARG_ENTITY)!! }
+
+    override val viewModel: NftViewModel by viewModel{
+        parametersOf(screenContext.wallet, nftEntity)
+    }
 
     private val verificationIcon: Drawable by lazy {
         getDrawable(UIKitIcon.ic_verification_16, requireContext().accentBlueColor)
@@ -96,7 +100,10 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
 
         val transferButton = view.findViewById<Button>(R.id.transfer)
         transferButton.setOnClickListener {
-            navigation?.add(SendScreen.newInstance(nftAddress = nftEntity.address))
+            navigation?.add(SendScreen.newInstance(
+                wallet = screenContext.wallet,
+                nftAddress = nftEntity.address
+            ))
         }
 
         val domainLinkButton = view.findViewById<Button>(R.id.domain_link)
@@ -109,11 +116,11 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
                 url = url.toString()
             )
             domainLinkButton.setOnClickListener {
-                navigation?.add(DAppScreen.newInstance(dAppArgs))
+                navigation?.add(DAppScreen.newInstance(screenContext.wallet, dAppArgs))
                 finish()
             }
             domainRenewButton.setOnClickListener {
-                navigation?.add(DAppScreen.newInstance(dAppArgs))
+                navigation?.add(DAppScreen.newInstance(screenContext.wallet, dAppArgs))
                 finish()
             }
         } else {
@@ -156,13 +163,11 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
         setAddress(view, nftEntity.userFriendlyAddress)
         setTrust(nftEntity.trust)
 
-        collectFlow(viewModel.hasPrivateKeyFlow) { hasPrivateKey ->
-            if (!hasPrivateKey) {
-                buttonsContainer.visibility = View.GONE
-                domainLinkButton.visibility = View.GONE
-                domainRenewButton.visibility = View.GONE
-                transferButton.visibility = View.GONE
-            }
+        if (!screenContext.wallet.hasPrivateKey) {
+            buttonsContainer.visibility = View.GONE
+            domainLinkButton.visibility = View.GONE
+            domainRenewButton.visibility = View.GONE
+            transferButton.visibility = View.GONE
         }
     }
 
@@ -188,7 +193,7 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
     }
 
     private fun mustOpenButtonDApp(url: String) {
-        navigation?.add(DAppScreen.newInstance(url = url))
+        navigation?.add(DAppScreen.newInstance(screenContext.wallet, url = url))
         finish()
     }
 
@@ -258,15 +263,11 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
 
     private fun reportSpam(spam: Boolean) {
         setTrust(if (spam) Trust.blacklist else Trust.whitelist)
-        collectFlow(viewModel.reportSpam(spam)) {
-            finish()
-        }
+        viewModel.reportSpam(spam) { finish() }
     }
 
     private fun hideCollection() {
-        collectFlow(viewModel.hideCollection()) {
-            finish()
-        }
+        viewModel.hideCollection { finish() }
     }
 
     private fun openTonViewer() {
@@ -311,11 +312,9 @@ class NftScreen: BaseWalletScreen(R.layout.fragment_nft), BaseFragment.BottomShe
 
         private const val ARG_ENTITY = "entity"
 
-        fun newInstance(entity: NftEntity): NftScreen {
-            val fragment = NftScreen()
-            fragment.arguments = Bundle().apply {
-                putParcelable(ARG_ENTITY, entity)
-            }
+        fun newInstance(wallet: WalletEntity, entity: NftEntity): NftScreen {
+            val fragment = NftScreen(wallet)
+            fragment.putParcelableArg(ARG_ENTITY, entity)
             return fragment
         }
     }

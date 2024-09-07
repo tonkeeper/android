@@ -5,6 +5,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
@@ -29,7 +30,8 @@ sealed class Item(type: Int) : BaseListItem(type) {
 
     data class RechargeMethod(
         val position: ListCell.Position,
-        val token: AccountTokenEntity
+        val token: AccountTokenEntity,
+        val wallet: WalletEntity,
     ) : Item(TYPE_RECHARGE_METHOD) {
 
         val symbol: String
@@ -40,11 +42,13 @@ sealed class Item(type: Int) : BaseListItem(type) {
     }
 
     data class Gift(
+        val wallet: WalletEntity,
         val position: ListCell.Position,
     ) : Item(TYPE_GIFT)
 
     data class Refund(
         val refundUrl: String,
+        val wallet: WalletEntity,
     ) : Item(TYPE_REFUND)
 
     data class Promo(

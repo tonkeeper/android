@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
@@ -51,6 +52,7 @@ import uikit.extensions.context
 
 class WalletViewModel(
     app: Application,
+    private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
@@ -94,10 +96,7 @@ class WalletViewModel(
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
-    val hasBackupFlow = combine(
-        accountRepository.selectedWalletFlow,
-        backupRepository.stream
-    ) { wallet, backups ->
+    val hasBackupFlow = backupRepository.stream.map { backups ->
         if (!wallet.hasPrivateKey) {
             true
         } else {
@@ -128,12 +127,11 @@ class WalletViewModel(
         }
 
         combine(
-            accountRepository.selectedWalletFlow,
             settingsRepository.currencyFlow,
             backupRepository.stream,
             networkMonitor.isOnlineFlow,
             _streamFLow,
-        ) { wallet, currency, backups, isOnline, _ ->
+        ) { currency, backups, isOnline, _ ->
             if (isOnline) {
                 setStatus(Status.Updating)
             }
@@ -241,8 +239,7 @@ class WalletViewModel(
     fun nextWallet() {
         viewModelScope.launch {
             val wallets = accountRepository.getWallets()
-            val activeWallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
-            val index = wallets.indexOf(activeWallet)
+            val index = wallets.indexOf(wallet)
             val nextIndex = if (index == wallets.size - 1) 0 else index + 1
             accountRepository.setSelectedWallet(wallets[nextIndex].id)
         }
@@ -251,8 +248,7 @@ class WalletViewModel(
     fun prevWallet() {
         viewModelScope.launch {
             val wallets = accountRepository.getWallets()
-            val activeWallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch
-            val index = wallets.indexOf(activeWallet)
+            val index = wallets.indexOf(wallet)
             val prevIndex = if (index == 0) wallets.size - 1 else index - 1
             accountRepository.setSelectedWallet(wallets[prevIndex].id)
         }

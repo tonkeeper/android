@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.token.viewer
 
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.doOnLayout
@@ -11,6 +12,7 @@ import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.TokenAdapter
 import com.tonapps.tonkeeperx.R
@@ -18,6 +20,8 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListPaginationListener
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -31,11 +35,13 @@ import uikit.extensions.setRightDrawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class TokenScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
+class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
     private val args: TokenArgs by lazy { TokenArgs(requireArguments()) }
 
-    override val viewModel: TokenViewModel by viewModel { parametersOf(args.address) }
+    override val viewModel: TokenViewModel by viewModel {
+        parametersOf(screenContext.wallet, args.address)
+    }
 
     private val tokenAdapter = TokenAdapter()
     private val historyAdapter = HistoryAdapter()
@@ -51,7 +57,7 @@ class TokenScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
         setListPadding(0, padding, 0, padding)
         setTitle(args.symbol)
         setAdapter(ConcatAdapter(tokenAdapter, historyAdapter))
-        addItemDecoration(HistoryItemDecoration)
+        addItemDecoration(HistoryItemDecoration())
         addItemDecoration(object : RecyclerView.ItemDecoration() {
 
             override fun getItemOffsets(
@@ -83,7 +89,7 @@ class TokenScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
         collectFlow(viewModel.uiHistoryFlow, historyAdapter::submitList)
     }
 
-    private fun applyToken(token: TokenData) {
+    private fun applyToken(token: AccountTokenEntity) {
         setActionIcon(R.drawable.ic_ellipsis_16) { actionMenu(it, token) }
         if (!token.verified) {
             applyUnverifiedToken()
@@ -103,16 +109,31 @@ class TokenScreen: BaseListWalletScreen(), BaseFragment.SwipeBack {
         headerView.setOnClickListener { navigation?.add(TokenUnverifiedScreen.newInstance()) }
     }
 
-    private fun actionMenu(view: View, token: TokenData) {
+    private fun actionMenu(view: View, token: AccountTokenEntity) {
+        val detailsUrl = if (token.isTon) {
+            Uri.parse("https://tonviewer.com/${screenContext.wallet.address}")
+        } else {
+            Uri.parse("https://tonviewer.com/${screenContext.wallet.address}/jetton/${token.address}")
+        }
+
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(0, Localization.view_details, R.drawable.ic_globe_16)
-        actionSheet.doOnItemClick = { navigation?.openURL(token.detailsUrl.toString(), true) }
+        actionSheet.doOnItemClick = { navigation?.openURL(detailsUrl.toString(), true) }
         actionSheet.show(view)
     }
 
+    /*
+
+     */
+
     companion object {
-        fun newInstance(address: String, name: String, symbol: String): TokenScreen {
-            val fragment = TokenScreen()
+        fun newInstance(
+            wallet: WalletEntity,
+            address: String,
+            name: String,
+            symbol: String
+        ): TokenScreen {
+            val fragment = TokenScreen(wallet)
             fragment.setArgs(TokenArgs(address, name, symbol))
             return fragment
         }

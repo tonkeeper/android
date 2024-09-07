@@ -23,8 +23,6 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     private val stakeView = findViewById<View>(R.id.stake)
 
     init {
-        sendView.setOnClickListener { navigation?.add(SendScreen.newInstance()) }
-        buyOrSellView.setOnClickListener { navigation?.add(PurchaseScreen.newInstance()) }
         scanView.setOnClickListener { navigation?.openCamera() }
         stakeView.setOnClickListener { navigation?.add(StakingScreen.newInstance()) }
     }
@@ -35,6 +33,12 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         }
         swapView.setOnClickListener {
             navigation?.add(SwapScreen.newInstance(item.swapUri, item.address, TokenEntity.TON.address))
+        }
+        buyOrSellView.setOnClickListener {
+            navigation?.add(PurchaseScreen.newInstance(item.wallet))
+        }
+        sendView.setOnClickListener {
+            navigation?.add(SendScreen.newInstance(item.wallet))
         }
 
         swapView.isEnabled = item.walletType != Wallet.Type.Watch && !item.disableSwap

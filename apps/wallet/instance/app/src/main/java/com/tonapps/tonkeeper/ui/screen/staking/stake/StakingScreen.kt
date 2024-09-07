@@ -6,6 +6,7 @@ import androidx.fragment.app.commit
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.stake.amount.StakeAmountFragment
 import com.tonapps.tonkeeper.ui.screen.staking.stake.confirm.StakeConfirmFragment
 import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragment
@@ -21,7 +22,7 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.hideKeyboard
 import uikit.widget.HeaderView
 
-class StakingScreen: BaseHolderWalletScreen(), BaseFragment.BottomSheet {
+class StakingScreen: BaseHolderWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.BottomSheet {
 
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
 

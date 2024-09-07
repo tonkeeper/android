@@ -118,13 +118,14 @@ sealed class State {
                         token = asset.token,
                         hiddenBalance = hiddenBalance,
                         testnet = wallet.testnet,
-                        currencyCode = currencyCode
+                        currencyCode = currencyCode,
+                        wallet = wallet,
                     )
                     uiItems.add(item)
                 }
             }
             uiItems.add(Item.Space(true))
-            uiItems.add(Item.Manage(true))
+            uiItems.add(Item.Manage(wallet))
             return uiItems.toList()
         }
 
@@ -135,9 +136,7 @@ sealed class State {
         ): Item.Balance {
             return Item.Balance(
                 balance = totalBalanceFormat,
-                address = wallet.address,
-                walletType = wallet.type,
-                walletVersion = wallet.version,
+                wallet = wallet,
                 status = status,
                 hiddenBalance = hiddenBalance,
                 hasBackup = hasBackup,
@@ -153,9 +152,8 @@ sealed class State {
             config: ConfigEntity
         ): Item.Actions {
             return Item.Actions(
-                address = wallet.address,
+                wallet = wallet,
                 token = TokenEntity.TON,
-                walletType = wallet.type,
                 swapUri = config.swapUri,
                 disableSwap = config.flags.disableSwap
             )

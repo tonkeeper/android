@@ -23,6 +23,7 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -123,9 +124,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
     data class Balance(
         val balance: CharSequence,
-        val address: String,
-        val walletType: Wallet.Type,
-        val walletVersion: WalletVersion,
+        val wallet: WalletEntity,
         val status: Status,
         val hiddenBalance: Boolean,
         val hasBackup: Boolean,
@@ -136,11 +135,18 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val batteryEmptyState: BatteryView.EmptyState,
     ): Item(TYPE_BALANCE) {
 
+        val address: String
+            get() = wallet.address
+
+        val walletType: Wallet.Type
+            get() = wallet.type
+
+        val walletVersion: WalletVersion
+            get() = wallet.version
+
         constructor(parcel: Parcel) : this(
-            parcel.readString()!!,
-            parcel.readString()!!,
-            parcel.readEnum(Wallet.Type::class.java)!!,
-            parcel.readEnum(WalletVersion::class.java)!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readParcelableCompat()!!,
             parcel.readEnum(Status::class.java)!!,
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
@@ -152,10 +158,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeString(balance.toString())
-            dest.writeString(address)
-            dest.writeEnum(walletType)
-            dest.writeEnum(walletVersion)
+            dest.writeCharSequenceCompat(balance)
+            dest.writeParcelable(wallet, flags)
             dest.writeEnum(status)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(hasBackup)
@@ -174,25 +178,28 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
     }
 
     data class Actions(
-        val address: String,
+        val wallet: WalletEntity,
         val token: TokenEntity,
-        val walletType: Wallet.Type,
         val swapUri: Uri,
         val disableSwap: Boolean
     ): Item(TYPE_ACTIONS) {
 
+        val address: String
+            get() = wallet.address
+
+        val walletType: Wallet.Type
+            get() = wallet.type
+
         constructor(parcel: Parcel) : this(
-            parcel.readString()!!,
             parcel.readParcelableCompat()!!,
-            parcel.readEnum(Wallet.Type::class.java)!!,
+            parcel.readParcelableCompat()!!,
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeString(address)
+            dest.writeParcelable(wallet, flags)
             dest.writeParcelable(token, flags)
-            dest.writeEnum(walletType)
             dest.writeParcelable(swapUri, flags)
             dest.writeBooleanCompat(disableSwap)
         }
@@ -268,7 +275,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val verified: Boolean,
         val testnet: Boolean,
         val hiddenBalance: Boolean,
-        val blacklist: Boolean
+        val blacklist: Boolean,
+        val wallet: WalletEntity,
     ): Item(TYPE_TOKEN) {
 
         val isTON = symbol == TokenEntity.TON.symbol
@@ -280,7 +288,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             token: AccountTokenEntity,
             hiddenBalance: Boolean,
             testnet: Boolean,
-            currencyCode: String
+            currencyCode: String,
+            wallet: WalletEntity
         ) : this(
             position = position,
             iconUri = token.imageUri,
@@ -296,7 +305,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             verified = token.verified,
             testnet = testnet,
             hiddenBalance = hiddenBalance,
-            blacklist = token.blacklist
+            blacklist = token.blacklist,
+            wallet = wallet
         )
 
         constructor(parcel: Parcel) : this(
@@ -314,7 +324,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat()
+            parcel.readBooleanCompat(),
+            parcel.readParcelableCompat()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -333,6 +344,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(testnet)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(blacklist)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<Token> {
@@ -429,14 +441,16 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         }
     }
 
-    data class Manage(val value: Boolean): Item(TYPE_MANAGE) {
+    data class Manage(
+        val wallet: WalletEntity
+    ): Item(TYPE_MANAGE) {
 
         constructor(parcel: Parcel) : this(
-            parcel.readBooleanCompat()
+            parcel.readParcelableCompat<WalletEntity>()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeBooleanCompat(value)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<Manage> {

@@ -23,7 +23,6 @@ class BrowserMainViewModel(
         Locale("", it)
     }
 
-
     fun setBottomScrolled(value: Boolean) {
         _childBottomScrolled.tryEmit(value)
     }

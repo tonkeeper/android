@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.events.list.Item
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.resolveColor
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import uikit.extensions.drawable
 import uikit.navigation.Navigation
@@ -47,7 +48,7 @@ class ActionHolder(parent: ViewGroup): Holder<Item.Action>(parent, R.layout.view
         } else {
             bodyView.visibility = View.VISIBLE
             setValue(item.value, item.valueColorRef)
-            setNft(item.nft)
+            setNft(item.wallet, item.nft)
         }
     }
 
@@ -70,13 +71,13 @@ class ActionHolder(parent: ViewGroup): Holder<Item.Action>(parent, R.layout.view
         }
     }
 
-    private fun setNft(nft: NftEntity?) {
+    private fun setNft(wallet: WalletEntity, nft: NftEntity?) {
         if (nft == null) {
             nftView.visibility = View.GONE
         } else {
             nftView.visibility = View.VISIBLE
             nftView.setOnClickListener {
-                Navigation.from(context)?.add(NftScreen.newInstance(nft))
+                Navigation.from(context)?.add(NftScreen.newInstance(wallet, nft))
             }
             nftIconView.setImageURI(nft.thumbUri, null)
             nftNameView.text = nft.name

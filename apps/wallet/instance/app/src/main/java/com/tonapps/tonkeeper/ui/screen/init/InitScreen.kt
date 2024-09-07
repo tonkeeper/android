@@ -9,6 +9,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
@@ -29,7 +30,7 @@ import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class InitScreen: BaseWalletScreen(R.layout.fragment_init), BaseFragment.SwipeBack {
+class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, ScreenContext.None), BaseFragment.SwipeBack {
 
     private val args: InitArgs by lazy { InitArgs(requireArguments()) }
 

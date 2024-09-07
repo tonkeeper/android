@@ -6,10 +6,12 @@ import android.view.View
 import androidx.fragment.app.FragmentManager
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillScreen
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -17,7 +19,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.commitChildAsSlide
 import uikit.widget.HeaderView
 
-class BatteryScreen : BaseHolderWalletScreen(), BaseFragment.BottomSheet {
+class BatteryScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
     private val initialPromo: String? by lazy { requireArguments().getString(ARG_PROMO) }
 
@@ -27,8 +29,8 @@ class BatteryScreen : BaseHolderWalletScreen(), BaseFragment.BottomSheet {
         super.onViewCreated(view, savedInstanceState)
         collectFlow(viewModel.routeFlow.map { route ->
             when(route) {
-                BatteryRoute.Refill -> BatteryRefillScreen.newInstance(initialPromo)
-                BatteryRoute.Settings -> BatterySettingsScreen.newInstance()
+                BatteryRoute.Refill -> BatteryRefillScreen.newInstance(screenContext.wallet, initialPromo)
+                BatteryRoute.Settings -> BatterySettingsScreen.newInstance(screenContext.wallet)
             }
         }) { setFragment(it) }
     }
@@ -36,12 +38,12 @@ class BatteryScreen : BaseHolderWalletScreen(), BaseFragment.BottomSheet {
     companion object {
         private const val ARG_PROMO = "promo"
 
-        fun newInstance(promo: String? = null): BatteryScreen {
-            val fragment = BatteryScreen()
-            fragment.arguments = Bundle().apply {
-                putString(ARG_PROMO, promo)
-            }
-
+        fun newInstance(
+            wallet: WalletEntity,
+            promo: String? = null
+        ): BatteryScreen {
+            val fragment = BatteryScreen(wallet)
+            fragment.putStringArg(ARG_PROMO, promo)
             return fragment
         }
     }

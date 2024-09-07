@@ -18,6 +18,7 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -33,6 +34,7 @@ import uikit.extensions.collectFlow
 
 class TokenViewModel(
     app: Application,
+    private val wallet: WalletEntity,
     private val tokenAddress: String,
     private val tokenRepository: TokenRepository,
     private val settingsRepository: SettingsRepository,
@@ -42,7 +44,7 @@ class TokenViewModel(
     private val historyHelper: HistoryHelper,
 ): BaseWalletVM(app) {
 
-    private val _tokenFlow = MutableStateFlow<TokenData?>(null)
+    private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
     val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
@@ -55,13 +57,12 @@ class TokenViewModel(
     private val chartFlow = _chartFlow.asStateFlow().filterNotNull()
 
     init {
-        collectFlow(accountRepository.selectedWalletFlow) { wallet ->
-            val list = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: return@collectFlow
-            val token = list.firstOrNull { it.address == tokenAddress } ?: return@collectFlow
-            val data = TokenData(token, wallet)
-            _tokenFlow.value = TokenData(token, wallet)
-            buildItems(data, emptyList())
-            load(data)
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: return@launch
+            val token = list.firstOrNull { it.address == tokenAddress } ?: return@launch
+            _tokenFlow.value = token
+            buildItems(token, emptyList())
+            load(token)
         }
 
         combine(tokenFlow, chartFlow) { token, chart ->
@@ -69,12 +70,12 @@ class TokenViewModel(
         }.launchIn(viewModelScope)
     }
 
-    private suspend fun load(data: TokenData) = withContext(Dispatchers.IO) {
-        if (data.verified) {
-            loadHistory(data.address, data.wallet)
-            loadMonthChart(data.address)
+    private suspend fun load(token: AccountTokenEntity) = withContext(Dispatchers.IO) {
+        if (token.verified) {
+            loadHistory(token.address)
+            loadMonthChart(token.address)
         } else {
-            loadHistory(data.address, data.wallet)
+            loadHistory(token.address)
         }
     }
 
@@ -88,34 +89,29 @@ class TokenViewModel(
             val data = _tokenFlow.value ?: return@launch
             val oldValues = _uiHistoryFlow.value ?: emptyList()
             _uiHistoryFlow.value = historyHelper.withLoadingItem(oldValues)
-            loadHistory(data.address, data.wallet, lastLt)
+            loadHistory(data.address, lastLt)
         }
     }
 
-    private fun buildItems(token: TokenData, charts: List<ChartEntity>) {
+    private fun buildItems(token: AccountTokenEntity, charts: List<ChartEntity>) {
         val items = mutableListOf<Item>()
         items.add(
             Item.Balance(
-            balance = CurrencyFormatter.format(token.symbol, token.balance, token.token.decimals),
+            balance = CurrencyFormatter.format(token.symbol, token.balance.value, token.decimals),
             fiat = CurrencyFormatter.format(settingsRepository.currency.code, token.fiat),
-            iconUri = token.iconUri,
+            iconUri = token.imageUri,
             hiddenBalance = settingsRepository.hiddenBalances,
         ))
-        items.add(
-            Item.Actions(
+        items.add(Item.Actions(
             swapUri = api.config.swapUri,
-            swap = token.verified && !token.wallet.isWatchOnly,
-            send = !token.wallet.isWatchOnly,
-            walletAddress = token.walletAddress,
-            tokenAddress = token.address,
-            token = token.token.balance.token,
-            walletType = token.wallet.type,
+            token = token.balance.token,
+            wallet = wallet,
         ))
         if (token.verified) {
             items.add(
                 Item.Price(
-                fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.token.rateNow),
-                rateDiff24h = token.token.rateDiff24h
+                fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.rateNow),
+                rateDiff24h = token.rateDiff24h
             ))
             items.add(
                 Item.Chart(
@@ -129,7 +125,6 @@ class TokenViewModel(
 
     private suspend fun loadHistory(
         tokenAddress: String,
-        wallet: WalletEntity,
         beforeLt: Long? = null
     ) = withContext(Dispatchers.IO) {
         val accountEvents = eventsRepository.loadForToken(tokenAddress, wallet.accountId, wallet.testnet, beforeLt) ?: return@withContext

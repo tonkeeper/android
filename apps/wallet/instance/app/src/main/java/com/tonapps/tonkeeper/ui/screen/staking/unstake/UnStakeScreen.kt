@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.unstake
 import android.os.Bundle
 import android.view.View
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.amount.UnStakeAmountFragment
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.confirm.UnStakeConfirmFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -11,7 +12,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.hideKeyboard
 
-class UnStakeScreen: BaseHolderWalletScreen(), BaseFragment.BottomSheet {
+class UnStakeScreen: BaseHolderWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.BottomSheet {
 
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
 

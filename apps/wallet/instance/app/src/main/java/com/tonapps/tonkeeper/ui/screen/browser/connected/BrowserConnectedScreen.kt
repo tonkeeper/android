@@ -5,24 +5,29 @@ import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 
-class BrowserConnectedScreen: BaseWalletScreen(R.layout.fragment_browser_connected) {
+class BrowserConnectedScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_connected, ScreenContext.Wallet(wallet)) {
 
-    override val viewModel: BrowserConnectedViewModel by viewModel()
+    override val viewModel: BrowserConnectedViewModel by viewModel {
+        parametersOf(screenContext.wallet)
+    }
 
     private val mainViewModel: BrowserMainViewModel by lazy {
         requireParentFragment().getViewModel()
@@ -110,6 +115,6 @@ class BrowserConnectedScreen: BaseWalletScreen(R.layout.fragment_browser_connect
 
         private const val SPAN_COUNT = 4
 
-        fun newInstance() = BrowserConnectedScreen()
+        fun newInstance(wallet: WalletEntity) = BrowserConnectedScreen(wallet)
     }
 }

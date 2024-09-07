@@ -11,9 +11,14 @@ import uikit.base.SimpleFragment
 import uikit.extensions.doKeyboardAnimation
 import uikit.navigation.Navigation
 
-abstract class BaseHolderWalletScreen: BaseWalletScreen(R.layout.fragment_holder) {
+abstract class BaseHolderWalletScreen<C: ScreenContext>(
+    screenContext: C
+): BaseWalletScreen<C>(
+    layoutId = R.layout.fragment_holder,
+    screenContext = screenContext
+) {
 
-    interface Child<P: BaseHolderWalletScreen, VM: BaseWalletVM> {
+    interface Child<P: BaseHolderWalletScreen<*>, VM: BaseWalletVM> {
         val primaryFragment: P
         val primaryViewModel: VM
 
@@ -30,7 +35,9 @@ abstract class BaseHolderWalletScreen: BaseWalletScreen(R.layout.fragment_holder
         }
     }
 
-    abstract class ChildListScreen<P: BaseHolderWalletScreen, VM: BaseWalletVM>: BaseListWalletScreen(), Child<P, VM> {
+    abstract class ChildListScreen<C: ScreenContext, P: BaseHolderWalletScreen<C>, VM: BaseWalletVM>(
+        screenContext: C
+    ): BaseListWalletScreen<C>(screenContext), Child<P, VM> {
 
         override val viewModel: BaseWalletVM = EmptyBaseWalletVM()
 
@@ -61,7 +68,7 @@ abstract class BaseHolderWalletScreen: BaseWalletScreen(R.layout.fragment_holder
         private class EmptyBaseWalletVM: BaseWalletVM(App.instance)
     }
 
-    abstract class ChildFragment<P: BaseHolderWalletScreen, VM: BaseWalletVM>(
+    abstract class ChildFragment<P: BaseHolderWalletScreen<*>, VM: BaseWalletVM>(
         layoutId: Int
     ): SimpleFragment<P>(layoutId), Child<P, VM> {
 

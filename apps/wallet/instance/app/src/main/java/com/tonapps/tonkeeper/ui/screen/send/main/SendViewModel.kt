@@ -63,6 +63,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
@@ -76,6 +77,7 @@ import java.math.RoundingMode
 @OptIn(FlowPreview::class)
 class SendViewModel(
     app: Application,
+    private val wallet: WalletEntity,
     private val nftAddress: String,
     private val accountRepository: AccountRepository,
     private val api: API,
@@ -110,26 +112,21 @@ class SendViewModel(
     private var lastTransferEntity: TransferEntity? = null
     private var sendTransferType: SendTransferType = SendTransferType.Default
 
-    val walletTypeFlow = accountRepository.selectedWalletFlow.map { it.type }
-
     private val userInputAddressFlow = userInputFlow
         .map { it.address }
         .distinctUntilChanged()
         .debounce { if (it.isEmpty()) 0 else 600 }
 
-    private val destinationFlow = combine(
-        accountRepository.selectedWalletFlow,
-        userInputAddressFlow,
-    ) { wallet, address ->
+    private val destinationFlow = userInputAddressFlow.map { address ->
         if (address.isEmpty()) {
-            return@combine SendDestination.Empty
+            SendDestination.Empty
+        } else {
+            getDestinationAccount(address, wallet.testnet)
         }
-        getDestinationAccount(address, wallet.testnet)
     }.flowOn(Dispatchers.IO).state(viewModelScope)
 
-    private val tokensFlow = accountRepository.selectedWalletFlow.map { wallet ->
-        tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: emptyList()
-    }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private val _tokensFlow = MutableStateFlow<List<AccountTokenEntity>?>(null)
+    private val tokensFlow = _tokensFlow.asStateFlow().filterNotNull()
 
     private val selectedTokenFlow = combine(
         tokensFlow,
@@ -159,10 +156,9 @@ class SendViewModel(
 
     val uiEncryptedCommentAvailableFlow = combine(
         uiRequiredMemoFlow,
-        walletTypeFlow,
         uiExistingTargetFlow,
-    ) { requiredMemo, walletType, existingTarget ->
-        existingTarget && !requiredMemo && (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup)
+    ) { requiredMemo, existingTarget ->
+        existingTarget && !requiredMemo && (wallet.type == Wallet.Type.Default || wallet.type == Wallet.Type.Testnet || wallet.type == Wallet.Type.Lockup)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val uiInputEncryptedComment = combine(
@@ -289,12 +285,11 @@ class SendViewModel(
     }
 
     val uiTransactionFlow = combine(
-        accountRepository.selectedWalletFlow,
         destinationFlow.mapNotNull { it as? SendDestination.Account },
         selectedTokenFlow,
         uiTransferAmountFlow,
         userInputFlow,
-    ) { wallet, destination, token, amount, userInput ->
+    ) { destination, token, amount, userInput ->
         SendTransaction(
             fromWallet = wallet,
             destination = destination,
@@ -307,11 +302,10 @@ class SendViewModel(
     }
 
     private val transferFlow = combine(
-        accountRepository.selectedWalletFlow.distinctUntilChanged(),
         uiTransactionFlow.distinctUntilChanged(),
         userInputFlow.map { Pair(it.comment, it.encryptedComment) }.distinctUntilChanged(),
         selectedTokenFlow,
-    ) { wallet, transaction, (comment, encryptedComment), token ->
+    ) { transaction, (comment, encryptedComment), token ->
         val sendMetadata = getSendParams(wallet)
         val builder = TransferEntity.Builder(wallet)
         builder.setToken(transaction.token)
@@ -340,6 +334,10 @@ class SendViewModel(
     }.flowOn(Dispatchers.IO).shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     init {
+        viewModelScope.launch(Dispatchers.IO) {
+            _tokensFlow.value = tokenRepository.get(currency, wallet.accountId, wallet.testnet)
+        }
+
         if (isNft) {
             loadNft()
         }
@@ -421,18 +419,11 @@ class SendViewModel(
     }
 
     private fun loadNft() {
-        accountRepository.selectedWalletFlow.take(1)
-            .map(::getNft)
-            .flowOn(Dispatchers.IO)
-            .filterNotNull()
-            .onEach(::userInputNft)
-            .launchIn(viewModelScope)
-    }
-
-    private suspend fun getNft(wallet: WalletEntity): NftEntity? {
-        val nft = collectiblesRepository.getNft(wallet.accountId, wallet.testnet, nftAddress) ?: return null
-        val pref = settingsRepository.getTokenPrefs(wallet.id, nftAddress)
-        return nft.with(pref)
+        viewModelScope.launch(Dispatchers.IO) {
+            val nft = collectiblesRepository.getNft(wallet.accountId, wallet.testnet, nftAddress) ?: return@launch
+            val pref = settingsRepository.getTokenPrefs(wallet.id, nftAddress)
+            userInputNft(nft.with(pref))
+        }
     }
 
     private fun shouldAttemptWithRelayer(transfer: TransferEntity): Boolean {
@@ -612,23 +603,16 @@ class SendViewModel(
     }
 
     private fun userInputTokenByAddress(tokenAddress: String) {
-        combine(
-            accountRepository.selectedWalletFlow.take(1),
-            findTokenFlow(tokenAddress).map { it?.balance?.token }
-        ) { wallet, token ->
+        tokensFlow.take(1).filter {
+            it.isNotEmpty()
+        }.filterList {
+            it.address.equalsAddress(tokenAddress)
+        }.map { it.firstOrNull()?.balance?.token }.map { token ->
             token ?: tokenRepository.getToken(tokenAddress, wallet.testnet) ?: TokenEntity.TON
-        }.take(1).flowOn(Dispatchers.IO).onEach { token ->
+        }.flowOn(Dispatchers.IO).onEach { token ->
             userInputToken(token)
         }.launchIn(viewModelScope)
     }
-
-    private fun findTokenFlow(
-        tokenAddress: String
-    ) = tokensFlow.take(1).filter {
-        it.isNotEmpty()
-    }.filterList {
-        it.address.equalsAddress(tokenAddress)
-    }.map { it.firstOrNull() }
 
     fun userInputAddress(address: String) {
         _userInputFlow.update {
@@ -682,18 +666,12 @@ class SendViewModel(
         )
     }
 
-    fun signerData() = combine(
-        accountRepository.selectedWalletFlow.take(1),
-        transferFlow.take(1)
-    ) { wallet, transfer ->
+    fun signerData() = transferFlow.take(1).map { transfer ->
         lastTransferEntity = transfer
         Pair(wallet.publicKey, transfer.getUnsignedBody())
     }
 
-    fun ledgerData() = combine(
-        accountRepository.selectedWalletFlow.take(1),
-        transferFlow.take(1)
-    ) { wallet, transfer ->
+    fun ledgerData() = transferFlow.take(1).map { transfer ->
         lastTransferEntity = transfer
         Pair(wallet.id, transfer.getLedgerTransaction())
     }

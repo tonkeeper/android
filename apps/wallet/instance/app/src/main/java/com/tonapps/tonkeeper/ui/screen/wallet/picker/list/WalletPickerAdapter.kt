@@ -28,15 +28,11 @@ class WalletPickerAdapter: RecyclerView.Adapter<Holder<*>>() {
             val uiItems = mutableListOf<Item>()
             for ((index, wallet) in wallets.withIndex()) {
                 val item = Item.Wallet(
-                    accountId = wallet.accountId,
-                    walletId = wallet.id,
-                    walletLabel = wallet.label,
-                    walletType = wallet.type,
                     selected = wallet.id == activeWallet.id,
                     position = ListCell.getPosition(wallets.size, index),
                     balance = balances[index],
                     hiddenBalance = hiddenBalance,
-                    walletVersion = wallet.version,
+                    wallet = wallet,
                 )
                 uiItems.add(item)
             }

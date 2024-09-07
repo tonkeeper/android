@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker.list
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.account.entities.WalletEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
     companion object {
@@ -16,11 +17,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Item(TYPE_SKELETON)
 
     data class Wallet(
-        val accountId: String,
-        val walletId: String,
-        val walletLabel: com.tonapps.wallet.data.account.Wallet.Label,
-        val walletType: com.tonapps.wallet.data.account.Wallet.Type,
-        val walletVersion: WalletVersion,
+        val wallet: WalletEntity,
         val selected: Boolean,
         val position: ListCell.Position,
         val balance: CharSequence,
@@ -28,20 +25,23 @@ sealed class Item(type: Int): BaseListItem(type) {
         val editMode: Boolean = false
     ): Item(TYPE_WALLET) {
 
+        val accountId: String
+            get() = wallet.accountId
+
+        val walletId: String
+            get() = wallet.id
+
         val color: Int
-            get() = walletLabel.color
+            get() = wallet.label.color
 
         val emoji: CharSequence
-            get() = walletLabel.emoji
+            get() = wallet.label.emoji
 
         val name: String
-            get() = walletLabel.name
+            get() = wallet.label.name
 
         val testnet: Boolean
-            get() = walletType == com.tonapps.wallet.data.account.Wallet.Type.Testnet
-
-        val w5: Boolean
-            get() = walletVersion == WalletVersion.V5R1
+            get() = wallet.testnet
     }
 
     data object AddWallet: Item(TYPE_ADD_WALLET)

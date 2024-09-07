@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
@@ -16,12 +17,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 
 class BrowserConnectedViewModel(
     app: Application,
-    private val accountRepository: AccountRepository,
+    private val wallet: WalletEntity,
     private val tonConnectRepository: TonConnectRepository,
     private val settingsRepository: SettingsRepository,
 ): BaseWalletVM(app) {
@@ -30,12 +33,9 @@ class BrowserConnectedViewModel(
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
     init {
-        combine(
-            accountRepository.selectedWalletFlow,
-            tonConnectRepository.connectionsFlow
-        ) { wallet, apps ->
+        tonConnectRepository.connectionsFlow.map { apps ->
             apps.filter { it.accountId == wallet.accountId }.distinctBy { it.url }.map {
-                Item(it)
+                Item(wallet, it)
             }
         }.onEach {
             _uiItemsFlow.value = it
@@ -43,9 +43,8 @@ class BrowserConnectedViewModel(
     }
 
     fun deleteConnect(connect: DConnectEntity) {
-        accountRepository.selectedWalletFlow.take(1).onEach {
-            tonConnectRepository.disconnect(it, connect, settingsRepository.firebaseToken)
+        viewModelScope.launch(Dispatchers.IO) {
+            tonConnectRepository.disconnect(wallet, connect, settingsRepository.firebaseToken)
         }
-
     }
 }

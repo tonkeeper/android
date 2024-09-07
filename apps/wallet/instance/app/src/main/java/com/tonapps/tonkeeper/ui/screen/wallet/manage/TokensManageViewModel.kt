@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
@@ -22,19 +23,17 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 
 class TokensManageViewModel(
     app: Application,
-    private val accountRepository: AccountRepository,
+    private val wallet: WalletEntity,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
 ): BaseWalletVM(app) {
 
-    private val tokensFlow = combine(
-        accountRepository.selectedWalletFlow,
-        settingsRepository.tokenPrefsChangedFlow,
-    ) { wallet, _ ->
+    private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
         tokenRepository.getLocal(settingsRepository.currency, wallet.accountId, wallet.testnet).map { token ->
             AssetsExtendedEntity(
                 raw = AssetsEntity.Token(token),
@@ -103,21 +102,19 @@ class TokensManageViewModel(
 
         _uiItemsFlow.value = uiItems
 
-        collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
-            settingsRepository.setTokensSort(wallet.id, newPinnedUiItems.map {
-                it.address
-            })
-        }
+        settingsRepository.setTokensSort(wallet.id, newPinnedUiItems.map {
+            it.address
+        })
     }
 
     fun onPinChange(tokenAddress: String, pin: Boolean) {
-        collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
+        viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.setTokenPinned(wallet.id, tokenAddress, pin)
         }
     }
 
     fun onHiddenChange(tokenAddress: String, hidden: Boolean) {
-        collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
+        viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.setTokenHidden(wallet.id, tokenAddress, hidden)
         }
     }

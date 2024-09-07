@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.add.imprt.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.add.imprt.list.Item
 import com.tonapps.tonkeeper.ui.screen.add.signer.AddSignerScreen
@@ -19,7 +20,7 @@ import uikit.extensions.getDimensionPixelSize
 import uikit.widget.HeaderView
 import uikit.widget.SimpleRecyclerView
 
-class ImportWalletScreen: BaseWalletScreen(R.layout.fragment_import_wallet), BaseFragment.Modal {
+class ImportWalletScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_import_wallet, ScreenContext.None), BaseFragment.Modal {
 
     override val viewModel: ImportWalletViewModel by viewModel()
 

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.name.adapter.ColorAdapter
 import com.tonapps.tonkeeper.ui.screen.name.adapter.EmojiAdapter
@@ -33,7 +34,7 @@ import uikit.extensions.withAlpha
 import uikit.widget.InputView
 import uikit.widget.LoaderView
 
-abstract class NameFragment(mode: NameMode): BaseWalletScreen(R.layout.fragment_name) {
+abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None>(R.layout.fragment_name, ScreenContext.None) {
 
     companion object {
         private const val MODE_KEY = "mode"

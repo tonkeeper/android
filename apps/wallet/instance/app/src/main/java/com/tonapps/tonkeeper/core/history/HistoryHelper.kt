@@ -203,6 +203,7 @@ class HistoryHelper(
                 isOut = true,
                 failed = false,
                 isScam = false,
+                wallet = wallet
             )
         )
 
@@ -371,6 +372,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonPreview.verification != JettonVerificationType.whitelist,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.jettonTransfer != null) {
             val jettonTransfer = action.jettonTransfer!!
@@ -428,6 +430,7 @@ class HistoryHelper(
                 unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
                 senderAddress = jettonTransfer.sender?.address,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.tonTransfer != null) {
             val tonTransfer = action.tonTransfer!!
@@ -483,6 +486,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 senderAddress = tonTransfer.sender.address,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!
@@ -506,6 +510,7 @@ class HistoryHelper(
                 isOut = true,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.nftItemTransfer != null) {
             val nftItemTransfer = action.nftItemTransfer!!
@@ -561,6 +566,7 @@ class HistoryHelper(
                 senderAddress = sender?.address?.toUserFriendly(testnet = wallet.testnet),
                 addressName = sender?.name,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.contractDeploy != null) {
             return HistoryItem.Event(
@@ -578,6 +584,7 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.depositStake != null) {
             val depositStake = action.depositStake!!
@@ -601,6 +608,7 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.jettonMint != null) {
             val jettonMint = action.jettonMint!!
@@ -625,6 +633,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonMint.jetton.verification != JettonVerificationType.whitelist,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.withdrawStakeRequest != null) {
             val withdrawStakeRequest = action.withdrawStakeRequest!!
@@ -648,6 +657,7 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.domainRenew != null) {
             val domainRenew = action.domainRenew!!
@@ -666,6 +676,7 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.auctionBid != null) {
             val auctionBid = action.auctionBid!!
@@ -690,9 +701,10 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.type == Action.Type.unknown) {
-            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails, isScam)
+            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails, isScam, wallet)
         } else if (action.withdrawStake != null) {
             val withdrawStake = action.withdrawStake!!
 
@@ -715,6 +727,7 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.nftPurchase != null) {
             val nftPurchase = action.nftPurchase!!
@@ -746,6 +759,7 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.jettonBurn != null) {
             val jettonBurn = action.jettonBurn!!
@@ -769,6 +783,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonBurn.jetton.verification != JettonVerificationType.whitelist,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.unSubscribe != null) {
             val unsubscribe = action.unSubscribe!!
@@ -788,6 +803,7 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else if (action.subscribe != null) {
             val subscribe = action.subscribe!!
@@ -810,9 +826,10 @@ class HistoryHelper(
                 isOut = false,
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
+                wallet = wallet,
             )
         } else {
-            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails, isScam)
+            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails, isScam, wallet)
         }
     }
 
@@ -825,6 +842,7 @@ class HistoryHelper(
         simplePreview: ActionSimplePreview,
         dateDetails: String,
         isScam: Boolean,
+        wallet: WalletEntity,
     ) = HistoryItem.Event(
         index = index,
         txId = txId,
@@ -839,5 +857,6 @@ class HistoryHelper(
         isOut = false,
         failed = action.status == Action.Status.failed,
         isScam = isScam,
+        wallet = wallet,
     )
 }

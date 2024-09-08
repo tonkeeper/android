@@ -68,14 +68,14 @@ class SettingsViewModel(
         settingsRepository.searchEngine = searchEngine ?: SearchEngine.GOOGLE
     }
 
-    fun signOut(callback: () -> Unit) {
+    fun signOut() {
         viewModelScope.launch(Dispatchers.IO) {
             AnalyticsHelper.trackEvent("delete_wallet")
             settingsRepository.setPushWallet(wallet.id, false)
             tonConnectRepository.deleteApps(wallet, settingsRepository.firebaseToken)
             accountRepository.delete(wallet.id)
             withContext(Dispatchers.Main) {
-                callback()
+                finish()
             }
         }
     }

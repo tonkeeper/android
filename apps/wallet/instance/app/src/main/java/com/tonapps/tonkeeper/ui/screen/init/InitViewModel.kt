@@ -402,9 +402,12 @@ class InitViewModel(
 
     private suspend fun newWallet(context: Context): WalletEntity {
         val mnemonic = Mnemonic.generate(random = AndroidSecureRandom)
+        val walletId = AccountRepository.newWalletId()
+        saveMnemonic(context, listOf(walletId), mnemonic)
+
         val label = getLabel()
-        val wallet = accountRepository.addNewWallet(label, mnemonic)
-        saveMnemonic(context, listOf(wallet.id), mnemonic)
+        val wallet = accountRepository.addNewWallet(walletId, label, mnemonic)
+
         AnalyticsHelper.trackEvent("generate_wallet")
         AnalyticsHelper.trackEvent("create_wallet")
         return wallet
@@ -420,9 +423,11 @@ class InitViewModel(
         if (!TonMnemonic.isValid(mnemonic)) {
             throw IllegalStateException("Invalid mnemonic")
         }
+        val ids = versions.map { AccountRepository.newWalletId() }
+        saveMnemonic(context, ids, mnemonic)
+
         val label = getLabel()
-        val wallets = accountRepository.importWallet(label, mnemonic, versions, testnet)
-        saveMnemonic(context, wallets.map { it.id }, mnemonic)
+        val wallets = accountRepository.importWallet(ids, label, mnemonic, versions, testnet)
         AnalyticsHelper.trackEvent("import_wallet")
         wallets
     }
@@ -460,7 +465,7 @@ class InitViewModel(
         var passcode = savedState.passcode
         if (passcode == null) {
             passcode = withContext(Dispatchers.Main) {
-                PasscodeDialog.request(context)
+                passcodeManager.legacyGetPasscode(context)
             }
         }
         if (passcode.isNullOrBlank()) {

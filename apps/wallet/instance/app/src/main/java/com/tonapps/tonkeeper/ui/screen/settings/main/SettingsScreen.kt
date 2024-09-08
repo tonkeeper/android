@@ -150,7 +150,7 @@ class SettingsScreen(
     }
 
     private fun signOut() {
-        viewModel.signOut { finish() }
+        viewModel.signOut()
     }
 
     companion object {

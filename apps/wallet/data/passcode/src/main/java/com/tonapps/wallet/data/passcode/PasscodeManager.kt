@@ -113,6 +113,23 @@ class PasscodeManager(
         }
     }
 
+    suspend fun legacyGetPasscode(
+        context: Context
+    ): String? {
+        return legacyGetPasscodeByBiometry() ?: PasscodeDialog.request(context)
+    }
+
+    private suspend fun legacyGetPasscodeByBiometry(): String? {
+        try {
+            if (settingsRepository.biometric) {
+                return rnLegacy.exportPasscodeWithBiometry()
+            }
+            throw Exception("biometry is disabled")
+        } catch (e: Throwable) {
+            return null
+        }
+    }
+
     private suspend fun confirmationMigration(
         context: Context,
     ): Boolean = withContext(Dispatchers.Main) {

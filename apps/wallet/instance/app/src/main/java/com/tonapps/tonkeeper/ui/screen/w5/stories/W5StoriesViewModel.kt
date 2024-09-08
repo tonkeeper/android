@@ -79,6 +79,7 @@ class W5StoriesViewModel(
     fun addWallet(context: Context) = accountRepository.selectedWalletFlow.take(1)
         .map { wallet ->
             accountRepository.addWallet(
+                ids = listOf(AccountRepository.newWalletId()),
                 label = wallet.label,
                 publicKey = wallet.publicKey,
                 versions = listOf(WalletVersion.V5R1),

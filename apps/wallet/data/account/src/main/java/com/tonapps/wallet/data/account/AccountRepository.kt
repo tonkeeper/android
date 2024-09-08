@@ -47,8 +47,8 @@ class AccountRepository(
     private val rnLegacy: RNLegacy,
 ) {
 
-    private companion object {
-        private fun newWalletId(): String {
+    companion object {
+        fun newWalletId(): String {
             return UUID.randomUUID().toString()
         }
 
@@ -262,10 +262,11 @@ class AccountRepository(
         qr: Boolean,
     ): List<WalletEntity> {
         val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
-        return addWallet(label, publicKey, versions, type)
+        return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type)
     }
 
     suspend fun importWallet(
+        ids: List<String>,
         label: Wallet.Label,
         mnemonic: List<String>,
         versions: List<WalletVersion>,
@@ -273,19 +274,20 @@ class AccountRepository(
     ): List<WalletEntity> {
         val publicKey = vaultSource.addMnemonic(mnemonic)
         val type = if (testnet) Wallet.Type.Testnet else Wallet.Type.Default
-        return addWallet(label, publicKey, versions, type)
+        return addWallet(ids, label, publicKey, versions, type)
     }
 
     suspend fun addWallet(
+        ids: List<String>,
         label: Wallet.Label,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
         type: Wallet.Type,
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
-        for (version in versions) {
+        for ((index, version) in versions.withIndex()) {
             val entity = WalletEntity(
-                id = newWalletId(),
+                id = ids.getOrNull(index) ?: newWalletId(),
                 publicKey = publicKey,
                 type = type,
                 version = version,
@@ -307,15 +309,20 @@ class AccountRepository(
         publicKey: PublicKeyEd25519,
         version: WalletVersion,
     ): WalletEntity {
-        return addWallet(label, publicKey, Wallet.Type.Watch, version)
+        return addWallet(newWalletId(), label, publicKey, Wallet.Type.Watch, version)
     }
 
-    suspend fun addNewWallet(label: Wallet.Label, mnemonic: List<String>): WalletEntity {
+    suspend fun addNewWallet(
+        id: String,
+        label: Wallet.Label,
+        mnemonic: List<String>
+    ): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
-        return addWallet(label, publicKey, Wallet.Type.Default, WalletVersion.V5R1, true)
+        return addWallet(id, label, publicKey, Wallet.Type.Default, WalletVersion.V5R1, true)
     }
 
     private suspend fun addWallet(
+        id: String,
         label: Wallet.Label,
         publicKey: PublicKeyEd25519,
         type: Wallet.Type,
@@ -323,7 +330,7 @@ class AccountRepository(
         new: Boolean = false,
     ): WalletEntity {
         val entity = WalletEntity(
-            id = newWalletId(),
+            id = id,
             publicKey = publicKey,
             type = type,
             version = version,

@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
@@ -24,9 +25,7 @@ import uikit.widget.HeaderView
 
 class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_main_list, wallet) {
 
-    override val viewModel: CollectiblesViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: CollectiblesViewModel by walletViewModel()
 
     private val adapter = Adapter()
 

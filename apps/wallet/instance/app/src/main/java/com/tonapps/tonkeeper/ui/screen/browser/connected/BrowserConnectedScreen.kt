@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Adapter
@@ -25,9 +26,7 @@ import uikit.utils.RecyclerVerticalScrollListener
 
 class BrowserConnectedScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_connected, ScreenContext.Wallet(wallet)) {
 
-    override val viewModel: BrowserConnectedViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: BrowserConnectedViewModel by walletViewModel()
 
     private val mainViewModel: BrowserMainViewModel by lazy {
         requireParentFragment().getViewModel()

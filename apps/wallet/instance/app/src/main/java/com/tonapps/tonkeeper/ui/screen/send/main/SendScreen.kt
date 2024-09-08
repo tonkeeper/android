@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.fragment.camera.CameraFragment
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
@@ -72,9 +73,7 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
     private val signerQRRequestKey: String by lazy { "send_${UUID.randomUUID()}" }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
 
-    override val viewModel: SendViewModel by viewModel {
-        parametersOf(screenContext.wallet, args.nftAddress)
-    }
+    override val viewModel: SendViewModel by walletViewModel { parametersOf(args.nftAddress) }
 
     private val signerResultContract = SingerResultContract()
     private val signerLauncher = registerForActivityResult(signerResultContract) {

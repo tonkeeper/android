@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -39,9 +40,7 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
 
     private val args: TokenArgs by lazy { TokenArgs(requireArguments()) }
 
-    override val viewModel: TokenViewModel by viewModel {
-        parametersOf(screenContext.wallet, args.address)
-    }
+    override val viewModel: TokenViewModel by walletViewModel { parametersOf(args.address) }
 
     private val tokenAdapter = TokenAdapter()
     private val historyAdapter = HistoryAdapter()

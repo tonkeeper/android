@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
 import com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -41,9 +42,7 @@ class SettingsScreen(
     wallet: WalletEntity
 ): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
-    override val viewModel: SettingsViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: SettingsViewModel by walletViewModel()
 
     private val searchEngineMenu: ActionSheet by lazy {
         ActionSheet(requireContext())

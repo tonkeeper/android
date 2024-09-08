@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.extensions.countryEmoji
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
@@ -30,9 +31,7 @@ import kotlin.coroutines.resume
 
 class PurchaseScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_purchase, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
-    override val viewModel: PurchaseViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: PurchaseViewModel by walletViewModel()
 
     private val adapter: Adapter by lazy { Adapter(::open) }
     private val confirmDialog: PurchaseConfirmDialog by lazy {

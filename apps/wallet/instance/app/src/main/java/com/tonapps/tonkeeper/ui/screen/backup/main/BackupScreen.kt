@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Adapter
@@ -28,9 +29,7 @@ class BackupScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wal
         BackupAttentionDialog(requireContext())
     }
 
-    override val viewModel: BackupViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: BackupViewModel by walletViewModel()
 
     private val adapter = Adapter { item ->
         when (item) {

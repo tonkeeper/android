@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -60,8 +61,9 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
 
     private val args: DAppArgs by lazy { DAppArgs(requireArguments()) }
     private val rootViewModel: RootViewModel by activityViewModel()
-    override val viewModel: DAppViewModel by viewModel {
-        parametersOf(screenContext.wallet, args.url)
+
+    override val viewModel: DAppViewModel by walletViewModel {
+        parametersOf(args.url)
     }
 
     private val currentUrl: String

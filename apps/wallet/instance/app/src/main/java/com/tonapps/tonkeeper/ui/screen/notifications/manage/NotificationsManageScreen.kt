@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.notifications.manage
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Adapter
@@ -16,9 +17,7 @@ import uikit.widget.SimpleRecyclerView
 
 class NotificationsManageScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_notifications_manage, ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
-    override val viewModel: NotificationsManageViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: NotificationsManageViewModel by walletViewModel()
 
     private val adapter = Adapter { url, enabled ->
         viewModel.enabledPush(url, enabled)

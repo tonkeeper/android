@@ -9,6 +9,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -33,9 +34,7 @@ import uikit.widget.webview.WebViewFixed
 
 class PurchaseWebScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_purchase_web, ScreenContext.Wallet(wallet)) {
 
-    override val viewModel: PurchaseWebViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: PurchaseWebViewModel by walletViewModel()
 
     private val method: PurchaseMethodEntity by lazy {
         requireArguments().getParcelableCompat(METHOD_KEY)!!

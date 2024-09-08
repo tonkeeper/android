@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.unstake
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.amount.UnStakeAmountFragment
@@ -17,9 +18,7 @@ class UnStakeScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
 
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
 
-    override val viewModel: UnStakeViewModel by viewModel {
-        parametersOf(screenContext.wallet, poolAddress)
-    }
+    override val viewModel: UnStakeViewModel by walletViewModel { parametersOf(poolAddress) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

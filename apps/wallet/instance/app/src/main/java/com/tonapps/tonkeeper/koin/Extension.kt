@@ -4,8 +4,12 @@ import android.content.Context
 import androidx.annotation.MainThread
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.HistoryHelper
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -14,11 +18,16 @@ import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.Koin
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.Definition
 import org.koin.core.definition.KoinDefinition
 import org.koin.core.module.Module
+import org.koin.core.parameter.ParametersDefinition
+import org.koin.core.parameter.ParametersHolder
+import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.Qualifier
 
 inline fun <reified T: RecyclerView.Adapter<*>> Module.uiAdapter(
     noinline definition: Definition<T>
@@ -27,9 +36,24 @@ inline fun <reified T: RecyclerView.Adapter<*>> Module.uiAdapter(
 }
 
 @MainThread
-inline fun <reified T : ViewModel> Fragment.parentFragmentViewModel(): Lazy<T> {
-    return lazy { requireParentFragment().getViewModel() }
+inline fun <reified T : ViewModel> BaseWalletScreen<ScreenContext.Wallet>.walletViewModel(
+    qualifier: Qualifier? = null,
+    noinline ownerProducer: () -> ViewModelStoreOwner = { this },
+    noinline extrasProducer: (() -> CreationExtras)? = null,
+    noinline parameters: ParametersDefinition = { parametersOf() },
+): Lazy<T> {
+    return lazy(LazyThreadSafetyMode.NONE) {
+        getViewModel(
+            qualifier = qualifier,
+            ownerProducer = ownerProducer,
+            extrasProducer = extrasProducer,
+            parameters = {
+                parameters.invoke().insert(0, screenContext.wallet)
+            }
+        )
+    }
 }
+
 
 val Context.koin: Koin?
     get() = (applicationContext as? KoinComponent)?.getKoin()

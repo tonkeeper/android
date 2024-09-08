@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Adapter
@@ -27,9 +28,7 @@ import uikit.widget.HeaderView
 
 class BrowserExploreScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_explore, ScreenContext.Wallet(wallet)) {
 
-    override val viewModel: BrowserExploreViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: BrowserExploreViewModel by walletViewModel()
 
     private val mainViewModel: BrowserMainViewModel by lazy {
         requireParentFragment().getViewModel()

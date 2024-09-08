@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Adapter
@@ -23,9 +24,7 @@ import uikit.extensions.getDimensionPixelSize
 
 class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
-    override val viewModel: TokensManageViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: TokensManageViewModel by walletViewModel()
 
     private val adapter: Adapter by lazy {
         Adapter(viewModel::onPinChange, viewModel::onHiddenChange, ::onDrag)

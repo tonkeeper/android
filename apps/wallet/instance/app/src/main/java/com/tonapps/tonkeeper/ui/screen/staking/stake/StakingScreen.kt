@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.commit
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -27,9 +28,7 @@ class StakingScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
 
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
 
-    override val viewModel: StakingViewModel by viewModel {
-        parametersOf(screenContext.wallet, poolAddress)
-    }
+    override val viewModel: StakingViewModel by walletViewModel { parametersOf(poolAddress) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

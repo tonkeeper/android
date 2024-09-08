@@ -12,6 +12,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -48,9 +49,7 @@ class NftScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.
 
     private val nftEntity: NftEntity by lazy { requireArguments().getParcelableCompat(ARG_ENTITY)!! }
 
-    override val viewModel: NftViewModel by viewModel{
-        parametersOf(screenContext.wallet, nftEntity)
-    }
+    override val viewModel: NftViewModel by walletViewModel { parametersOf(nftEntity) }
 
     private val verificationIcon: Drawable by lazy {
         getDrawable(UIKitIcon.ic_verification_16, requireContext().accentBlueColor)

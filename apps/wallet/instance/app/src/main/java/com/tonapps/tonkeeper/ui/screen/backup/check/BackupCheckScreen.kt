@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
@@ -24,9 +25,7 @@ class BackupCheckScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wa
 
     private val args: BackupCheckArgs by lazy { BackupCheckArgs(requireArguments()) }
 
-    override val viewModel: BackupCheckViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: BackupCheckViewModel by walletViewModel()
 
     private val indexes: IntArray by lazy {
         val words = args.words

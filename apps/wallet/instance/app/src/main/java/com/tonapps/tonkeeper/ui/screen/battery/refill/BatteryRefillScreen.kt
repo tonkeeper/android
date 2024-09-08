@@ -2,9 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.os.Bundle
 import android.view.View
-import com.tonapps.tonkeeper.koin.parentFragmentViewModel
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
-import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryViewModel
@@ -21,8 +20,8 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
 
     private val initialPromo: String? by lazy { requireArguments().getString(ARG_PROMO) }
 
-    override val viewModel: BatteryRefillViewModel by viewModel {
-        parametersOf(screenContext.wallet, initialPromo)
+    override val viewModel: BatteryRefillViewModel by walletViewModel {
+        parametersOf(initialPromo)
     }
 
     private val adapter = Adapter(

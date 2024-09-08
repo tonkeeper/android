@@ -6,6 +6,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Adapter
@@ -28,8 +29,8 @@ class TokenPickerScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wa
 
     private val args: TokenPickerArgs by lazy { TokenPickerArgs(requireArguments()) }
 
-    override val viewModel: TokenPickerViewModel by viewModel {
-        parametersOf(screenContext.wallet, args.selectedToken, args.allowedTokens)
+    override val viewModel: TokenPickerViewModel by walletViewModel {
+        parametersOf(args.selectedToken, args.allowedTokens)
     }
 
     private val adapter = Adapter { item ->

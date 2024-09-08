@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.component.MainRecyclerView
 import com.tonapps.tonkeeper.ui.component.wallet.WalletHeaderView
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
@@ -20,9 +21,7 @@ import uikit.extensions.collectFlow
 
 class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wallet, wallet) {
 
-    override val viewModel: WalletViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: WalletViewModel by walletViewModel()
 
     private val adapter: WalletAdapter by inject()
 

@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
@@ -25,7 +26,7 @@ import uikit.widget.HeaderView
 
 class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_main_events_list, wallet) {
 
-    override val viewModel: EventsViewModel by viewModel { parametersOf(screenContext.wallet) }
+    override val viewModel: EventsViewModel by walletViewModel()
 
     private val legacyAdapter = HistoryAdapter()
     private val paginationListener = object : ListPaginationListener() {

@@ -13,6 +13,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
@@ -49,8 +50,8 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
 
     private val rootViewModel: RootViewModel by activityViewModel()
 
-    override val viewModel: BatteryRechargeViewModel by viewModel {
-        parametersOf(screenContext.wallet, args)
+    override val viewModel: BatteryRechargeViewModel by walletViewModel {
+        parametersOf(args)
     }
 
     private val adapter = Adapter(

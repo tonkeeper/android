@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.send.contacts
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.send.contacts.list.Adapter
@@ -22,9 +23,7 @@ class SendContactsScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenConte
 
     private val adapter = Adapter { selectContact(it) }
 
-    override val viewModel: SendContactsViewModel by viewModel {
-        parametersOf(screenContext.wallet)
-    }
+    override val viewModel: SendContactsViewModel by walletViewModel()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

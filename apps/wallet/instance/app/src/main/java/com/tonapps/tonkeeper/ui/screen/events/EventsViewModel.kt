@@ -62,6 +62,7 @@ class EventsViewModel(
             getCached()?.let {
                 _uiItemsFlow.value = it
             }
+            loadEvents(isOnline = true, updating = true)
         }
 
         eventsRepository.decryptedCommentFlow.onEach {
@@ -71,7 +72,6 @@ class EventsViewModel(
         networkMonitor.isOnlineFlow.onEach { isOnline ->
             loadEvents(isOnline = isOnline, updating = false)
         }
-
 
         /*collectFlow(pushManager.dAppPushFlow.filterNotNull()) {
             val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
@@ -191,6 +191,11 @@ class EventsViewModel(
                 loadLocal()
             }
         }
+    }
+
+    private suspend fun load() {
+        loadLocal()
+        loadRemote()
     }
 
     private suspend fun loadLocal() {

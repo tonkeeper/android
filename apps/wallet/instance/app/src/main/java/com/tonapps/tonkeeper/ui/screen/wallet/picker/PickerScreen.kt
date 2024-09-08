@@ -1,26 +1,28 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item.Companion.height
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
 import com.tonapps.uikit.color.buttonSecondaryForegroundColor
+import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.wallet.localization.Localization
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.HapticHelper
 import uikit.base.BaseFragment
-import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
@@ -32,19 +34,16 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
 
     override val viewModel: PickerViewModel by viewModel()
 
-    private val adapter: WalletPickerAdapter by inject()
+    private val adapter = Adapter { wallet ->
+        viewModel.setWallet(wallet)
+        finish()
+    }
 
     private lateinit var actionButton: AppCompatTextView
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        collectFlow(viewModel.walletChangedFlow) {
-            finish()
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         val horizontalOffset = requireContext().getDimensionPixelSize(uikit.R.dimen.cornerMedium)
 
         actionButton = createActionButton(view.context)
@@ -53,8 +52,6 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
             it.marginEnd = horizontalOffset
             it.marginStart = horizontalOffset
         })
-
-        setListPadding(horizontalOffset, 0, horizontalOffset, 0)
         setTitle(getString(Localization.wallets))
         setAdapter(adapter)
 
@@ -67,13 +64,15 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
-                val item = (viewHolder as? Holder<*>)?.item ?: return false
-                if (item is Item.Wallet && item.editMode) {
-                    adapter.moveItem(viewHolder.bindingAdapterPosition, target.bindingAdapterPosition)
-                    HapticHelper.impactLight(requireContext())
-                    return true
+                val fromPosition = viewHolder.bindingAdapterPosition
+                val toPosition = target.bindingAdapterPosition
+                val item = adapter.getItem(fromPosition) as? Item.Wallet ?: return false
+                if (!item.editMode) {
+                    return false
                 }
-                return false
+                adapter.moveItem(fromPosition, toPosition)
+                HapticHelper.impactLight(requireContext())
+                return true
             }
 
             override fun clearView(
@@ -81,8 +80,9 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
                 viewHolder: RecyclerView.ViewHolder
             ) {
                 super.clearView(recyclerView, viewHolder)
-                val item = (viewHolder as? Holder<*>)?.item ?: return
-                if (item is Item.Wallet && item.editMode) {
+                val position = viewHolder.bindingAdapterPosition
+                val item = adapter.getItem(position) as? Item.Wallet ?: return
+                if (item.editMode) {
                     viewModel.saveOrder(adapter.rebuild())
                 }
             }
@@ -92,14 +92,27 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
         })
 
         collectFlow(viewModel.editModeFlow, ::applyEditMove)
+        collectFlow(viewModel.uiItemsFlow, ::setNewList)
+    }
+
+    private fun setNewList(list: List<Item>) {
+        updateBottomSheetHeight(list.height + headerContainer.height + (16.dp * 2))
+        adapter.submitList(list)
+    }
+
+    private fun updateBottomSheetHeight(height: Int) {
+        val maxHeight = coordinatorView.measuredHeight - 72.dp
+        val newHeight = height.coerceAtMost(maxHeight)
+        if (bottomSheetView.measuredHeight != newHeight) {
+            bottomSheetView.updateLayoutParams<ViewGroup.LayoutParams> {
+                this.height = newHeight
+            }
+        }
     }
 
     private fun applyEditMove(edit: Boolean) {
-        if (edit) {
-            actionButton.setText(Localization.done)
-        } else {
-            actionButton.setText(Localization.edit)
-        }
+        actionButton.setText(if (edit) Localization.done else Localization.edit)
+
         adapter.submitList(adapter.currentList.map {
             if (it is Item.Wallet) {
                 it.copy(editMode = edit)

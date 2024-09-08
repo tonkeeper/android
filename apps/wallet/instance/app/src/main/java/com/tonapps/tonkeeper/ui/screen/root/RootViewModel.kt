@@ -5,17 +5,14 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
-import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
@@ -26,7 +23,6 @@ import com.tonapps.tonkeeper.sign.SignManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel.Companion.getWalletScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
@@ -36,7 +32,6 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.Theme
-import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.purchase.PurchaseRepository
@@ -49,9 +44,7 @@ import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import com.tonapps.wallet.data.tonconnect.entities.reply.DAppSuccessEntity
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -71,12 +64,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import uikit.extensions.collectFlow
-import uikit.extensions.context
 import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
@@ -90,7 +81,6 @@ class RootViewModel(
     private val historyHelper: HistoryHelper,
     private val screenCacheSource: ScreenCacheSource,
     private val walletAdapter: WalletAdapter,
-    private val walletPickerAdapter: WalletPickerAdapter,
     private val tokenRepository: TokenRepository,
     private val purchaseRepository: PurchaseRepository
 ): BaseWalletVM(app) {
@@ -142,18 +132,6 @@ class RootViewModel(
             Widget.updateAll()
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
-        combine(
-            selectedWalletFlow,
-            settingsRepository.hiddenBalancesFlow,
-            settingsRepository.currencyFlow,
-        ) { wallet, hiddenBalance, currency ->
-            val wallets = accountRepository.getWallets()
-                .map { WalletExtendedEntity( it, settingsRepository.getWalletPrefs(it.id)) }
-                .sortedBy { it.index }
-                .map { it.raw }
-            val balances = getBalances(wallets, currency)
-            walletPickerAdapter.submitList(WalletPickerAdapter.map(wallets, wallet, balances, hiddenBalance))
-        }.launchIn(viewModelScope)
 
         viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.firebaseToken = GooglePushService.requestToken()
@@ -442,25 +420,5 @@ class RootViewModel(
 
     private fun toast(resId: Int) {
         _eventFlow.tryEmit(RootEvent.Toast(resId))
-    }
-
-    private suspend fun getBalances(
-        wallets: List<WalletEntity>,
-        currency: WalletCurrency
-    ): List<CharSequence> = withContext(Dispatchers.IO) {
-        val list = mutableListOf<Deferred<CharSequence>>()
-        for (wallet in wallets) {
-            list.add(async { getBalance(wallet.accountId, wallet.testnet, currency) })
-        }
-        list.map { it.await() }
-    }
-
-    private suspend fun getBalance(
-        accountId: String,
-        testnet: Boolean,
-        currency: WalletCurrency
-    ): CharSequence {
-        val totalBalance = tokenRepository.getTotalBalances(currency, accountId, testnet) ?: return context.getString(Localization.unknown)
-        return CurrencyFormatter.formatFiat(if (testnet) WalletCurrency.TON.code else currency.code, totalBalance)
     }
 }

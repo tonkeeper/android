@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.base
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,11 +13,14 @@ import uikit.navigation.Navigation
 abstract class BaseWalletScreen<C: ScreenContext>(
     @LayoutRes layoutId: Int,
     screenContext: C,
-): BaseFragment(layoutId) {
+): BaseFragment(layoutId), BaseWalletVM.Holder {
 
     private companion object {
         private const val ARG_SCREEN_CONTEXT = "_screen_context"
     }
+
+    override val uiContext: Context
+        get() = requireContext()
 
     abstract val viewModel: BaseWalletVM
 
@@ -36,12 +40,12 @@ abstract class BaseWalletScreen<C: ScreenContext>(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        activity?.let { viewModel.attachActivity(it) }
+        viewModel.attachHolder(this)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        viewModel.detachActivity()
+        viewModel.detachHolder()
     }
 }

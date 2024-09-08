@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder
 
 import android.content.res.ColorStateList
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
@@ -13,11 +14,14 @@ import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 
 class WalletHolder(
-    parent: ViewGroup
+    parent: ViewGroup,
+    private val onClick: (WalletEntity) -> Unit
 ): Holder<Item.Wallet>(parent, R.layout.view_wallet_item) {
 
     private val colorView = findViewById<View>(R.id.wallet_color)
@@ -30,39 +34,47 @@ class WalletHolder(
     private val pencilView = findViewById<View>(R.id.pencil)
 
     override fun onBind(item: Item.Wallet) {
-        itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
-            if (!item.editMode) {
-                context.accountRepository?.safeSetSelectedWallet(item.walletId)
-            }
-        }
-
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)
         emojiView.setEmoji(item.emoji)
         nameView.text = item.name
         typesView.text = context.getWalletBadges(item.wallet.type, item.wallet.version)
 
-        if (item.hiddenBalance) {
-            balanceView.text = HIDDEN_BALANCE
-        } else {
-            balanceView.text = item.balance.withCustomSymbol(context)
-        }
+        updatePosition(item)
+        updateBalance(item)
+        updateSelected(item)
+        updateEditMode(item)
+    }
 
-        if (item.selected) {
-            checkView.setImageResource(UIKitIcon.ic_donemark_otline_28)
+    fun updateBalance(item: Item.Wallet) {
+        val text = if (item.hiddenBalance) {
+            HIDDEN_BALANCE
+        } else if (item.balance == null) {
+            getString(Localization.loading)
         } else {
-            checkView.setImageResource(0)
+            item.balance.withCustomSymbol(context)
         }
+        balanceView.text = text
+    }
 
+    fun updateSelected(item: Item.Wallet) {
+        checkView.setImageResource(if (item.selected) UIKitIcon.ic_donemark_otline_28 else 0)
+    }
+
+    fun updateEditMode(item: Item.Wallet) {
         if (item.editMode) {
+            pencilView.setOnClickListener { navigation?.add(EditNameScreen.newInstance(item.wallet)) }
+            itemView.setOnClickListener(null)
             editView.visibility = View.VISIBLE
             checkView.visibility = View.GONE
-            pencilView.setOnClickListener {
-                navigation?.add(EditNameScreen.newInstance(item.wallet))
-            }
         } else {
+            itemView.setOnClickListener { onClick(item.wallet) }
+            pencilView.setOnClickListener(null)
             editView.visibility = View.GONE
             checkView.visibility = View.VISIBLE
         }
+    }
+
+    fun updatePosition(item: Item.Wallet) {
+        itemView.background = item.position.drawable(context)
     }
 }

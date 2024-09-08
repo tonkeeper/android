@@ -1,29 +1,45 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker.list
 
-import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import uikit.extensions.dp
 
-sealed class Item(type: Int): BaseListItem(type) {
+sealed class Item(
+    type: Int,
+    val viewHeight: Int
+): BaseListItem(type) {
+
     companion object {
         const val TYPE_WALLET = 0
         const val TYPE_ADD_WALLET = 1
         const val TYPE_SKELETON = 2
+
+        val List<Item>.height: Int
+            get() = sumOf { it.viewHeight }
+
+        private fun getId(item: Item) = when (item) {
+            is Wallet -> item.wallet.id
+            is AddWallet -> "add_wallet"
+            is Skeleton -> "skeleton"
+        }
     }
+
+    val id: String
+        get() = getId(this)
 
     data class Skeleton(
         val position: ListCell.Position
-    ): Item(TYPE_SKELETON)
+    ): Item(TYPE_SKELETON, 78.dp)
 
     data class Wallet(
         val wallet: WalletEntity,
         val selected: Boolean,
         val position: ListCell.Position,
-        val balance: CharSequence,
+        val balance: CharSequence?,
         val hiddenBalance: Boolean,
-        val editMode: Boolean = false
-    ): Item(TYPE_WALLET) {
+        val editMode: Boolean = false,
+    ): Item(TYPE_WALLET, 78.dp) {
 
         val accountId: String
             get() = wallet.accountId
@@ -44,5 +60,5 @@ sealed class Item(type: Int): BaseListItem(type) {
             get() = wallet.testnet
     }
 
-    data object AddWallet: Item(TYPE_ADD_WALLET)
+    data object AddWallet: Item(TYPE_ADD_WALLET, 68.dp)
 }

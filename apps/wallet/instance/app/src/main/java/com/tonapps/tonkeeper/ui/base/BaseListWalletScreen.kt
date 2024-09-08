@@ -24,35 +24,33 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
     screenContext = screenContext
 ) {
 
-    private lateinit var headerContainer: FrameLayout
+    protected lateinit var headerContainer: FrameLayout
     protected lateinit var headerView: HeaderView
-    private lateinit var listView: SimpleRecyclerView
+    protected lateinit var listView: SimpleRecyclerView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerContainer = view.findViewById(R.id.header_container)
 
         headerView = view.findViewById(R.id.header)
+        listView = view.findViewById(R.id.list)
+
         if (this is SwipeBack) {
             headerView.setIcon(UIKitIcon.ic_chevron_left_16)
             headerView.doOnCloseClick = { finish() }
+            listView.applyNavBottomPadding(listView.paddingBottom)
         } else if (this is BottomSheet || this is Modal) {
             headerView.ignoreSystemOffset = true
             headerView.setAction(UIKitIcon.ic_close_16)
             headerView.doOnActionClick = { finish() }
+            listView.insideBottomSheet = true
         } else if (parentFragment != null) {
             headerView.ignoreSystemOffset = true
         } else {
             headerView.ignoreSystemOffset = false
         }
 
-        listView = view.findViewById(R.id.list)
-        listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(R.dimen.cornerMedium))
         collectFlow(listView.topScrolled, headerView::setDivider)
-    }
-
-    fun hideHeaderContainer() {
-        headerContainer.visibility = View.GONE
     }
 
     fun addViewHeader(view: View, params: FrameLayout.LayoutParams? = null) {
@@ -110,6 +108,10 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
 
     fun setHeaderBackground(@DrawableRes resId: Int) {
         headerView.setBackgroundResource(resId)
+    }
+
+    fun setLayoutManager(layoutManager: RecyclerView.LayoutManager) {
+        listView.layoutManager = layoutManager
     }
 
 }

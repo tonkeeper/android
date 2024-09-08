@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
+import uikit.base.BaseFragment
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
 import java.lang.ref.WeakReference
@@ -14,30 +15,28 @@ abstract class BaseWalletVM(
     app: Application
 ): AndroidViewModel(app) {
 
+    interface Holder {
+        val uiContext: Context?
+        fun finish()
+    }
+
     class EmptyViewViewModel(app: Application): BaseWalletVM(app)
 
-    private var activityRef: WeakReference<FragmentActivity>? = null
+    private var holderRef: WeakReference<Holder>? = null
 
-    val activity: FragmentActivity?
-        get() = activityRef?.get()
-
-    val navigation: Navigation?
-        get() = activity?.navigation
+    private val holder: Holder?
+        get() = holderRef?.get()
 
     val context: Context
-        get() = activity ?: getApplication()
+        get() = holder?.uiContext ?: getApplication()
 
-    val executor: Executor by lazy {
-        ContextCompat.getMainExecutor(context)
+    fun attachHolder(holder: Holder) {
+        holderRef = WeakReference(holder)
     }
 
-    fun attachActivity(activity: FragmentActivity) {
-        activityRef = WeakReference(activity)
-    }
-
-    fun detachActivity() {
-        activityRef?.clear()
-        activityRef = null
+    fun detachHolder() {
+        holderRef?.clear()
+        holderRef = null
     }
 
     fun getString(resId: Int) = context.getString(resId)
@@ -46,6 +45,10 @@ abstract class BaseWalletVM(
 
     override fun onCleared() {
         super.onCleared()
-        detachActivity()
+        detachHolder()
+    }
+
+    fun finish() {
+        holder?.finish()
     }
 }

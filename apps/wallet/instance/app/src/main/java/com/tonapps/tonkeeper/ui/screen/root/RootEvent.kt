@@ -11,7 +11,11 @@ import org.ton.api.pub.PublicKeyEd25519
 
 sealed class RootEvent {
     data class Toast(val resId: Int): RootEvent()
-    data class OpenTab(val link: String): RootEvent()
+
+    data class OpenTab(
+        val link: String
+    ): RootEvent()
+
     data class Swap(
         val uri: Uri,
         val address: String,

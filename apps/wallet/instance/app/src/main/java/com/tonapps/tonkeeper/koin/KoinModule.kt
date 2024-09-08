@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.billing.BillingManager
+import com.tonapps.tonkeeper.manager.AssetsManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -40,7 +41,6 @@ import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsViewModel
 import com.tonapps.tonkeeper.ui.screen.send.main.SendViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.WalletPickerAdapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
@@ -59,7 +59,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidApplication
-import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -71,6 +70,7 @@ val koinModel = module {
     single { NetworkMonitor(get(), get()) }
     single { SignManager(get(), get(), get(), get(), get(), get()) }
     single { HistoryHelper(get(), get(), get(), get(), get(), get(), get()) }
+    single { AssetsManager(get(), get(), get(), get()) }
     singleOf(::BillingManager)
 
     factory { (viewModel: BaseWalletVM) ->
@@ -78,7 +78,6 @@ val koinModel = module {
     }
 
     uiAdapter { WalletAdapter(get()) }
-    uiAdapter { WalletPickerAdapter() }
 
     viewModel { DevViewModel(androidApplication()) }
     viewModel { ChangePasscodeViewModel(androidApplication(), get(), get()) }
@@ -93,8 +92,8 @@ val koinModel = module {
     viewModel { parameters -> NameViewModel(androidApplication(), mode = parameters.get(), get(), get()) }
     viewModel { parameters -> InitViewModel(androidApplication(), args = parameters.get<InitArgs>(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(androidApplication(), get(), get()) }
-    viewModel { RootViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { PickerViewModel(androidApplication(), get(), get()) }
+    viewModel { RootViewModel(androidApplication(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { PickerViewModel(androidApplication(), get(), get(), get()) }
 
     viewModel { parameters -> WalletViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { parameters -> SettingsViewModel(androidApplication(), wallet = parameters.get(), get(), get(), get(), get(), get(), get()) }

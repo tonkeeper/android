@@ -22,6 +22,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -80,6 +81,12 @@ open class BaseFragment(
 
         val behavior: BottomSheetBehavior<FrameLayout>
             get() = view.behavior
+
+        val bottomSheetView: FrameLayout
+            get() = view.bottomSheetView
+
+        val coordinatorView: CoordinatorLayout
+            get() = view.coordinatorView
 
         val scaleBackground: Boolean
             get() = false

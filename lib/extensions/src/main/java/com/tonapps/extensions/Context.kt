@@ -17,6 +17,9 @@ import java.io.File
 import java.security.spec.AlgorithmParameterSpec
 import java.util.Locale
 
+val isUIThread: Boolean
+    get() = Thread.currentThread() == android.os.Looper.getMainLooper().thread
+
 val Context.locale: Locale
     get() {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

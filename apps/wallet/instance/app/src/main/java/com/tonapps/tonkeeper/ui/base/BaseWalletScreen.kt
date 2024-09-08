@@ -2,17 +2,20 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation
+import kotlin.reflect.KClass
 
 abstract class BaseWalletScreen<C: ScreenContext>(
     @LayoutRes layoutId: Int,
-    screenContext: C,
+    screenContext: C
 ): BaseFragment(layoutId), BaseWalletVM.Holder {
 
     private companion object {
@@ -32,7 +35,9 @@ abstract class BaseWalletScreen<C: ScreenContext>(
     }
 
     init {
-        putParcelableArg(ARG_SCREEN_CONTEXT, screenContext)
+        if (!(screenContext is ScreenContext.Wallet && screenContext.isEmpty)) {
+            putParcelableArg(ARG_SCREEN_CONTEXT, screenContext)
+        }
     }
 
     override fun onCreateView(

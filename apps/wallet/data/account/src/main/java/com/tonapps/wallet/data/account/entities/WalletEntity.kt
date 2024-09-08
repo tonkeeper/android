@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.publicKey
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -32,6 +33,15 @@ data class WalletEntity(
 ): Parcelable {
 
     companion object {
+
+        val EMPTY = WalletEntity(
+            id = "",
+            publicKey = EmptyPrivateKeyEd25519.publicKey(),
+            type = Wallet.Type.Default,
+            version = WalletVersion.V5BETA,
+            label = Wallet.Label("", "", 0),
+            ledger = null
+        )
 
         @JvmField
         val CREATOR = object : Parcelable.Creator<WalletEntity> {

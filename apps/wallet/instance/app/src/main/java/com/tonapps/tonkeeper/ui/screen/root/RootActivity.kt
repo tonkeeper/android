@@ -17,6 +17,7 @@ import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
+import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
@@ -61,6 +62,7 @@ class RootActivity: BaseWalletActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(viewModel.theme.resId)
+        supportFragmentManager.fragmentFactory = WalletFragmentFactory()
         super.onCreate(savedInstanceState)
         legacyRN.setActivity(this)
         windowInsetsController.isAppearanceLightStatusBars = viewModel.theme.light

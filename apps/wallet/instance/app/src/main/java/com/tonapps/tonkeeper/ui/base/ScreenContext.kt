@@ -10,5 +10,12 @@ sealed class ScreenContext: Parcelable {
     data object None : ScreenContext()
 
     @Parcelize
-    data class Wallet(val wallet: WalletEntity) : ScreenContext()
+    data object Ignore : ScreenContext()
+
+    @Parcelize
+    data class Wallet(val wallet: WalletEntity) : ScreenContext() {
+
+        val isEmpty: Boolean
+            get() = wallet.id.isBlank()
+    }
 }

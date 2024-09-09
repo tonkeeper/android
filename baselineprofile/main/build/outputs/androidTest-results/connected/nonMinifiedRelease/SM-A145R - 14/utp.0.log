@@ -14,15 +14,43 @@ INFO: Configuring Android Instrumentation driver: android_instrumentation_runtim
       key: "androidx.benchmark.enabledRules"
       value: "baselineprofile"
     }
+    args_map {
+      key: "androidx.benchmark.targetPackageName"
+      value: "com.ton_keeper"
+    }
+    args_map {
+      key: "suppressErrors"
+      value: "EMULATOR"
+    }
+    args_map {
+      key: "targetAppId"
+      value: "com.ton_keeper"
+    }
   }
 }
 am_instrument_timeout: 31536000
+
+INFO: Configuring AndroidTestApkInstallerPlugin: apks_to_install {
+  apk_paths: "/Users/polstianka/StudioProjects/TonkeeperX/apps/wallet/instance/main/build/outputs/apk/nonMinifiedRelease/main-nonMinifiedRelease.apk"
+  install_options {
+  }
+  uninstall_after_test: true
+}
+apks_to_install {
+  apk_paths: "/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/apk/nonMinifiedRelease/main-nonMinifiedRelease.apk"
+  install_options {
+  }
+  uninstall_after_test: true
+}
 
 INFO: No installables found in test fixture. Nothing to install.
 INFO: Installing [/Users/polstianka/StudioProjects/TonkeeperX/apps/wallet/instance/main/build/outputs/apk/nonMinifiedRelease/main-nonMinifiedRelease.apk] on device R83WA0LPT5Z.
 INFO: Installing [/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/apk/nonMinifiedRelease/main-nonMinifiedRelease.apk] on device R83WA0LPT5Z.
 INFO: Start logcat streaming.
 INFO: Running Android Instrumentation driver.
+INFO: Copying files from device to host: /sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output to /Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/connected_android_test_additional_output/nonMinifiedRelease/connected/SM-A145R - 14
+INFO: Copying /sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-09-08-10-44-31.txt to /Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/connected_android_test_additional_output/nonMinifiedRelease/connected/SM-A145R - 14/BaselineProfileGenerator_generate-baseline-prof-2024-09-08-10-44-31.txt
+INFO: Copying /sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt to /Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/connected_android_test_additional_output/nonMinifiedRelease/connected/SM-A145R - 14/BaselineProfileGenerator_generate-baseline-prof.txt
 INFO: Stop logcat streaming.
 INFO: Uninstalling com.ton_keeper for device R83WA0LPT5Z.
 INFO: Uninstalling com.tonapps.main.baselineprofile for device R83WA0LPT5Z.
@@ -31,7 +59,7 @@ INFO: Execute com.baselineprofile.StartupBenchmarks.startupCompilationBaselinePr
 org.junit.AssumptionViolatedException: org.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 at org.junit.Assume.assumeThat(Assume.java:106)
 at org.junit.Assume.assumeTrue(Assume.java:50)
-at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)
+at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:205)
 at androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)
 at org.junit.rules.RunRules.evaluate(RunRules.java:20)
 at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
@@ -66,7 +94,7 @@ at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:24
 org.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 at org.junit.Assume.assumeThat(Assume.java:106)
 at org.junit.Assume.assumeTrue(Assume.java:50)
-at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)
+at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:205)
 at androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)
 at org.junit.rules.RunRules.evaluate(RunRules.java:20)
 at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
@@ -101,7 +129,7 @@ INFO: Execute com.baselineprofile.StartupBenchmarks.startupCompilationNone: IGNO
 org.junit.AssumptionViolatedException: org.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 at org.junit.Assume.assumeThat(Assume.java:106)
 at org.junit.Assume.assumeTrue(Assume.java:50)
-at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)
+at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:205)
 at androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)
 at org.junit.rules.RunRules.evaluate(RunRules.java:20)
 at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
@@ -136,7 +164,7 @@ at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:24
 org.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 at org.junit.Assume.assumeThat(Assume.java:106)
 at org.junit.Assume.assumeTrue(Assume.java:50)
-at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)
+at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:205)
 at androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)
 at org.junit.rules.RunRules.evaluate(RunRules.java:20)
 at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)

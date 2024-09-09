@@ -1,6 +1,4 @@
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+@file:Suppress("UnstableApiUsage")
 
 plugins {
     id("com.android.application")
@@ -14,6 +12,8 @@ plugins {
     id("com.google.firebase.firebase-perf")
 }
 
+val isCI = project.hasProperty("android.injected.signing.store.file")
+
 android {
     namespace = Build.namespacePrefix("TonKeeper")
     compileSdk = Build.compileSdkVersion
@@ -24,17 +24,9 @@ android {
         targetSdk = 34
         versionCode = 600
 
-        // val currentDate = SimpleDateFormat("dd-MMM-yyyy", Locale.US).format(Date()).lowercase()
+        versionName = "X"
 
-        versionName = "X" // $versionCode ($currentDate)
-
-        ndk {
-            abiFilters.add("arm64-v8a")
-            abiFilters.add("armeabi-v7a")
-            abiFilters.add("armeabi")
-            abiFilters.add("x86")
-            abiFilters.add("x86_64")
-        }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -49,29 +41,58 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
-            /*postprocessing {
+            if (isCI) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            baselineProfile.automaticGenerationDuringBuild = true
+            /*
+            postprocessing {
                 isObfuscate = true
                 isOptimizeCode = true
                 isRemoveUnusedCode = true
                 isRemoveUnusedResources = true
             }*/
         }
+
         debug {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
         }
     }
 
+    experimentalProperties["android.experimental.art-profile-r8-rewriting"] = true
+    experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+    packaging {
+        resources {
+            excludes.add("/META-INF/{AL2.0,LGPL2.1}")
+        }
+    }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
 }
 
+baselineProfile {
+    saveInSrc = true
+    dexLayoutOptimization = true
+}
+
 dependencies {
     implementation(project(Dependence.Wallet.app))
+
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+
+    implementation(Dependence.AndroidX.profileinstaller)
+    baselineProfile(project(":baselineprofile:main"))
 }

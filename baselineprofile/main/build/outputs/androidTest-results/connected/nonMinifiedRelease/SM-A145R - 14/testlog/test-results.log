@@ -8,18 +8,18 @@ INSTRUMENTATION_STATUS: test=generate
 INSTRUMENTATION_STATUS_CODE: 1
 INSTRUMENTATION_STATUS: additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof.txt=/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt
 INSTRUMENTATION_STATUS_CODE: 2
-INSTRUMENTATION_STATUS: additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof-2024-07-16-10-56-54.txt=/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-07-16-10-56-54.txt
+INSTRUMENTATION_STATUS: additionalTestOutputFile_BaselineProfileGenerator_generate-baseline-prof-2024-09-08-10-44-31.txt=/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof-2024-09-08-10-44-31.txt
 INSTRUMENTATION_STATUS_CODE: 2
 INSTRUMENTATION_STATUS: android.studio.display.benchmark=BaselineProfileGenerator_generate
-Total run time Ns: 91644222852.
-Baseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-10-56-54.txt)
+Total run time Ns: 143602368547.
+Baseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-09-08-10-44-31.txt)
 
 To copy the profile use:
 adb -s R83WA0LPT5Z pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt" .
 
 INSTRUMENTATION_STATUS: android.studio.v2display.benchmark=BaselineProfileGenerator_generate
-Total run time Ns: 91644222852.
-Baseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-07-16-10-56-54.txt)
+Total run time Ns: 143602368547.
+Baseline profile [results](file://BaselineProfileGenerator_generate-baseline-prof-2024-09-08-10-44-31.txt)
 
 To copy the profile use:
 adb -s R83WA0LPT5Z pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-baseline-prof.txt" .
@@ -48,7 +48,7 @@ INSTRUMENTATION_STATUS: numtests=3
 INSTRUMENTATION_STATUS: stack=org.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 at org.junit.Assume.assumeThat(Assume.java:106)
 at org.junit.Assume.assumeTrue(Assume.java:50)
-at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)
+at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:205)
 at androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)
 at org.junit.rules.RunRules.evaluate(RunRules.java:20)
 at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
@@ -98,7 +98,7 @@ INSTRUMENTATION_STATUS: numtests=3
 INSTRUMENTATION_STATUS: stack=org.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 at org.junit.Assume.assumeThat(Assume.java:106)
 at org.junit.Assume.assumeTrue(Assume.java:50)
-at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:131)
+at androidx.benchmark.macro.junit4.MacrobenchmarkRule$applyInternal$1.evaluate(MacrobenchmarkRule.kt:205)
 at androidx.test.rule.GrantPermissionRule$RequestPermissionStatement.evaluate(GrantPermissionRule.java:136)
 at org.junit.rules.RunRules.evaluate(RunRules.java:20)
 at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
@@ -135,7 +135,7 @@ INSTRUMENTATION_STATUS: test=startupCompilationNone
 INSTRUMENTATION_STATUS_CODE: -4
 INSTRUMENTATION_RESULT: stream=
 
-Time: 92.088
+Time: 144.154
 
 OK (3 tests)
 

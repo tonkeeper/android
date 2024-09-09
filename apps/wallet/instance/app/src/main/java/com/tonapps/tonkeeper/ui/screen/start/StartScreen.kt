@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.start
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import com.tonapps.tonkeeper.dialog.ImportWalletDialog
 import com.tonapps.tonkeeper.ui.screen.add.imprt.ImportWalletScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen

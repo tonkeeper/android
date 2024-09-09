@@ -44,15 +44,6 @@ android {
             if (isCI) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            postprocessing {
-                isObfuscate = true
-                isOptimizeCode = true
-                isRemoveUnusedCode = true
-                isRemoveUnusedResources = true
-            }
-            /*
-            baselineProfile.automaticGenerationDuringBuild = true
-            */
         }
 
         debug {

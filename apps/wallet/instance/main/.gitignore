@@ -1,4 +1,5 @@
 /build
-/release
+/release/*.apk
+/release/*.aab
+/release/*.json
 /benchmarkRelease
-/src/release

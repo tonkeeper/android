@@ -14,6 +14,7 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.logError
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -386,8 +387,8 @@ class InitViewModel(
 
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {
+                context.logError(e)
                 setLoading(false)
-                Navigation.from(context)?.toast(e.message ?: "Error")
             }
         }
     }

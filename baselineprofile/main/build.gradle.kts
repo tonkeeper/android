@@ -47,6 +47,10 @@ android {
     targetProjectPath = ":apps:wallet:instance:main"
 
     experimentalProperties["android.experimental.self-instrumenting"] = true
+    experimentalProperties["android.experimental.testOptions.managedDevices.setupTimeoutMinutes"] = 20
+    experimentalProperties["android.experimental.androidTest.numManagedDeviceShards"] = 1
+    experimentalProperties["android.experimental.testOptions.managedDevices.maxConcurrentDevices"] = 1
+    experimentalProperties["android.experimental.testOptions.managedDevices.emulator.showKernelLogging"] = true
     if (isCI) {
         experimentalProperties["android.testoptions.manageddevices.emulator.gpu"] = "swiftshader_indirect"
     }

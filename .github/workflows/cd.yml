@@ -1,7 +1,9 @@
 name: Android APK build CD
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - dev
 
 jobs:
   android-build:
@@ -23,9 +25,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 20.0.2+9
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
 
       - name: Decode signing certificate into a file
         env:

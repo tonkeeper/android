@@ -44,8 +44,8 @@ android {
             if (isCI) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            baselineProfile.automaticGenerationDuringBuild = true
             /*
+            baselineProfile.automaticGenerationDuringBuild = true
             postprocessing {
                 isObfuscate = true
                 isOptimizeCode = true

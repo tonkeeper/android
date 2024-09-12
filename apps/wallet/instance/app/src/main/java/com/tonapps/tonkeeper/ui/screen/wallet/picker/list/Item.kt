@@ -39,6 +39,7 @@ sealed class Item(
         val balance: CharSequence?,
         val hiddenBalance: Boolean,
         val editMode: Boolean = false,
+        val focusAnimation: Boolean = false
     ): Item(TYPE_WALLET, 78.dp) {
 
         val accountId: String

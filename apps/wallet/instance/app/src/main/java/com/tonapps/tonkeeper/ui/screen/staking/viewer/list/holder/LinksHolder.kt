@@ -28,7 +28,7 @@ class LinksHolder(
             val linkView = context.inflate(R.layout.view_link, linksView) as AppCompatTextView
             linkView.text = host
             linkView.setLeftDrawable(linkDrawable)
-            linkView.setOnClickListener { Navigation.from(context)?.openURL(link, true) }
+            linkView.setOnClickListener { Navigation.from(context)?.openURL(link) }
             linksView.addView(linkView)
         }
     }

@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.toastLoading
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.screen.action.ActionScreen
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
@@ -32,6 +33,7 @@ class SignManager(
     private val api: API,
     private val historyHelper: HistoryHelper,
     private val batteryRepository: BatteryRepository,
+    private val transactionManager: TransactionManager,
 ) {
 
     suspend fun action(
@@ -42,8 +44,11 @@ class SignManager(
         batteryTxType: BatteryTransaction? = null,
         forceRelayer: Boolean = false,
     ): String {
+        Log.d("ActionLog", "SignManager.action #1")
         navigation.toastLoading(true)
         var isBattery = batteryTxType != null && settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTxType)
+
+        Log.d("ActionLog", "SignManager.action #2")
         val details: HistoryHelper.Details?
         if (isBattery || forceRelayer) {
             val result = emulateBattery(request, wallet, forceRelayer = forceRelayer)
@@ -52,6 +57,7 @@ class SignManager(
         } else {
             details = emulate(request, wallet)
         }
+
         navigation.toastLoading(false)
 
         if (details == null) {
@@ -61,12 +67,7 @@ class SignManager(
 
         val boc = getBoc(navigation, wallet, request, details, canceller, isBattery) ?: throw IllegalArgumentException("Failed boc")
         AnalyticsHelper.trackEvent("send_transaction")
-        val state = if (isBattery) {
-            val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("Can't find TonProof token")
-            api.sendToBlockchainWithBattery(boc, tonProofToken, wallet.testnet)
-        } else {
-            api.sendToBlockchain(boc, wallet.testnet)
-        }
+        val state = transactionManager.send(wallet, boc, isBattery)
         if (state == SendBlockchainState.SUCCESS) {
             AnalyticsHelper.trackEvent("send_success")
         } else {
@@ -94,11 +95,13 @@ class SignManager(
         navigation.add(ActionScreen.newInstance(details, wallet.id, request, requestKey, isBattery))
     }
 
+
     private suspend fun emulate(
         request: SignRequestEntity,
         wallet: WalletEntity,
         currency: WalletCurrency = settingsRepository.currency,
     ): HistoryHelper.Details? {
+
         val rates = ratesRepository.getRates(currency, "TON")
         val seqno = accountRepository.getSeqno(wallet)
 

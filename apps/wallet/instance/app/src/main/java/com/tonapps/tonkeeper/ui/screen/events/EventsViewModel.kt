@@ -5,12 +5,16 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.extensions.mapList
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.tonkeeper.api.AccountEventWrap
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.UiListState
+import com.tonapps.wallet.api.toJSON
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -24,17 +28,21 @@ import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
@@ -48,38 +56,29 @@ class EventsViewModel(
     private val pushManager: PushManager,
     private val historyHelper: HistoryHelper,
     private val screenCacheSource: ScreenCacheSource,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val transactionManager: TransactionManager,
 ): BaseWalletVM(app) {
 
-    private val _isUpdatingFlow = MutableStateFlow(false)
-    val isUpdatingFlow = _isUpdatingFlow.asSharedFlow()
+    private var accountEvents: List<AccountEventWrap>? = null
 
     private val _uiItemsFlow = MutableStateFlow<List<HistoryItem>?>(null)
-    val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
+    val uiItemsFlow = _uiItemsFlow.filterNotNull().shareIn(viewModelScope, SharingStarted.Eagerly, 1)
+
+    private val _isUpdatingFlow = MutableStateFlow(true)
+    val isUpdatingFlow = _isUpdatingFlow.asSharedFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            getCached()?.let {
-                _uiItemsFlow.value = it
-            }
-            loadEvents(isOnline = true, updating = true)
+            val cached = getCached() ?: return@launch
+            _uiItemsFlow.value = cached
         }
 
         eventsRepository.decryptedCommentFlow.onEach {
-            loadEvents(isOnline = false, updating = false)
+            submitAccountEvents(emptyList())
         }.launchIn(viewModelScope)
 
-        networkMonitor.isOnlineFlow.onEach { isOnline ->
-            loadEvents(isOnline = isOnline, updating = false)
-        }
-
-        /*collectFlow(pushManager.dAppPushFlow.filterNotNull()) {
-            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
-            loadEvents(wallet, true)
-        }
-
         collectFlow(settingsRepository.hiddenBalancesFlow.drop(1)) {
-            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@collectFlow
             val uiItems = _uiItemsFlow.value?.map {
                 if (it is HistoryItem.Event) {
                     it.copy(hiddenBalance = settingsRepository.hiddenBalances)
@@ -90,76 +89,79 @@ class EventsViewModel(
 
             _uiItemsFlow.value = uiItems.toList()
             screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
-        }*/
-    }
+        }
 
-    fun update() {
-        viewModelScope.launch(Dispatchers.IO) {
-            loadLast(true)
+        collectFlow(transactionManager.eventsFlow(wallet)) { accountEvent ->
+            submitAccountEvents(listOf(accountEvent))
+            if (!accountEvent.inProgress) {
+                refresh()
+            }
+        }
+
+        collectFlow(eventsRepository.getFlow(wallet.accountId, wallet.testnet)) { eventsResult ->
+            submitAccountEvents(eventsResult.events.events.map { accountEvent ->
+                AccountEventWrap(
+                    event = accountEvent,
+                    cached = eventsResult.cache
+                )
+            })
+
+            _isUpdatingFlow.value = eventsResult.cache
         }
     }
 
-    private suspend fun loadLast(
-        inProgress: Boolean
+    private suspend fun refresh() = withContext(Dispatchers.IO) {
+        _isUpdatingFlow.value = true
+        val events = eventsRepository.getRemote(wallet.accountId, wallet.testnet)?.events
+        if (events != null) {
+            submitAccountEvents(events.map { accountEvent ->
+                AccountEventWrap(
+                    event = accountEvent,
+                    cached = false
+                )
+            })
+        }
+        _isUpdatingFlow.value = false
+    }
+
+    private suspend fun submitAccountEvents(
+        newEvents: List<AccountEventWrap>
     ) = withContext(Dispatchers.IO) {
-        val events = eventsRepository.getLast(wallet.accountId, wallet.testnet)?.events?.filter {
-            it.inProgress == inProgress
-        } ?: return@withContext
-        val items = mapping(wallet, events)
-        val newItems = (_uiItemsFlow.value ?: emptyList()) + items
-        setItems(wallet, newItems.distinctBy {
-            it.uniqueId
-        }, false)
-    }
+        val currentEvents = accountEvents?.toMutableList() ?: mutableListOf()
 
-    private suspend fun getRemoteDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
-        val events = pushManager.getRemoteDAppEvents(wallet)
-        return dAppEventsMapping(wallet, events, emptyList())
-    }
-
-    private suspend fun getLocalDAppEvents(wallet: WalletEntity): List<HistoryItem.App> {
-        val events = pushManager.getLocalDAppEvents(wallet)
-        return dAppEventsMapping(wallet, events, emptyList())
-    }
-
-    private fun dAppEventsMapping(
-        wallet: WalletEntity,
-        events: List<AppPushEntity>,
-        manifests: List<DAppManifestEntity>
-    ): List<HistoryItem.App> {
-        val dappUrls = events.map { it.dappUrl }
-        val apps = tonConnectRepository.getApps(dappUrls, wallet)
-
-        val items = mutableListOf<HistoryItem.App>()
-        for (event in events) {
-            val app = apps.firstOrNull {
-                it.url.startsWith(event.dappUrl) && it.accountId == event.account
-            } ?: continue
-
-            val manifest = manifests.firstOrNull { it.url == app.url } ?: continue
-
-            items.add(HistoryItem.App(
-                iconUri = Uri.parse(manifest.iconUrl),
-                title = manifest.name,
-                body = event.message,
-                date = DateHelper.timestampToDateString(event.dateUnix, settingsRepository.getLocale()),
-                timestamp = event.dateUnix,
-                deepLink = event.link,
-                host = manifest.host,
-                wallet = wallet,
-            ))
+        for (newEvent in newEvents) {
+            if (newEvent.previewEventId != null) {
+                currentEvents.removeIf { newEvent.previewEventId == it.eventId }
+            }
+            currentEvents.removeIf {
+                it.eventId == newEvent.eventId && it.cached && !newEvent.cached
+            }
+            currentEvents.add(newEvent)
         }
-        return items
+
+        val events = currentEvents.map {
+            it.copy()
+        }.distinctBy {
+            it.eventId
+        }.sortedByDescending {
+            it.timestamp
+        }
+
+        accountEvents = events.toList()
+
+        createUiItems(events.map { it.event })
     }
 
-    private fun foundLastItem(): HistoryItem.Event? {
-        return _uiItemsFlow.value?.lastOrNull { it is HistoryItem.Event } as? HistoryItem.Event
+    private suspend fun createUiItems(events: List<AccountEvent>) {
+        val uiItems = mapping(events)
+        _uiItemsFlow.value = uiItems
+        screenCacheSource.set(CACHE_NAME, wallet.id, uiItems.toList())
     }
 
     private fun lastLt(): Long? {
-        val item = foundLastItem() ?: return null
-        if (item.lt > 0) {
-            return item.lt
+        val lt = accountEvents?.last()?.lt ?: return null
+        if (lt > 0) {
+            return lt
         }
         return null
     }
@@ -168,89 +170,45 @@ class EventsViewModel(
         if (_isUpdatingFlow.value) {
             return
         }
-
         val lastLt = lastLt() ?: return
-        withUpdating {
-            val oldValues = _uiItemsFlow.value ?: emptyList()
-            _uiItemsFlow.value = historyHelper.withLoadingItem(oldValues)
-            loadRemote(lastLt)
-        }
-    }
-
-    private fun loadEvents(
-        isOnline: Boolean,
-        updating: Boolean = true
-    ) {
-        if (updating && isOnline) {
-            withUpdating {
-                loadLocal()
-                loadRemote()
+        viewModelScope.launch {
+            uiItemsLoading(true)
+            val events = eventsRepository.getRemote(wallet.accountId, wallet.testnet, lastLt)?.events
+            if (events == null) {
+                uiItemsLoading(false)
+                return@launch
             }
+            submitAccountEvents(events.map {
+                AccountEventWrap(
+                    event = it,
+                    cached = false
+                )
+            })
+
+            uiItemsLoading(false)
+        }
+    }
+
+    private fun uiItemsLoading(loading: Boolean) {
+        val oldValues = _uiItemsFlow.value ?: emptyList()
+        _uiItemsFlow.value = if (loading) {
+            historyHelper.withLoadingItem(oldValues)
         } else {
-            viewModelScope.launch(Dispatchers.IO) {
-                loadLocal()
-            }
+            historyHelper.removeLoadingItem(oldValues)
         }
-    }
-
-    private suspend fun load() {
-        loadLocal()
-        loadRemote()
-    }
-
-    private suspend fun loadLocal() {
-        val accountEvents = eventsRepository.getLocal(wallet.accountId, wallet.testnet) ?: return
-        val walletEventItems = mapping(wallet, accountEvents.events)
-        if (walletEventItems.isNotEmpty()) {
-            setItems(wallet, walletEventItems + getLocalDAppEvents(wallet), false)
-        }
-    }
-
-    private suspend fun loadRemote(beforeLt: Long? = null) {
-        val accountEvents = eventsRepository.getRemote(wallet.accountId, wallet.testnet, beforeLt) ?: return
-        val walletEventItems = mapping(wallet, accountEvents.events)
-        if (beforeLt == null) {
-            setItems(wallet, walletEventItems + getRemoteDAppEvents(wallet), false)
-        } else {
-            val oldValues = _uiItemsFlow.value ?: emptyList()
-            setItems(wallet, oldValues + walletEventItems, true)
-        }
+        _isUpdatingFlow.value = loading
     }
 
     private suspend fun mapping(
-        wallet: WalletEntity,
         events: List<AccountEvent>
     ): List<HistoryItem> {
-        return historyHelper.mapping(
+        val items = historyHelper.mapping(
             wallet = wallet,
-            events = events,
+            events = events.map { it.copy() },
             removeDate = false,
             hiddenBalances = settingsRepository.hiddenBalances
         )
-    }
-
-    private fun setItems(
-        wallet: WalletEntity,
-        items: List<HistoryItem>,
-        more: Boolean
-    ) {
-        val uiItems = historyHelper.groupByDate(items)
-        _uiItemsFlow.value = uiItems
-        if (!more) {
-            screenCacheSource.set(CACHE_NAME, wallet.id, uiItems.toList())
-        }
-    }
-
-    private fun setUpdating(updating: Boolean) {
-        _isUpdatingFlow.tryEmit(updating)
-    }
-
-    private fun withUpdating(action: suspend () -> Unit) {
-        viewModelScope.launch {
-            setUpdating(true)
-            action()
-            setUpdating(false)
-        }
+        return historyHelper.groupByDate(items)
     }
 
     private fun getCached(): List<HistoryItem>? {

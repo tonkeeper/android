@@ -169,6 +169,11 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
+    override fun removeByClass(clazz: Class<out Fragment>) {
+        val fragment = supportFragmentManager.fragments.find { it.javaClass == clazz }
+        fragment?.let { remove(it) }
+    }
+
     private fun isStateSaved(): Boolean {
         return supportFragmentManager.isStateSaved || isFinishing || isDestroyed
     }

@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker.list
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
+import androidx.collection.ArrayMap
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -30,17 +31,19 @@ class Adapter(
         fun map(
             wallets: List<WalletEntity>,
             activeWallet: WalletEntity,
-            balances: List<CharSequence> = emptyList(),
-            hiddenBalance: Boolean
+            balances: ArrayMap<String, CharSequence> = ArrayMap(),
+            hiddenBalance: Boolean = false,
+            walletIdFocus: String = "",
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             for ((index, wallet) in wallets.withIndex()) {
                 val item = Item.Wallet(
                     selected = wallet.id == activeWallet.id,
                     position = ListCell.getPosition(wallets.size, index),
-                    balance = balances.getOrNull(index),
+                    balance = balances[wallet.id],
                     hiddenBalance = hiddenBalance,
                     wallet = wallet.copy(),
+                    focusAnimation = walletIdFocus == wallet.id
                 )
                 uiItems.add(item)
             }
@@ -77,6 +80,7 @@ class Adapter(
                     if (oldItem.hiddenBalance != newItem.hiddenBalance) putBoolean("hiddenBalance", newItem.hiddenBalance)
                     if (oldItem.editMode != newItem.editMode) putBoolean("editMode", newItem.editMode)
                     if (oldItem.position != newItem.position) putInt("position", newItem.position.value)
+                    if (oldItem.focusAnimation != newItem.focusAnimation) putBoolean("focusAnimation", newItem.focusAnimation)
                 }
             }
             return null
@@ -157,6 +161,9 @@ class Adapter(
             }
             if (payload.containsKey("position")) {
                 holder.updatePosition(item)
+            }
+            if (payload.containsKey("focusAnimation")) {
+                holder.updateFocusAnimation(item)
             }
         } else {
             super.onBindViewHolder(holder, position, payloads)

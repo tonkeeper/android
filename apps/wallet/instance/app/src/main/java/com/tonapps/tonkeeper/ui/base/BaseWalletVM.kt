@@ -2,9 +2,11 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.app.Application
 import android.content.Context
+import androidx.annotation.UiThread
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
+import com.tonapps.extensions.isUIThread
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
@@ -48,7 +50,12 @@ abstract class BaseWalletVM(
         detachHolder()
     }
 
+    @UiThread
     fun finish() {
-        holder?.finish()
+        if (isUIThread) {
+            holder?.finish()
+        } else {
+            throw IllegalStateException("finish() must be called from UI thread")
+        }
     }
 }

@@ -7,12 +7,12 @@ internal class RemoteDataSource(
     private val api: API
 ) {
 
-    suspend fun get(
+    fun get(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
-        limit: Int = 50
+        limit: Int = 20
     ): AccountEvents? = api.getEvents(accountId, testnet, beforeLt, limit)
 
-    suspend fun getSingle(eventId: String, testnet: Boolean) = api.getSingleEvent(eventId, testnet)
+    fun getSingle(eventId: String, testnet: Boolean) = api.getSingleEvent(eventId, testnet)
 }

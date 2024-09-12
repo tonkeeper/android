@@ -2,11 +2,13 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.app.Application
 import android.util.Log
+import androidx.collection.ArrayMap
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.manager.AssetsManager
+import com.tonapps.tonkeeper.manager.BalancesManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
@@ -30,9 +32,11 @@ import kotlinx.coroutines.withContext
 
 class PickerViewModel(
     app: Application,
+    private val walletIdFocus: String,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val assetsManager: AssetsManager,
+    private val balancesManager: BalancesManager,
 ): BaseWalletVM(app) {
 
     private val _editModeFlow = MutableStateFlow(false)
@@ -44,19 +48,37 @@ class PickerViewModel(
         val wallets = getWallets()
 
         flow {
+            val balances = balancesManager.get(wallets.map { it.id })
+            val nonCachedWallets = wallets.filter { it.id !in balances.keys }
+
             emit(Adapter.map(
                 wallets = wallets,
                 activeWallet = wallet,
-                hiddenBalance = hiddenBalances
+                hiddenBalance = hiddenBalances,
+                balances = balances,
+                walletIdFocus = walletIdFocus
             ))
 
-            if (!hiddenBalances) {
-                val balances = getBalances(wallets).map { it }
+            if (!hiddenBalances && nonCachedWallets.isNotEmpty()) {
+                for (chunkWallets in wallets.chunked(5)) {
+                    balances += getBalances(chunkWallets).also {
+                        balancesManager.set(it)
+                    }
+                    emit(Adapter.map(
+                        wallets = wallets,
+                        activeWallet = wallet,
+                        balances = balances,
+                        walletIdFocus = walletIdFocus
+                    ))
+                }
+            }
+
+            if (walletIdFocus.isNotBlank()) {
+                delay(1000)
                 emit(Adapter.map(
                     wallets = wallets,
                     activeWallet = wallet,
-                    balances = balances,
-                    hiddenBalance = false
+                    balances = balances
                 ))
             }
         }
@@ -99,12 +121,16 @@ class PickerViewModel(
 
     private suspend fun getBalances(
         wallets: List<WalletEntity>
-    ): List<CharSequence> = withContext(Dispatchers.IO) {
-        val list = mutableListOf<Deferred<CharSequence>>()
+    ): ArrayMap<String, CharSequence> = withContext(Dispatchers.IO) {
+        val map = ArrayMap<String, Deferred<CharSequence>>()
         for (wallet in wallets) {
-            list.add(async { getBalance(wallet) })
+            map[wallet.id] = async { getBalance(wallet) }
         }
-        list.map { it.await() }
+        ArrayMap<String, CharSequence>().apply {
+            for ((id, deferred) in map) {
+                put(id, deferred.await())
+            }
+        }
     }
 
 }

@@ -22,6 +22,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.extensions.withVerificationIcon
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
@@ -76,7 +77,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     private lateinit var currencyView: AppCompatTextView
     private lateinit var dateView: AppCompatTextView
     private lateinit var dataView: LinearLayoutCompat
-    private lateinit var txView: TransactionDetailView
     private lateinit var feeView: TransactionDetailView
     private lateinit var commentView: TransactionDetailView
     private lateinit var accountNameView: TransactionDetailView
@@ -128,9 +128,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         accountNameView = view.findViewById(R.id.account_name)
         accountAddressView = view.findViewById(R.id.account_address)
 
-        txView = view.findViewById(R.id.tx)
-        txView.title = getString(Localization.transaction)
-
         explorerButton = view.findViewById(R.id.open_explorer)
 
         unverifiedView.visibility = if (action.unverifiedToken) {
@@ -164,11 +161,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         applyCurrency(action.currency, action.hiddenBalance)
         applyDate(action.action, action.dateDetails)
 
-        txView.setData(action.txId.shortHash, "")
-        txView.setOnClickListener {
-            context?.copyWithToast(action.txId)
-        }
-
         val txHashText = getString(Localization.transaction) + " " + action.txId.substring(0, 8)
         val txHashSpannable = SpannableString(txHashText)
         txHashSpannable.setColor(
@@ -180,7 +172,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
 
         explorerButton.setOnClickListener {
-            navigation?.openURL("https://tonviewer.com/transaction/${action.txId}", true)
+            navigation?.openURL("https://tonviewer.com/transaction/${action.txId}")
         }
 
         updateDataView()
@@ -194,13 +186,18 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             iconSwap2View.setImageURI(Uri.parse(action.coinIconUrl2), this)
             amount2View.visibility = View.VISIBLE
             amount2View.text = action.value2.withCustomSymbol(requireContext())
+            accountAddressView.title = getString(Localization.recipient_address)
         } else if (action.hasNft) {
             iconSwapView.visibility = View.GONE
             val nft = action.nft!!
             iconView.setImageURI(nft.mediumUri, null)
             iconView.setRound(16f.dp)
             currencyView.visibility = View.VISIBLE
-            currencyView.text = nft.collectionName
+            if (nft.verified) {
+                currencyView.text = nft.collectionName.withVerificationIcon(requireContext())
+            } else {
+                currencyView.text = nft.collectionName
+            }
             amount2View.visibility = View.VISIBLE
             amount2View.text = nft.name
             amount2View.setTextColor(requireContext().textPrimaryColor)

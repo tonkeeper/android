@@ -25,7 +25,7 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
         iconView.setImageResource(item.iconRes)
         textView.setText(item.textRes)
         itemView.setOnClickListener {
-            navigation?.openURL(item.link, true)
+            navigation?.openURL(item.link)
             if (item.settingsType == Item.SetupLink.TYPE_TELEGRAM_CHANNEL) {
                 settingsRepository?.setTelegramChannel(item.walletId)
             }

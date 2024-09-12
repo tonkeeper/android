@@ -21,6 +21,15 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         private const val TELEGRAM_CHANNEL_PREFIX = "telegram_channel_"
         private const val SPAM_STATE_TRANSACTION_PREFIX = "spam_state_transaction_"
         private const val BATTERY_TX_ENABLED_PREFIX = "batter_tx_enabled_"
+        private const val USDT_W5_PREFIX = "usdt_w5_"
+    }
+
+    fun isUSDTW5(walletId: String): Boolean {
+        return getBoolean(keyUsdtW5(walletId), true)
+    }
+
+    fun disableUSDTW5(walletId: String) {
+        putBoolean(keyUsdtW5(walletId), false)
     }
 
     fun getBatteryTxEnabled(accountId: String): Array<BatteryTransaction> {
@@ -110,6 +119,10 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
 
     private fun keyBatteryTxEnabled(accountId: String): String {
         return key(BATTERY_TX_ENABLED_PREFIX, accountId)
+    }
+
+    private fun keyUsdtW5(walletId: String): String {
+        return key(USDT_W5_PREFIX, walletId)
     }
 
     private fun keySpamStateTransaction(walletId: String, id: String): String {

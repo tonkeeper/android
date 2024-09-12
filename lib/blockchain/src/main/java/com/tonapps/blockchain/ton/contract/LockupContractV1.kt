@@ -17,6 +17,8 @@ class LockupContractV1(
 
     override val features: WalletFeature = WalletFeature.NONE
 
+    override val maxMessages: Int = 4
+
     override fun getStateCell(): Cell {
         return CellBuilder.createCell {
             storeUInt(0, 32)

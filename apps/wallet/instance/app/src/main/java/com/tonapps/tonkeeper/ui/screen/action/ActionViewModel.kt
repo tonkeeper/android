@@ -2,13 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.action
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.api.API
@@ -26,7 +25,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import org.ton.contract.wallet.WalletTransfer
 
 class ActionViewModel(
     app: Application,
@@ -35,6 +33,7 @@ class ActionViewModel(
     private val passcodeManager: PasscodeManager,
     private val api: API,
     private val batteryRepository: BatteryRepository,
+    private val transactionManager: TransactionManager,
 ) : BaseWalletVM(app) {
 
     private val _walletFlow = MutableStateFlow<WalletEntity?>(null)
@@ -72,7 +71,6 @@ class ActionViewModel(
                 var boc: String? = null
 
                 transactions.forEachIndexed { index, transaction ->
-                    Log.d("ActionViewModel", "Signing transaction $transaction")
                     val isLast = index == transactions.size - 1
                     val signedBody = context.signLedgerTransaction(transaction, wallet.id)
                         ?: throw SendException.Cancelled()
@@ -81,8 +79,7 @@ class ActionViewModel(
                         contract.createTransferMessageCell(contract.address, seqno, signedBody)
                     boc = message.base64()
                     if (!isLast) {
-                        val state = api.sendToBlockchain(message, wallet.testnet)
-                        Log.d("ActionViewModel", "Sending transaction to blockchain")
+                        val state = transactionManager.send(wallet, message, false)
                         if (state != SendBlockchainState.SUCCESS) {
                             throw SendBlockchainException.fromState(state)
                         }

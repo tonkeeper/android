@@ -33,6 +33,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
 import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
+import com.tonapps.wallet.data.tonconnect.entities.reply.DAppDeviceEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +43,9 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
+import uikit.extensions.setPaddingBottom
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.BridgeWebView
 import java.util.UUID
 import kotlin.coroutines.resume
@@ -69,28 +72,38 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
     private val currentUrl: String
         get() = webView.url ?: args.url
 
-    private val webViewCallback = object : WebViewClient() {
-        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+    private val webViewCallback = object : WebViewFixed.Callback() {
+        override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
             val refererUri = request.requestHeaders?.get("Referer")?.toUri()
             val url = request.url.normalizeTONSites()
-            if (url.scheme != "https") {
-                navigation?.openURL(url.toString(), true)
+            if (!url.toString().startsWith("https") || url.host == "t.me") {
+                navigation?.openURL(url.toString())
                 return true
             }
             return rootViewModel.processDeepLink(url, false, refererUri)
         }
 
-        override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-            super.onPageStarted(view, url, favicon)
+        override fun onPageStarted(url: String, favicon: Bitmap?) {
+            super.onPageStarted(url, favicon)
             refreshView.isRefreshing = true
             applyHost(url)
         }
 
-        override fun onPageFinished(view: WebView, url: String) {
-            super.onPageFinished(view, url)
+        override fun onReceivedTitle(title: String) {
+            super.onReceivedTitle(title)
+            titleView.text = title
+        }
+
+        override fun onPageFinished(url: String) {
+            super.onPageFinished(url)
             refreshView.isRefreshing = false
-            titleView.text = view.title
             applyHost(url)
+        }
+
+        override fun onScroll(y: Int, x: Int) {
+            super.onScroll(y, x)
+            headerDrawable.setDivider(y > 0)
+            refreshView.isEnabled = y == 0
         }
     }
 
@@ -132,11 +145,11 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
         closeView.setOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web_view)
-        webView.clipToPadding = false
-        webView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
-            headerDrawable.setDivider(scrollY > 0)
-        }
+        webView.settings.useWideViewPort = true
+        webView.settings.loadWithOverviewMode = true
+        webView.addCallback(webViewCallback)
         webView.jsBridge = DAppBridge(
+            deviceInfo = DAppDeviceEntity(sendMaxMessages = screenContext.wallet.contract.maxMessages),
             send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
             connect = { _, request -> tonConnectAuth(webView.url?.toUri(), request) },
             restoreConnection = { viewModel.restoreConnection() },
@@ -150,10 +163,6 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
             webView.reload()
         }
 
-        collectFlow(webView.scrollFlow) { scroll ->
-            refreshView.isEnabled = scroll == 0
-        }
-
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
             headerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -163,12 +172,16 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
             refreshView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 bottomMargin = imeInsets.bottom
             }
+
+            val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            webView.setPaddingBottom(navInsets.bottom)
             insets
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        webView.removeCallback(webViewCallback)
         webView.destroy()
     }
 
@@ -235,12 +248,12 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
 
     override fun onResume() {
         super.onResume()
-        webView.addClientCallback(webViewCallback)
+        webView.addCallback(webViewCallback)
     }
 
     override fun onPause() {
         super.onPause()
-        webView.removeClientCallback(webViewCallback)
+        webView.removeCallback(webViewCallback)
     }
 
     private fun back() {

@@ -1,9 +1,12 @@
 package com.tonapps.tonkeeper.extensions
 
+import android.content.Context
 import android.text.Spannable
 import android.text.SpannableStringBuilder
-import android.util.Log
 import androidx.core.net.toUri
+import com.tonapps.uikit.icon.UIKitIcon
+import uikit.extensions.drawable
+import uikit.span.ImageSpanCompat
 
 fun String.substringSafe(startIndex: Int, endIndex: Int): String {
     return if (startIndex > length) {
@@ -61,4 +64,15 @@ fun String.isVersionLowerThan(other: String): Boolean {
 
 fun String.normalizeTONSites(): String {
     return toUri().normalizeTONSites().toString()
+}
+
+fun String.withVerificationIcon(context: Context): CharSequence {
+    val drawable = context.drawable(UIKitIcon.ic_verification_16)
+    drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
+
+    val builder = SpannableStringBuilder()
+    builder.append(this)
+    builder.append(" X")
+    builder.setSpan(ImageSpanCompat(drawable), builder.length - 1, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    return builder
 }

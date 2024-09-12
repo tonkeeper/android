@@ -2,27 +2,15 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake
 
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.commit
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.stake.amount.StakeAmountFragment
-import com.tonapps.tonkeeper.ui.screen.staking.stake.confirm.StakeConfirmFragment
-import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragment
-import com.tonapps.tonkeeper.ui.screen.staking.stake.options.StakeOptionsFragment
-import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
-import uikit.base.SimpleFragment
-import uikit.extensions.collectFlow
-import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.hideKeyboard
-import uikit.widget.HeaderView
 
 class StakingScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 

@@ -1,5 +1,5 @@
 import com.android.build.gradle.AppExtension
-import com.android.build.gradle.internal.dsl.SigningConfig
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("com.android.application") version "8.6.0" apply false

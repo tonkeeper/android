@@ -38,7 +38,6 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
         if (this is SwipeBack) {
             headerView.setIcon(UIKitIcon.ic_chevron_left_16)
             headerView.doOnCloseClick = { finish() }
-            listView.applyNavBottomPadding(listView.paddingBottom)
         } else if (this is BottomSheet || this is Modal) {
             headerView.ignoreSystemOffset = true
             headerView.setAction(UIKitIcon.ic_close_16)
@@ -50,6 +49,7 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
             headerView.ignoreSystemOffset = false
         }
 
+        listView.applyNavBottomPadding(listView.paddingBottom)
         collectFlow(listView.topScrolled, headerView::setDivider)
     }
 

@@ -144,6 +144,12 @@ open class BaseFragment(
         }
     }
 
+    fun putBooleanArg(key: String, value: Boolean) {
+        setArgs(Bundle().apply {
+            putBoolean(key, value)
+        })
+    }
+
     fun getSpannable(@StringRes id: Int): SpannableString {
         return requireContext().getSpannable(id)
     }

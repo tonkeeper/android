@@ -160,7 +160,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         if (qr) {
             navigation?.add(EmulateFragment.newInstance(uri.toString()))
         } else {
-            navigation?.openURL(uri.toString(), true)
+            navigation?.openURL(uri.toString())
         }
     }
 

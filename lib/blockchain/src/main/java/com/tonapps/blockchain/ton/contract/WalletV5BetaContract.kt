@@ -28,6 +28,8 @@ class WalletV5BetaContract(
 
     override val features: WalletFeature = WalletFeature.GASLESS or WalletFeature.SIGNED_INTERNALS
 
+    override val maxMessages: Int = 255
+
     override fun getWalletVersion() = WalletVersion.V5BETA
 
     override fun getStateCell(): Cell {
@@ -68,8 +70,8 @@ class WalletV5BetaContract(
         queryId: BigInt?,
         vararg gifts: WalletTransfer
     ): Cell {
-        if (gifts.size > 255) {
-            throw IllegalArgumentException("Maximum number of messages in a single transfer is 255")
+        if (gifts.size > maxMessages) {
+            throw IllegalArgumentException("Maximum number of messages in a single transfer is $maxMessages")
         }
 
         val actions = packV5Actions(*gifts)

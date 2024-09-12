@@ -25,8 +25,8 @@ class SelectScreen: BaseFragment(R.layout.fragment_init_select) {
 
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
-    private val adapter = Adapter {
-        initViewModel.toggleAccountSelection(it.address.toRawAddress())
+    private val adapter = Adapter { account, checked ->
+        initViewModel.toggleAccountSelection(account.address.toRawAddress(), checked)
     }
 
     private lateinit var listView: RecyclerView

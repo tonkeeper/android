@@ -11,6 +11,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.drawee.drawable.RoundedCornersDrawable
+import com.facebook.drawee.drawable.RoundedDrawable
 import com.facebook.drawee.generic.RoundingParams
 import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.request.ImageRequest
@@ -21,6 +22,9 @@ class FrescoView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
 ) : SimpleDraweeView(context, attrs, defStyle) {
+
+    val isCircular: Boolean
+        get() = hierarchy.roundingParams?.roundAsCircle ?: false
 
     fun setRound(radius: Float) {
         hierarchy.roundingParams = RoundingParams.fromCornersRadius(radius)
@@ -62,9 +66,13 @@ class FrescoView @JvmOverloads constructor(
     }
 
     override fun setImageRequest(request: ImageRequest) {
-        setImageDrawable(null)
-        setPlaceholder(ColorDrawable(Color.TRANSPARENT))
-        super.setImageRequest(request)
+        if (UriUtil.isLocalResourceUri(request.sourceUri)) {
+            loadLocalUri(request.sourceUri, null)
+        } else {
+            setImageDrawable(null)
+            setPlaceholder(ColorDrawable(Color.TRANSPARENT))
+            super.setImageRequest(request)
+        }
     }
 
     fun setPlaceholder(drawable: Drawable) {
@@ -87,10 +95,16 @@ class FrescoView @JvmOverloads constructor(
             val resourceId = uri.pathSegments[0].toInt()
             getDrawable(resourceId)
         }
-        if (drawable is VectorDrawable || drawable is ColorDrawable) {
-            return drawable
+        val iconDrawable = if (drawable is VectorDrawable || drawable is ColorDrawable) {
+            drawable
+        } else return null
+
+        if (isCircular) {
+            return RoundedCornersDrawable(iconDrawable).apply {
+                setCircle(true)
+            }
         }
-        return null
+        return iconDrawable
     }
 
     fun clear(callerContext: Any?) {

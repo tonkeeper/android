@@ -5,9 +5,12 @@ import android.view.View
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.amount.UnStakeAmountFragment
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.confirm.UnStakeConfirmFragment
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -25,12 +28,15 @@ class UnStakeScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
         collectFlow(viewModel.eventFlow, ::onEvent)
     }
 
-    private fun onEvent(event: UnStakeEvent) {
+    private suspend fun onEvent(event: UnStakeEvent) {
         when(event) {
             is UnStakeEvent.RouteToAmount -> setFragment(UnStakeAmountFragment.newInstance())
             is UnStakeEvent.OpenConfirm -> setFragment(UnStakeConfirmFragment.newInstance())
             is UnStakeEvent.Finish -> {
                 navigation?.openURL("tonkeeper://activity")
+                navigation?.removeByClass(UnStakeScreen::class.java)
+                navigation?.removeByClass(StakeViewerScreen::class.java)
+                delay(2000)
                 finish()
             }
         }

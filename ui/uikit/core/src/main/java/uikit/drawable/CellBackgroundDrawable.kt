@@ -1,28 +1,39 @@
 package uikit.drawable
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.Shader
+import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.RippleDrawable
+import android.util.Log
+import android.view.View
+import androidx.core.animation.doOnEnd
+import androidx.core.graphics.withSave
 import com.tonapps.uikit.color.backgroundContentColor
 import com.tonapps.uikit.color.backgroundHighlightedColor
 import com.tonapps.uikit.color.separatorCommonColor
 import com.tonapps.uikit.list.ListCell
 import uikit.R
 import uikit.base.BaseDrawable
+import uikit.extensions.contentDrawable
 import uikit.extensions.dp
 import uikit.extensions.getDimension
 
 class CellBackgroundDrawable(
-    context: Context,
+    private val context: Context,
     private val position: ListCell.Position,
-    backgroundColor: Int = context.backgroundContentColor
-): BaseDrawable() {
+    private val backgroundColor: Int = context.backgroundContentColor,
+    private val shimmerColor: Int = context.backgroundHighlightedColor
+): BaseDrawable(), Animatable {
 
     companion object {
         private fun createCorners(
@@ -51,11 +62,40 @@ class CellBackgroundDrawable(
                 null
             )
         }
+
+        fun find(view: View): CellBackgroundDrawable? {
+            val background = view.background as? RippleDrawable ?: return null
+            return background.contentDrawable as? CellBackgroundDrawable
+        }
     }
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = backgroundColor
     }
+
+    private val shimmerPaint: Paint by lazy {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.shader = LinearGradient(0f,0f, shimmerSize, 0f, intArrayOf(Color.TRANSPARENT, shimmerColor, Color.TRANSPARENT), null, Shader.TileMode.CLAMP)
+
+        paint
+    }
+
+    private val shimmerSize = 102f.dp
+    private var shimmerOffsetX = 0f
+    private val shimmerAnimator: ValueAnimator by lazy {
+        ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 860
+            addUpdateListener {
+                setShimmerProgress(it.animatedFraction)
+            }
+            doOnEnd {
+                isShimmerAnimation = false
+            }
+        }
+    }
+
+    private var isShimmerAnimation = false
+
     private val radius = context.getDimension(R.dimen.cornerMedium)
     private val firstCorners = createCorners(radius, radius, 0f, 0f)
     private val lastCorners = createCorners(0f, 0f, radius, radius)
@@ -71,6 +111,12 @@ class CellBackgroundDrawable(
 
     override fun draw(canvas: Canvas) {
         canvas.drawPath(path, backgroundPaint)
+        if (isShimmerAnimation) {
+            canvas.withSave {
+                translate(shimmerOffsetX, 0f)
+                drawPath(path, shimmerPaint)
+            }
+        }
         if (position != ListCell.Position.SINGLE && position != ListCell.Position.LAST) {
             drawDivider(canvas, bounds)
         }
@@ -121,10 +167,39 @@ class CellBackgroundDrawable(
     override fun onBoundsChange(bounds: Rect) {
         super.onBoundsChange(bounds)
         when (position) {
-            com.tonapps.uikit.list.ListCell.Position.FIRST -> firstPath(bounds)
-            com.tonapps.uikit.list.ListCell.Position.MIDDLE -> middlePath(bounds)
-            com.tonapps.uikit.list.ListCell.Position.LAST -> lastPath(bounds)
-            com.tonapps.uikit.list.ListCell.Position.SINGLE -> singlePath(bounds)
+            ListCell.Position.FIRST -> firstPath(bounds)
+            ListCell.Position.MIDDLE -> middlePath(bounds)
+            ListCell.Position.LAST -> lastPath(bounds)
+            ListCell.Position.SINGLE -> singlePath(bounds)
         }
     }
+
+    private fun setShimmerProgress(progress: Float) {
+        if (isShimmerAnimation) {
+            shimmerOffsetX = bounds.width() * progress
+            if (shimmerOffsetX > bounds.width()) {
+                stop()
+            } else {
+                invalidateSelf()
+            }
+        }
+    }
+
+    override fun start() {
+        if (!isShimmerAnimation) {
+            isShimmerAnimation = true
+            shimmerAnimator.start()
+            invalidateSelf()
+        }
+    }
+
+    override fun stop() {
+        if (isShimmerAnimation) {
+            isShimmerAnimation = false
+            shimmerAnimator.end()
+            invalidateSelf()
+        }
+    }
+
+    override fun isRunning() = isShimmerAnimation && shimmerAnimator.isRunning
 }

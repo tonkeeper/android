@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("buildLogic")
     repositories {
         google()
         mavenCentral()
@@ -6,6 +7,7 @@ pluginManagement {
         maven("https://jitpack.io")
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -67,3 +69,4 @@ include(":apps:wallet:data:passcode")
 include(":apps:wallet:data:staking")
 include(":apps:wallet:data:purchase")
 include(":apps:wallet:data:battery")
+include(":apps:wallet:data:dapps")

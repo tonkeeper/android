@@ -101,6 +101,8 @@ abstract class BaseWalletContract(
 
     abstract val features: WalletFeature
 
+    abstract val maxMessages: Int
+
     fun isSupportedFeature(feature: WalletFeature): Boolean {
         return features.contains(feature)
     }
@@ -228,7 +230,6 @@ abstract class BaseWalletContract(
                 storeTlb(CellStringTlbConstructor, ByteString(*appliedPromo.encodeToByteArray()))
             }
         }
-
         return cell
     }
 }

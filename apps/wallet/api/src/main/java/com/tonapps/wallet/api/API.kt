@@ -73,7 +73,7 @@ class API(
         createTonAPIHttpClient(
             context = context,
             tonApiV2Key = config.tonApiV2Key,
-            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost)
+            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost, "https://rt-testnet.tonapi.io", "https://rt.tonapi.io")
         )
     }
 
@@ -181,6 +181,14 @@ class API(
             beforeLt = beforeLt,
             subjectOnly = true
         )
+    }
+
+    fun getTransactionByHash(
+        accountId: String,
+        hash: String,
+        testnet: Boolean
+    ): AccountEvent? {
+        return withRetry { accounts(testnet).getAccountEvent(accountId, hash) }
     }
 
     fun getSingleEvent(
@@ -342,6 +350,12 @@ class API(
         return tx
     }
 
+    fun newRealtime(accountId: String, testnet: Boolean): Flow<SSEvent> {
+        val host = if (testnet) "rt-testnet.tonapi.io" else "rt.tonapi.io"
+        val url = "https://${host}/sse/transactions?account=$accountId"
+        return tonAPIHttpClient.sse(url)
+    }
+
     fun tonconnectEvents(
         publicKeys: List<String>,
         lastEventId: String?
@@ -464,12 +478,6 @@ class API(
     }
 
     suspend fun sendToBlockchainWithBattery(
-        boc: Cell,
-        tonProofToken: String,
-        testnet: Boolean,
-    ) = sendToBlockchainWithBattery(boc.base64(), tonProofToken, testnet)
-
-    suspend fun sendToBlockchainWithBattery(
         boc: String,
         tonProofToken: String,
         testnet: Boolean,
@@ -500,11 +508,6 @@ class API(
             SendBlockchainState.SUCCESS
         } ?: SendBlockchainState.UNKNOWN_ERROR
     }
-
-    suspend fun sendToBlockchain(
-        cell: Cell,
-        testnet: Boolean
-    ) = sendToBlockchain(cell.base64(), testnet)
 
     fun getAccountSeqno(
         accountId: String,

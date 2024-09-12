@@ -2,6 +2,14 @@ package com.tonapps.blockchain.ton.extensions
 
 import com.tonapps.blockchain.ton.TONOpCode
 import org.ton.cell.CellBuilder
+import org.ton.cell.CellBuilder.Companion.beginCell
+import kotlin.math.floor
+
+val CellBuilder.availableBits: Int
+    get() = 1023 - bits.size
+
+val CellBuilder.availableRefs: Int
+    get() = 1023 - refs.size
 
 fun CellBuilder.storeBuilder(builder: CellBuilder) = apply {
     storeRefs(builder.refs)
@@ -21,4 +29,24 @@ fun CellBuilder.storeSeqAndValidUntil(seqno: Int, validUntil: Long) = apply {
         storeUInt(validUntil, 32)
     }
     storeUInt(seqno, 32)
+}
+
+fun CellBuilder.storeStringTail(src: String) = apply {
+    writeBytes(src.toByteArray(), this)
+}
+
+private fun writeBytes(src: ByteArray, builder: CellBuilder) {
+    if (src.isNotEmpty()) {
+        val bytes = floor(builder.availableBits / 8f).toInt()
+        if (src.size > bytes) {
+            val a = src.copyOfRange(0, bytes)
+            val t = src.copyOfRange(bytes, src.size)
+            builder.storeBytes(a)
+            val bb = beginCell()
+            writeBytes(t, bb)
+            builder.storeRef(bb.endCell())
+        } else {
+            builder.storeBytes(src)
+        }
+    }
 }

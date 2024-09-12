@@ -70,10 +70,9 @@ class EventsRepository(
         }
     }
 
-    suspend fun getFlow(
+    fun getFlow(
         accountId: String,
-        testnet: Boolean,
-        isOnline: Boolean
+        testnet: Boolean
     ) = flow {
         try {
             val local = getLocal(accountId, testnet)
@@ -81,10 +80,8 @@ class EventsRepository(
                 emit(AccountEventsResult(cache = true, events = local))
             }
 
-            if (isOnline) {
-                val remote = getRemote(accountId, testnet) ?: return@flow
-                emit(AccountEventsResult(cache = false, events = remote))
-            }
+            val remote = getRemote(accountId, testnet) ?: return@flow
+            emit(AccountEventsResult(cache = false, events = remote))
         } catch (ignored: Throwable) { }
     }.cancellable()
 

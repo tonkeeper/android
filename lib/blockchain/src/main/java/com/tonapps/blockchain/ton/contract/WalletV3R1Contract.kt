@@ -19,6 +19,8 @@ open class WalletV3R1Contract(
 
     override val features: WalletFeature = WalletFeature.NONE
 
+    override val maxMessages: Int = 4
+
     override fun getWalletVersion() = WalletVersion.V3R1
 
     override fun getStateCell(): Cell {
@@ -40,6 +42,10 @@ open class WalletV3R1Contract(
         queryId: BigInt?,
         vararg gifts: WalletTransfer
     ) = CellBuilder.createCell {
+        if (gifts.size > maxMessages) {
+            throw IllegalArgumentException("Maximum number of messages in a single transfer is $maxMessages")
+        }
+
         storeUInt(walletId, 32)
         storeUInt(validUntil, 32)
         storeUInt(seqno, 32)

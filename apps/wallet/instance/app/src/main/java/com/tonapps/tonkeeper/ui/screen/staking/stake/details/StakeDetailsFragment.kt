@@ -82,7 +82,7 @@ class StakeDetailsFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
             val linkView = requireContext().inflate(R.layout.view_link, linksView) as AppCompatTextView
             linkView.text = host
             linkView.setLeftDrawable(linkDrawable)
-            linkView.setOnClickListener { navigation?.openURL(link, true) }
+            linkView.setOnClickListener { navigation?.openURL(link) }
             linksView.addView(linkView)
         }
     }

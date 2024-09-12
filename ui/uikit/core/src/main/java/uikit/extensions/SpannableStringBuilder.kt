@@ -3,6 +3,7 @@ package uikit.extensions
 import android.content.Context
 import android.text.SpannableStringBuilder
 import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
 import androidx.annotation.StyleRes
 import androidx.core.text.inSpans
 import com.tonapps.uikit.color.accentGreenColor

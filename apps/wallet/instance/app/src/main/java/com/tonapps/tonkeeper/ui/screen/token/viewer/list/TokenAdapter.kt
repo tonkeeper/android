@@ -5,6 +5,7 @@ import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.ActionsHolder
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.BalanceHolder
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.ChartHolder
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.PriceHolder
+import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.W5BannerHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
@@ -16,6 +17,7 @@ class TokenAdapter: BaseListAdapter() {
             Item.TYPE_ACTIONS -> ActionsHolder(parent)
             Item.TYPE_PRICE -> PriceHolder(parent)
             Item.TYPE_CHART -> ChartHolder(parent)
+            Item.TYPE_W5_BANNER -> W5BannerHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

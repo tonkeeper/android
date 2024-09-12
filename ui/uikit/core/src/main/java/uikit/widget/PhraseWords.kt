@@ -6,6 +6,8 @@ import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.extensions.dp
+import uikit.extensions.pivot
+import uikit.extensions.scale
 
 class PhraseWords @JvmOverloads constructor(
     context: Context,
@@ -15,6 +17,18 @@ class PhraseWords @JvmOverloads constructor(
 
     init {
         orientation = HORIZONTAL
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        val screenHeight = resources.displayMetrics.heightPixels - 108.dp
+        val layoutHeight = measuredHeight
+
+        if (layoutHeight > screenHeight) {
+            scale = screenHeight.toFloat() / layoutHeight.toFloat()
+            pivotY = 0f
+            translationX = measuredWidth * (1 - scale) / 2
+        }
     }
 
     fun setWords(words: Array<String>) {
@@ -50,4 +64,5 @@ class PhraseWords @JvmOverloads constructor(
         addView(row, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT, 1f))
         return row
     }
+
 }

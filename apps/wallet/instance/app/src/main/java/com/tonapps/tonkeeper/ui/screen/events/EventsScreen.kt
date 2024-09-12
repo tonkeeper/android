@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
@@ -75,7 +76,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
 
     override fun scrollUp() {
         super.scrollUp()
-        viewModel.update()
+        listView.scrollToPosition(0)
     }
 
     private fun openQRCode() {

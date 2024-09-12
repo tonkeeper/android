@@ -6,7 +6,9 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.entity.ConfigEntity
 import uikit.base.SimpleFragment
 import uikit.extensions.doKeyboardAnimation
 import uikit.navigation.Navigation
@@ -74,6 +76,9 @@ abstract class BaseHolderWalletScreen<C: ScreenContext>(
 
         val navigation: Navigation?
             get() = primaryFragment.navigation
+
+        val remoteConfig: ConfigEntity?
+            get() = context?.remoteConfig
 
         @Suppress("UNCHECKED_CAST")
         override val primaryFragment: P

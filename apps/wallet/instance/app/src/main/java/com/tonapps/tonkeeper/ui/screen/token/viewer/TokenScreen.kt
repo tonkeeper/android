@@ -117,13 +117,9 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
 
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(0, Localization.view_details, R.drawable.ic_globe_16)
-        actionSheet.doOnItemClick = { navigation?.openURL(detailsUrl.toString(), true) }
+        actionSheet.doOnItemClick = { navigation?.openURL(detailsUrl.toString()) }
         actionSheet.show(view)
     }
-
-    /*
-
-     */
 
     companion object {
         fun newInstance(

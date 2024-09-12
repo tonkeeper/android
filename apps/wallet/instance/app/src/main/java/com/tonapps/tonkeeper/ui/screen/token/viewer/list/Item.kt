@@ -14,6 +14,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_ACTIONS = 1
         const val TYPE_PRICE = 2
         const val TYPE_CHART = 3
+        const val TYPE_W5_BANNER = 4
     }
 
     data class Balance(
@@ -54,4 +55,9 @@ sealed class Item(type: Int): BaseListItem(type) {
         val data: List<ChartEntity>,
         val square: Boolean
     ): Item(TYPE_CHART)
+
+    data class W5Banner(
+        val wallet: WalletEntity,
+        val addButton: Boolean
+    ): Item(TYPE_W5_BANNER)
 }

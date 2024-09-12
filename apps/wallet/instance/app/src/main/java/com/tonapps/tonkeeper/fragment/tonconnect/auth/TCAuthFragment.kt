@@ -196,8 +196,6 @@ class TCAuthFragment: BaseWalletScreen<ScreenContext.None>(R.layout.dialog_ton_c
     }
 
     private fun redirectTo(uri: Uri) {
-        try {
-            navigation?.openURL(uri.toString(), true)
-        } catch (ignored: Throwable) { }
+        navigation?.openURL(uri.toString())
     }
 }

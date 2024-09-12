@@ -71,9 +71,7 @@ class PurchaseConfirmDialog(
     private fun createInfoButton(button: PurchaseMethodEntity.Button): View {
         val buttonView = AppCompatTextView(context)
         buttonView.text = button.title
-        buttonView.setOnClickListener {
-            navigation?.openURL(button.url, true)
-        }
+        buttonView.setOnClickListener { navigation?.openURL(button.url) }
         buttonView.setTextAppearance(uikit.R.style.TextAppearance_Body1)
         buttonView.setTextColor(context.textSecondaryColor)
         return buttonView

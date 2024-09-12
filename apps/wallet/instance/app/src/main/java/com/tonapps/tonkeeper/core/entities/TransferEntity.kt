@@ -5,6 +5,7 @@ import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.blockchain.ton.extensions.storeStringTail
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.tlb.MessageData
 import com.tonapps.extensions.toByteArray
@@ -25,6 +26,7 @@ import org.ton.block.AddrStd
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
+import org.ton.cell.CellBuilder.Companion.beginCell
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
 import java.math.BigInteger
@@ -65,6 +67,14 @@ data class TransferEntity(
             return if (max && isTon) (TonSendMode.CARRY_ALL_REMAINING_BALANCE.value + TonSendMode.IGNORE_ERRORS.value) else (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
         }
 
+    val isValidComment: Boolean
+        get() {
+            if (wallet.isLedger && comment != null) {
+                return comment.all { it.code in 32..126 }
+            }
+            return true
+        }
+
     private val coins: org.ton.block.Coins
         get() {
             return org.ton.block.Coins.ofNano(amount.toLong())
@@ -76,15 +86,16 @@ data class TransferEntity(
         if (comment.isNullOrBlank()) {
             return null
         } else if (!commentEncrypted) {
-            return MessageData.text(comment).body
+            // return MessageData.text(comment).body
+            return beginCell()
+                .storeUInt(0, 32)
+                .storeStringTail(comment)
+                .endCell()
         } else {
-            privateKey
-                ?: throw IllegalArgumentException("Private key required for encrypted comment")
-
-            val publicKey = privateKey.publicKey()
+            privateKey ?: throw IllegalArgumentException("Private key required for encrypted comment")
             return CommentEncryption.encryptComment(
                 comment = comment,
-                myPublicKey = publicKey,
+                myPublicKey = privateKey.publicKey(),
                 theirPublicKey = destinationPK,
                 myPrivateKey = privateKey,
                 senderAddress = contract.address.toAccountId()

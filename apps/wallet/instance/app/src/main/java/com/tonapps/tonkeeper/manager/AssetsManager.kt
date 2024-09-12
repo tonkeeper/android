@@ -10,6 +10,7 @@ import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import java.util.concurrent.ConcurrentHashMap
 
 class AssetsManager(
     private val ratesRepository: RatesRepository,

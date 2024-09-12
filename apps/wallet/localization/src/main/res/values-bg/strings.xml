@@ -21,10 +21,8 @@
     <string name="insufficient_balance_title">Недостатъчни средства</string>
     <string name="insufficient_balance_description">Въведете по-малка сума или изберете максималния си баланс.</string>
     <string name="w5_story_title_1">Безплатни USDT трансфери</string>
-    <string name="w5_story_title_2">Намалени блокчейн такси</string>
     <string name="w5_story_title_3">До 255 операции в една транзакция</string>
     <string name="w5_story_title_4">Възстановителната фраза не се променя</string>
-    <string name="w5_story_title_5">W5 е Бета</string>
 
     <string name="unverified_token_description">Този токен изглежда подозрителен по една или няколко причини.</string>
     <string name="unverified_token_reason_1">Ниска ликвидност. Токенът може да има някаква стойност, но тя е изключително ниска.</string>
@@ -33,10 +31,8 @@
     <string name="unverified_token_reason_4">Използва се за измама. Името или изображението на токена може да води потребителите в заблуда.</string>
 
     <string name="w5_story_description_1">Изпращайте USDT без налични TON - таксите за транзакции ще бъдат покрити автоматично с няколко цента USDT.</string>
-    <string name="w5_story_description_2">W5 използва по-ефективен подход за обработка на транзакции, което означава до 25% по-ниски газови такси.</string>
     <string name="w5_story_description_3">W5 увеличава броя на едновременните операции от 4 на 255, което може да намали таксите.</string>
     <string name="w5_story_description_4">Старите акаунти и W5 използват същата възстановителна фраза - при възстановяване на акаунти на ново устройство, и старите, и новите ще се появят автоматично.</string>
-    <string name="w5_story_description_5">Стандартът W5 е в бета версия - безплатните транзакции са експериментална функция за тестване - не прехвърляйте всички активи към портфейла W5 до окончателното издание.</string>
 
     <string name="w5_add_wallet">Добавете W5 портфейл</string>
 

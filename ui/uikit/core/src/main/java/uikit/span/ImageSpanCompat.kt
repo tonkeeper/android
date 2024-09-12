@@ -21,6 +21,7 @@ class ImageSpanCompat(drawable: Drawable): ImageSpan(drawable, ALIGN_BOTTOM) {
         canvas.save()
         val transY =  top + (bottom - top) / 2 - drawable.bounds.height() / 2
         canvas.translate(x, transY.toFloat())
+        drawable.setTint(paint.color)
         drawable.draw(canvas)
         canvas.restore()
     }

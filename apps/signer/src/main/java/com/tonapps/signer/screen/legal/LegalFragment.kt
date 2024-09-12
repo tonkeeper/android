@@ -16,12 +16,12 @@ class LegalFragment: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBa
 
         val termsView = view.findViewById<View>(R.id.terms)
         termsView.setOnClickListener {
-            navigation?.openURL("https://tonkeeper.com/terms", true)
+            navigation?.openURL("https://tonkeeper.com/terms")
         }
 
         val privacyView = view.findViewById<View>(R.id.privacy)
         privacyView.setOnClickListener {
-            navigation?.openURL("https://tonkeeper.com/privacy", true)
+            navigation?.openURL("https://tonkeeper.com/privacy")
         }
     }
 

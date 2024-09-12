@@ -208,6 +208,10 @@ class SettingsRepository(
             }
         }
 
+    fun isUSDTW5(walletId: String) = walletPrefsFolder.isUSDTW5(walletId)
+
+    fun disableUSDTW5(walletId: String) = walletPrefsFolder.disableUSDTW5(walletId)
+
     fun getSpamStateTransaction(walletId: String, id: String) = walletPrefsFolder.getSpamStateTransaction(walletId, id)
 
     fun isSpamTransaction(walletId: String, id: String) = getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
@@ -321,7 +325,9 @@ class SettingsRepository(
 
     init {
         languageFlow.onEach {
-            AppCompatDelegate.setApplicationLocales(getLocales())
+            try {
+                AppCompatDelegate.setApplicationLocales(getLocales())
+            } catch (ignored: Throwable) { }
         }.launchIn(scope)
 
         scope.launch(Dispatchers.IO) {

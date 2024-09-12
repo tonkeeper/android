@@ -50,7 +50,9 @@ interface Navigation {
 
     fun remove(fragment: Fragment)
 
-    fun openURL(url: String, external: Boolean = false)
+    fun removeByClass(clazz: Class<out Fragment>)
+
+    fun openURL(url: String)
 
     fun toast(message: String, loading: Boolean, color: Int)
 

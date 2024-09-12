@@ -12,6 +12,8 @@ class WalletV3R2Contract(
 
     override val features: WalletFeature = WalletFeature.NONE
 
+    override val maxMessages: Int = 4
+
     override fun getWalletVersion() = WalletVersion.V3R2
 
     override fun getCode(): Cell {

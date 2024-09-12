@@ -8,7 +8,7 @@ import uikit.widget.webview.bridge.JsBridge
 import uikit.widget.webview.bridge.message.BridgeMessage
 
 class DAppBridge(
-    val deviceInfo: DAppDeviceEntity = DAppDeviceEntity(),
+    val deviceInfo: DAppDeviceEntity,
     val isWalletBrowser: Boolean = true,
     val protocolVersion: Int = 2,
     val send: suspend (array: JSONArray) -> String?,

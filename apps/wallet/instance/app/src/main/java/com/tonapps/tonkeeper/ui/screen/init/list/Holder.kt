@@ -19,7 +19,7 @@ import uikit.widget.CheckBoxView
 
 class Holder(
     parent: ViewGroup,
-    private val onClick: (AccountItem) -> Boolean
+    private val onClick: (AccountItem, Boolean) -> Boolean
 ): BaseListHolder<AccountItem>(parent, R.layout.view_select_wallet) {
 
     private val addressView = findViewById<AppCompatTextView>(R.id.address)
@@ -28,16 +28,18 @@ class Holder(
 
     override fun onBind(item: AccountItem) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
-            if (!onClick(item)) {
-                itemView.reject()
-            }
-        }
+        itemView.setOnClickListener { selectedView.toggle() }
 
         itemView.isEnabled = !item.ledgerAdded
         addressView.text = item.address.shortAddress
         selectedView.checked = item.selected
         selectedView.isEnabled = !item.ledgerAdded
+        selectedView.doOnCheckedChanged = { isChecked ->
+            if (!onClick(item, isChecked)) {
+                selectedView.checked = !isChecked
+                itemView.reject()
+            }
+        }
         setDetails(item.walletVersion, item.balanceFormat, item.tokens, item.collectibles, item.ledgerIndex != null, item.ledgerAdded)
     }
 

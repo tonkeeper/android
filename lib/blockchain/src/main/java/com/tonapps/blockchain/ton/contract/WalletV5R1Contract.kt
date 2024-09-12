@@ -72,6 +72,8 @@ class WalletV5R1Contract(
 
     override val features: WalletFeature = WalletFeature.GASLESS or WalletFeature.SIGNED_INTERNALS
 
+    override val maxMessages: Int = 255
+
     constructor(publicKey: PublicKeyEd25519, network: TonNetwork) : this(
         publicKey = publicKey,
         networkGlobalId = network.value
@@ -114,8 +116,8 @@ class WalletV5R1Contract(
         queryId: BigInt?,
         vararg gifts: WalletTransfer
     ): Cell {
-        if (gifts.size > 255) {
-            throw IllegalArgumentException("Maximum number of messages in a single transfer is 255")
+        if (gifts.size > maxMessages) {
+            throw IllegalArgumentException("Maximum number of messages in a single transfer is $maxMessages")
         }
 
         val actions = packV5Actions(*gifts)

@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.koin
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.manager.AssetsManager
+import com.tonapps.tonkeeper.manager.BalancesManager
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -44,6 +46,8 @@ val koinModel = module {
     singleOf(::HistoryHelper)
     singleOf(::AssetsManager)
     singleOf(::BillingManager)
+    singleOf(::BalancesManager)
+    singleOf(::TransactionManager)
 
     uiAdapter { WalletAdapter(get()) }
 

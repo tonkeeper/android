@@ -1,8 +1,6 @@
 package com.tonapps.wallet.data.backup
 
 import android.content.Context
-import android.util.Log
-import com.tonapps.extensions.isMainVersion
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.backup.source.LocalDataSource
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -12,9 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -76,7 +71,7 @@ class BackupRepository(
 
     fun addBackup(
         walletId: String,
-        source: BackupEntity.Source,
+        source: BackupEntity.Source = BackupEntity.Source.LOCAL,
         date: Long = System.currentTimeMillis()
     ): BackupEntity {
         val entity = localDataSource.addBackup(walletId, source, date)

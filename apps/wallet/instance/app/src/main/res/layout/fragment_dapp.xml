@@ -93,7 +93,8 @@
             android:id="@+id/web_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:overScrollMode="ifContentScrolls"/>
+            android:overScrollMode="ifContentScrolls"
+            android:clipToPadding="false"/>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </uikit.widget.ColumnLayout>

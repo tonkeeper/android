@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
@@ -66,6 +67,7 @@ class WalletViewModel(
     private val ratesRepository: RatesRepository,
     private val batteryRepository: BatteryRepository,
     private val billingManager: BillingManager,
+    private val transactionManager: TransactionManager
 ): BaseWalletVM(app) {
 
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
@@ -107,10 +109,18 @@ class WalletViewModel(
     private val _streamFLow = combine(updateWalletSettings, _lastLtFlow) { _, _ -> }
 
     init {
-        collectFlow(accountRepository.realtimeEventsFlow) { event ->
+        /*collectFlow(accountRepository.realtimeEventsFlow) { event ->
             if (event is WalletEvent.Boc) {
                 setStatus(Status.SendingTransaction)
             } else if (event is WalletEvent.Transaction) {
+
+            }
+        }*/
+
+        collectFlow(transactionManager.eventsFlow(wallet)) { event ->
+            if (event.inProgress) {
+                setStatus(Status.SendingTransaction)
+            } else {
                 setStatus(Status.TransactionConfirmed)
                 delay(2000)
                 setStatus(Status.Default)

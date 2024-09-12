@@ -31,7 +31,6 @@
             android:paddingTop="16dp"
             android:paddingBottom="22dp"
             android:maxLines="4"
-            android:maxLength="220"
             android:textAppearance="@style/TextAppearance.Body1"
             android:textColor="?attr/textPrimaryColor"
             android:textCursorDrawable="@drawable/cursor"

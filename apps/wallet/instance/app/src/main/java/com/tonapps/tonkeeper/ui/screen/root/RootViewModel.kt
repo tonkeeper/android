@@ -334,7 +334,7 @@ class RootViewModel(
         if (DeepLink.isTonConnectUri(uri)) {
             resolveTonConnect(uri, wallet, refSource)
         } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
-            _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString()))
+            _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString(), wallet))
         } else if (path?.startsWith("/send") == true) {
             _eventFlow.tryEmit(RootEvent.OpenSend(wallet))
         } else if (path?.startsWith("/staking") == true) {

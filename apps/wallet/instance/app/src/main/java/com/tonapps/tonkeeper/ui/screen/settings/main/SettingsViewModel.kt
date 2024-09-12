@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.emoji.Emoji
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -16,10 +17,14 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.WalletColor
 import com.tonapps.wallet.data.backup.BackupRepository
+import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.push.PushManager
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.localization.Language
@@ -46,6 +51,8 @@ class SettingsViewModel(
     private val backupRepository: BackupRepository,
     private val pushManager: PushManager,
     private val tonConnectRepository: TonConnectRepository,
+    private val passcodeManager: PasscodeManager,
+    private val rnLegacy: RNLegacy,
 ): BaseWalletVM(application) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
@@ -80,7 +87,34 @@ class SettingsViewModel(
         }
     }
 
-    private suspend fun hasW5(wallet: WalletEntity): Boolean {
+    fun createV4R2Wallet() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val passcode = withContext(Dispatchers.Main) {
+                passcodeManager.legacyGetPasscode(context)
+            } ?: return@launch
+
+            val newLabel = Wallet.Label(
+                accountName = wallet.label.accountName + " V4R2",
+                emoji = wallet.label.emoji,
+                color = wallet.label.color
+            )
+            val walletId = AccountRepository.newWalletId()
+            val version = WalletVersion.V4R2
+            val mnemonic = accountRepository.getMnemonic(wallet.id)?.toList() ?: return@launch
+            val walletIds = listOf(walletId)
+            val versions = listOf(version)
+
+            rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
+            accountRepository.importWallet(walletIds, newLabel, mnemonic, versions, wallet.testnet)
+            backupRepository.addBackup(walletId)
+            accountRepository.setSelectedWallet(walletId)
+            withContext(Dispatchers.Main) {
+                finish()
+            }
+        }
+    }
+
+    private suspend fun hasW5(): Boolean {
         if (wallet.version == WalletVersion.V5R1) {
             return true
         } else if (wallet.type == Wallet.Type.Watch || wallet.type == Wallet.Type.Lockup || wallet.type == Wallet.Type.Ledger) {
@@ -91,6 +125,18 @@ class SettingsViewModel(
         return accountRepository.getWalletByAccountId(accountId, wallet.testnet) != null
     }
 
+    private suspend fun hasV4R2(): Boolean {
+        if (wallet.version != WalletVersion.V5R1 && wallet.version != WalletVersion.V5BETA) {
+            return true
+        }
+        if (wallet.type == Wallet.Type.Watch || wallet.type == Wallet.Type.Lockup || wallet.type == Wallet.Type.Ledger) {
+            return true
+        }
+        val v4R2Contact = BaseWalletContract.create(wallet.publicKey, "v4r2", wallet.testnet)
+        val accountId = v4R2Contact.address.toAccountId()
+        return accountRepository.getWalletByAccountId(accountId, wallet.testnet) != null
+    }
+
     private suspend fun buildUiItems(
         newWallet: WalletEntity,
         currency: WalletCurrency,
@@ -98,7 +144,8 @@ class SettingsViewModel(
         searchEngine: SearchEngine,
         hasBackup: Boolean
     ) {
-        val hasW5 = hasW5(newWallet)
+        val hasW5 = hasW5()
+        val hasV4R2 = hasV4R2()
         val uiItems = mutableListOf<Item>()
         uiItems.add(Item.Account(newWallet))
         uiItems.add(Item.Space)
@@ -127,6 +174,9 @@ class SettingsViewModel(
         }
         if (!hasW5) {
             uiItems.add(Item.W5(ListCell.Position.MIDDLE))
+        }
+        if (!hasV4R2) {
+            uiItems.add(Item.V4R2(ListCell.Position.MIDDLE))
         }
         if (!newWallet.isExternal && !api.config.batteryDisabled) {
             uiItems.add(Item.Battery(ListCell.Position.MIDDLE))

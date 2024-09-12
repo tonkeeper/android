@@ -1,6 +1,5 @@
 package com.tonapps.wallet.localization
 
-import android.util.Log
 import java.util.Locale
 
 data class Language(val code: String = DEFAULT) {

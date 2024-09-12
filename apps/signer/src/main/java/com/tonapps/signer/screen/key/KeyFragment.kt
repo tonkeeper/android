@@ -123,7 +123,7 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
         }
 
         exportTonkeeperWebView.setOnClickListener {
-            navigation?.openURL(TKDeepLink.buildLinkUriWeb(publicKey, name).toString(), true)
+            navigation?.openURL(TKDeepLink.buildLinkUriWeb(publicKey, name).toString())
         }
     }
 

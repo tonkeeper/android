@@ -36,7 +36,7 @@ class BackupScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wal
             is Item.RecoveryPhrase -> attentionDialog.show {
                 openRecoveryPhrase()
             }
-            is Item.ManualBackup -> attentionDialog.show {
+            is Item.ManualBackup, Item.ManualAccentBackup -> attentionDialog.show {
                 openRecoveryPhrase(backup = true)
             }
             is Item.Backup -> attentionDialog.show {

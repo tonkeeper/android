@@ -27,7 +27,7 @@ data class TokenEntity(
     companion object {
 
         val TON_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_ton_with_bg.toString()).build()
-        val USDT_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_usdt.toString()).build()
+        val USDT_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_usdt_with_bg.toString()).build()
 
         val TON = TokenEntity(
             address = "TON",

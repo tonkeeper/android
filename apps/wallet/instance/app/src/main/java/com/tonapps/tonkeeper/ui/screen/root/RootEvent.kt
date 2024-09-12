@@ -13,7 +13,8 @@ sealed class RootEvent {
     data class Toast(val resId: Int): RootEvent()
 
     data class OpenTab(
-        val link: String
+        val link: String,
+        val wallet: WalletEntity
     ): RootEvent()
 
     data class Swap(

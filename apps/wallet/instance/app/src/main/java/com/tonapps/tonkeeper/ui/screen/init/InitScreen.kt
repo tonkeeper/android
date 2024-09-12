@@ -53,7 +53,9 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
     private fun onChildFragment(fragment: Fragment) {
         if (fragment is PushScreen) {
             headerView.background = null
+            headerView.actionView.visibility = View.GONE
         } else {
+            headerView.actionView.visibility = View.VISIBLE
             headerView.setBackgroundResource(uikit.R.drawable.bg_page_gradient)
         }
     }

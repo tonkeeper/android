@@ -4,6 +4,9 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -65,7 +68,11 @@ class TokenViewModel(
             load(token)
         }
 
-        combine(tokenFlow, chartFlow) { token, chart ->
+        combine(
+            tokenFlow,
+            chartFlow,
+            settingsRepository.walletPrefsChangedFlow
+        ) { token, chart, _ ->
             buildItems(token, chart)
         }.launchIn(viewModelScope)
     }
@@ -93,7 +100,21 @@ class TokenViewModel(
         }
     }
 
-    private fun buildItems(token: AccountTokenEntity, charts: List<ChartEntity>) {
+    private suspend fun hasW5(): Boolean {
+        if (wallet.version == WalletVersion.V5R1) {
+            return true
+        } else if (wallet.type == Wallet.Type.Watch || wallet.type == Wallet.Type.Lockup || wallet.type == Wallet.Type.Ledger) {
+            return true
+        }
+        val w5Contact = BaseWalletContract.create(wallet.publicKey, "v5r1", wallet.testnet)
+        val accountId = w5Contact.address.toAccountId()
+        return accountRepository.getWalletByAccountId(accountId, wallet.testnet) != null
+    }
+
+    private suspend fun buildItems(
+        token: AccountTokenEntity,
+        charts: List<ChartEntity>
+    ) {
         val items = mutableListOf<Item>()
         items.add(
             Item.Balance(
@@ -107,6 +128,13 @@ class TokenViewModel(
             token = token.balance.token,
             wallet = wallet,
         ))
+        if (token.isUsdt && !wallet.isW5 && (wallet.hasPrivateKey || wallet.isExternal) && settingsRepository.isUSDTW5(wallet.id)) {
+            items.add(Item.W5Banner(
+                wallet = wallet,
+                addButton = !hasW5()
+            ))
+        }
+
         if (token.verified) {
             items.add(
                 Item.Price(

@@ -9,7 +9,7 @@ val SupportedLanguages = listOf(
     Language("ru-RU"),
     Language("uk-UA"),
     Language("uz-UZ"),
-    Language("id-ID"),
+    Language("in"),
     Language("es-ES"),
     Language("tr-TR"),
     Language("zh-CN"),

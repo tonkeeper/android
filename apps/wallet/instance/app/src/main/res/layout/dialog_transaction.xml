@@ -172,11 +172,6 @@
             android:layout_height="wrap_content"/>
 
         <com.tonapps.tonkeeper.view.TransactionDetailView
-            android:id="@+id/tx"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <com.tonapps.tonkeeper.view.TransactionDetailView
             android:id="@+id/fee"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>

@@ -259,7 +259,7 @@ class RootActivity: NavigationActivity() {
         }
     }
 
-    override fun openURL(url: String, external: Boolean) {
+    override fun openURL(url: String) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)

@@ -258,15 +258,19 @@ class RootActivity: BaseWalletActivity() {
         processDeepLink(uri)
     }
 
-    override fun openURL(url: String, external: Boolean) {
+    override fun openURL(url: String) {
         if (url.isBlank()) {
             return
         }
         val uri = url.toUri()
-        if (external) {
-            openExternalLink(uri)
-        } else {
+        if (uri.host == "t.me") {
+            openTelegramLink(uri)
+        } else if (uri.scheme == "mailto") {
+            openEmail(uri)
+        } else if (uri.scheme == "tonkeeper" || uri.scheme == "ton" || uri.scheme == "tc" || uri.host == "app.tonkeeper.com") {
             processDeepLink(uri)
+        } else {
+            openExternalLink(uri)
         }
     }
 

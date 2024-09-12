@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation
@@ -21,6 +23,9 @@ abstract class BaseWalletScreen<C: ScreenContext>(
     private companion object {
         private const val ARG_SCREEN_CONTEXT = "_screen_context"
     }
+
+    val remoteConfig: ConfigEntity?
+        get() = context?.remoteConfig
 
     override val uiContext: Context
         get() = requireContext()

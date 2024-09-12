@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
-import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.flattenFirst
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.Transaction
@@ -14,6 +12,7 @@ import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.api.API
@@ -29,27 +28,18 @@ import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.StakingUtils
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
-import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
-import io.ktor.util.reflect.instanceOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,7 +48,6 @@ import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
 import uikit.extensions.collectFlow
-import uikit.widget.ProcessTaskView
 
 class StakingViewModel(
     app: Application,
@@ -71,6 +60,7 @@ class StakingViewModel(
     private val passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
     private val api: API,
+    private val transactionManager: TransactionManager,
 ) : BaseWalletVM(app) {
 
     data class AvailableUiState(
@@ -316,7 +306,7 @@ class StakingViewModel(
         val contract = wallet.contract
         val message = contract.createTransferMessageCell(contract.address, seqno, signedBody)
 
-        val state = api.sendToBlockchain(message, wallet.testnet)
+        val state = transactionManager.send(wallet, message, false)
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)
         }
@@ -336,7 +326,7 @@ class StakingViewModel(
             unsignedBody = unsignedBody
         )
 
-        val state = api.sendToBlockchain(message, wallet.testnet)
+        val state = transactionManager.send(wallet, message, false)
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)
         }

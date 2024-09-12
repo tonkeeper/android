@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.widget.AppCompatTextView
@@ -30,6 +31,38 @@ class WebScreen: BaseFragment(R.layout.fragment_web) {
     private lateinit var refreshView: SwipeRefreshLayout
     private lateinit var webView: WebViewFixed
 
+    private val webViewCallback = object : WebViewFixed.Callback() {
+        override fun onLoadResource(url: String): Boolean {
+            return !DeepLink.isSupportedUrl(url)
+        }
+
+        override fun onReceivedTitle(title: String) {
+            titleView.text = title
+        }
+
+        override fun onProgressChanged(newProgress: Int) {
+            super.onProgressChanged(newProgress)
+            progressBar.progress = newProgress.coerceIn(0, 100)
+        }
+
+        /*override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
+            val uri = request.url
+            return DeepLink.openUri(requireContext(), uri)
+        }*/
+
+        override fun onPageStarted(url: String, favicon: Bitmap?) {
+            super.onPageStarted(url, favicon)
+            refreshView.isRefreshing = true
+            subtitleView.text = Uri.parse(url).host
+            checkBack()
+        }
+
+        override fun onPageFinished(url: String) {
+            super.onPageFinished(url)
+            refreshView.isRefreshing = false
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         backView = view.findViewById(R.id.back)
@@ -48,43 +81,7 @@ class WebScreen: BaseFragment(R.layout.fragment_web) {
         refreshView.setColorSchemeColors(requireContext().tabBarActiveIconColor)
 
         webView = view.findViewById(R.id.web_view)
-        webView.webViewClient = object : WebViewClient() {
-
-            override fun onLoadResource(view: WebView?, url: String?) {
-                if (DeepLink.isSupportedUrl(url)) {
-                    return
-                }
-                super.onLoadResource(view, url)
-            }
-
-            /*override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                val uri = request.url
-                return DeepLink.openUri(requireContext(), uri)
-            }*/
-
-            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                super.onPageStarted(view, url, favicon)
-                refreshView.isRefreshing = true
-                subtitleView.text = Uri.parse(url).host
-                checkBack()
-            }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                refreshView.isRefreshing = false
-            }
-
-        }
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onReceivedTitle(view: WebView?, title: String?) {
-                titleView.text = title
-            }
-
-            override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                super.onProgressChanged(view, newProgress)
-                progressBar.progress = newProgress.coerceIn(0, 100)
-            }
-        }
+        webView.addCallback(webViewCallback)
         webView.loadUrl(startUrl)
 
         refreshView.setOnRefreshListener {
@@ -123,6 +120,7 @@ class WebScreen: BaseFragment(R.layout.fragment_web) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        webView.removeCallback(webViewCallback)
         webView.destroy()
     }
 

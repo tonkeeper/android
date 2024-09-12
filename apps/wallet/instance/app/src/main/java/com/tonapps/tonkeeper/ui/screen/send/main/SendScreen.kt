@@ -31,6 +31,7 @@ import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.tonkeeper.ui.screen.signer.qr.SignerQRScreen
+import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
@@ -407,6 +408,7 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
     private fun setSuccess() {
         processTaskView.state = ProcessTaskView.State.SUCCESS
         navigation?.openURL("tonkeeper://activity")
+        navigation?.removeByClass(TokenScreen::class.java)
         postDelayed(2000, ::finish)
     }
 

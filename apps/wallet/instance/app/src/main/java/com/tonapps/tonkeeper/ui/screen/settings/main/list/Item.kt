@@ -226,6 +226,15 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
+    data class V4R2(
+        override val position: ListCell.Position
+    ): Icon(
+        titleRes = Localization.v4r2_wallet,
+        iconRes = UIKitIcon.ic_wallet_28,
+        position = position,
+        secondaryIcon = false
+    )
+
     data class Battery(
         override val position: ListCell.Position
     ): Icon(

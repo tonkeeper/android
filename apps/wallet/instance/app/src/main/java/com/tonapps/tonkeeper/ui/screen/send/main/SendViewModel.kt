@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.extensions.ErrorForUserException
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
@@ -17,6 +18,7 @@ import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.with
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.SendNftHelper
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
@@ -87,6 +89,7 @@ class SendViewModel(
     private val passcodeManager: PasscodeManager,
     private val collectiblesRepository: CollectiblesRepository,
     private val batteryRepository: BatteryRepository,
+    private val transactionManager: TransactionManager,
 ) : BaseWalletVM(app) {
 
     private val isNft: Boolean
@@ -517,8 +520,9 @@ class SendViewModel(
             }
         } else {
             val message = transfer.toSignedMessage(fakePrivateKey, false)
+            val emulated = api.emulate(message, transfer.wallet.testnet)
 
-            val fee = api.emulate(message, transfer.wallet.testnet)?.totalFees ?: 0
+            val fee = emulated?.totalFees ?: 0
 
             sendTransferType = SendTransferType.Default
 
@@ -684,6 +688,9 @@ class SendViewModel(
 
     fun sendLedgerSignedMessage(body: Cell) {
         transferFlow.take(1).map { transfer ->
+            if (!transfer.isValidComment) {
+                throw ErrorForUserException(Localization.comment_ascii_text)
+            }
             Pair(transfer.transferMessage(body), transfer.wallet)
         }.sendTransfer()
     }
@@ -729,20 +736,15 @@ class SendViewModel(
         }.sendTransfer()
     }
 
-    private suspend fun sendToBlockchain(
+    private suspend fun send(
         message: Cell,
         wallet: WalletEntity
     ) {
-        val state = if (sendTransferType is SendTransferType.WithExcessesAddress) {
-            val tonProofToken = accountRepository.requestTonProofToken(
-                wallet = wallet
-            ) ?: throw IllegalStateException("Can't find TonProof token")
-
-            api.sendToBlockchainWithBattery(message, tonProofToken, wallet.testnet)
-        } else {
-            api.sendToBlockchain(message, wallet.testnet)
-        }
-
+        val state = transactionManager.send(
+            wallet = wallet,
+            boc = message,
+            withBattery = sendTransferType is SendTransferType.WithExcessesAddress
+        )
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)
         }
@@ -750,7 +752,7 @@ class SendViewModel(
 
     private fun Flow<Pair<Cell, WalletEntity>>.sendTransfer() {
         this.map { (boc, wallet) ->
-            sendToBlockchain(boc, wallet)
+            send(boc, wallet)
             AnalyticsHelper.trackEvent("send_success")
         }.catch {
             _uiEventFlow.tryEmit(SendEvent.Failed(it))

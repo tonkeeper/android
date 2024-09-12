@@ -21,6 +21,7 @@ import com.tonapps.uikit.color.buttonSecondaryForegroundColor
 import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
@@ -32,7 +33,9 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
 
     override val scaleBackground: Boolean = true
 
-    override val viewModel: PickerViewModel by viewModel()
+    override val viewModel: PickerViewModel by viewModel {
+        parametersOf(requireArguments().getString(ARG_WALLET_ID_FOCUS)!!)
+    }
 
     private val adapter = Adapter { wallet ->
         viewModel.setWallet(wallet)
@@ -133,6 +136,13 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
     }
 
     companion object {
-        fun newInstance() = PickerScreen()
+
+        private const val ARG_WALLET_ID_FOCUS = "wallet_id_focus"
+
+        fun newInstance(walletIdFocus: String = ""): PickerScreen {
+            val fragment = PickerScreen()
+            fragment.putStringArg(ARG_WALLET_ID_FOCUS, walletIdFocus)
+            return fragment
+        }
     }
 }

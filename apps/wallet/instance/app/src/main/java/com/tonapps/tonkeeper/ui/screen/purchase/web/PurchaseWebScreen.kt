@@ -44,6 +44,30 @@ class PurchaseWebScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wa
     private lateinit var loaderView: LoaderView
     private lateinit var webView: WebViewFixed
 
+    private val webViewCallback = object : WebViewFixed.Callback() {
+
+        override fun onPageFinished(url: String) {
+            super.onPageFinished(url)
+            webView.visibility = View.VISIBLE
+            loaderView.visibility = View.GONE
+        }
+
+        override fun onPageStarted(url: String, favicon: Bitmap?) {
+            super.onPageStarted(url, favicon)
+            if (url.matches(".*#endsession".toRegex())) {
+                finish()
+                return
+            }
+
+            val successUrlPattern = method.successUrlPattern?.pattern ?: return
+            val regexp = Regex(successUrlPattern, RegexOption.IGNORE_CASE)
+
+            regexp.find(url)?.groupValues ?: return
+            AnalyticsHelper.trackEvent("buy_crypto")
+            finish()
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
@@ -52,33 +76,7 @@ class PurchaseWebScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wa
         loaderView = view.findViewById(R.id.loader)
 
         webView = view.findViewById(R.id.web)
-        webView.webChromeClient = object : android.webkit.WebChromeClient() {
-
-        }
-        webView.webViewClient = object : android.webkit.WebViewClient() {
-
-            override fun onPageFinished(view: WebView, url: String) {
-                super.onPageFinished(view, url)
-                view.visibility = View.VISIBLE
-                loaderView.visibility = View.GONE
-            }
-
-            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                super.onPageStarted(view, url, favicon)
-                if (url?.matches(".*#endsession".toRegex()) == true) {
-                    finish()
-                    return
-                }
-
-                val successUrlPattern = method.successUrlPattern?.pattern ?: return
-                val regexp = Regex(successUrlPattern, RegexOption.IGNORE_CASE)
-
-                regexp.find(url ?: "")?.groupValues ?: return
-                AnalyticsHelper.trackEvent("buy_crypto")
-                finish()
-            }
-        }
-
+        webView.addCallback(webViewCallback)
         webView.loadUrl(viewModel.replaceUrl(method.actionButton.url))
     }
 
@@ -95,6 +93,7 @@ class PurchaseWebScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wa
     override fun onDestroyView() {
         super.onDestroyView()
         navigation?.add(PurchaseScreen.newInstance(screenContext.wallet))
+        webView.removeCallback(webViewCallback)
         webView.destroy()
     }
 

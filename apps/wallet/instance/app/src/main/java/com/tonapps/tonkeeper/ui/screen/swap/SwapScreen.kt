@@ -15,6 +15,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.getDimensionPixelSize
 import uikit.widget.HeaderView
+import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.BridgeWebView
 
 class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet {
@@ -25,6 +26,13 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
 
     private lateinit var closeView: View
     private lateinit var webView: BridgeWebView
+
+    private val webViewCallback = object : WebViewFixed.Callback() {
+        override fun onPageFinished(url: String) {
+            super.onPageFinished(url)
+            hideCloseView()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +45,7 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
         closeView.setOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web)
+        webView.addCallback(webViewCallback)
         webView.clipToPadding = false
         webView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
         webView.loadUrl(getUri().toString())
@@ -45,12 +54,6 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
             close = ::finish,
             sendTransaction = ::sing
         )
-        webView.addClientCallback(object : WebViewClient() {
-            override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                hideCloseView()
-            }
-        })
     }
 
     private fun hideCloseView() {
@@ -79,6 +82,7 @@ class SwapScreen: BaseFragment(R.layout.fragment_swap), BaseFragment.BottomSheet
     }
 
     override fun onDestroyView() {
+        webView.removeCallback(webViewCallback)
         webView.destroy()
         super.onDestroyView()
     }

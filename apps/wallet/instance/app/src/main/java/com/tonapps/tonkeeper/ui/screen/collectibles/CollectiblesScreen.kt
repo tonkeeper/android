@@ -55,6 +55,7 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
                 headerView.setSubtitle(Localization.updating)
             } else if (state is UiListState.Empty) {
                 setEmptyState()
+                headerView.setSubtitle(null)
             } else if (state is UiListState.Items) {
                 setListState()
                 adapter.submitList(state.items)

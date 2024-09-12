@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import kotlinx.coroutines.CoroutineScope
 
@@ -14,6 +15,14 @@ internal class TokenPrefsFolder(context: Context, scope: CoroutineScope): BaseSe
     }
 
     fun get(walletId: String, tokenAddress: String, blacklist: Boolean): TokenPrefsEntity {
+        if (blacklist && !contains(keyState(walletId, tokenAddress))) {
+            return TokenPrefsEntity(
+                pinned = false,
+                state = TokenPrefsEntity.State.SPAM,
+                hidden = true,
+            )
+        }
+
         val state = getState(walletId, tokenAddress)
         val hidden = getHidden(walletId, tokenAddress)
         val pinned = getPinned(walletId, tokenAddress)

@@ -35,7 +35,13 @@ data class NftEntity(
         get() = metadata.description ?: ""
 
     val collectionName: String
-        get() = collection?.name ?: ""
+        get() {
+            val name = collection?.name
+            if (name.isNullOrBlank() && isDomain) {
+                return "TON DNS"
+            }
+            return name ?: ""
+        }
 
     val collectionDescription: String
         get() = collection?.description ?: ""

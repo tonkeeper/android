@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder
 
 import android.content.res.ColorStateList
+import android.graphics.drawable.RippleDrawable
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -17,12 +18,16 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
+import uikit.drawable.CellBackgroundDrawable
 import uikit.extensions.drawable
 
 class WalletHolder(
     parent: ViewGroup,
     private val onClick: (WalletEntity) -> Unit
 ): Holder<Item.Wallet>(parent, R.layout.view_wallet_item) {
+
+    private val backgroundDrawable: CellBackgroundDrawable?
+        get() = CellBackgroundDrawable.find(itemView)
 
     private val colorView = findViewById<View>(R.id.wallet_color)
     private val emojiView = findViewById<EmojiView>(R.id.wallet_emoji)
@@ -43,6 +48,7 @@ class WalletHolder(
         updateBalance(item)
         updateSelected(item)
         updateEditMode(item)
+        updateFocusAnimation(item)
     }
 
     fun updateBalance(item: Item.Wallet) {
@@ -76,5 +82,14 @@ class WalletHolder(
 
     fun updatePosition(item: Item.Wallet) {
         itemView.background = item.position.drawable(context)
+    }
+
+    fun updateFocusAnimation(item: Item.Wallet) {
+        val drawable = backgroundDrawable ?: return
+        if (item.focusAnimation) {
+            drawable.start()
+        } else {
+            drawable.stop()
+        }
     }
 }

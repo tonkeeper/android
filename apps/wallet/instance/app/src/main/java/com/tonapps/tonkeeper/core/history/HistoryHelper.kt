@@ -297,9 +297,9 @@ class HistoryHelper(
                     pending = pending,
                     position = ListCell.getPosition(actions.size + positionExtra, actionIndex),
                     fee = if (fee.isPositive) CurrencyFormatter.format(TokenEntity.TON.symbol, fee, TokenEntity.TON.decimals) else null,
-                    feeInCurrency = if (fee.isPositive) CurrencyFormatter.formatFiat(currency.code, feeInCurrency) else null,
+                    feeInCurrency = CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
                     refund = if (refund.isPositive) CurrencyFormatter.format(TokenEntity.TON.symbol, refund, TokenEntity.TON.decimals) else null,
-                    refundInCurrency = if (fee.isPositive) CurrencyFormatter.formatFiat(currency.code, refundInCurrency) else null,
+                    refundInCurrency = CurrencyFormatter.formatFiat(currency.code, refundInCurrency),
                     lt = event.lt,
                     hiddenBalance = hiddenBalances
                 ))
@@ -367,10 +367,11 @@ class HistoryHelper(
                 timestamp = timestamp,
                 date = date,
                 dateDetails = dateDetails,
-                isOut = isOut,
+                isOut = false,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonPreview.verification != JettonVerificationType.whitelist,
+                senderAddress = wallet.address,
                 isScam = isScam,
                 wallet = wallet,
             )

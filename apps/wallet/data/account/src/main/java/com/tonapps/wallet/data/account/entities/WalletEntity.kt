@@ -23,6 +23,7 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 
+
 data class WalletEntity(
     val id: String,
     val publicKey: PublicKeyEd25519,
@@ -72,9 +73,6 @@ data class WalletEntity(
     val hasPrivateKey: Boolean
         get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet || type == Wallet.Type.Lockup
 
-    val isSigner: Boolean
-        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR
-
     val accountId: String = contract.address.toAccountId()
 
     val address: String = contract.address.toWalletAddress(testnet)
@@ -85,6 +83,9 @@ data class WalletEntity(
     val isLedger: Boolean
         get() = type == Wallet.Type.Ledger
 
+    val isW5: Boolean
+        get() = version == WalletVersion.V5BETA || version == WalletVersion.V5R1
+
     val isExternal: Boolean
         get() = signer || isLedger
 
@@ -94,7 +95,7 @@ data class WalletEntity(
         type = parcel.readEnum(Wallet.Type::class.java)!!,
         version = parcel.readEnum(WalletVersion::class.java)!!,
         label = parcel.readParcelableCompat()!!,
-        ledger = parcel.readParcelableCompat()!!
+        ledger = parcel.readParcelableCompat()
     )
 
     fun isMyAddress(address: String): Boolean {

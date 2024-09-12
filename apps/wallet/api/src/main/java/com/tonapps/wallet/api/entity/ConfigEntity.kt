@@ -41,6 +41,7 @@ data class ConfigEntity(
     val batteryMaxInputAmount: String,
     val batteryRefundEndpoint: String,
     val batteryPromoDisabled: Boolean,
+    val stakingInfoUrl: String,
 ): Parcelable {
 
     val swapUri: Uri
@@ -87,6 +88,7 @@ data class ConfigEntity(
         batteryMaxInputAmount = json.optString("batteryMaxInputAmount", "3"),
         batteryRefundEndpoint = json.optString("batteryRefundEndpoint", "https://battery-refund-app.vercel.app"),
         batteryPromoDisabled = json.optBoolean("disable_battery_promo_module", true),
+        stakingInfoUrl = json.getString("stakingInfoUrl"),
     )
 
     constructor() : this(
@@ -123,6 +125,7 @@ data class ConfigEntity(
         batteryMaxInputAmount = "3",
         batteryRefundEndpoint = "https://battery-refund-app.vercel.app",
         batteryPromoDisabled = false,
+        stakingInfoUrl = "https://ton.org/stake",
     )
 
     companion object {

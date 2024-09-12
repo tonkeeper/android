@@ -413,7 +413,7 @@ class TonConnectRepository(
             type = type
         )
         val items = createLedgerItems(wallet, requestItems, proofEntity)
-        val res = DAppEventSuccessEntity(items)
+        val res = DAppEventSuccessEntity(items, wallet.contract.maxMessages)
         send(app, res.toJSON())
         firebaseToken?.let {
             subscribePush(wallet, app, it, enablePush, false)
@@ -440,7 +440,7 @@ class TonConnectRepository(
                 type = type
             )
             val items = createItems(app, wallet, privateKey, requestItems)
-            val res = DAppEventSuccessEntity(items)
+            val res = DAppEventSuccessEntity(items, wallet.contract.maxMessages)
             send(app, res.toJSON())
             firebaseToken?.let {
                 subscribePush(wallet, app, it, enablePush, false)
@@ -449,7 +449,7 @@ class TonConnectRepository(
             res.copy()
         } catch (e: Throwable) {
             Log.e("TonConnectRepository", "connect error", e)
-            DAppEventSuccessEntity(emptyList())
+            DAppEventSuccessEntity(emptyList(), wallet.contract.maxMessages)
         }
     }
 
@@ -463,7 +463,7 @@ class TonConnectRepository(
             publicKey = wallet.publicKey,
             stateInit = wallet.contract.stateInit
         ))
-        DAppEventSuccessEntity(items)
+        DAppEventSuccessEntity(items, wallet.contract.maxMessages)
     }
 
     private fun createLedgerItems(

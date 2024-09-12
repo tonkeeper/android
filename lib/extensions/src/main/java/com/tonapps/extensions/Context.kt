@@ -16,6 +16,7 @@ import androidx.security.crypto.MasterKeys
 import java.io.File
 import java.security.spec.AlgorithmParameterSpec
 import java.util.Locale
+import java.util.concurrent.CancellationException
 
 val isUIThread: Boolean
     get() = Thread.currentThread() == android.os.Looper.getMainLooper().thread
@@ -53,9 +54,6 @@ val Context.appVersionName: String
 val Context.appVersionCode: Long
     get() = packageInfo.versionCodeCompat
 
-val Context.isMainVersion: Boolean
-    get() = packageInfo.packageName == "com.ton_keeper"
-
 fun Context.prefs(name: String): SharedPreferences {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
@@ -74,6 +72,9 @@ val Context.activity: ComponentActivity?
 
 
 fun Context.logError(e: Throwable) {
+    if (e is CancellationException) {
+        return
+    }
     //
 }
 

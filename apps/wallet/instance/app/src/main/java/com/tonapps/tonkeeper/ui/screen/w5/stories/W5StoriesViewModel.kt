@@ -90,9 +90,9 @@ class W5StoriesViewModel(
             val passcode = passcodeManager.requestValidPasscode(context)
             rnLegacy.addMnemonics(passcode, listOf(wallet.id), mnemonic.toList())
             wallet
-        }.onEach { wallet ->
+        }.map { wallet ->
             backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)
-            accountRepository.setSelectedWallet(wallet.id)
-        }.flowOn(Dispatchers.IO).take(1)
+            wallet.id
+        }.flowOn(Dispatchers.IO)
 
 }

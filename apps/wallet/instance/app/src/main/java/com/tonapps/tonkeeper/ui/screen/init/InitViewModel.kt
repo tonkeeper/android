@@ -71,6 +71,7 @@ class InitViewModel(
     private val savedState = InitModelState(savedStateHandle)
     private val type = args.type
     private val testnet: Boolean = type == InitArgs.Type.Testnet
+    private var walletsCount: Int? = null
 
     private val tonNetwork: TonNetwork
         get() = if (testnet) TonNetwork.TESTNET else TonNetwork.MAINNET
@@ -135,14 +136,17 @@ class InitViewModel(
         routeTo(InitRoute.LabelAccount)
     }
 
-    fun toggleAccountSelection(address: String): Boolean {
+    fun toggleAccountSelection(address: String, selected: Boolean): Boolean {
         val items = getAccounts().toMutableList()
         val index = items.indexOfFirst { it.address.toRawAddress() == address }
         if (index == -1) {
             return false
         }
         val oldItem = items[index]
-        val newItem = oldItem.copy(selected = !oldItem.selected)
+        if (oldItem.selected == selected) {
+            return true
+        }
+        val newItem = oldItem.copy(selected = selected)
         items[index] = newItem
         setAccounts(items.toList())
         return true
@@ -268,7 +272,7 @@ class InitViewModel(
         }
     }
 
-    private fun setWatchAccount(account: AccountDetailsEntity?) {
+    private suspend fun setWatchAccount(account: AccountDetailsEntity?) {
         val oldAccount = getWatchAccount()
         if (oldAccount?.equals(account) == true) {
             return
@@ -276,10 +280,22 @@ class InitViewModel(
 
         savedState.watchAccount = account
 
-        val isFirstWallet = accountRepository.selectedStateFlow.value == AccountRepository.SelectedState.Empty
-        val defaultTitle = getString(if (isFirstWallet) Localization.app_name else Localization.wallet)
+        setLabelName(account?.name ?: getDefaultWalletName())
+    }
 
-        setLabelName(account?.name ?: defaultTitle)
+    private suspend fun getDefaultWalletName(): String {
+        val count = getWalletsCount()
+        return if (count == 0) {
+            getString(Localization.app_name)
+        } else {
+            getString(Localization.wallet) + " " + (count + 1)
+        }
+    }
+
+    private suspend fun getWalletsCount(): Int {
+        return walletsCount ?: accountRepository.getWallets().size.also {
+            walletsCount = it
+        }
     }
 
     fun getWatchAccount(): AccountDetailsEntity? {
@@ -291,8 +307,8 @@ class InitViewModel(
     }
 
     fun setAccounts(accounts: List<AccountItem>) {
-        savedState.accounts = accounts.toList()
-        _accountsFlow.tryEmit(accounts.toList())
+        savedState.accounts = accounts.map { it.copy() }
+        _accountsFlow.tryEmit(accounts.map { it.copy() })
     }
 
     private fun getSelectedAccounts(): List<AccountItem> {
@@ -305,6 +321,16 @@ class InitViewModel(
 
     fun setLabel(label: Wallet.Label) {
         savedState.label = label
+    }
+
+    private suspend fun getFixedLabel(): Wallet.Label {
+        val label = getLabel()
+        if (label.name.isBlank()) {
+            return label.copy(
+                accountName = getDefaultWalletName()
+            )
+        }
+        return label
     }
 
     fun getLabel(): Wallet.Label {
@@ -395,7 +421,7 @@ class InitViewModel(
 
     private suspend fun saveWatchWallet(): WalletEntity {
         val account = getWatchAccount() ?: throw IllegalStateException("Account is not set")
-        val label = getLabel()
+        val label = getFixedLabel()
         val publicKey = api.safeGetPublicKey(account.address, testnet)
 
         return accountRepository.addWatchWallet(label, publicKey, account.walletVersion)
@@ -406,7 +432,7 @@ class InitViewModel(
         val walletId = AccountRepository.newWalletId()
         saveMnemonic(context, listOf(walletId), mnemonic)
 
-        val label = getLabel()
+        val label = getFixedLabel()
         val wallet = accountRepository.addNewWallet(walletId, label, mnemonic)
 
         AnalyticsHelper.trackEvent("generate_wallet")
@@ -427,7 +453,7 @@ class InitViewModel(
         val ids = versions.map { AccountRepository.newWalletId() }
         saveMnemonic(context, ids, mnemonic)
 
-        val label = getLabel()
+        val label = getFixedLabel()
         val wallets = accountRepository.importWallet(ids, label, mnemonic, versions, testnet)
         AnalyticsHelper.trackEvent("import_wallet")
         wallets
@@ -441,7 +467,7 @@ class InitViewModel(
             ledgerConnectData.accounts.find { account -> account.path.index == selectedAccount.ledgerIndex }
                 ?: throw IllegalStateException("Ledger account is not found")
         }
-        val label = getLabel()
+        val label = getFixedLabel()
 
         return accountRepository.pairLedger(
             label = label,
@@ -452,7 +478,7 @@ class InitViewModel(
 
     private suspend fun signerWallets(qr: Boolean): List<WalletEntity> {
         val versions = getSelectedAccounts().map { it.walletVersion }
-        val label = getLabel()
+        val label = getFixedLabel()
         val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
 
         return accountRepository.pairSigner(label, publicKey.publicKey, versions, qr)
@@ -461,7 +487,7 @@ class InitViewModel(
     private suspend fun saveMnemonic(
         context: Context,
         walletIds: List<String>,
-        list: List<String>
+        mnemonic: List<String>
     ) = withContext(Dispatchers.IO) {
         var passcode = savedState.passcode
         if (passcode == null) {
@@ -472,6 +498,6 @@ class InitViewModel(
         if (passcode.isNullOrBlank()) {
             throw IllegalStateException("wrong passcode")
         }
-        rnLegacy.addMnemonics(passcode, walletIds, list)
+        rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
     }
 }

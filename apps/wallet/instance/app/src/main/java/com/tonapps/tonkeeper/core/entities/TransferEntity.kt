@@ -17,6 +17,7 @@ import com.tonapps.security.Security
 import com.tonapps.security.hex
 import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.wallet.api.entity.BalanceEntity
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.events.CommentEncryption
 import org.ton.api.pk.PrivateKeyEd25519
@@ -45,6 +46,7 @@ data class TransferEntity(
     val nftAddress: String? = null,
     val commentEncrypted: Boolean,
     val queryId: BigInteger = newWalletQueryId(),
+    val tokenPayload: TokenEntity.TransferPayload?
 ) {
 
     val contract: BaseWalletContract
@@ -57,7 +59,13 @@ data class TransferEntity(
         get() = nftAddress != null
 
     val stateInit: StateInit?
-        get() = if (seqno == 0) contract.stateInit else null
+        get() {
+            return if (seqno == 0) {
+                tokenPayload?.stateInit ?: contract.stateInit
+            } else {
+                tokenPayload?.stateInit
+            }
+        }
 
     val testnet: Boolean
         get() = wallet.testnet
@@ -229,13 +237,17 @@ data class TransferEntity(
         return getCommentForwardPayload(privateKey)
     }
 
-    private fun jettonBody(privateKey: PrivateKeyEd25519?, excessesAddress: AddrStd): Cell {
+    private fun jettonBody(
+        privateKey: PrivateKeyEd25519?,
+        excessesAddress: AddrStd
+    ): Cell {
         return TonTransferHelper.jetton(
             coins = coins,
             toAddress = destination,
             responseAddress = excessesAddress,
             queryId = queryId,
-            body = getCommentForwardPayload(privateKey),
+            forwardPayload = getCommentForwardPayload(privateKey),
+            customPayload = tokenPayload?.customPayload,
         )
     }
 
@@ -282,7 +294,8 @@ data class TransferEntity(
             toAddress = batteryAddress,
             responseAddress = batteryAddress,
             queryId = queryId,
-            body = CellBuilder.beginCell().storeOpCode(TONOpCode.GASLESS).endCell(),
+            forwardPayload = beginCell().storeOpCode(TONOpCode.GASLESS).endCell(),
+            customPayload = tokenPayload?.customPayload,
         )
         builder.coins = TRANSFER_PRICE
         builder.destination = AddrStd.parse(token.walletAddress)
@@ -303,6 +316,13 @@ data class TransferEntity(
         private var commentEncrypted: Boolean = false
         private var nftAddress: String? = null
         private var queryId: BigInteger? = null
+        private var tokenPayload: TokenEntity.TransferPayload? = null
+
+        fun setTokenPayload(tokenPayload: TokenEntity.TransferPayload) = apply {
+            if (!tokenPayload.isEmpty) {
+                this.tokenPayload = tokenPayload
+            }
+        }
 
         fun setQueryId(queryId: BigInteger) = apply { this.queryId = queryId }
 
@@ -352,7 +372,8 @@ data class TransferEntity(
                 comment = comment,
                 nftAddress = nftAddress,
                 commentEncrypted = commentEncrypted,
-                queryId = queryId ?: newWalletQueryId()
+                queryId = queryId ?: newWalletQueryId(),
+                tokenPayload = tokenPayload
             )
         }
     }

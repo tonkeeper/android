@@ -239,7 +239,9 @@ class API(
             token = TokenEntity.TON,
             value = Coins.of(account.balance),
             walletAddress = accountId,
-            initializedAccount = initializedAccount
+            initializedAccount = initializedAccount,
+            isCompressed = false,
+            isTransferable = true
         )
     }
 
@@ -254,15 +256,29 @@ class API(
         return TokenEntity(jetton)
     }
 
+    fun getJettonCustomPayload(
+        accountId: String,
+        testnet: Boolean,
+        jettonId: String
+    ): TokenEntity.TransferPayload? {
+        val jettonsAPI = jettons(testnet)
+        val payload = withRetry {
+            jettonsAPI.getJettonTransferPayload(accountId, jettonId)
+        } ?: return null
+        return TokenEntity.TransferPayload(tokenAddress = jettonId, payload)
+    }
+
     fun getJettonsBalances(
         accountId: String,
         testnet: Boolean,
-        currency: String? = null
+        currency: String? = null,
+        extensions: List<String>? = null
     ): List<BalanceEntity>? {
         val jettonsBalances = withRetry {
             accounts(testnet).getAccountJettonsBalances(
                 accountId = accountId,
-                currencies = currency?.let { listOf(it) }
+                currencies = currency?.let { listOf(it) },
+                extensions = extensions,
             ).balances
         } ?: return null
         return jettonsBalances.map { BalanceEntity(it) }.filter { it.value.isPositive }

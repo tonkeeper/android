@@ -3,12 +3,17 @@ package com.tonapps.wallet.api.entity
 import android.net.Uri
 import android.os.Parcelable
 import android.util.Log
+import com.tonapps.blockchain.ton.extensions.safeParseCell
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.wallet.api.R
+import io.tonapi.models.JettonBalanceLock
 import io.tonapi.models.JettonInfo
 import io.tonapi.models.JettonPreview
+import io.tonapi.models.JettonTransferPayload
 import io.tonapi.models.JettonVerificationType
 import kotlinx.parcelize.Parcelize
+import org.ton.block.StateInit
+import org.ton.cell.Cell
 
 @Parcelize
 data class TokenEntity(
@@ -17,11 +22,56 @@ data class TokenEntity(
     val symbol: String,
     val imageUri: Uri,
     val decimals: Int,
-    val verification: Verification
+    val verification: Verification,
+    val isCompressed: Boolean,
+    val isTransferable: Boolean,
+    val lock: Lock? = null
 ): Parcelable {
 
     enum class Verification {
         whitelist, blacklist, none
+    }
+
+    @Parcelize
+    data class Lock(
+        val amount: String,
+        val till: Long
+    ): Parcelable {
+
+        constructor(lock: JettonBalanceLock) : this(
+            amount = lock.amount,
+            till = lock.till
+        )
+    }
+
+    data class TransferPayload(
+        val tokenAddress: String,
+        val customPayload: Cell? = null,
+        val stateInit: StateInit? = null
+    ) {
+
+        companion object {
+
+            fun empty(tokenAddress: String): TransferPayload {
+                return TransferPayload(tokenAddress)
+            }
+        }
+
+        val isEmpty: Boolean
+            get() = customPayload == null && stateInit == null
+
+        constructor(tokenAddress: String, model: JettonTransferPayload) : this(
+            tokenAddress = tokenAddress,
+            customPayload = model.customPayload?.safeParseCell(),
+            stateInit = model.stateInit?.safeParseCell()?.let {
+                StateInit.Companion.loadTlb(it)
+            },
+        )
+    }
+
+    enum class Extension(val value: String) {
+        NonTransferable("non_transferable"),
+        CustomPayload("custom_payload")
     }
 
     companion object {
@@ -35,7 +85,9 @@ data class TokenEntity(
             symbol = "TON",
             imageUri = TON_ICON_URI,
             decimals = 9,
-            verification = Verification.whitelist
+            verification = Verification.whitelist,
+            isCompressed = false,
+            isTransferable = true
         )
 
         val USDT = TokenEntity(
@@ -44,7 +96,9 @@ data class TokenEntity(
             symbol = "USD₮",
             imageUri = USDT_ICON_URI,
             decimals = 6,
-            verification = Verification.whitelist
+            verification = Verification.whitelist,
+            isCompressed = false,
+            isTransferable = true
         )
 
         private fun convertVerification(verification: JettonVerificationType): Verification {
@@ -68,21 +122,35 @@ data class TokenEntity(
     val blacklist: Boolean
         get() = verification == TokenEntity.Verification.blacklist
 
-    constructor(jetton: JettonPreview) : this(
+    constructor(
+        jetton: JettonPreview,
+        extensions: List<String>? = null,
+        lock: JettonBalanceLock? = null
+    ) : this(
         address = jetton.address.toRawAddress(),
         name = jetton.name,
         symbol = jetton.symbol,
         imageUri = Uri.parse(jetton.image),
         decimals = jetton.decimals,
-        verification = convertVerification(jetton.verification)
+        verification = convertVerification(jetton.verification),
+        isCompressed = extensions?.contains(Extension.CustomPayload.value) == true,
+        isTransferable = extensions?.contains(Extension.NonTransferable.value) != true,
+        lock = lock?.let { Lock(it) }
     )
 
-    constructor(jetton: JettonInfo) : this(
+    constructor(
+        jetton: JettonInfo,
+        extensions: List<String>? = null,
+        lock: JettonBalanceLock? = null
+    ) : this(
         address = jetton.metadata.address.toRawAddress(),
         name = jetton.metadata.name,
         symbol = jetton.metadata.symbol,
         imageUri = Uri.parse(jetton.metadata.image),
         decimals = jetton.metadata.decimals.toInt(),
-        verification = convertVerification(jetton.verification)
+        verification = convertVerification(jetton.verification),
+        isCompressed = extensions?.contains(Extension.CustomPayload.value) == true,
+        isTransferable = extensions?.contains(Extension.NonTransferable.value) != true,
+        lock = lock?.let { Lock(it) }
     )
 }

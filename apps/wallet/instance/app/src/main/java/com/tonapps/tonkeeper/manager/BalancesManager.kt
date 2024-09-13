@@ -18,6 +18,7 @@ class BalancesManager(
         settingsRepository.currencyFlow.onEach {
             clear()
         }.launchIn(scope)
+
         settingsRepository.walletPrefsChangedFlow.onEach {
             clear()
         }.launchIn(scope)

@@ -40,7 +40,9 @@ data class RawMessageEntity(
     val payload: Cell
         get() = payloadValue.safeParseCell() ?: Cell()
 
-    fun getWalletTransfer(excessesAddress: AddrStd? = null): WalletTransfer {
+    fun getWalletTransfer(
+        excessesAddress: AddrStd? = null
+    ): WalletTransfer {
         val builder = WalletTransferBuilder()
         builder.stateInit = stateInit
         builder.destination = address

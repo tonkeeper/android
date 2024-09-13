@@ -40,7 +40,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             get() = wallet.type
 
         val send: Boolean
-            get() = !wallet.isWatchOnly
+            get() = !wallet.isWatchOnly && token.isTransferable
 
         val swap: Boolean
             get() = token.verified && !wallet.isWatchOnly

@@ -830,8 +830,8 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAccountJettonsBalances(accountId: kotlin.String, currencies: kotlin.collections.List<kotlin.String>? = null) : JettonsBalances {
-        val localVarResponse = getAccountJettonsBalancesWithHttpInfo(accountId = accountId, currencies = currencies)
+    fun getAccountJettonsBalances(accountId: kotlin.String, currencies: kotlin.collections.List<kotlin.String>? = null, extensions: List<String>? = null) : JettonsBalances {
+        val localVarResponse = getAccountJettonsBalancesWithHttpInfo(accountId = accountId, currencies = currencies, extensions = extensions)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as JettonsBalances
@@ -859,8 +859,8 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getAccountJettonsBalancesWithHttpInfo(accountId: kotlin.String, currencies: kotlin.collections.List<kotlin.String>?) : ApiResponse<JettonsBalances?> {
-        val localVariableConfig = getAccountJettonsBalancesRequestConfig(accountId = accountId, currencies = currencies)
+    fun getAccountJettonsBalancesWithHttpInfo(accountId: kotlin.String, currencies: kotlin.collections.List<kotlin.String>?, extensions: List<String>?) : ApiResponse<JettonsBalances?> {
+        val localVariableConfig = getAccountJettonsBalancesRequestConfig(accountId = accountId, currencies = currencies, extensions = extensions)
 
         return request<Unit, JettonsBalances>(
             localVariableConfig
@@ -874,12 +874,15 @@ class AccountsApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClien
      * @param currencies accept ton and all possible fiat currencies, separated by commas (optional)
      * @return RequestConfig
      */
-    fun getAccountJettonsBalancesRequestConfig(accountId: kotlin.String, currencies: kotlin.collections.List<kotlin.String>?) : RequestConfig<Unit> {
+    fun getAccountJettonsBalancesRequestConfig(accountId: kotlin.String, currencies: kotlin.collections.List<kotlin.String>?, extensions: List<String>?) : RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
             .apply {
                 if (currencies != null) {
                     put("currencies", toMultiValue(currencies.toList(), "csv"))
+                }
+                if (extensions != null) {
+                    put("supported_extensions", toMultiValue(extensions.toList(), "csv"))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()

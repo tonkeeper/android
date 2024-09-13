@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.icu.Coins
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.TokenRates
@@ -13,18 +14,31 @@ data class BalanceEntity(
     val token: TokenEntity,
     val value: Coins,
     val walletAddress: String,
-    val initializedAccount: Boolean
+    val initializedAccount: Boolean,
+    val isCompressed: Boolean,
+    val isTransferable: Boolean,
 ): Parcelable {
 
     companion object {
 
-        fun empty(accountId: String) = create(accountId, Coins.ZERO)
+        fun empty(
+            accountId: String,
+            isCompressed: Boolean,
+            isTransferable: Boolean
+        ) = create(accountId, Coins.ZERO, isCompressed, isTransferable)
 
-        fun create(accountId: String, value: Coins) = BalanceEntity(
+        fun create(
+            accountId: String,
+            value: Coins,
+            isCompressed: Boolean,
+            isTransferable: Boolean
+        ) = BalanceEntity(
             token = TokenEntity.TON,
             value = value,
             walletAddress = accountId,
             initializedAccount = false,
+            isCompressed = isCompressed,
+            isTransferable = isTransferable
         )
     }
 
@@ -38,10 +52,12 @@ data class BalanceEntity(
         get() = token.decimals
 
     constructor(jettonBalance: JettonBalance) : this(
-        token = TokenEntity(jettonBalance.jetton),
+        token = TokenEntity(jettonBalance.jetton, jettonBalance.extensions, jettonBalance.lock),
         value = Coins.of(BigDecimal(jettonBalance.balance).movePointLeft(jettonBalance.jetton.decimals), jettonBalance.jetton.decimals),
         walletAddress = jettonBalance.walletAddress.address,
         initializedAccount = true,
+        isCompressed = jettonBalance.extensions?.contains(TokenEntity.Extension.CustomPayload.value) == true,
+        isTransferable = jettonBalance.extensions?.contains(TokenEntity.Extension.NonTransferable.value) != true
     ) {
         rates = jettonBalance.price
     }

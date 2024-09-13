@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
@@ -114,6 +115,7 @@ class SendViewModel(
 
     private var lastTransferEntity: TransferEntity? = null
     private var sendTransferType: SendTransferType = SendTransferType.Default
+    private var tokenCustomPayload: TokenEntity.TransferPayload? = null
 
     private val userInputAddressFlow = userInputFlow
         .map { it.address }
@@ -309,8 +311,12 @@ class SendViewModel(
         userInputFlow.map { Pair(it.comment, it.encryptedComment) }.distinctUntilChanged(),
         selectedTokenFlow,
     ) { transaction, (comment, encryptedComment), token ->
+        val customPayload = getTokenCustomPayload(token.balance.token)
         val sendMetadata = getSendParams(wallet)
         val builder = TransferEntity.Builder(wallet)
+        if (!customPayload.isEmpty) {
+            builder.setTokenPayload(customPayload)
+        }
         builder.setToken(transaction.token)
         builder.setDestination(transaction.destination.address, transaction.destination.publicKey)
         builder.setSeqno(sendMetadata.seqno)
@@ -759,5 +765,21 @@ class SendViewModel(
         }.flowOn(Dispatchers.IO).onEach {
             _uiEventFlow.tryEmit(SendEvent.Success)
         }.launchIn(viewModelScope)
+    }
+
+    private fun getTokenCustomPayload(token: TokenEntity): TokenEntity.TransferPayload {
+        if (token.isTon) {
+            return TokenEntity.TransferPayload.empty("TON")
+        } else if (!token.isCompressed) {
+            return TokenEntity.TransferPayload.empty(token.address)
+        }
+        if (tokenCustomPayload != null && tokenCustomPayload!!.tokenAddress.equalsAddress(token.address)) {
+            return tokenCustomPayload!!
+        }
+
+        if (tokenCustomPayload == null) {
+            tokenCustomPayload = api.getJettonCustomPayload(wallet.accountId, wallet.testnet, token.address)
+        }
+        return tokenCustomPayload ?: TokenEntity.TransferPayload.empty(token.address)
     }
 }

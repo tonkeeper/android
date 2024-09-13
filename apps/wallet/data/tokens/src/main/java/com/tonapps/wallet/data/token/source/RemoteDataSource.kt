@@ -21,7 +21,15 @@ internal class RemoteDataSource(
         testnet: Boolean
     ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
         val tonBalanceDeferred = async { api.getTonBalance(accountId, testnet) }
-        val jettonBalancesDeferred = async { api.getJettonsBalances(accountId, testnet, currency.code) }
+        val jettonBalancesDeferred = async { api.getJettonsBalances(
+            accountId = accountId,
+            testnet = testnet,
+            currency = currency.code,
+            extensions = listOf(
+                TokenEntity.Extension.CustomPayload.value,
+                TokenEntity.Extension.NonTransferable.value
+            ))
+        }
         val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
         val jettons = jettonBalancesDeferred.await()?.toMutableList() ?: mutableListOf()
 
@@ -36,7 +44,9 @@ internal class RemoteDataSource(
                 token = TokenEntity.USDT,
                 value = Coins.ZERO,
                 walletAddress = accountId,
-                initializedAccount = tonBalance.initializedAccount
+                initializedAccount = tonBalance.initializedAccount,
+                isCompressed = false,
+                isTransferable = true
             ))
         } else if (usdtIndex >= 0) {
             jettons[usdtIndex] = jettons[usdtIndex].copy(

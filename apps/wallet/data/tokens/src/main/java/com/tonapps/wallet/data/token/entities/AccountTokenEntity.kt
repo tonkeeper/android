@@ -18,11 +18,13 @@ data class AccountTokenEntity(
     companion object {
 
         val EMPTY = AccountTokenEntity(
-            BalanceEntity(
-                TokenEntity.TON,
-                Coins.ZERO,
-                "",
-                false
+            balance = BalanceEntity(
+                token = TokenEntity.TON,
+                value = Coins.ZERO,
+                walletAddress = "",
+                initializedAccount = false,
+                isCompressed = false,
+                isTransferable = true,
             )
         )
     }
@@ -62,4 +64,7 @@ data class AccountTokenEntity(
 
     val blacklist: Boolean
         get() = balance.token.blacklist
+
+    val isCompressed: Boolean
+        get() = balance.isCompressed
 }

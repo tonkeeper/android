@@ -15,6 +15,7 @@ import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.TransferEntity
+import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackEntity
@@ -326,12 +327,19 @@ class BatteryRechargeViewModel(
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request))
         } else {
             val queryId = TransferEntity.newWalletQueryId()
+            val customPayload = if (token.isCompressed) {
+                api.getJettonCustomPayload(wallet.accountId, wallet.testnet, token.address)
+            } else {
+                null
+            }
+
             val jettonPayload = TonTransferHelper.jetton(
-                coins = org.ton.block.Coins.ofNano(amount.toLong()),
+                coins = amount.toGrams(),
                 toAddress = AddrStd.parse(fundReceiver),
                 responseAddress = wallet.contract.address,
                 queryId = queryId,
-                body = payload,
+                forwardPayload = payload,
+                customPayload = customPayload?.customPayload
             )
             val request = SignRequestEntity(
                 fromValue = wallet.contract.address.toAccountId(),

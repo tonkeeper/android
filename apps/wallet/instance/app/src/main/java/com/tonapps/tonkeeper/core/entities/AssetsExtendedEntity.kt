@@ -28,7 +28,12 @@ data class AssetsExtendedEntity(
         get() = when (raw) {
             is AssetsEntity.Token -> raw.token
             is AssetsEntity.Staked -> AccountTokenEntity(
-                balance = BalanceEntity.create(accountId, raw.staked.balance),
+                balance = BalanceEntity.create(
+                    accountId = accountId,
+                    value = raw.staked.balance,
+                    isCompressed = false,
+                    isTransferable = true
+                ),
             )
         }
 

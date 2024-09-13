@@ -1,8 +1,13 @@
 package com.tonapps.blockchain.ton.extensions
 
 import com.tonapps.blockchain.ton.TONOpCode
+import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellBuilder.Companion.beginCell
+import org.ton.tlb.CellRef
+import org.ton.tlb.TlbCodec
+import org.ton.tlb.constructor.AnyTlbConstructor
+import org.ton.tlb.storeRef
 import kotlin.math.floor
 
 val CellBuilder.availableBits: Int
@@ -48,5 +53,23 @@ private fun writeBytes(src: ByteArray, builder: CellBuilder) {
         } else {
             builder.storeBytes(src)
         }
+    }
+}
+
+fun <T> CellBuilder.storeMaybeRef(codec: TlbCodec<T>, value: CellRef<T>?) = apply {
+    if (value == null) {
+        storeBit(false)
+    } else {
+        storeBit(true)
+        storeRef(codec, value)
+    }
+}
+
+fun CellBuilder.storeMaybeRef(value: Cell?) = apply {
+    if (value == null) {
+        storeBit(false)
+    } else {
+        storeBit(true)
+        storeRef(value)
     }
 }

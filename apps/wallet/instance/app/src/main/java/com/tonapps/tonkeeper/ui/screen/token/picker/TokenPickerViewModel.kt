@@ -40,7 +40,10 @@ class TokenPickerViewModel(
     private val queryFlow = _queryFlow.asSharedFlow()
 
     private val tokensFlow = settingsRepository.currencyFlow.map { currency ->
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: emptyList()
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet)?.filter {
+            it.balance.isTransferable
+        } ?: emptyList()
+
         if (allowedTokens.isNotEmpty()) {
             tokens.filter { allowedTokens.contains(it.address) }
         } else {

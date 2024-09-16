@@ -1,0 +1,95 @@
+package com.tonapps.tonkeeper.extensions
+
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.TonTransferHelper
+import com.tonapps.blockchain.ton.extensions.loadMaybeRef
+import com.tonapps.blockchain.ton.extensions.loadOpCode
+import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.wallet.data.core.entity.RawMessageEntity
+import org.ton.block.AddrStd
+import org.ton.block.Coins
+import org.ton.block.MsgAddressInt
+import org.ton.cell.Cell
+import org.ton.cell.CellBuilder
+import org.ton.contract.wallet.WalletTransfer
+import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.loadTlb
+import org.ton.tlb.storeTlb
+
+private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
+    excessesAddress: AddrStd
+): Cell {
+    val slice = payload.beginParse()
+    val builder = CellBuilder.beginCell()
+    return when (slice.loadOpCode()) {
+        // stonfi swap
+        TONOpCode.STONFI_SWAP -> {
+            builder
+                .storeOpCode(TONOpCode.STONFI_SWAP)
+                .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
+                .storeTlb(Coins, slice.loadTlb(Coins.tlbCodec()))
+                .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
+
+            if (slice.loadBit()) {
+                slice.loadTlb(AddrStd.tlbCodec())
+            }
+            slice.endParse()
+
+            builder
+                .storeBit(true)
+                .storeTlb(MsgAddressInt, excessesAddress)
+
+            builder.endCell()
+        }
+        TONOpCode.NFT_TRANSFER -> payload
+        TONOpCode.JETTON_TRANSFER -> payload
+        else -> payload
+    }
+}
+
+private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
+    customPayload: Cell,
+): Cell {
+    val slice = payload.beginParse()
+    val opCode = slice.loadOpCode()
+    if (opCode != TONOpCode.JETTON_TRANSFER) {
+        return customPayload
+    }
+    val queryId = slice.loadUInt(64)
+    val jettonAmount = slice.loadTlb(Coins.tlbCodec())
+    val receiverAddress = slice.loadTlb(AddrStd.tlbCodec())
+    val excessesAddress = slice.loadTlb(AddrStd.tlbCodec())
+    slice.loadMaybeRef()
+    val forwardAmount = slice.loadTlb(Coins.tlbCodec()).amount.toLong()
+    val forwardBody = slice.loadMaybeRef()
+
+    return TonTransferHelper.jetton(
+        coins = jettonAmount,
+        toAddress = receiverAddress,
+        responseAddress = excessesAddress,
+        queryId = queryId,
+        forwardAmount = forwardAmount,
+        forwardPayload = forwardBody,
+        customPayload = customPayload
+    )
+}
+
+
+fun RawMessageEntity.getWalletTransfer(
+    excessesAddress: AddrStd? = null,
+    customPayload: Cell? = null
+): WalletTransfer {
+    val builder = WalletTransferBuilder()
+    builder.stateInit = stateInit
+    builder.destination = address
+    builder.body = if (excessesAddress != null) {
+        rebuildBodyWithCustomExcessesAccount(excessesAddress)
+    } else if (customPayload != null) {
+        rebuildJettonTransferWithCustomPayload(customPayload)
+    } else {
+        payload
+    }
+    // builder.bounceable = address.isBounceable()
+    builder.coins = coins
+    return builder.build()
+}

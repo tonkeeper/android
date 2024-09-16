@@ -5,8 +5,7 @@ import io.tonapi.models.AccountEvent
 data class AccountEventWrap(
     val event: AccountEvent,
     val cached: Boolean = false,
-    val previewEventId: String? = null,
-    val hash: String? = null
+    val eventIds: List<String>,
 ) {
 
     val eventId: String

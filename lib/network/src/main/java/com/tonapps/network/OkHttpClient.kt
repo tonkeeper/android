@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.retry
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
@@ -121,7 +122,7 @@ fun OkHttpClient.sse(url: String): Flow<SSEvent> = callbackFlow {
         .build()
     val events = sseFactory().newEventSource(request, listener)
     awaitClose { events.cancel() }
-}.retry { _ ->
+}.cancellable().retry { _ ->
     delay(1000)
     true
-}
+}.cancellable()

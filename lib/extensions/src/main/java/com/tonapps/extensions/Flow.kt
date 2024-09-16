@@ -1,17 +1,26 @@
 package com.tonapps.extensions
 
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.timeout
@@ -61,5 +70,16 @@ fun <T> Flow<Flow<T>>.flattenFirst(): Flow<T> = channelFlow {
                 }
             }
         }
+    }
+}
+
+fun <T> join(vararg flows: Flow<T>) = channelFlow {
+    val jobs = flows.map { flow ->
+        launch {
+            flow.buffer(Channel.BUFFERED).onEach { value -> send(value) }.catch { }.collect()
+        }
+    }
+    awaitClose {
+        jobs.forEach { it.cancel() }
     }
 }

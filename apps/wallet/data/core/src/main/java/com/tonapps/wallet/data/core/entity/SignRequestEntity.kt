@@ -4,6 +4,7 @@ import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import kotlinx.datetime.Clock
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject
@@ -18,10 +19,9 @@ data class SignRequestEntity(
     val network: TonNetwork
 ): Parcelable {
 
+    @IgnoredOnParcel
     val from: AddrStd?
         get() = fromValue?.let { AddrStd.parse(it) }
-
-    val transfers = messages.map { it.getWalletTransfer() }
 
     constructor(json: JSONObject) : this(
         fromValue = parseFrom(json),

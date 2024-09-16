@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
@@ -109,16 +110,8 @@ class WalletViewModel(
     private val _streamFLow = combine(updateWalletSettings, _lastLtFlow) { _, _ -> }
 
     init {
-        /*collectFlow(accountRepository.realtimeEventsFlow) { event ->
-            if (event is WalletEvent.Boc) {
-                setStatus(Status.SendingTransaction)
-            } else if (event is WalletEvent.Transaction) {
-
-            }
-        }*/
-
-        collectFlow(transactionManager.eventsFlow(wallet)) { event ->
-            if (event.inProgress) {
+        collectFlow(transactionManager.getEventsFlow(wallet)) { event ->
+            if (event.pending) {
                 setStatus(Status.SendingTransaction)
             } else {
                 setStatus(Status.TransactionConfirmed)

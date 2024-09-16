@@ -6,6 +6,7 @@ import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.history.HistoryHelper
+import com.tonapps.tonkeeper.extensions.getTransfers
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
@@ -117,7 +118,7 @@ class SignManager(
                 seqno = seqno,
                 privateKeyEd25519 = EmptyPrivateKeyEd25519,
                 validUntil = validUntil,
-                transfers = request.transfers
+                transfers = request.getTransfers()
             )
             val emulated = api.emulate(cell, wallet.testnet) ?: return null
             historyHelper.create(wallet, emulated, rates)
@@ -141,7 +142,7 @@ class SignManager(
 
             val rates = ratesRepository.getRates(currency, "TON")
             val seqno = accountRepository.getSeqno(wallet)
-            val cell = accountRepository.createSignedMessage(wallet, seqno, EmptyPrivateKeyEd25519, request.validUntil, request.transfers, internalMessage = true)
+            val cell = accountRepository.createSignedMessage(wallet, seqno, EmptyPrivateKeyEd25519, request.validUntil, request.getTransfers(), internalMessage = true)
 
             val (consequences, withBattery) = batteryRepository.emulate(
                 tonProofToken = tonProofToken,

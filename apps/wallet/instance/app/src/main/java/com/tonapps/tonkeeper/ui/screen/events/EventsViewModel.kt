@@ -91,7 +91,13 @@ class EventsViewModel(
             screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
         }
 
-        collectFlow(transactionManager.eventsFlow(wallet)) { accountEvent ->
+        collectFlow(transactionManager.getEventsFlow(wallet).map {
+            AccountEventWrap(
+                event = it.body,
+                cached = false,
+                eventIds = it.eventIds
+            )
+        }) { accountEvent ->
             submitAccountEvents(listOf(accountEvent))
             if (!accountEvent.inProgress) {
                 refresh()
@@ -102,7 +108,8 @@ class EventsViewModel(
             submitAccountEvents(eventsResult.events.events.map { accountEvent ->
                 AccountEventWrap(
                     event = accountEvent,
-                    cached = eventsResult.cache
+                    cached = eventsResult.cache,
+                    eventIds = listOf(accountEvent.eventId)
                 )
             })
 
@@ -117,24 +124,28 @@ class EventsViewModel(
             submitAccountEvents(events.map { accountEvent ->
                 AccountEventWrap(
                     event = accountEvent,
-                    cached = false
+                    cached = false,
+                    eventIds = listOf(accountEvent.eventId)
                 )
-            })
+            }, true)
         }
         _isUpdatingFlow.value = false
     }
 
     private suspend fun submitAccountEvents(
-        newEvents: List<AccountEventWrap>
+        newEvents: List<AccountEventWrap>,
+        clear: Boolean = false,
     ) = withContext(Dispatchers.IO) {
-        val currentEvents = accountEvents?.toMutableList() ?: mutableListOf()
+
+        val currentEvents = if (clear) {
+            mutableListOf()
+        } else {
+            accountEvents?.toMutableList() ?: mutableListOf()
+        }
 
         for (newEvent in newEvents) {
-            if (newEvent.previewEventId != null) {
-                currentEvents.removeIf { newEvent.previewEventId == it.eventId }
-            }
             currentEvents.removeIf {
-                it.eventId == newEvent.eventId && it.cached && !newEvent.cached
+                newEvent.eventIds.contains(it.eventId) && it.cached && !newEvent.cached
             }
             currentEvents.add(newEvent)
         }
@@ -181,7 +192,8 @@ class EventsViewModel(
             submitAccountEvents(events.map {
                 AccountEventWrap(
                     event = it,
-                    cached = false
+                    cached = false,
+                    eventIds = listOf(it.eventId)
                 )
             })
 

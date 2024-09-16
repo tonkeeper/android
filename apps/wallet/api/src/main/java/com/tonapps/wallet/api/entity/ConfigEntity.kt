@@ -42,6 +42,8 @@ data class ConfigEntity(
     val batteryRefundEndpoint: String,
     val batteryPromoDisabled: Boolean,
     val stakingInfoUrl: String,
+    val tonapiSSEEndpoint: String,
+    val tonapiSSETestnetEndpoint: String,
 ): Parcelable {
 
     val swapUri: Uri
@@ -89,6 +91,8 @@ data class ConfigEntity(
         batteryRefundEndpoint = json.optString("batteryRefundEndpoint", "https://battery-refund-app.vercel.app"),
         batteryPromoDisabled = json.optBoolean("disable_battery_promo_module", true),
         stakingInfoUrl = json.getString("stakingInfoUrl"),
+        tonapiSSEEndpoint = json.optString("tonapi_sse_endpoint", "https://rt.tonapi.io"),
+        tonapiSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint", "https://rt-testnet.tonapi.io"),
     )
 
     constructor() : this(
@@ -126,6 +130,8 @@ data class ConfigEntity(
         batteryRefundEndpoint = "https://battery-refund-app.vercel.app",
         batteryPromoDisabled = false,
         stakingInfoUrl = "https://ton.org/stake",
+        tonapiSSEEndpoint = "https://rt.tonapi.io",
+        tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
     )
 
     companion object {

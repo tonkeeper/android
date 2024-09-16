@@ -1,15 +1,12 @@
 package com.tonapps.tonkeeper.manager.tx
 
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.parseCell
-import com.tonapps.tonkeeper.api.AccountEventWrap
+import com.tonapps.extensions.join
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
+import com.tonapps.wallet.api.entity.AccountEventEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import io.tonapi.models.AccountEvent
-import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,76 +18,97 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
-import org.ton.crypto.hex
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TransactionManager(
     private val accountRepository: AccountRepository,
     private val api: API
 ) {
 
+    private val eventFlowMap = ConcurrentHashMap<String, Flow<AccountEventEntity>>()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val _sentTransactionFlow = MutableSharedFlow<SendTransaction>(
+    private val _sentTransactionFlow = MutableSharedFlow<PendingTransaction>(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     private val sentTransactionFlow = _sentTransactionFlow.shareIn(scope, SharingStarted.Eagerly, 1)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun eventsFlow(
+    fun getEventsFlow(
         wallet: WalletEntity
-    ): Flow<AccountEventWrap> = sentTransactionFlow.filter {
+    ): Flow<AccountEventEntity> {
+        val key = eventFlowMapKey(wallet)
+        return eventFlowMap.getOrPut(key) {
+            createEventsFlow(wallet)
+        }
+    }
+
+    private fun createEventsFlow(
+        wallet: WalletEntity
+    ) = join(
+        pendingEventsFlow(wallet),
+        realtime(wallet)
+    ).distinctUntilChanged { old, new ->
+        old.pending == new.pending && old.lt == new.lt
+    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
+
+    private fun realtime(wallet: WalletEntity) = api.realtime(
+        accountId = wallet.accountId,
+        testnet = wallet.testnet
+    ).map {
+        TransactionEvent(it.json)
+    }.flatMapLatest {
+        transactionFlow(wallet, it.hash)
+    }
+
+    private fun pendingEventsFlow(
+        wallet: WalletEntity
+    ): Flow<AccountEventEntity> = sentTransactionFlow.filter {
         it.wallet.id == wallet.id
-    }.flatMapLatest { transaction ->
-        transactionFlow(transaction.wallet, transaction.hash)
-    }.flowOn(Dispatchers.IO).cancellable()
+    }.flatMapLatest { transactionFlow(it.wallet, it.hash) }
 
     @OptIn(FlowPreview::class)
-    fun transactionFlow(
+    private fun transactionFlow(
         wallet: WalletEntity,
-        hash: String
-    ): Flow<AccountEventWrap> = flow {
-        val event = getTransaction(wallet, hash) ?: return@flow
-        emit(AccountEventWrap(
-            event = event,
-            hash = hash
-        ))
+        hash: String,
+    ): Flow<AccountEventEntity> = flow {
+        val initialTx = getTransaction(wallet, hash) ?: return@flow
+        emit(initialTx)
 
-        while (event.inProgress && currentCoroutineContext().isActive) {
-            delay((1..5).random().seconds)
-            val doneEvent = getTransaction(wallet, hash)
-            if (doneEvent?.inProgress == false) {
-                emit(AccountEventWrap(
-                    event = doneEvent,
-                    hash = hash,
-                    previewEventId = event.eventId
-                ))
+        if (initialTx.pending) {
+            delay(15.seconds)
+            while (currentCoroutineContext().isActive) {
+                val finalTx = getTransaction(wallet, hash)
+                if (finalTx == null || finalTx.pending) {
+                    delay(5.seconds)
+                    continue
+                }
+                finalTx.addEventId(hash)
+                finalTx.addEventId(initialTx.body.eventId)
+                emit(finalTx)
                 break
             }
         }
-    }.flowOn(Dispatchers.IO).timeout(1.minutes)
+    }.timeout(2.minutes)
 
     private suspend fun getTransaction(
         wallet: WalletEntity,
         hash: String
-    ): AccountEvent? = withContext(Dispatchers.IO) {
-        api.getTransactionByHash(wallet.accountId, hash, wallet.testnet)
+    ): AccountEventEntity? = withContext(Dispatchers.IO) {
+        api.getTransactionByHash(wallet.accountId, wallet.testnet, hash)
     }
 
     private suspend fun sendWithBattery(
@@ -115,7 +133,7 @@ class TransactionManager(
             return state
         }
 
-        _sentTransactionFlow.tryEmit(SendTransaction(wallet.copy(), boc))
+        _sentTransactionFlow.tryEmit(PendingTransaction(wallet.copy(), boc))
         return state
     }
 
@@ -124,4 +142,11 @@ class TransactionManager(
         boc: Cell,
         withBattery: Boolean
     ) = send(wallet, boc.base64(), withBattery)
+
+    private fun eventFlowMapKey(wallet: WalletEntity): String {
+        if (wallet.testnet) {
+            return wallet.accountId + "_testnet"
+        }
+        return wallet.accountId
+    }
 }

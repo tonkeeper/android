@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.extensions.loadOpCode
 import com.tonapps.blockchain.ton.extensions.safeParseCell
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.toTlb
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 import org.ton.block.AddrStd
@@ -28,59 +29,24 @@ data class RawMessageEntity(
     val payloadValue: String
 ): Parcelable {
 
-    val address: AddrStd
-        get() = AddrStd.parse(addressValue)
-
-    val coins: Coins
-        get() = Coins.ofNano(amount)
-
-    val stateInit: StateInit?
-        get() = stateInitValue?.toTlb()
-
-    val payload: Cell
-        get() = payloadValue.safeParseCell() ?: Cell()
-
-    fun getWalletTransfer(
-        excessesAddress: AddrStd? = null
-    ): WalletTransfer {
-        val builder = WalletTransferBuilder()
-        builder.stateInit = stateInit
-        builder.destination = address
-        builder.body = if (excessesAddress != null) rebuildBodyWithCustomExcessesAccount(payload, excessesAddress) else payload
-        // builder.bounceable = address.isBounceable()
-        builder.coins = coins
-        return builder.build()
+    @IgnoredOnParcel
+    val address: AddrStd by lazy {
+        AddrStd.parse(addressValue)
     }
 
-    private fun rebuildBodyWithCustomExcessesAccount(body: Cell, excessesAddress: AddrStd): Cell {
-        val slice = body.beginParse()
-        val builder = CellBuilder.beginCell()
-        return when (slice.loadOpCode()) {
-            // stonfi swap
-            TONOpCode.STONFI_SWAP -> {
-                builder
-                    .storeOpCode(TONOpCode.STONFI_SWAP)
-                    .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
-                    .storeTlb(Coins, slice.loadTlb(Coins.tlbCodec()))
-                    .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
+    @IgnoredOnParcel
+    val coins: Coins by lazy {
+        Coins.ofNano(amount)
+    }
 
-                if (slice.loadBit()) {
-                    slice.loadTlb(AddrStd.tlbCodec())
-                }
-                slice.endParse()
+    @IgnoredOnParcel
+    val stateInit: StateInit? by lazy {
+        stateInitValue?.toTlb()
+    }
 
-                builder
-                    .storeBit(true)
-                    .storeTlb(MsgAddressInt, excessesAddress)
-
-                builder.endCell()
-            }
-            // nft transfer
-            TONOpCode.NFT_TRANSFER -> body
-            // jetton transfer
-            TONOpCode.JETTON_TRANSFER -> body
-            else -> body
-        }
+    @IgnoredOnParcel
+    val payload: Cell by lazy {
+        payloadValue.safeParseCell() ?: Cell()
     }
 
     constructor(json: JSONObject) : this(

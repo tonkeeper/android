@@ -21,6 +21,7 @@ import com.tonapps.network.postJSON
 import com.tonapps.network.sse
 import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
+import com.tonapps.wallet.api.entity.AccountEventEntity
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
@@ -32,6 +33,7 @@ import io.batteryapi.apis.BatteryApi.UnitsGetBalance
 import io.batteryapi.models.Balance
 import io.batteryapi.models.Config
 import io.batteryapi.models.RechargeMethods
+import io.tonapi.infrastructure.ClientException
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.Account
 import io.tonapi.models.AccountAddress
@@ -44,8 +46,11 @@ import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
 import io.tonapi.models.TokenRates
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.withContext
@@ -73,7 +78,7 @@ class API(
         createTonAPIHttpClient(
             context = context,
             tonApiV2Key = config.tonApiV2Key,
-            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost, "https://rt-testnet.tonapi.io", "https://rt.tonapi.io")
+            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost, config.tonapiSSEEndpoint, config.tonapiSSETestnetEndpoint)
         )
     }
 
@@ -169,6 +174,12 @@ class API(
         }
     }
 
+    fun realtime(accountId: String, testnet: Boolean): Flow<SSEvent> {
+        val endpoint = if (testnet) config.tonapiSSETestnetEndpoint else config.tonapiSSEEndpoint
+        val url = "$endpoint/sse/transactions?account=$accountId"
+        return tonAPIHttpClient.sse(url)
+    }
+
     fun getEvents(
         accountId: String,
         testnet: Boolean,
@@ -183,12 +194,25 @@ class API(
         )
     }
 
-    fun getTransactionByHash(
+    suspend fun getTransactionByHash(
         accountId: String,
+        testnet: Boolean,
         hash: String,
-        testnet: Boolean
-    ): AccountEvent? {
-        return withRetry { accounts(testnet).getAccountEvent(accountId, hash) }
+        attempt: Int = 0
+    ): AccountEventEntity? {
+        try {
+            val body = accounts(testnet).getAccountEvent(accountId, hash)
+            return AccountEventEntity(accountId, testnet, hash, body)
+        } catch (e: Throwable) {
+            if (attempt >= 10 || e is CancellationException) {
+                return null
+            } else if (e is ClientException && e.statusCode == 404) {
+                delay(2000)
+            } else {
+                delay(1000)
+            }
+            return getTransactionByHash(accountId, testnet, hash, attempt + 1)
+        }
     }
 
     fun getSingleEvent(

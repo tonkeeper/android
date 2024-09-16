@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.SendBlockchainException
+import com.tonapps.tonkeeper.extensions.getTransfers
+import com.tonapps.tonkeeper.extensions.getWalletTransfer
 import com.tonapps.tonkeeper.extensions.signLedgerTransaction
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -17,12 +19,15 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
@@ -45,69 +50,69 @@ class ActionViewModel(
         }
     }
 
-    fun sign(context: Context) = walletFlow.take(1).flatMapLatest { w ->
-        val passcodeFlow = if (!w.isLedger) {
-            passcodeManager.confirmationFlow(context, context.getString(Localization.app_name))
-                .take(1)
-        } else {
-            flowOf(Unit)
+    private suspend fun byLedger(
+        wallet: WalletEntity,
+        seqno: Int,
+    ): String {
+        val transactions = args.request.getTransfers().map { transfer ->
+            Transaction.fromWalletTransfer(
+                transfer,
+                seqno = seqno,
+                timeout = args.validUntil
+            )
         }
 
-        combine(
-            passcodeFlow,
-            flowOf(w),
-        ) { _, wallet ->
-            val request = args.request
-            val seqno = accountRepository.getSeqno(wallet)
-            if (wallet.isLedger) {
-                val transactions = request.transfers.map { transfer ->
-                    Transaction.fromWalletTransfer(
-                        transfer,
-                        seqno = seqno,
-                        timeout = request.validUntil
-                    )
+        val contract = wallet.contract
+        var boc: String? = null
+        for ((index, transaction) in transactions.withIndex()) {
+            val isLast = index == transactions.size - 1
+            val signedBody = context.signLedgerTransaction(transaction, wallet.id) ?: throw SendException.Cancelled()
+            val message = contract.createTransferMessageCell(contract.address, seqno, signedBody)
+            boc = message.base64()
+            if (!isLast) {
+                val state = transactionManager.send(wallet, message, false)
+                if (state != SendBlockchainState.SUCCESS) {
+                    throw SendBlockchainException.fromState(state)
                 }
-
-                var boc: String? = null
-
-                transactions.forEachIndexed { index, transaction ->
-                    val isLast = index == transactions.size - 1
-                    val signedBody = context.signLedgerTransaction(transaction, wallet.id)
-                        ?: throw SendException.Cancelled()
-                    val contract = wallet.contract
-                    val message =
-                        contract.createTransferMessageCell(contract.address, seqno, signedBody)
-                    boc = message.base64()
-                    if (!isLast) {
-                        val state = transactionManager.send(wallet, message, false)
-                        if (state != SendBlockchainState.SUCCESS) {
-                            throw SendBlockchainException.fromState(state)
-                        }
-                    }
-                }
-
-                if (boc == null) throw SendException.UnableSendTransaction()
-
-                boc!!
-            } else {
-                val secretKey = accountRepository.getPrivateKey(wallet.id)
-                val excessesAddress = if (args.isBattery) {
-                    batteryRepository.getConfig(wallet.testnet).excessesAddress
-                } else null
-
-                val transfers = request.messages.map { it.getWalletTransfer(excessesAddress) }
-
-                val message = accountRepository.createSignedMessage(
-                    wallet,
-                    seqno,
-                    secretKey,
-                    request.validUntil,
-                    transfers,
-                    internalMessage = args.isBattery
-                )
-                message.base64()
             }
         }
+
+        return boc ?: throw SendException.UnableSendTransaction()
     }
+
+    private suspend fun byDefault(
+        wallet: WalletEntity,
+        seqno: Int,
+    ): String {
+        val secretKey = accountRepository.getPrivateKey(wallet.id)
+        val excessesAddress = if (args.isBattery) {
+            batteryRepository.getConfig(wallet.testnet).excessesAddress
+        } else null
+
+        val transfers = args.messages.map { it.getWalletTransfer(excessesAddress) }
+
+        val message = accountRepository.createSignedMessage(
+            wallet,
+            seqno,
+            secretKey,
+            args.validUntil,
+            transfers,
+            internalMessage = args.isBattery
+        )
+        return message.base64()
+    }
+
+    fun sign(context: Context) = walletFlow.take(1).map { wallet ->
+        if (!wallet.isLedger && !passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
+            throw SendException.Cancelled()
+        }
+        val seqno = accountRepository.getSeqno(wallet)
+
+        if (wallet.isLedger) {
+            byLedger(wallet, seqno)
+        } else {
+            byDefault(wallet, seqno)
+        }
+    }.flowOn(Dispatchers.IO)
 
 }

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.action
 
 import android.os.Bundle
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import uikit.base.BaseArgs
 
@@ -20,6 +21,12 @@ data class ActionArgs(
         private const val ARG_REQUEST = "request"
         private const val ARG_IS_BATTERY = "is_battery"
     }
+
+    val validUntil: Long
+        get() = request.validUntil
+
+    val messages: List<RawMessageEntity>
+        get() = request.messages
 
     constructor(bundle: Bundle) : this(
         walletId = bundle.getString(ARG_WALLET_ID)!!,

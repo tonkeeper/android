@@ -19,7 +19,7 @@ import com.tonapps.tonkeeper.core.signer.SingerArgs
 import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.wallet.data.push.GooglePushService
-import com.tonapps.tonkeeper.sign.SignManager
+import com.tonapps.tonkeeper.manager.SignManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen

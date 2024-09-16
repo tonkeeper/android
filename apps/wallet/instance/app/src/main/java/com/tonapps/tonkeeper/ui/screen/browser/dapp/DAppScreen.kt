@@ -168,13 +168,11 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
             headerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 topMargin = statusInsets.top
             }
-            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.navigationBars())
             refreshView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = imeInsets.bottom
+                bottomMargin = bottomInsets.bottom
             }
 
-            val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            webView.setPaddingBottom(navInsets.bottom)
             insets
         }
     }

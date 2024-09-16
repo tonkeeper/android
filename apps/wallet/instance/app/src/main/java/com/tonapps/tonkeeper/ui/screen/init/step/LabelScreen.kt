@@ -43,12 +43,15 @@ class LabelScreen: BaseFragment(R.layout.fragment_init_label) {
             view.updatePadding(top = it)
         }
 
-        val label = initViewModel.getLabel()
-        with(editorView) {
-            name = label.name
-            emoji = label.emoji
-            color = label.color
+        lifecycleScope.launch {
+            val label = initViewModel.getLabel()
+            with(editorView) {
+                name = label.name
+                emoji = label.emoji
+                color = label.color
+            }
         }
+
     }
 
     override fun onResume() {

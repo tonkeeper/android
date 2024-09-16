@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.flattenFirst
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.extensions.with
+import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
@@ -32,14 +33,16 @@ class CollectiblesViewModel(
     private val wallet: WalletEntity,
     private val collectiblesRepository: CollectiblesRepository,
     private val networkMonitor: NetworkMonitor,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val transactionManager: TransactionManager,
 ): BaseWalletVM(app) {
 
     val uiListStateFlow = combine(
         networkMonitor.isOnlineFlow,
         settingsRepository.hiddenBalancesFlow,
         settingsRepository.tokenPrefsChangedFlow,
-    ) { isOnline, hiddenBalances, _ ->
+        transactionManager.getEventsFlow(wallet),
+    ) { isOnline, hiddenBalances, _, _ ->
         stateFlow(
             wallet = wallet,
             hiddenBalances = hiddenBalances,

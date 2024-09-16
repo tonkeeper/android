@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.sign.SignManager
+import com.tonapps.tonkeeper.manager.SignManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.add.imprt.ImportWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryViewModel

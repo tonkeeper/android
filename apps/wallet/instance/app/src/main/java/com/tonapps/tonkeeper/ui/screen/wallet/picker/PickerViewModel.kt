@@ -104,7 +104,10 @@ class PickerViewModel(
 
     private suspend fun getAssets(
         wallet: WalletEntity
-    ) = assetsManager.getAssets(wallet)?.sort(wallet, settingsRepository)
+    ) = assetsManager.getAssets(
+        wallet = wallet,
+        refresh = false
+    )?.sort(wallet, settingsRepository)
 
     private suspend fun getBalance(
         wallet: WalletEntity

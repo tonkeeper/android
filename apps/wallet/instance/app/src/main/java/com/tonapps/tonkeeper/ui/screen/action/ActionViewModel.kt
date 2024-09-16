@@ -18,6 +18,8 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,8 @@ class ActionViewModel(
     private val api: API,
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
+    private val tokenRepository: TokenRepository,
+    private val settingsRepository: SettingsRepository,
 ) : BaseWalletVM(app) {
 
     private val _walletFlow = MutableStateFlow<WalletEntity?>(null)
@@ -54,7 +58,9 @@ class ActionViewModel(
         wallet: WalletEntity,
         seqno: Int,
     ): String {
-        val transactions = args.request.getTransfers().map { transfer ->
+        val compressedTokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)?.filter { it.isCompressed } ?: emptyList()
+
+        val transactions = args.request.getTransfers(wallet, compressedTokens, api = api).map { transfer ->
             Transaction.fromWalletTransfer(
                 transfer,
                 seqno = seqno,
@@ -84,12 +90,14 @@ class ActionViewModel(
         wallet: WalletEntity,
         seqno: Int,
     ): String {
+        val compressedTokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)?.filter { it.isCompressed } ?: emptyList()
+
         val secretKey = accountRepository.getPrivateKey(wallet.id)
         val excessesAddress = if (args.isBattery) {
             batteryRepository.getConfig(wallet.testnet).excessesAddress
         } else null
 
-        val transfers = args.messages.map { it.getWalletTransfer(excessesAddress) }
+        val transfers = args.request.getTransfers(wallet, compressedTokens, excessesAddress, api)
 
         val message = accountRepository.createSignedMessage(
             wallet,

@@ -333,22 +333,24 @@ class InitViewModel(
         return label
     }
 
-    fun getLabel(): Wallet.Label {
-        return savedState.label ?: Wallet.Label(
-            accountName = "",
+    suspend fun getLabel(): Wallet.Label = withContext(Dispatchers.IO) {
+        savedState.label ?: Wallet.Label(
+            accountName = getDefaultWalletName(),
             emoji = Emoji.WALLET_ICON,
             color = WalletColor.all.first()
         )
     }
 
     fun setLabelName(name: String) {
-        val oldLabel = getLabel()
-        val emoji = Emoji.getEmojiFromPrefix(name) ?: oldLabel.emoji
+        viewModelScope.launch {
+            val oldLabel = getLabel()
+            val emoji = Emoji.getEmojiFromPrefix(name) ?: oldLabel.emoji
 
-        setLabel(oldLabel.copy(
-            accountName = name.replace(emoji.toString(), "").trim(),
-            emoji = emoji
-        ))
+            setLabel(oldLabel.copy(
+                accountName = name.replace(emoji.toString(), "").trim(),
+                emoji = emoji
+            ))
+        }
     }
 
     fun nextStep(context: Context, from: InitRoute) {
@@ -369,12 +371,13 @@ class InitViewModel(
     }
 
     private fun applyNameFromSelectedAccounts() {
-        val selected = getSelectedAccounts().filter { !it.name.isNullOrBlank() }
-        if (selected.isEmpty()) {
-            return
+        viewModelScope.launch {
+            val walletName = getSelectedAccounts().firstOrNull {
+                !it.name.isNullOrBlank()
+            }?.name ?: getDefaultWalletName()
+
+            setLabelName(walletName)
         }
-        val name = selected.first().name ?: return
-        setLabelName(name)
     }
 
     private fun execute(context: Context) {

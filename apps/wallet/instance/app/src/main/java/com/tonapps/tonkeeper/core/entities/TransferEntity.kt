@@ -4,6 +4,7 @@ import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeStringTail
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -51,6 +52,10 @@ data class TransferEntity(
 
     val contract: BaseWalletContract
         get() = wallet.contract
+
+    val fakePrivateKey: PrivateKeyEd25519 by lazy {
+        if (commentEncrypted) PrivateKeyEd25519() else EmptyPrivateKeyEd25519
+    }
 
     val isTon: Boolean
         get() = token.isTon
@@ -261,7 +266,7 @@ data class TransferEntity(
     }
 
     fun toSignedMessage(
-        privateKey: PrivateKeyEd25519,
+        privateKey: PrivateKeyEd25519 = fakePrivateKey,
         internalMessage: Boolean,
         excessesAddress: AddrStd? = null,
         additionalGifts: List<WalletTransfer> = emptyList()

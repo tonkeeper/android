@@ -9,6 +9,7 @@ import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
+import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletTransfer
@@ -48,18 +49,23 @@ private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
 }
 
 private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
-    customPayload: Cell,
+    newCustomPayload: Cell,
 ): Cell {
     val slice = payload.beginParse()
     val opCode = slice.loadOpCode()
     if (opCode != TONOpCode.JETTON_TRANSFER) {
-        return customPayload
+        return newCustomPayload
     }
+
     val queryId = slice.loadUInt(64)
     val jettonAmount = slice.loadTlb(Coins.tlbCodec())
     val receiverAddress = slice.loadTlb(AddrStd.tlbCodec())
     val excessesAddress = slice.loadTlb(AddrStd.tlbCodec())
-    slice.loadMaybeRef()
+    val customPayload = slice.loadMaybeRef()
+    if (customPayload != null) {
+        return payload
+    }
+
     val forwardAmount = slice.loadTlb(Coins.tlbCodec()).amount.toLong()
     val forwardBody = slice.loadMaybeRef()
 
@@ -70,22 +76,39 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
         queryId = queryId,
         forwardAmount = forwardAmount,
         forwardPayload = forwardBody,
-        customPayload = customPayload
+        customPayload = newCustomPayload
     )
 }
 
+fun RawMessageEntity.getJettonAddress(): AddrStd? {
+    val slice = payload.beginParse()
+    val opCode = slice.loadOpCode()
+    if (opCode != TONOpCode.JETTON_TRANSFER) {
+        return null
+    }
+    slice.loadUInt(64)
+    slice.loadTlb(Coins.tlbCodec())
+    slice.loadTlb(AddrStd.tlbCodec())
+    val excessesAddress = slice.loadTlb(AddrStd.tlbCodec())
+    val customPayload = slice.loadMaybeRef()
+    if (customPayload != null) {
+        return null
+    }
+    return excessesAddress
+}
 
 fun RawMessageEntity.getWalletTransfer(
     excessesAddress: AddrStd? = null,
-    customPayload: Cell? = null
+    newStateInit: StateInit? = null,
+    newCustomPayload: Cell? = null,
 ): WalletTransfer {
     val builder = WalletTransferBuilder()
-    builder.stateInit = stateInit
+    builder.stateInit = newStateInit ?: stateInit
     builder.destination = address
     builder.body = if (excessesAddress != null) {
         rebuildBodyWithCustomExcessesAccount(excessesAddress)
-    } else if (customPayload != null) {
-        rebuildJettonTransferWithCustomPayload(customPayload)
+    } else if (newCustomPayload != null) {
+        rebuildJettonTransferWithCustomPayload(newCustomPayload)
     } else {
         payload
     }

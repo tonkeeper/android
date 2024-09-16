@@ -21,39 +21,54 @@ class AssetsManager(
 
     suspend fun getAssets(
         wallet: WalletEntity,
-        currency: WalletCurrency = settingsRepository.currency
+        currency: WalletCurrency = settingsRepository.currency,
+        refresh: Boolean,
     ): List<AssetsEntity>? {
-        val tokens = getTokens(wallet, currency) ?: return null
-        val staked = getStaked(wallet, tokens.map { it.token }, currency)
+        val tokens = getTokens(wallet, currency, refresh)
+        val staked = getStaked(wallet, tokens.map { it.token }, currency, refresh)
+
         val liquid = staked.find { it.isTonstakers }?.liquidToken
         val filteredTokens = if (liquid == null) {
             tokens
         } else {
             tokens.filter { !liquid.token.address.contains(it.address)  }
         }
-        return (filteredTokens + staked).sortedBy { it.fiat }.reversed()
+        val list = (filteredTokens + staked).sortedBy { it.fiat }.reversed()
+        if (list.isEmpty()) {
+            return null
+        }
+        return list
     }
 
     private suspend fun getTokens(
         wallet: WalletEntity,
-        currency: WalletCurrency = settingsRepository.currency
-    ): List<AssetsEntity.Token>? {
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: return null
+        currency: WalletCurrency = settingsRepository.currency,
+        refresh: Boolean,
+    ): List<AssetsEntity.Token> {
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh) ?: return emptyList()
         return tokens.map { AssetsEntity.Token(it) }
     }
 
     private suspend fun getStaked(
         wallet: WalletEntity,
         tokens: List<AccountTokenEntity>,
-        currency: WalletCurrency = settingsRepository.currency
+        currency: WalletCurrency = settingsRepository.currency,
+        refresh: Boolean,
     ): List<AssetsEntity.Staked> {
-        val staking = getStaking(wallet)
+        val staking = getStaking(wallet, refresh)
         val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
         return staked.map { AssetsEntity.Staked(it) }
     }
 
-    private suspend fun getStaking(wallet: WalletEntity): StakingEntity {
-        return stakingRepository.get(wallet.accountId, wallet.testnet)
+    private suspend fun getStaking(
+        wallet: WalletEntity,
+        refresh: Boolean
+    ): StakingEntity {
+        return stakingRepository.get(
+            accountId = wallet.accountId,
+            testnet = wallet.testnet,
+            ignoreCache = refresh
+        )
     }
 }
 

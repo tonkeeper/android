@@ -454,12 +454,6 @@ class SendViewModel(
         retryWithoutRelayer: Boolean = false,
         ignoreGasless: Boolean = false,
     ): Pair<Coins, Boolean> = withContext(Dispatchers.IO) {
-        val fakePrivateKey = if (transfer.commentEncrypted) {
-            PrivateKeyEd25519()
-        } else {
-            EmptyPrivateKeyEd25519
-        }
-
         val wallet = transfer.wallet
         val withRelayer = shouldAttemptWithRelayer(transfer)
         val tonProofToken = accountRepository.requestTonProofToken(wallet)
@@ -474,66 +468,95 @@ class SendViewModel(
             wallet.isSupportedFeature(WalletFeature.GASLESS) && tonProofToken != null && excessesAddress != null && isGaslessToken
         val isPreferGasless = batteryRepository.getPreferGasless(wallet.testnet)
 
-        if (withRelayer && !retryWithoutRelayer && tonProofToken != null) {
+        if (ignoreGasless && retryWithoutRelayer) {
+            calculateFeeDefault(transfer, isSupportsGasless)
+        } else if (withRelayer && !retryWithoutRelayer && tonProofToken != null && excessesAddress != null) {
             try {
-                if (api.config.isBatteryDisabled) {
-                    throw IllegalStateException("Battery is disabled")
-                }
-
-                val message = transfer.toSignedMessage(fakePrivateKey, true)
-
-                val (consequences, _) = batteryRepository.emulate(
-                    tonProofToken = tonProofToken,
-                    publicKey = wallet.publicKey,
-                    testnet = wallet.testnet,
-                    boc = message
-                ) ?: throw IllegalStateException("Failed to emulate battery")
-
-                sendTransferType = SendTransferType.Battery(excessesAddress!!)
-
-                Pair(Coins.of(consequences.totalFees), isSupportsGasless)
+                calculateFeeBattery(transfer, excessesAddress, isSupportsGasless, tonProofToken)
             } catch (e: Throwable) {
                 calculateFee(transfer, retryWithoutRelayer = true)
             }
         } else if (!ignoreGasless && isPreferGasless && isSupportsGasless && tonProofToken != null && excessesAddress != null) {
             try {
-                val message = transfer.toSignedMessage(
-                    privateKey = fakePrivateKey,
-                    internalMessage = true,
-                    additionalGifts = listOf(
-                        transfer.gaslessInternalGift(
-                            jettonAmount = Coins.ONE, batteryAddress = excessesAddress
-                        )
-                    ),
-                    excessesAddress = excessesAddress,
-                )
-
-                val commission = api.estimateGaslessCost(
-                    tonProofToken = tonProofToken,
-                    jettonMaster = tokenAddress,
-                    cell = message,
-                    testnet = wallet.testnet,
-                ) ?: throw IllegalStateException("Failed to estimate gasless cost")
-
-                sendTransferType = SendTransferType.Gasless(
-                    excessesAddress = excessesAddress,
-                    gaslessFee = Coins.of(commission, transfer.token.decimals)
-                )
-
-                Pair(Coins.ofNano(commission, transfer.token.decimals), true)
+                calculateFeeGasless(transfer, excessesAddress, tonProofToken, tokenAddress)
             } catch (e: Throwable) {
                 calculateFee(transfer, ignoreGasless = true)
             }
         } else {
-            val message = transfer.toSignedMessage(fakePrivateKey, false)
-            val emulated = api.emulate(message, transfer.wallet.testnet)
-
-            val fee = emulated?.totalFees ?: 0
-
-            sendTransferType = SendTransferType.Default
-
-            Pair(Coins.of(fee), isSupportsGasless)
+            calculateFeeDefault(transfer, isSupportsGasless)
         }
+    }
+
+    private suspend fun calculateFeeBattery(
+        transfer: TransferEntity,
+        excessesAddress: AddrStd,
+        isSupportsGasless: Boolean,
+        tonProofToken: String,
+    ): Pair<Coins, Boolean> {
+        if (api.config.isBatteryDisabled) {
+            return calculateFeeDefault(transfer, isSupportsGasless)
+        }
+
+        val message = transfer.toSignedMessage(internalMessage = true)
+
+        val (consequences, _) = batteryRepository.emulate(
+            tonProofToken = tonProofToken,
+            publicKey = wallet.publicKey,
+            testnet = wallet.testnet,
+            boc = message
+        ) ?: return calculateFeeDefault(transfer, isSupportsGasless)
+
+        sendTransferType = SendTransferType.Battery(excessesAddress)
+
+        return Pair(Coins.of(consequences.totalFees), isSupportsGasless)
+    }
+
+    private suspend fun calculateFeeGasless(
+        transfer: TransferEntity,
+        excessesAddress: AddrStd,
+        tonProofToken: String,
+        tokenAddress: String
+    ): Pair<Coins, Boolean> {
+        val message = transfer.toSignedMessage(
+            internalMessage = true,
+            additionalGifts = listOf(
+                transfer.gaslessInternalGift(
+                    jettonAmount = Coins.ONE,
+                    batteryAddress = excessesAddress
+                )
+            ),
+            excessesAddress = excessesAddress,
+        )
+
+        val commission = api.estimateGaslessCost(
+            tonProofToken = tonProofToken,
+            jettonMaster = tokenAddress,
+            cell = message,
+            testnet = wallet.testnet,
+        ) ?: return calculateFeeDefault(transfer, true)
+
+        sendTransferType = SendTransferType.Gasless(
+            excessesAddress = excessesAddress,
+            gaslessFee = Coins.of(commission, transfer.token.decimals)
+        )
+
+        return Pair(Coins.ofNano(commission, transfer.token.decimals), true)
+    }
+
+    private suspend fun calculateFeeDefault(
+        transfer: TransferEntity,
+        isSupportsGasless: Boolean,
+    ): Pair<Coins, Boolean> {
+        val message = transfer.toSignedMessage(
+            internalMessage = false
+        )
+        val emulated = api.emulate(message, transfer.wallet.testnet)
+
+        val fee = emulated?.totalFees ?: 0
+
+        sendTransferType = SendTransferType.Default
+
+        return Pair(Coins.of(fee), isSupportsGasless)
     }
 
     private suspend fun eventFee(

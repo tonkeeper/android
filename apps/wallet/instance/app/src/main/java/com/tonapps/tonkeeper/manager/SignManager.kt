@@ -1,7 +1,6 @@
-package com.tonapps.tonkeeper.sign
+package com.tonapps.tonkeeper.manager
 
 import android.os.CancellationSignal
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.SendBlockchainException
@@ -21,6 +20,8 @@ import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.suspendCancellableCoroutine
 import uikit.navigation.Navigation
@@ -35,6 +36,7 @@ class SignManager(
     private val historyHelper: HistoryHelper,
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
+    private val tokenRepository: TokenRepository,
 ) {
 
     suspend fun action(
@@ -45,18 +47,28 @@ class SignManager(
         batteryTxType: BatteryTransaction? = null,
         forceRelayer: Boolean = false,
     ): String {
-        Log.d("ActionLog", "SignManager.action #1")
         navigation.toastLoading(true)
+
+        val compressedTokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)?.filter { it.isCompressed } ?: emptyList()
+
         var isBattery = batteryTxType != null && settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTxType)
 
-        Log.d("ActionLog", "SignManager.action #2")
         val details: HistoryHelper.Details?
         if (isBattery || forceRelayer) {
-            val result = emulateBattery(request, wallet, forceRelayer = forceRelayer)
+            val result = emulateBattery(
+                request = request,
+                wallet = wallet,
+                forceRelayer = forceRelayer,
+                compressedTokens = compressedTokens
+            )
             details = result.first
             isBattery = result.second
         } else {
-            details = emulate(request, wallet)
+            details = emulate(
+                request = request,
+                wallet = wallet,
+                compressedTokens = compressedTokens
+            )
         }
 
         navigation.toastLoading(false)
@@ -101,6 +113,7 @@ class SignManager(
         request: SignRequestEntity,
         wallet: WalletEntity,
         currency: WalletCurrency = settingsRepository.currency,
+        compressedTokens: List<AccountTokenEntity>,
     ): HistoryHelper.Details? {
 
         val rates = ratesRepository.getRates(currency, "TON")
@@ -118,7 +131,7 @@ class SignManager(
                 seqno = seqno,
                 privateKeyEd25519 = EmptyPrivateKeyEd25519,
                 validUntil = validUntil,
-                transfers = request.getTransfers()
+                transfers = request.getTransfers(wallet, compressedTokens, api = api)
             )
             val emulated = api.emulate(cell, wallet.testnet) ?: return null
             historyHelper.create(wallet, emulated, rates)
@@ -132,6 +145,7 @@ class SignManager(
         wallet: WalletEntity,
         currency: WalletCurrency = settingsRepository.currency,
         forceRelayer: Boolean,
+        compressedTokens: List<AccountTokenEntity>,
     ): Pair<HistoryHelper.Details?, Boolean> {
         return try {
             if (api.config.isBatteryDisabled) {
@@ -142,7 +156,14 @@ class SignManager(
 
             val rates = ratesRepository.getRates(currency, "TON")
             val seqno = accountRepository.getSeqno(wallet)
-            val cell = accountRepository.createSignedMessage(wallet, seqno, EmptyPrivateKeyEd25519, request.validUntil, request.getTransfers(), internalMessage = true)
+            val cell = accountRepository.createSignedMessage(
+                wallet = wallet,
+                seqno = seqno,
+                privateKeyEd25519 = EmptyPrivateKeyEd25519,
+                validUntil = request.validUntil,
+                transfers = request.getTransfers(wallet, compressedTokens, api = api),
+                internalMessage = true
+            )
 
             val (consequences, withBattery) = batteryRepository.emulate(
                 tonProofToken = tonProofToken,
@@ -155,7 +176,7 @@ class SignManager(
             val details = historyHelper.create(wallet, consequences, rates, isBattery = true)
             Pair(details, withBattery)
         } catch (e: Throwable) {
-            Pair(emulate(request, wallet, currency), false)
+            Pair(emulate(request, wallet, currency, compressedTokens), false)
         }
     }
 }

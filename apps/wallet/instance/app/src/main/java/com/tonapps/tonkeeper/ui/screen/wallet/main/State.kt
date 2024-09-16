@@ -82,6 +82,8 @@ sealed class State {
         val assets: Assets,
         val hasBackup: Boolean,
         val battery: Battery,
+        val lt: Long?,
+        val isOnline: Boolean,
     ): State() {
 
         private val totalBalanceFormat: CharSequence

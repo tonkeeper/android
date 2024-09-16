@@ -33,37 +33,15 @@ class TokenRepository(
 
     fun getToken(accountId: String, testnet: Boolean) = remoteDataSource.getJetton(accountId, testnet)
 
-    suspend fun getTotalBalances(
-        currency: WalletCurrency,
-        accountId: String,
-        testnet: Boolean
-    ): Coins? {
-        return totalBalanceCache[cacheKey(accountId, testnet)] ?: loadTotalBalances(currency, accountId, testnet)
-    }
-
-    private suspend fun loadTotalBalances(
-        currency: WalletCurrency,
-        accountId: String,
-        testnet: Boolean
-    ): Coins? {
-        val tokens = get(currency, accountId, testnet) ?: return null
-        var fiatBalance = Coins.of(0)
-        if (testnet) {
-            fiatBalance = tokens.first().balance.value
-        } else {
-            for (token in tokens) {
-                fiatBalance += token.fiat
-            }
-        }
-        totalBalanceCache[cacheKey(accountId, testnet)] = fiatBalance
-        return fiatBalance
-    }
-
     suspend fun get(
         currency: WalletCurrency,
         accountId: String,
-        testnet: Boolean
+        testnet: Boolean,
+        refresh: Boolean = false,
     ): List<AccountTokenEntity>? {
+        if (refresh) {
+            return getRemote(currency, accountId, testnet)
+        }
         val tokens = getLocal(currency, accountId, testnet)
         if (tokens.isNotEmpty()) {
             return tokens

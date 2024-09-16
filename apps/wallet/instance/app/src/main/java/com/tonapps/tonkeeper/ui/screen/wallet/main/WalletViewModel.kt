@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.manager.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
@@ -36,10 +37,12 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
@@ -51,6 +54,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 import uikit.extensions.context
+import kotlin.time.Duration.Companion.seconds
 
 class WalletViewModel(
     app: Application,
@@ -68,7 +72,8 @@ class WalletViewModel(
     private val ratesRepository: RatesRepository,
     private val batteryRepository: BatteryRepository,
     private val billingManager: BillingManager,
-    private val transactionManager: TransactionManager
+    private val transactionManager: TransactionManager,
+    private val assetsManager: AssetsManager,
 ): BaseWalletVM(app) {
 
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
@@ -107,7 +112,7 @@ class WalletViewModel(
         }
     }.map { !it }
 
-    private val _streamFLow = combine(updateWalletSettings, _lastLtFlow) { _, _ -> }
+    private val _streamFlow = combine(updateWalletSettings, _lastLtFlow) { _, lastLt -> lastLt }
 
     init {
         collectFlow(transactionManager.getEventsFlow(wallet)) { event ->
@@ -133,11 +138,17 @@ class WalletViewModel(
             settingsRepository.currencyFlow,
             backupRepository.stream,
             networkMonitor.isOnlineFlow,
-            _streamFLow,
-        ) { currency, backups, isOnline, _ ->
-            if (isOnline) {
+            _streamFlow,
+        ) { currency, backups, currentIsOnline, currentLt ->
+            val lastLt = _stateMainFlow.value?.lt ?: 0
+            val lastIsOnline = _stateMainFlow.value?.isOnline
+
+            val isRequestUpdate = _stateMainFlow.value == null || lastLt != currentLt || lastIsOnline != currentIsOnline
+
+            if (isRequestUpdate) {
                 setStatus(Status.Updating)
             }
+
             _uiLabelFlow.value = wallet.label
 
             val hasBackup = if (!wallet.hasPrivateKey) {
@@ -148,7 +159,7 @@ class WalletViewModel(
 
             val walletCurrency = getCurrency(wallet, currency)
 
-            val localAssets = getLocalAssets(walletCurrency, wallet)
+            val localAssets = getAssets(walletCurrency, false)
             val batteryBalance = getBatteryBalance(wallet)
             if (localAssets != null) {
                 _stateMainFlow.value = State.Main(
@@ -161,11 +172,13 @@ class WalletViewModel(
                         disabled = api.config.batteryDisabled,
                         viewed = settingsRepository.batteryViewed,
                     ),
+                    lt = currentLt,
+                    isOnline = currentIsOnline,
                 )
             }
 
-            if (isOnline) {
-                val remoteAssets = getRemoteAssets(walletCurrency, wallet)
+            if (isRequestUpdate) {
+                val remoteAssets = getAssets(walletCurrency, true)
                 val batteryBalance = getBatteryBalance(wallet, true)
                 if (remoteAssets != null) {
                     _stateMainFlow.value = State.Main(
@@ -178,6 +191,8 @@ class WalletViewModel(
                             disabled = api.config.batteryDisabled,
                             viewed = settingsRepository.batteryViewed,
                         ),
+                        lt = currentLt,
+                        isOnline = currentIsOnline,
                     )
                     settingsRepository.setWalletLastUpdated(wallet.id)
                     setStatus(Status.Default)
@@ -275,58 +290,18 @@ class WalletViewModel(
         return@withContext battery.balance
     }
 
-    private suspend fun getLocalAssets(
+    private suspend fun getAssets(
         currency: WalletCurrency,
-        wallet: WalletEntity
+        refresh: Boolean
     ): State.Assets? = withContext(Dispatchers.IO) {
-        val tokens = tokenRepository.getLocal(currency, wallet.accountId, wallet.testnet)
-        if (tokens.isEmpty()) {
-            return@withContext null
+        assetsManager.getAssets(wallet, currency, refresh)?.let {
+            State.Assets(
+                currency = currency,
+                list = it.sort(wallet, settingsRepository),
+                fromCache = !refresh,
+                rates = ratesRepository.getTONRates(currency)
+            )
         }
-        val initializedAccount = tokens.firstOrNull()?.balance?.initializedAccount ?: false
-        val staking = stakingRepository.get(wallet.accountId, wallet.testnet, initializedAccount = initializedAccount)
-        buildStateTokens(wallet, currency, tokens, staking, true)
-    }
-
-    private suspend fun getRemoteAssets(
-        currency: WalletCurrency,
-        wallet: WalletEntity
-    ): State.Assets? = withContext(Dispatchers.IO) {
-        try {
-            val tokens = tokenRepository.getRemote(currency, wallet.accountId, wallet.testnet) ?: return@withContext null
-            val initializedAccount = tokens.first().balance.initializedAccount
-            val staking = stakingRepository.get(wallet.accountId, wallet.testnet, ignoreCache = true, initializedAccount = initializedAccount)
-            buildStateTokens(wallet, currency, tokens, staking, false)
-        } catch (e: Throwable) {
-            return@withContext null
-        }
-    }
-
-    private suspend fun buildStateTokens(
-        wallet: WalletEntity,
-        currency: WalletCurrency,
-        tokens: List<AccountTokenEntity>,
-        staking: StakingEntity,
-        fromCache: Boolean
-    ): State.Assets? {
-        val fiatRates = ratesRepository.getTONRates(currency)
-        val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
-        val liquid = staked.find { it.isTonstakers }?.liquidToken
-
-        val filteredTokens = if (liquid == null) {
-            tokens
-        } else {
-            tokens.filter { !liquid.token.address.contains(it.address)  }
-        }
-        if (filteredTokens.isEmpty() && staked.isEmpty()) {
-            return null
-        }
-
-        val assets = (filteredTokens.map { AssetsEntity.Token(it) } + staked.map {
-            AssetsEntity.Staked(it)
-        }).sortedBy { it.fiat }.reversed()
-
-        return State.Assets(currency, assets.sort(wallet, settingsRepository), fromCache, fiatRates)
     }
 
     private fun getApps(

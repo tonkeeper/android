@@ -13,6 +13,7 @@ import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -26,6 +27,17 @@ class BatterySettingsViewModel(
     private val batteryRepository: BatteryRepository,
     private val api: API,
 ): BaseWalletVM(app) {
+
+    val titleFlow = batteryRepository.balanceUpdatedFlow.map { _ ->
+        val batteryBalance = getBatteryBalance(wallet)
+        val hasBalance = batteryBalance.balance.isPositive
+
+        if (hasBalance) {
+            ""
+        } else {
+            getString(Localization.transactions)
+        }
+    }.flowOn(Dispatchers.IO)
 
     val uiItemsFlow = batteryRepository.balanceUpdatedFlow.map { _ ->
         val config = api.config

@@ -39,7 +39,6 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
         setHeaderBackground(R.drawable.bg_page_gradient)
         setActionIcon(UIKitIcon.ic_close_16) { finish() }
         setAdapter(adapter)
-        updateListPadding(top = requireContext().getDimensionPixelSize(R.dimen.barHeight))
         if (initialPromo != null) {
             viewModel.applyPromo(initialPromo!!, true)
         }

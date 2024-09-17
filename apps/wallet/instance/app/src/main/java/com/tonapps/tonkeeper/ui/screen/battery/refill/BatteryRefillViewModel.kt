@@ -27,11 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import uikit.extensions.collectFlow
 import java.net.URLEncoder
 
 class BatteryRefillViewModel(
@@ -68,13 +64,15 @@ class BatteryRefillViewModel(
             uiItems.add(Item.Space)
         }
 
-        if (!api.config.disableBatteryCryptoRecharge) {
+        val rechargeMethodsItems = uiItemsRechargeMethods(wallet)
+
+        if (!api.config.disableBatteryCryptoRecharge && rechargeMethodsItems.isNotEmpty()) {
             uiItems.addAll(uiItemsRechargeMethods(wallet))
+            uiItems.add(Item.Space)
         }
 
         val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
 
-        uiItems.add(Item.Space)
         uiItems.add(
             Item.Refund(
                 wallet = wallet,
@@ -134,7 +132,9 @@ class BatteryRefillViewModel(
                 )
             )
         }
-        uiItems.add(Item.Gift(wallet, position = ListCell.Position.LAST))
+        if (uiItems.isNotEmpty()) {
+            uiItems.add(Item.Gift(wallet, position = ListCell.Position.LAST))
+        }
         return uiItems.toList()
     }
 
@@ -177,8 +177,14 @@ class BatteryRefillViewModel(
             }
         }
         return tokens.filter { token ->
-            supportTokenAddress.contains(token.address)
-        }.sortedBy { it.fiat }.reversed()
+            supportTokenAddress.contains(token.address) && token.balance.value.isPositive
+        }.sortedWith(compareByDescending<AccountTokenEntity> { token ->
+            token.isUsdt // Place USDT at the top
+        }.thenBy { token ->
+            token.isTon // Place TON at the end
+        }.thenByDescending { token ->
+            token.fiat // Sort by fiat value
+        })
     }
 
     fun applyPromo(promo: String, isInitial: Boolean = false) {

@@ -51,6 +51,7 @@ class RechargePackHolder(
 
         radioView.checked = item.selected
         radioView.isEnabled = item.isEnabled
+        radioView.setOnClickListener { onPackSelect(item.packType) }
 
 
     }

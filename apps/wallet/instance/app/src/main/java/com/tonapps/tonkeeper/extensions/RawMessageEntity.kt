@@ -80,30 +80,13 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
     )
 }
 
-fun RawMessageEntity.getJettonAddress(): AddrStd? {
-    val slice = payload.beginParse()
-    val opCode = slice.loadOpCode()
-    if (opCode != TONOpCode.JETTON_TRANSFER) {
-        return null
-    }
-    slice.loadUInt(64)
-    slice.loadTlb(Coins.tlbCodec())
-    slice.loadTlb(AddrStd.tlbCodec())
-    val excessesAddress = slice.loadTlb(AddrStd.tlbCodec())
-    val customPayload = slice.loadMaybeRef()
-    if (customPayload != null) {
-        return null
-    }
-    return excessesAddress
-}
-
 fun RawMessageEntity.getWalletTransfer(
     excessesAddress: AddrStd? = null,
     newStateInit: StateInit? = null,
     newCustomPayload: Cell? = null,
 ): WalletTransfer {
     val builder = WalletTransferBuilder()
-    builder.stateInit = newStateInit ?: stateInit
+    builder.stateInit = stateInit ?: newStateInit
     builder.destination = address
     builder.body = if (excessesAddress != null) {
         rebuildBodyWithCustomExcessesAccount(excessesAddress)

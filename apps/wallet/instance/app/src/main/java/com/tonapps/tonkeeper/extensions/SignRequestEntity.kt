@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.extensions
 
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -18,8 +19,12 @@ suspend fun SignRequestEntity.getTransfers(
 ): List<WalletTransfer> = withContext(Dispatchers.IO) {
     val transfers = mutableListOf<WalletTransfer>()
     for (message in messages) {
-        val jettonCustomPayload = message.getJettonAddress()?.toAccountId()?.let {
-            api.getJettonCustomPayload(wallet.accountId, wallet.testnet, it)
+        val jetton = compressedTokens.firstOrNull {
+            it.address.equalsAddress(message.addressValue) ||
+            it.balance.walletAddress.equalsAddress(message.addressValue)
+        }
+        val jettonCustomPayload = jetton?.let {
+            api.getJettonCustomPayload(wallet.accountId, wallet.testnet, it.address)
         }
 
         val transfer = message.getWalletTransfer(

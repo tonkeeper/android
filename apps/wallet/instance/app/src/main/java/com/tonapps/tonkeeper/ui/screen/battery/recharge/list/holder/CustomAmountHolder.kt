@@ -23,5 +23,6 @@ class CustomAmountHolder(
         titleView.text = getString(Localization.battery_other_title)
         subtitleView.text = getString(Localization.battery_other_subtitle)
         radioView.checked = item.selected
+        radioView.setOnClickListener { onCustomAmountSelect() }
     }
 }

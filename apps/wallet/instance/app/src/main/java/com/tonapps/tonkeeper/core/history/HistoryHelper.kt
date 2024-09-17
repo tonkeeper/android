@@ -130,7 +130,15 @@ class HistoryHelper(
         for (event in events) {
             val groupKey = getGroupKey(event.timestampForSort)
             val date = event.timestampForSort
-            val section = output[groupKey] ?: ActionDateSection(date, DateHelper.formatTransactionsGroupDate(context, date, settingsRepository.getLocale()), mutableListOf())
+            val section = output[groupKey] ?: ActionDateSection(
+                date,
+                DateHelper.formatTransactionsGroupDate(
+                    context,
+                    date,
+                    settingsRepository.getLocale()
+                ),
+                mutableListOf()
+            )
             section.events.add(event)
             output[groupKey] = section
         }
@@ -283,7 +291,8 @@ class HistoryHelper(
             val chunkItems = mutableListOf<HistoryItem>()
             for ((actionIndex, action) in actions.withIndex()) {
                 val timestamp = if (removeDate) 0 else event.timestamp
-                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
+                val isScam =
+                    event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
 
                 val item = action(
                     index = actionIndex,
@@ -293,16 +302,29 @@ class HistoryHelper(
                     timestamp = timestamp,
                     isScam = isScam
                 )
-                chunkItems.add(item.copy(
-                    pending = pending,
-                    position = ListCell.getPosition(actions.size + positionExtra, actionIndex),
-                    fee = if (fee.isPositive) CurrencyFormatter.format(TokenEntity.TON.symbol, fee, TokenEntity.TON.decimals) else null,
-                    feeInCurrency = CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
-                    refund = if (refund.isPositive) CurrencyFormatter.format(TokenEntity.TON.symbol, refund, TokenEntity.TON.decimals) else null,
-                    refundInCurrency = CurrencyFormatter.formatFiat(currency.code, refundInCurrency),
-                    lt = event.lt,
-                    hiddenBalance = hiddenBalances
-                ))
+                chunkItems.add(
+                    item.copy(
+                        pending = pending,
+                        position = ListCell.getPosition(actions.size + positionExtra, actionIndex),
+                        fee = if (fee.isPositive) CurrencyFormatter.format(
+                            TokenEntity.TON.symbol,
+                            fee,
+                            TokenEntity.TON.decimals
+                        ) else null,
+                        feeInCurrency = CurrencyFormatter.formatFiat(currency.code, feeInCurrency),
+                        refund = if (refund.isPositive) CurrencyFormatter.format(
+                            TokenEntity.TON.symbol,
+                            refund,
+                            TokenEntity.TON.decimals
+                        ) else null,
+                        refundInCurrency = CurrencyFormatter.formatFiat(
+                            currency.code,
+                            refundInCurrency
+                        ),
+                        lt = event.lt,
+                        hiddenBalance = hiddenBalances
+                    )
+                )
             }
 
             if (chunkItems.size > 0) {
@@ -324,30 +346,43 @@ class HistoryHelper(
 
         val simplePreview = action.simplePreview
         val date = DateHelper.formatTransactionTime(timestamp, settingsRepository.getLocale())
-        val dateDetails = DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
+        val dateDetails =
+            DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
 
         if (action.jettonSwap != null) {
             val jettonSwap = action.jettonSwap!!
             val jettonPreview = jettonSwap.jettonPreview!!
             val token = jettonSwap.jettonPreview!!.address
-            val symbol = jettonPreview.symbol
             val amount = Coins.ofNano(jettonSwap.amount, jettonPreview.decimals)
-            val tonFromJetton = Coins.of(jettonSwap.ton)
 
-            val isOut = jettonSwap.amountOut != ""
-            val value: CharSequence
-            val value2: CharSequence
-            val tokenCode: String
 
-            if (!isOut) {
-                tokenCode = TokenEntity.TON.symbol
-                value = CurrencyFormatter.format(tokenCode, tonFromJetton, 2)
-                value2 = CurrencyFormatter.format(symbol, amount, 2)
-            } else {
-                tokenCode = symbol
-                value = CurrencyFormatter.format(symbol, amount, 2)
-                value2 = CurrencyFormatter.format(TokenEntity.TON.symbol, tonFromJetton, 2)
-            }
+            val amountIn = if (jettonSwap.tonIn != null) {
+                CurrencyFormatter.format(
+                    TokenEntity.TON.symbol,
+                    Coins.of(jettonSwap.tonIn!!),
+                    2
+                ).withMinus
+            } else if (jettonSwap.jettonMasterIn != null) {
+                CurrencyFormatter.format(
+                    jettonSwap.jettonMasterIn!!.symbol,
+                    Coins.ofNano(jettonSwap.amountIn, jettonSwap.jettonMasterIn!!.decimals),
+                    2
+                ).withMinus
+            } else "-"
+
+            val amountOut = if (jettonSwap.tonOut != null) {
+                CurrencyFormatter.format(
+                    TokenEntity.TON.symbol,
+                    Coins.of(jettonSwap.tonOut!!),
+                    2
+                ).withPlus
+            } else if (jettonSwap.jettonMasterOut != null) {
+                CurrencyFormatter.format(
+                    jettonSwap.jettonMasterOut!!.symbol,
+                    Coins.ofNano(jettonSwap.amountOut, jettonSwap.jettonMasterOut!!.decimals),
+                    2
+                ).withPlus
+            } else "-"
 
             val rates = ratesRepository.getRates(currency, token)
             val inCurrency = rates.convert(token, amount)
@@ -359,11 +394,12 @@ class HistoryHelper(
                 action = ActionType.Swap,
                 title = simplePreview.name,
                 subtitle = jettonSwap.router.getNameOrAddress(wallet.testnet, true),
-                value = value.withPlus,
-                value2 = value2.withMinus,
-                tokenCode = tokenCode,
-                coinIconUrl = jettonSwap.jettonMasterIn?.image ?: TokenEntity.TON.imageUri.toString(),
-                coinIconUrl2 = jettonSwap.jettonMasterOut?.image ?: TokenEntity.TON.imageUri.toString(),
+                value = amountOut,
+                value2 = amountIn,
+                coinIconUrl = jettonSwap.jettonMasterIn?.image
+                    ?: TokenEntity.TON.imageUri.toString(),
+                coinIconUrl2 = jettonSwap.jettonMasterOut?.image
+                    ?: TokenEntity.TON.imageUri.toString(),
                 timestamp = timestamp,
                 date = date,
                 dateDetails = dateDetails,
@@ -681,7 +717,10 @@ class HistoryHelper(
             )
         } else if (action.auctionBid != null) {
             val auctionBid = action.auctionBid!!
-            val subtitle = auctionBid.nft?.title?.max24 ?: auctionBid.bidder.getNameOrAddress(wallet.testnet, true)
+            val subtitle = auctionBid.nft?.title?.max24 ?: auctionBid.bidder.getNameOrAddress(
+                wallet.testnet,
+                true
+            )
 
             val amount = Coins.ofNano(auctionBid.amount.value)
             val tokenCode = auctionBid.amount.tokenName
@@ -705,7 +744,17 @@ class HistoryHelper(
                 wallet = wallet,
             )
         } else if (action.type == Action.Type.unknown) {
-            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails, isScam, wallet)
+            return createUnknown(
+                index,
+                txId,
+                action,
+                date,
+                timestamp,
+                simplePreview,
+                dateDetails,
+                isScam,
+                wallet
+            )
         } else if (action.withdrawStake != null) {
             val withdrawStake = action.withdrawStake!!
 
@@ -830,7 +879,17 @@ class HistoryHelper(
                 wallet = wallet,
             )
         } else {
-            return createUnknown(index, txId, action, date, timestamp, simplePreview, dateDetails, isScam, wallet)
+            return createUnknown(
+                index,
+                txId,
+                action,
+                date,
+                timestamp,
+                simplePreview,
+                dateDetails,
+                isScam,
+                wallet
+            )
         }
     }
 

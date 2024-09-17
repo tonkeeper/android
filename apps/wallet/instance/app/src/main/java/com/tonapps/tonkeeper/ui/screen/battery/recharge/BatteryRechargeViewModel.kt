@@ -283,8 +283,8 @@ class BatteryRechargeViewModel(
         val batteryMaxInputAmount = rechargeMethod.fromTon(api.config.batteryMaxInputAmount)
 
         val amount = _selectedPackTypeFlow.value?.let { packType ->
-            Coins.of(RechargePackEntity.getTonAmount(api.config.batteryMeanFees, packType))
-        } ?: Coins.of(_amountFlow.value)
+            rechargeMethod.fromTon(RechargePackEntity.getTonAmount(api.config.batteryMeanFees, packType))
+        } ?: Coins.of(_amountFlow.value, token.decimals)
 
         if (amount > batteryMaxInputAmount) {
             _eventFlow.tryEmit(
@@ -333,6 +333,8 @@ class BatteryRechargeViewModel(
                 null
             }
 
+            Log.d("BatteryRechargeViewModel", "amount=$amount")
+
             val jettonPayload = TonTransferHelper.jetton(
                 coins = amount.toGrams(),
                 toAddress = AddrStd.parse(fundReceiver),
@@ -358,7 +360,7 @@ class BatteryRechargeViewModel(
         }
     }.catch {
         _eventFlow.tryEmit(BatteryRechargeEvent.Error)
-    }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }.take(1).flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
     private fun uiItemsPacks(
         packs: List<RechargePackEntity>,

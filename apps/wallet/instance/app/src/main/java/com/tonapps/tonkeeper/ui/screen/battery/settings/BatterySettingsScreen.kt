@@ -32,7 +32,7 @@ class BatterySettingsScreen(wallet: WalletEntity): BaseHolderWalletScreen.ChildL
         setCloseIcon(UIKitIcon.ic_chevron_left_16) { popBackStack() }
         setActionIcon(UIKitIcon.ic_close_16) { finish() }
         setAdapter(adapter)
-        updateListPadding(top = requireContext().getDimensionPixelSize(R.dimen.barHeight))
+        collectFlow(viewModel.titleFlow, ::setTitle)
     }
 
     companion object {

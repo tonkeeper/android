@@ -71,6 +71,15 @@
                 android:subtitle="@string/signer_wallet_subtitle"/>
 
             <uikit.widget.ActionCellView
+                android:id="@+id/keystone_wallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:icon="@drawable/ic_keystone_28"
+                android:subtitle="@string/keystone_subtitle"
+                android:title="@string/keystone_title" />
+
+            <uikit.widget.ActionCellView
                 android:id="@+id/ledger_wallet"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

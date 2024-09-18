@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.widget.NestedScrollView
 import com.tonapps.tonkeeper.koin.api
 import com.tonapps.tonkeeper.ui.screen.add.signer.AddSignerScreen
+import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.add.KeystoneAddScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.pair.PairLedgerScreen
@@ -13,6 +14,7 @@ import com.tonapps.wallet.api.API
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
+import uikit.extensions.pinToBottomInsets
 import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ModalHeader
@@ -27,6 +29,7 @@ class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal 
         headerView.onCloseClick = { finish() }
 
         val scrollView = view.findViewById<NestedScrollView>(R.id.scroll)
+        scrollView.pinToBottomInsets()
         collectFlow(scrollView.topScrolled, headerView::setDivider)
 
         openByClick(R.id.new_wallet, InitArgs.Type.New)
@@ -41,6 +44,10 @@ class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal 
 
         if (api.config.flags.disableSigner) {
             signerView.visibility = View.GONE
+        }
+
+        view.findViewById<View>(R.id.keystone_wallet).setOnClickListener {
+            navigation?.add(KeystoneAddScreen.newInstance())
         }
 
         val ledgerView = view.findViewById<View>(R.id.ledger_wallet)

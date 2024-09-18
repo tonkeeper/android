@@ -110,12 +110,14 @@ class InitViewModel(
         }
 
         savedState.ledgerConnectData = args.ledgerConnectData
+        savedState.keystone = args.keystone
 
         when (type) {
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
             InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)
             InitArgs.Type.Signer, InitArgs.Type.SignerQR -> withLoading { resolveWallets(savedState.publicKey!!) }
             InitArgs.Type.Ledger -> routeTo(InitRoute.SelectAccount)
+            InitArgs.Type.Keystone -> routeTo(InitRoute.LabelAccount)
             else -> { }
         }
 
@@ -385,7 +387,7 @@ class InitViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (!passcodeManager.hasPinCode()) {
+                if ((type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !passcodeManager.hasPinCode()) {
                     passcodeManager.save(savedState.passcode!!)
                 }
 
@@ -397,6 +399,7 @@ class InitViewModel(
                     InitArgs.Type.Signer -> wallets.addAll(signerWallets(false))
                     InitArgs.Type.SignerQR -> wallets.addAll(signerWallets(true))
                     InitArgs.Type.Ledger -> wallets.addAll(ledgerWallets())
+                    InitArgs.Type.Keystone -> wallets.addAll(keystoneWallet())
                 }
 
                 if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
@@ -485,6 +488,14 @@ class InitViewModel(
         val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
 
         return accountRepository.pairSigner(label, publicKey.publicKey, versions, qr)
+    }
+
+    private suspend fun keystoneWallet(): List<WalletEntity> {
+        val label = getFixedLabel()
+        val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
+        val keystone = savedState.keystone ?: throw IllegalStateException("Keystone is not set")
+
+        return accountRepository.pairKeystone(label, publicKey.publicKey, keystone)
     }
 
     private suspend fun saveMnemonic(

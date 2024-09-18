@@ -1,14 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.signer.qr
 
+import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
-import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
-import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tonapps.qr.QRImageAnalyzer
@@ -18,14 +16,32 @@ import com.tonapps.tonkeeperx.R
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.bitstring.BitString
 import org.ton.cell.Cell
 import uikit.base.BaseFragment
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.round
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 class SignerQRScreen: BaseFragment(R.layout.fragment_signer_qr), BaseFragment.BottomSheet {
+
+    val contract = object : ResultContract<Uri, BitString> {
+        override fun createResult(result: Uri) = Bundle().apply {
+            putString(KEY_URI, result.toString())
+        }
+
+        override fun parseResult(bundle: Bundle): BitString {
+            val uri = bundle.getString(KEY_URI)?.toUri()
+            val sign = uri?.getQueryParameter("sign")
+            if (sign.isNullOrBlank()) {
+                throw CancellationException("SignerQRScreen canceled")
+            }
+            return BitString(sign)
+        }
+    }
 
     private val args: SignerQRArgs by lazy { SignerQRArgs(requireArguments()) }
 
@@ -35,7 +51,7 @@ class SignerQRScreen: BaseFragment(R.layout.fragment_signer_qr), BaseFragment.Bo
         }
     }
 
-    private var isReady = false
+    private val isReady = AtomicBoolean(false)
     private val qrAnalyzer = QRImageAnalyzer()
     private val chunks = mutableListOf<String>()
     private lateinit var cameraExecutor: ExecutorService
@@ -72,9 +88,7 @@ class SignerQRScreen: BaseFragment(R.layout.fragment_signer_qr), BaseFragment.Bo
     }
 
     private fun handleBarcode(barcode: Barcode) {
-        if (isReady) {
-            return
-        }
+        if (isReady.get()) return
 
         val data = barcode.rawValue ?: return
 
@@ -93,9 +107,9 @@ class SignerQRScreen: BaseFragment(R.layout.fragment_signer_qr), BaseFragment.Bo
             null
         } ?: return
 
-        isReady = true
-        setFragmentResult(args.requestKey, Bundle().apply { putString(KEY_URI, uri.toString()) })
-        finish()
+        if (isReady.compareAndSet(false, true)) {
+            setResult(contract.createResult(uri))
+        }
     }
 
     private fun checkAndStartCamera() {
@@ -132,11 +146,10 @@ class SignerQRScreen: BaseFragment(R.layout.fragment_signer_qr), BaseFragment.Bo
         fun newInstance(
             publicKey: PublicKeyEd25519,
             unsignedBody: Cell,
-            label: String,
-            requestKey: String
+            label: String = ""
         ): SignerQRScreen {
             val fragment = SignerQRScreen()
-            fragment.setArgs(SignerQRArgs(publicKey, unsignedBody, label, requestKey))
+            fragment.setArgs(SignerQRArgs(publicKey, unsignedBody, label))
             return fragment
         }
     }

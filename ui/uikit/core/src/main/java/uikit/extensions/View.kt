@@ -25,6 +25,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -318,4 +319,12 @@ fun TextView.setRightDrawable(drawable: Drawable?) {
 
 fun TextView.clearDrawables() {
     setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
+}
+
+fun View.setChildText(id: Int, textRes: Int) {
+    findViewById<TextView>(id).setText(textRes)
+}
+
+fun View.gone(id: Int) {
+    findViewById<View>(id).visibility = View.GONE
 }

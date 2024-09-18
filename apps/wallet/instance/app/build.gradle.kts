@@ -32,6 +32,7 @@ dependencies {
     implementation(Dependence.Koin.core)
     implementation(Dependence.KotlinX.datetime)
     implementation(Dependence.j2objc)
+    implementation(Dependence.cbor)
 
     implementation(project(Dependence.Wallet.localization))
     implementation(project(Dependence.Wallet.api))
@@ -94,6 +95,7 @@ dependencies {
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.ledger))
+    implementation(project(Dependence.Lib.ur))
 
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)

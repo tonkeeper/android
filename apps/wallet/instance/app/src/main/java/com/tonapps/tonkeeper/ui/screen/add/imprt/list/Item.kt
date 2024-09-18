@@ -20,6 +20,7 @@ data class Item(
         const val TESTNET_WALLET_ID = 3
         const val SIGNER_WALLET_ID = 4
         const val LEDGER_WALLET_ID = 5
+        const val KEYSTONE_WALLET_ID = 6
 
         val import = Item(
             id = IMPORT_WALLET_ID,
@@ -47,6 +48,13 @@ data class Item(
             iconResId = UIKitIcon.ic_key_28,
             titleResId = Localization.signer_wallet,
             subtitleResId = Localization.signer_wallet_subtitle
+        )
+
+        val keystone = Item(
+            id = KEYSTONE_WALLET_ID,
+            iconResId = UIKitIcon.ic_keystone_28,
+            titleResId = Localization.keystone_title,
+            subtitleResId = Localization.keystone_subtitle
         )
 
         val ledger = Item(

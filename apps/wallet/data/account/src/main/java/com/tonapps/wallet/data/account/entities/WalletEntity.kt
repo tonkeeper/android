@@ -23,7 +23,6 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 
-
 data class WalletEntity(
     val id: String,
     val publicKey: PublicKeyEd25519,
@@ -31,6 +30,7 @@ data class WalletEntity(
     val version: WalletVersion,
     val label: Wallet.Label,
     val ledger: Ledger? = null,
+    val keystone: Keystone? = null
 ): Parcelable {
 
     companion object {
@@ -41,7 +41,8 @@ data class WalletEntity(
             type = Wallet.Type.Default,
             version = WalletVersion.V5BETA,
             label = Wallet.Label("", "", 0),
-            ledger = null
+            ledger = null,
+            keystone = null
         )
 
         @JvmField
@@ -56,6 +57,12 @@ data class WalletEntity(
     data class Ledger(
         val deviceId: String,
         val accountIndex: Int
+    ) : Parcelable
+
+    @Parcelize
+    data class Keystone(
+        val xfp: String,
+        val path: String
     ) : Parcelable
 
     val contract: BaseWalletContract by lazy {
@@ -83,11 +90,14 @@ data class WalletEntity(
     val isLedger: Boolean
         get() = type == Wallet.Type.Ledger
 
+    val isKeystone: Boolean
+        get() = type == Wallet.Type.Keystone
+
     val isW5: Boolean
         get() = version == WalletVersion.V5BETA || version == WalletVersion.V5R1
 
     val isExternal: Boolean
-        get() = signer || isLedger
+        get() = signer || isLedger || isKeystone
 
     constructor(parcel: Parcel) : this(
         id = parcel.readString()!!,
@@ -95,7 +105,8 @@ data class WalletEntity(
         type = parcel.readEnum(Wallet.Type::class.java)!!,
         version = parcel.readEnum(WalletVersion::class.java)!!,
         label = parcel.readParcelableCompat()!!,
-        ledger = parcel.readParcelableCompat()
+        ledger = parcel.readParcelableCompat(),
+        keystone = parcel.readParcelableCompat()
     )
 
     fun isMyAddress(address: String): Boolean {
@@ -140,6 +151,7 @@ data class WalletEntity(
         parcel.writeEnum(version)
         parcel.writeParcelable(label, flags)
         parcel.writeParcelable(ledger, flags)
+        parcel.writeParcelable(keystone, flags)
     }
 
     override fun describeContents(): Int {

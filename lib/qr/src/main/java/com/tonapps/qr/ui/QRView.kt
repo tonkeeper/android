@@ -84,6 +84,10 @@ class QRView @JvmOverloads constructor(
         doOnLayout { qrDrawable.setData(size, content) }
     }
 
+    fun setContent(chunks: List<String>) {
+        doOnLayout { qrDrawable.setData(size, chunks) }
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.withSave {

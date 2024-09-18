@@ -13,7 +13,7 @@ sealed class Wallet {
     }
 
     enum class Type(val id: Int) {
-        Default(0), Watch(1), Testnet(2), Signer(3), Lockup(4), Ledger(5), SignerQR(6)
+        Default(0), Watch(1), Testnet(2), Signer(3), Lockup(4), Ledger(5), SignerQR(6), Keystone(7)
     }
 
     @Parcelize

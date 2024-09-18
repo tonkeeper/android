@@ -189,6 +189,7 @@ class BalanceHolder(
             Wallet.Type.Ledger -> builder.badgeGreen(context, Localization.ledger)
             Wallet.Type.Testnet -> builder.badgeOrange(context, Localization.testnet)
             Wallet.Type.Watch -> builder.badgeOrange(context, Localization.watch_only)
+            Wallet.Type.Keystone -> builder.badgePurple(context, Localization.keystone)
             Wallet.Type.Default -> builder
             Wallet.Type.Lockup -> builder
         }

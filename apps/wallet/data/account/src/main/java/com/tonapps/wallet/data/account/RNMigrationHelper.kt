@@ -60,6 +60,8 @@ internal class RNMigrationHelper(
                 type = Wallet.Type.SignerQR
             } else if (legacyWallet.type == RNWallet.Type.Ledger) {
                 type = Wallet.Type.Ledger
+            } else if (legacyWallet.type == RNWallet.Type.Keystone) {
+                type = Wallet.Type.Keystone
             } else {
                 continue
             }
@@ -74,6 +76,12 @@ internal class RNMigrationHelper(
                     WalletEntity.Ledger(
                         deviceId = it.deviceId,
                         accountIndex = it.accountIndex
+                    )
+                },
+                keystone = legacyWallet.keystone?.let {
+                    WalletEntity.Keystone(
+                        xfp = it.xfp,
+                        path = it.path
                     )
                 }
             )

@@ -7,6 +7,12 @@
         <compositeConfiguration>
           <compositeBuild compositeDefinitionSource="SCRIPT">
             <builds>
+              <build path="$PROJECT_DIR$/buildLogic" name="buildLogic">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildLogic" />
+                  <project path="$PROJECT_DIR$/buildLogic/plugin" />
+                </projects>
+              </build>
               <build path="$PROJECT_DIR$/buildSrc" name="buildSrc">
                 <projects>
                   <project path="$PROJECT_DIR$/buildSrc" />
@@ -31,6 +37,7 @@
             <option value="$PROJECT_DIR$/apps/wallet/data/browser" />
             <option value="$PROJECT_DIR$/apps/wallet/data/collectibles" />
             <option value="$PROJECT_DIR$/apps/wallet/data/core" />
+            <option value="$PROJECT_DIR$/apps/wallet/data/dapps" />
             <option value="$PROJECT_DIR$/apps/wallet/data/events" />
             <option value="$PROJECT_DIR$/apps/wallet/data/passcode" />
             <option value="$PROJECT_DIR$/apps/wallet/data/purchase" />
@@ -49,6 +56,8 @@
             <option value="$PROJECT_DIR$/baselineprofile" />
             <option value="$PROJECT_DIR$/baselineprofile/main" />
             <option value="$PROJECT_DIR$/baselineprofile/x" />
+            <option value="$PROJECT_DIR$/buildLogic" />
+            <option value="$PROJECT_DIR$/buildLogic/plugin" />
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/lib" />
             <option value="$PROJECT_DIR$/lib/blockchain" />
@@ -60,6 +69,7 @@
             <option value="$PROJECT_DIR$/lib/qr" />
             <option value="$PROJECT_DIR$/lib/security" />
             <option value="$PROJECT_DIR$/lib/sqlite" />
+            <option value="$PROJECT_DIR$/lib/ur" />
             <option value="$PROJECT_DIR$/tonapi" />
             <option value="$PROJECT_DIR$/ui" />
             <option value="$PROJECT_DIR$/ui/blur" />

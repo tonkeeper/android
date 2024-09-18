@@ -14,6 +14,7 @@ import com.tonapps.security.hex
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.ton.api.pub.PublicKeyEd25519
 
 class InitModelState(private val savedStateHandle: SavedStateHandle) {
@@ -52,6 +53,7 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         private const val PUBLIC_KEY = "public_key"
         private const val LEDGER_CONNECT_DATA = "ledger_connect_data"
         private const val ENABLE_PUSH_KEY = "enable_push"
+        private const val KEYSTONE_KEY = "keystone"
     }
 
     var passcode: String?
@@ -87,4 +89,9 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
     var enablePush: Boolean
         get() = savedStateHandle[ENABLE_PUSH_KEY] ?: false
         set(value) = savedStateHandle.set(ENABLE_PUSH_KEY, value)
+
+    var keystone: WalletEntity.Keystone?
+        get() = savedStateHandle[KEYSTONE_KEY]
+        set(value) = savedStateHandle.set(KEYSTONE_KEY, value)
+
 }

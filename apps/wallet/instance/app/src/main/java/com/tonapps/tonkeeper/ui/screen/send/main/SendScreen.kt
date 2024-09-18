@@ -47,7 +47,6 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
@@ -75,14 +74,6 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
 
     override val viewModel: SendViewModel by walletViewModel { parametersOf(args.nftAddress) }
-
-    private val signerResultContract = SingerResultContract()
-    private val signerLauncher = registerForActivityResult(signerResultContract) {
-        if (it != null) {
-            setLoading()
-            viewModel.sendSignedMessage(it)
-        }
-    }
 
     private val lockDrawable: Drawable by lazy {
         val drawable = requireContext().drawable(UIKitIcon.ic_lock_16)
@@ -241,13 +232,12 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
         val walletType = screenContext.wallet.type
         if (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup) {
             confirmButton.setText(Localization.confirm)
-            confirmButton.setOnClickListener { confirmDefault() }
+            confirmButton.setOnClickListener { viewModel.sign() }
         } else {
             confirmButton.setText(Localization.continue_action)
             when (walletType) {
                 Wallet.Type.Ledger -> confirmButton.setOnClickListener { openLedger() }
-                Wallet.Type.SignerQR -> confirmButton.setOnClickListener { openSignerQR() }
-                Wallet.Type.Signer -> confirmButton.setOnClickListener { openSigner() }
+                Wallet.Type.SignerQR, Wallet.Type.Signer, Wallet.Type.Keystone -> confirmButton.setOnClickListener { viewModel.sign() }
                 else -> { }
             }
         }
@@ -508,38 +498,9 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
         }
     }
 
-    private fun confirmDefault() {
-        setLoading()
-        viewModel.send(requireContext())
-    }
-
     private fun openLedger() {
         collectFlow(viewModel.ledgerData()) { (walletId, transaction) ->
             requestLedgerSign(transaction, walletId)
-        }
-    }
-
-    private fun openSignerQR() {
-        AnalyticsHelper.trackEvent("send_transaction")
-
-        var text = commentInput.text
-        if (text.isEmpty()) {
-            text = reviewRecipientView.value?.toString() ?: "..."
-        }
-
-        collectFlow(viewModel.signerData()) { (publicKey, unsignedBody) ->
-            navigation?.add(
-                SignerQRScreen.newInstance(
-                    publicKey, unsignedBody, text, signerQRRequestKey
-                )
-            )
-        }
-    }
-
-    private fun openSigner() {
-        AnalyticsHelper.trackEvent("send_transaction")
-        collectFlow(viewModel.signerData()) { (publicKey, unsignedBody) ->
-            signerLauncher.launch(SingerResultContract.Input(unsignedBody, publicKey))
         }
     }
 

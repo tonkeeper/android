@@ -18,7 +18,8 @@ data class RNWallet(
     val workchain: Int,
     val allowedDestinations: String?,
     val configPubKey: String?,
-    val ledger: RNLedger?
+    val ledger: RNLedger?,
+    val keystone: RNKeystone?
 ): RNData() {
 
     companion object {
@@ -127,7 +128,8 @@ data class RNWallet(
         WatchOnly("WatchOnly"),
         Signer("Signer"),
         SignerDeeplink("SignerDeeplink"),
-        Ledger("Ledger")
+        Ledger("Ledger"),
+        Keystone("Keystone")
     }
 
     enum class Network(val code: Int) {
@@ -174,7 +176,8 @@ data class RNWallet(
         json.getInt("workchain"),
         json.optString("allowedDestinations", null),
         json.optString("configPubKey", null),
-        json.optJSONObject("ledger")?.let { RNLedger(it) }
+        json.optJSONObject("ledger")?.let { RNLedger(it) },
+        json.optJSONObject("keystone")?.let { RNKeystone(it) }
     )
 
     override fun toJSON(): JSONObject {
@@ -191,6 +194,7 @@ data class RNWallet(
             allowedDestinations?.let { put("allowedDestinations", it) }
             configPubKey?.let { put("configPubKey", it) }
             ledger?.let { put("ledger", it.toJSON()) }
+            keystone?.let { put("keystone", it.toJSON()) }
         }
     }
 

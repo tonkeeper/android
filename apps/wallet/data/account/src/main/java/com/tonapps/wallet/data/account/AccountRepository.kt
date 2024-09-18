@@ -17,6 +17,7 @@ import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.rn.data.RNKeystone
 import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
 import kotlinx.coroutines.CoroutineScope
@@ -87,18 +88,6 @@ class AccountRepository(
     val selectedId: String?
         get() = (selectedStateFlow.value as? SelectedState.Wallet)?.wallet?.id
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val realtimeEventsFlow = selectedWalletFlow.flatMapLatest { wallet ->
-        api.accountEvents(wallet.accountId, wallet.testnet).map { event ->
-            val isBoc = event.json.has("boc")
-            if (isBoc) {
-                WalletEvent.Boc(wallet, event.json)
-            } else {
-                WalletEvent.Transaction(wallet, event.json)
-            }
-        }
-    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
-
     init {
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMainMigration()) {
@@ -145,6 +134,7 @@ class AccountRepository(
             Wallet.Type.SignerQR -> RNWallet.Type.Signer
             Wallet.Type.Signer -> RNWallet.Type.SignerDeeplink
             Wallet.Type.Ledger -> RNWallet.Type.Ledger
+            Wallet.Type.Keystone -> RNWallet.Type.Keystone
             else -> RNWallet.Type.Regular
         }
 
@@ -166,6 +156,12 @@ class AccountRepository(
                     accountIndex = it.accountIndex
                 )
             },
+            keystone = wallet.keystone?.let {
+                RNKeystone(
+                    xfp = it.xfp,
+                    path = it.path
+                )
+            }
         )
 
         rnLegacy.addWallet(rnWallet)
@@ -263,6 +259,25 @@ class AccountRepository(
     ): List<WalletEntity> {
         val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
         return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type)
+    }
+
+    suspend fun pairKeystone(
+        label: Wallet.Label,
+        publicKey: PublicKeyEd25519,
+        keystone: WalletEntity.Keystone,
+    ): List<WalletEntity> {
+        val entity = WalletEntity(
+            id = newWalletId(),
+            publicKey = publicKey,
+            type = Wallet.Type.Keystone,
+            version = WalletVersion.V4R2,
+            label = label,
+            keystone = keystone
+        )
+
+        val list = listOf(entity)
+        insertWallets(list)
+        return list
     }
 
     suspend fun importWallet(

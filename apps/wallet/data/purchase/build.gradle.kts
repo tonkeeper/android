@@ -1,7 +1,7 @@
 plugins {
     id("com.tonapps.wallet.data")
     id("kotlin-parcelize")
-    kotlin("plugin.serialization") version "2.0.0"
+    kotlin("plugin.serialization")
 }
 
 android {

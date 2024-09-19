@@ -5,15 +5,17 @@ object Dependence {
     const val guava = "com.google.guava:guava:33.2.1-android"
     const val zxing = "com.google.zxing:core:3.5.3"
     const val j2objc = "com.google.j2objc:j2objc-annotations:3.0.0"
+    const val cbor = "co.nstant.in:cbor:0.9"
 
     object Analytics {
         const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"
     }
 
     object KotlinX {
-        const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
+        const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0"
         const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.2"
         const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2"
+        const val serializationCBOR = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.2"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
         const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.5.3"
     }
@@ -111,6 +113,7 @@ object Dependence {
         const val icu = ":lib:icu"
         const val sqlite = ":lib:sqlite"
         const val ledger = ":lib:ledger"
+        const val ur = ":lib:ur"
     }
 
     object UIKit {

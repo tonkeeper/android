@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "libs/*",
+]
+
+
+[profile.release]
+strip = true
+opt-level = 'z' # Optimize for size
+lto = true

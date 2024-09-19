@@ -19,6 +19,7 @@ class ImportWalletViewModel(
         if (!api.config.flags.disableSigner) {
             uiItems.add(Item.signer)
         }
+        uiItems.add(Item.keystone)
         uiItems.add(Item.ledger)
         uiItems.toList()
     }

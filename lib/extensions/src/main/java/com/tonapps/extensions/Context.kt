@@ -75,6 +75,6 @@ fun Context.logError(e: Throwable) {
     if (e is CancellationException) {
         return
     }
-    //
+    Log.e("TonkeeperLog", e.message, e)
 }
 

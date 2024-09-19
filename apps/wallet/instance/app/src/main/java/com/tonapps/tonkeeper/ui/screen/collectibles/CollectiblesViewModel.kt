@@ -37,11 +37,13 @@ class CollectiblesViewModel(
     private val transactionManager: TransactionManager,
 ): BaseWalletVM(app) {
 
+    private val ltFlow = transactionManager.getEventsFlow(wallet).stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+
     val uiListStateFlow = combine(
         networkMonitor.isOnlineFlow,
         settingsRepository.hiddenBalancesFlow,
         settingsRepository.tokenPrefsChangedFlow,
-        transactionManager.getEventsFlow(wallet),
+        ltFlow,
     ) { isOnline, hiddenBalances, _, _ ->
         stateFlow(
             wallet = wallet,

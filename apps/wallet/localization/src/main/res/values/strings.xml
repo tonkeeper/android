@@ -7,10 +7,16 @@
     <string name="fake" translatable="false">FAKE</string>
     <string name="beta" translatable="false">Beta</string>
     <string name="ok" translatable="false">OK</string>
+    <string name="keystone" translatable="false">Keystone</string>
     <string name="w5" translatable="false">W5</string>
     <string name="staking_apy" translatable="false">APY</string>
+    <string name="keystone_sign_step1">Scan the QR code with Keystone</string>
+    <string name="keystone_sign_step2">Confirm your transaction in Keystone</string>
+    <string name="keystone_sign_step3">Scan signed transaction QR code from Keystone</string>
     <string name="v4r2_wallet">Wallet v4R2</string>
     <string name="comment_ascii_text">Use only ASCII characters: digits, latin alphabet letters and punctuation marks.</string>
+    <string name="keystone_title">Pair with Keystone</string>
+    <string name="keystone_subtitle">A high level of security with an AIR-GAP hardware wallet</string>
     <string name="w5_wallet">Wallet W5</string>
     <string name="nft_unverified">Unverified NFT</string>
     <string name="report_spam">Report spam</string>
@@ -385,6 +391,9 @@
     <string name="banner_top">You currently using an experimental version of Tonkeeper.</string>
     <string name="banner_top_button">Install stable version</string>
     <string name="signer_description">Open Signer » Select the required key » Scan QR code</string>
+    <string name="keystone_description">Open Keystone » Connect Software Wallet » Tonkeeper</string>
+    <string name="keystone_about">About Keystone</string>
+    <string name="signer_about">About Signer</string>
     <string name="signer_open">Open Signer on this device</string>
     <string name="signer" translatable="false">Signer</string>
     <string name="choose_wallet_title">Choose wallet</string>

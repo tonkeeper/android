@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Color
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -40,6 +41,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -47,6 +49,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
@@ -102,6 +106,8 @@ class InitViewModel(
     private val _accountsFlow = MutableEffectFlow<List<AccountItem>?>()
     val accountsFlow = _accountsFlow.asSharedFlow().filterNotNull()
 
+    val labelFlow = savedState.labelFlow.stateIn(viewModelScope, SharingStarted.Lazily, null).filterNotNull()
+
     private var hasPinCode by Delegates.notNull<Boolean>()
 
     init {
@@ -110,12 +116,14 @@ class InitViewModel(
         }
 
         savedState.ledgerConnectData = args.ledgerConnectData
+        savedState.keystone = args.keystone
 
         when (type) {
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
             InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)
             InitArgs.Type.Signer, InitArgs.Type.SignerQR -> withLoading { resolveWallets(savedState.publicKey!!) }
             InitArgs.Type.Ledger -> routeTo(InitRoute.SelectAccount)
+            InitArgs.Type.Keystone -> routeTo(InitRoute.LabelAccount)
             else -> { }
         }
 
@@ -333,12 +341,19 @@ class InitViewModel(
         return label
     }
 
-    suspend fun getLabel(): Wallet.Label = withContext(Dispatchers.IO) {
-        savedState.label ?: Wallet.Label(
+    private suspend fun getLabel(): Wallet.Label = withContext(Dispatchers.IO) {
+        var label = savedState.label ?: Wallet.Label(
             accountName = getDefaultWalletName(),
             emoji = Emoji.WALLET_ICON,
             color = WalletColor.all.first()
         )
+        if (label.color == Color.TRANSPARENT) {
+            label = label.copy(color = WalletColor.all.first())
+        }
+        if (label.emoji.isBlank()) {
+            label = label.copy(emoji = Emoji.WALLET_ICON)
+        }
+        label
     }
 
     fun setLabelName(name: String) {
@@ -385,7 +400,7 @@ class InitViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (!passcodeManager.hasPinCode()) {
+                if ((type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !passcodeManager.hasPinCode()) {
                     passcodeManager.save(savedState.passcode!!)
                 }
 
@@ -397,6 +412,7 @@ class InitViewModel(
                     InitArgs.Type.Signer -> wallets.addAll(signerWallets(false))
                     InitArgs.Type.SignerQR -> wallets.addAll(signerWallets(true))
                     InitArgs.Type.Ledger -> wallets.addAll(ledgerWallets())
+                    InitArgs.Type.Keystone -> wallets.addAll(keystoneWallet())
                 }
 
                 if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
@@ -485,6 +501,14 @@ class InitViewModel(
         val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
 
         return accountRepository.pairSigner(label, publicKey.publicKey, versions, qr)
+    }
+
+    private suspend fun keystoneWallet(): List<WalletEntity> {
+        val label = getFixedLabel()
+        val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
+        val keystone = savedState.keystone ?: throw IllegalStateException("Keystone is not set")
+
+        return accountRepository.pairKeystone(label, publicKey.publicKey, keystone)
     }
 
     private suspend fun saveMnemonic(

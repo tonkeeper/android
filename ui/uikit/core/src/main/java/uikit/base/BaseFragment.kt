@@ -26,6 +26,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.getSpannable
@@ -34,10 +35,16 @@ import uikit.widget.BottomSheetLayout
 import uikit.widget.ModalView
 import uikit.widget.SwipeBackLayout
 import java.util.concurrent.Executor
+import java.util.concurrent.atomic.AtomicBoolean
 
 open class BaseFragment(
     @LayoutRes layoutId: Int
 ): Fragment(layoutId) {
+
+    interface ResultContract<I, O> {
+        fun parseResult(bundle: Bundle): O
+        fun createResult(result: I): Bundle
+    }
 
     interface PredictiveBackGesture {
         fun onPredictiveBackCancelled() {
@@ -109,8 +116,9 @@ open class BaseFragment(
             }
         }
 
-    val mainExecutor: Executor
-        get() = ContextCompat.getMainExecutor(requireContext())
+    val mainExecutor: Executor by lazy {
+        ContextCompat.getMainExecutor(requireContext())
+    }
 
     open val disableShowAnimation: Boolean = false
 
@@ -118,7 +126,11 @@ open class BaseFragment(
 
     open val title: CharSequence? = null
 
-    private var isFinished: Boolean = false
+    private val isFinished = AtomicBoolean(false)
+
+    private val resultKey: String? by lazy {
+        arguments?.getString(ARG_RESULT_KEY)?.ifBlank { null }
+    }
 
     fun setArgs(bundle: Bundle) {
         val args = arguments ?: Bundle()
@@ -148,6 +160,18 @@ open class BaseFragment(
         setArgs(Bundle().apply {
             putBoolean(key, value)
         })
+    }
+
+    fun setResultKey(key: String) {
+        putStringArg(ARG_RESULT_KEY, key)
+    }
+
+    fun setResult(bundle: Bundle, finish: Boolean = true) {
+        val key = resultKey ?: throw IllegalStateException("For setting result you must set result key")
+        setFragmentResult(key, bundle)
+        if (finish) {
+            finish()
+        }
     }
 
     fun getSpannable(@StringRes id: Int): SpannableString {
@@ -229,23 +253,24 @@ open class BaseFragment(
     }
 
     open fun finish() {
-        if (isFinished) {
+        if (isFinished.get()) {
             return
         }
 
         val view = view ?: return
 
-        isFinished = true
-
-        when (view) {
-            is SwipeBackLayout -> view.startHideAnimation()
-            is BottomSheetLayout -> view.hide(true)
-            is ModalView -> view.hide(true)
-            else -> finishInternal()
+        if (isFinished.compareAndSet(false, true)) {
+            when (view) {
+                is SwipeBackLayout -> view.startHideAnimation()
+                is BottomSheetLayout -> view.hide(true)
+                is ModalView -> view.hide(true)
+                else -> finishInternal()
+            }
         }
     }
 
     private fun finishInternal() {
+        resultKey?.let { setFragmentResult(it, Bundle()) }
         navigation?.remove(this)
     }
 
@@ -300,4 +325,7 @@ open class BaseFragment(
         return requireActivity().currentFocus as? EditText
     }
 
+    private companion object {
+        private const val ARG_RESULT_KEY = "_uikit_result_key_"
+    }
 }

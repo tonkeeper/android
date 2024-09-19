@@ -29,10 +29,12 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleableRes
 import androidx.core.content.res.ResourcesCompat
+import androidx.fragment.app.FragmentActivity
 import com.tonapps.uikit.color.backgroundHighlightedColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textTertiaryColor
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.navigation.NavigationActivity
 
 fun Context.inflate(
     @LayoutRes layoutId: Int,
@@ -64,11 +66,11 @@ fun Context.getColorByIdentifier(name: String): Int {
     }
 }
 
-val Context.activity: ComponentActivity?
+val Context.activity: NavigationActivity?
     get() {
         var context = this
         while (context is ContextWrapper) {
-            if (context is ComponentActivity) {
+            if (context is NavigationActivity) {
                 return context
             }
             context = context.baseContext

@@ -10,7 +10,9 @@ import androidx.annotation.ColorInt
 import androidx.fragment.app.Fragment
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.backgroundContentTintColor
+import kotlinx.coroutines.suspendCancellableCoroutine
 import uikit.base.BaseFragment
+import kotlin.coroutines.resume
 
 interface Navigation {
 
@@ -46,7 +48,11 @@ interface Navigation {
         listener: ((bundle: Bundle) -> Unit)
     )
 
+    fun resetFragmentResult(requestKey: String)
+
     fun add(fragment: BaseFragment)
+
+    fun addForResult(fragment: BaseFragment, callback: (Bundle) -> Unit)
 
     fun remove(fragment: Fragment)
 

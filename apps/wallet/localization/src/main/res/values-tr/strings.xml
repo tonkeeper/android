@@ -1,4 +1,11 @@
 <resources>
+    <string name="keystone_sign_step1">QR kodunu Keystone ile tarayın</string>
+    <string name="keystone_sign_step2">İşleminizi Keystone\'da onaylayın</string>
+    <string name="keystone_sign_step3">İmzalı işlem QR kodunu Keystone\'dan tarayın</string>
+    <string name="v4r2_wallet">Cüzdan v4R2</string>
+    <string name="comment_ascii_text">Yalnızca ASCII karakterleri kullanın: rakamlar, Latin alfabesi harfleri ve noktalama işaretleri.</string>
+    <string name="keystone_title">Keystone ile eşleştirin</string>
+    <string name="keystone_subtitle">AIR-GAP donanım cüzdanıyla yüksek düzeyde güvenlik</string>
     <string name="w5_wallet">Cüzdan W5</string>
     <string name="nft_unverified">Doğrulanmamış NFT</string>
     <string name="report_spam">Spam bildir</string>
@@ -30,6 +37,9 @@
     <string name="w5_story_description_1">TON\'a sahip olmadan USDT gönderin – işlem ücretleri otomatik olarak birkaç sent USDT ile karşılanacaktır.</string>
     <string name="w5_story_description_3">W5, eşzamanlı işlemlerin sayısını 4\'ten 255\'e çıkararak ücret maliyetlerinden tasarruf sağlar.</string>
     <string name="w5_story_description_4">Eski hesaplar ve W5 aynı kurtarma cümlesini kullanır – yeni bir cihazda hesapları geri yüklerken hem eski hem de yeniler otomatik olarak görünecektir.</string>
+    <string name="w5_usdt_title">Gazsız Transferler</string>
+    <string name="w5_usdt_subtitle">Gazsız USDT ödemeleri ve diğer harika özellikler desteğiyle yepyeni W5 cüzdan standardını deneyin.</string>
+    <string name="w5_about_button">W5 Cüzdanı Hakkında</string>
     <string name="w5_add_wallet">W5 Cüzdanı Ekle</string>
     <string name="liquid_staking">Sıvı Hisse Senedi</string>
     <string name="other">Diğer</string>
@@ -321,10 +331,14 @@
     <string name="banner_top">Şu anda Tonkeeper\'ın deneysel bir sürümünü kullanıyorsunuz.</string>
     <string name="banner_top_button">Kararlı sürümü yükle</string>
     <string name="signer_description">Açık İmzalayıcı » Gerekli anahtarı seç » QR kodunu tara</string>
+    <string name="keystone_description">Keystone\'u Aç » Yazılım Cüzdanını Bağla » Tonkeeper</string>
+    <string name="keystone_about">Keystone Hakkında</string>
+    <string name="signer_about">Signer Hakkında</string>
     <string name="signer_open">Bu cihazda İmzalayıcıyı Aç</string>
     <string name="choose_wallet_title">Cüzdanı seç</string>
     <string name="choose_wallet_subtitle">Eklemek istediğiniz cüzdanları seçin.</string>
     <string name="choose_wallet_already_added">Zaten eklendi</string>
+    <string name="hide">Saklamak</string>
     <string name="hide_collection">Koleksiyonu gizle</string>
     <string name="hide_and_report_collection">Gizle ve bildir</string>
     <string name="open_tonviewer">Tonviewer\'da aç</string>

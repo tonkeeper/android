@@ -20,6 +20,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.backgroundContentTintColor
@@ -31,6 +32,7 @@ import uikit.extensions.hapticConfirm
 import uikit.extensions.primaryFragment
 import uikit.extensions.runAnimation
 import uikit.widget.ToastView
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
 
@@ -48,6 +50,8 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     private lateinit var baseView: View
     private lateinit var contentView: View
     private lateinit var toastView: ToastView
+
+    private val nextFragmentRequestCode = AtomicInteger()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,6 +122,13 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
+    override fun resetFragmentResult(requestKey: String) {
+        supportFragmentManager.apply {
+            clearFragmentResult(requestKey)
+            clearFragmentResultListener(requestKey)
+        }
+    }
+
     fun setPrimaryFragment(
         fragment: BaseFragment,
         recreate: Boolean = false,
@@ -157,6 +168,19 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
         transaction.setReorderingAllowed(true)
         transaction.commitAllowingStateLoss()
+    }
+
+    override fun addForResult(
+        fragment: BaseFragment,
+        callback: (Bundle) -> Unit
+    ) {
+        val requestKey = "fragment_rq#" + nextFragmentRequestCode.getAndIncrement()
+        fragment.setResultKey(requestKey)
+        setFragmentResultListener(requestKey) { bundle ->
+            resetFragmentResult(requestKey)
+            callback(bundle)
+        }
+        add(fragment)
     }
 
     override fun remove(fragment: Fragment) {

@@ -5,6 +5,7 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
         maven("https://jitpack.io")
+        maven("https://plugins.gradle.org/m2/")
     }
 }
 
@@ -14,6 +15,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("https://jitpack.io")
+        maven("https://plugins.gradle.org/m2/")
     }
 }
 
@@ -46,6 +48,8 @@ include(":lib:emoji")
 include(":lib:blockchain")
 include(":lib:sqlite")
 include(":lib:ledger")
+include(":lib:ur")
+
 
 include(":apps:wallet:instance:app")
 include(":apps:wallet:instance:main")

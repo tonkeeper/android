@@ -22,9 +22,11 @@ import android.view.animation.Animation
 import android.widget.TextView
 import androidx.annotation.AnimRes
 import androidx.annotation.DrawableRes
+import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -122,6 +124,20 @@ fun View.roundTop(radius: Int) {
         outlineProvider = object : ViewOutlineProvider() {
             override fun getOutline(view: View, outline: Outline) {
                 outline.setRoundRect(0, 0, view.width, view.height + radius * 2, radius.toFloat())
+            }
+        }
+        clipToOutline = true
+    }
+}
+
+fun View.roundBottom(radius: Int) {
+    if (radius == 0) {
+        outlineProvider = null
+        clipToOutline = false
+    } else {
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, -radius * 2, view.width, view.height, radius.toFloat())
             }
         }
         clipToOutline = true
@@ -318,4 +334,32 @@ fun TextView.setRightDrawable(drawable: Drawable?) {
 
 fun TextView.clearDrawables() {
     setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
+}
+
+fun View.setChildText(@IdRes id: Int, textRes: Int) {
+    findViewById<TextView>(id).setText(textRes)
+}
+
+fun View.gone(@IdRes id: Int) {
+    findViewById<View>(id).visibility = View.GONE
+}
+
+fun View.round(@IdRes id: Int, radius: Int) {
+    findViewById<View>(id).round(radius)
+}
+
+fun View.roundBottom(@IdRes id: Int, radius: Int) {
+    findViewById<View>(id).roundBottom(radius)
+}
+
+fun View.setOnClickListener(@IdRes id: Int, block: () -> Unit) {
+    findViewById<View>(id).setOnClickListener { block() }
+}
+
+fun View.setBackgroundColor(@IdRes id: Int, color: Int) {
+    findViewById<View>(id).setBackgroundColor(color)
+}
+
+fun View.setBackground(@IdRes id: Int, drawable: Drawable) {
+    findViewById<View>(id).background = drawable
 }

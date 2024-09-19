@@ -44,7 +44,7 @@ class QRView @JvmOverloads constructor(
             qrDrawable.errorCorrectionLevel = value
         }
 
-    private var color: Int
+    var color: Int
         get() = qrDrawable.color
         set(value) {
             qrDrawable.color = value
@@ -82,6 +82,10 @@ class QRView @JvmOverloads constructor(
 
     fun setContent(content: String) {
         doOnLayout { qrDrawable.setData(size, content) }
+    }
+
+    fun setContent(chunks: List<String>) {
+        doOnLayout { qrDrawable.setData(size, chunks) }
     }
 
     override fun onDraw(canvas: Canvas) {

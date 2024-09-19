@@ -28,6 +28,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
 import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
+import com.tonapps.tonkeeper.usecase.SignUseCase
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,7 @@ val koinModel = module {
     factory { Dispatchers.Default }
 
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
+
     singleOf(::SettingsRepository)
     singleOf(::NetworkMonitor)
     singleOf(::SignManager)
@@ -48,6 +50,7 @@ val koinModel = module {
     singleOf(::BillingManager)
     singleOf(::BalancesManager)
     singleOf(::TransactionManager)
+    singleOf(::SignUseCase)
 
     uiAdapter { WalletAdapter(get()) }
 

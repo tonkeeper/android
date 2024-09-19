@@ -20,6 +20,7 @@ import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
 import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.api.pub.PublicKeyEd25519
@@ -143,8 +144,9 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             publicKeyEd25519: PublicKeyEd25519? = null,
             name: String? = null,
             ledgerConnectData: LedgerConnectData? = null,
-            accounts: List<AccountItem>? = null
-        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts))
+            accounts: List<AccountItem>? = null,
+            keystone: WalletEntity.Keystone? = null
+        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts, keystone))
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()

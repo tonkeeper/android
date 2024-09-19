@@ -5,7 +5,6 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.WalletFeature
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.ErrorForUserException
 import com.tonapps.extensions.MutableEffectFlow
@@ -26,6 +25,7 @@ import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransferType
+import com.tonapps.tonkeeper.usecase.SignUseCase
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -68,7 +68,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
@@ -91,6 +90,7 @@ class SendViewModel(
     private val collectiblesRepository: CollectiblesRepository,
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
+    private val signUseCase: SignUseCase,
 ) : BaseWalletVM(app) {
 
     private val isNft: Boolean
@@ -699,20 +699,18 @@ class SendViewModel(
         )
     }
 
-    fun signerData() = transferFlow.take(1).map { transfer ->
-        lastTransferEntity = transfer
-        Pair(wallet.publicKey, transfer.getUnsignedBody())
+    fun sign() {
+        transferFlow.take(1).map { transfer ->
+            lastTransferEntity = transfer
+            val signature = signUseCase(context, wallet, transfer.getUnsignedBody())
+            _uiEventFlow.tryEmit(SendEvent.Loading)
+            Pair(transfer.transferMessage(signature), transfer.wallet)
+        }.catch {  }.sendTransfer()
     }
 
     fun ledgerData() = transferFlow.take(1).map { transfer ->
         lastTransferEntity = transfer
         Pair(wallet.id, transfer.getLedgerTransaction())
-    }
-
-    fun sendSignedMessage(signature: BitString) {
-        transferFlow.take(1).map { transfer ->
-            Pair(transfer.transferMessage(signature), transfer.wallet)
-        }.sendTransfer()
     }
 
     fun sendLedgerSignedMessage(body: Cell) {

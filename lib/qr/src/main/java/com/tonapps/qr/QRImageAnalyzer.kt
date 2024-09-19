@@ -24,7 +24,10 @@ class QRImageAnalyzer: ImageAnalysis.Analyzer {
         .build())
 
     override fun analyze(imageProxy: ImageProxy) {
-        val image = imageProxy.image?.let { InputImage.fromMediaImage(it, imageProxy.imageInfo.rotationDegrees) } ?: return imageProxy.close()
+        val image = imageProxy.image?.let {
+            InputImage.fromMediaImage(it, imageProxy.imageInfo.rotationDegrees)
+        } ?: return imageProxy.close()
+
         barcodeScanner.process(image)
             .addOnSuccessListener { barcodes ->
                 handleBarcodes(barcodes)

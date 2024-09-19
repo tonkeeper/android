@@ -22,7 +22,7 @@ internal class DatabaseSource(
 
     private companion object {
         private const val DATABASE_NAME = "account"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         private const val WALLET_TABLE_NAME = "wallet"
         private const val WALLET_TABLE_ID_COLUMN = "id"
@@ -32,6 +32,9 @@ internal class DatabaseSource(
         private const val WALLET_TABLE_LABEL = "label"
         private const val WALLET_TABLE_LEDGER_DEVICE_ID = "ledger_device_id"
         private const val WALLET_TABLE_LEDGER_ACCOUNT_INDEX = "ledger_account_index"
+
+        private const val WALLET_TABLE_KEYSTONE_XFP = "keystone_xfp"
+        private const val WALLET_TABLE_KEYSTONE_PATH = "keystone_path"
 
         private fun WalletEntity.toValues(): ContentValues {
             val values = ContentValues()
@@ -43,6 +46,10 @@ internal class DatabaseSource(
             ledger?.let {
                 values.put(WALLET_TABLE_LEDGER_DEVICE_ID, it.deviceId)
                 values.put(WALLET_TABLE_LEDGER_ACCOUNT_INDEX, it.accountIndex)
+            }
+            keystone?.let {
+                values.put(WALLET_TABLE_KEYSTONE_XFP, it.xfp)
+                values.put(WALLET_TABLE_KEYSTONE_PATH, it.path)
             }
             return values
         }
@@ -56,7 +63,9 @@ internal class DatabaseSource(
                 "$WALLET_TABLE_VERSION TEXT," +
                 "$WALLET_TABLE_LABEL BLOB," +
                 "$WALLET_TABLE_LEDGER_DEVICE_ID TEXT," +
-                "$WALLET_TABLE_LEDGER_ACCOUNT_INDEX INTEGER" +
+                "$WALLET_TABLE_LEDGER_ACCOUNT_INDEX INTEGER," +
+                "$WALLET_TABLE_KEYSTONE_XFP TEXT," +
+                "$WALLET_TABLE_KEYSTONE_PATH TEXT" +
                 ");")
 
         val walletIndexPrefix = "idx_$WALLET_TABLE_NAME"
@@ -66,9 +75,14 @@ internal class DatabaseSource(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        if (oldVersion == 1 && newVersion == 2) {
+        if (1 >= oldVersion && newVersion == 2) {
             db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_LEDGER_DEVICE_ID TEXT;")
             db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_LEDGER_ACCOUNT_INDEX INTEGER;")
+        }
+
+        if (2 >= oldVersion && newVersion == 3) {
+            db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_KEYSTONE_XFP TEXT;")
+            db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_KEYSTONE_PATH TEXT;")
         }
     }
 
@@ -101,14 +115,14 @@ internal class DatabaseSource(
     }
 
     suspend fun getAccounts(): List<WalletEntity> = withContext(scope.coroutineContext) {
-        val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX FROM $WALLET_TABLE_NAME LIMIT 1000;"
+        val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX, $WALLET_TABLE_KEYSTONE_XFP, $WALLET_TABLE_KEYSTONE_PATH FROM $WALLET_TABLE_NAME LIMIT 1000;"
         val cursor = readableDatabase.rawQuery(query, null)
         readAccounts(cursor)
     }
 
     suspend fun getAccount(id: String): WalletEntity? = withContext(scope.coroutineContext) {
         if (id.isNotBlank()) {
-            val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX FROM $WALLET_TABLE_NAME WHERE $WALLET_TABLE_ID_COLUMN = ?;"
+            val query = "SELECT $WALLET_TABLE_ID_COLUMN, $WALLET_TABLE_ID_PUBLIC_KEY, $WALLET_TABLE_TYPE, $WALLET_TABLE_VERSION, $WALLET_TABLE_LABEL, $WALLET_TABLE_LEDGER_DEVICE_ID, $WALLET_TABLE_LEDGER_ACCOUNT_INDEX, $WALLET_TABLE_KEYSTONE_XFP, $WALLET_TABLE_KEYSTONE_PATH FROM $WALLET_TABLE_NAME WHERE $WALLET_TABLE_ID_COLUMN = ?;"
             val cursor = readableDatabase.rawQuery(query, arrayOf(id))
             readAccounts(cursor).firstOrNull()
         } else {
@@ -137,6 +151,8 @@ internal class DatabaseSource(
         val labelIndex = cursor.getColumnIndex(WALLET_TABLE_LABEL)
         val ledgerDeviceIdIndex = cursor.getColumnIndex(WALLET_TABLE_LEDGER_DEVICE_ID)
         val ledgerAccountIndexIndex = cursor.getColumnIndex(WALLET_TABLE_LEDGER_ACCOUNT_INDEX)
+        val keystoneXfpIndex = cursor.getColumnIndex(WALLET_TABLE_KEYSTONE_XFP)
+        val keystonePathIndex = cursor.getColumnIndex(WALLET_TABLE_KEYSTONE_PATH)
         val accounts = mutableListOf<WalletEntity>()
         while (cursor.moveToNext()) {
             val wallet = WalletEntity(
@@ -147,12 +163,23 @@ internal class DatabaseSource(
                 label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!
             )
             if (wallet.type == Wallet.Type.Ledger) {
-                accounts.add(wallet.copy(
-                    ledger = WalletEntity.Ledger(
-                        deviceId = cursor.getString(ledgerDeviceIdIndex),
-                        accountIndex = cursor.getInt(ledgerAccountIndexIndex)
+                accounts.add(
+                    wallet.copy(
+                        ledger = WalletEntity.Ledger(
+                            deviceId = cursor.getString(ledgerDeviceIdIndex),
+                            accountIndex = cursor.getInt(ledgerAccountIndexIndex)
+                        )
                     )
-                ))
+                )
+            } else if (wallet.type == Wallet.Type.Keystone) {
+                accounts.add(
+                    wallet.copy(
+                        keystone = WalletEntity.Keystone(
+                            xfp = cursor.getString(keystoneXfpIndex),
+                            path = cursor.getString(keystonePathIndex)
+                        )
+                    )
+                )
             } else {
                 accounts.add(wallet)
             }

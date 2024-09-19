@@ -8,6 +8,8 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.putEnum
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
+import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.ton.api.pub.PublicKeyEd25519
 import uikit.base.BaseArgs
 
@@ -16,11 +18,12 @@ data class InitArgs(
     val name: String?,
     val publicKeyEd25519: PublicKeyEd25519?,
     val ledgerConnectData: LedgerConnectData?,
-    val accounts: List<AccountItem>?
+    val accounts: List<AccountItem>?,
+    val keystone: WalletEntity.Keystone?
 ) : BaseArgs() {
 
     enum class Type {
-        New, Import, Watch, Testnet, Signer, SignerQR, Ledger,
+        New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone,
     }
 
     private companion object {
@@ -30,6 +33,7 @@ data class InitArgs(
         private const val ARG_WALLET_SOURCE = "wallet_source"
         private const val ARG_LEDGER_CONNECT_DATA = "ledger_connect_data"
         private const val ARG_ACCOUNTS = "accounts"
+        private const val ARG_KEYSTONE = "keystone"
     }
 
     val labelName: String?
@@ -40,7 +44,8 @@ data class InitArgs(
         name = bundle.getString(ARG_NAME),
         publicKeyEd25519 = bundle.getString(ARG_PUBLIC_KEY)?.publicKey(),
         accounts = bundle.getParcelableArrayList<AccountItem>(ARG_ACCOUNTS),
-        ledgerConnectData = bundle.getParcelableCompat<LedgerConnectData>(ARG_LEDGER_CONNECT_DATA)
+        ledgerConnectData = bundle.getParcelableCompat<LedgerConnectData>(ARG_LEDGER_CONNECT_DATA),
+        keystone = bundle.getParcelableCompat(ARG_KEYSTONE)
     )
 
     override fun toBundle(): Bundle = Bundle().apply {
@@ -49,6 +54,7 @@ data class InitArgs(
         publicKeyEd25519?.let { putString(ARG_PUBLIC_KEY, it.base64()) }
         accounts?.let { putParcelableArrayList(ARG_ACCOUNTS, ArrayList(it)) }
         ledgerConnectData?.let { putParcelable(ARG_LEDGER_CONNECT_DATA, it) }
+        keystone?.let { putParcelable(ARG_KEYSTONE, it) }
     }
 
 }

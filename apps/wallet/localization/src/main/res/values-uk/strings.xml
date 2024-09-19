@@ -1,4 +1,11 @@
 <resources>
+    <string name="keystone_sign_step1">Відскануйте QR-код за допомогою Keystone</string>
+    <string name="keystone_sign_step2">Підтвердьте свою транзакцію в Keystone</string>
+    <string name="keystone_sign_step3">Відскануйте QR-код підписаної транзакції з Keystone</string>
+    <string name="v4r2_wallet">Гаманець v4R2</string>
+    <string name="comment_ascii_text">Використовуйте лише символи ASCII: цифри, літери латинського алфавіту та знаки пунктуації.</string>
+    <string name="keystone_title">Поєднання з Keystone</string>
+    <string name="keystone_subtitle">Високий рівень безпеки з апаратним гаманцем AIR-GAP</string>
     <string name="w5_wallet">Гаманець W5</string>
     <string name="nft_unverified">Неперевірений NFT</string>
     <string name="report_spam">Поскаржитися на спам</string>
@@ -30,6 +37,9 @@
     <string name="w5_story_description_1">Надсилайте USDT без наявності TON – комісії за транзакції будуть автоматично покриватися кількома центами USDT.</string>
     <string name="w5_story_description_3">W5 збільшує кількість одночасних операцій з 4 до 255, що може зекономити на витратах на комісії.</string>
     <string name="w5_story_description_4">Старі акаунти та W5 використовують однакову фразу для відновлення – при відновленні акаунтів на новому пристрої обидва, старі й нові, з\'являться автоматично.</string>
+    <string name="w5_usdt_title">Безгазові передачі</string>
+    <string name="w5_usdt_subtitle">Спробуйте абсолютно новий стандарт гаманця W5 із підтримкою безгазових платежів USDT та іншими цікавими функціями.</string>
+    <string name="w5_about_button">Про гаманець W5</string>
     <string name="w5_add_wallet">Додати W5 Гаманець</string>
     <string name="liquid_staking">Ліквідний стейкинг</string>
     <string name="other">Інше</string>
@@ -321,10 +331,14 @@
     <string name="banner_top">Ви використовуєте експериментальну версію Tonkeeper.</string>
     <string name="banner_top_button">Встановити стабільну версію</string>
     <string name="signer_description">Відкрийте Signer » Виберіть потрібний ключ » Скануйте QR-код</string>
+    <string name="keystone_description">Відкрийте Keystone » Connect Software Wallet » Tonkeeper</string>
+    <string name="keystone_about">Про Keystone</string>
+    <string name="signer_about">Про Signer</string>
     <string name="signer_open">Відкрити Підписувач на цьому пристрої</string>
     <string name="choose_wallet_title">Виберіть гаманець</string>
     <string name="choose_wallet_subtitle">Виберіть гаманці, які хочете додати.</string>
     <string name="choose_wallet_already_added">Вже додано</string>
+    <string name="hide">Сховати</string>
     <string name="hide_collection">Сховати колекцію</string>
     <string name="hide_and_report_collection">Сховати і повідомити</string>
     <string name="open_tonviewer">Відкрити в Tonviewer</string>

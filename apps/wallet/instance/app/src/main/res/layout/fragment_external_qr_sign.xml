@@ -5,6 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <uikit.widget.RowLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="@dimen/itemHeight"
         android:paddingHorizontal="@dimen/offsetMedium">
@@ -32,8 +33,10 @@
     </uikit.widget.RowLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
 
         <uikit.widget.ColumnLayout
             android:layout_width="match_parent"
@@ -76,8 +79,7 @@
                 <com.tonapps.qr.ui.QRView
                     android:id="@+id/qr"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:color="@color/constantQROrange"/>
+                    android:layout_height="wrap_content"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/transaction"
@@ -153,6 +155,7 @@
                     android:textColor="?attr/textPrimaryColor"/>
 
                 <uikit.widget.SquareFrameLayout
+                    android:id="@+id/camera_frame"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/offsetMedium"

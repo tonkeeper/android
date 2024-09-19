@@ -1,4 +1,11 @@
 <resources>
+    <string name="keystone_sign_step1">QR kodni Keystone bilan skanerlang</string>
+    <string name="keystone_sign_step2">Tranzaksiyani Keystone da tasdiqlang</string>
+    <string name="keystone_sign_step3">Keystone’dan imzolangan tranzaksiya QR kodini skanerlang</string>
+    <string name="v4r2_wallet">Hamyon v4R2</string>
+    <string name="comment_ascii_text">Faqat ASCII belgilaridan foydalaning: raqamlar, lotin alifbosi harflari va tinish belgilari.</string>
+    <string name="keystone_title">Keystone bilan bog\'lang</string>
+    <string name="keystone_subtitle">AIR-GAP apparat hamyoni bilan yuqori darajadagi xavfsizlik</string>
     <string name="w5_wallet">Hamyon W5</string>
     <string name="nft_unverified">Tasdiqlanmagan NFT</string>
     <string name="report_spam">Spam haqida xabar berish</string>
@@ -30,6 +37,9 @@
     <string name="w5_story_description_1">TON ga ega bo\'lmasdan USDT yuboring – tranzaksiya to\'lovlari avtomatik ravishda bir necha sent USDT bilan qoplanadi.</string>
     <string name="w5_story_description_3">W5 bir vaqtning o\'zida bajariladigan operatsiyalar sonini 4 tadan 255 tagacha oshiradi, bu esa to\'lov xarajatlarini tejashga yordam beradi.</string>
     <string name="w5_story_description_4">Eski hisoblar va W5 bir xil tiklash iborasidan foydalanadi – yangi qurilmada hisoblarni tiklashda, eski va yangi avtomatik ravishda paydo bo\'ladi.</string>
+    <string name="w5_usdt_title">Gazsiz o\'tkazmalar</string>
+    <string name="w5_usdt_subtitle">Gazsiz USDT to\'lovlari va boshqa ajoyib xususiyatlarni qo\'llab-quvvatlaydigan yangi W5 hamyon standartini sinab ko\'ring.</string>
+    <string name="w5_about_button">W5 Wallet haqida</string>
     <string name="w5_add_wallet">W5 Hamyonini qo\'shish</string>
     <string name="liquid_staking">Suyuqlikni to\'ldirish</string>
     <string name="other">Boshqa</string>
@@ -321,10 +331,14 @@
     <string name="banner_top">Siz hozirda Tonkeeper-ning tajribaviy versiyasidan foydalanmoqdasiz.</string>
     <string name="banner_top_button">Barqaror versiyani o\'rnating</string>
     <string name="signer_description">Signer-ni oching » Kerakli kalitni tanlang » QR kodni skaner qiling</string>
+    <string name="keystone_description">Keystone » Ulanish Software Wallet » Tonkeeper ni oching</string>
+    <string name="keystone_about">Keystone haqida</string>
+    <string name="signer_about">Signer haqida</string>
     <string name="signer_open">Ushbu qurilmada imzolovchini oching</string>
     <string name="choose_wallet_title">Hamyonni tanlang</string>
     <string name="choose_wallet_subtitle">Qo\'shmoqchi bo\'lgan hamyonlarni tanlang.</string>
     <string name="choose_wallet_already_added">Allaqachon qo\'shilgan</string>
+    <string name="hide">Yashirish</string>
     <string name="hide_collection">To\'plamni yashirish</string>
     <string name="hide_and_report_collection">Yashirish va hisobot berish</string>
     <string name="open_tonviewer">Tonviewer-da oching</string>

@@ -1,4 +1,11 @@
 <resources>
+    <string name="keystone_sign_step1">Сканирайте QR кода с Keystone</string>
+    <string name="keystone_sign_step2">Потвърдете транзакцията си в Keystone</string>
+    <string name="keystone_sign_step3">Сканирайте QR кода на подписаната транзакция от Keystone</string>
+    <string name="v4r2_wallet">Портфейл v4R2</string>
+    <string name="comment_ascii_text">Използвайте само ASCII знаци: цифри, букви от латинската азбука и препинателни знаци.</string>
+    <string name="keystone_title">Сдвояване с Keystone</string>
+    <string name="keystone_subtitle">Високо ниво на сигурност с AIR-GAP хардуерен портфейл</string>
     <string name="w5_wallet">Портфейл W5</string>
     <string name="nft_unverified">Неверифициран NFT</string>
     <string name="report_spam">Докладвай за спам</string>
@@ -34,6 +41,9 @@
     <string name="w5_story_description_3">W5 увеличава броя на едновременните операции от 4 на 255, което може да намали таксите.</string>
     <string name="w5_story_description_4">Старите акаунти и W5 използват същата възстановителна фраза - при възстановяване на акаунти на ново устройство, и старите, и новите ще се появят автоматично.</string>
 
+    <string name="w5_usdt_title">Безгазови трансфери</string>
+    <string name="w5_usdt_subtitle">Опитайте чисто новия стандарт за портфейл W5 с поддръжка за USDT плащания без газ и други страхотни функции.</string>
+    <string name="w5_about_button">Относно W5 Wallet</string>
     <string name="w5_add_wallet">Добавете W5 портфейл</string>
 
     <string name="liquid_staking">Течен залог</string>
@@ -365,6 +375,9 @@
     <string name="banner_top">В момента използвате експериментална версия на Tonkeeper.</string>
     <string name="banner_top_button">Инсталирайте стабилната версия</string>
     <string name="signer_description">Отворете Signer » Изберете необходимия ключ » Сканирайте QR код</string>
+    <string name="keystone_description">Отворете Keystone » Connect Software Wallet » Tonkeeper</string>
+    <string name="keystone_about">Относно Keystone</string>
+    <string name="signer_about">Относно Signer</string>
     <string name="signer_open">Отворете Signer на това устройство</string>
     <string name="later">По-късно</string>
     <string name="signer" translatable="false">Signer</string>
@@ -372,6 +385,7 @@
     <string name="choose_wallet_subtitle">Изберете портфейли, които искате да добавите.</string>
     <string name="choose_wallet_already_added">Вече добавено</string>
 
+    <string name="hide">Скрий се</string>
     <string name="hide_collection">Скриване на колекцията</string>
     <string name="hide_and_report_collection">Скрий се и докладвай</string>
     <string name="open_tonviewer">Отворете в Tonviewer</string>

@@ -3,9 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.add.main
 import android.os.Bundle
 import android.view.View
 import androidx.core.widget.NestedScrollView
-import com.tonapps.tonkeeper.koin.api
-import com.tonapps.tonkeeper.ui.screen.add.signer.AddSignerScreen
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.add.KeystoneAddScreen
+import com.tonapps.tonkeeper.ui.screen.external.qr.signer.add.SignerAddScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.pair.PairLedgerScreen
@@ -39,7 +38,7 @@ class AddScreen: BaseFragment(R.layout.fragment_add_wallet), BaseFragment.Modal 
 
         val signerView = view.findViewById<View>(R.id.signer_wallet)
         signerView.setOnClickListener {
-            navigation?.add(AddSignerScreen.newInstance())
+            navigation?.add(SignerAddScreen.newInstance())
         }
 
         if (api.config.flags.disableSigner) {

@@ -1,6 +1,13 @@
 <resources>
 
     <string name="incorrect_phrase">Неправильная фраза</string>
+    <string name="keystone_sign_step1">Сканируйте QR-код с помощью Keystone</string>
+    <string name="keystone_sign_step2">Подтвердите транзакцию в Keystone</string>
+    <string name="keystone_sign_step3">Сканируйте подписанный транзакционный QR-код от Keystone</string>
+    <string name="v4r2_wallet">Кошелек v4R2</string>
+    <string name="comment_ascii_text">Используйте только символы ASCII: цифры, буквы латинского алфавита и знаки препинания.</string>
+    <string name="keystone_title">Пара с Keystone</string>
+    <string name="keystone_subtitle">Высокий уровень безопасности с аппаратным кошельком AIR-GAP</string>
     <string name="w5_wallet">Кошелек W5</string>
     <string name="nft_unverified">Непроверенный NFT</string>
     <string name="report_spam">Спам</string>
@@ -30,6 +37,9 @@
     <string name="w5_story_description_3">W5 увеличивает количество одновременных операций с 4 до 255, что позволяет вам сэкономить на комиссиях.</string>
     <string name="w5_story_description_4">Ваш старый и новый кошелёк W5 используют один и тот же секретный ключ: при восстановлении на новом устройстве оба кошелька появятся автоматически.</string>
 
+    <string name="w5_usdt_title">Безгазовые транзакции</string>
+    <string name="w5_usdt_subtitle">Попробуйте совершенно новый стандарт кошелька W5 с поддержкой безналичных платежей в USDT и другими интересными функциями.</string>
+    <string name="w5_about_button">О кошельке W5</string>
     <string name="w5_add_wallet">Добавить кошелёк W5</string>
 
     <string name="staking_minimum_deposit">Минимальный депозит %1$s.</string>
@@ -362,9 +372,13 @@
     <string name="signer_wallet">Пара для Signer</string>
     <string name="signer_wallet_subtitle">Более высокий уровень контроля и безопасности</string>
     <string name="signer_description">Открой Signer » Выбери нужный ключ » Отсканируй QR-код</string>
+    <string name="keystone_description">Открыть Keystone » Подключить программный кошелек » Tonkeeper</string>
+    <string name="keystone_about">О Keystone</string>
+    <string name="signer_about">О Signer</string>
     <string name="signer_open">Открыть Signer на этом устройстве</string>
     <string name="add_wallet">Добавить кошелек</string>
     <string name="wallets">Кошельки</string>
+    <string name="hide">Скрыть</string>
     <string name="hide_collection">Скрыть коллекцию</string>
     <string name="hide_and_report_collection">Скрыть и жалоба</string>
     <string name="open_tonviewer">Открыть в Tonviewer</string>

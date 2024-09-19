@@ -44,7 +44,7 @@ class QRView @JvmOverloads constructor(
             qrDrawable.errorCorrectionLevel = value
         }
 
-    private var color: Int
+    var color: Int
         get() = qrDrawable.color
         set(value) {
             qrDrawable.color = value

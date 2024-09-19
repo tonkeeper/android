@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Color
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -40,6 +41,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -47,6 +49,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
@@ -101,6 +105,8 @@ class InitViewModel(
 
     private val _accountsFlow = MutableEffectFlow<List<AccountItem>?>()
     val accountsFlow = _accountsFlow.asSharedFlow().filterNotNull()
+
+    val labelFlow = savedState.labelFlow.stateIn(viewModelScope, SharingStarted.Lazily, null).filterNotNull()
 
     private var hasPinCode by Delegates.notNull<Boolean>()
 
@@ -335,12 +341,19 @@ class InitViewModel(
         return label
     }
 
-    suspend fun getLabel(): Wallet.Label = withContext(Dispatchers.IO) {
-        savedState.label ?: Wallet.Label(
+    private suspend fun getLabel(): Wallet.Label = withContext(Dispatchers.IO) {
+        var label = savedState.label ?: Wallet.Label(
             accountName = getDefaultWalletName(),
             emoji = Emoji.WALLET_ICON,
             color = WalletColor.all.first()
         )
+        if (label.color == Color.TRANSPARENT) {
+            label = label.copy(color = WalletColor.all.first())
+        }
+        if (label.emoji.isBlank()) {
+            label = label.copy(emoji = Emoji.WALLET_ICON)
+        }
+        label
     }
 
     fun setLabelName(name: String) {

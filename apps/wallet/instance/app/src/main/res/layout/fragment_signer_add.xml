@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
     <androidx.camera.view.PreviewView
         android:id="@+id/camera"
@@ -13,62 +12,73 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/barHeight"
+        android:layout_marginHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="start|center_vertical"
+            android:background="@drawable/bg_oval"
+            android:src="@drawable/ic_chevron_down_16"
+            android:scaleType="centerInside"
+            android:tint="@color/constantWhite"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/about"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="end|center_vertical"
+            android:paddingHorizontal="12dp"
+            android:background="@drawable/bg_content_tint_16"
+            android:text="@string/signer_about"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:textColor="@color/constantWhite"/>
+
+    </FrameLayout>
+
     <uikit.widget.ColumnLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingHorizontal="48dp">
 
-        <uikit.widget.HeaderView
-            android:id="@+id/header"
-            android:icon="@drawable/ic_chevron_down_16"
+        <uikit.widget.TextHeaderView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:ignoreSystemOffset="true"/>
+            android:layout_marginBottom="@dimen/offsetLarge"
+            android:title="@string/scan_qr_code"
+            android:description="@string/signer_description"/>
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <uikit.widget.SquareImageView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginHorizontal="@dimen/offsetLarge"
-            android:orientation="vertical">
+            android:layout_marginVertical="@dimen/offsetLarge"/>
 
-            <uikit.widget.TextHeaderView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/offsetLarge"
-                android:title="@string/scan_qr_code"
-                android:description="@string/signer_description"/>
-
-            <uikit.widget.SquareImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="@dimen/offsetLarge"/>
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/flash"
-                android:layout_width="@dimen/itemHeight"
-                android:layout_height="@dimen/itemHeight"
-                android:layout_marginTop="@dimen/offsetLarge"
-                android:background="@drawable/bg_oval"
-                android:backgroundTint="#14ffffff"
-                android:layout_gravity="center"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_flash"/>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <Button
-            style="@style/Widget.App.Button.Secondary"
-            android:id="@+id/signer_open"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/offsetLarge"
-            android:backgroundTint="@color/constantWhite"
-            android:textColor="@color/constantBlack"
-            android:layout_gravity="bottom"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:text="@string/signer_open"/>
+        <com.tonapps.tonkeeper.ui.component.CameraFlashIconView
+            android:id="@+id/flash"
+            android:layout_width="@dimen/itemHeight"
+            android:layout_height="@dimen/itemHeight"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:layout_gravity="center"/>
 
     </uikit.widget.ColumnLayout>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/signer_open"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetLarge"
+        android:layout_gravity="bottom"
+        android:backgroundTint="@color/constantWhite"
+        android:textColor="@color/constantBlack"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/signer_open"/>
 
 </FrameLayout>

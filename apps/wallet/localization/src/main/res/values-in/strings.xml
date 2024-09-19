@@ -1,4 +1,11 @@
 <resources>
+    <string name="keystone_sign_step1">Pindai kode QR dengan Keystone</string>
+    <string name="keystone_sign_step2">Konfirmasikan transaksi Anda di Keystone</string>
+    <string name="keystone_sign_step3">Pindai kode QR transaksi yang ditandatangani dari Keystone</string>
+    <string name="v4r2_wallet">Dompet v4R2</string>
+    <string name="comment_ascii_text">Gunakan hanya karakter ASCII: angka, huruf alfabet latin, dan tanda baca.</string>
+    <string name="keystone_title">Pasangkan dengan Keystone</string>
+    <string name="keystone_subtitle">Tingkat keamanan tinggi dengan dompet perangkat keras AIR-GAP</string>
     <string name="w5_wallet">Dompet W5</string>
     <string name="nft_unverified">NFT Tidak Terverifikasi</string>
     <string name="report_spam">Laporkan spam</string>
@@ -30,6 +37,9 @@
     <string name="w5_story_description_1">Kirim USDT tanpa memiliki TON – biaya transaksi akan ditanggung oleh beberapa sen USDT secara otomatis.</string>
     <string name="w5_story_description_3">W5 meningkatkan jumlah operasi simultan dari 4 menjadi 255, yang dapat menghemat biaya.</string>
     <string name="w5_story_description_4">Akun lama dan W5 menggunakan frasa pemulihan yang sama – saat memulihkan akun di perangkat baru, baik yang lama maupun yang baru akan muncul secara otomatis.</string>
+    <string name="w5_usdt_title">Transfer Tanpa Gas</string>
+    <string name="w5_usdt_subtitle">Cobalah standar dompet W5 baru dengan dukungan pembayaran USDT tanpa gas dan fitur menarik lainnya.</string>
+    <string name="w5_about_button">Tentang Dompet W5</string>
     <string name="w5_add_wallet">Tambahkan Dompet W5</string>
     <string name="liquid_staking">Taruhan Cair</string>
     <string name="other">Lainnya</string>
@@ -321,10 +331,14 @@
     <string name="banner_top">Anda saat ini menggunakan versi eksperimental dari Tonkeeper.</string>
     <string name="banner_top_button">Instal versi stabil</string>
     <string name="signer_description">Buka Penanda » Pilih kunci yang diperlukan » Pindai kode QR</string>
+    <string name="keystone_description">Buka Keystone » Hubungkan Dompet Perangkat Lunak » Tonkeeper</string>
+    <string name="keystone_about">Tentang Keystone</string>
+    <string name="signer_about">Tentang Signer</string>
     <string name="signer_open">Buka Penanda pada perangkat ini</string>
     <string name="choose_wallet_title">Pilih dompet</string>
     <string name="choose_wallet_subtitle">Pilih dompet yang ingin Anda tambahkan.</string>
     <string name="choose_wallet_already_added">Sudah ditambahkan</string>
+    <string name="hide">Bersembunyi</string>
     <string name="hide_collection">Sembunyikan koleksi</string>
     <string name="hide_and_report_collection">Sembunyikan dan laporkan</string>
     <string name="open_tonviewer">Buka di Tonviewer</string>

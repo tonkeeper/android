@@ -8,8 +8,8 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.add.imprt.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.add.imprt.list.Item
-import com.tonapps.tonkeeper.ui.screen.add.signer.AddSignerScreen
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.add.KeystoneAddScreen
+import com.tonapps.tonkeeper.ui.screen.external.qr.signer.add.SignerAddScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.pair.PairLedgerScreen
@@ -30,7 +30,7 @@ class ImportWalletScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment
             Item.IMPORT_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.Import))
             Item.WATCH_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.Watch))
             Item.TESTNET_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.Testnet))
-            Item.SIGNER_WALLET_ID -> openScreen(AddSignerScreen.newInstance())
+            Item.SIGNER_WALLET_ID -> openScreen(SignerAddScreen.newInstance())
             Item.LEDGER_WALLET_ID -> openScreen(PairLedgerScreen.newInstance())
             Item.KEYSTONE_WALLET_ID -> openScreen(KeystoneAddScreen.newInstance())
         }

@@ -700,27 +700,17 @@ class SendViewModel(
     }
 
     fun sign() {
-        Log.d("SignUseCase", "Sign")
         transferFlow.take(1).map { transfer ->
             lastTransferEntity = transfer
-            signUseCase(context, wallet, transfer.getUnsignedBody())
-        }.catch {
-            Log.e("SignUseCase", "Failed to sign", it)
-        }.onEach {
-            Log.d("SignUseCase", "Signed: $it")
-        }.launchIn(viewModelScope)
-
+            val signature = signUseCase(context, wallet, transfer.getUnsignedBody())
+            _uiEventFlow.tryEmit(SendEvent.Loading)
+            Pair(transfer.transferMessage(signature), transfer.wallet)
+        }.catch {  }.sendTransfer()
     }
 
     fun ledgerData() = transferFlow.take(1).map { transfer ->
         lastTransferEntity = transfer
         Pair(wallet.id, transfer.getLedgerTransaction())
-    }
-
-    fun sendSignedMessage(signature: BitString) {
-        transferFlow.take(1).map { transfer ->
-            Pair(transfer.transferMessage(signature), transfer.wallet)
-        }.sendTransfer()
     }
 
     fun sendLedgerSignedMessage(body: Cell) {

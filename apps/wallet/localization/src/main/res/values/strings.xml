@@ -393,6 +393,7 @@
     <string name="signer_description">Open Signer » Select the required key » Scan QR code</string>
     <string name="keystone_description">Open Keystone » Connect Software Wallet » Tonkeeper</string>
     <string name="keystone_about">About Keystone</string>
+    <string name="signer_about">About Signer</string>
     <string name="signer_open">Open Signer on this device</string>
     <string name="signer" translatable="false">Signer</string>
     <string name="choose_wallet_title">Choose wallet</string>

@@ -4,8 +4,8 @@ import android.content.Context
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.tonkeeper.core.signer.SignerHelper
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
+import com.tonapps.tonkeeper.ui.screen.external.qr.signer.sign.SignerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendException
-import com.tonapps.tonkeeper.ui.screen.signer.qr.SignerQRScreen
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -63,7 +63,7 @@ class SignUseCase(
         unsignedBody: Cell
     ): BitString {
         val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
-        val fragment = SignerQRScreen.newInstance(
+        val fragment = SignerSignScreen.newInstance(
             publicKey = wallet.publicKey,
             unsignedBody = unsignedBody
         )

@@ -8,7 +8,6 @@ import android.text.method.LinkMovementMethod
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.net.toUri
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.short4
@@ -16,7 +15,6 @@ import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.core.signer.SingerResultContract
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
@@ -30,7 +28,6 @@ import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
-import com.tonapps.tonkeeper.ui.screen.signer.qr.SignerQRScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
@@ -48,7 +45,6 @@ import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
 import org.koin.core.parameter.parametersOf
-import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import uikit.base.BaseFragment
 import uikit.dialog.modal.ModalDialog
@@ -70,7 +66,6 @@ import java.util.UUID
 class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_send_new, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
     private val args: SendArgs by lazy { SendArgs(requireArguments()) }
-    private val signerQRRequestKey: String by lazy { "send_${UUID.randomUUID()}" }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
 
     override val viewModel: SendViewModel by walletViewModel { parametersOf(args.nftAddress) }
@@ -111,13 +106,6 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AnalyticsHelper.trackEvent("send_open")
-        navigation?.setFragmentResultListener(signerQRRequestKey) { bundle ->
-            val sign = bundle.getString(SignerQRScreen.KEY_URI)?.toUri()?.getQueryParameter("sign")
-            if (sign != null) {
-                setLoading()
-                viewModel.sendSignedMessage(BitString(sign))
-            }
-        }
 
         navigation?.setFragmentResultListener(contractsRequestKey) { bundle ->
             val contact = bundle.getParcelableCompat<SendContact>("contact")

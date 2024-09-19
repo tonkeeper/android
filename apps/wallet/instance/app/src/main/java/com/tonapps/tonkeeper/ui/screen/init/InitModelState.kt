@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
+import android.graphics.Color
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.lifecycle.SavedStateHandle
@@ -55,6 +56,8 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         private const val ENABLE_PUSH_KEY = "enable_push"
         private const val KEYSTONE_KEY = "keystone"
     }
+
+    val labelFlow = savedStateHandle.getStateFlow(LABEL_KEY, Wallet.Label("", "", Color.TRANSPARENT))
 
     var passcode: String?
         get() = savedStateHandle[PASSCODE_KEY]

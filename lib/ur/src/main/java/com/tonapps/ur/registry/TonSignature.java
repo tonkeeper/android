@@ -1,7 +1,5 @@
 package com.tonapps.ur.registry;
 
-import android.util.Log;
-
 import co.nstant.in.cbor.model.ByteString;
 import co.nstant.in.cbor.model.DataItem;
 import co.nstant.in.cbor.model.Map;

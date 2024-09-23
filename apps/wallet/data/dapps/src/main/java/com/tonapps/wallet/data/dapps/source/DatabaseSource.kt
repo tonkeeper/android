@@ -134,6 +134,7 @@ internal class DatabaseSource(
             values.put(APP_TABLE_NAME_COLUMN, appEntity.name)
             values.put(APP_TABLE_ICON_URL_COLUMN, appEntity.iconUrl)
             writableDatabase.insertWithOnConflict(APP_TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            prefs.remove(LAST_EVENT_ID_KEY)
             true
         } catch (e: Throwable) {
             false
@@ -258,7 +259,7 @@ internal class DatabaseSource(
     }
 
     internal fun getLastAppRequestId(clientId: String): Long {
-        return prefs.getLong(LAST_APP_REQUEST_ID_PREFIX + clientId, 0)
+        return prefs.getLong(LAST_APP_REQUEST_ID_PREFIX + clientId, -1)
     }
 
     internal fun setLastAppRequestId(clientId: String, id: Long) {

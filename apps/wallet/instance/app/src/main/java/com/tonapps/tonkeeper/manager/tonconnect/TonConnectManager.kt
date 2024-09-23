@@ -56,7 +56,10 @@ class TonConnectManager(
     private val bridge: Bridge = Bridge(api)
 
     private val eventsFlow = dAppsRepository.connectionsFlow
-        .map { it.chunked(50) }
+        .map {
+            Log.d("TonConnectManager", "connections: ${it.size}")
+            it.chunked(10)
+        }
         .flat { chunks ->
             chunks.map { bridge.eventsFlow(it, dAppsRepository.lastEventId) }
         }.mapNotNull { event ->

@@ -85,17 +85,10 @@ internal class Bridge(private val api: API) {
     suspend fun send(
         clientId: String,
         keyPair: CryptoBox.KeyPair,
-        message: String
+        unencryptedMessage: String
     ) = withContext(Dispatchers.IO) {
-        send(clientId.hex(), keyPair.privateKey, message.base64)
-    }
-
-    suspend fun send(
-        clientId: ByteArray,
-        privateKey: ByteArray,
-        message: ByteArray
-    ) = withContext(Dispatchers.IO) {
-        AppConnectEntity.encryptMessage(clientId, privateKey, message)
+        val encryptedMessage = AppConnectEntity.encryptMessage(clientId.hex(), keyPair.privateKey, unencryptedMessage.toByteArray())
+        api.tonconnectSend(hex(keyPair.publicKey), clientId, encryptedMessage.base64)
     }
 
     fun eventsFlow(
@@ -117,5 +110,4 @@ internal class Bridge(private val api: API) {
                 )
             }
     }
-
 }

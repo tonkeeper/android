@@ -14,6 +14,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.amount
 import com.tonapps.tonkeeper.api.fee
 import com.tonapps.tonkeeper.api.getNameOrAddress
+import com.tonapps.tonkeeper.api.getWalletAddress
 import com.tonapps.tonkeeper.api.iconURL
 import com.tonapps.tonkeeper.api.jettonPreview
 import com.tonapps.tonkeeper.api.parsedAmount
@@ -505,7 +506,7 @@ class HistoryHelper(
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
-                senderAddress = jettonTransfer.sender?.address,
+                senderAddress = jettonTransfer.sender?.getWalletAddress(wallet.testnet),
                 isScam = isScam,
                 wallet = wallet,
             )
@@ -561,7 +562,7 @@ class HistoryHelper(
                 addressName = accountAddress.name,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                senderAddress = tonTransfer.sender.address,
+                senderAddress = tonTransfer.sender.getWalletAddress(wallet.testnet),
                 isScam = isScam,
                 wallet = wallet,
             )
@@ -640,7 +641,7 @@ class HistoryHelper(
                 dateDetails = dateDetails,
                 isOut = isOut,
                 failed = action.status == Action.Status.failed,
-                senderAddress = sender?.address?.toUserFriendly(testnet = wallet.testnet),
+                senderAddress = sender?.getWalletAddress(wallet.testnet),
                 addressName = sender?.name,
                 isScam = isScam,
                 wallet = wallet,

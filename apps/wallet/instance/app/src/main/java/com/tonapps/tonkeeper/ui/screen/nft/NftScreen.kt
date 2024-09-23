@@ -14,8 +14,6 @@ import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
-import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
@@ -30,7 +28,6 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
@@ -101,7 +98,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         val transferButton = view.findViewById<Button>(R.id.transfer)
         transferButton.setOnClickListener {
             navigation?.add(SendScreen.newInstance(
-                wallet = screenContext.wallet,
+                wallet = wallet,
                 nftAddress = nftEntity.address
             ))
         }
@@ -116,11 +113,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
                 url = url.toString()
             )
             domainLinkButton.setOnClickListener {
-                navigation?.add(DAppScreen.newInstance(screenContext.wallet, dAppArgs))
+                navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))
                 finish()
             }
             domainRenewButton.setOnClickListener {
-                navigation?.add(DAppScreen.newInstance(screenContext.wallet, dAppArgs))
+                navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))
                 finish()
             }
         } else {
@@ -163,7 +160,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         setAddress(view, nftEntity.userFriendlyAddress)
         setTrust(nftEntity.trust)
 
-        if (!screenContext.wallet.hasPrivateKey) {
+        if (!wallet.isTonConnectSupported) {
             buttonsContainer.visibility = View.GONE
             domainLinkButton.visibility = View.GONE
             domainRenewButton.visibility = View.GONE
@@ -193,7 +190,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     }
 
     private fun mustOpenButtonDApp(url: String) {
-        navigation?.add(DAppScreen.newInstance(screenContext.wallet, url = url))
+        navigation?.add(DAppScreen.newInstance(wallet, url = url))
         finish()
     }
 

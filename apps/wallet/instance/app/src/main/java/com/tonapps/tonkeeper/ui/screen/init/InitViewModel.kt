@@ -118,6 +118,11 @@ class InitViewModel(
         savedState.ledgerConnectData = args.ledgerConnectData
         savedState.keystone = args.keystone
 
+
+        if (savedState.label == null || savedState.label?.isEmpty == true) {
+            savedState.label = Wallet.Label(getString(Localization.wallet), Emoji.WALLET_ICON, WalletColor.all.first())
+        }
+
         when (type) {
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
             InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)

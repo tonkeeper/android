@@ -122,6 +122,13 @@ fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): S
     return if (short) value.max18 else value
 }
 
+fun AccountAddress.getWalletAddress(testnet: Boolean): String {
+    return address.toUserFriendly(
+        wallet = isWallet,
+        testnet = testnet
+    )
+}
+
 val AccountAddress.iconURL: String?
     get() = icon
 

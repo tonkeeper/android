@@ -22,6 +22,7 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
@@ -97,7 +98,7 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun isNeedRemoveModals(fragment: BaseFragment): Boolean {
-        if (fragment is QRCameraScreen) {
+        if (fragment is QRCameraScreen || fragment is LedgerSignScreen) {
             return false
         }
         return super.isNeedRemoveModals(fragment)

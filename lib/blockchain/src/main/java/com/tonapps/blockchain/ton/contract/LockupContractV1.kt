@@ -36,7 +36,7 @@ class LockupContractV1(
 
     override fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
+        seqNo: Int,
         internalMessage: Boolean,
         queryId: BigInteger?,
         vararg gifts: WalletTransfer

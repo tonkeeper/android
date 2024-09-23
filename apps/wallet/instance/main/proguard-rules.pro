@@ -25,3 +25,7 @@
 -keepclasseswithmembers class * {
     @com.squareup.moshi.* <methods>;
 }
+
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator CREATOR;
+}

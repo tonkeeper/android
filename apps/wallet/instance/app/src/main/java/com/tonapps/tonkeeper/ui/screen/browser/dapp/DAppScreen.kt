@@ -7,10 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
@@ -20,37 +17,41 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
-import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.popup.ActionSheet
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
-import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
+import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
+import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
-import com.tonapps.wallet.data.tonconnect.entities.reply.DAppDeviceEntity
+import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.suspendCancellableCoroutine
+import org.json.JSONArray
+import org.json.JSONObject
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.drawable.HeaderDrawable
+import uikit.extensions.activity
 import uikit.extensions.collectFlow
-import uikit.extensions.setPaddingBottom
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.BridgeWebView
-import java.util.UUID
-import kotlin.coroutines.resume
+import java.util.concurrent.CancellationException
 
-class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_dapp, ScreenContext.Wallet(wallet)) {
+class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_dapp, wallet) {
+
+    private val tonConnectManager: TonConnectManager by inject()
 
     private lateinit var headerDrawable: HeaderDrawable
     private lateinit var headerView: View
@@ -66,7 +67,7 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
     private val rootViewModel: RootViewModel by activityViewModel()
 
     override val viewModel: DAppViewModel by walletViewModel {
-        parametersOf(args.url)
+        parametersOf(args.host)
     }
 
     private val currentUrl: String
@@ -139,7 +140,6 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
         hostView.text = args.host
 
         menuView = view.findViewById(R.id.menu)
-        menuView.setOnClickListener { requestMenu(it) }
 
         closeView = view.findViewById(R.id.close)
         closeView.setOnClickListener { finish() }
@@ -149,10 +149,10 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
         webView.settings.loadWithOverviewMode = true
         webView.addCallback(webViewCallback)
         webView.jsBridge = DAppBridge(
-            deviceInfo = DAppDeviceEntity(sendMaxMessages = screenContext.wallet.contract.maxMessages),
-            send = { rootViewModel.tonconnectBridgeEvent(requireContext(), args.url, it) },
-            connect = { _, request -> tonConnectAuth(webView.url?.toUri(), request) },
-            restoreConnection = { viewModel.restoreConnection() },
+            deviceInfo = JsonBuilder.device(wallet.maxMessages).toString(),
+            send = ::send,
+            connect = ::tonconnect,
+            restoreConnection = viewModel::restoreConnection,
             disconnect = { viewModel.disconnect() }
         )
         webView.loadUrl(args.url)
@@ -175,29 +175,70 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
 
             insets
         }
+
+        collectFlow(viewModel.connectionFlow) { connection ->
+            if (connection == null) {
+                setDefaultState()
+            } else {
+                setConnectionState(connection)
+            }
+        }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        webView.removeCallback(webViewCallback)
-        webView.destroy()
+    private suspend fun send(array: JSONArray): JSONObject {
+        val messages = BridgeEvent.Message.parse(array)
+        if (messages.size == 1) {
+            val message = messages.first()
+            val id = message.id
+            if (message.method != BridgeMethod.SEND_TRANSACTION) {
+                return JsonBuilder.responseError(id, BridgeError.METHOD_NOT_SUPPORTED)
+            }
+            val signRequests = message.params.map { SignRequestEntity(it) }
+            if (signRequests.size != 1) {
+                return JsonBuilder.responseError(id, BridgeError.BAD_REQUEST)
+            }
+            val signRequest = signRequests.first()
+            return try {
+                val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
+                JsonBuilder.responseSendTransaction(id, boc)
+            } catch (e: CancellationException) {
+                JsonBuilder.responseError(id, BridgeError.USER_DECLINED_TRANSACTION)
+            } catch (e: BridgeError.Exception) {
+                JsonBuilder.responseError(id, e.error)
+            } catch (e: Throwable) {
+                JsonBuilder.responseError(id, BridgeError.UNKNOWN)
+            }
+        } else {
+            return JsonBuilder.responseError(0, BridgeError.BAD_REQUEST)
+        }
     }
 
-    private fun requestMenu(view: View) {
-        collectFlow(viewModel.appFlow) { openMenu(view, it) }
+    private fun setDefaultState() {
+        menuView.setOnClickListener { openDefaultMenu(it) }
     }
 
-    private fun openMenu(view: View, app: DConnectEntity?) {
+    private fun setConnectionState(connection: AppConnectEntity) {
+        menuView.setOnClickListener { openConnectionMenu(it, connection) }
+    }
+
+    private fun openDefaultMenu(view: View) {
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(REFRESH_ID, Localization.refresh, UIKitIcon.ic_refresh_16)
-        if (app?.enablePush == true) {
+        actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
+        actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
+        actionSheet.doOnItemClick = { actionClick(it.id) }
+        actionSheet.show(view)
+    }
+
+    private fun openConnectionMenu(view: View, connection: AppConnectEntity) {
+        val actionSheet = ActionSheet(requireContext())
+        actionSheet.addItem(REFRESH_ID, Localization.refresh, UIKitIcon.ic_refresh_16)
+        if (connection.pushEnabled) {
             actionSheet.addItem(MUTE_ID, Localization.mute, UIKitIcon.ic_bell_disable_16)
         }
         actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
         actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
-        if (app != null) {
-            actionSheet.addItem(DISCONNECT_ID, Localization.disconnect, UIKitIcon.ic_disconnect_16)
-        }
+        actionSheet.addItem(DISCONNECT_ID, Localization.disconnect, UIKitIcon.ic_disconnect_16)
         actionSheet.doOnItemClick = { actionClick(it.id) }
         actionSheet.show(view)
     }
@@ -220,28 +261,15 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
         startActivity(shareIntent)
     }
 
-    private suspend fun tonConnectAuth(
-        sourceUri: Uri?,
-        request: DAppPayloadEntity
-    ): String? = suspendCancellableCoroutine { continuation ->
-        val id = UUID.randomUUID().toString()
-        navigation?.setFragmentResultListener(id) { bundle ->
-            if (bundle.containsKey(TCAuthFragment.REPLY_ARG)) {
-                continuation.resume(bundle.getString(TCAuthFragment.REPLY_ARG))
-            } else {
-                continuation.resume(null)
-            }
+    private suspend fun tonconnect(
+        version: Int,
+        request: ConnectRequest
+    ): JSONObject {
+        if (version != 2) {
+            return JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
         }
-        openAuth(sourceUri, id, request)
-    }
-
-    private fun openAuth(sourceUri: Uri?, id: String, request: DAppPayloadEntity) {
-        val entity = DAppRequestEntity(
-            id = id,
-            r = request.toJSON().toString(),
-            source = sourceUri,
-        )
-        navigation?.add(TCAuthFragment.newInstance(entity, id, true))
+        val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
+        return tonConnectManager.launchConnectFlow(activity, TonConnect.fromJsInject(request))
     }
 
     override fun onResume() {
@@ -267,6 +295,12 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
         return false
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        webView.removeCallback(webViewCallback)
+        webView.destroy()
+    }
+
     companion object {
 
         private const val REFRESH_ID = 1L
@@ -282,7 +316,7 @@ class DAppScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R
             url: String
         ): DAppScreen {
             val mustHost = if (host.isNullOrBlank()) {
-                Uri.parse(url).host
+                url.toUri().host!!
             } else {
                 host
             }

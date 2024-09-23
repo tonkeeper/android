@@ -49,7 +49,7 @@ class TokenRepository(
         return getRemote(currency, accountId, testnet)
     }
 
-    suspend fun getRemote(
+    private suspend fun getRemote(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean

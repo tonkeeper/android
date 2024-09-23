@@ -1,14 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.billing.BillingManager
-import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
-import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.manager.AssetsManager
@@ -21,54 +18,36 @@ import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEvent
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.push.PushManager
-import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.staking.StakingRepository
-import com.tonapps.wallet.data.staking.entities.StakingEntity
-import com.tonapps.wallet.data.token.TokenRepository
-import com.tonapps.wallet.data.token.entities.AccountTokenEntity
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
-import uikit.extensions.context
-import kotlin.time.Duration.Companion.seconds
 
 class WalletViewModel(
     app: Application,
     private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
-    private val tokenRepository: TokenRepository,
     private val api: API,
     private val networkMonitor: NetworkMonitor,
     private val pushManager: PushManager,
-    private val tonConnectRepository: TonConnectRepository,
     private val screenCacheSource: ScreenCacheSource,
     private val backupRepository: BackupRepository,
-    private val stakingRepository: StakingRepository,
     private val ratesRepository: RatesRepository,
     private val batteryRepository: BatteryRepository,
     private val billingManager: BillingManager,
@@ -216,7 +195,6 @@ class WalletViewModel(
             }*/
 
             val dAppEvents = dAppNotifications ?: emptyList()
-            val apps = getApps(state.wallet, dAppEvents)
 
             val isSetupHidden = settingsRepository.isSetupHidden(state.wallet.id)
             val uiSetup: State.Setup? = if (isSetupHidden) null else {
@@ -237,7 +215,7 @@ class WalletViewModel(
                 status = status,
                 config = settings.config,
                 alerts = alerts,
-                dAppNotifications = State.DAppNotifications(dAppEvents, apps),
+                dAppNotifications = State.DAppNotifications(dAppEvents, emptyList()),
                 setup = uiSetup,
                 lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale())
             )
@@ -302,17 +280,6 @@ class WalletViewModel(
                 rates = ratesRepository.getTONRates(currency)
             )
         }
-    }
-
-    private fun getApps(
-        wallet: WalletEntity,
-        events: List<AppPushEntity>
-    ): List<DConnectEntity> {
-        if (true) { // events.isEmpty()
-            return emptyList()
-        }
-        val dappUrls = events.map { it.dappUrl }
-        return tonConnectRepository.getApps(dappUrls, wallet)
     }
 
     private fun setCached(wallet: WalletEntity, items: List<Item>) {

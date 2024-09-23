@@ -7,16 +7,16 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import androidx.biometric.BiometricPrompt
-import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
+import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
@@ -33,17 +33,16 @@ import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
@@ -85,7 +84,7 @@ class RootActivity: BaseWalletActivity() {
             insets
         }
 
-        collectFlow(viewModel.tonConnectEventsFlow, ::onDAppEvent)
+        // collectFlow(viewModel.tonConnectEventsFlow, ::onDAppEvent)
         collectFlow(viewModel.hasWalletFlow) { init(it) }
         collectFlow(viewModel.eventFlow) { event(it) }
         collectFlow(viewModel.passcodeFlow, ::passcodeFlow)
@@ -95,6 +94,13 @@ class RootActivity: BaseWalletActivity() {
         }
 
         App.applyConfiguration(resources.configuration)
+    }
+
+    override fun isNeedRemoveModals(fragment: BaseFragment): Boolean {
+        if (fragment is QRCameraScreen) {
+            return false
+        }
+        return super.isNeedRemoveModals(fragment)
     }
 
     override fun recreate() {
@@ -129,24 +135,6 @@ class RootActivity: BaseWalletActivity() {
         }
     }
 
-    private suspend fun onDAppEvent(event: DAppEventEntity) {
-        if (event.method != "sendTransaction") {
-            return
-        }
-
-        val params = event.params
-        for (i in 0 until params.length()) {
-            val param = DAppEventEntity.parseParam(params.get(i))
-            val request = SignRequestEntity(param)
-            try {
-                val boc = viewModel.requestSign(this, event.wallet, request)
-                viewModel.tonconnectBoc(event.id, event.connect, boc)
-            } catch (e: Throwable) {
-                viewModel.tonconnectReject(event.id, event.connect)
-            }
-        }
-    }
-
     private fun checkPasscode(code: String) {
         viewModel.checkPasscode(this, code).catch {
             lockPasscodeView.setError()
@@ -164,7 +152,6 @@ class RootActivity: BaseWalletActivity() {
             is RootEvent.Toast -> toast(event.resId)
             is RootEvent.Singer -> add(InitScreen.newInstance(if (event.qr) InitArgs.Type.SignerQR else InitArgs.Type.Signer, event.publicKey, event.name))
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
-            is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
             is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
             is RootEvent.Transfer -> openSend(
                 targetAddress = event.address,
@@ -262,12 +249,8 @@ class RootActivity: BaseWalletActivity() {
         if (url.isBlank()) {
             return
         }
-        val uri = url.toUri()
-        if (uri.host == "t.me") {
-            openTelegramLink(uri)
-        } else if (uri.scheme == "mailto") {
-            openEmail(uri)
-        } else if (uri.scheme == "tonkeeper" || uri.scheme == "ton" || uri.scheme == "tc" || uri.host == "app.tonkeeper.com") {
+        val uri = url.toUriOrNull() ?: return
+        if (uri.scheme == "tonkeeper" || uri.scheme == "ton" || uri.scheme == "tc" || uri.host == "app.tonkeeper.com") {
             processDeepLink(uri)
         } else {
             openExternalLink(uri)

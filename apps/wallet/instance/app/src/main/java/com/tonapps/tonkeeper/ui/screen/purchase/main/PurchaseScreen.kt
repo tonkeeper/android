@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
@@ -29,7 +30,7 @@ import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import kotlin.coroutines.resume
 
-class PurchaseScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_purchase, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_purchase, wallet), BaseFragment.BottomSheet {
 
     override val viewModel: PurchaseViewModel by walletViewModel()
 

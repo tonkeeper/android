@@ -1,5 +1,7 @@
 package com.tonapps.tonkeeper.manager
 
+import com.tonapps.icu.Coins
+import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -70,24 +72,13 @@ class AssetsManager(
             ignoreCache = refresh
         )
     }
-}
 
-
-/*
-
-        val filteredTokens = if (liquid == null) {
-            tokens
-        } else {
-            tokens.filter { !liquid.token.address.contains(it.address)  }
-        }
-        if (filteredTokens.isEmpty() && staked.isEmpty()) {
-            return null
-        }
-
-        val assets = (filteredTokens.map { AssetsEntity.Token(it) } + staked.map {
-            AssetsEntity.Staked(it)
-        }).sortedBy { it.fiat }.reversed()
-
-        return State.Assets(currency, assets.sort(wallet, settingsRepository), fromCache, fiatRates)
+    suspend fun getTotalBalance(
+        wallet: WalletEntity,
+        currency: WalletCurrency,
+        refresh: Boolean = false
+    ): Coins {
+        val assets = getAssets(wallet, currency, refresh) ?: return Coins.ZERO
+        return assets.map { it.fiat }.sumOf { it }
     }
- */
+}

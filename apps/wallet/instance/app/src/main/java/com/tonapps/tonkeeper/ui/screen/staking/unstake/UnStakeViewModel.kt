@@ -14,17 +14,15 @@ import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
-import com.tonapps.tonkeeper.extensions.signLedgerTransaction
 import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.screen.send.main.SendException
+import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
@@ -32,7 +30,6 @@ import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.StakingUtils
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.token.TokenRepository
-import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,8 +61,8 @@ class UnStakeViewModel(
     private val settingsRepository: SettingsRepository,
     private val ratesRepository: RatesRepository,
     private val api: API,
-    private val passcodeManager: PasscodeManager,
     private val transactionManager: TransactionManager,
+    private val signUseCase: SignUseCase,
 ): BaseWalletVM(app) {
 
     data class AvailableUiState(
@@ -139,14 +136,15 @@ class UnStakeViewModel(
     }
 
     fun requestFee() = unsignedBodyFlow().map { (seqno, unsignedBody) ->
-        val contract = wallet.contract
+        /*val contract = wallet.contract
         val message = contract.createTransferMessageCell(
             address = contract.address,
             privateKey = EmptyPrivateKeyEd25519,
             seqno = seqno,
             unsignedBody = unsignedBody,
         )
-        api.emulate(message, wallet.testnet)?.totalFees ?: 0L
+        api.emulate(message, wallet.testnet)?.totalFees ?: 0L*/
+        0L
     }.take(1).flowOn(Dispatchers.IO)
 
     fun requestFeeFormat() = combine(
@@ -180,7 +178,7 @@ class UnStakeViewModel(
         val gift = buildTransfer(wallet, amount, stake.pool, params)
         val body = wallet.contract.createTransferUnsignedBody(
             validUntil = params.validUntil,
-            seqno = params.seqno,
+            seqNo = params.seqno,
             gifts = arrayOf(gift),
         )
         Pair(params.seqno, body)
@@ -267,38 +265,15 @@ class UnStakeViewModel(
                 createUnStakeFlow(wallet)
             }
         }
-
     }
-
-    /*
-     = walletFlow.take(1).map { wallet ->
-
-    }.flattenFirst().flowOn(Dispatchers.IO).catch { e ->
-        taskStateFlow.tryEmit(
-            if (e.instanceOf(SendException.Cancelled::class)) {
-                ProcessTaskView.State.DEFAULT
-            } else {
-                ProcessTaskView.State.FAILED
-            }
-        )
-    }.onEach {
-        taskStateFlow.tryEmit(ProcessTaskView.State.SUCCESS)
-        delay(3000)
-        _eventFlow.tryEmit(UnStakeEvent.Finish)
-    }
-     */
 
     private fun createLedgerStakeFlow(
         context: Context,
         wallet: WalletEntity
     ) = ledgerTransactionFlow().map { (seqno, transaction) ->
+        val message = signUseCase(context, wallet, seqno, transaction)
+
         taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
-
-        val signedBody = context.signLedgerTransaction(transaction, wallet.id)
-            ?: throw SendException.Cancelled()
-
-        val contract = wallet.contract
-        val message = contract.createTransferMessageCell(contract.address, seqno, signedBody)
 
         val state = transactionManager.send(wallet, message, false)
         if (state != SendBlockchainState.SUCCESS) {
@@ -306,21 +281,12 @@ class UnStakeViewModel(
         }
     }
 
-    private fun createUnStakeFlow(wallet: WalletEntity) = unsignedBodyFlow().map { (seqno, unsignedBody) ->
-        if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
-            throw SendException.Cancelled()
-        }
+    private fun createUnStakeFlow(
+        wallet: WalletEntity
+    ) = unsignedBodyFlow().map { (seqno, unsignedBody) ->
+        val message = signUseCase(context, wallet, unsignedBody, seqno)
 
         taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
-
-        val contract = wallet.contract
-        val privateKey = accountRepository.getPrivateKey(wallet.id)
-        val message = contract.createTransferMessageCell(
-            address = contract.address,
-            privateKey = privateKey,
-            seqno = seqno,
-            unsignedBody = unsignedBody
-        )
 
         val state = transactionManager.send(wallet, message, false)
         if (state != SendBlockchainState.SUCCESS) {

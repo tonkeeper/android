@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerMode
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
@@ -89,7 +90,7 @@ class W5StoriesScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_w5
 
 
         }.onEach { walletId ->
-            navigation?.add(PickerScreen.newInstance(walletId))
+            navigation?.add(PickerScreen.newInstance(PickerMode.Focus(walletId)))
             navigation?.removeByClass(SettingsScreen::class.java)
             finish()
         }.launchIn(lifecycleScope)

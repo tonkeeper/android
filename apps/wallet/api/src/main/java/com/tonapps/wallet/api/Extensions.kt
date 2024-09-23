@@ -33,12 +33,13 @@ fun <R> withRetry(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
+            Log.e("TONKeeperLog", "error request", e)
             if (e is ClientException && e.statusCode != 429 && 500 >= e.statusCode) {
                 return null
             } else if (e is OkHttpError && e.statusCode != 429 && 500 >= e.statusCode) {
                 return null
             }
-            Log.e("TONKeeperLog", "error request", e)
+
             /*else if (e is InterruptedIOException || e is SocketException) {
                 return null
             }*/

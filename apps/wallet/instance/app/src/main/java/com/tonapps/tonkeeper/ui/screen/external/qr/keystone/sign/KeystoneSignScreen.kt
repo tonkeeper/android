@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.ton.bitstring.BitString
+import org.ton.crypto.encodeHex
 import org.ton.crypto.hex
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize

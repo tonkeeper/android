@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.label.LabelEditorView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.Wallet
@@ -19,7 +20,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.widget.HeaderView
 
-class EditNameScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_name_edit, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+class EditNameScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_name_edit, wallet), BaseFragment.BottomSheet {
 
     override val viewModel: EditNameViewModel by walletViewModel()
 

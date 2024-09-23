@@ -25,15 +25,15 @@ fun CellBuilder.storeOpCode(opCode: TONOpCode) = apply {
     storeUInt(opCode.code, 32)
 }
 
-fun CellBuilder.storeSeqAndValidUntil(seqno: Int, validUntil: Long) = apply {
-    if (seqno == 0) {
+fun CellBuilder.storeSeqAndValidUntil(seqNo: Int, validUntil: Long) = apply {
+    if (seqNo == 0) {
         for (i in 0 until 32) {
             storeBit(true)
         }
     } else {
         storeUInt(validUntil, 32)
     }
-    storeUInt(seqno, 32)
+    storeUInt(seqNo, 32)
 }
 
 fun CellBuilder.storeStringTail(src: String) = apply {

@@ -10,6 +10,11 @@
     <string name="keystone" translatable="false">Keystone</string>
     <string name="w5" translatable="false">W5</string>
     <string name="staking_apy" translatable="false">APY</string>
+    <string name="transaction_expired">Transaction expired</string>
+    <string name="total">Total: %1$s</string>
+    <string name="send_transaction_scroll">Check all details to confirm</string>
+    <string name="send_transaction_detail">The total value of tokens that will be sent from your wallet. Refunds are not included in the total value.</string>
+    <string name="send_transaction_detail_nft">The total value of tokens, excluding the cost of NFTs, that will be sent from your wallet. Refunds are not included in the total value.</string>
     <string name="keystone_sign_step1">Scan the QR code with Keystone</string>
     <string name="keystone_sign_step2">Confirm your transaction in Keystone</string>
     <string name="keystone_sign_step3">Scan signed transaction QR code from Keystone</string>
@@ -150,6 +155,7 @@
     <string name="domain_renew">Domain Renew</string>
     <string name="unstake">Unstake</string>
     <string name="unknown">Unknown</string>
+    <string name="tonconnect_warning_description">Be sure to check the service address before connecting the wallet.</string>
     <string name="unknown_error">Unknown error</string>
     <string name="nft_purchase">NFT Purchase</string>
     <string name="burned">Burned</string>

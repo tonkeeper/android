@@ -7,10 +7,10 @@ import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -45,7 +45,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     abstract class Child(
         @LayoutRes layoutId: Int,
         wallet: WalletEntity,
-    ): BaseWalletScreen<ScreenContext.Wallet>(layoutId, ScreenContext.Wallet(wallet)) {
+    ): WalletContextScreen(layoutId, wallet) {
 
         val mainViewModel: MainViewModel by lazy {
             requireParentFragment().getViewModel()
@@ -123,7 +123,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }.launchIn(lifecycleScope)
 
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.Swap>()) {
-            navigation?.add(SwapScreen.newInstance(it.uri, it.address, it.from, it.to))
+            navigation?.add(SwapScreen.newInstance(it.wallet, it.uri, it.address, it.from, it.to))
         }
         collectFlow(viewModel.selectedWalletFlow) { wallet ->
             val browserTabEnabled = (wallet.type == Wallet.Type.Default || wallet.isExternal)

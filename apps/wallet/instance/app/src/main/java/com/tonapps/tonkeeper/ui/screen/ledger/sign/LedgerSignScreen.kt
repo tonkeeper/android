@@ -18,7 +18,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 
-class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragment.Modal {
+class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragment.Modal {
 
     private val args: LedgerSignArgs by lazy { LedgerSignArgs(requireArguments()) }
 
@@ -51,12 +51,12 @@ class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragme
         collectFlow(connectionViewModel.eventFlow, ::onEvent)
     }
 
-    override fun onDestroy() {
+    /*override fun onDestroy() {
         super.onDestroy()
         if (!requireActivity().isChangingConfigurations && !isSuccessful) {
             navigation?.setFragmentResult(args.requestKey, Bundle())
         }
-    }
+    }*/
 
     private fun onEvent(event: LedgerEvent) {
         when (event) {
@@ -88,19 +88,20 @@ class LedgerSignScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragme
     }
 
     private fun onSuccess(body: Cell) {
-        navigation?.setFragmentResult(args.requestKey, Bundle().apply {
+        val bundle = Bundle().apply {
             putByteArray(SIGNED_MESSAGE, body.toByteArray())
-        })
+        }
+        setResult(bundle)
         isSuccessful = true
-        finish()
     }
+
 
     companion object {
         const val SIGNED_MESSAGE = "signed_message"
 
-        fun newInstance(transaction: Transaction, walletId: String, requestKey: String): LedgerSignScreen {
+        fun newInstance(transaction: Transaction, walletId: String): LedgerSignScreen {
             return LedgerSignScreen().apply {
-                setArgs(LedgerSignArgs(transaction, walletId, requestKey))
+                setArgs(LedgerSignArgs(transaction, walletId))
             }
         }
     }

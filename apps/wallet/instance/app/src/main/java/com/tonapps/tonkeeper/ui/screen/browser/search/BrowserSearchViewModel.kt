@@ -2,9 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.network.get
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -14,22 +11,14 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-import uikit.extensions.collectFlow
 
 class BrowserSearchViewModel(
     app: Application,

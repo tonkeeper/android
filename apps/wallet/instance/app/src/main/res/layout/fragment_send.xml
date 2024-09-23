@@ -1,21 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<uikit.widget.SlideBetweenView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/slides"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <uikit.widget.HeaderView
-        android:id="@+id/header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:title="@string/recipient"
-        app:ignoreSystemOffset="true"
-        android:action="@drawable/ic_close_16"/>
+    <include
+        layout="@layout/fragment_send_create"/>
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/pager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <include
+        layout="@layout/fragment_send_review"/>
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+</uikit.widget.SlideBetweenView>

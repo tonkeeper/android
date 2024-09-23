@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
@@ -26,7 +27,7 @@ import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.HeaderView
 
-class BrowserExploreScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_explore, ScreenContext.Wallet(wallet)) {
+class BrowserExploreScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_explore, wallet) {
 
     override val viewModel: BrowserExploreViewModel by walletViewModel()
 

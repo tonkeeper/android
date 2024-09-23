@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper
 
 import android.app.Application
 import android.content.res.Configuration
+import android.os.Build
+import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
@@ -13,6 +15,7 @@ import com.facebook.imagepipeline.core.MemoryChunkType
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel
 import com.tonapps.tonkeeper.koin.viewModelWalletModule
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.wallet.api.apiModule
 import com.tonapps.wallet.data.account.accountModule
 import com.tonapps.wallet.data.rates.ratesModule
@@ -32,8 +35,8 @@ import com.tonapps.wallet.data.purchase.purchaseModule
 import com.tonapps.wallet.data.push.pushModule
 import com.tonapps.wallet.data.rn.rnLegacyModule
 import com.tonapps.wallet.data.staking.stakingModule
-import com.tonapps.wallet.data.tonconnect.tonConnectModule
 import org.koin.core.component.KoinComponent
+import java.util.concurrent.Executors
 
 class App: Application(), CameraXConfig.Provider, KoinComponent {
 
@@ -47,6 +50,15 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
     }
 
     override fun onCreate() {
+        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder()
+                .detectLeakedSqlLiteObjects()
+                .penaltyLog()
+                .penaltyListener(Executors.newSingleThreadExecutor()) {
+                    Log.e("Tonkeeper", "StrictMode.VmPolicy: $it", it.cause)
+                }.build())
+        }
+
         super.onCreate()
         Theme.add("blue", uikit.R.style.Theme_App_Blue)
         Theme.add("dark", uikit.R.style.Theme_App_Dark)
@@ -56,7 +68,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
 
         startKoin {
             androidContext(this@App)
-            modules(koinModel, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, pushModule, tonConnectModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, pushModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

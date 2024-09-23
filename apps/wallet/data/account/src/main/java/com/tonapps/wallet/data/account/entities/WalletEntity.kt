@@ -71,6 +71,9 @@ data class WalletEntity(
         BaseWalletContract.create(publicKey, version.title, network)
     }
 
+    val maxMessages: Int
+        get() = if (isLedger) 1 else contract.maxMessages
+
     val testnet: Boolean
         get() = type == Wallet.Type.Testnet
 
@@ -99,6 +102,9 @@ data class WalletEntity(
     val isExternal: Boolean
         get() = signer || isLedger || isKeystone
 
+    val isTonConnectSupported: Boolean
+        get() = !testnet && type != Wallet.Type.Watch
+
     constructor(parcel: Parcel) : this(
         id = parcel.readString()!!,
         publicKey = parcel.readString()!!.publicKey(),
@@ -118,28 +124,28 @@ data class WalletEntity(
     }
 
     fun createBody(
-        seqno: Int,
+        seqNo: Int,
         validUntil: Long,
         gifts: List<WalletTransfer>,
-        internalMessage: Boolean = false,
+        internalMessage: Boolean,
     ): Cell {
         return contract.createTransferUnsignedBody(
             validUntil = validUntil,
-            seqno = seqno,
+            seqNo = seqNo,
             gifts = gifts.toTypedArray(),
             internalMessage = internalMessage,
         )
     }
 
     fun sign(
-        privateKeyEd25519: PrivateKeyEd25519,
-        seqno: Int,
+        privateKey: PrivateKeyEd25519,
+        seqNo: Int,
         body: Cell
     ): Cell {
         return contract.createTransferMessageCell(
             address = contract.address,
-            privateKey = privateKeyEd25519,
-            seqno = seqno,
+            privateKey = privateKey,
+            seqNo = seqNo,
             unsignedBody = body,
         )
     }

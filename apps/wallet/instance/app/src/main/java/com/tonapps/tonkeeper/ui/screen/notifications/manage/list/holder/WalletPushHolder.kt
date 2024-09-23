@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.manage.list.holder
 
-import android.util.Log
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
@@ -26,7 +25,7 @@ class WalletPushHolder(parent: ViewGroup): Holder<Item.Wallet>(parent, R.layout.
         switchView.setChecked(item.pushEnabled, false)
         switchView.doCheckedChanged = { checked, byUser ->
             if (byUser) {
-                settingsRepository?.setPushWallet(item.walletId, checked)
+                settingsRepository?.setPushWallet(item.wallet.id, checked)
             }
         }
     }

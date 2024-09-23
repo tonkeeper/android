@@ -53,6 +53,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -78,7 +79,7 @@ class API(
         createTonAPIHttpClient(
             context = context,
             tonApiV2Key = config.tonApiV2Key,
-            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost, config.tonapiSSEEndpoint, config.tonapiSSETestnetEndpoint)
+            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost, config.tonapiSSEEndpoint, config.tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
         )
     }
 
@@ -178,6 +179,13 @@ class API(
         val endpoint = if (testnet) config.tonapiSSETestnetEndpoint else config.tonapiSSEEndpoint
         val url = "$endpoint/sse/transactions?account=$accountId"
         return tonAPIHttpClient.sse(url)
+    }
+
+    fun get(url: String): String {
+        val headers = ArrayMap<String, String>().apply {
+            set("Connection", "close")
+        }
+        return defaultHttpClient.get(url, headers)
     }
 
     fun getEvents(
@@ -398,17 +406,14 @@ class API(
 
     fun tonconnectEvents(
         publicKeys: List<String>,
-        lastEventId: String?
+        lastEventId: Long? = null
     ): Flow<SSEvent> {
         if (publicKeys.isEmpty()) {
             return emptyFlow()
         }
         val value = publicKeys.joinToString(",")
-        var url = "${BRIDGE_URL}/events?client_id=$value"
-        if (lastEventId != null) {
-            url += "&last_event_id=$lastEventId"
-        }
-        return tonAPIHttpClient.sse(url)
+        val url = "${BRIDGE_URL}/events?client_id=$value"
+        return tonAPIHttpClient.sse(url, lastEventId).filter { it.type == "message" }
     }
 
     fun tonconnectPayload(): String? {
@@ -445,7 +450,7 @@ class API(
         val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
         val response = tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
         if (!response.isSuccessful) {
-            throw Exception("Failed sending event: ${response.code}")
+            throw Exception("Failed sending event[code=${response.code};body=${response.body?.string()}]")
         }
     }
 

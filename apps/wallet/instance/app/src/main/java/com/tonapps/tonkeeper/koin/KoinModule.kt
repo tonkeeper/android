@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.manager.SignManager
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.add.imprt.ImportWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryViewModel
@@ -27,8 +27,10 @@ import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
 import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesViewModel
+import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
-import com.tonapps.tonkeeper.usecase.SignUseCase
+import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
+import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,13 +46,14 @@ val koinModel = module {
 
     singleOf(::SettingsRepository)
     singleOf(::NetworkMonitor)
-    singleOf(::SignManager)
     singleOf(::HistoryHelper)
     singleOf(::AssetsManager)
     singleOf(::BillingManager)
     singleOf(::BalancesManager)
     singleOf(::TransactionManager)
     singleOf(::SignUseCase)
+    singleOf(::TonConnectManager)
+    singleOf(::EmulationUseCase)
 
     uiAdapter { WalletAdapter(get()) }
 
@@ -69,6 +72,7 @@ val koinModel = module {
     viewModelOf(::MainViewModel)
     viewModelOf(::RootViewModel)
     viewModelOf(::PickerViewModel)
+    viewModelOf(::TonConnectViewModel)
 
 
     viewModelOf(::LedgerConnectionViewModel)

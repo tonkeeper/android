@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.staking.viewer
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.toast
@@ -14,12 +13,9 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
-import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 
 class StakeViewerScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 

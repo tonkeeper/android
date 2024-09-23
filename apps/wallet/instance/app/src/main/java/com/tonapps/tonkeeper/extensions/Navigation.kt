@@ -27,6 +27,3 @@ fun Navigation.toastLoading(loading: Boolean) {
     toast(context.getString(Localization.loading), loading, context.backgroundContentTintColor)
 }
 
-fun Navigation.openCamera() {
-    add(CameraFragment.newInstance())
-}

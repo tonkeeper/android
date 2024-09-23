@@ -2,14 +2,13 @@ package com.tonapps.tonkeeper.ui.screen.settings.main
 
 import android.app.Application
 import android.os.Build
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
-import com.tonapps.emoji.Emoji
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -17,16 +16,12 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.WalletColor
 import com.tonapps.wallet.data.backup.BackupRepository
-import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.passcode.PasscodeManager
-import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import com.tonapps.wallet.localization.Language
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
@@ -35,12 +30,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import uikit.extensions.getString
 
 class SettingsViewModel(
     application: Application,
@@ -49,8 +40,7 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val backupRepository: BackupRepository,
-    private val pushManager: PushManager,
-    private val tonConnectRepository: TonConnectRepository,
+    private val tonConnectManager: TonConnectManager,
     private val passcodeManager: PasscodeManager,
     private val rnLegacy: RNLegacy,
 ): BaseWalletVM(application) {
@@ -79,7 +69,7 @@ class SettingsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             AnalyticsHelper.trackEvent("delete_wallet")
             settingsRepository.setPushWallet(wallet.id, false)
-            tonConnectRepository.deleteApps(wallet, settingsRepository.firebaseToken)
+            tonConnectManager.clear(wallet)
             accountRepository.delete(wallet.id)
             withContext(Dispatchers.Main) {
                 finish()

@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.flagEmoji
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchScreen
@@ -27,7 +28,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.navigation.Navigation.Companion.navigation
 
-class BrowserMainScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_main, ScreenContext.Wallet(wallet)) {
+class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_main, wallet) {
 
     override val viewModel: BrowserMainViewModel by viewModel()
 

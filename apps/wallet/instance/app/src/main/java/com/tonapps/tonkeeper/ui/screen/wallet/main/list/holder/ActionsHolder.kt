@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
 import android.view.View
 import android.view.ViewGroup
-import com.tonapps.tonkeeper.extensions.openCamera
+import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
@@ -23,7 +23,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     private val stakeView = findViewById<View>(R.id.stake)
 
     init {
-        scanView.setOnClickListener { navigation?.openCamera() }
+        scanView.setOnClickListener { navigation?.add(CameraScreen.newInstance()) }
     }
 
     override fun onBind(item: Item.Actions) {
@@ -31,7 +31,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(QRScreen.newInstance(item.address, item.token, item.walletType))
         }
         swapView.setOnClickListener {
-            navigation?.add(SwapScreen.newInstance(item.swapUri, item.address, TokenEntity.TON.address))
+            navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.address, TokenEntity.TON.address))
         }
         buyOrSellView.setOnClickListener {
             navigation?.add(PurchaseScreen.newInstance(item.wallet))

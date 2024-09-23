@@ -24,11 +24,10 @@ import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
-import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 
 sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
@@ -393,20 +392,18 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
     data class Push(
         val events: List<AppPushEntity>,
-        val apps: List<DConnectEntity>,
-        val manifests: List<DAppManifestEntity>
+        val apps: List<AppEntity>
     ): Item(TYPE_PUSH) {
 
         constructor(parcel: Parcel) : this(
             parcel.readArrayCompat(AppPushEntity::class.java)?.toList()!!,
-            parcel.readArrayCompat(DConnectEntity::class.java)?.toList()!!,
-            parcel.readArrayCompat(DAppManifestEntity::class.java)?.toList()!!
+            parcel.readArrayCompat(AppEntity::class.java)?.toList()!!
         )
 
         val text = events.first().message
 
         val iconUris: List<Uri> by lazy {
-            manifests.map { Uri.parse(it.iconUrl) }
+            apps.map { Uri.parse(it.iconUrl) }
         }
 
         override fun marshall(dest: Parcel, flags: Int) {

@@ -8,7 +8,7 @@ import uikit.base.BaseArgs
 
 data class DAppArgs(
     val title: String? = null,
-    val host: String?,
+    val host: String,
     val url: String
 ): BaseArgs() {
 
@@ -20,11 +20,11 @@ data class DAppArgs(
 
     constructor(bundle: Bundle) : this(
         title = bundle.getString(ARG_TITLE),
-        host = bundle.getString(ARG_HOST),
+        host = bundle.getString(ARG_HOST)!!,
         url = bundle.getString(ARG_URL)!!.normalizeTONSites()
     )
 
-    constructor(title: String? = null, host: String?, uri: Uri) : this(
+    constructor(title: String? = null, host: String, uri: Uri) : this(
         title = title,
         host = host,
         url = uri.toString()

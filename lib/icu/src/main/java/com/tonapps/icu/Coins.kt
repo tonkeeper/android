@@ -169,11 +169,16 @@ data class Coins(
         parcel.writeInt(decimals)
     }
 
-    operator fun plus(other: Coins) = of(value + other.value, decimals)
+    operator fun plus(other: Coins): Coins {
+        return of(value + other.value, decimals)
+    }
 
     operator fun minus(other: Coins) = of(value - other.value, decimals)
 
-    operator fun times(other: Coins) = of(value * other.value, decimals)
+    operator fun times(other: Coins): Coins {
+        //  = of(value * other.value, decimals)
+        return of(value.multiply(other.value), decimals)
+    }
 
     fun div(other: Coins, roundingMode: RoundingMode = RoundingMode.HALF_UP): Coins {
         try {

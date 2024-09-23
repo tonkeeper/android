@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.app.Application
-import android.util.Log
 import androidx.collection.ArrayMap
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
@@ -11,7 +10,6 @@ import com.tonapps.tonkeeper.manager.AssetsManager
 import com.tonapps.tonkeeper.manager.BalancesManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
@@ -32,11 +30,11 @@ import kotlinx.coroutines.withContext
 
 class PickerViewModel(
     app: Application,
-    private val walletIdFocus: String,
+    private val mode: PickerMode,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val assetsManager: AssetsManager,
-    private val balancesManager: BalancesManager,
+    private val balancesManager: BalancesManager
 ): BaseWalletVM(app) {
 
     private val _editModeFlow = MutableStateFlow(false)
@@ -46,14 +44,20 @@ class PickerViewModel(
     val uiItemsFlow = accountRepository.selectedWalletFlow.map { wallet ->
         val hiddenBalances = settingsRepository.hiddenBalances
         val wallets = getWallets()
+        val currentWallet = if (mode is PickerMode.TonConnect) {
+            wallets.first { it.id == mode.walletId }
+        } else {
+            wallet
+        }
 
         flow {
             val balances = balancesManager.get(wallets.map { it.id })
             val nonCachedWallets = wallets.filter { it.id !in balances.keys }
+            val walletIdFocus = (mode as? PickerMode.Focus)?.walletId ?: ""
 
             emit(Adapter.map(
                 wallets = wallets,
-                activeWallet = wallet,
+                activeWallet = currentWallet,
                 hiddenBalance = hiddenBalances,
                 balances = balances,
                 walletIdFocus = walletIdFocus
@@ -66,7 +70,7 @@ class PickerViewModel(
                     }
                     emit(Adapter.map(
                         wallets = wallets,
-                        activeWallet = wallet,
+                        activeWallet = currentWallet,
                         balances = balances,
                         walletIdFocus = walletIdFocus
                     ))
@@ -77,7 +81,7 @@ class PickerViewModel(
                 delay(1000)
                 emit(Adapter.map(
                     wallets = wallets,
-                    activeWallet = wallet,
+                    activeWallet = currentWallet,
                     balances = balances
                 ))
             }
@@ -97,7 +101,12 @@ class PickerViewModel(
     }
 
     private suspend fun getWallets(): List<WalletEntity> = withContext(Dispatchers.IO) {
-        accountRepository.getWallets().map {
+        var wallets = accountRepository.getWallets()
+        if (mode is PickerMode.TonConnect) {
+            wallets = wallets.filter { it.isTonConnectSupported }
+        }
+
+        wallets.map {
             WalletExtendedEntity( it, settingsRepository.getWalletPrefs(it.id))
         }.sortedBy { it.index }.map { it.raw }
     }

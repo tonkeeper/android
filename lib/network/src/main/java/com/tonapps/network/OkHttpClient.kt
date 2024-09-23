@@ -63,12 +63,18 @@ fun OkHttpClient.get(
     url: String,
     headers: ArrayMap<String, String>? = null
 ): String {
+    return simple(url, headers).body?.string() ?: throw Exception("Empty response")
+}
+
+fun OkHttpClient.simple(
+    url: String,
+    headers: ArrayMap<String, String>? = null
+): Response {
     val builder = requestBuilder(url)
     headers?.forEach { (key, value) ->
         builder.addHeader(key, value)
     }
-    val response = execute(builder.build())
-    return response.body?.string() ?: throw Exception("Empty response")
+    return execute(builder.build())
 }
 
 private fun OkHttpClient.execute(request: Request): Response {
@@ -97,7 +103,10 @@ fun OkHttpClient.getBitmap(url: String): Bitmap {
 
 fun OkHttpClient.sseFactory() = EventSources.createFactory(this)
 
-fun OkHttpClient.sse(url: String): Flow<SSEvent> = callbackFlow {
+fun OkHttpClient.sse(
+    url: String,
+    lastEventId: Long? = null
+): Flow<SSEvent> = callbackFlow {
     val listener = object : EventSourceListener() {
         override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
             this@callbackFlow.trySendBlocking(SSEvent(id, type, data))
@@ -115,11 +124,15 @@ fun OkHttpClient.sse(url: String): Flow<SSEvent> = callbackFlow {
             super.onOpen(eventSource, response)
         }
     }
-    val request = requestBuilder(url)
+    val builder = requestBuilder(url)
         .addHeader("Accept", "text/event-stream")
         .addHeader("Cache-Control", "no-cache")
         .addHeader("Connection", "keep-alive")
-        .build()
+
+    if (lastEventId != null) {
+        builder.addHeader("Last-Event-ID", lastEventId.toString())
+    }
+    val request = builder.build()
     val events = sseFactory().newEventSource(request, listener)
     awaitClose { events.cancel() }
 }.cancellable().retry { _ ->

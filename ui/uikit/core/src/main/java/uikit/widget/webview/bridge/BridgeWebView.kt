@@ -1,28 +1,14 @@
 package uikit.widget.webview.bridge
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.RectF
-import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.webkit.JavascriptInterface
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -30,7 +16,6 @@ import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.message.BridgeMessage
 import uikit.widget.webview.bridge.message.FunctionInvokeBridgeMessage
 import uikit.widget.webview.bridge.message.FunctionResponseBridgeMessage
-import java.util.LinkedList
 
 class BridgeWebView @JvmOverloads constructor(
     context: Context,

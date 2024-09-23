@@ -6,6 +6,7 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.ledger.ton.LedgerAccount
@@ -417,7 +418,7 @@ class AccountRepository(
 
     suspend fun getWalletsByAccountId(accountId: String, testnet: Boolean): List<WalletEntity> {
         return database.getAccounts().filter {
-            it.accountId.equals(accountId, ignoreCase = true) && it.testnet == testnet
+            it.accountId.equalsAddress(accountId) && it.testnet == testnet
         }
     }
 
@@ -452,26 +453,38 @@ class AccountRepository(
         seconds + (5 * 30L) // 5 minutes
     }
 
-    fun messageBody(
+    private fun messageBody(
         wallet: WalletEntity,
-        seqno: Int,
+        seqNo: Int,
         validUntil: Long,
-        transfers: List<WalletTransfer>,
-        internalMessage: Boolean = false,
+        transfers: List<WalletTransfer>
     ): MessageBodyEntity {
-        val body = wallet.createBody(seqno, validUntil, transfers, internalMessage)
-        return MessageBodyEntity(seqno, body, validUntil)
+        return MessageBodyEntity(wallet, seqNo, validUntil, transfers)
     }
 
-    fun createSignedMessage(
+    suspend fun messageBody(
+        wallet: WalletEntity,
+        validUntil: Long = 0,
+        transfers: List<WalletTransfer>
+    ): MessageBodyEntity {
+        val seqNo = getSeqno(wallet)
+        return messageBody(
+            wallet = wallet,
+            seqNo = seqNo,
+            validUntil = if (validUntil > 0) validUntil else getValidUntil(wallet.testnet),
+            transfers = transfers
+        )
+    }
+
+    /*suspend fun createSignedMessage(
         wallet: WalletEntity,
         seqno: Int,
-        privateKeyEd25519: PrivateKeyEd25519,
+        privateKeyEd25519: PrivateKeyEd25519 = EmptyPrivateKeyEd25519,
         validUntil: Long,
         transfers: List<WalletTransfer>,
         internalMessage: Boolean = false,
     ): Cell {
         val data = messageBody(wallet, seqno, validUntil, transfers, internalMessage)
-        return wallet.sign(privateKeyEd25519, data.seqno, data.body)
-    }
+        return wallet.sign(privateKeyEd25519, data.seqNo, data.body)
+    }*/
 }

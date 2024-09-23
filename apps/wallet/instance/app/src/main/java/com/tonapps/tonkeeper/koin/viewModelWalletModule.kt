@@ -6,9 +6,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
-import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
-import com.tonapps.tonkeeper.ui.screen.action.ActionViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
@@ -29,16 +27,14 @@ import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
-
+import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionViewModel
 
 val viewModelWalletModule = module {
     viewModelOf(::WalletViewModel)
     viewModelOf(::SettingsViewModel)
     viewModelOf(::EditNameViewModel)
     viewModelOf(::EventsViewModel)
-    viewModelOf(::TCAuthViewModel)
     viewModelOf(::CollectiblesViewModel)
-    viewModelOf(::ActionViewModel)
     viewModelOf(::BrowserExploreViewModel)
     viewModelOf(::BrowserConnectedViewModel)
     viewModelOf(::DAppViewModel)
@@ -59,4 +55,5 @@ val viewModelWalletModule = module {
     viewModelOf(::StakeViewerViewModel)
     viewModelOf(::UnStakeViewModel)
     viewModelOf(::StakingViewModel)
+    viewModelOf(::SendTransactionViewModel)
 }

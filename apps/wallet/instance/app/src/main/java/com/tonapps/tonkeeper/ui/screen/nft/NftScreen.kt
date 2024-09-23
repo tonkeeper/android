@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
@@ -45,7 +46,7 @@ import uikit.widget.ColumnLayout
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
 
-class NftScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_nft, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft, wallet), BaseFragment.BottomSheet {
 
     private val nftEntity: NftEntity by lazy { requireArguments().getParcelableCompat(ARG_ENTITY)!! }
 
@@ -111,7 +112,7 @@ class NftScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.
         if (nftEntity.isDomain && nftEntity.metadata.buttons.isEmpty()) {
             val url = Uri.parse("https://dns.tonkeeper.com/manage?v=${nftEntity.userFriendlyAddress}")
             val dAppArgs = DAppArgs(
-                host = url.host,
+                host = "dns.tonkeeper.com",
                 url = url.toString()
             )
             domainLinkButton.setOnClickListener {

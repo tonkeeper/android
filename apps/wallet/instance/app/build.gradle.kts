@@ -44,7 +44,6 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.rates))
     implementation(project(Dependence.Wallet.Data.collectibles))
     implementation(project(Dependence.Wallet.Data.events))
-    implementation(project(Dependence.Wallet.Data.tonconnect))
     implementation(project(Dependence.Wallet.Data.push))
     implementation(project(Dependence.Wallet.Data.browser))
     implementation(project(Dependence.Wallet.Data.backup))

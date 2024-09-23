@@ -31,7 +31,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         }
         swapView.isEnabled = item.swap
         swapView.setOnClickListener {
-            navigation?.add(SwapScreen.newInstance(item.swapUri, item.walletAddress, item.tokenAddress))
+            navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.walletAddress, item.tokenAddress))
         }
     }
 }

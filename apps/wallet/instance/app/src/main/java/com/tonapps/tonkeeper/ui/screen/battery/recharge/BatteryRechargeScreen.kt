@@ -9,6 +9,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.extensions.showToast
@@ -28,8 +29,10 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -47,8 +50,6 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
     private val args: RechargeArgs by lazy { RechargeArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
     private val tokenRequestKey: String by lazy { "token_${UUID.randomUUID()}" }
-
-    private val rootViewModel: RootViewModel by activityViewModel()
 
     override val viewModel: BatteryRechargeViewModel by walletViewModel {
         parametersOf(args)
@@ -146,15 +147,12 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         finish()
     }
 
-    private fun sing(
-        request: SignRequestEntity
-    ) {
-        lifecycleScope.launch {
-            try {
-                rootViewModel.requestSign(requireContext(), request, forceRelayer = true)
-                onSuccess()
-            } catch (_: Exception) {}
-        }
+    private fun sing(request: SignRequestEntity) {
+        viewModel.sign(request).catch {
+            showError(it.bestMessage)
+        }.onEach {
+            onSuccess()
+        }.launchIn(lifecycleScope)
     }
 
     private fun onEvent(event: BatteryRechargeEvent) {

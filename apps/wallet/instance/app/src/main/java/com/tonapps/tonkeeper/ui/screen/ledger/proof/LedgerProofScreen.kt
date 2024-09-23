@@ -3,7 +3,9 @@ package com.tonapps.tonkeeper.ui.screen.ledger.proof
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.ton.extensions.toByteArray
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen.Companion.SIGNED_MESSAGE
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerEvent
@@ -49,12 +51,12 @@ class LedgerProofScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragm
         collectFlow(connectionViewModel.eventFlow, ::onEvent)
     }
 
-    override fun onDestroy() {
+    /*override fun onDestroy() {
         super.onDestroy()
         if (!requireActivity().isChangingConfigurations && !isSuccessful) {
             navigation?.setFragmentResult(args.requestKey, Bundle())
         }
-    }
+    }*/
 
     private fun onEvent(event: LedgerEvent) {
         when (event) {
@@ -91,11 +93,11 @@ class LedgerProofScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragm
     }
 
     private fun onSuccess(proof: ByteArray) {
-        navigation?.setFragmentResult(args.requestKey, Bundle().apply {
+        val bundle = Bundle().apply {
             putByteArray(SIGNED_PROOF, proof)
-        })
+        }
+        setResult(bundle)
         isSuccessful = true
-        finish()
     }
 
     companion object {
@@ -105,11 +107,10 @@ class LedgerProofScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragm
             domain: String,
             timestamp: BigInteger,
             payload: String,
-            walletId: String,
-            requestKey: String,
+            walletId: String
         ): LedgerProofScreen {
             return LedgerProofScreen().apply {
-                setArgs(LedgerProofArgs(domain, timestamp, payload, walletId, requestKey))
+                setArgs(LedgerProofArgs(domain, timestamp, payload, walletId))
             }
         }
     }

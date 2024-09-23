@@ -9,6 +9,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -25,7 +26,7 @@ import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class TokenPickerScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_token_picker, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+class TokenPickerScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_token_picker, wallet), BaseFragment.BottomSheet {
 
     private val args: TokenPickerArgs by lazy { TokenPickerArgs(requireArguments()) }
 

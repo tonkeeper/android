@@ -6,7 +6,6 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
 import org.ton.api.pub.PublicKeyEd25519
 
 sealed class RootEvent {
@@ -18,6 +17,7 @@ sealed class RootEvent {
     ): RootEvent()
 
     data class Swap(
+        val wallet: WalletEntity,
         val uri: Uri,
         val address: String,
         val from: String,
@@ -38,10 +38,6 @@ sealed class RootEvent {
     data class Ledger(
         val connectData: LedgerConnectData,
         val accounts: List<AccountItem>
-    ): RootEvent()
-
-    data class TonConnect(
-        val request: DAppRequestEntity
     ): RootEvent()
 
     data class Browser(

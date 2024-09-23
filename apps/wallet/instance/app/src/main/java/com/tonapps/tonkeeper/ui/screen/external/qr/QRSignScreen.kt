@@ -26,6 +26,8 @@ import uikit.extensions.gone
 import uikit.extensions.pinToBottomInsets
 import uikit.extensions.round
 import uikit.extensions.roundBottom
+import uikit.extensions.scrollDown
+import uikit.extensions.scrollView
 import uikit.extensions.setOnClickListener
 import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
@@ -52,7 +54,6 @@ abstract class QRSignScreen: QRCameraScreen(R.layout.fragment_external_qr_sign),
         view.round(R.id.content, radius)
         view.gone(R.id.transaction)
         view.gone(R.id.label)
-
 
         cameraView = view.findViewById(R.id.camera)
 

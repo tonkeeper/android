@@ -98,7 +98,7 @@ class SlideActionView @JvmOverloads constructor(
         }
     }
 
-    private val textView: AppCompatTextView
+    private val textView: GradientTextView
     private val buttonView: AppCompatImageView
     private val dragHelper: ViewDragHelper
 
@@ -145,6 +145,9 @@ class SlideActionView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (!isEnabled) {
+            return false
+        }
         return try {
             dragHelper.processTouchEvent(event)
             true
@@ -154,6 +157,9 @@ class SlideActionView @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (!isEnabled) {
+            return false
+        }
         return try {
             dragHelper.shouldInterceptTouchEvent(ev)
         } catch (e: Throwable) {
@@ -162,6 +168,12 @@ class SlideActionView @JvmOverloads constructor(
     }
 
     override fun hasOverlappingRendering() = false
+
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+        alpha = if (enabled) 1f else .2f
+        textView.isEnabled = enabled
+    }
 
     class GradientTextView @JvmOverloads constructor(
         context: Context,
@@ -173,6 +185,7 @@ class SlideActionView @JvmOverloads constructor(
         private val color = Color.parseColor("#C2DAFF")
         private val textColor = context.textTertiaryColor
         private val gradientColors = intArrayOf(textColor, color, color, textColor)
+        private val matrix = Matrix()
 
         private val animator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 2400
@@ -188,9 +201,12 @@ class SlideActionView @JvmOverloads constructor(
         }
 
         override fun onAnimationUpdate(animation: ValueAnimator) {
+            if (!isEnabled) {
+                return
+            }
+            matrix.reset()
             val w = measuredWidth + gradientWidth
             val progress = animation.animatedValue as Float
-            val matrix = Matrix()
             matrix.setTranslate(w * progress, 0f)
             paint.shader?.setLocalMatrix(matrix)
             invalidate()

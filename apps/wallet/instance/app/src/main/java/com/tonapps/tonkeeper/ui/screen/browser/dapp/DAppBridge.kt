@@ -1,35 +1,34 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
-import com.tonapps.wallet.data.tonconnect.entities.DAppPayloadEntity
-import com.tonapps.wallet.data.tonconnect.entities.reply.DAppDeviceEntity
+import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import org.json.JSONArray
 import org.json.JSONObject
 import uikit.widget.webview.bridge.JsBridge
 import uikit.widget.webview.bridge.message.BridgeMessage
 
 class DAppBridge(
-    val deviceInfo: DAppDeviceEntity,
+    val deviceInfo: String,
     val isWalletBrowser: Boolean = true,
     val protocolVersion: Int = 2,
-    val send: suspend (array: JSONArray) -> String?,
-    val connect: suspend (protocolVersion: Int, request: DAppPayloadEntity) -> String?,
-    val restoreConnection: suspend () -> String?,
+    val send: suspend (array: JSONArray) -> JSONObject,
+    val connect: suspend (protocolVersion: Int, request: ConnectRequest) -> JSONObject,
+    val restoreConnection: suspend () -> JSONObject,
     val disconnect: suspend () -> Unit,
 ): JsBridge("tonkeeper") {
 
     override val availableFunctions = arrayOf("send", "connect", "restoreConnection", "disconnect")
 
     init {
-        keys["deviceInfo"] = deviceInfo.toJSON()
+        keys["deviceInfo"] = deviceInfo
         keys["protocolVersion"] = protocolVersion
         keys["isWalletBrowser"] = isWalletBrowser
     }
 
     override suspend fun invokeFunction(name: String, args: JSONArray): Any? {
         return when (name) {
-            "connect" -> connect(protocolVersion, DAppPayloadEntity(args.getJSONObject(1)))
-            "send" -> send(args)
-            "restoreConnection" -> restoreConnection()
+            "connect" -> connect(protocolVersion, ConnectRequest.parse(args.getJSONObject(1))).toString()
+            "send" -> send(args).toString()
+            "restoreConnection" -> restoreConnection().toString()
             "disconnect" -> disconnect()
             else -> null
         }

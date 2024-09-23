@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
@@ -21,7 +22,7 @@ import uikit.widget.HeaderView
 import uikit.widget.TextHeaderView
 import uikit.widget.WordInput
 
-class BackupCheckScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_backup_check, ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
+class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_backup_check, wallet), BaseFragment.SwipeBack {
 
     private val args: BackupCheckArgs by lazy { BackupCheckArgs(requireArguments()) }
 

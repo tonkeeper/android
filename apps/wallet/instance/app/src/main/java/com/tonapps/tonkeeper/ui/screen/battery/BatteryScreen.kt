@@ -1,23 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.battery
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import androidx.fragment.app.FragmentManager
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillScreen
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsScreen
-import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
-import uikit.extensions.commitChildAsSlide
-import uikit.widget.HeaderView
 
 class BatteryScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 

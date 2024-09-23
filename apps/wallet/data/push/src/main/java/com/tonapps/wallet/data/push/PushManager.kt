@@ -3,33 +3,24 @@ package com.tonapps.wallet.data.push
 import android.app.Notification
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.locale
-import com.tonapps.network.getBitmap
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.push.entities.WalletPushEntity
 import com.tonapps.wallet.data.push.source.LocalDataSource
 import com.tonapps.wallet.data.push.source.RemoteDataSource
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
-import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PushManager(
@@ -37,7 +28,6 @@ class PushManager(
     private val scope: CoroutineScope,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
-    private val tonConnectRepository: TonConnectRepository,
     private val api: API
 ) {
 
@@ -79,7 +69,7 @@ class PushManager(
     }
 
     suspend fun handleAppPush(push: AppPushEntity): Boolean = withContext(Dispatchers.IO) {
-        if (!alreadyReceiveAppPush(push.from)) {
+        /*if (!alreadyReceiveAppPush(push.from)) {
             try {
                 val wallet = accountRepository.getWalletByAccountId(push.account, false) ?: throw IllegalStateException("Wallet not found")
                 val connect = tonConnectRepository.getConnect(push.dappUrl, wallet) ?: throw IllegalStateException("App not found")
@@ -93,11 +83,11 @@ class PushManager(
                 }
                 return@withContext true
             } catch (ignored: Throwable) {}
-        }
+        }*/
         return@withContext false
     }
 
-    private suspend fun displayAppPush(
+    /*private suspend fun displayAppPush(
         connect: DConnectEntity,
         manifest: DAppManifestEntity,
         push: AppPushEntity,
@@ -117,7 +107,7 @@ class PushManager(
         builder.setLargeIcon(largeIcon)
         builder.setContentIntent(pending)
         helper.display(notificationId, builder.build())
-    }
+    }*/
 
     fun displayNotification(notification: Notification) {
         val id = helper.newId()
@@ -165,7 +155,7 @@ class PushManager(
     private suspend fun subscribe(
         firebaseToken: String
     ) = withContext(Dispatchers.IO) {
-        val tcAppsDeferred = async { tonConnectRepository.subscribePush(firebaseToken) }
+        /*val tcAppsDeferred = async { tonConnectRepository.subscribePush(firebaseToken) }
         val walletDeferred = async { subscribeWalletPush(firebaseToken) }
 
         if (!tcAppsDeferred.await()) {
@@ -174,7 +164,7 @@ class PushManager(
 
         if (!walletDeferred.await()) {
             Log.e("TONKeeperLog", "Failed to subscribe to wallet push")
-        }
+        }*/
     }
 
     private suspend fun subscribeWalletPush(

@@ -19,6 +19,7 @@ import com.tonapps.security.hex
 import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.events.CommentEncryption
 import org.ton.api.pk.PrivateKeyEd25519
@@ -157,7 +158,7 @@ data class TransferEntity(
     ): Cell {
         return contract.createTransferUnsignedBody(
             validUntil = validUntil,
-            seqno = seqno,
+            seqNo = seqno,
             gifts = getGifts(
                 privateKey = privateKey,
                 excessesAddress = excessesAddress ?: contract.address,
@@ -167,7 +168,10 @@ data class TransferEntity(
         )
     }
 
-    fun getLedgerTransaction(): Transaction {
+    fun getLedgerTransaction(): Transaction? {
+        if (wallet.type != Wallet.Type.Ledger) {
+            return null
+        }
         val builder = TransactionBuilder()
         if (isNft) {
             builder.setCoins(coins)
@@ -274,7 +278,7 @@ data class TransferEntity(
         return contract.createTransferMessageCell(
             address = contract.address,
             privateKey = privateKey,
-            seqno = seqno,
+            seqNo = seqno,
             unsignedBody = getUnsignedBody(
                 privateKey = privateKey,
                 internalMessage = internalMessage,

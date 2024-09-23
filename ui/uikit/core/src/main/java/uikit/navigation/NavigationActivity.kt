@@ -36,10 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
 
-    companion object {
-        val hostFragmentId = R.id.root_container
-        val hostSheetId = R.id.sheet_container
-    }
+    open val hostFragmentId: Int = R.id.root_container
+    open val hostSheetId: Int = R.id.sheet_container
 
     open val isInitialized: Boolean
         get() = supportFragmentManager.fragments.isNotEmpty()
@@ -155,8 +153,12 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         return true
     }
 
+    open fun isNeedRemoveModals(fragment: BaseFragment): Boolean {
+        return fragment !is BaseFragment.Modal
+    }
+
     override fun add(fragment: BaseFragment) {
-        val removeModals = fragment !is BaseFragment.Modal
+        val removeModals = isNeedRemoveModals(fragment)
         val transaction = supportFragmentManager.beginTransaction()
         if (fragment is BaseFragment.BottomSheet || fragment is BaseFragment.Modal) {
             transaction.add(hostSheetId, fragment)

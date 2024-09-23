@@ -1,6 +1,8 @@
 package com.tonapps.extensions
 
 import android.graphics.Color
+import android.net.Uri
+import androidx.core.net.toUri
 import com.tonapps.icu.Punycode
 
 val String.short12: String
@@ -89,5 +91,12 @@ fun String.fromHex(): ByteArray {
     return data
 }
 
+fun String.toUriOrNull(): Uri? {
+    return try {
+        toUri()
+    } catch (e: Exception) {
+        null
+    }
+}
 
 

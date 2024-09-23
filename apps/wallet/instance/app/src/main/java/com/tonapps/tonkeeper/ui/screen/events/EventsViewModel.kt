@@ -1,48 +1,27 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.app.Application
-import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.extensions.mapList
-import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.api.AccountEventWrap
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.base.UiListState
-import com.tonapps.wallet.api.toJSON
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.push.PushManager
-import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
@@ -51,9 +30,6 @@ class EventsViewModel(
     app: Application,
     private val wallet: WalletEntity,
     private val eventsRepository: EventsRepository,
-    private val networkMonitor: NetworkMonitor,
-    private val tonConnectRepository: TonConnectRepository,
-    private val pushManager: PushManager,
     private val historyHelper: HistoryHelper,
     private val screenCacheSource: ScreenCacheSource,
     private val settingsRepository: SettingsRepository,

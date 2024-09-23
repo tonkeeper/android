@@ -30,7 +30,19 @@ data class SignRequestEntity(
         network = parseNetwork(json.opt("network"))
     )
 
-    private companion object {
+    constructor(value: String) : this(JSONObject(value))
+
+    constructor(value: Any) : this(value.toString())
+
+    companion object {
+
+        fun parse(array: JSONArray): List<SignRequestEntity> {
+            val requests = mutableListOf<SignRequestEntity>()
+            for (i in 0 until array.length()) {
+                requests.add(SignRequestEntity(array.get(i)))
+            }
+            return requests.toList()
+        }
 
         private fun parseValidUnit(json: JSONObject): Long {
             val value = json.optLong("valid_until", json.optLong("validUntil", 0))

@@ -12,7 +12,6 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.short4
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
-import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.clipboardText
@@ -20,10 +19,8 @@ import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
-import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
-import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
@@ -38,14 +35,12 @@ import com.tonapps.uikit.color.fieldErrorBorderColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
 import org.koin.core.parameter.parametersOf
-import org.ton.boc.BagOfCells
 import uikit.base.BaseFragment
 import uikit.dialog.modal.ModalDialog
 import uikit.extensions.collectFlow
@@ -63,7 +58,7 @@ import uikit.widget.ProcessTaskView
 import uikit.widget.SlideBetweenView
 import java.util.UUID
 
-class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_send_new, ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_send, wallet), BaseFragment.BottomSheet {
 
     private val args: SendArgs by lazy { SendArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
@@ -143,7 +138,7 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
         view.findViewById<View>(R.id.address_book).setOnClickListener { openAddressBook() }
 
         amountView = view.findViewById(R.id.amount)
-        amountView.setWallet(screenContext.wallet)
+        amountView.setWallet(wallet)
         amountView.doOnValueChanged = viewModel::userInputAmount
         amountView.doOnTokenChanged = viewModel::userInputToken
         amountView.setOnDoneActionListener { commentInput.requestFocus() }
@@ -217,18 +212,8 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
             taskContainerView.translationY = -offset.toFloat()
         }
 
-        val walletType = screenContext.wallet.type
-        if (walletType == Wallet.Type.Default || walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Lockup) {
-            confirmButton.setText(Localization.confirm)
-            confirmButton.setOnClickListener { viewModel.sign() }
-        } else {
-            confirmButton.setText(Localization.continue_action)
-            when (walletType) {
-                Wallet.Type.Ledger -> confirmButton.setOnClickListener { openLedger() }
-                Wallet.Type.SignerQR, Wallet.Type.Signer, Wallet.Type.Keystone -> confirmButton.setOnClickListener { viewModel.sign() }
-                else -> { }
-            }
-        }
+        confirmButton.setOnClickListener { viewModel.sign() }
+        confirmButton.setText(if (wallet.hasPrivateKey) Localization.confirm else Localization.continue_action)
 
         collectFlow(viewModel.uiInputAddressErrorFlow) {
             addressInput.error = it
@@ -258,7 +243,7 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
     }
 
     private fun openAddressBook() {
-        navigation?.add(SendContactsScreen.newInstance(screenContext.wallet, contractsRequestKey))
+        navigation?.add(SendContactsScreen.newInstance(wallet, contractsRequestKey))
         getCurrentFocus()?.hideKeyboard()
     }
 
@@ -344,21 +329,6 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
             is SendEvent.InsufficientBalance -> showInsufficientBalance()
             is SendEvent.Confirm -> slidesView.next()
         }
-    }
-
-    private fun requestLedgerSign(transaction: Transaction, walletId: String) {
-        val requestKey = "ledger_sign_request"
-        navigation?.setFragmentResultListener(requestKey) { bundle ->
-            processTaskView.state = ProcessTaskView.State.LOADING
-            val result = bundle.getByteArray(LedgerSignScreen.SIGNED_MESSAGE)
-            if (result == null) {
-                setDefault()
-            } else {
-                setLoading()
-                viewModel.sendLedgerSignedMessage(BagOfCells(result).first())
-            }
-        }
-        navigation?.add(LedgerSignScreen.newInstance(transaction, walletId, requestKey))
     }
 
     private fun next() {
@@ -483,12 +453,6 @@ class SendScreen(wallet: WalletEntity) : BaseWalletScreen<ScreenContext.Wallet>(
             reviewRecipientFeeView.subtitleView.isEnabled = true
             reviewRecipientFeeView.setDefault()
             confirmButton.isEnabled = true
-        }
-    }
-
-    private fun openLedger() {
-        collectFlow(viewModel.ledgerData()) { (walletId, transaction) ->
-            requestLedgerSign(transaction, walletId)
         }
     }
 

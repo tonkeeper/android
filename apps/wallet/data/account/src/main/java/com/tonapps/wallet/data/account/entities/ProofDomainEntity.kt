@@ -18,7 +18,6 @@ data class ProofDomainEntity(
         val json = JSONObject()
         if (camelCase) {
             json.put("lengthBytes", lengthBytes)
-
         } else {
             json.put("length_bytes", lengthBytes)
         }

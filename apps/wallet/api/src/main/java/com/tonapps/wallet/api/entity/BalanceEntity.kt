@@ -14,9 +14,9 @@ data class BalanceEntity(
     val token: TokenEntity,
     val value: Coins,
     val walletAddress: String,
-    val initializedAccount: Boolean,
-    val isCompressed: Boolean,
-    val isTransferable: Boolean,
+    val initializedAccount: Boolean = true,
+    val isCompressed: Boolean = false,
+    val isTransferable: Boolean = true,
 ): Parcelable {
 
     companion object {
@@ -30,8 +30,8 @@ data class BalanceEntity(
         fun create(
             accountId: String,
             value: Coins,
-            isCompressed: Boolean,
-            isTransferable: Boolean
+            isCompressed: Boolean = false,
+            isTransferable: Boolean = true
         ) = BalanceEntity(
             token = TokenEntity.TON,
             value = value,

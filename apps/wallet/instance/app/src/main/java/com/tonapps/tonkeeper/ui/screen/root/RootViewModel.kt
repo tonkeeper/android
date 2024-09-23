@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -19,10 +20,13 @@ import com.tonapps.tonkeeper.core.signer.SingerArgs
 import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.wallet.data.push.GooglePushService
-import com.tonapps.tonkeeper.manager.SignManager
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel.Companion.getWalletScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
@@ -33,16 +37,10 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.purchase.PurchaseRepository
-import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.token.TokenRepository
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppRequestEntity
-import com.tonapps.wallet.data.tonconnect.entities.reply.DAppSuccessEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -65,24 +63,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 
 class RootViewModel(
     app: Application,
     private val passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
-    private val signManager: SignManager,
-    private val tonConnectRepository: TonConnectRepository,
     private val api: API,
     private val historyHelper: HistoryHelper,
     private val screenCacheSource: ScreenCacheSource,
     private val walletAdapter: WalletAdapter,
-    private val tokenRepository: TokenRepository,
-    private val purchaseRepository: PurchaseRepository
+    private val purchaseRepository: PurchaseRepository,
+    private val tonConnectManager: TonConnectManager,
 ): BaseWalletVM(app) {
 
     data class Passcode(
@@ -106,9 +99,9 @@ class RootViewModel(
 
     val themeFlow: Flow<Int> = settingsRepository.themeFlow.map { it.resId }.drop(1)
 
-    val tonConnectEventsFlow = tonConnectRepository.eventsFlow
-
     init {
+        collectFlow(tonConnectManager.transactionRequestFlow, ::sendTransaction)
+
         combine(
             settingsRepository.biometricFlow.take(1),
             settingsRepository.lockscreenFlow.take(1)
@@ -152,6 +145,51 @@ class RootViewModel(
         }.filterNotNull().onEach {
             settingsRepository.country = it
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }
+
+    private suspend fun sendTransaction(pair: Pair<AppConnectEntity, BridgeEvent.Message>) {
+        val (connection, message) = pair
+        val eventId = message.id
+        try {
+            val signRequests = message.params.map { SignRequestEntity(it) }
+            for (signRequest in signRequests) {
+                signRequest(eventId, connection, signRequest)
+            }
+        } catch (e: Exception) {
+            tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
+        }
+    }
+
+    private suspend fun signRequest(
+        eventId: Long,
+        connection: AppConnectEntity,
+        signRequest: SignRequestEntity
+    ) {
+        if (signRequest.network == TonNetwork.TESTNET) {
+            tonConnectManager.sendBridgeError(connection, BridgeError.METHOD_NOT_SUPPORTED, eventId)
+            return
+        }
+        val wallets = accountRepository.getWalletsByAccountId(
+            accountId = connection.accountId,
+            testnet = connection.testnet
+        ).filter {
+            it.isTonConnectSupported
+        }
+        if (wallets.isEmpty()) {
+            tonConnectManager.sendBridgeError(connection, BridgeError.UNKNOWN_APP, eventId)
+            return
+        }
+        val wallet = wallets.find { it.hasPrivateKey } ?: wallets.first()
+        try {
+            val boc = SendTransactionScreen.run(context, wallet, signRequest)
+            tonConnectManager.sendTransactionResponseSuccess(connection, boc, eventId)
+        } catch (e: Throwable) {
+            if (e is BridgeError.Exception) {
+                tonConnectManager.sendBridgeError(connection, e.error, eventId)
+            } else {
+                tonConnectManager.sendBridgeError(connection, BridgeError.USER_DECLINED_TRANSACTION, eventId)
+            }
+        }
     }
 
     private suspend fun initShortcuts(
@@ -210,73 +248,6 @@ class RootViewModel(
         _passcodeFlow.value = Passcode(show = false, biometric = false)
     }
 
-    suspend fun tonconnectReject(requestId: String, app: DConnectEntity) {
-        tonConnectRepository.sendError(requestId, app, 300, "Reject Request")
-    }
-
-    suspend fun tonconnectBoc(
-        requestId: String,
-        app: DConnectEntity,
-        boc: String
-    ) {
-        tonConnectRepository.send(requestId, app, boc)
-    }
-
-    suspend fun requestSign(
-        context: Context,
-        request: SignRequestEntity,
-        batteryTxType: BatteryTransaction? = null,
-        forceRelayer: Boolean = false,
-    ): String {
-        val wallet = selectedWalletFlow.firstOrNull() ?: throw Exception("wallet is null")
-        return requestSign(context, wallet, request, batteryTxType, forceRelayer)
-    }
-
-    suspend fun requestSign(
-        context: Context,
-        wallet: WalletEntity,
-        request: SignRequestEntity,
-        batteryTxType: BatteryTransaction? = null,
-        forceRelayer: Boolean = false,
-    ): String {
-        val navigation = context.navigation ?: throw Exception("navigation is null")
-        return signManager.action(navigation, wallet, request, batteryTxType = batteryTxType, forceRelayer = forceRelayer)
-    }
-
-    suspend fun tonconnectBridgeEvent(
-        context: Context,
-        url: String,
-        array: JSONArray
-    ): String? {
-        if (array.length() != 1) {
-            throw IllegalStateException("Invalid array length")
-        }
-        return tonconnectBridgeEvent(context, url, array.getJSONObject(0))
-    }
-
-    suspend fun tonconnectBridgeEvent(
-        context: Context,
-        url: String,
-        json: JSONObject
-    ): String? {
-        val wallet = selectedWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
-        val app = tonConnectRepository.getConnect(url, wallet) ?: throw IllegalStateException("No app")
-        val event = DAppEventEntity(wallet.copy(), app.copy(), json)
-        if (event.method != "sendTransaction") {
-            throw IllegalStateException("Invalid method")
-        }
-        val params = event.params
-        if (params.length() != 1) {
-            throw IllegalStateException("Invalid params length")
-        }
-        val param = DAppEventEntity.parseParam(params.get(0))
-        val request = SignRequestEntity(param)
-
-        val boc = requestSign(context, event.wallet, request)
-        val data = DAppSuccessEntity(event.id, boc)
-        return data.toJSON().toString()
-    }
-
     fun connectLedger(connectData: LedgerConnectData, accounts: List<AccountItem>) {
         _eventFlow.tryEmit(RootEvent.Ledger(connectData, accounts))
     }
@@ -291,26 +262,33 @@ class RootViewModel(
         }
     }.take(1)
 
-    fun processDeepLink(uri: Uri, fromQR: Boolean, refSource: Uri?): Boolean {
-        if (DeepLink.isSupportedUri(uri)) {
+    fun processDeepLink(
+        uri: Uri,
+        fromQR: Boolean,
+        refSource: Uri?
+    ): Boolean {
+        if (TonConnectManager.isTonConnectDeepLink(uri)) {
+            return tonConnectManager.processDeeplink(context, uri, fromQR, refSource)
+        } else if (DeepLink.isSupportedUri(uri)) {
             resolveDeepLink(uri, fromQR, refSource)
             return true
         }
         return false
     }
 
-    private fun resolveDeepLink(uri: Uri, fromQR: Boolean, refSource: Uri?) {
-        if (uri.host == "signer") {
+    private fun resolveDeepLink(
+        uri: Uri,
+        fromQR: Boolean,
+        refSource: Uri?
+    ) {
+        if (TonConnectManager.isTonConnectDeepLink(uri)) {
+            tonConnectManager.processDeeplink(context, uri, fromQR, refSource)
+        } else if (uri.host == "signer") {
             collectFlow(hasWalletFlow.take(1)) {
                 delay(1000)
                 resolveSignerLink(uri, fromQR)
             }
-            return
         }
-        selectedWalletFlow.take(1).onEach { wallet ->
-            delay(1000)
-            resolveOther(refSource, uri, wallet)
-        }.launchIn(viewModelScope)
     }
 
     private fun resolveSignerLink(uri: Uri, fromQR: Boolean) {
@@ -331,9 +309,7 @@ class RootViewModel(
         val uri = Uri.parse(url)
         val path = uri.path
 
-        if (DeepLink.isTonConnectUri(uri)) {
-            resolveTonConnect(uri, wallet, refSource)
-        } else if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
+        if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
             _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString(), wallet))
         } else if (path?.startsWith("/send") == true) {
             _eventFlow.tryEmit(RootEvent.OpenSend(wallet))
@@ -367,7 +343,7 @@ class RootViewModel(
         } else if (path?.startsWith("/swap") == true) {
             val ft = uri.getQueryParameter("ft") ?: "TON"
             val tt = uri.getQueryParameter("tt")
-            _eventFlow.tryEmit(RootEvent.Swap(api.config.swapUri, wallet.address, ft, tt))
+            _eventFlow.tryEmit(RootEvent.Swap(wallet, api.config.swapUri, wallet.address, ft, tt))
         } else if (path?.startsWith("/battery") == true) {
             val promocode = uri.getQueryParameter("promocode")
             _eventFlow.tryEmit(RootEvent.Battery(wallet, promocode))
@@ -398,23 +374,6 @@ class RootViewModel(
             val event = api.getTransactionEvents(wallet.accountId, wallet.testnet, hash) ?: return@launch
             val item = historyHelper.mapping(wallet, event).find { it is HistoryItem.Event } as? HistoryItem.Event ?: return@launch
             _eventFlow.tryEmit(RootEvent.Transaction(item))
-        }
-    }
-
-    private fun resolveTonConnect(
-        uri: Uri,
-        wallet: WalletEntity,
-        source: Uri?
-    ) {
-        try {
-            if (!wallet.hasPrivateKey && !wallet.isLedger) {
-                toast(Localization.not_supported)
-                return
-            }
-            val request = DAppRequestEntity(source, uri)
-            _eventFlow.tryEmit(RootEvent.TonConnect(request))
-        } catch (e: Throwable) {
-            toast(Localization.invalid_link)
         }
     }
 

@@ -37,7 +37,7 @@ open class WalletV3R1Contract(
 
     override fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
+        seqNo: Int,
         internalMessage: Boolean,
         queryId: BigInt?,
         vararg gifts: WalletTransfer
@@ -48,7 +48,7 @@ open class WalletV3R1Contract(
 
         storeUInt(walletId, 32)
         storeUInt(validUntil, 32)
-        storeUInt(seqno, 32)
+        storeUInt(seqNo, 32)
         for (gift in gifts) {
             var sendMode = 3
             if (gift.sendMode > -1) {

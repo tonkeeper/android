@@ -2,11 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.extensions.ErrorForUserException
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
@@ -25,7 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransferType
-import com.tonapps.tonkeeper.usecase.SignUseCase
+import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -68,7 +66,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import uikit.extensions.collectFlow
@@ -234,7 +231,7 @@ class SendViewModel(
             false
         } else if (recipient.memoRequired && comment.isNullOrEmpty()) {
             false
-        } else if (isNft || amount.isPositive) {
+        } else if (isNft || (!balance.insufficientBalance && amount.isPositive)) {
             true
         } else if (balance.insufficientBalance) {
             false
@@ -702,24 +699,16 @@ class SendViewModel(
     fun sign() {
         transferFlow.take(1).map { transfer ->
             lastTransferEntity = transfer
-            val signature = signUseCase(context, wallet, transfer.getUnsignedBody())
+            val boc = signUseCase(
+                context = context,
+                wallet = wallet,
+                unsignedBody = transfer.getUnsignedBody(),
+                seqNo = transfer.seqno,
+                ledgerTransaction = transfer.getLedgerTransaction()
+            )
             _uiEventFlow.tryEmit(SendEvent.Loading)
-            Pair(transfer.transferMessage(signature), transfer.wallet)
+            Pair(boc, transfer.wallet)
         }.catch {  }.sendTransfer()
-    }
-
-    fun ledgerData() = transferFlow.take(1).map { transfer ->
-        lastTransferEntity = transfer
-        Pair(wallet.id, transfer.getLedgerTransaction())
-    }
-
-    fun sendLedgerSignedMessage(body: Cell) {
-        transferFlow.take(1).map { transfer ->
-            if (!transfer.isValidComment) {
-                throw ErrorForUserException(Localization.comment_ascii_text)
-            }
-            Pair(transfer.transferMessage(body), transfer.wallet)
-        }.sendTransfer()
     }
 
     fun send(context: Context) {

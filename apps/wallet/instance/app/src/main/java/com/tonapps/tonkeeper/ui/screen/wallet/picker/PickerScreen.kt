@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -11,35 +10,56 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item.Companion.height
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
 import com.tonapps.uikit.color.buttonSecondaryForegroundColor
-import com.tonapps.uikit.list.LinearLayoutManager
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import org.ton.bitstring.BitString
+import org.ton.crypto.hex
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
+import java.util.concurrent.CancellationException
 
 class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.Modal {
 
-    override val scaleBackground: Boolean = true
+    val contract = object : ResultContract<WalletEntity, WalletEntity?> {
 
-    override val viewModel: PickerViewModel by viewModel {
-        parametersOf(requireArguments().getString(ARG_WALLET_ID_FOCUS)!!)
+        private val KEY_WALLET = "wallet"
+
+        override fun createResult(result: WalletEntity) = Bundle().apply {
+            putParcelable(KEY_WALLET, result)
+        }
+
+        override fun parseResult(bundle: Bundle): WalletEntity? {
+            return bundle.getParcelableCompat(KEY_WALLET)
+        }
     }
 
+    private val mode: PickerMode by lazy {  requireArguments().getParcelableCompat<PickerMode>(ARG_MODE)!! }
+
+    override val scaleBackground: Boolean
+        get() = mode !is PickerMode.TonConnect
+
+    override val viewModel: PickerViewModel by viewModel { parametersOf(mode) }
+
     private val adapter = Adapter { wallet ->
-        viewModel.setWallet(wallet)
-        finish()
+        if (mode is PickerMode.TonConnect) {
+            setResult(contract.createResult(wallet))
+        } else {
+            viewModel.setWallet(wallet)
+            finish()
+        }
     }
 
     private lateinit var actionButton: AppCompatTextView
@@ -51,6 +71,9 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
 
         actionButton = createActionButton(view.context)
         actionButton.setOnClickListener { viewModel.toggleEditMode() }
+        if (mode is PickerMode.TonConnect) {
+            actionButton.visibility = View.GONE
+        }
         addViewHeader(actionButton, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, 32.dp, Gravity.CENTER_VERTICAL).also {
             it.marginEnd = horizontalOffset
             it.marginStart = horizontalOffset
@@ -137,11 +160,13 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
 
     companion object {
 
-        private const val ARG_WALLET_ID_FOCUS = "wallet_id_focus"
+        private const val ARG_MODE = "mode"
 
-        fun newInstance(walletIdFocus: String = ""): PickerScreen {
+        fun newInstance(
+            type: PickerMode = PickerMode.Default
+        ): PickerScreen {
             val fragment = PickerScreen()
-            fragment.putStringArg(ARG_WALLET_ID_FOCUS, walletIdFocus)
+            fragment.putParcelableArg(ARG_MODE, type)
             return fragment
         }
     }

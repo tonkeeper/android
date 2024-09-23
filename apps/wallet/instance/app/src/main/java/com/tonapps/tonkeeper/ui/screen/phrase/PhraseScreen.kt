@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -16,7 +17,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.widget.HeaderView
 import uikit.widget.PhraseWords
 
-class PhraseScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_phrase, ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
+class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_phrase, wallet), BaseFragment.SwipeBack {
 
     private val args: PhraseArgs by lazy { PhraseArgs(requireArguments()) }
 

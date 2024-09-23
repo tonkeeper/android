@@ -65,7 +65,7 @@ class WalletV5BetaContract(
 
     override fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
+        seqNo: Int,
         internalMessage: Boolean,
         queryId: BigInt?,
         vararg gifts: WalletTransfer
@@ -84,7 +84,7 @@ class WalletV5BetaContract(
             storeInt(workchain, 8)
             storeUInt(0, 8)
             storeUInt(subwalletNumber, 32)
-            storeSeqAndValidUntil(seqno, validUntil)
+            storeSeqAndValidUntil(seqNo, validUntil)
             storeBuilder(actions)
         }
     }

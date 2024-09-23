@@ -17,7 +17,6 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.account))
     implementation(project(Dependence.Wallet.Data.settings))
     implementation(project(Dependence.Wallet.Data.events))
-    implementation(project(Dependence.Wallet.Data.tonconnect))
     implementation(project(Dependence.Lib.network))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.security))

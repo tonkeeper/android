@@ -115,7 +115,7 @@ abstract class BaseWalletContract(
 
     abstract fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
+        seqNo: Int,
         internalMessage: Boolean = false,
         queryId: BigInteger? = null,
         vararg gifts: WalletTransfer
@@ -141,10 +141,10 @@ abstract class BaseWalletContract(
     fun createTransferMessageCell(
         address: MsgAddressInt,
         privateKey: PrivateKeyEd25519,
-        seqno: Int,
+        seqNo: Int,
         unsignedBody: Cell
     ): Cell {
-        val message = createTransferMessage(address, privateKey, seqno, unsignedBody)
+        val message = createTransferMessage(address, privateKey, seqNo, unsignedBody)
 
         val cell = buildCell {
             storeTlb(Message.tlbCodec(AnyTlbConstructor), message)

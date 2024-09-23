@@ -5,26 +5,21 @@ import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
-import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppManifestEntity
-import com.tonapps.wallet.data.tonconnect.entities.DConnectEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.getViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
-import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 
-class BrowserConnectedScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_browser_connected, ScreenContext.Wallet(wallet)) {
+class BrowserConnectedScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_connected, wallet) {
 
     override val viewModel: BrowserConnectedViewModel by walletViewModel()
 
@@ -32,8 +27,8 @@ class BrowserConnectedScreen(wallet: WalletEntity): BaseWalletScreen<ScreenConte
         requireParentFragment().getViewModel()
     }
 
-    private val adapter = Adapter { connect, manifest ->
-        deleteAppConfirm(connect, manifest)
+    private val adapter = Adapter { app ->
+        deleteAppConfirm(app)
     }
 
     private val scrollListener = object : RecyclerVerticalScrollListener() {
@@ -71,12 +66,12 @@ class BrowserConnectedScreen(wallet: WalletEntity): BaseWalletScreen<ScreenConte
         }
     }
 
-    private fun deleteAppConfirm(connect: DConnectEntity, manifest: DAppManifestEntity) {
-        val message = getString(Localization.remove_dapp_confirm, manifest.name)
+    private fun deleteAppConfirm(app: AppEntity) {
+        val message = getString(Localization.remove_dapp_confirm, app.name)
         AlertDialog.Builder(requireContext())
             .setMessage(message)
             .setNegativeButton(Localization.confirm) {
-                viewModel.deleteConnect(connect)
+                viewModel.deleteConnect(app)
             }
             .setPositiveButton(Localization.cancel) {
 

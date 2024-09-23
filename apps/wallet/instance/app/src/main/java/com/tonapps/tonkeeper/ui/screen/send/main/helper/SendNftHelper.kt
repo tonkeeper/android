@@ -80,7 +80,7 @@ object SendNftHelper {
         val gift = simpleGift(contract, nftAddress, seqno, destination, queryId, comment)
         return contract.createTransferUnsignedBody(
             validUntil = validUntil,
-            seqno = seqno,
+            seqNo = seqno,
             queryId = queryId,
             gifts = arrayOf(gift)
         )

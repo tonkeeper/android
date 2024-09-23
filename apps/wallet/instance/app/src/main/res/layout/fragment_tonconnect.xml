@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="402dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <uikit.widget.LoaderView
+        android:id="@+id/loader"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"/>
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:background="@drawable/bg_oval_button_secondary"/>
+
+        <uikit.widget.RowLayout
+            android:layout_width="wrap_content"
+            android:layout_height="72dp"
+            android:layout_gravity="center">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:scaleType="centerInside"
+                android:padding="12dp"
+                android:src="@drawable/ic_logo_48"
+                android:tint="?attr/colorAccent"
+                android:background="@drawable/bg_content_20"/>
+
+            <com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
+                android:id="@+id/crypto"
+                android:layout_width="86dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"/>
+
+            <uikit.widget.FrescoView
+                android:id="@+id/app_icon"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:scaleType="centerCrop"
+                app:roundedCornerRadius="20dp"/>
+
+        </uikit.widget.RowLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:textColor="?attr/textPrimaryColor"
+            android:textAppearance="@style/TextAppearance.H2"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="32dp"
+            android:gravity="center"
+            android:textColor="?attr/textSecondaryColor"
+            android:textAppearance="@style/TextAppearance.Body1"/>
+
+        <uikit.widget.RowLayout
+            android:id="@+id/picker"
+            android:layout_width="match_parent"
+            android:layout_height="76dp"
+            android:background="@drawable/bg_content"
+            android:padding="@dimen/offsetMedium">
+
+            <FrameLayout
+                android:id="@+id/wallet_color"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_oval">
+
+                <com.tonapps.emoji.ui.EmojiView
+                    android:id="@+id/wallet_emoji"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"/>
+            </FrameLayout>
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:paddingHorizontal="@dimen/offsetMedium">
+
+                <com.google.android.flexbox.FlexboxLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:alignItems="center"
+                    app:alignContent="center"
+                    app:flexDirection="row"
+                    app:flexWrap="nowrap">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/wallet_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textAppearance="@style/TextAppearance.Label1"
+                        android:textColor="?attr/textPrimaryColor"
+                        app:layout_flexShrink="10000"/>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/wallet_types"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="1dp"
+                        android:maxLines="1"/>
+
+                </com.google.android.flexbox.FlexboxLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/wallet_address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:singleLine="true"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor"/>
+
+            </uikit.widget.ColumnLayout>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="16dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_switch_16"
+                android:tint="?attr/iconTertiaryColor"/>
+        </uikit.widget.RowLayout>
+
+        <uikit.widget.RowLayout
+            android:id="@+id/push"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:background="@drawable/bg_content"
+            android:padding="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:text="@string/allow_notification"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="?attr/textPrimaryColor"/>
+            
+            <uikit.widget.CheckBoxView
+                android:id="@+id/checkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"/>
+
+        </uikit.widget.RowLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="88dp"
+            android:paddingVertical="@dimen/offsetMedium">
+
+            <Button
+                style="@style/Widget.App.Button"
+                android:id="@+id/button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:text="@string/connect_wallet"/>
+
+            <uikit.widget.ProcessTaskView
+                android:id="@+id/task"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:successLabel="@string/done"
+                app:errorLabel="@string/sending_error"/>
+
+        </FrameLayout>
+
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"
+            android:gravity="center"
+            android:text="@string/tonconnect_warning_description"/>
+
+
+    </uikit.widget.ColumnLayout>
+
+
+</FrameLayout>

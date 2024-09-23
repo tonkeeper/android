@@ -14,8 +14,6 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.flow.filterNotNull
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
 
@@ -37,7 +35,7 @@ class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wal
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance()) }
-        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(screenContext.wallet)) }
+        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(wallet)) }
         headerView.doWalletSwipe = { right ->
             if (right) {
                 viewModel.prevWallet()

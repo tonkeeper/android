@@ -40,7 +40,7 @@ open class WalletV4R1Contract(
 
     override fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
+        seqNo: Int,
         internalMessage: Boolean,
         queryId: BigInt?,
         vararg gifts: WalletTransfer
@@ -50,7 +50,7 @@ open class WalletV4R1Contract(
         }
         return CellBuilder.createCell {
             storeUInt(walletId, 32)
-            storeSeqAndValidUntil(seqno, validUntil)
+            storeSeqAndValidUntil(seqNo, validUntil)
             storeUInt(0, 8)
             for (gift in gifts) {
                 var sendMode = 3

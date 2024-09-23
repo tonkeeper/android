@@ -21,7 +21,11 @@ data class Transaction(
     val payload: TonPayloadFormat? = null
 ): Parcelable {
     companion object {
-        fun fromWalletTransfer(walletTransfer: WalletTransfer, seqno: Int, timeout: Number): Transaction {
+        fun fromWalletTransfer(
+            walletTransfer: WalletTransfer,
+            seqno: Int,
+            timeout: Number
+        ): Transaction {
             val payload: TonPayloadFormat? = walletTransfer.body?.let {
                 TonPayloadFormat.fromCell(it)
             }

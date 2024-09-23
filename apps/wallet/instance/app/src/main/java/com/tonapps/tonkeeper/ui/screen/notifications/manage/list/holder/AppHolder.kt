@@ -2,10 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.notifications.manage.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.tonkeeper.koin.tonConnectRepository
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import uikit.extensions.drawable
 import uikit.widget.FrescoView
 import uikit.widget.SwitchView
@@ -32,7 +30,7 @@ class AppHolder(
         pushView.setChecked(item.pushEnabled, false)
         pushView.doCheckedChanged = { isChecked, byUser ->
             if (byUser) {
-                onToggleCallback.invoke(item.url, isChecked)
+                onToggleCallback(item.host, isChecked)
             }
         }
     }

@@ -87,4 +87,13 @@ open class SimpleRecyclerView @JvmOverloads constructor(
             setMeasuredDimension(width, height)
         }
     }*/
+
+    override fun onMeasure(widthSpec: Int, heightSpec: Int) {
+        super.onMeasure(widthSpec, heightSpec)
+        if (maxHeight in 1..<measuredHeight) {
+            val width = measuredWidth
+            val height = maxHeight
+            setMeasuredDimension(width, height)
+        }
+    }
 }

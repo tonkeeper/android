@@ -111,7 +111,7 @@ class WalletV5R1Contract(
 
     override fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
+        seqNo: Int,
         internalMessage: Boolean,
         queryId: BigInt?,
         vararg gifts: WalletTransfer
@@ -127,7 +127,7 @@ class WalletV5R1Contract(
         return buildCell {
             storeOpCode(opCode)
             storeUInt(context.serialized, 32)
-            storeSeqAndValidUntil(seqno, validUntil)
+            storeSeqAndValidUntil(seqNo, validUntil)
             storeBuilder(actions)
         }
     }

@@ -118,6 +118,11 @@ class InitViewModel(
         savedState.ledgerConnectData = args.ledgerConnectData
         savedState.keystone = args.keystone
 
+
+        if (savedState.label == null || savedState.label?.isEmpty == true) {
+            savedState.label = Wallet.Label(getString(Localization.wallet), Emoji.WALLET_ICON, WalletColor.all.first())
+        }
+
         when (type) {
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
             InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)
@@ -288,7 +293,7 @@ class InitViewModel(
 
         savedState.watchAccount = account
 
-        setLabelName(account?.name ?: getDefaultWalletName())
+        internalSetLabelName(account?.name ?: getDefaultWalletName())
     }
 
     private suspend fun getDefaultWalletName(): String {
@@ -327,7 +332,7 @@ class InitViewModel(
         setLabel(Wallet.Label(name, emoji, color))
     }
 
-    fun setLabel(label: Wallet.Label) {
+    private fun setLabel(label: Wallet.Label) {
         savedState.label = label
     }
 
@@ -358,14 +363,18 @@ class InitViewModel(
 
     fun setLabelName(name: String) {
         viewModelScope.launch {
-            val oldLabel = getLabel()
-            val emoji = Emoji.getEmojiFromPrefix(name) ?: oldLabel.emoji
-
-            setLabel(oldLabel.copy(
-                accountName = name.replace(emoji.toString(), "").trim(),
-                emoji = emoji
-            ))
+            internalSetLabelName(name)
         }
+    }
+
+    private suspend fun internalSetLabelName(name: String) {
+        val oldLabel = getLabel()
+        val emoji = Emoji.getEmojiFromPrefix(name) ?: oldLabel.emoji
+
+        setLabel(oldLabel.copy(
+            accountName = name.replace(emoji.toString(), "").trim(),
+            emoji = emoji
+        ))
     }
 
     fun nextStep(context: Context, from: InitRoute) {
@@ -391,7 +400,7 @@ class InitViewModel(
                 !it.name.isNullOrBlank()
             }?.name ?: getDefaultWalletName()
 
-            setLabelName(walletName)
+            internalSetLabelName(walletName)
         }
     }
 

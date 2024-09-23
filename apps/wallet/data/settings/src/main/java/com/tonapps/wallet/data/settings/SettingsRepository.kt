@@ -268,6 +268,9 @@ class SettingsRepository(
     }
 
     fun batteryIsEnabledTx(accountId: String, type: BatteryTransaction): Boolean {
+        if (type == BatteryTransaction.UNKNOWN) {
+            return false
+        }
         return getBatteryTxEnabled(accountId).contains(type)
     }
 

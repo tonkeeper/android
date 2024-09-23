@@ -1,21 +1,71 @@
 package com.tonapps.tonkeeper.ui.screen.camera
 
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import android.view.View
+import androidx.camera.view.PreviewView
+import androidx.core.net.toUri
+import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.ui.base.QRCameraScreen
+import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
+import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.constantWhiteColor
+import com.tonapps.uikit.color.stateList
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
+import uikit.extensions.setOnClickListener
+import uikit.extensions.withAlpha
+import uikit.navigation.Navigation.Companion.navigation
 
-class CameraScreen: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
+class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
+    private val mode: CameraMode by lazy { requireArguments().getParcelableCompat(ARG_MODE)!! }
+
+    private val rootViewModel: RootViewModel by activityViewModel()
+
+    override lateinit var cameraView: PreviewView
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val constantWhiteColor = requireContext().constantWhiteColor.withAlpha(.08f).stateList
+
+        val closeView = view.findViewById<View>(R.id.close)
+        closeView.setOnClickListener { finish() }
+        closeView.backgroundTintList = constantWhiteColor
+
+        cameraView = view.findViewById(R.id.camera)
+
+        val flashView = view.findViewById<CameraFlashIconView>(R.id.flash)
+        flashView.setOnClickListener { toggleFlash() }
+
+        collectFlow(flashConfigFlow) { flashConfig ->
+            if (!flashConfig.isFlashAvailable) {
+                flashView.visibility = View.GONE
+            } else {
+                flashView.setFlashState(flashConfig.isFlashEnabled)
+            }
+        }
+
+        collectFlow(readerFlow.map { it.toUriOrNull() }.filterNotNull()) { uri ->
+            rootViewModel.processDeepLink(uri, true, null)
+            finish()
+        }
+    }
 
     companion object {
 
-        private const val ARG_REQUEST = "request"
+        private const val ARG_MODE = "mode"
 
-        fun newInstance(request: String): CameraScreen {
+        fun newInstance(mode: CameraMode = CameraMode.Default): CameraScreen {
             val fragment = CameraScreen()
-            fragment.arguments = Bundle().apply {
-                putString(ARG_REQUEST, request)
-            }
+            fragment.putParcelableArg(ARG_MODE, mode)
             return fragment
         }
     }

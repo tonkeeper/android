@@ -6,12 +6,15 @@ import androidx.collection.arrayMapOf
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.max24
+import com.tonapps.extensions.short4
+import com.tonapps.extensions.short8
 import com.tonapps.extensions.withMinus
 import com.tonapps.extensions.withPlus
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.amount
 import com.tonapps.tonkeeper.api.fee
 import com.tonapps.tonkeeper.api.getNameOrAddress
+import com.tonapps.tonkeeper.api.getWalletAddress
 import com.tonapps.tonkeeper.api.iconURL
 import com.tonapps.tonkeeper.api.jettonPreview
 import com.tonapps.tonkeeper.api.parsedAmount
@@ -30,6 +33,7 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
+import com.tonapps.tonkeeper.usecase.emulation.Emulated
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -193,7 +197,7 @@ class HistoryHelper(
         val items = mapping(wallet, response.event, true, positionExtra = 1).toMutableList()
 
         val fee = Coins.of(response.totalFees)
-        val feeFormat = CurrencyFormatter.format("TON", fee)
+        val feeFormat = "≈ " + CurrencyFormatter.format("TON", fee)
         val feeFiat = rates.convert("TON", fee)
         val feeFiatFormat = CurrencyFormatter.formatFiat(rates.currency.code, feeFiat)
 
@@ -221,6 +225,43 @@ class HistoryHelper(
             fee = fee,
             feeFormat = feeFormat,
             feeFiat = feeFiat,
+            feeFiatFormat = feeFiatFormat
+        )
+    }
+
+    suspend fun create(
+        wallet: WalletEntity,
+        emulated: Emulated,
+    ): Details {
+        val items = mapping(wallet, emulated.consequences.event, true, positionExtra = 1).toMutableList()
+
+        val feeFormat = "≈ " + CurrencyFormatter.format("TON", emulated.extra.value)
+        val feeFiatFormat = CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
+
+        items.add(
+            HistoryItem.Event(
+                index = items.lastIndex + 1,
+                position = ListCell.Position.LAST,
+                txId = "fee",
+                iconURL = "",
+                action = if (emulated.extra.isRefund) ActionType.Refund else ActionType.Fee,
+                title = "",
+                subtitle = if (emulated.withBattery) context.getString(Localization.will_be_paid_with_battery) else "",
+                value = feeFormat,
+                date = feeFiatFormat.toString(),
+                isOut = true,
+                failed = false,
+                isScam = false,
+                wallet = wallet
+            )
+        )
+
+        return Details(
+            accountId = wallet.accountId,
+            items = items.toList(),
+            fee = emulated.extra.value,
+            feeFormat = feeFormat,
+            feeFiat = emulated.extra.fiat,
             feeFiatFormat = feeFiatFormat
         )
     }
@@ -393,7 +434,7 @@ class HistoryHelper(
                 iconURL = "",
                 action = ActionType.Swap,
                 title = simplePreview.name,
-                subtitle = jettonSwap.router.getNameOrAddress(wallet.testnet, true),
+                subtitle = wallet.address.short4,
                 value = amountOut,
                 value2 = amountIn,
                 coinIconUrl = jettonSwap.jettonMasterIn?.image
@@ -465,7 +506,7 @@ class HistoryHelper(
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
                 unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
-                senderAddress = jettonTransfer.sender?.address,
+                senderAddress = jettonTransfer.sender?.getWalletAddress(wallet.testnet),
                 isScam = isScam,
                 wallet = wallet,
             )
@@ -521,7 +562,7 @@ class HistoryHelper(
                 addressName = accountAddress.name,
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                senderAddress = tonTransfer.sender.address,
+                senderAddress = tonTransfer.sender.getWalletAddress(wallet.testnet),
                 isScam = isScam,
                 wallet = wallet,
             )
@@ -600,7 +641,7 @@ class HistoryHelper(
                 dateDetails = dateDetails,
                 isOut = isOut,
                 failed = action.status == Action.Status.failed,
-                senderAddress = sender?.address?.toUserFriendly(testnet = wallet.testnet),
+                senderAddress = sender?.getWalletAddress(wallet.testnet),
                 addressName = sender?.name,
                 isScam = isScam,
                 wallet = wallet,

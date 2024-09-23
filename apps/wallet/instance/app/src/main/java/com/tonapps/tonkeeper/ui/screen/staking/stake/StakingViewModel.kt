@@ -11,16 +11,14 @@ import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
-import com.tonapps.tonkeeper.extensions.signLedgerTransaction
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.screen.send.main.SendException
+import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
@@ -57,10 +55,10 @@ class StakingViewModel(
     private val stakingRepository: StakingRepository,
     private val tokenRepository: TokenRepository,
     private val ratesRepository: RatesRepository,
-    private val passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val transactionManager: TransactionManager,
+    private val signUseCase: SignUseCase,
 ) : BaseWalletVM(app) {
 
     data class AvailableUiState(
@@ -246,7 +244,7 @@ class StakingViewModel(
         val gift = buildTransfer(wallet, amount, pool, token.balance.token, params)
         val body = wallet.contract.createTransferUnsignedBody(
             validUntil = params.validUntil,
-            seqno = params.seqno,
+            seqNo = params.seqno,
             gifts = arrayOf(gift),
         )
         Pair(params.seqno, body)
@@ -264,14 +262,15 @@ class StakingViewModel(
     }.flowOn(Dispatchers.IO)
 
     private fun requestFee() = unsignedBodyFlow().map { (seqno, unsignedBody) ->
-        val contract = wallet.contract
+        /*val contract = wallet.contract
         val message = contract.createTransferMessageCell(
             address = contract.address,
             privateKey = EmptyPrivateKeyEd25519,
             seqno = seqno,
             unsignedBody = unsignedBody,
         )
-        api.emulate(message, wallet.testnet)?.totalFees ?: 0L
+        api.emulate(message, wallet.testnet)?.totalFees ?: 0L*/
+        0L
     }.flowOn(Dispatchers.IO)
 
     fun requestFeeFormat() = combine(
@@ -300,11 +299,7 @@ class StakingViewModel(
         context: Context,
         wallet: WalletEntity
     ) = ledgerTransactionFlow().map { (seqno, transaction) ->
-        val signedBody = context.signLedgerTransaction(transaction, wallet.id)
-            ?: throw SendException.Cancelled()
-
-        val contract = wallet.contract
-        val message = contract.createTransferMessageCell(contract.address, seqno, signedBody)
+        val message = signUseCase(context, wallet, seqno, transaction)
 
         val state = transactionManager.send(wallet, message, false)
         if (state != SendBlockchainState.SUCCESS) {
@@ -312,19 +307,10 @@ class StakingViewModel(
         }
     }
 
-    private fun createStakeFlow(wallet: WalletEntity) = unsignedBodyFlow().map { (seqno, unsignedBody) ->
-        if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
-            throw SendException.Cancelled()
-        }
-
-        val contract = wallet.contract
-        val privateKey = accountRepository.getPrivateKey(wallet.id)
-        val message = contract.createTransferMessageCell(
-            address = contract.address,
-            privateKey = privateKey,
-            seqno = seqno,
-            unsignedBody = unsignedBody
-        )
+    private fun createStakeFlow(
+        wallet: WalletEntity
+    ) = unsignedBodyFlow().map { (seqno, unsignedBody) ->
+        val message = signUseCase(context, wallet, unsignedBody, seqno)
 
         val state = transactionManager.send(wallet, message, false)
         if (state != SendBlockchainState.SUCCESS) {

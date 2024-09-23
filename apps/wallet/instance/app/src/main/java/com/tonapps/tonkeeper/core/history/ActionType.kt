@@ -20,4 +20,5 @@ enum class ActionType {
     UnSubscribe,
     Subscribe,
     Fee,
+    Refund,
 }

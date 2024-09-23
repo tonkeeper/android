@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.PurchaseRepository
@@ -32,7 +33,7 @@ import uikit.widget.HeaderView
 import uikit.widget.LoaderView
 import uikit.widget.webview.WebViewFixed
 
-class PurchaseWebScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_purchase_web, ScreenContext.Wallet(wallet)) {
+class PurchaseWebScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_purchase_web, wallet) {
 
     override val viewModel: PurchaseWebViewModel by walletViewModel()
 

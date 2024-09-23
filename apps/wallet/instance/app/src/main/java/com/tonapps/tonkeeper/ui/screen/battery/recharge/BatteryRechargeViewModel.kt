@@ -23,6 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
+import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -495,4 +497,9 @@ class BatteryRechargeViewModel(
             }
         }
     }
+
+    fun sign(request: SignRequestEntity) = flow {
+        val boc = SendTransactionScreen.run(context, wallet, request, forceRelayer = true)
+        emit(boc)
+    }.flowOn(Dispatchers.IO)
 }

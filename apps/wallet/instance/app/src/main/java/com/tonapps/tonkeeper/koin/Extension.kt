@@ -74,3 +74,4 @@ val Context.rnLegacy: RNLegacy?
 
 val Context.historyHelper: HistoryHelper?
     get() = koin?.get<HistoryHelper>()
+

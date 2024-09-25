@@ -12,6 +12,7 @@ import com.tonapps.extensions.flat
 import com.tonapps.extensions.mapList
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.Bridge
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
@@ -28,6 +29,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -49,17 +51,13 @@ import java.util.concurrent.CancellationException
 class TonConnectManager(
     private val scope: CoroutineScope,
     private val api: API,
-    private val accountRepository: AccountRepository,
     private val dAppsRepository: DAppsRepository
 ) {
 
     private val bridge: Bridge = Bridge(api)
 
     private val eventsFlow = dAppsRepository.connectionsFlow
-        .map {
-            Log.d("TonConnectManager", "connections: ${it.size}")
-            it.chunked(10)
-        }
+        .map { it.chunked(10) }
         .flat { chunks ->
             chunks.map { bridge.eventsFlow(it, dAppsRepository.lastEventId) }
         }.mapNotNull { event ->
@@ -69,7 +67,7 @@ class TonConnectManager(
             }
             dAppsRepository.setLastAppRequestId(event.connection.clientId, event.message.id)
             event
-        }.shareIn(scope, SharingStarted.Eagerly, 1)
+        }.shareIn(scope, SharingStarted.Eagerly)
 
     val transactionRequestFlow = eventsFlow.mapNotNull { event ->
         if (event.method == BridgeMethod.SEND_TRANSACTION) {
@@ -82,7 +80,7 @@ class TonConnectManager(
             }
             null
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly)
 
     fun walletConnectionsFlow(wallet: WalletEntity) = dAppsRepository.connectionsFlow.filterList { connection ->
         connection.testnet == wallet.testnet && connection.accountId.equalsAddress(wallet.accountId)
@@ -179,20 +177,22 @@ class TonConnectManager(
             }
             return true
         } catch (e: Exception) {
+            context.navigation?.toast(Localization.invalid_link)
             return false
         }
     }
 
     private suspend fun connectRemoteApp(activity: NavigationActivity, tonConnect: TonConnect) {
         val keyPair = CryptoBox.keyPair()
-        val message = launchConnectFlow(activity, tonConnect, keyPair)
+        val message = launchConnectFlow(activity, tonConnect, keyPair, null)
         bridge.send(tonConnect.clientId, keyPair, message.toString())
     }
 
     suspend fun launchConnectFlow(
         activity: NavigationActivity,
         tonConnect: TonConnect,
-        keyPair: CryptoBox.KeyPair = CryptoBox.keyPair()
+        keyPair: CryptoBox.KeyPair = CryptoBox.keyPair(),
+        wallet: WalletEntity?
     ): JSONObject = withContext(Dispatchers.IO) {
         val clientId = tonConnect.clientId
         try {
@@ -201,6 +201,7 @@ class TonConnectManager(
                 app = app,
                 proofPayload = tonConnect.proofPayload,
                 returnUri = tonConnect.returnUri,
+                wallet = wallet,
             )
             val bundle = activity.addForResult(screen)
             val response = screen.contract.parseResult(bundle)

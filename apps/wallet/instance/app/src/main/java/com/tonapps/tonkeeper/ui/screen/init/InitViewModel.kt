@@ -11,6 +11,7 @@ import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.WalletV5R1Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.emoji.Emoji
@@ -227,7 +228,18 @@ class InitViewModel(
 
         if (accounts.count { it.walletVersion == WalletVersion.V5R1 } == 0) {
             val contract = WalletV5R1Contract(publicKey.publicKey, tonNetwork)
-            accounts.add(0, AccountDetailsEntity(contract, testnet, publicKey.new))
+            val query = contract.address.toAccountId()
+            if (publicKey.new) {
+                accounts.add(0, AccountDetailsEntity(contract, testnet, true))
+            } else {
+                val apiAccount = api.resolveAccount(query, testnet)
+                val account = if (apiAccount == null) {
+                    AccountDetailsEntity(contract, testnet, false)
+                } else {
+                    AccountDetailsEntity(query, apiAccount, testnet, false)
+                }
+                accounts.add(0, account)
+            }
         }
 
         val list = accounts.mapIndexed { index, account ->

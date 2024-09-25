@@ -1,28 +1,25 @@
 package com.tonapps.extensions
 
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
@@ -51,6 +48,12 @@ fun <T> Flow<List<T>>.filterList(predicate: (T) -> Boolean): Flow<List<T>> = map
 fun <T> Flow<T>.single(timeout: Duration = 1.seconds): Flow<T> {
     return this.take(1).timeout(timeout)
 }
+
+@OptIn(FlowPreview::class)
+suspend fun <T> Flow<T>.singleValue(timeout: Duration = 1.seconds): T? {
+    return this.take(1).timeout(timeout).firstOrNull()
+}
+
 
 fun <T> Flow<T>.state(
     scope: CoroutineScope,

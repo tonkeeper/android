@@ -8,13 +8,19 @@ import com.tonapps.extensions.short12
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.SendException
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 import uikit.widget.FrescoView
@@ -83,7 +89,18 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
     }
 
     private fun unStake() {
-        primaryViewModel.unStake(requireContext())
+        setTaskState(ProcessTaskView.State.LOADING)
+        primaryViewModel.unStake(requireContext()).catch { e ->
+            val state = if (e is SendException.Cancelled) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
+            setTaskState(state)
+        }.onEach {
+            setTaskState(ProcessTaskView.State.SUCCESS)
+            navigation?.openURL("tonkeeper://activity")
+            navigation?.removeByClass(UnStakeScreen::class.java)
+            navigation?.removeByClass(StakeViewerScreen::class.java)
+            delay(2000)
+            finish()
+        }.launchIn(lifecycleScope)
     }
 
     private fun applyPool(pool: PoolEntity) {

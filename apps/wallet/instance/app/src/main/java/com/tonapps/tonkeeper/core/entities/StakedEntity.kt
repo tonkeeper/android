@@ -18,7 +18,11 @@ data class StakedEntity(
     val readyWithdraw: Coins,
     val fiatBalance: Coins,
     val fiatReadyWithdraw: Coins,
-    val liquidToken: BalanceEntity? = null
+    val liquidToken: BalanceEntity? = null,
+    val pendingDeposit: Coins,
+    val pendingWithdraw: Coins,
+    val cycleStart: Long,
+    val cycleEnd: Long,
 ) {
 
     val isTonstakers: Boolean
@@ -50,7 +54,11 @@ data class StakedEntity(
                         readyWithdraw = Coins.ZERO,
                         fiatBalance = fiatRates.convertTON(balance),
                         fiatReadyWithdraw = Coins.ZERO,
-                        liquidToken = token.balance.copy()
+                        liquidToken = token.balance.copy(),
+                        pendingDeposit = Coins.ZERO,
+                        pendingWithdraw = Coins.ZERO,
+                        cycleStart = pool.cycleStart,
+                        cycleEnd = pool.cycleEnd,
                     ))
                 } else {
                     val balance = staking.getAmount(pool)
@@ -61,6 +69,10 @@ data class StakedEntity(
                         readyWithdraw = readyWithdraw,
                         fiatBalance = fiatRates.convertTON(balance),
                         fiatReadyWithdraw = fiatRates.convertTON(readyWithdraw),
+                        pendingDeposit = staking.getPendingDeposit(pool),
+                        pendingWithdraw = staking.getPendingWithdraw(pool),
+                        cycleStart = pool.cycleStart,
+                        cycleEnd = pool.cycleEnd,
                     ))
                 }
             }

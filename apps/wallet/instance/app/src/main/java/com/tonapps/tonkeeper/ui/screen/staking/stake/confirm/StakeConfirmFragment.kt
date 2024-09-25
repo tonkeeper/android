@@ -26,10 +26,12 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import uikit.extensions.collectFlow
 import uikit.widget.FrescoView
+import uikit.widget.HeaderView
 import uikit.widget.ProcessTaskView
 
 class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_confirm) {
 
+    private lateinit var headerView: HeaderView
     private lateinit var iconView: FrescoView
     private lateinit var walletView: TransactionDetailView
     private lateinit var recipientView: TransactionDetailView
@@ -41,6 +43,10 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        headerView = view.findViewById(R.id.header)
+        headerView.doOnCloseClick = { popBackStack() }
+        headerView.doOnActionClick = { finish() }
+
         iconView = view.findViewById(R.id.icon)
         iconView.setCircular()
 

@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.viewModelScope
@@ -11,6 +12,7 @@ import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.setLocales
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
@@ -51,7 +53,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
@@ -97,19 +98,21 @@ class RootViewModel(
     val theme: Theme
         get() = settingsRepository.theme
 
-    val themeFlow: Flow<Int> = settingsRepository.themeFlow.map { it.resId }.drop(1)
-
     init {
-        collectFlow(tonConnectManager.transactionRequestFlow, ::sendTransaction)
+        tonConnectManager.transactionRequestFlow.collectFlow(::sendTransaction)
+
+        settingsRepository.languageFlow.collectFlow {
+            context.setLocales(settingsRepository.localeList)
+        }
 
         combine(
             settingsRepository.biometricFlow.take(1),
             settingsRepository.lockscreenFlow.take(1)
         ) { biometric, lockscreen ->
             Passcode(lockscreen, biometric)
-        }.onEach {
+        }.collectFlow {
             _passcodeFlow.value = it
-        }.launchIn(viewModelScope)
+        }
 
         combine(
             accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization },
@@ -130,12 +133,12 @@ class RootViewModel(
             settingsRepository.firebaseToken = GooglePushService.requestToken()
         }
 
-        collectFlow(selectedWalletFlow) { wallet ->
+        selectedWalletFlow.collectFlow { wallet ->
             applyAnalyticsKeys(wallet)
             initShortcuts(wallet)
         }
 
-        collectFlow(api.configFlow.take(1)) { config ->
+        api.configFlow.take(1).collectFlow { config ->
             AnalyticsHelper.setConfig(context, config)
             AnalyticsHelper.trackEvent("launch_app")
         }
@@ -281,12 +284,14 @@ class RootViewModel(
         fromQR: Boolean,
         refSource: Uri?
     ) {
-        if (TonConnectManager.isTonConnectDeepLink(uri)) {
-            tonConnectManager.processDeeplink(context, uri, fromQR, refSource)
-        } else if (uri.host == "signer") {
+        if (uri.host == "signer") {
             collectFlow(hasWalletFlow.take(1)) {
                 delay(1000)
                 resolveSignerLink(uri, fromQR)
+            }
+        } else {
+            collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
+                resolveOther(refSource, uri, wallet)
             }
         }
     }

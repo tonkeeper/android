@@ -212,7 +212,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             taskContainerView.translationY = -offset.toFloat()
         }
 
-        confirmButton.setOnClickListener { viewModel.sign() }
+        confirmButton.setOnClickListener { signAndSend() }
         confirmButton.setText(if (wallet.hasPrivateKey) Localization.confirm else Localization.continue_action)
 
         collectFlow(viewModel.uiInputAddressErrorFlow) {
@@ -240,6 +240,10 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         }
 
         initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress)
+    }
+
+    private fun signAndSend() {
+        viewModel.sign()
     }
 
     private fun openAddressBook() {

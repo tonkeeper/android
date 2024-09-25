@@ -108,6 +108,7 @@ class BottomSheetLayout @JvmOverloads constructor(
         contentView = findViewById(R.id.sheet_content)
 
         behavior = BottomSheetBehavior.from(contentView)
+        behavior.hideFriction = 0.4f
         behavior.addBottomSheetCallback(bottomSheetCallback)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
@@ -126,7 +127,6 @@ class BottomSheetLayout @JvmOverloads constructor(
 
     fun startShowAnimation() {
         doOnLayout {
-            Log.d("BottomSheetLayoutLog", "stackViews: $stackViews")
             behavior.peekHeight = contentView.measuredHeight
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
             showAnimation.start()

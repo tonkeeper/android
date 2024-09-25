@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
@@ -52,6 +53,7 @@ import uikit.navigation.Navigation.Companion.navigation
 class RootActivity: BaseWalletActivity() {
 
     override val viewModel: RootViewModel by viewModel()
+
     private val legacyRN: RNLegacy by inject()
 
     private lateinit var uiHandler: Handler
@@ -61,6 +63,7 @@ class RootActivity: BaseWalletActivity() {
     private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("RootViewModelLog", "RootActivity.onCreate")
         setTheme(viewModel.theme.resId)
         supportFragmentManager.fragmentFactory = WalletFragmentFactory()
         super.onCreate(savedInstanceState)
@@ -85,14 +88,9 @@ class RootActivity: BaseWalletActivity() {
             insets
         }
 
-        // collectFlow(viewModel.tonConnectEventsFlow, ::onDAppEvent)
         collectFlow(viewModel.hasWalletFlow) { init(it) }
         collectFlow(viewModel.eventFlow) { event(it) }
         collectFlow(viewModel.passcodeFlow, ::passcodeFlow)
-
-        collectFlow(viewModel.themeFlow) {
-            recreate()
-        }
 
         App.applyConfiguration(resources.configuration)
     }
@@ -104,9 +102,9 @@ class RootActivity: BaseWalletActivity() {
         return super.isNeedRemoveModals(fragment)
     }
 
-    override fun recreate() {
+    override fun onDestroy() {
         viewModelStore.clear()
-        super.recreate()
+        super.onDestroy()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

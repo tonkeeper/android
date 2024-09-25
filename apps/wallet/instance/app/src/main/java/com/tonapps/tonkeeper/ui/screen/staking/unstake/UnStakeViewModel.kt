@@ -3,35 +3,45 @@ package com.tonapps.tonkeeper.ui.screen.staking.unstake
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.storeAddress
+import com.tonapps.blockchain.ton.extensions.storeCoins
+import com.tonapps.blockchain.ton.extensions.storeMaybeRef
+import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.blockchain.ton.extensions.storeQueryId
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.Transaction
-import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.toGrams
+import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
-import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.StakingRepository
-import com.tonapps.wallet.data.staking.StakingUtils
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
@@ -45,11 +55,12 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
-import org.ton.cell.Cell
+import org.ton.cell.buildCell
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
 import uikit.extensions.collectFlow
 import uikit.widget.ProcessTaskView
+import kotlin.time.Duration.Companion.seconds
 
 class UnStakeViewModel(
     app: Application,
@@ -60,9 +71,9 @@ class UnStakeViewModel(
     private val tokenRepository: TokenRepository,
     private val settingsRepository: SettingsRepository,
     private val ratesRepository: RatesRepository,
-    private val api: API,
     private val transactionManager: TransactionManager,
     private val signUseCase: SignUseCase,
+    private val emulationUseCase: EmulationUseCase,
 ): BaseWalletVM(app) {
 
     data class AvailableUiState(
@@ -74,6 +85,7 @@ class UnStakeViewModel(
 
     private val currency = settingsRepository.currency
     private val token = "TON"
+    private var tickerJob: Job? = null
 
     private val _amountFlow = MutableStateFlow(0.0)
     private val amountFlow = _amountFlow.map { Coins.of(it) }
@@ -86,6 +98,8 @@ class UnStakeViewModel(
     private val _stakeFlow = MutableStateFlow<StakedEntity?>(null)
     private val stakeFlow = _stakeFlow.asStateFlow().filterNotNull()
 
+    private val _cycleEndFormatFlow = MutableStateFlow<String?>(null)
+    val cycleEndFormatFlow = _cycleEndFormatFlow.asStateFlow().filterNotNull()
 
     val availableUiStateFlow = combine(
         amountFlow,
@@ -123,6 +137,10 @@ class UnStakeViewModel(
     val poolFlow = stakeFlow.map { it.pool }
 
     init {
+        collectFlow(stakeFlow) { entity ->
+            startTicker(entity.cycleEnd)
+        }
+
         _eventFlow.tryEmit(UnStakeEvent.RouteToAmount)
         updateAmount(0.0)
 
@@ -131,34 +149,30 @@ class UnStakeViewModel(
         }
     }
 
+    private fun startTicker(timestamp: Long) {
+        tickerJob = viewModelScope.launch(Dispatchers.IO) {
+            while (true) {
+                _cycleEndFormatFlow.value = DateHelper.formatCycleEnd(timestamp)
+                delay(1.seconds)
+            }
+        }
+    }
+
     fun requestMax() = stakeFlow.take(1).map {
         it.balance.value
     }
 
-    fun requestFee() = unsignedBodyFlow().map { (seqno, unsignedBody) ->
-        /*val contract = wallet.contract
-        val message = contract.createTransferMessageCell(
-            address = contract.address,
-            privateKey = EmptyPrivateKeyEd25519,
-            seqno = seqno,
-            unsignedBody = unsignedBody,
-        )
-        api.emulate(message, wallet.testnet)?.totalFees ?: 0L*/
-        0L
+    fun requestFee() = unsignedBodyFlow().map { message ->
+        emulationUseCase(message, wallet.testnet).extra
     }.take(1).flowOn(Dispatchers.IO)
 
-    fun requestFeeFormat() = combine(
-        requestFee(),
-        stakeFlow
-    ) { fee, stake ->
-        val coins = Coins.of(fee)
-        val rates = ratesRepository.getRates(currency, token)
-        val converted = rates.convert("TON", coins)
+    fun requestFeeFormat() = requestFee().map { extra ->
+        val currency = settingsRepository.currency
         Pair(
-            CurrencyFormatter.format(TokenEntity.TON.symbol, coins, TokenEntity.TON.decimals),
-            CurrencyFormatter.format(currency.code, converted, currency.decimals)
+            CurrencyFormatter.format(TokenEntity.TON.symbol, extra.value, TokenEntity.TON.decimals),
+            CurrencyFormatter.format(currency.code, extra.fiat, currency.decimals)
         )
-    }.take(1)
+    }
 
     fun confirm() {
         collectFlow(poolFlow.take(1)) { pool ->
@@ -175,13 +189,13 @@ class UnStakeViewModel(
         stakeFlow.take(1),
     ) { amount, stake ->
         val params = getSendParams(wallet)
-        val gift = buildTransfer(wallet, amount, stake.pool, params)
-        val body = wallet.contract.createTransferUnsignedBody(
-            validUntil = params.validUntil,
+        val gift = buildTransfer(wallet, amount, stake, params)
+        accountRepository.messageBody(
+            wallet = wallet,
             seqNo = params.seqno,
-            gifts = arrayOf(gift),
+            validUntil = params.validUntil,
+            transfers = listOf(gift),
         )
-        Pair(params.seqno, body)
     }.flowOn(Dispatchers.IO)
 
     private fun ledgerTransactionFlow() = combine(
@@ -189,7 +203,7 @@ class UnStakeViewModel(
         stakeFlow.take(1),
     ) { amount, stake ->
         val params = getSendParams(wallet)
-        val gift = buildTransfer(wallet, amount, stake.pool, params)
+        val gift = buildTransfer(wallet, amount, stake, params)
         val transaction = Transaction.fromWalletTransfer(gift, params.seqno, params.validUntil)
         Pair(params.seqno, transaction)
     }.flowOn(Dispatchers.IO)
@@ -197,40 +211,88 @@ class UnStakeViewModel(
     private suspend fun buildTransfer(
         wallet: WalletEntity,
         amount: Coins,
-        pool: PoolEntity,
+        staked: StakedEntity,
         sendParams: SendMetadataEntity,
     ): WalletTransfer {
-        val isJetton = pool.liquidJettonMaster != null
-
-        val withdrawalFee = Coins.of(StakingUtils.getWithdrawalFee(pool.implementation))
-
-        val coins = if (pool.isTonstakers) {
-            org.ton.block.Coins.ofNano(amount.toLong() + withdrawalFee.toLong())
-        } else {
-            org.ton.block.Coins.ofNano(amount.toLong())
-        }
-
+        val isSendAll = amount == staked.balance
+        val pool = staked.pool
         val builder = WalletTransferBuilder()
-        builder.body = buildPayload(pool, amount, AddrStd.parse(pool.address))
-        builder.coins = coins
-        builder.destination = AddrStd.parse(pool.address)
+        builder.bounceable = true
+        builder.sendMode = (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
         if (0 >= sendParams.seqno) {
             builder.stateInit = wallet.contract.stateInit
+        }
+        when (staked.pool.implementation) {
+            StakingPool.Implementation.LiquidTF -> {
+                val token = pool.liquidJettonMaster?.let { getTokenBalance(it) } ?: throw IllegalStateException("Liquid jetton master not found")
+                builder.applyLiquid(amount, wallet.contract.address, token)
+            }
+            StakingPool.Implementation.Whales -> builder.applyWhales(pool, amount, isSendAll)
+            StakingPool.Implementation.TF -> builder.applyTF(pool)
+            else -> throw IllegalStateException("Unsupported pool implementation")
         }
         return builder.build()
     }
 
-    private suspend fun buildPayload(
-        pool: PoolEntity,
-        amount: Coins,
-        address: AddrStd
-    ): Cell = withContext(Dispatchers.IO) {
-        val queryId = TransferEntity.newWalletQueryId()
-        when (pool.implementation) {
-            StakingPool.Implementation.Whales -> StakingUtils.createWhalesWithdrawStakeCell(queryId, amount.toGrams())
-            StakingPool.Implementation.LiquidTF -> StakingUtils.createLiquidTfWithdrawStakeCell(queryId, amount.toGrams(), address)
-            StakingPool.Implementation.TF -> StakingUtils.createTfWithdrawStakeCell()
-            else -> throw IllegalStateException("Unsupported pool implementation: ${pool.implementation}")
+    private suspend fun getTokenBalance(
+        tokenAddress: String
+    ): AccountTokenEntity? {
+        val tokens = tokenRepository.get(
+            currency = settingsRepository.currency,
+            accountId = wallet.accountId,
+            testnet = wallet.testnet
+        ) ?: return null
+        return tokens.find { it.address.equalsAddress(tokenAddress) }
+    }
+
+    private suspend fun WalletTransferBuilder.applyLiquid(amount: Coins, responseAddress: AddrStd, tsTONToken: AccountTokenEntity) {
+        val address = tsTONToken.balance.walletAddress.toUserFriendly(
+            wallet = false,
+            bounceable = true,
+            testnet = wallet.testnet
+        )
+
+        val rates = ratesRepository.getRates(WalletCurrency.TON, tsTONToken.address)
+        val tokenRate = rates.getRate(tsTONToken.address)
+        val convertedAmount = Coins.of((amount / tokenRate).value, tsTONToken.decimals)
+
+        val customPayload = buildCell {
+            storeUInt(1, 1)
+            storeUInt(0, 1)
+        }
+
+        this.coins = Coins.ONE.toGrams()
+        this.destination = AddrStd.parse(address)
+        this.body = buildCell {
+            storeOpCode(TONOpCode.LIQUID_TF_BURN)
+            storeQueryId(TransferEntity.newWalletQueryId())
+            storeCoins(convertedAmount.toGrams())
+            storeAddress(responseAddress)
+            storeMaybeRef(customPayload)
+        }
+    }
+
+    private fun WalletTransferBuilder.applyWhales(pool: PoolEntity, amount: Coins, isSendAll: Boolean) {
+        this.coins = Coins.of(0.2).toGrams()
+        this.destination = AddrStd.parse(pool.address)
+        this.body = buildCell {
+            storeOpCode(TONOpCode.WHALES_WITHDRAW)
+            storeQueryId(TransferEntity.newWalletQueryId())
+            storeCoins(Coins.of(0.1).toGrams())
+            if (isSendAll) {
+                storeCoins(Coins.ZERO.toGrams())
+            } else {
+                storeCoins(amount.toGrams())
+            }
+        }
+    }
+
+    private fun WalletTransferBuilder.applyTF(pool: PoolEntity) {
+        this.coins = Coins.ONE.toGrams()
+        this.destination = AddrStd.parse(pool.address)
+        this.body = buildCell {
+            storeUInt(0, 32)
+            storeBytes("w".toByteArray())
         }
     }
 
@@ -257,15 +319,11 @@ class UnStakeViewModel(
         }
     }
 
-    fun unStake(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (wallet.isLedger) {
-                createLedgerStakeFlow(context, wallet)
-            } else {
-                createUnStakeFlow(wallet)
-            }
-        }
-    }
+    fun unStake(context: Context) = (if (wallet.isLedger) {
+        createLedgerStakeFlow(context, wallet)
+    } else {
+        createUnStakeFlow(wallet)
+    }).flowOn(Dispatchers.IO)
 
     private fun createLedgerStakeFlow(
         context: Context,
@@ -283,14 +341,21 @@ class UnStakeViewModel(
 
     private fun createUnStakeFlow(
         wallet: WalletEntity
-    ) = unsignedBodyFlow().map { (seqno, unsignedBody) ->
-        val message = signUseCase(context, wallet, unsignedBody, seqno)
+    ) = unsignedBodyFlow().map { message ->
+        val cell = message.createUnsignedBody(false)
+
+        val boc = signUseCase(context, wallet, cell, message.seqNo)
 
         taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
 
-        val state = transactionManager.send(wallet, message, false)
+        val state = transactionManager.send(wallet, boc, false)
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        tickerJob?.cancel()
     }
 }

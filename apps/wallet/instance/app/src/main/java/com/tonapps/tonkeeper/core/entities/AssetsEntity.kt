@@ -33,6 +33,9 @@ sealed class AssetsEntity(
 
         val liquidToken: BalanceEntity?
             get() = staked.liquidToken
+
+        val readyWithdraw: Coins
+            get() = staked.readyWithdraw
     }
 
     data class Token(val token: AccountTokenEntity): AssetsEntity(token.fiat) {

@@ -3,8 +3,7 @@ package com.tonapps.tonkeeper.usecase.emulation
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
-import com.tonapps.tonkeeper.core.history.HistoryHelper
-import com.tonapps.tonkeeper.manager.AssetsManager
+import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -33,8 +32,8 @@ class EmulationUseCase(
 
     suspend operator fun invoke(
         message: MessageBodyEntity,
-        useBattery: Boolean,
-        forceRelayer: Boolean,
+        useBattery: Boolean = false,
+        forceRelayer: Boolean = false,
     ): Emulated {
         return if (forceRelayer || useBattery) {
             emulateWithBattery(message, forceRelayer)
@@ -109,7 +108,7 @@ class EmulationUseCase(
         risk: Risk,
         currency: WalletCurrency,
     ): Emulated.Total {
-        val balanceFiat = assetsManager.getTotalBalance(wallet, currency)
+        val balanceFiat = assetsManager.getTotalBalance(wallet, currency) ?: Coins.ZERO
         val tokens = getTokens(wallet, risk.ton, risk.jettons)
         val rates = ratesRepository.getRates(currency, tokens.map { it.token.address })
         val totalFiat = tokens.map { token ->

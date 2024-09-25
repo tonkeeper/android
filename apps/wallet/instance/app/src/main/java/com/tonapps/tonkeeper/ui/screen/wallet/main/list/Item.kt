@@ -222,6 +222,13 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val fiatFormat: CharSequence,
         val hiddenBalance: Boolean,
         val wallet: WalletEntity,
+        val readyWithdraw: Coins,
+        val readyWithdrawFormat: CharSequence,
+        val pendingDeposit: Coins,
+        val pendingDepositFormat: CharSequence,
+        val pendingWithdraw: Coins,
+        val pendingWithdrawFormat: CharSequence,
+        val cycleEnd: Long,
     ): Item(TYPE_STAKED) {
 
         val iconUri: Uri
@@ -238,7 +245,14 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readParcelableCompat()!!,
             parcel.readCharSequenceCompat()!!,
             parcel.readBooleanCompat(),
-            parcel.readParcelableCompat()!!
+            parcel.readParcelableCompat()!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readLong()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -253,6 +267,13 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeCharSequenceCompat(fiatFormat)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeParcelable(wallet, flags)
+            dest.writeParcelable(readyWithdraw, flags)
+            dest.writeCharSequenceCompat(readyWithdrawFormat)
+            dest.writeParcelable(pendingDeposit, flags)
+            dest.writeCharSequenceCompat(pendingDepositFormat)
+            dest.writeParcelable(pendingWithdraw, flags)
+            dest.writeCharSequenceCompat(pendingWithdrawFormat)
+            dest.writeLong(cycleEnd)
         }
 
         companion object CREATOR : Parcelable.Creator<Stake> {

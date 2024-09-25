@@ -11,7 +11,7 @@ internal class RemoteDataSource(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
-        limit: Int = 20
+        limit: Int = 12
     ): AccountEvents? = api.getEvents(accountId, testnet, beforeLt, limit)
 
     fun getSingle(eventId: String, testnet: Boolean) = api.getSingleEvent(eventId, testnet)

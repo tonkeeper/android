@@ -1,11 +1,14 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
+import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
+import androidx.core.graphics.drawable.toIcon
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.locale
@@ -18,6 +21,7 @@ import com.tonapps.network.interceptor.AcceptLanguageInterceptor
 import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.network.post
 import com.tonapps.network.postJSON
+import com.tonapps.network.simple
 import com.tonapps.network.sse
 import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
@@ -59,6 +63,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.api.pub.PublicKeyEd25519
@@ -103,6 +108,56 @@ class API(
 
     val configFlow: Flow<ConfigEntity>
         get() = configRepository.stream
+
+
+    private fun tonapiRawUrl(testnet: Boolean, method: String): String {
+        val host = if (!testnet) config.tonapiMainnetHost else config.tonapiTestnetHost
+        return "$host/v2/$method"
+    }
+
+    private fun tonapiRawResponse(response: Response): String {
+        return if (response.isSuccessful) {
+            response.body?.string() ?: ""
+        } else if (response.code > 0) {
+            "{\"error\": \"server response ${response.code}\"}"
+        } else {
+            "{\"error\": \"client error\"}"
+        }
+    }
+
+    suspend fun tonapiPostRaw(
+        testnet: Boolean,
+        method: String,
+        json: String
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val url = tonapiRawUrl(testnet, method)
+            val response = tonAPIHttpClient.postJSON(url, json)
+            tonapiRawResponse(response)
+        } catch (e: Throwable) {
+            "{\"error\": \"unknown client error\"}"
+        }
+    }
+
+    suspend fun tonapiGetRaw(
+        testnet: Boolean,
+        method: String,
+        params: String
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val builder = Uri.parse(tonapiRawUrl(testnet, method)).buildUpon()
+            if (params.isBlank() && params.equals("null", ignoreCase = true)) {
+                val json = JSONObject(params)
+                for (key in json.keys()) {
+                    builder.appendQueryParameter(key, json.getString(key))
+                }
+            }
+            val response = tonAPIHttpClient.simple(builder.toString())
+            tonapiRawResponse(response)
+        } catch (e: Throwable) {
+            "{\"error\": \"unknown client error\"}"
+        }
+    }
 
     private val provider: Provider by lazy {
         Provider(config.tonapiMainnetHost, config.tonapiTestnetHost, tonAPIHttpClient)

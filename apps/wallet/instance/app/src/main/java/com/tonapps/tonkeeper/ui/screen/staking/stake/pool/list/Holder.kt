@@ -25,8 +25,10 @@ class Holder(
     private val maxApyView = findViewById<View>(R.id.max_apy)
     private val descriptionView = findViewById<AppCompatTextView>(R.id.description)
     private val radioView = findViewById<RadioView>(R.id.radio)
+    private val arrowView = findViewById<View>(R.id.arrow)
 
     init {
+        arrowView.visibility = View.GONE
         iconView.setCircular()
         radioView.setOnClickListener(null)
     }

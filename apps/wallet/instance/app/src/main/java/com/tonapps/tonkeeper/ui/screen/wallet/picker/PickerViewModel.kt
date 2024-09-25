@@ -2,12 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.app.Application
 import androidx.collection.ArrayMap
-import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
-import com.tonapps.tonkeeper.manager.AssetsManager
-import com.tonapps.tonkeeper.manager.BalancesManager
+import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
 import com.tonapps.wallet.data.account.AccountRepository
@@ -33,8 +30,7 @@ class PickerViewModel(
     private val mode: PickerMode,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
-    private val assetsManager: AssetsManager,
-    private val balancesManager: BalancesManager
+    private val assetsManager: AssetsManager
 ): BaseWalletVM(app) {
 
     private val _editModeFlow = MutableStateFlow(false)
@@ -51,7 +47,7 @@ class PickerViewModel(
         }
 
         flow {
-            val balances = balancesManager.get(wallets.map { it.id })
+            val balances = ArrayMap<String, CharSequence>()
             val nonCachedWallets = wallets.filter { it.id !in balances.keys }
             val walletIdFocus = (mode as? PickerMode.Focus)?.walletId ?: ""
 
@@ -59,15 +55,12 @@ class PickerViewModel(
                 wallets = wallets,
                 activeWallet = currentWallet,
                 hiddenBalance = hiddenBalances,
-                balances = balances,
                 walletIdFocus = walletIdFocus
             ))
 
             if (!hiddenBalances && nonCachedWallets.isNotEmpty()) {
                 for (chunkWallets in wallets.chunked(5)) {
-                    balances += getBalances(chunkWallets).also {
-                        balancesManager.set(it)
-                    }
+                    balances += getBalances(chunkWallets)
                     emit(Adapter.map(
                         wallets = wallets,
                         activeWallet = currentWallet,
@@ -111,18 +104,16 @@ class PickerViewModel(
         }.sortedBy { it.index }.map { it.raw }
     }
 
-    private suspend fun getAssets(
-        wallet: WalletEntity
-    ) = assetsManager.getAssets(
-        wallet = wallet,
-        refresh = false
-    )?.sort(wallet, settingsRepository)
-
     private suspend fun getBalance(
         wallet: WalletEntity
     ): CharSequence {
-        val assets = getAssets(wallet) ?: return getString(Localization.unknown)
-        val balance = assets.map { it.fiat }.sumOf { it }
+        val balance = assetsManager.getTotalBalance(
+            wallet = wallet,
+            currency = settingsRepository.currency,
+            refresh = false,
+            sorted = true
+        ) ?: return getString(Localization.unknown)
+
         val currency = if (wallet.testnet) {
             WalletCurrency.TON.code
         } else {

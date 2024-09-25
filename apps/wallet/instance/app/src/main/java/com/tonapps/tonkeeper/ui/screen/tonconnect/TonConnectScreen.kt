@@ -110,7 +110,12 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
 
         warningView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
 
-        collectFlow(viewModel.stateFlow, ::applyState)
+        val initialWallet = args.wallet
+        if (initialWallet == null) {
+            collectFlow(viewModel.stateFlow, ::applyState)
+        } else {
+            applyState(TonConnectScreenState(initialWallet, false))
+        }
 
         setDefaultState()
     }
@@ -278,10 +283,11 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         fun newInstance(
             app: AppEntity,
             proofPayload: String?,
-            returnUri: Uri?
+            returnUri: Uri?,
+            wallet: WalletEntity?
         ): TonConnectScreen {
             val fragment = TonConnectScreen()
-            fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri))
+            fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri, wallet))
             return fragment
         }
     }

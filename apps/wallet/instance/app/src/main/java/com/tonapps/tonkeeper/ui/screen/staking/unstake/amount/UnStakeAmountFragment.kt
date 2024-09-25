@@ -25,6 +25,7 @@ class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen,
     private lateinit var amountView: CoinEditText
     private lateinit var availableView: AppCompatTextView
     private lateinit var currencyView: AppCompatTextView
+    private lateinit var cycleView: AppCompatTextView
     private lateinit var button: Button
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -38,6 +39,8 @@ class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen,
 
         currencyView = view.findViewById(R.id.unstake_currency)
 
+        cycleView = view.findViewById(R.id.cycle)
+
         availableView = view.findViewById(R.id.available)
 
         button = view.findViewById(R.id.next_button)
@@ -46,6 +49,9 @@ class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen,
         view.findViewById<View>(R.id.max).setOnClickListener { applyMax() }
 
         collectFlow(primaryViewModel.availableUiStateFlow, ::applyAvailableState)
+        collectFlow(primaryViewModel.cycleEndFormatFlow) { date ->
+            cycleView.text = getString(Localization.staking_unstake_cycle, date)
+        }
     }
 
     private fun applyAvailableState(state: UnStakeViewModel.AvailableUiState) {

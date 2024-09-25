@@ -2,8 +2,7 @@ package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.billing.BillingManager
-import com.tonapps.tonkeeper.manager.AssetsManager
-import com.tonapps.tonkeeper.manager.BalancesManager
+import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
@@ -36,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
@@ -49,11 +49,11 @@ val koinModel = module {
     singleOf(::HistoryHelper)
     singleOf(::AssetsManager)
     singleOf(::BillingManager)
-    singleOf(::BalancesManager)
     singleOf(::TransactionManager)
-    singleOf(::SignUseCase)
     singleOf(::TonConnectManager)
-    singleOf(::EmulationUseCase)
+
+    factoryOf(::SignUseCase)
+    factoryOf(::EmulationUseCase)
 
     uiAdapter { WalletAdapter(get()) }
 

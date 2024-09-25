@@ -91,6 +91,15 @@
 
             </uikit.widget.RowLayout>
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/cycle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_content"
+                android:padding="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"/>
+
         </uikit.widget.ColumnLayout>
 
     </androidx.core.widget.NestedScrollView>

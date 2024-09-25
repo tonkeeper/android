@@ -63,7 +63,11 @@ data class WalletEntity(
     data class Keystone(
         val xfp: String,
         val path: String
-    ) : Parcelable
+    ) : Parcelable {
+
+        val isEmpty: Boolean
+            get() = xfp.isBlank() || path.isBlank()
+    }
 
     val contract: BaseWalletContract by lazy {
         val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value

@@ -61,7 +61,6 @@ class BridgeWebView @JvmOverloads constructor(
 
     @JavascriptInterface
     fun postMessage(message: String) {
-        Log.d("DAppBridgeLog", "postMessage: $message")
         val json = JSONObject(message)
         val type = json.getString("type")
         if (type == BridgeMessage.Type.InvokeRnFunc.value) {

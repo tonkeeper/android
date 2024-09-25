@@ -103,7 +103,7 @@
         android:enabled="false"
         android:textAppearance="@style/TextAppearance.Label1"
         android:textColor="?attr/textPrimaryColor"
-        android:text="@string/staking_confirm"/>
+        android:text="@string/unstake_confirm"/>
 
 
 </FrameLayout>

@@ -6,11 +6,10 @@ import com.tonapps.ur.UR
 import com.tonapps.ur.registry.CryptoKeypath
 import com.tonapps.ur.registry.TonSignRequest
 import com.tonapps.ur.registry.pathcomponent.IndexPathComponent
+import com.tonapps.ur.registry.pathcomponent.PathComponent
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.ton.crypto.hex
 import uikit.base.BaseArgs
-import java.util.UUID
-import kotlin.uuid.Uuid
 
 data class KeystoneSignArgs(
     val requestId: String,
@@ -27,15 +26,24 @@ data class KeystoneSignArgs(
         private const val ARG_ADDRESS = "address"
         private const val ARG_KEYSTONE = "keystone"
 
-        private fun buildPathList(path: String) = path.split("/").drop(1).map {
-            val hardened = it.endsWith("'")
-            val index = if (hardened) it.dropLast(1).toInt() else it.toInt()
-            IndexPathComponent(index, hardened)
+        private fun buildPathList(path: String): List<PathComponent> {
+            if (path.isBlank()) {
+                return emptyList()
+            }
+            return path.split("/").drop(1).map {
+                val hardened = it.endsWith("'")
+                val index = if (hardened) it.dropLast(1).toInt() else it.toInt()
+                IndexPathComponent(index, hardened)
+            }
         }
     }
 
     val ur: UR by lazy {
-        val path = CryptoKeypath(buildPathList(keystone.path), hex(keystone.xfp))
+        val path: CryptoKeypath? = if (keystone.isEmpty) {
+            null
+        } else {
+            CryptoKeypath(buildPathList(keystone.path), hex(keystone.xfp))
+        }
         val request = TonSignRequest(requestId.toByteArray(), hex(unsignedBody), if (isTransaction) 1 else 2, path, address, "Tonkeeper")
         request.toUR()
     }

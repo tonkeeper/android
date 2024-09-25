@@ -72,6 +72,7 @@ import uikit.extensions.collectFlow
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.RoundingMode
+import java.util.concurrent.CancellationException
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
@@ -696,61 +697,22 @@ class SendViewModel(
         )
     }
 
-    fun sign() {
-        transferFlow.take(1).map { transfer ->
-            lastTransferEntity = transfer
-            val boc = signUseCase(
-                context = context,
-                wallet = wallet,
-                unsignedBody = transfer.getUnsignedBody(),
-                seqNo = transfer.seqno,
-                ledgerTransaction = transfer.getLedgerTransaction()
-            )
-            _uiEventFlow.tryEmit(SendEvent.Loading)
-            Pair(boc, transfer.wallet)
-        }.catch {  }.sendTransfer()
-    }
-
-    fun send(context: Context) {
-        AnalyticsHelper.trackEvent("send_transaction")
-        transferFlow.take(1).map { transfer ->
-            val wallet = transfer.wallet
-            if (!wallet.hasPrivateKey) {
-                throw SendException.UnableSendTransaction()
-            }
-
-            val isValidPasscode = passcodeManager.confirmation(context, context.getString(Localization.app_name))
-            if (!isValidPasscode) {
-                throw SendException.WrongPasscode()
-            }
-
-            val privateKey = accountRepository.getPrivateKey(wallet.id)
-
-            if (sendTransferType is SendTransferType.Gasless) {
-                val gasless = sendTransferType as SendTransferType.Gasless
-
-                val message = transfer.toSignedMessage(
-                    privateKey = privateKey,
-                    internalMessage = true,
-                    excessesAddress = gasless.excessesAddress,
-                    additionalGifts = listOf(
-                        transfer.gaslessInternalGift(
-                            jettonAmount = gasless.gaslessFee,
-                            batteryAddress = gasless.excessesAddress
-                        )
-                    ),
-                )
-                return@map Pair(message, wallet)
-            }
-
-            val boc = transfer.toSignedMessage(
-                privateKey = privateKey,
-                internalMessage = sendTransferType is SendTransferType.Battery,
-                excessesAddress = (sendTransferType as? SendTransferType.WithExcessesAddress)?.excessesAddress
-            )
-            Pair(boc, wallet)
-        }.sendTransfer()
-    }
+    fun sign() = transferFlow.take(1).map { transfer ->
+        lastTransferEntity = transfer
+        val boc = signUseCase(
+            context = context,
+            wallet = wallet,
+            unsignedBody = transfer.getUnsignedBody(),
+            seqNo = transfer.seqno,
+            ledgerTransaction = transfer.getLedgerTransaction()
+        )
+        _uiEventFlow.tryEmit(SendEvent.Loading)
+        Pair(boc, transfer.wallet)
+    }.catch {
+        if (it !is CancellationException) {
+            _uiEventFlow.tryEmit(SendEvent.Failed(it))
+        }
+    }.sendTransfer()
 
     private suspend fun send(
         message: Cell,

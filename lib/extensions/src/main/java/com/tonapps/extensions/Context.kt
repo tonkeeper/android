@@ -6,13 +6,18 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Build
+import android.os.LocaleList
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.ActivityCompat
+import androidx.core.os.LocaleListCompat
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import uikit.extensions.activity
 import java.io.File
 import java.security.spec.AlgorithmParameterSpec
 import java.util.Locale
@@ -23,12 +28,26 @@ val isUIThread: Boolean
 
 val Context.locale: Locale
     get() {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            resources.configuration.locales.get(0)
-        } else {
-            resources.configuration.locale
-        }
+        return resources.configuration.locales.get(0)
     }
+
+val Context.locales: LocaleList
+    get() {
+        return resources.configuration.locales
+    }
+
+fun Context.setLocales(locales: LocaleListCompat) {
+    try {
+        AppCompatDelegate.setApplicationLocales(locales)
+    } catch (e: Throwable) {
+        recreate()
+    }
+}
+
+fun Context.recreate() {
+    val activity = activity ?: return
+    ActivityCompat.recreate(activity)
+}
 
 val Context.isDebug: Boolean
     get() = 0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE

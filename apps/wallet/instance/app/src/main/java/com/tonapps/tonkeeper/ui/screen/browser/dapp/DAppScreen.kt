@@ -33,6 +33,7 @@ import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
@@ -51,6 +52,7 @@ import java.util.concurrent.CancellationException
 
 class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_dapp, wallet) {
 
+    private val api: API by inject()
     private val tonConnectManager: TonConnectManager by inject()
 
     private lateinit var headerDrawable: HeaderDrawable
@@ -153,7 +155,13 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             send = ::send,
             connect = ::tonconnect,
             restoreConnection = viewModel::restoreConnection,
-            disconnect = { viewModel.disconnect() }
+            disconnect = { viewModel.disconnect() },
+            tonapiPost = { method, params ->
+                api.tonapiPostRaw(wallet.testnet, method, params)
+            },
+            tonapiGet = { method, params ->
+                api.tonapiGetRaw(wallet.testnet, method, params)
+            }
         )
         webView.loadUrl(args.url)
 
@@ -269,7 +277,11 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             return JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
         }
         val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
-        return tonConnectManager.launchConnectFlow(activity, TonConnect.fromJsInject(request))
+        return tonConnectManager.launchConnectFlow(
+            activity = activity,
+            tonConnect = TonConnect.fromJsInject(request),
+            wallet = wallet
+        )
     }
 
     override fun onResume() {

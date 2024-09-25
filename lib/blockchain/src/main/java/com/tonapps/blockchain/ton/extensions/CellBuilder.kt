@@ -1,6 +1,8 @@
 package com.tonapps.blockchain.ton.extensions
 
 import com.tonapps.blockchain.ton.TONOpCode
+import org.ton.block.Coins
+import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellBuilder.Companion.beginCell
@@ -8,6 +10,8 @@ import org.ton.tlb.CellRef
 import org.ton.tlb.TlbCodec
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
+import org.ton.tlb.storeTlb
+import java.math.BigInteger
 import kotlin.math.floor
 
 val CellBuilder.availableBits: Int
@@ -72,4 +76,20 @@ fun CellBuilder.storeMaybeRef(value: Cell?) = apply {
         storeBit(true)
         storeRef(value)
     }
+}
+
+fun CellBuilder.storeCoins(value: Coins) = apply {
+    storeTlb(Coins, value)
+}
+
+fun CellBuilder.storeCoins(value: Long) = apply {
+    storeCoins(Coins.ofNano(value))
+}
+
+fun CellBuilder.storeAddress(value: MsgAddressInt) = apply {
+    storeTlb(MsgAddressInt, value)
+}
+
+fun CellBuilder.storeQueryId(value: BigInteger) = apply {
+    storeUInt(value, 64)
 }

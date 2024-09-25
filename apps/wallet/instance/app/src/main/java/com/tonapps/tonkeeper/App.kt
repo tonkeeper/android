@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper
 
 import android.app.Application
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.os.StrictMode
@@ -8,10 +9,12 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
+import androidx.core.os.LocaleListCompat
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
+import com.tonapps.extensions.setLocales
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel
 import com.tonapps.tonkeeper.koin.viewModelWalletModule
@@ -34,8 +37,10 @@ import com.tonapps.wallet.data.passcode.passcodeModule
 import com.tonapps.wallet.data.purchase.purchaseModule
 import com.tonapps.wallet.data.push.pushModule
 import com.tonapps.wallet.data.rn.rnLegacyModule
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
 import org.koin.core.component.KoinComponent
+import org.koin.android.ext.android.inject
 import java.util.concurrent.Executors
 
 class App: Application(), CameraXConfig.Provider, KoinComponent {
@@ -48,6 +53,8 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
             CurrencyFormatter.onConfigurationChanged(newConfig)
         }
     }
+
+    private val settingsRepository: SettingsRepository by inject()
 
     override fun onCreate() {
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -65,12 +72,11 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         Theme.add("light", uikit.R.style.Theme_App_Light, true)
 
         instance = this
-
         startKoin {
             androidContext(this@App)
             modules(koinModel, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, pushModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
         }
-
+        setLocales(settingsRepository.localeList)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         initFresco()
     }

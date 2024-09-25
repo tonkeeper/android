@@ -111,7 +111,14 @@ sealed class State {
                         fiat = staked.fiatBalance,
                         fiatFormat = CurrencyFormatter.formatFiat(currencyCode, staked.fiatBalance),
                         hiddenBalance = hiddenBalance,
-                        wallet = wallet
+                        wallet = wallet,
+                        readyWithdraw = staked.readyWithdraw,
+                        readyWithdrawFormat = CurrencyFormatter.formatFiat("TON", staked.readyWithdraw),
+                        pendingDeposit = staked.pendingDeposit,
+                        pendingDepositFormat = CurrencyFormatter.formatFiat("TON", staked.pendingDeposit),
+                        pendingWithdraw = staked.pendingWithdraw,
+                        pendingWithdrawFormat = CurrencyFormatter.formatFiat("TON", staked.pendingWithdraw),
+                        cycleEnd = staked.cycleEnd,
                     )
                     uiItems.add(item)
                 } else if (asset is AssetsEntity.Token) {

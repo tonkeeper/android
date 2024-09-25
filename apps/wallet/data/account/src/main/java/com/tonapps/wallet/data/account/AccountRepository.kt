@@ -453,7 +453,7 @@ class AccountRepository(
         seconds + (5 * 30L) // 5 minutes
     }
 
-    private fun messageBody(
+    fun messageBody(
         wallet: WalletEntity,
         seqNo: Int,
         validUntil: Long,

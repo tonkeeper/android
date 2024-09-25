@@ -10,6 +10,7 @@ data class AppEntity(
     val url: String,
     val name: String,
     val iconUrl: String,
+    val empty: Boolean
 ): Parcelable {
 
     val host: String
@@ -19,6 +20,7 @@ data class AppEntity(
         url = json.getString("url"),
         name = json.getString("name"),
         iconUrl = json.getString("iconUrl"),
+        empty = false,
     )
 
     constructor(value: String) : this(JSONObject(value))

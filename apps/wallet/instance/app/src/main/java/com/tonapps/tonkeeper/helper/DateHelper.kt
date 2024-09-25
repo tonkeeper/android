@@ -18,6 +18,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.util.Date
 import java.util.Locale
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 object DateHelper {
 
@@ -117,7 +119,7 @@ object DateHelper {
         return formatter.format(date)
     }
 
-    private fun formatDate(instant: Instant, formatString: String, locale: Locale): String {
+    fun formatDate(instant: Instant, formatString: String, locale: Locale): String {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             return formatModernDate(instant, formatString, locale)
         } else {
@@ -133,6 +135,21 @@ object DateHelper {
         val formatString = "d MMM, HH:mm"
         val instant = Instant.fromEpochMilliseconds(unixTimestamp * 1000)
         return formatDate(instant, formatString, locale)
+    }
+
+    fun formatCycleEnd(timestamp: Long): String {
+        val now = Clock.System.now()
+        var estimateInstant = Instant.fromEpochSeconds(timestamp)
+        if (estimateInstant < now) {
+            estimateInstant = now
+        }
+
+        val duration = estimateInstant - now
+        val hours = duration.inWholeHours
+        val minutes = (duration - hours.hours).inWholeMinutes
+        val seconds = (duration - hours.hours - minutes.minutes).inWholeSeconds
+
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 
 }

@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.main
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
@@ -22,21 +21,19 @@ import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletScreen
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
-import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
-import uikit.base.BaseFragment
 import uikit.drawable.BarDrawable
+import uikit.extensions.activity
 import uikit.extensions.collectFlow
 import uikit.extensions.isMaxScrollReached
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.roundTop
+import uikit.extensions.scale
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
 
@@ -120,13 +117,14 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             val itemId = mainDeepLinks[it.link] ?: return@onEach
             bottomTabsView.selectedItemId = itemId
             setFragment(itemId, it.wallet, true)
+            parentClearState()
         }.launchIn(lifecycleScope)
 
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.Swap>()) {
             navigation?.add(SwapScreen.newInstance(it.wallet, it.uri, it.address, it.from, it.to))
         }
         collectFlow(viewModel.selectedWalletFlow) { wallet ->
-            val browserTabEnabled = (wallet.type == Wallet.Type.Default || wallet.isExternal)
+            val browserTabEnabled = (wallet.isTonConnectSupported)
             bottomTabsView.toggleItem(R.id.browser, browserTabEnabled)
             val itemId = if (childFragmentManager.fragments.isEmpty() || (!browserTabEnabled && bottomTabsView.selectedItemId == R.id.browser)) {
                 R.id.wallet
@@ -136,6 +134,14 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             applyWallet(wallet)
             setFragment(itemId, wallet, false)
         }
+    }
+
+    private fun parentClearState() {
+        val activity = context?.activity ?: return
+        val view = activity.findViewById<View>(uikit.R.id.root_container)
+        view.roundTop(0)
+        view.scale = 1f
+        view.alpha = 1f
     }
 
     private fun applyWallet(wallet: WalletEntity) {

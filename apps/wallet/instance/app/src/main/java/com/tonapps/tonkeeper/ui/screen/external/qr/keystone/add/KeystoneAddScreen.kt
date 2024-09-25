@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.add
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.camera.view.PreviewView
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
 import com.tonapps.tonkeeper.ui.screen.external.qr.urFlow
@@ -13,6 +15,8 @@ import com.tonapps.uikit.color.constantWhiteColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.ur.registry.CryptoHDKey
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.crypto.hex
@@ -55,19 +59,24 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
         flashView = view.findViewById(R.id.flash)
         flashView.setOnClickListener { toggleFlash() }
 
-        collectFlow(urFlow<CryptoHDKey>().map {
-            val name = if (it.name.isNullOrBlank()) {
-                it.note
+        collectFlow(urFlow<CryptoHDKey>().map { cryptoHDKey ->
+            val name = if (cryptoHDKey.name.isNullOrBlank()) {
+                cryptoHDKey.note
             } else {
-                it.name
+                cryptoHDKey.name
             }
 
+            val xfp = cryptoHDKey.origin?.let { hex(it.sourceFingerprint) }
+            val path = cryptoHDKey.origin?.let { "m/$it" }
+
             KeystoneData(
-                publicKey = PublicKeyEd25519(it.key),
-                xfp = hex(it.origin.sourceFingerprint),
-                path = "m/" + it.origin.path,
+                publicKey = PublicKeyEd25519(cryptoHDKey.key),
+                xfp = xfp ?: "",
+                path = path ?: "",
                 name = name
             )
+        }.catch {
+            navigation?.toast(Localization.unknown_error)
         }, ::addAccount)
 
         collectFlow(flashConfigFlow) { flashConfig ->

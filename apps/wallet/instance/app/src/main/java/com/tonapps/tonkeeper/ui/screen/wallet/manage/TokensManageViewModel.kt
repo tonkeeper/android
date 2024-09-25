@@ -30,7 +30,7 @@ class TokensManageViewModel(
     app: Application,
     private val wallet: WalletEntity,
     private val settingsRepository: SettingsRepository,
-    private val tokenRepository: TokenRepository,
+    private val tokenRepository: TokenRepository
 ): BaseWalletVM(app) {
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->

@@ -115,11 +115,23 @@ internal class DatabaseSource(
             apps.add(AppEntity(
                 url = cursor.getString(urlIndex),
                 name = cursor.getString(nameIndex),
-                iconUrl = cursor.getString(iconUrlIndex)
+                iconUrl = cursor.getString(iconUrlIndex),
+                empty = false
             ))
         }
         cursor.close()
-        apps
+        val notFoundApps = hosts.filter { host -> apps.none { it.host == host } }
+        if (notFoundApps.isNotEmpty()) {
+            for (host in notFoundApps) {
+                apps.add(AppEntity(
+                    url = "https://$host",
+                    name = host.split(".").firstOrNull() ?: host,
+                    iconUrl = "https://$host/favicon.ico",
+                    empty = true
+                ))
+            }
+        }
+        apps.toList()
     }
 
     suspend fun getApp(host: String): AppEntity? = withContext(coroutineContext) {

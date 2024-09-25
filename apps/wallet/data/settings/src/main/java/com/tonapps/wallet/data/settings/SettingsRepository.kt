@@ -1,8 +1,6 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
-import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
@@ -23,9 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -60,9 +56,6 @@ class SettingsRepository(
 
     private val _languageFlow = MutableEffectFlow<Language>()
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
-
-    private val _themeFlow = MutableEffectFlow<Theme>()
-    val themeFlow = _themeFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _hiddenBalancesFlow = MutableEffectFlow<Boolean>()
     val hiddenBalancesFlow = _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
@@ -118,7 +111,6 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putString(THEME_KEY, value.key).apply()
                 field = value
-                _themeFlow.tryEmit(value)
                 migrationHelper.setLegacyTheme(value)
             }
         }
@@ -150,13 +142,23 @@ class SettingsRepository(
             }
         }
 
-    var language: Language = Language(prefs.getString(LANGUAGE_CODE_KEY, "en") ?: Language.DEFAULT)
+    var language: Language = Language(prefs.getString(LANGUAGE_CODE_KEY, Language.DEFAULT) ?: Language.DEFAULT)
         set(value) {
             if (value != field) {
                 field = value
                 prefs.edit().putString(LANGUAGE_CODE_KEY, field.code).apply()
                 _languageFlow.tryEmit(field)
                 migrationHelper.setLegacyLanguage(value)
+            }
+        }
+
+    val localeList: LocaleListCompat
+        get() {
+            if (language.code.isBlank() || language.code == Language.DEFAULT) {
+                return LocaleListCompat.getEmptyLocaleList()
+            } else {
+                val newLocale = Locale.forLanguageTag(language.code)
+                return LocaleListCompat.create(newLocale)
             }
         }
 
@@ -327,12 +329,6 @@ class SettingsRepository(
     }
 
     init {
-        languageFlow.onEach {
-            try {
-                AppCompatDelegate.setApplicationLocales(getLocales())
-            } catch (ignored: Throwable) { }
-        }.launchIn(scope)
-
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
                 prefs.clear()
@@ -355,7 +351,6 @@ class SettingsRepository(
             }
 
             _currencyFlow.tryEmit(currency)
-            _themeFlow.tryEmit(theme)
             _languageFlow.tryEmit(language)
             _hiddenBalancesFlow.tryEmit(hiddenBalances)
             _firebaseTokenFlow.tryEmit(firebaseToken)
@@ -423,15 +418,6 @@ class SettingsRepository(
             for (transactionId in spamTransactions.nonSpam) {
                 walletPrefsFolder.setSpamStateTransaction(walletId, transactionId, SpamTransactionState.NOT_SPAM)
             }
-        }
-    }
-
-    private fun getLocales(): LocaleListCompat {
-        val code = language.code
-        return if (code == Language.DEFAULT) {
-            LocaleListCompat.getEmptyLocaleList()
-        } else {
-            LocaleListCompat.forLanguageTags(code)
         }
     }
 

@@ -233,6 +233,7 @@ class DAppsRepository(
                 url = legacyApp.url.removeSuffix("/"),
                 name = legacyApp.name,
                 iconUrl = legacyApp.icon,
+                empty = false,
             )
             database.insertApp(newApp)
             for (legacyConnections in legacyApp.connections) {

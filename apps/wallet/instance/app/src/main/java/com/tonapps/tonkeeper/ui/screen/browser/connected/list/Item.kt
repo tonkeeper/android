@@ -17,8 +17,8 @@ data class Item(
         get() = app.name
 
     val url: Uri
-        get() = Uri.parse(app.url)
+        get() = app.url
 
     val host: String
-        get() = app.host
+        get() = app.url.host ?: ""
 }

@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.dapps.entities
 
+import android.net.Uri
 import com.tonapps.extensions.base64
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.Sodium
@@ -11,7 +12,7 @@ data class AppConnectEntity(
     val testnet: Boolean,
     val clientId: String,
     val type: Type,
-    val host: String,
+    val appUrl: Uri,
     val keyPair: CryptoBox.KeyPair,
     val proofSignature: String?,
     val proofPayload: String?,

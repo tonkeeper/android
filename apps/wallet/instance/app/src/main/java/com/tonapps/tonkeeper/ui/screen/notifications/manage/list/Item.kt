@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.manage.list
 
+import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -36,7 +37,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val name: String
             get() = app.name
 
-        val host: String
-            get() = app.host
+        val uri: Uri
+            get() = app.url
     }
 }

@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.dapps
 
+import android.net.Uri
 import androidx.collection.ArrayMap
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.rn.data.RNTCConnection
@@ -38,14 +39,14 @@ internal object LegacyHelper {
         return Pair(mainnetConnectionsMap, testnetConnectionsMap)
     }
 
-    fun sortByHost(
+    fun sortByUrl(
         connections: List<AppConnectEntity>
-    ): ArrayMap<String, List<AppConnectEntity>> {
-        val connectionsByHost = ArrayMap<String, List<AppConnectEntity>>()
+    ): ArrayMap<Uri, List<AppConnectEntity>> {
+        val connectionsByHost = ArrayMap<Uri, List<AppConnectEntity>>()
         for (connection in connections) {
-            val list = connectionsByHost[connection.host]?.toMutableList() ?: mutableListOf()
+            val list = connectionsByHost[connection.appUrl]?.toMutableList() ?: mutableListOf()
             list.add(connection)
-            connectionsByHost[connection.host] = list
+            connectionsByHost[connection.appUrl] = list
         }
         return connectionsByHost
     }

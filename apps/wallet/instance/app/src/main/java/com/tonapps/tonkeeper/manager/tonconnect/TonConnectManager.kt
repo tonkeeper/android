@@ -13,18 +13,14 @@ import com.tonapps.extensions.mapList
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.extensions.toastLoading
+import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.Bridge
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError.Companion.asException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.manager.tonconnect.exceptions.ManifestException
-import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectResponse
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
@@ -32,8 +28,6 @@ import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -51,7 +45,8 @@ import java.util.concurrent.CancellationException
 class TonConnectManager(
     private val scope: CoroutineScope,
     private val api: API,
-    private val dAppsRepository: DAppsRepository
+    private val dAppsRepository: DAppsRepository,
+    private val pushManager: PushManager,
 ) {
 
     private val bridge: Bridge = Bridge(api)
@@ -86,8 +81,8 @@ class TonConnectManager(
         connection.testnet == wallet.testnet && connection.accountId.equalsAddress(wallet.accountId)
     }
 
-    fun walletAppsFlow(wallet: WalletEntity) = walletConnectionsFlow(wallet).mapList { it.host }.map { it.distinct() }.map { hosts ->
-        dAppsRepository.getApps(hosts)
+    fun walletAppsFlow(wallet: WalletEntity) = walletConnectionsFlow(wallet).mapList { it.appUrl }.map { it.distinct() }.map { urls ->
+        dAppsRepository.getApps(urls)
     }.flowOn(Dispatchers.IO)
 
     private suspend fun deleteConnection(connection: AppConnectEntity, messageId: Long) {
@@ -99,12 +94,13 @@ class TonConnectManager(
         }
     }
 
-    fun disconnect(wallet: WalletEntity, host: String, type: AppConnectEntity.Type? = null) {
+    fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type? = null) {
         scope.launch(Dispatchers.IO) {
-            val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.testnet, host, type)
+            val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.testnet, appUrl, type)
             for (connection in connections) {
                 bridge.sendDisconnect(connection)
             }
+            pushManager.dAppUnsubscribe(wallet, connections)
         }
     }
 
@@ -114,6 +110,7 @@ class TonConnectManager(
             for (connection in connections) {
                 bridge.sendDisconnect(connection)
             }
+            pushManager.dAppUnsubscribe(wallet, connections)
         }
     }
 
@@ -125,15 +122,15 @@ class TonConnectManager(
         bridge.sendTransactionResponseSuccess(connection, boc, id)
     }
 
-    fun isPushEnabled(wallet: WalletEntity, host: String): Boolean {
-        return dAppsRepository.isPushEnabled(wallet.accountId, wallet.testnet, host)
+    fun isPushEnabled(wallet: WalletEntity, appUrl: Uri): Boolean {
+        return dAppsRepository.isPushEnabled(wallet.accountId, wallet.testnet, appUrl)
     }
 
     private suspend fun newConnect(
         wallet: WalletEntity,
         keyPair: CryptoBox.KeyPair,
         clientId: String,
-        host: String,
+        appUrl: Uri,
         proof: TONProof.Result?,
         pushEnabled: Boolean,
         type: AppConnectEntity.Type
@@ -144,7 +141,7 @@ class TonConnectManager(
             testnet = wallet.testnet,
             clientId = clientId,
             type = type,
-            host = host,
+            appUrl = appUrl,
             keyPair = keyPair,
             proofSignature = proof?.signature,
             timestamp = timestamp,
@@ -154,12 +151,15 @@ class TonConnectManager(
         if (!dAppsRepository.newConnect(connection)) {
             throw Exception("Failed to save connection")
         }
-        setPushEnabled(wallet.accountId, wallet.testnet, host, pushEnabled)
+        setPushEnabled(wallet, appUrl, pushEnabled)
         return connection
     }
 
-    suspend fun setPushEnabled(accountId: String, testnet: Boolean, host: String, enabled: Boolean) {
-        dAppsRepository.setPushEnabled(accountId, testnet, host, enabled)
+    suspend fun setPushEnabled(wallet: WalletEntity, appUrl: Uri, enabled: Boolean) {
+        val connections = dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, enabled)
+        if (!pushManager.dAppPush(wallet, connections, enabled)) {
+            dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, !enabled)
+        }
     }
 
     fun processDeeplink(
@@ -194,6 +194,10 @@ class TonConnectManager(
         keyPair: CryptoBox.KeyPair = CryptoBox.keyPair(),
         wallet: WalletEntity?
     ): JSONObject = withContext(Dispatchers.IO) {
+        if (tonConnect.request.items.isEmpty()) {
+            return@withContext JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
+        }
+
         val clientId = tonConnect.clientId
         try {
             val app = readManifest(tonConnect.manifestUrl)
@@ -209,7 +213,7 @@ class TonConnectManager(
                 wallet = response.wallet,
                 keyPair = keyPair,
                 clientId = clientId,
-                host = app.host,
+                appUrl = app.url,
                 proof = response.proof,
                 pushEnabled = response.notifications,
                 type = if (tonConnect.jsInject) AppConnectEntity.Type.Internal else AppConnectEntity.Type.External
@@ -229,6 +233,10 @@ class TonConnectManager(
     }
 
     private suspend fun readManifest(url: String): AppEntity {
+        return fetchManifest(url)
+    }
+
+    private suspend fun fetchManifest(url: String): AppEntity {
         val headers = ArrayMap<String, String>().apply {
             set("Connection", "close")
         }
@@ -258,10 +266,10 @@ class TonConnectManager(
         }
 
         private fun normalizeUri(uri: Uri): Uri {
-            val value = uri.toString().lowercase()
+            val value = uri.toString()
             for (prefix in othersPrefix) {
-                if (value.startsWith(prefix)) {
-                    return value.replace(prefix, TONCONNECT_PREFIX).toUri()
+                if (value.startsWith(prefix, ignoreCase = true)) {
+                    return value.replace(prefix, TONCONNECT_PREFIX, ignoreCase = true).toUri()
                 }
             }
             return uri

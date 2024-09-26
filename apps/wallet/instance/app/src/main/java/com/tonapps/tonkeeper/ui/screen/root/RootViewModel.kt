@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.viewModelScope
@@ -21,7 +20,7 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
 import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.helper.ShortcutHelper
-import com.tonapps.wallet.data.push.GooglePushService
+import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
@@ -130,7 +129,7 @@ class RootViewModel(
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            settingsRepository.firebaseToken = GooglePushService.requestToken()
+            settingsRepository.firebaseToken = FirebasePush.requestToken()
         }
 
         selectedWalletFlow.collectFlow { wallet ->

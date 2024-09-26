@@ -5,6 +5,7 @@ import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
+import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
@@ -51,6 +52,7 @@ val koinModel = module {
     singleOf(::BillingManager)
     singleOf(::TransactionManager)
     singleOf(::TonConnectManager)
+    singleOf(::PushManager)
 
     factoryOf(::SignUseCase)
     factoryOf(::EmulationUseCase)

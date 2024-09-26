@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper
 
 import android.app.Application
-import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.os.StrictMode
@@ -9,7 +8,6 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
-import androidx.core.os.LocaleListCompat
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
@@ -35,7 +33,6 @@ import com.tonapps.wallet.data.dapps.dAppsModule
 import com.tonapps.wallet.data.events.eventsModule
 import com.tonapps.wallet.data.passcode.passcodeModule
 import com.tonapps.wallet.data.purchase.purchaseModule
-import com.tonapps.wallet.data.push.pushModule
 import com.tonapps.wallet.data.rn.rnLegacyModule
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
@@ -74,7 +71,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         instance = this
         startKoin {
             androidContext(this@App)
-            modules(koinModel, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, pushModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
         }
         setLocales(settingsRepository.localeList)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

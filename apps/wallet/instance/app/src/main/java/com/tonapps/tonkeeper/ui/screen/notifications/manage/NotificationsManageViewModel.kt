@@ -1,13 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.manage
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.push.GooglePushService
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
@@ -33,7 +33,7 @@ class NotificationsManageViewModel(
             uiItems.add(Item.Space)
             for ((index, entity) in apps.withIndex()) {
                 val position = ListCell.getPosition(apps.size, index)
-                val pushEnabled = tonConnectManager.isPushEnabled(wallet, entity.host)
+                val pushEnabled = tonConnectManager.isPushEnabled(wallet, entity.url)
                 uiItems.add(Item.App(
                     app = entity,
                     wallet = wallet,
@@ -46,10 +46,9 @@ class NotificationsManageViewModel(
         uiItems
     }.flowOn(Dispatchers.IO)
 
-    fun enabledPush(host: String, enabled: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val token = GooglePushService.requestToken()
-            // tonConnectRepository.setPushEnabled(wallet, url, enabled, token)
+    fun enabledPush(url: Uri, enabled: Boolean) {
+        viewModelScope.launch {
+            tonConnectManager.setPushEnabled(wallet, url, enabled)
         }
     }
 }

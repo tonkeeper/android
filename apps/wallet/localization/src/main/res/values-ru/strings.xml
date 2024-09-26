@@ -1,6 +1,15 @@
 <resources>
 
     <string name="incorrect_phrase">Неправильная фраза</string>
+    <string name="transaction_expired">Срок действия транзакции истек</string>
+    <string name="total">Всего: %1$s</string>
+    <string name="staking_ready_withdraw">%1$s готов. Нажмите чтобы забрать</string>
+    <string name="staking_pending_deposit">%1$s будет зачислен в %2$s</string>
+    <string name="staking_pending_withdraw">%1$s будет снят через %2$s</string>
+    <string name="staking_unstake_cycle">Запрос на отмену ставки будет обработан после окончания цикла проверки в %1$s</string>
+    <string name="send_transaction_scroll">Проверьте все данные для подтверждения</string>
+    <string name="send_transaction_detail">Общая стоимость токенов, которые будут отправлены с вашего кошелька. Возвраты не включены в общую стоимость.</string>
+    <string name="send_transaction_detail_nft">Общая стоимость токенов, за исключением стоимости NFT, которые будут отправлены с вашего кошелька. Возвраты не включены в общую стоимость.</string>
     <string name="keystone_sign_step1">Сканируйте QR-код с помощью Keystone</string>
     <string name="keystone_sign_step2">Подтвердите транзакцию в Keystone</string>
     <string name="keystone_sign_step3">Сканируйте подписанный транзакционный QR-код от Keystone</string>
@@ -127,6 +136,7 @@
     <string name="domain_renew">Домен продлён</string>
     <string name="unstake">Вывести</string>
     <string name="unknown">Неизвестно</string>
+    <string name="tonconnect_warning_description">Обязательно проверьте адрес сервиса перед подключением кошелька.</string>
     <string name="unknown_error">Неизвестная ошибка</string>
     <string name="links">Ссылки</string>
     <string name="nft_purchase">Покупка NFT</string>

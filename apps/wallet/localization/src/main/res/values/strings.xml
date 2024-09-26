@@ -12,7 +12,7 @@
     <string name="staking_apy" translatable="false">APY</string>
     <string name="transaction_expired">Transaction expired</string>
     <string name="total">Total: %1$s</string>
-    <string name="staking_ready_withdraw">%1$s ready.\nTap co collect.</string>
+    <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>
     <string name="staking_pending_deposit">%1$s will be deposited in %2$s</string>
     <string name="staking_pending_withdraw">%1$s will be withdrawn in %2$s</string>
 
@@ -49,8 +49,13 @@
     <string name="signer_step_2">Confirm your transaction in Signer</string>
     <string name="signer_step_3">Scan signed transaction QR code from Signer</string>
 
-    <string name="insufficient_balance_title">Insufficient funds</string>
+    <string name="insufficient_balance_title">Insufficient Funds</string>
     <string name="insufficient_balance_description">Enter an amount less or choose your maximum balance.</string>
+
+    <string name="insufficient_balance_in_wallet">Insufficient funds in wallet</string>
+    <string name="insufficient_balance_fees">Required for blockchain fees: %1$s.\nYour balance: %2$s.</string>
+    <string name="insufficient_balance_default">To be paid: %1$s.\nYour balance: %2$s.</string>
+
 
     <string name="w5_story_title_1">Gasless USDT Transfers</string>
     <string name="w5_story_title_3">Up to 255 Operations in One Transaction</string>
@@ -211,6 +216,7 @@
 
     <string name="new_wallet">New wallet</string>
     <string name="buy_toncoin">Buy Toncoin</string>
+    <string name="buy_ton">Buy TON</string>
     <string name="buy_or_sell">Buy or sell</string>
     <string name="fiat_open_description">You are opening an external app not operated by Tonkeeper.</string>
     <string name="buy">Buy</string>
@@ -504,4 +510,5 @@
     <string name="promocode_hint">Promo Code</string>
     <string name="refund">Refund</string>
     <string name="gasless_switch_label">Tap to pay in %1$s</string>
+    <string name="recharge_battery">Recharge Battery</string>
 </resources>

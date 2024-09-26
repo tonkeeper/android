@@ -1,4 +1,13 @@
 <resources>
+    <string name="transaction_expired">Transacción expirada</string>
+    <string name="total">Total: %1$s</string>
+    <string name="staking_ready_withdraw">%1$s listo. Toca para recoger.</string>
+    <string name="staking_pending_deposit">%1$s se depositará en %2$s</string>
+    <string name="staking_pending_withdraw">%1$s se retirarán en %2$s</string>
+    <string name="staking_unstake_cycle">La solicitud de cancelación de participación se procesará después del final del ciclo de validación en %1$s</string>
+    <string name="send_transaction_scroll">Verifique todos los detalles para confirmar</string>
+    <string name="send_transaction_detail">El valor total de los tokens que se enviarán desde su billetera. Los reembolsos no están incluidos en el valor total.</string>
+    <string name="send_transaction_detail_nft">El valor total de los tokens, sin incluir el costo de los NFT, que se enviarán desde su billetera. Los reembolsos no están incluidos en el valor total.</string>
     <string name="keystone_sign_step1">Escanee el código QR con Keystone</string>
     <string name="keystone_sign_step2">Confirme su transacción en Keystone</string>
     <string name="keystone_sign_step3">Escanee el código QR de la transacción firmada desde Keystone</string>
@@ -119,6 +128,7 @@
     <string name="domain_renew">Renovación de Dominio</string>
     <string name="unstake">Desapostar</string>
     <string name="unknown">Desconocido</string>
+    <string name="tonconnect_warning_description">Asegúrese de verificar la dirección del servicio antes de conectar la billetera.</string>
     <string name="unknown_error">Error desconocido</string>
     <string name="nft_purchase">Compra de NFT</string>
     <string name="burned">Quemado</string>

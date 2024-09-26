@@ -1,4 +1,13 @@
 <resources>
+    <string name="transaction_expired">交易已过期</string>
+    <string name="total">总计：%1$s</string>
+    <string name="staking_ready_withdraw">%1$s 已准备就绪。点击共同收集。</string>
+    <string name="staking_pending_deposit">%1$s 将存入 %2$s</string>
+    <string name="staking_pending_withdraw">%1$s 将在 %2$s 内被提取</string>
+    <string name="staking_unstake_cycle">取消质押请求将在 %1$s 的验证周期结束后处理</string>
+    <string name="send_transaction_scroll">检查所有详细信息以确认</string>
+    <string name="send_transaction_detail">将从您的钱包发送的代币总价值。退款不包含在总价值中。</string>
+    <string name="send_transaction_detail_nft">将从您的钱包中发送的代币总价值（不包括 NFT 成本）。退款不包含在总价值中。</string>
     <string name="keystone_sign_step1">使用 Keystone 扫描二维码</string>
     <string name="keystone_sign_step2">在 Keystone 中确认您的交易</string>
     <string name="keystone_sign_step3">扫描 Keystone 签名的交易二维码</string>
@@ -119,6 +128,7 @@
     <string name="domain_renew">域名续费</string>
     <string name="unstake">解除质押</string>
     <string name="unknown">未知</string>
+    <string name="tonconnect_warning_description">连接钱包之前，请务必检查服务地址。</string>
     <string name="unknown_error">未知错误</string>
     <string name="nft_purchase">NFT购买</string>
     <string name="burned">已烧毁</string>

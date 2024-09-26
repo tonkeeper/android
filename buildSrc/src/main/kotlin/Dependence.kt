@@ -136,7 +136,6 @@ object Dependence {
             const val tokens = ":apps:wallet:data:tokens"
             const val collectibles = ":apps:wallet:data:collectibles"
             const val events = ":apps:wallet:data:events"
-            const val push = ":apps:wallet:data:push"
             const val browser = ":apps:wallet:data:browser"
             const val backup = ":apps:wallet:data:backup"
             const val rn = ":apps:wallet:data:rn"

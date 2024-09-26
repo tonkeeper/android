@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.core.history.list.item
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
@@ -11,10 +13,13 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.tonkeeper.core.history.ActionType
+import com.tonapps.tonkeeper.core.history.recipient
+import com.tonapps.tonkeeper.core.history.sender
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import io.tonapi.models.AccountAddress
 import io.tonapi.models.EncryptedComment
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -159,6 +164,38 @@ sealed class HistoryItem(
         }
     }
 
+    @Parcelize
+    data class Account(
+        val address: String,
+        val name: String?,
+        val isWallet: Boolean,
+        val icon: String?,
+        val isScam: Boolean,
+    ): Parcelable {
+
+        constructor(account: AccountAddress, testnet: Boolean) : this(
+            address = account.address.toUserFriendly(
+                wallet = account.isWallet,
+                testnet = testnet,
+            ),
+            name = account.name?.ifPunycodeToUnicode(),
+            isWallet = account.isWallet,
+            icon = account.icon,
+            isScam = account.isScam
+        )
+
+        companion object {
+
+            fun ofSender(action: io.tonapi.models.Action, testnet: Boolean): Account? {
+                return action.sender?.let { Account(it, testnet) }
+            }
+
+            fun ofRecipient(action: io.tonapi.models.Action, testnet: Boolean): Account? {
+                return action.recipient?.let { Account(it, testnet) }
+            }
+        }
+    }
+
     data class Event(
         val index: Int,
         val txId: String,
@@ -182,9 +219,8 @@ sealed class HistoryItem(
         val fee: CharSequence? = null,
         val feeInCurrency: CharSequence? = null,
         val isOut: Boolean,
-        val address: String? = null,
-        val addressName: String? = null,
-        val senderAddress: String? = null,
+        val sender: Account?,
+        val recipient: Account?,
         val lt: Long = 0L,
         val failed: Boolean,
         val hiddenBalance: Boolean = false,
@@ -194,6 +230,9 @@ sealed class HistoryItem(
         val refundInCurrency: CharSequence? = null,
         val wallet: WalletEntity,
     ): HistoryItem(TYPE_ACTION) {
+
+        val account: Account?
+            get() = if (isOut) recipient else sender
 
         @Parcelize
         data class Comment(
@@ -269,9 +308,8 @@ sealed class HistoryItem(
             fee = parcel.readCharSequenceCompat(),
             feeInCurrency = parcel.readCharSequenceCompat(),
             isOut = parcel.readBooleanCompat(),
-            address = parcel.readString(),
-            addressName = parcel.readString(),
-            senderAddress = parcel.readString(),
+            sender = parcel.readParcelableCompat(),
+            recipient = parcel.readParcelableCompat(),
             lt = parcel.readLong(),
             failed = parcel.readBooleanCompat(),
             hiddenBalance = parcel.readBooleanCompat(),
@@ -304,9 +342,8 @@ sealed class HistoryItem(
             dest.writeCharSequenceCompat(fee)
             dest.writeCharSequenceCompat(feeInCurrency)
             dest.writeBooleanCompat(isOut)
-            dest.writeString(address)
-            dest.writeString(addressName)
-            dest.writeString(senderAddress)
+            dest.writeParcelable(sender, flags)
+            dest.writeParcelable(recipient, flags)
             dest.writeLong(lt)
             dest.writeBooleanCompat(failed)
             dest.writeBooleanCompat(hiddenBalance)

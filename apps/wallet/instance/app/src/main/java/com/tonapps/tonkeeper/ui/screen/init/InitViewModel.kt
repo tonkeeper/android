@@ -58,6 +58,7 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.mnemonic.Mnemonic
 import uikit.navigation.Navigation
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.properties.Delegates
 
 @OptIn(FlowPreview::class)
@@ -76,7 +77,7 @@ class InitViewModel(
     private val savedState = InitModelState(savedStateHandle)
     private val type = args.type
     private val testnet: Boolean = type == InitArgs.Type.Testnet
-    private var walletsCount: Int? = null
+    private val walletsCount = AtomicInteger(-1)
 
     private val tonNetwork: TonNetwork
         get() = if (testnet) TonNetwork.TESTNET else TonNetwork.MAINNET
@@ -310,7 +311,7 @@ class InitViewModel(
 
     private suspend fun getDefaultWalletName(): String {
         val count = getWalletsCount()
-        return if (count == 0) {
+        return if (count == 0 && type == InitArgs.Type.New) {
             getString(Localization.app_name)
         } else {
             getString(Localization.wallet) + " " + (count + 1)
@@ -318,8 +319,13 @@ class InitViewModel(
     }
 
     private suspend fun getWalletsCount(): Int {
-        return walletsCount ?: accountRepository.getWallets().size.also {
-            walletsCount = it
+        val count = walletsCount.get()
+        return if (0 > count) {
+            accountRepository.getWallets().size.also {
+                walletsCount.set(it)
+            }
+        } else {
+            count
         }
     }
 

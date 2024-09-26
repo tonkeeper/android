@@ -1,4 +1,13 @@
 <resources>
+    <string name="transaction_expired">İşlem süresi doldu</string>
+    <string name="total">Toplam: %1$s</string>
+    <string name="staking_ready_withdraw">%1$s hazır. Toplamak için dokunun.</string>
+    <string name="staking_pending_deposit">%1$s %2$s\'ye yatırılacak</string>
+    <string name="staking_pending_withdraw">%1$s %2$s içinde çekilecek</string>
+    <string name="staking_unstake_cycle">Paydan çıkarma isteği, %1$s\'deki doğrulama döngüsünün bitiminden sonra işlenecektir.</string>
+    <string name="send_transaction_scroll">Onaylamak için tüm ayrıntıları kontrol edin</string>
+    <string name="send_transaction_detail">Cüzdanınızdan gönderilecek tokenların toplam değeri. İadeler toplam değere dahil değildir.</string>
+    <string name="send_transaction_detail_nft">Cüzdanınızdan gönderilecek tokenların toplam değeri, NFT maliyeti hariç. Geri ödemeler toplam değere dahil değildir.</string>
     <string name="keystone_sign_step1">QR kodunu Keystone ile tarayın</string>
     <string name="keystone_sign_step2">İşleminizi Keystone\'da onaylayın</string>
     <string name="keystone_sign_step3">İmzalı işlem QR kodunu Keystone\'dan tarayın</string>
@@ -119,6 +128,7 @@
     <string name="domain_renew">Alan Adı Yenileme</string>
     <string name="unstake">Stake\'den Çıkar</string>
     <string name="unknown">Bilinmeyen</string>
+    <string name="tonconnect_warning_description">Cüzdanı bağlamadan önce servis adresini kontrol ettiğinizden emin olun.</string>
     <string name="unknown_error">Bilinmeyen hata</string>
     <string name="nft_purchase">NFT Satın Alımı</string>
     <string name="burned">Yakılmış</string>

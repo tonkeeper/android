@@ -115,7 +115,7 @@ class HistoryActionHolder(
         if (item.comment == null || item.isScam) {
             commentView.visibility = View.GONE
         } else {
-            bindComment(item.comment, item.txId, item.senderAddress ?: "")
+            bindComment(item.comment, item.txId, item.sender?.address ?: "")
         }
 
         bindNft(item)

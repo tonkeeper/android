@@ -130,7 +130,7 @@ internal object JsonBuilder {
         val json = JSONObject()
         json.put("name", "ton_addr")
         json.put("address", wallet.accountId)
-        json.put("network", if (wallet.testnet) -3 else -239)
+        json.put("network", (if (wallet.testnet) -3 else -239).toString())
         json.put("publicKey", wallet.publicKey.hex())
         json.put("walletStateInit", stateInit)
         return json

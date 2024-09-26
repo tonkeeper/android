@@ -2,7 +2,9 @@ package com.tonapps.tonkeeper.manager.tonconnect
 
 import android.net.Uri
 import android.os.Parcelable
+import android.util.Log
 import androidx.core.net.toUri
+import com.tonapps.extensions.getMultipleQuery
 import com.tonapps.security.Security
 import com.tonapps.security.hex
 import kotlinx.parcelize.Parcelize
@@ -15,6 +17,7 @@ data class TonConnect(
     val returnUri: Uri?,
     val fromQR: Boolean,
     val jsInject: Boolean,
+    val origin: Uri?
 ): Parcelable {
 
     val proofPayload: String?
@@ -25,13 +28,17 @@ data class TonConnect(
 
     companion object {
 
-        fun fromJsInject(request: ConnectRequest): TonConnect {
+        fun fromJsInject(
+            request: ConnectRequest,
+            webViewUri: Uri?,
+        ): TonConnect {
             return TonConnect(
                 clientId = hex(Security.randomBytes(16)),
                 request = request,
                 returnUri = null,
                 fromQR = false,
-                jsInject = true
+                jsInject = true,
+                origin = webViewUri
             )
         }
 
@@ -80,7 +87,8 @@ data class TonConnect(
                 request = request,
                 returnUri = ret,
                 fromQR = fromQR,
-                jsInject = false
+                jsInject = false,
+                origin = refSource
             )
         }
     }

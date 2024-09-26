@@ -58,7 +58,7 @@ class TonConnectViewModel(
         wallet: WalletEntity,
         app: AppEntity,
         proofPayload: String
-    ) = signUseCase(context, wallet, app.host, proofPayload)
+    ) = signUseCase(context, wallet, app.url.host!!, proofPayload)
 
     fun setWallet(wallet: WalletEntity) {
         val state = _stateFlow.value ?: return

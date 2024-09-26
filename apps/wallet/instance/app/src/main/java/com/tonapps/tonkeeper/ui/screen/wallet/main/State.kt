@@ -17,7 +17,6 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.dapps.entities.AppEntity
-import com.tonapps.wallet.data.push.entities.AppPushEntity
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.localization.Localization
 
@@ -259,9 +258,9 @@ sealed class State {
             }
             uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat))
             uiItems.add(uiItemActions(config))
-            if (!dAppNotifications.isEmpty) {
+            /*if (!dAppNotifications.isEmpty) {
                 uiItems.add(Item.Push(dAppNotifications.notifications, dAppNotifications.apps))
-            }
+            }*/
 
             setup?.let {
                 val setupTypes = createSetupTypes(it)
@@ -276,12 +275,11 @@ sealed class State {
     }
 
     data class DAppNotifications(
-        val notifications: List<AppPushEntity> = emptyList(),
         val apps: List<AppEntity> = emptyList(),
     ): State() {
 
         val isEmpty: Boolean
-            get() = notifications.isEmpty() || apps.isEmpty()
+            get() = apps.isEmpty()
     }
 
     data class Settings(

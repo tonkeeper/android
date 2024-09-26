@@ -1,4 +1,13 @@
 <resources>
+    <string name="transaction_expired">Transaksi telah berakhir</string>
+    <string name="total">Jumlah: %1$s</string>
+    <string name="staking_ready_withdraw">%1$s sudah siap. Ketuk kumpulkan bersama.</string>
+    <string name="staking_pending_deposit">%1$s akan disimpan di %2$s</string>
+    <string name="staking_pending_withdraw">%1$s akan ditarik dalam %2$s</string>
+    <string name="staking_unstake_cycle">Permintaan pembatalan taruhan akan diproses setelah akhir siklus validasi dalam %1$s</string>
+    <string name="send_transaction_scroll">Periksa semua detail untuk konfirmasi</string>
+    <string name="send_transaction_detail">Nilai total token yang akan dikirim dari dompet Anda. Pengembalian dana tidak termasuk dalam nilai total.</string>
+    <string name="send_transaction_detail_nft">Nilai total token, tidak termasuk biaya NFT, yang akan dikirim dari dompet Anda. Pengembalian dana tidak termasuk dalam nilai total.</string>
     <string name="keystone_sign_step1">Pindai kode QR dengan Keystone</string>
     <string name="keystone_sign_step2">Konfirmasikan transaksi Anda di Keystone</string>
     <string name="keystone_sign_step3">Pindai kode QR transaksi yang ditandatangani dari Keystone</string>
@@ -119,6 +128,7 @@
     <string name="domain_renew">Perpanjangan Domain</string>
     <string name="unstake">Lepas Taruhan</string>
     <string name="unknown">Tidak diketahui</string>
+    <string name="tonconnect_warning_description">Pastikan untuk memeriksa alamat layanan sebelum menghubungkan dompet.</string>
     <string name="unknown_error">Kesalahan tidak diketahui</string>
     <string name="nft_purchase">Pembelian NFT</string>
     <string name="burned">Terbakar</string>

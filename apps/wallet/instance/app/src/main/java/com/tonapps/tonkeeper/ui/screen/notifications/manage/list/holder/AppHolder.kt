@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.manage.list.holder
 
+import android.net.Uri
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
@@ -10,7 +11,7 @@ import uikit.widget.SwitchView
 
 class AppHolder(
     parent: ViewGroup,
-    private val onToggleCallback: (String, Boolean) -> Unit
+    private val onToggleCallback: (Uri, Boolean) -> Unit
 ): Holder<Item.App>(parent, R.layout.view_notifications_app) {
 
     private val iconView = findViewById<FrescoView>(R.id.icon)
@@ -30,7 +31,7 @@ class AppHolder(
         pushView.setChecked(item.pushEnabled, false)
         pushView.doCheckedChanged = { isChecked, byUser ->
             if (byUser) {
-                onToggleCallback(item.host, isChecked)
+                onToggleCallback(item.uri, isChecked)
             }
         }
     }

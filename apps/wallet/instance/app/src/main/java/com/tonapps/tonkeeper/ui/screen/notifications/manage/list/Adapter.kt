@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.manage.list
 
+import android.net.Uri
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.holder.AppHolder
 import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.holder.AppsHeaderHolder
@@ -10,7 +11,7 @@ import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
 
 class Adapter(
-    private val onToggleCallback: (String, Boolean) -> Unit
+    private val onToggleCallback: (Uri, Boolean) -> Unit
 ): BaseListAdapter() {
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when(viewType) {

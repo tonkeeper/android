@@ -6,7 +6,12 @@ sealed class SendEvent {
     data class Failed(val throwable: Throwable): SendEvent()
     data object Success: SendEvent()
     data object Loading: SendEvent()
-    data object InsufficientBalance: SendEvent()
+    data class InsufficientBalance(
+        val balance: Coins,
+        val required: Coins,
+        val withRechargeBattery: Boolean,
+        val singleWallet: Boolean
+    ): SendEvent()
     data object Confirm: SendEvent()
     data class Fee(
         val value: Coins,

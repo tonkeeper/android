@@ -1,10 +1,7 @@
 package com.tonapps.tonkeeper.manager.tonconnect
 
-import android.net.Uri
 import android.os.Parcelable
-import androidx.core.net.toUri
 import com.tonapps.extensions.optStringCompat
-import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject

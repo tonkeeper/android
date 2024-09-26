@@ -256,7 +256,7 @@ class AccountRepository(
         label: Wallet.Label,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
-        qr: Boolean,
+        qr: Boolean
     ): List<WalletEntity> {
         val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
         return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type)
@@ -298,7 +298,7 @@ class AccountRepository(
         label: Wallet.Label,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
-        type: Wallet.Type,
+        type: Wallet.Type
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
         for ((index, version) in versions.withIndex()) {

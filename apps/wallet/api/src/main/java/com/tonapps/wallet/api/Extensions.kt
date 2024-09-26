@@ -33,16 +33,17 @@ fun <R> withRetry(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
-            Log.e("TONKeeperLog", "error request", e)
-            if (e is ClientException && e.statusCode != 429 && 500 >= e.statusCode) {
-                return null
-            } else if (e is OkHttpError && e.statusCode != 429 && 500 >= e.statusCode) {
+            val statusCode = when (e) {
+                is ClientException -> e.statusCode
+                is OkHttpError -> e.statusCode
+                else -> 0
+            }
+            if (statusCode == 429) { // Too many requests
+                SystemClock.sleep((3000..5000).random().toLong())
+                return withRetry(times, delay, retryBlock)
+            } else if (statusCode >= 500 || statusCode == 404) {
                 return null
             }
-
-            /*else if (e is InterruptedIOException || e is SocketException) {
-                return null
-            }*/
         }
         SystemClock.sleep(delay)
     }

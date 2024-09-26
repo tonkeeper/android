@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.dapps
 import android.content.Context
 import android.net.Uri
 import androidx.collection.ArrayMap
+import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.API
@@ -33,7 +34,6 @@ import kotlinx.coroutines.withContext
 class DAppsRepository(
     context: Context,
     private val scope: CoroutineScope,
-    private val api: API,
     private val rnLegacy: RNLegacy,
 ) {
 
@@ -77,22 +77,29 @@ class DAppsRepository(
         database.setLastAppRequestId(clientId, requestId)
     }
 
-    fun isPushEnabled(accountId: String, testnet: Boolean, host: String): Boolean {
-        return database.isPushEnabled(accountId, testnet, host)
+    fun isPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri): Boolean {
+        return database.isPushEnabled(accountId, testnet, appUrl)
     }
 
-    fun setPushEnabled(accountId: String, testnet: Boolean, host: String, enabled: Boolean) {
-        database.setPushEnabled(accountId, testnet, host, enabled)
+    fun setPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri, enabled: Boolean): List<AppConnectEntity> {
+        val otherConnections = mutableListOf<AppConnectEntity>()
+        val accountConnections = mutableListOf<AppConnectEntity>()
 
-        val connections = _connectionsFlow.value?.map {
-            if (it.accountId == accountId && it.testnet == testnet && it.host == host) {
-                it.copy(pushEnabled = enabled)
+        for (connection in (_connectionsFlow.value ?: return emptyList())) {
+            if (connection.accountId == accountId && connection.testnet == testnet && connection.appUrl == appUrl) {
+                accountConnections.add(connection.copy(pushEnabled = enabled))
             } else {
-                it
+                otherConnections.add(connection.copy())
             }
-        } ?: return
+        }
 
-        _connectionsFlow.value = connections
+        if (accountConnections.isEmpty()) {
+            return emptyList()
+        }
+
+        database.setPushEnabled(accountId, testnet, appUrl, enabled)
+        _connectionsFlow.value = otherConnections + accountConnections
+        return accountConnections
     }
 
     suspend fun newConnect(connection: AppConnectEntity): Boolean {
@@ -122,18 +129,18 @@ class DAppsRepository(
     suspend fun deleteApp(
         accountId: String,
         testnet: Boolean,
-        host: String,
+        appUrl: Uri,
         type: AppConnectEntity.Type? = null
     ): List<AppConnectEntity> {
         if (type == null) {
             val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.testnet == testnet && it.host == host
+                it.accountId == accountId && it.testnet == testnet && it.appUrl == appUrl
             }
 
             return deleteConnections(predicate)
         } else {
             val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.testnet == testnet && it.host == host && it.type == type
+                it.accountId == accountId && it.testnet == testnet && it.appUrl == appUrl && it.type == type
             }
 
             return deleteConnections(predicate)
@@ -172,42 +179,15 @@ class DAppsRepository(
         }
     }
 
-    suspend fun getApps(hosts: List<String>): List<AppEntity> {
-        return database.getApps(hosts)
+    suspend fun getApps(urls: List<Uri>): List<AppEntity> {
+        return database.getApps(urls)
     }
 
-    suspend fun getManifest(
-        uri: Uri
-    ): AppEntity? = fetchManifest(uri)
-
-    suspend fun getAppByHost(
-        host: String,
-    ): AppEntity? = withContext(Dispatchers.IO) {
-        database.getApp(host) ?: loadAppByHost(host)
-    }
-
-    private suspend fun loadAppByHost(host: String): AppEntity? {
-        for (path in manifestPaths) {
-            val uri = Uri.parse("https://$host/$path")
-            val manifest = fetchManifest(uri)
-            if (manifest != null) {
-                return manifest
-            }
+    suspend fun getApp(url: Uri?): AppEntity? {
+        if (url == null) {
+            return null
         }
-        return null
-    }
-
-    private suspend fun fetchManifest(
-        uri: Uri
-    ): AppEntity? {
-        return try {
-            val response = api.get(uri.toString())
-            val app = AppEntity(response)
-            database.insertApp(app)
-            app
-        } catch (e: Exception) {
-            null
-        }
+        return database.getApp(url)
     }
 
     suspend fun insertApp(app: AppEntity) {
@@ -230,7 +210,7 @@ class DAppsRepository(
         val accountId = connections.address.toRawAddress()
         for (legacyApp in connections.apps) {
             val newApp = AppEntity(
-                url = legacyApp.url.removeSuffix("/"),
+                url = legacyApp.url.toUri(),
                 name = legacyApp.name,
                 iconUrl = legacyApp.icon,
                 empty = false,
@@ -242,7 +222,7 @@ class DAppsRepository(
                     testnet = testnet,
                     clientId = legacyConnections.clientId,
                     type = if (legacyConnections.type == "remote") AppConnectEntity.Type.External else AppConnectEntity.Type.Internal,
-                    host = newApp.host,
+                    appUrl = newApp.url,
                     keyPair = legacyConnections.keyPair,
                     proofSignature = null,
                     proofPayload = null,
@@ -254,9 +234,9 @@ class DAppsRepository(
     }
 
     private suspend fun addToLegacy(connections: List<AppConnectEntity>) {
-        val hosts = connections.map { it.host }.distinct()
-        val apps = getApps(hosts)
-        val appsMap = apps.associateBy { it.host }
+        val appUrls = connections.map { it.appUrl }.distinct()
+        val apps = getApps(appUrls)
+        val appsMap = apps.associateBy { it.url }
 
         val (mainnetConnections, testnetConnections) = LegacyHelper.sortByNetworkAndAccount(connections)
 
@@ -272,24 +252,24 @@ class DAppsRepository(
     private fun addToLegacyCreateApps(
         connectionsMap: ArrayMap<String, List<AppConnectEntity>>,
         testnet: Boolean,
-        appsMap: Map<String, AppEntity>
+        appsMap: Map<Uri, AppEntity>
     ): List<RNTCApps> {
         val legacyApps = mutableListOf<RNTCApps>()
 
         for ((accountId, connections) in connectionsMap) {
-            val connectionsByHost = LegacyHelper.sortByHost(connections)
+            val connectionsByAppUrls = LegacyHelper.sortByUrl(connections)
             val legacyAccountApps = mutableListOf<RNTCApp>()
 
-            for ((host, hostConnections) in connectionsByHost) {
-                val app = appsMap[host] ?: continue
-                val notificationsEnabled = isPushEnabled(accountId, testnet, host)
+            for ((appUrl, appUrlConnections) in connectionsByAppUrls) {
+                val app = appsMap[appUrl] ?: continue
+                val notificationsEnabled = isPushEnabled(accountId, testnet, appUrl)
                 val legacyConnections = mutableListOf<RNTCConnection>()
-                for (hostConnection in hostConnections) {
-                    legacyConnections.add(LegacyHelper.createConnection(hostConnection))
+                for (appUrlConnection in appUrlConnections) {
+                    legacyConnections.add(LegacyHelper.createConnection(appUrlConnection))
                 }
                 legacyAccountApps.add(RNTCApp(
                     name = app.name,
-                    url = app.url,
+                    url = app.url.toString(),
                     icon = app.iconUrl,
                     notificationsEnabled = notificationsEnabled,
                     connections = legacyConnections.toList()

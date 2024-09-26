@@ -11,6 +11,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.short4
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -21,6 +22,7 @@ import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
+import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
@@ -69,6 +71,10 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         val drawable = requireContext().drawable(UIKitIcon.ic_lock_16)
         drawable.setTint(requireContext().accentGreenColor)
         drawable
+    }
+
+    private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
+        InsufficientFundsDialog(requireContext())
     }
 
     private lateinit var slidesView: SlideBetweenView
@@ -330,7 +336,15 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> setLoading()
             is SendEvent.Fee -> setFee(event)
-            is SendEvent.InsufficientBalance -> showInsufficientBalance()
+            is SendEvent.InsufficientBalance -> {
+                insufficientFundsDialog.show(
+                    wallet = wallet,
+                    balance = event.balance,
+                    required = event.required,
+                    withRechargeBattery = event.withRechargeBattery,
+                    singleWallet = event.singleWallet
+                )
+            }
             is SendEvent.Confirm -> slidesView.next()
         }
     }
@@ -339,10 +353,6 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         setFee(null)
         addressInput.hideKeyboard()
         viewModel.next()
-    }
-
-    private fun showInsufficientBalance() {
-        InsufficientBalanceDialog(requireContext()).show()
     }
 
     private fun setLoading() {
@@ -514,16 +524,6 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 )
             )
             return screen
-        }
-
-        private class InsufficientBalanceDialog(
-            context: Context
-        ) : ModalDialog(context, R.layout.dialog_insufficient_balance) {
-
-            init {
-                findViewById<HeaderView>(R.id.header)?.doOnActionClick = { dismiss() }
-                findViewById<View>(R.id.ok)?.setOnClickListener { dismiss() }
-            }
         }
     }
 }

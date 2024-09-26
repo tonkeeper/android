@@ -4,8 +4,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putLong
@@ -36,13 +38,12 @@ internal class DatabaseSource(
         private const val LAST_APP_REQUEST_ID_PREFIX = "last_app_request_id_"
 
         private const val APP_TABLE_NAME = "app"
-        private const val APP_TABLE_HOST_COLUMN = "host"
         private const val APP_TABLE_URL_COLUMN = "url"
         private const val APP_TABLE_NAME_COLUMN = "name"
         private const val APP_TABLE_ICON_URL_COLUMN = "icon_url"
 
         private const val CONNECT_TABLE_NAME = "connect"
-        private const val CONNECT_TABLE_TYPE_HOST_COLUMN = "host"
+        private const val CONNECT_TABLE_APP_URL_COLUMN = "app_url"
         private const val CONNECT_TABLE_ACCOUNT_ID_COLUMN = "account_id"
         private const val CONNECT_TABLE_TESTNET_COLUMN = "testnet"
         private const val CONNECT_TABLE_CLIENT_ID_COLUMN = "client_id"
@@ -56,7 +57,7 @@ internal class DatabaseSource(
         ).joinToString(",")
 
         private val connectFields = arrayOf(
-            CONNECT_TABLE_TYPE_HOST_COLUMN,
+            CONNECT_TABLE_APP_URL_COLUMN,
             CONNECT_TABLE_ACCOUNT_ID_COLUMN,
             CONNECT_TABLE_TESTNET_COLUMN,
             CONNECT_TABLE_CLIENT_ID_COLUMN,
@@ -72,14 +73,13 @@ internal class DatabaseSource(
 
     private fun createAppTable(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $APP_TABLE_NAME (" +
-                "$APP_TABLE_HOST_COLUMN TEXT PRIMARY KEY," +
+                "$APP_TABLE_URL_COLUMN TEXT PRIMARY KEY," +
                 "$APP_TABLE_NAME_COLUMN TEXT," +
-                "$APP_TABLE_ICON_URL_COLUMN TEXT," +
-                "$APP_TABLE_URL_COLUMN TEXT" +
+                "$APP_TABLE_ICON_URL_COLUMN TEXT" +
                 ")")
 
         val appIndexPrefix = "idx_$APP_TABLE_NAME"
-        db.execSQL("CREATE UNIQUE INDEX ${appIndexPrefix}_host ON $APP_TABLE_NAME ($APP_TABLE_HOST_COLUMN)")
+        db.execSQL("CREATE UNIQUE INDEX ${appIndexPrefix}_url ON $APP_TABLE_NAME ($APP_TABLE_URL_COLUMN)")
     }
 
     private fun createConnectTable(db: SQLiteDatabase) {
@@ -88,14 +88,14 @@ internal class DatabaseSource(
                 "$CONNECT_TABLE_ACCOUNT_ID_COLUMN TEXT," +
                 "$CONNECT_TABLE_TESTNET_COLUMN INTEGER," +
                 "$CONNECT_TABLE_TYPE_COLUMN INTEGER," +
-                "$CONNECT_TABLE_TYPE_HOST_COLUMN TEXT," +
+                "$CONNECT_TABLE_APP_URL_COLUMN TEXT," +
                 "$CONNECT_TABLE_TIMESTAMP_COLUMN INTEGER" +
                 ")")
 
         val connectIndexPrefix = "idx_$CONNECT_TABLE_NAME"
         db.execSQL("CREATE UNIQUE INDEX ${connectIndexPrefix}_client_id ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_CLIENT_ID_COLUMN)")
         db.execSQL("CREATE INDEX ${connectIndexPrefix}_account_id_testnet ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_ACCOUNT_ID_COLUMN, $CONNECT_TABLE_TESTNET_COLUMN)")
-        db.execSQL("CREATE INDEX ${connectIndexPrefix}_type_host ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_TYPE_COLUMN, $CONNECT_TABLE_TYPE_HOST_COLUMN)")
+        db.execSQL("CREATE INDEX ${connectIndexPrefix}_app_url ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_TYPE_COLUMN, $CONNECT_TABLE_APP_URL_COLUMN)")
     }
 
     override fun create(db: SQLiteDatabase) {
@@ -103,30 +103,31 @@ internal class DatabaseSource(
         createConnectTable(db)
     }
 
-    suspend fun getApps(hosts: List<String>): List<AppEntity> = withContext(coroutineContext) {
-        val placeholders = hosts.joinToString(",") { "?" }
-        val query = "SELECT $appFields FROM $APP_TABLE_NAME WHERE $APP_TABLE_HOST_COLUMN IN ($placeholders)"
-        val cursor = readableDatabase.rawQuery(query, hosts.toTypedArray())
+    suspend fun getApps(urls: List<Uri>): List<AppEntity> = withContext(coroutineContext) {
+        val placeholders = urls.joinToString(",") { "?" }
+        val query = "SELECT $appFields FROM $APP_TABLE_NAME WHERE $APP_TABLE_URL_COLUMN IN ($placeholders)"
+        val cursor = readableDatabase.rawQuery(query, urls.map { it.toString() }.toTypedArray())
         val urlIndex = cursor.getColumnIndex(APP_TABLE_URL_COLUMN)
         val nameIndex = cursor.getColumnIndex(APP_TABLE_NAME_COLUMN)
         val iconUrlIndex = cursor.getColumnIndex(APP_TABLE_ICON_URL_COLUMN)
         val apps = mutableListOf<AppEntity>()
         while (cursor.moveToNext()) {
             apps.add(AppEntity(
-                url = cursor.getString(urlIndex),
+                url = Uri.parse(cursor.getString(urlIndex).removeSuffix("/")),
                 name = cursor.getString(nameIndex),
                 iconUrl = cursor.getString(iconUrlIndex),
                 empty = false
             ))
         }
         cursor.close()
-        val notFoundApps = hosts.filter { host -> apps.none { it.host == host } }
+        val notFoundApps = urls.filter { url -> apps.none { it.url == url } }
         if (notFoundApps.isNotEmpty()) {
-            for (host in notFoundApps) {
+            for (url in notFoundApps) {
+                val domain = url.host ?: "test.ton"
                 apps.add(AppEntity(
-                    url = "https://$host",
-                    name = host.split(".").firstOrNull() ?: host,
-                    iconUrl = "https://$host/favicon.ico",
+                    url = url,
+                    name = domain.split(".").firstOrNull() ?: domain,
+                    iconUrl = "https://$domain/favicon.ico",
                     empty = true
                 ))
             }
@@ -134,15 +135,14 @@ internal class DatabaseSource(
         apps.toList()
     }
 
-    suspend fun getApp(host: String): AppEntity? = withContext(coroutineContext) {
-        getApps(listOf(host)).firstOrNull()
+    suspend fun getApp(url: Uri): AppEntity? = withContext(coroutineContext) {
+        getApps(listOf(url)).firstOrNull()
     }
 
     suspend fun insertApp(appEntity: AppEntity): Boolean = withContext(coroutineContext) {
         try {
             val values = ContentValues()
-            values.put(APP_TABLE_HOST_COLUMN, appEntity.host)
-            values.put(APP_TABLE_URL_COLUMN, appEntity.url)
+            values.put(APP_TABLE_URL_COLUMN, appEntity.url.toString().removeSuffix("/"))
             values.put(APP_TABLE_NAME_COLUMN, appEntity.name)
             values.put(APP_TABLE_ICON_URL_COLUMN, appEntity.iconUrl)
             writableDatabase.insertWithOnConflict(APP_TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
@@ -155,7 +155,7 @@ internal class DatabaseSource(
 
     suspend fun insertConnection(connection: AppConnectEntity) = withContext(coroutineContext) {
         val values = ContentValues()
-        values.put(CONNECT_TABLE_TYPE_HOST_COLUMN, connection.host)
+        values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.toString().removeSuffix("/"))
         values.put(CONNECT_TABLE_ACCOUNT_ID_COLUMN, connection.accountId)
         values.put(CONNECT_TABLE_TESTNET_COLUMN, if (connection.testnet) 1 else 0)
         values.put(CONNECT_TABLE_CLIENT_ID_COLUMN, connection.clientId)
@@ -166,10 +166,10 @@ internal class DatabaseSource(
         val prefix = prefixAccount(connection.accountId, connection.testnet)
         encryptedPrefs.putParcelable(prefixKeyPair(prefix, connection.clientId), connection.keyPair)
         if (connection.proofSignature != null) {
-            encryptedPrefs.putString(prefixProofSignature(prefix, connection.host), connection.proofSignature)
+            encryptedPrefs.putString(prefixProofSignature(prefix, connection.appUrl), connection.proofSignature)
         }
         if (connection.proofPayload != null) {
-            encryptedPrefs.putString(prefixProofPayload(prefix, connection.host), connection.proofPayload)
+            encryptedPrefs.putString(prefixProofPayload(prefix, connection.appUrl), connection.proofPayload)
         }
     }
 
@@ -178,8 +178,8 @@ internal class DatabaseSource(
         encryptedPrefs.edit {
             val prefix = prefixAccount(connection.accountId, connection.testnet)
             remove(prefixKeyPair(prefix, connection.clientId))
-            remove(prefixProofSignature(prefix, connection.host))
-            remove(prefixProofPayload(prefix, connection.host))
+            remove(prefixProofSignature(prefix, connection.appUrl))
+            remove(prefixProofPayload(prefix, connection.appUrl))
         }
         count > 0
     }
@@ -193,7 +193,7 @@ internal class DatabaseSource(
     }
 
     private fun readConnections(cursor: Cursor): List<AppConnectEntity> {
-        val hostIndex = cursor.getColumnIndex(CONNECT_TABLE_TYPE_HOST_COLUMN)
+        val appUrlIndex = cursor.getColumnIndex(CONNECT_TABLE_APP_URL_COLUMN)
         val accountIdIndex = cursor.getColumnIndex(CONNECT_TABLE_ACCOUNT_ID_COLUMN)
         val testnetIndex = cursor.getColumnIndex(CONNECT_TABLE_TESTNET_COLUMN)
         val clientIdIndex = cursor.getColumnIndex(CONNECT_TABLE_CLIENT_ID_COLUMN)
@@ -205,21 +205,21 @@ internal class DatabaseSource(
             val accountId = cursor.getString(accountIdIndex)
             val testnet = cursor.getInt(testnetIndex) == 1
             val clientId = cursor.getString(clientIdIndex)
-            val host = cursor.getString(hostIndex)
+            val appUrl = Uri.parse(cursor.getString(appUrlIndex))
             val prefix = prefixAccount(accountId, testnet)
             val keyPair = encryptedPrefs.getParcelable<CryptoBox.KeyPair>(prefixKeyPair(prefix, clientId)) ?: continue
 
             connections.add(AppConnectEntity(
-                host = host,
+                appUrl = appUrl,
                 accountId = accountId,
                 testnet = testnet,
                 clientId = cursor.getString(clientIdIndex),
                 type = AppConnectEntity.Type.entries.first { it.value == cursor.getInt(typeIndex) },
                 keyPair = keyPair,
-                proofSignature = encryptedPrefs.getString(prefixProofSignature(prefix, host), null),
-                proofPayload = encryptedPrefs.getString(prefixProofPayload(prefix, host), null),
+                proofSignature = encryptedPrefs.getString(prefixProofSignature(prefix, appUrl), null),
+                proofPayload = encryptedPrefs.getString(prefixProofPayload(prefix, appUrl), null),
                 timestamp = cursor.getLong(timestampIndex),
-                pushEnabled = isPushEnabled(accountId, testnet, host)
+                pushEnabled = isPushEnabled(accountId, testnet, appUrl)
             ))
         }
         return connections
@@ -234,23 +234,23 @@ internal class DatabaseSource(
 
     private fun prefixProofSignature(
         prefix: String,
-        host: String
+        appUrl: Uri
     ): String {
-        return "proof_signature_${prefix}_${host}"
+        return "proof_signature_${prefix}_${appUrl}"
     }
 
     private fun prefixProofPayload(
         prefix: String,
-        host: String
+        appUrl: Uri
     ): String {
-        return "proof_payload_${prefix}_${host}"
+        return "proof_payload_${prefix}_${appUrl}"
     }
 
     private fun prefixPush(
         prefix: String,
-        host: String
+        appUrl: Uri
     ): String {
-        return "push_${prefix}_${host}"
+        return "push_${prefix}_${appUrl}"
     }
 
     private fun prefixAccount(
@@ -280,13 +280,13 @@ internal class DatabaseSource(
         }
     }
 
-    internal fun isPushEnabled(accountId: String, testnet: Boolean, host: String): Boolean {
-        return prefs.getBoolean(prefixPush(prefixAccount(accountId, testnet), host), false)
+    internal fun isPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri): Boolean {
+        return prefs.getBoolean(prefixPush(prefixAccount(accountId, testnet), appUrl), false)
     }
 
-    internal fun setPushEnabled(accountId: String, testnet: Boolean, host: String, enabled: Boolean) {
+    internal fun setPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri, enabled: Boolean) {
         prefs.edit {
-            putBoolean(prefixPush(prefixAccount(accountId, testnet), host), enabled)
+            putBoolean(prefixPush(prefixAccount(accountId, testnet), appUrl), enabled)
         }
     }
 

@@ -49,4 +49,7 @@ val ActionType.nameRes: Int
     }
 
 val Action.recipient: AccountAddress?
-    get() = tonTransfer?.recipient ?: jettonTransfer?.recipient ?: nftItemTransfer?.recipient
+    get() = tonTransfer?.recipient ?: jettonTransfer?.recipient ?: nftItemTransfer?.recipient ?: jettonSwap?.userWallet ?: jettonMint?.recipient ?: depositStake?.staker ?: withdrawStake?.staker ?: withdrawStakeRequest?.staker
+
+val Action.sender: AccountAddress?
+    get() = tonTransfer?.sender ?: jettonTransfer?.sender ?: nftItemTransfer?.sender ?: jettonSwap?.userWallet ?: jettonBurn?.sender ?: depositStake?.staker ?: withdrawStake?.staker ?: withdrawStakeRequest?.staker

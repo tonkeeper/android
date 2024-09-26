@@ -21,11 +21,11 @@ class PhraseWords @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val screenHeight = resources.displayMetrics.heightPixels - 108.dp
+        val screenHeight = resources.displayMetrics.heightPixels / 1.2f
         val layoutHeight = measuredHeight
 
         if (layoutHeight > screenHeight) {
-            scale = screenHeight.toFloat() / layoutHeight.toFloat()
+            scale = screenHeight / layoutHeight.toFloat()
             pivotY = 0f
             translationX = measuredWidth * (1 - scale) / 2
         }

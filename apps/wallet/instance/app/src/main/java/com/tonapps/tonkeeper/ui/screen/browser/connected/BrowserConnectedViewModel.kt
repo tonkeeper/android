@@ -19,6 +19,6 @@ class BrowserConnectedViewModel(
     }
 
     fun deleteConnect(app: AppEntity) {
-        tonConnectManager.disconnect(wallet, app.host)
+        tonConnectManager.disconnect(wallet, app.url)
     }
 }

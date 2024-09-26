@@ -22,7 +22,6 @@ import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.WalletCurrency
-import com.tonapps.wallet.data.push.PushManager
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +44,6 @@ class WalletViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val networkMonitor: NetworkMonitor,
-    private val pushManager: PushManager,
     private val screenCacheSource: ScreenCacheSource,
     private val backupRepository: BackupRepository,
     private val ratesRepository: RatesRepository,
@@ -182,10 +180,10 @@ class WalletViewModel(
         combine(
             stateMainFlow,
             alertNotificationsFlow,
-            pushManager.dAppPushFlow,
+            // pushManager.dAppPushFlow,
             _stateSettingsFlow,
             updateWalletSettings,
-        ) { state, alerts, dAppNotifications, settings, _ ->
+        ) { state, alerts, settings, _ ->
             val status = settings.status /* if (settings.status == Status.NoInternet) {
                 settings.status
             } else if (settings.status != Status.SendingTransaction && settings.status != Status.TransactionConfirmed) {
@@ -193,8 +191,6 @@ class WalletViewModel(
             } else {
                 settings.status
             }*/
-
-            val dAppEvents = dAppNotifications ?: emptyList()
 
             val isSetupHidden = settingsRepository.isSetupHidden(state.wallet.id)
             val uiSetup: State.Setup? = if (isSetupHidden) null else {
@@ -215,7 +211,7 @@ class WalletViewModel(
                 status = status,
                 config = settings.config,
                 alerts = alerts,
-                dAppNotifications = State.DAppNotifications(dAppEvents, emptyList()),
+                dAppNotifications = State.DAppNotifications(emptyList()),
                 setup = uiSetup,
                 lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale())
             )

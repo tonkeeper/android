@@ -66,10 +66,10 @@ class SettingsViewModel(
     }
 
     fun signOut() {
+        tonConnectManager.clear(wallet)
         viewModelScope.launch(Dispatchers.IO) {
             AnalyticsHelper.trackEvent("delete_wallet")
             settingsRepository.setPushWallet(wallet.id, false)
-            tonConnectManager.clear(wallet)
             accountRepository.delete(wallet.id)
             withContext(Dispatchers.Main) {
                 finish()

@@ -87,7 +87,7 @@ data class RatesEntity(
         }
 
         val rate = rateValue(token)
-        return value.div(rate, RoundingMode.HALF_DOWN)
+        return value.div(rate, roundingMode = RoundingMode.HALF_DOWN)
     }
 
     fun getRate(token: String): Coins {

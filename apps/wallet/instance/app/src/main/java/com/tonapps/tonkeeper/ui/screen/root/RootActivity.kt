@@ -257,7 +257,7 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun openExternalLink(uri: Uri) {
-        return if (uri.host == "t.me") {
+        return if (uri.host == "t.me" || uri.scheme == "tg") {
             openTelegramLink(uri)
         } else if (uri.scheme == "mailto") {
             openEmail(uri)

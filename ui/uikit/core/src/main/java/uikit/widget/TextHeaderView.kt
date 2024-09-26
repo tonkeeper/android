@@ -12,8 +12,8 @@ class TextHeaderView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : ColumnLayout(context, attrs, defStyle) {
 
-    private val titleView: AppCompatTextView
-    private val descriptionView: AppCompatTextView
+    val titleView: AppCompatTextView
+    val descriptionView: AppCompatTextView
 
     var title: String
         get() = titleView.text.toString()

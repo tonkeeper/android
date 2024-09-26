@@ -60,9 +60,6 @@ class SettingsRepository(
     private val _hiddenBalancesFlow = MutableEffectFlow<Boolean>()
     val hiddenBalancesFlow = _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _firebaseTokenFlow = MutableEffectFlow<String?>()
-    val firebaseTokenFlow = _firebaseTokenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
-
     private val _countryFlow = MutableEffectFlow<String>()
     val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull().map { fixCountryCode(it) }
 
@@ -128,7 +125,6 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putString(FIREBASE_TOKEN_KEY, value).apply()
                 field = value
-                _firebaseTokenFlow.tryEmit(value)
             }
         }
 
@@ -353,7 +349,6 @@ class SettingsRepository(
             _currencyFlow.tryEmit(currency)
             _languageFlow.tryEmit(language)
             _hiddenBalancesFlow.tryEmit(hiddenBalances)
-            _firebaseTokenFlow.tryEmit(firebaseToken)
             _countryFlow.tryEmit(country)
             _searchEngineFlow.tryEmit(searchEngine)
             _biometricFlow.tryEmit(biometric)

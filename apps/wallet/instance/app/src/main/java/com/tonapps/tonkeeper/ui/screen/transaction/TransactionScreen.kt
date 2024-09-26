@@ -157,7 +157,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             feeView.position = ListCell.Position.LAST
         }
 
-        applyAccount(action.isOut, action.senderAddress, action.addressName?.ifPunycodeToUnicode())
+        applyAccount(action.isOut, action.account?.address, action.account?.name)
         applyCurrency(action.currency, action.hiddenBalance)
         applyDate(action.action, action.dateDetails)
 
@@ -241,7 +241,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     }
 
     private fun decryptComment(comment: HistoryItem.Event.Comment) {
-        historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.senderAddress ?: "").catch {
+        historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.sender?.address ?: "").catch {
             context?.logError(it)
             commentView.reject()
         }.onEach {

@@ -1,4 +1,13 @@
 <resources>
+    <string name="transaction_expired">Транзакцията е изтекла</string>
+    <string name="total">Общо: %1$s</string>
+    <string name="staking_ready_withdraw">%1$s готов. Докоснете съвместно събиране.</string>
+    <string name="staking_pending_deposit">%1$s ще бъдат депозирани в %2$s</string>
+    <string name="staking_pending_withdraw">%1$s ще бъде изтеглен след %2$s</string>
+    <string name="staking_unstake_cycle">Заявката за премахване на залагане ще бъде обработена след края на цикъла на валидиране в %1$s</string>
+    <string name="send_transaction_scroll">Проверете всички подробности, за да потвърдите</string>
+    <string name="send_transaction_detail">Общата стойност на токените, които ще бъдат изпратени от вашия портфейл. Възстановяванията не са включени в общата стойност.</string>
+    <string name="send_transaction_detail_nft">Общата стойност на токените, с изключение на цената на NFT, които ще бъдат изпратени от вашия портфейл. Възстановяванията не са включени в общата стойност.</string>
     <string name="keystone_sign_step1">Сканирайте QR кода с Keystone</string>
     <string name="keystone_sign_step2">Потвърдете транзакцията си в Keystone</string>
     <string name="keystone_sign_step3">Сканирайте QR кода на подписаната транзакция от Keystone</string>
@@ -138,6 +147,7 @@
     <string name="domain_renew">Подновяване на домейн</string>
     <string name="unstake">Изтегляне на стейк</string>
     <string name="unknown">Неизвестно</string>
+    <string name="tonconnect_warning_description">Не забравяйте да проверите адреса на услугата, преди да свържете портфейла.</string>
     <string name="unknown_error">Неизвестна грешка</string>
     <string name="nft_purchase">Покупка на NFT</string>
     <string name="burned">Изгорено</string>

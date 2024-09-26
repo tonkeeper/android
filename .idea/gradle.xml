@@ -41,7 +41,6 @@
             <option value="$PROJECT_DIR$/apps/wallet/data/events" />
             <option value="$PROJECT_DIR$/apps/wallet/data/passcode" />
             <option value="$PROJECT_DIR$/apps/wallet/data/purchase" />
-            <option value="$PROJECT_DIR$/apps/wallet/data/push" />
             <option value="$PROJECT_DIR$/apps/wallet/data/rates" />
             <option value="$PROJECT_DIR$/apps/wallet/data/rn" />
             <option value="$PROJECT_DIR$/apps/wallet/data/settings" />

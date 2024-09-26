@@ -69,7 +69,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
     private val rootViewModel: RootViewModel by activityViewModel()
 
     override val viewModel: DAppViewModel by walletViewModel {
-        parametersOf(args.host)
+        parametersOf(args.url)
     }
 
     private val currentUrl: String
@@ -79,11 +79,15 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
             val refererUri = request.requestHeaders?.get("Referer")?.toUri()
             val url = request.url.normalizeTONSites()
-            if (!url.toString().startsWith("https") || url.host == "t.me") {
-                navigation?.openURL(url.toString())
+            val scheme = url.scheme ?: ""
+            if (scheme == "https") {
+                return false
+            }
+            if (rootViewModel.processDeepLink(url, false, refererUri)) {
                 return true
             }
-            return rootViewModel.processDeepLink(url, false, refererUri)
+            navigation?.openURL(url.toString())
+            return true
         }
 
         override fun onPageStarted(url: String, favicon: Bitmap?) {
@@ -279,7 +283,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
         return tonConnectManager.launchConnectFlow(
             activity = activity,
-            tonConnect = TonConnect.fromJsInject(request),
+            tonConnect = TonConnect.fromJsInject(request, webView.url?.toUri()),
             wallet = wallet
         )
     }

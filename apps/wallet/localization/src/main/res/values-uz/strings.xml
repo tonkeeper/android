@@ -1,4 +1,13 @@
 <resources>
+    <string name="transaction_expired">Tranzaksiya muddati tugadi</string>
+    <string name="total">Jami: %1$s</string>
+    <string name="staking_ready_withdraw">%1$s tayyor. Birgalikda yig\'ish-ga teging.</string>
+    <string name="staking_pending_deposit">%1$s %2$s da saqlanadi</string>
+    <string name="staking_pending_withdraw">%1$s %2$s ichida yechib olinadi</string>
+    <string name="staking_unstake_cycle">Toʻlovni bekor qilish soʻrovi %1$s da tekshirish davri tugaganidan keyin koʻrib chiqiladi</string>
+    <string name="send_transaction_scroll">Tasdiqlash uchun barcha tafsilotlarni tekshiring</string>
+    <string name="send_transaction_detail">Hamyoningizdan yuboriladigan tokenlarning umumiy qiymati. To\'lovlar umumiy qiymatga kiritilmagan.</string>
+    <string name="send_transaction_detail_nft">Hamyoningizdan yuboriladigan tokenlarning umumiy qiymati, NFT narxidan tashqari. To\'lovlar umumiy qiymatga kiritilmagan.</string>
     <string name="keystone_sign_step1">QR kodni Keystone bilan skanerlang</string>
     <string name="keystone_sign_step2">Tranzaksiyani Keystone da tasdiqlang</string>
     <string name="keystone_sign_step3">Keystone’dan imzolangan tranzaksiya QR kodini skanerlang</string>
@@ -119,6 +128,7 @@
     <string name="domain_renew">Domenni yangilash</string>
     <string name="unstake">Unstake</string>
     <string name="unknown">Noma\'lum</string>
+    <string name="tonconnect_warning_description">Hamyonni ulashdan oldin xizmat manzilini tekshiring.</string>
     <string name="unknown_error">Noma\'lum xato</string>
     <string name="nft_purchase">NFT sotib olish</string>
     <string name="burned">Yondirilgan</string>

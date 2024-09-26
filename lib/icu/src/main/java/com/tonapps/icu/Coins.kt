@@ -180,17 +180,21 @@ data class Coins(
         return of(value.multiply(other.value), decimals)
     }
 
-    fun div(other: Coins, roundingMode: RoundingMode = RoundingMode.HALF_UP): Coins {
+    fun div(
+        other: Coins,
+        scale: Int = decimals,
+        roundingMode: RoundingMode = RoundingMode.HALF_UP
+    ): Coins {
         try {
-            val result = value.divide(other.value, decimals, roundingMode)
-            return of(result, decimals)
+            val result = value.divide(other.value, scale, roundingMode)
+            return of(result, scale)
         } catch (e: Throwable) {
             return ZERO
         }
     }
 
     operator fun div(other: Coins): Coins {
-        return div(other, RoundingMode.HALF_UP)
+        return div(other)
     }
 
     operator fun rem(other: Coins) = of(value.remainder(other.value), decimals)
@@ -202,6 +206,8 @@ data class Coins(
     fun multiply(other: Coins) = of(value.multiply(other.value), decimals)
 
     fun multiply(other: BigDecimal) = of(value.multiply(other), decimals)
+
+    fun multiply(other: String) = of(value.multiply(BigDecimal(other)), decimals)
 
     fun divide(divisor: Coins, roundingMode: RoundingMode = RoundingMode.HALF_DOWN) = of(value.divide(divisor.value, roundingMode))
 
@@ -227,6 +233,10 @@ data class Coins(
             .multiply(BigDecimal("100"))
             .setScale(2, RoundingMode.HALF_UP)
         return percentage.toFloat()
+    }
+
+    fun setScale(scale: Int, roundingMode: RoundingMode = RoundingMode.HALF_UP): Coins {
+        return of(value.setScale(scale, roundingMode), scale)
     }
 
     override fun describeContents(): Int {

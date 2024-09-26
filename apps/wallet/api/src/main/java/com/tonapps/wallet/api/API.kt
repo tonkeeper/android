@@ -501,12 +501,16 @@ class API(
         clientId: String,
         body: String
     ) {
-        val mimeType = "text/plain".toMediaType()
-        val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
-        val response = tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
-        if (!response.isSuccessful) {
-            throw Exception("Failed sending event[code=${response.code};body=${response.body?.string()}]")
-        }
+        try {
+            val mimeType = "text/plain".toMediaType()
+            val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
+            val response = withRetry {
+                tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
+            } ?: throw Exception("Empty response")
+            if (!response.isSuccessful) {
+                throw Exception("Failed sending event[code=${response.code};body=${response.body?.string()}]")
+            }
+        } catch (e: Throwable) { }
     }
 
     fun estimateGaslessCost(

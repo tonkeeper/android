@@ -2,7 +2,7 @@
 <uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_content_tint_16"
+    android:background="@drawable/bg_content_20"
     android:layout_margin="@dimen/offsetMedium"
     android:padding="@dimen/offsetMedium">
 
@@ -37,6 +37,7 @@
                 android:layout_height="36dp"
                 android:paddingVertical="0dp"
                 android:gravity="center"
+                android:background="@drawable/bg_button_green_18"
                 android:text="@string/w5_about_button"
                 android:textAppearance="@style/TextAppearance.Label2"
                 android:textColor="?attr/textPrimaryColor"/>
@@ -48,6 +49,7 @@
                 android:layout_height="36dp"
                 android:layout_marginLeft="8dp"
                 android:paddingVertical="0dp"
+                android:background="@drawable/bg_button_tertiary_18"
                 android:gravity="center"
                 android:text="@string/hide"
                 android:textAppearance="@style/TextAppearance.Label2"

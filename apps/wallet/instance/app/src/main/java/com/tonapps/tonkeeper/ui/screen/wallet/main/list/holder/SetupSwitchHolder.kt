@@ -12,12 +12,15 @@ import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.passcodeManager
+import com.tonapps.tonkeeper.koin.pushManager
 import com.tonapps.tonkeeper.koin.rnLegacy
 import com.tonapps.tonkeeper.koin.settingsRepository
+import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.stateList
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import uikit.extensions.activity
@@ -29,6 +32,7 @@ import uikit.widget.SwitchView
 class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.layout.view_wallet_setup_switch) {
 
     private val settingsRepository = context.settingsRepository
+    private val pushManager = context.pushManager
     private val passcodeManager = context.passcodeManager
     private val rnLegacy = context.rnLegacy
 
@@ -47,7 +51,7 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
         switchView.doCheckedChanged = { checked, byUser ->
             if (byUser) {
                 if (item.settingsType == Item.SetupSwitch.TYPE_PUSH) {
-                    togglePush(item.walletId, checked)
+                    togglePush(item.wallet, checked)
                 } else if (item.settingsType == Item.SetupSwitch.TYPE_BIOMETRIC) {
                     toggleBiometric(checked)
                 }
@@ -59,14 +63,14 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
         switchView.setChecked(item.enabled, false)
     }
 
-    private fun togglePush(walletId: String, enable: Boolean) {
+    private fun togglePush(wallet: WalletEntity, enable: Boolean) {
         if (!enable) {
-            settingsRepository?.setPushWallet(walletId, false)
+            pushManager?.walletAsync(wallet, PushManager.State.Disable)
             return
         }
 
         if (context.hasPushPermission()) {
-            settingsRepository?.setPushWallet(walletId, true)
+            pushManager?.walletAsync(wallet, PushManager.State.Enable)
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val activity = context.activity ?: return
             switchView.setChecked(newChecked = false, byUser = false)

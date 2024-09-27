@@ -2,11 +2,11 @@ package uikit.widget
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.extensions.dp
-import uikit.extensions.pivot
 import uikit.extensions.scale
 
 class PhraseWords @JvmOverloads constructor(
@@ -21,14 +21,18 @@ class PhraseWords @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val screenHeight = resources.displayMetrics.heightPixels / 1.2f
-        val layoutHeight = measuredHeight
+        val isSmall = 1280 >= context.resources.displayMetrics.heightPixels
+        scale = if (isSmall) {
+            0.8f
+        } else {
+            1f
+        }
 
-        if (layoutHeight > screenHeight) {
+        /*if (layoutHeight > screenHeight) {
             scale = screenHeight / layoutHeight.toFloat()
             pivotY = 0f
             translationX = measuredWidth * (1 - scale) / 2
-        }
+        }*/
     }
 
     fun setWords(words: Array<String>) {

@@ -1,8 +1,8 @@
-package com.tonapps.tonkeeper.ui.screen.notifications.manage.list.holder
+package com.tonapps.tonkeeper.ui.screen.notifications.list.holder
 
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
-import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
+import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.uikit.list.BaseListHolder
 
 abstract class Holder<I: Item>(

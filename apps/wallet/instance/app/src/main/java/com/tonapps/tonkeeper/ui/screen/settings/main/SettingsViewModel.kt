@@ -8,6 +8,7 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
+import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
@@ -42,6 +43,7 @@ class SettingsViewModel(
     private val backupRepository: BackupRepository,
     private val tonConnectManager: TonConnectManager,
     private val passcodeManager: PasscodeManager,
+    private val pushManager: PushManager,
     private val rnLegacy: RNLegacy,
 ): BaseWalletVM(application) {
 
@@ -67,9 +69,9 @@ class SettingsViewModel(
 
     fun signOut() {
         tonConnectManager.clear(wallet)
+        pushManager.walletAsync(wallet, PushManager.State.Delete)
         viewModelScope.launch(Dispatchers.IO) {
             AnalyticsHelper.trackEvent("delete_wallet")
-            settingsRepository.setPushWallet(wallet.id, false)
             accountRepository.delete(wallet.id)
             withContext(Dispatchers.Main) {
                 finish()

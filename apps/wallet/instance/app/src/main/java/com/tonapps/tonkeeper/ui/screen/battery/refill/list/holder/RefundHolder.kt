@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.net.toUri
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
@@ -24,7 +25,7 @@ class RefundHolder(
         itemView.background = ListCell.Position.SINGLE.drawable(context)
         itemView.setOnClickListener {
             context.activity?.onBackPressed()
-            navigation?.add(DAppScreen.newInstance(wallet = item.wallet, url = item.refundUrl))
+            navigation?.add(DAppScreen.newInstance(wallet = item.wallet, url = item.refundUrl.toUri()))
         }
         refundImageView.visibility = View.VISIBLE
         titleView.text = context.getString(Localization.battery_refund_title)

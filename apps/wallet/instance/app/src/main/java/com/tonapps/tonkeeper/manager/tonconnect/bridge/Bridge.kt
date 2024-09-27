@@ -60,8 +60,9 @@ internal class Bridge(private val api: API) {
         wallet: WalletEntity,
         proof: TONProof.Result?,
         proofError: BridgeError?,
+        appVersion: String,
     ): String {
-        val message = JsonBuilder.connectEventSuccess(wallet, proof, proofError).toString()
+        val message = JsonBuilder.connectEventSuccess(wallet, proof, proofError, appVersion).toString()
         send(connection, message)
         return message
     }

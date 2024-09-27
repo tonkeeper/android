@@ -6,6 +6,7 @@ import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.withoutQuery
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
@@ -69,6 +70,22 @@ class DAppsRepository(
         }.flowOn(Dispatchers.IO).launchIn(scope)
     }
 
+    suspend fun getConnections(
+        accountId: String,
+        testnet: Boolean
+    ): ArrayMap<AppEntity, List<AppConnectEntity>> {
+        val connections = (_connectionsFlow.value ?: emptyList()).filter {
+            it.accountId == accountId && it.testnet == testnet
+        }
+        val map = connections.groupBy { it.appUrl.withoutQuery }
+        val apps = getApps(map.keys.toList())
+        val result = ArrayMap<AppEntity, List<AppConnectEntity>>()
+        for (app in apps) {
+            result[app] = map[app.url] ?: emptyList()
+        }
+        return result
+    }
+
     fun getLastAppRequestId(clientId: String): Long {
         return database.getLastAppRequestId(clientId)
     }
@@ -78,7 +95,7 @@ class DAppsRepository(
     }
 
     fun isPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri): Boolean {
-        return database.isPushEnabled(accountId, testnet, appUrl)
+        return database.isPushEnabled(accountId, testnet, appUrl.withoutQuery)
     }
 
     fun setPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri, enabled: Boolean): List<AppConnectEntity> {
@@ -86,7 +103,7 @@ class DAppsRepository(
         val accountConnections = mutableListOf<AppConnectEntity>()
 
         for (connection in (_connectionsFlow.value ?: return emptyList())) {
-            if (connection.accountId == accountId && connection.testnet == testnet && connection.appUrl == appUrl) {
+            if (connection.accountId == accountId && connection.testnet == testnet && connection.appUrl.withoutQuery == appUrl.withoutQuery) {
                 accountConnections.add(connection.copy(pushEnabled = enabled))
             } else {
                 otherConnections.add(connection.copy())
@@ -134,13 +151,13 @@ class DAppsRepository(
     ): List<AppConnectEntity> {
         if (type == null) {
             val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.testnet == testnet && it.appUrl == appUrl
+                it.accountId == accountId && it.testnet == testnet && it.appUrl.withoutQuery == appUrl.withoutQuery
             }
 
             return deleteConnections(predicate)
         } else {
             val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.testnet == testnet && it.appUrl == appUrl && it.type == type
+                it.accountId == accountId && it.testnet == testnet && it.appUrl.withoutQuery == appUrl.withoutQuery && it.type == type
             }
 
             return deleteConnections(predicate)
@@ -181,13 +198,6 @@ class DAppsRepository(
 
     suspend fun getApps(urls: List<Uri>): List<AppEntity> {
         return database.getApps(urls)
-    }
-
-    suspend fun getApp(url: Uri?): AppEntity? {
-        if (url == null) {
-            return null
-        }
-        return database.getApp(url)
     }
 
     suspend fun insertApp(app: AppEntity) {
@@ -234,7 +244,7 @@ class DAppsRepository(
     }
 
     private suspend fun addToLegacy(connections: List<AppConnectEntity>) {
-        val appUrls = connections.map { it.appUrl }.distinct()
+        val appUrls = connections.map { it.appUrl.withoutQuery }.distinct()
         val apps = getApps(appUrls)
         val appsMap = apps.associateBy { it.url }
 

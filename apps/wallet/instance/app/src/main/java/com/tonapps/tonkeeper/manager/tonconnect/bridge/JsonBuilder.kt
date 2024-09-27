@@ -50,11 +50,12 @@ internal object JsonBuilder {
         wallet: WalletEntity,
         proof: TONProof.Result?,
         proofError: BridgeError?,
+        appVersion: String
     ): JSONObject {
         val json = JSONObject()
         json.put("event", "connect")
         json.put("id", System.currentTimeMillis())
-        json.put("payload", payload(wallet, proof, proofError))
+        json.put("payload", payload(wallet, proof, proofError, appVersion))
         return json
     }
 
@@ -69,11 +70,12 @@ internal object JsonBuilder {
     private fun payload(
         wallet: WalletEntity,
         proof: TONProof.Result?,
-        proofError: BridgeError?
+        proofError: BridgeError?,
+        appVersion: String,
     ): JSONObject {
         val json = JSONObject()
         json.put("items", payloadItems(wallet, proof, proofError))
-        json.put("device", device(wallet.maxMessages))
+        json.put("device", device(wallet.maxMessages, appVersion))
         return json
     }
 
@@ -136,11 +138,11 @@ internal object JsonBuilder {
         return json
     }
 
-    fun device(maxMessages: Int): JSONObject {
+    fun device(maxMessages: Int, appVersion: String): JSONObject {
         val json = JSONObject()
         json.put("platform", "android")
         json.put("appName", "Tonkeeper")
-        json.put("appVersion", "4.10.1")
+        json.put("appVersion", appVersion)
         json.put("maxProtocolVersion", 2)
         json.put("features", features(maxMessages))
         return json

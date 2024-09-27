@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.notifications.manage.list
+package com.tonapps.tonkeeper.ui.screen.notifications.list
 
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem

@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
@@ -109,8 +110,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         if (nftEntity.isDomain && nftEntity.metadata.buttons.isEmpty()) {
             val url = Uri.parse("https://dns.tonkeeper.com/manage?v=${nftEntity.userFriendlyAddress}")
             val dAppArgs = DAppArgs(
-                host = "dns.tonkeeper.com",
-                url = url.toString()
+                url = url
             )
             domainLinkButton.setOnClickListener {
                 navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))
@@ -190,7 +190,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     }
 
     private fun mustOpenButtonDApp(url: String) {
-        navigation?.add(DAppScreen.newInstance(wallet, url = url))
+        navigation?.add(DAppScreen.newInstance(wallet, url = url.toUri()))
         finish()
     }
 

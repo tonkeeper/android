@@ -35,3 +35,6 @@ fun Uri.getMultipleQuery(vararg keys: String): String? {
     }
     return null
 }
+
+val Uri.withoutQuery: Uri
+    get() = buildUpon().clearQuery().build()

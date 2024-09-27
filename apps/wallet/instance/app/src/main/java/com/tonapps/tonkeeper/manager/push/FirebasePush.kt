@@ -1,28 +1,21 @@
 package com.tonapps.tonkeeper.manager.push
 
-import android.content.Intent
-import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
-import com.google.firebase.messaging.RemoteMessage
+import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.koin.android.ext.android.inject
 import kotlin.coroutines.resume
 
 class FirebasePush: FirebaseMessagingService() {
 
-    override fun onMessageReceived(message: RemoteMessage) {
-        super.onMessageReceived(message)
-        Log.d("FirebasePushLog", "onMessageReceived: ${message.data}")
-    }
+    private val settingsRepository: SettingsRepository by inject()
+    private val pushManager: PushManager by inject()
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d("FirebasePushLog", "onNewToken: $token")
-    }
-
-    override fun handleIntent(intent: Intent?) {
-        super.handleIntent(intent)
-        Log.d("FirebasePushLog", "handleIntent: ${intent?.extras}")
+        settingsRepository.firebaseToken = token
+        pushManager.newFirebaseToken()
     }
 
     companion object {

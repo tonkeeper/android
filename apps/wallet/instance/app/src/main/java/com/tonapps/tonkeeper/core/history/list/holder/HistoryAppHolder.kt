@@ -1,8 +1,8 @@
 package com.tonapps.tonkeeper.core.history.list.holder
 
-import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.net.toUri
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
@@ -29,8 +29,7 @@ class HistoryAppHolder(
                 DAppScreen.newInstance(
                     wallet = item.wallet,
                     title = item.title,
-                    host = item.host,
-                    url = item.deepLink
+                    url = item.deepLink.toUri()
             ))
         }
         imageView.setImageURI(item.iconUri, this)

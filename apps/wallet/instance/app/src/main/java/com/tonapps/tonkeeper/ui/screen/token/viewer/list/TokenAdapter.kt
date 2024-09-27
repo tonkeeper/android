@@ -9,14 +9,17 @@ import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.W5BannerHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
+import com.tonapps.wallet.data.settings.ChartPeriod
 
-class TokenAdapter: BaseListAdapter() {
+class TokenAdapter(
+    private val chartPeriodCallback: (ChartPeriod) -> Unit,
+): BaseListAdapter() {
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when(viewType) {
             Item.TYPE_BALANCE -> BalanceHolder(parent)
             Item.TYPE_ACTIONS -> ActionsHolder(parent)
             Item.TYPE_PRICE -> PriceHolder(parent)
-            Item.TYPE_CHART -> ChartHolder(parent)
+            Item.TYPE_CHART -> ChartHolder(parent, chartPeriodCallback)
             Item.TYPE_W5_BANNER -> W5BannerHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }

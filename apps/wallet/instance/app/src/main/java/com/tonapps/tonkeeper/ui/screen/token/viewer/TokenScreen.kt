@@ -38,7 +38,10 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
 
     override val viewModel: TokenViewModel by walletViewModel { parametersOf(args.address) }
 
-    private val tokenAdapter = TokenAdapter()
+    private val tokenAdapter = TokenAdapter {
+        viewModel.setChartPeriod(it)
+    }
+
     private val historyAdapter = HistoryAdapter()
     private val paginationListener = object : ListPaginationListener() {
         override fun onLoadMore() {

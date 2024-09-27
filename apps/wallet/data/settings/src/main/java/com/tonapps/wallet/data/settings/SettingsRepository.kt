@@ -49,6 +49,7 @@ class SettingsRepository(
         private const val SEARCH_ENGINE_KEY = "search_engine"
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
+        private const val CHART_PERIOD_KEY = "chart_period"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -109,6 +110,14 @@ class SettingsRepository(
                 prefs.edit().putString(THEME_KEY, value.key).apply()
                 field = value
                 migrationHelper.setLegacyTheme(value)
+            }
+        }
+
+    var chartPeriod: ChartPeriod = ChartPeriod.of(prefs.getString(CHART_PERIOD_KEY, ""))
+        set(value) {
+            if (value != field) {
+                prefs.edit().putString(CHART_PERIOD_KEY, value.value).apply()
+                field = value
             }
         }
 

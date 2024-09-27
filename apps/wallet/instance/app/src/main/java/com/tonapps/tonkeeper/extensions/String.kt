@@ -62,10 +62,6 @@ fun String.isVersionLowerThan(other: String): Boolean {
     return false // Versions are equal
 }
 
-fun String.normalizeTONSites(): String {
-    return toUri().normalizeTONSites().toString()
-}
-
 fun String.withVerificationIcon(context: Context): CharSequence {
     val drawable = context.drawable(UIKitIcon.ic_verification_16)
     drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)

@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
@@ -63,7 +64,6 @@ class RootActivity: BaseWalletActivity() {
     private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d("RootViewModelLog", "RootActivity.onCreate")
         setTheme(viewModel.theme.resId)
         supportFragmentManager.fragmentFactory = WalletFragmentFactory()
         super.onCreate(savedInstanceState)
@@ -151,7 +151,7 @@ class RootActivity: BaseWalletActivity() {
             is RootEvent.Toast -> toast(event.resId)
             is RootEvent.Singer -> add(InitScreen.newInstance(if (event.qr) InitArgs.Type.SignerQR else InitArgs.Type.Signer, event.publicKey, event.name))
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
-            is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
+            is RootEvent.Browser -> add(DAppScreen.newInstance(event.wallet, url = event.uri))
             is RootEvent.Transfer -> openSend(
                 targetAddress = event.address,
                 tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,

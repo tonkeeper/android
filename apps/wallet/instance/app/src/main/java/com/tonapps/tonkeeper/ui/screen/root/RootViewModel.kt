@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.viewModelScope
@@ -11,6 +12,7 @@ import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.getQueryLong
 import com.tonapps.extensions.setLocales
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -330,6 +332,12 @@ class RootViewModel(
                 showTransaction(accountAddress, actionId)
             }
         } else if (path?.startsWith("/transfer/") == true) {
+            val exp = uri.getQueryLong("exp") ?: 0
+            if (exp > 0 && exp < System.currentTimeMillis() / 1000) {
+                toast(Localization.transaction_expired)
+                return
+            }
+
             _eventFlow.tryEmit(RootEvent.Transfer(
                 wallet = wallet,
                 address = uri.pathSegments.last(),
@@ -359,6 +367,9 @@ class RootViewModel(
             _eventFlow.tryEmit(RootEvent.BuyOrSell(wallet, method))
         } else if (path?.startsWith("/backups") == true) {
             _eventFlow.tryEmit(RootEvent.OpenBackups(wallet))
+        } else if (path?.startsWith("/dapp") == true) {
+            val dAppUrl = uri.toString().replace("https://app.tonkeeper.com/dapp/", "https://")
+            _eventFlow.tryEmit(RootEvent.Browser(wallet, Uri.parse(dAppUrl)))
         } else {
             toast(Localization.invalid_link)
         }

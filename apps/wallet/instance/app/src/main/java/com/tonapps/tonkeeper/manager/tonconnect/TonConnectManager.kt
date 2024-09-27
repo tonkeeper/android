@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.proof.TONProof
+import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.flat
 import com.tonapps.extensions.mapList
@@ -221,7 +222,8 @@ class TonConnectManager(
             JsonBuilder.connectEventSuccess(
                 wallet = response.wallet,
                 proof = response.proof,
-                proofError = response.proofError
+                proofError = response.proofError,
+                activity.appVersionName
             )
         } catch (e: CancellationException) {
             JsonBuilder.connectEventError(BridgeError.USER_DECLINED_TRANSACTION)

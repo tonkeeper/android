@@ -6,6 +6,7 @@ import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.settings.ChartPeriod
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -53,7 +54,8 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data class Chart(
         val data: List<ChartEntity>,
-        val square: Boolean
+        val square: Boolean,
+        val period: ChartPeriod,
     ): Item(TYPE_CHART)
 
     data class W5Banner(

@@ -1,16 +1,12 @@
-package com.tonapps.tonkeeper.ui.screen.notifications.manage
+package com.tonapps.tonkeeper.ui.screen.notifications
 
 import android.os.Bundle
 import android.view.View
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
-import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
-import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Adapter
+import com.tonapps.tonkeeper.ui.screen.notifications.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
@@ -20,9 +16,11 @@ class NotificationsManageScreen(wallet: WalletEntity): WalletContextScreen(R.lay
 
     override val viewModel: NotificationsManageViewModel by walletViewModel()
 
-    private val adapter = Adapter { url, enabled ->
-        viewModel.enabledPush(url, enabled)
-    }
+    private val adapter = Adapter({ wallet, enabled ->
+        viewModel.toggleWalletPush(wallet, enabled)
+    }, { url, enabled ->
+        viewModel.toggleDAppPush(url, enabled)
+    })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

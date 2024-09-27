@@ -1,11 +1,12 @@
-package com.tonapps.tonkeeper.ui.screen.notifications.manage
+package com.tonapps.tonkeeper.ui.screen.notifications
 
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.screen.notifications.manage.list.Item
+import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -19,11 +20,13 @@ class NotificationsManageViewModel(
     private val wallet: WalletEntity,
     private val tonConnectManager: TonConnectManager,
     private val settingsRepository: SettingsRepository,
+    private val pushManager: PushManager,
 ): BaseWalletVM(app) {
 
     val uiItemsFlow = tonConnectManager.walletAppsFlow(wallet).map { apps ->
         val uiItems = mutableListOf<Item>()
-        uiItems.add(Item.Wallet(
+        uiItems.add(
+            Item.Wallet(
             wallet = wallet,
             pushEnabled = settingsRepository.getPushWallet(wallet.id)
         ))
@@ -34,7 +37,8 @@ class NotificationsManageViewModel(
             for ((index, entity) in apps.withIndex()) {
                 val position = ListCell.getPosition(apps.size, index)
                 val pushEnabled = tonConnectManager.isPushEnabled(wallet, entity.url)
-                uiItems.add(Item.App(
+                uiItems.add(
+                    Item.App(
                     app = entity,
                     wallet = wallet,
                     pushEnabled = pushEnabled,
@@ -46,7 +50,13 @@ class NotificationsManageViewModel(
         uiItems
     }.flowOn(Dispatchers.IO)
 
-    fun enabledPush(url: Uri, enabled: Boolean) {
+    fun toggleWalletPush(wallet: WalletEntity, enabled: Boolean) {
+        viewModelScope.launch {
+            pushManager.wallet(wallet, if (enabled) PushManager.State.Enable else PushManager.State.Disable)
+        }
+    }
+
+    fun toggleDAppPush(url: Uri, enabled: Boolean) {
         viewModelScope.launch {
             tonConnectManager.setPushEnabled(wallet, url, enabled)
         }

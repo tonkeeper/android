@@ -203,7 +203,7 @@ sealed class State {
                         iconRes = UIKitIcon.ic_faceid_28,
                         textRes = Localization.setup_finish_biometry,
                         enabled = false,
-                        walletId = wallet.id,
+                        wallet = wallet,
                         settingsType = Item.SetupSwitch.TYPE_BIOMETRIC
                     )
                     SetupType.Push -> Item.SetupSwitch(
@@ -211,7 +211,7 @@ sealed class State {
                         iconRes = UIKitIcon.ic_bell_28,
                         textRes = Localization.setup_finish_push,
                         enabled = false,
-                        walletId = wallet.id,
+                        wallet = wallet,
                         settingsType = Item.SetupSwitch.TYPE_PUSH
                     )
                 }

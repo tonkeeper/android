@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.tonapps.tonkeeper.view.ChartView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/chart"
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="176dp"/>
+    android:layout_height="wrap_content">
+
+    <com.tonapps.tonkeeper.view.ChartView
+        android:id="@+id/chart"
+        android:layout_width="match_parent"
+        android:layout_height="176dp"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="84dp">
+
+        <com.tonapps.tonkeeper.view.ChartPeriodView
+            android:id="@+id/period"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal"/>
+
+    </FrameLayout>
+
+</uikit.widget.ColumnLayout>

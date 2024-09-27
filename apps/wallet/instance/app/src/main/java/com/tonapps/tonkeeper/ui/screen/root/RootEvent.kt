@@ -41,6 +41,7 @@ sealed class RootEvent {
     ): RootEvent()
 
     data class Browser(
+        val wallet: WalletEntity,
         val uri: Uri
     ): RootEvent()
 

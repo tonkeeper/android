@@ -21,6 +21,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.uikit.list.ListCell
@@ -67,10 +68,10 @@ class InitViewModel(
     args: InitArgs,
     private val passcodeManager: PasscodeManager,
     private val accountRepository: AccountRepository,
-    private val settingsRepository: SettingsRepository,
     private val api: API,
     private val backupRepository: BackupRepository,
     private val rnLegacy: RNLegacy,
+    private val pushManager: PushManager,
     savedStateHandle: SavedStateHandle
 ): BaseWalletVM(app) {
 
@@ -120,9 +121,10 @@ class InitViewModel(
         savedState.ledgerConnectData = args.ledgerConnectData
         savedState.keystone = args.keystone
 
-
         if (savedState.label == null || savedState.label?.isEmpty == true) {
-            savedState.label = Wallet.Label(getString(Localization.wallet), Emoji.WALLET_ICON, WalletColor.all.first())
+            viewModelScope.launch {
+                setLabel(getLabel())
+            }
         }
 
         when (type) {
@@ -313,6 +315,8 @@ class InitViewModel(
         val count = getWalletsCount()
         return if (count == 0 && type == InitArgs.Type.New) {
             getString(Localization.app_name)
+        } else if (count == 0) {
+            getString(Localization.wallet)
         } else {
             getString(Localization.wallet) + " " + (count + 1)
         }
@@ -375,6 +379,9 @@ class InitViewModel(
         }
         if (label.emoji.isBlank()) {
             label = label.copy(emoji = Emoji.WALLET_ICON)
+        }
+        if (label.name.isBlank()) {
+            label = label.copy(accountName = getDefaultWalletName())
         }
         label
     }
@@ -452,9 +459,7 @@ class InitViewModel(
                 accountRepository.setSelectedWallet(selectedWalletId)
 
                 if (savedState.enablePush) {
-                    for (wallet in wallets) {
-                        settingsRepository.setPushWallet(wallet.id, savedState.enablePush)
-                    }
+                    pushManager.wallets(wallets, PushManager.State.Enable)
                 }
 
                 _eventFlow.tryEmit(InitEvent.Finish)

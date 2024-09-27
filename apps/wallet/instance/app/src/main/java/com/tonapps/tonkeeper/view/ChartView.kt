@@ -60,6 +60,7 @@ class ChartView @JvmOverloads constructor(
         path.reset()
 
         if (data.isEmpty()) {
+            invalidate()
             return
         }
 

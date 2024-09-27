@@ -14,6 +14,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
@@ -72,8 +73,8 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         parametersOf(args.url)
     }
 
-    private val currentUrl: String
-        get() = webView.url ?: args.url
+    private val currentUrl: Uri
+        get() = webView.url?.toUri() ?: args.url
 
     private val webViewCallback = object : WebViewFixed.Callback() {
         override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
@@ -116,7 +117,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEventClickDApp(args.url)
+        AnalyticsHelper.trackEventClickDApp(args.url.toString())
     }
 
     private fun applyHost(url: String) {
@@ -143,7 +144,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         }
 
         hostView = view.findViewById(R.id.host)
-        hostView.text = args.host
+        hostView.text = args.url.host
 
         menuView = view.findViewById(R.id.menu)
 
@@ -155,7 +156,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         webView.settings.loadWithOverviewMode = true
         webView.addCallback(webViewCallback)
         webView.jsBridge = DAppBridge(
-            deviceInfo = JsonBuilder.device(wallet.maxMessages).toString(),
+            deviceInfo = JsonBuilder.device(wallet.maxMessages, requireContext().appVersionName).toString(),
             send = ::send,
             connect = ::tonconnect,
             restoreConnection = viewModel::restoreConnection,
@@ -328,15 +329,9 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         fun newInstance(
             wallet: WalletEntity,
             title: String? = null,
-            host: String? = null,
-            url: String
+            url: Uri
         ): DAppScreen {
-            val mustHost = if (host.isNullOrBlank()) {
-                url.toUri().host!!
-            } else {
-                host
-            }
-            return newInstance(wallet, DAppArgs(title, mustHost, Uri.parse(url)))
+            return newInstance(wallet, DAppArgs(title, url))
         }
 
         fun newInstance(

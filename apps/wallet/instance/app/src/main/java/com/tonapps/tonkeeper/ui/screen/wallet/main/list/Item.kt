@@ -504,7 +504,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val iconRes: Int,
         val textRes: Int,
         val enabled: Boolean,
-        val walletId: String,
+        val wallet: WalletEntity,
         val settingsType: Int
     ): Item(TYPE_SETUP_SWITCH) {
 
@@ -525,7 +525,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readInt(),
             parcel.readInt(),
             parcel.readBooleanCompat(),
-            parcel.readString()!!,
+            parcel.readParcelableCompat()!!,
             parcel.readInt()
         )
 
@@ -534,7 +534,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeInt(iconRes)
             dest.writeInt(textRes)
             dest.writeBooleanCompat(enabled)
-            dest.writeString(walletId)
+            dest.writeParcelable(wallet, flags)
             dest.writeInt(settingsType)
         }
     }

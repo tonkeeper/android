@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.init.step
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -12,7 +11,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
-import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableScreen
 import com.tonapps.tonkeeperx.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment

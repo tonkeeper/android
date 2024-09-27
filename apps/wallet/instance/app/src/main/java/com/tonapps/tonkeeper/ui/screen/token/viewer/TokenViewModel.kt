@@ -1,8 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.token.viewer
 
 import android.app.Application
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -10,7 +8,6 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.wallet.api.API
@@ -19,12 +16,12 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.data.settings.ChartPeriod
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -33,7 +30,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.internal.toImmutableList
-import uikit.extensions.collectFlow
 
 class TokenViewModel(
     app: Application,
@@ -77,11 +73,32 @@ class TokenViewModel(
         }.launchIn(viewModelScope)
     }
 
+    fun setChartPeriod(period: ChartPeriod) {
+        settingsRepository.chartPeriod = period
+        val tokenAddress = _tokenFlow.value?.address ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            loadChartPeriod(tokenAddress, period)
+        }
+    }
+
+    private suspend fun loadChartPeriod(tokenAddress: String, period: ChartPeriod) {
+        _chartFlow.value = emptyList()
+        when (period) {
+            ChartPeriod.hour -> loadHourChart(tokenAddress)
+            ChartPeriod.day -> loadDayChart(tokenAddress)
+            ChartPeriod.week -> loadWeekChart(tokenAddress)
+            ChartPeriod.month -> loadMonthChart(tokenAddress)
+            ChartPeriod.halfYear -> load6MonthChart(tokenAddress)
+            ChartPeriod.year -> loadYearChart(tokenAddress)
+        }
+    }
+
     private suspend fun load(token: AccountTokenEntity) = withContext(Dispatchers.IO) {
         if (token.verified) {
             loadHistory(token.address)
-            loadMonthChart(token.address)
+            loadChartPeriod(token.address, settingsRepository.chartPeriod)
         } else {
+            _chartFlow.value = emptyList()
             loadHistory(token.address)
         }
     }
@@ -136,15 +153,16 @@ class TokenViewModel(
         }
 
         if (token.verified) {
-            items.add(
-                Item.Price(
+            items.add(Item.Price(
                 fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.rateNow),
                 rateDiff24h = token.rateDiff24h
             ))
-            items.add(
-                Item.Chart(
+
+            val period = settingsRepository.chartPeriod
+            items.add(Item.Chart(
                 data = charts,
-                square = false
+                square = period == ChartPeriod.hour,
+                period = period
             ))
         }
 

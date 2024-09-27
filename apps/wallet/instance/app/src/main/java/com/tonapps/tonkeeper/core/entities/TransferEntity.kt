@@ -389,7 +389,7 @@ data class TransferEntity(
 
     companion object {
 
-        val BASE_FORWARD_AMOUNT = Coins.of(0.064, 9)
+        val BASE_FORWARD_AMOUNT = Coins.of(0.1, 9)
         private val TRANSFER_PRICE = BASE_FORWARD_AMOUNT.toGrams()
 
         fun newWalletQueryId(): BigInteger {

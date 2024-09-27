@@ -21,7 +21,6 @@ import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
-import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
@@ -79,7 +78,6 @@ val koinModel = module {
 
     viewModelOf(::LedgerConnectionViewModel)
     viewModelOf(::W5StoriesViewModel)
-    viewModelOf(::NotificationsEnableViewModel)
     viewModelOf(::ImportWalletViewModel)
     viewModelOf(::BatteryViewModel)
     viewModelOf(BaseWalletVM::EmptyViewViewModel)

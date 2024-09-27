@@ -1,12 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.commit
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -17,7 +15,6 @@ import com.tonapps.tonkeeper.ui.screen.init.step.PushScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.SelectScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
-import com.tonapps.tonkeeper.ui.screen.notifications.enable.NotificationsEnableScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -28,7 +25,6 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, ScreenContext.None), BaseFragment.SwipeBack {

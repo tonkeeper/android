@@ -14,6 +14,7 @@ import com.tonapps.extensions.putLong
 import com.tonapps.extensions.putParcelable
 import com.tonapps.extensions.putString
 import com.tonapps.extensions.remove
+import com.tonapps.extensions.withoutQuery
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.Security
 import com.tonapps.sqlite.SQLiteHelper
@@ -106,7 +107,7 @@ internal class DatabaseSource(
     suspend fun getApps(urls: List<Uri>): List<AppEntity> = withContext(coroutineContext) {
         val placeholders = urls.joinToString(",") { "?" }
         val query = "SELECT $appFields FROM $APP_TABLE_NAME WHERE $APP_TABLE_URL_COLUMN IN ($placeholders)"
-        val cursor = readableDatabase.rawQuery(query, urls.map { it.toString() }.toTypedArray())
+        val cursor = readableDatabase.rawQuery(query, urls.map { it.withoutQuery.toString() }.toTypedArray())
         val urlIndex = cursor.getColumnIndex(APP_TABLE_URL_COLUMN)
         val nameIndex = cursor.getColumnIndex(APP_TABLE_NAME_COLUMN)
         val iconUrlIndex = cursor.getColumnIndex(APP_TABLE_ICON_URL_COLUMN)
@@ -142,7 +143,7 @@ internal class DatabaseSource(
     suspend fun insertApp(appEntity: AppEntity): Boolean = withContext(coroutineContext) {
         try {
             val values = ContentValues()
-            values.put(APP_TABLE_URL_COLUMN, appEntity.url.toString().removeSuffix("/"))
+            values.put(APP_TABLE_URL_COLUMN, appEntity.url.withoutQuery.toString().removeSuffix("/"))
             values.put(APP_TABLE_NAME_COLUMN, appEntity.name)
             values.put(APP_TABLE_ICON_URL_COLUMN, appEntity.iconUrl)
             writableDatabase.insertWithOnConflict(APP_TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
@@ -155,7 +156,7 @@ internal class DatabaseSource(
 
     suspend fun insertConnection(connection: AppConnectEntity) = withContext(coroutineContext) {
         val values = ContentValues()
-        values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.toString().removeSuffix("/"))
+        values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.withoutQuery.toString().removeSuffix("/"))
         values.put(CONNECT_TABLE_ACCOUNT_ID_COLUMN, connection.accountId)
         values.put(CONNECT_TABLE_TESTNET_COLUMN, if (connection.testnet) 1 else 0)
         values.put(CONNECT_TABLE_CLIENT_ID_COLUMN, connection.clientId)
@@ -205,7 +206,7 @@ internal class DatabaseSource(
             val accountId = cursor.getString(accountIdIndex)
             val testnet = cursor.getInt(testnetIndex) == 1
             val clientId = cursor.getString(clientIdIndex)
-            val appUrl = Uri.parse(cursor.getString(appUrlIndex))
+            val appUrl = Uri.parse(cursor.getString(appUrlIndex)).withoutQuery
             val prefix = prefixAccount(accountId, testnet)
             val keyPair = encryptedPrefs.getParcelable<CryptoBox.KeyPair>(prefixKeyPair(prefix, clientId)) ?: continue
 

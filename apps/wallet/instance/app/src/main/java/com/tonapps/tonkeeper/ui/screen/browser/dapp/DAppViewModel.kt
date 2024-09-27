@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.filterList
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
@@ -42,7 +43,7 @@ class DAppViewModel(
         return if (connection == null) {
             JsonBuilder.connectEventError(BridgeError.UNKNOWN_APP)
         } else {
-            JsonBuilder.connectEventSuccess(wallet, null, null)
+            JsonBuilder.connectEventSuccess(wallet, null, null, context.appVersionName)
         }
     }
 }

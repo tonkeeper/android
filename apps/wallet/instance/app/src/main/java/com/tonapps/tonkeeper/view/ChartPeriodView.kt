@@ -6,8 +6,8 @@ import android.view.Gravity
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import com.tonapps.tonkeeper.api.chart.ChartPeriod
 import com.tonapps.uikit.color.textPrimaryColor
+import com.tonapps.wallet.data.settings.ChartPeriod
 import uikit.extensions.dp
 
 class ChartPeriodView @JvmOverloads constructor(
@@ -18,7 +18,7 @@ class ChartPeriodView @JvmOverloads constructor(
 
     var doOnPeriodSelected: ((period: ChartPeriod) -> Unit)? = null
 
-    private var selectedPeriod: ChartPeriod = ChartPeriod.week
+    var selectedPeriod: ChartPeriod = ChartPeriod.week
         set(value) {
             if (field != value) {
                 field = value

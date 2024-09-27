@@ -30,11 +30,14 @@ data class KeystoneSignArgs(
             if (path.isBlank()) {
                 return emptyList()
             }
-            return path.split("/").drop(1).map {
-                val hardened = it.endsWith("'")
-                val index = if (hardened) it.dropLast(1).toInt() else it.toInt()
-                IndexPathComponent(index, hardened)
+            val components = mutableListOf<PathComponent>()
+            for (component in path.split("/").drop(1)) {
+                val hardened = component.endsWith("'")
+                val value = (if (hardened) component.dropLast(1) else component)
+                val index = value.toIntOrNull() ?: continue
+                components.add(IndexPathComponent(index, hardened))
             }
+            return components.toList()
         }
     }
 

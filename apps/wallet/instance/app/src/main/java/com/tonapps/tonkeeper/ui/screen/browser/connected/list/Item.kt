@@ -18,7 +18,4 @@ data class Item(
 
     val url: Uri
         get() = app.url
-
-    val host: String
-        get() = app.url.host ?: ""
 }

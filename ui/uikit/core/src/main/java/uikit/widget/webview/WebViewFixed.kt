@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.RectF
+import android.net.Uri
 import android.os.Build
 import android.util.AttributeSet
 import android.view.ViewGroup
@@ -134,6 +135,10 @@ open class WebViewFixed @JvmOverloads constructor(
 
     fun removeCallback(callback: Callback) {
         callbacks.remove(callback)
+    }
+
+    fun loadUrl(uri: Uri) {
+        loadUrl(uri.toString())
     }
 
     override fun hasOverlappingRendering(): Boolean {

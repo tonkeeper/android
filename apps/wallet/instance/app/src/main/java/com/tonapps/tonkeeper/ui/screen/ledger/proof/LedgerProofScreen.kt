@@ -80,6 +80,7 @@ class LedgerProofScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragm
             }
 
             is LedgerEvent.Rejected -> {
+
                 finish()
             }
 

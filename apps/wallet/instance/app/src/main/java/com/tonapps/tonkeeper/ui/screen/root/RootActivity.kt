@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
@@ -53,7 +52,10 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class RootActivity: BaseWalletActivity() {
 
-    override val viewModel: RootViewModel by viewModel()
+    private var rootViewModel: Lazy<RootViewModel>? = null
+
+    override val viewModel: RootViewModel
+        get() = rootViewModel!!.value
 
     private val legacyRN: RNLegacy by inject()
 
@@ -64,6 +66,7 @@ class RootActivity: BaseWalletActivity() {
     private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        rootViewModel = viewModel<RootViewModel>()
         setTheme(viewModel.theme.resId)
         supportFragmentManager.fragmentFactory = WalletFragmentFactory()
         super.onCreate(savedInstanceState)
@@ -103,8 +106,9 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun onDestroy() {
-        viewModelStore.clear()
         super.onDestroy()
+        viewModelStore.clear()
+        rootViewModel = null
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

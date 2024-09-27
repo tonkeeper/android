@@ -4,7 +4,7 @@
             "outputFile": "com.tonapps.main.baselineprofile.main-mergeNonMinifiedReleaseResources-16:/values-lv/values-lv.xml",
             "map": [
                 {
-                    "source": "/Users/polstianka/.gradle/caches/transforms-4/69ed61e1864483d920353f57b0854c0b/transformed/core-1.9.0/res/values-lv/values-lv.xml",
+                    "source": "/Users/polstianka/.gradle/caches/transforms-4/eb7f313e9672c8b1cc6ed0b4539dd007/transformed/core-1.9.0/res/values-lv/values-lv.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

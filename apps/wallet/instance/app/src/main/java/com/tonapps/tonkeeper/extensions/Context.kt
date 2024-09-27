@@ -14,12 +14,15 @@ import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.extensions.bestMessage
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
+import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
 
 fun Context.showToast(@StringRes resId: Int) {
@@ -119,4 +122,14 @@ fun Context.getWalletBadges(
     }
 
     return builder
+}
+
+fun Context.debugToast(e: Throwable) {
+    debugToast(e.bestMessage)
+}
+
+fun Context.debugToast(text: String) {
+    if (BuildConfig.DEBUG) {
+        Navigation.from(this)?.toast(text)
+    }
 }

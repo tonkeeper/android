@@ -34,20 +34,20 @@ class TonConnectViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: run {
-                finish()
+                _stateFlow.value = TonConnectScreenState.Failure
                 return@launch
             }
 
             val wallets = accountRepository.getWallets().filter { it.isTonConnectSupported }
 
             if (wallets.isEmpty()) {
-                finish()
+                _stateFlow.value = TonConnectScreenState.Failure
                 return@launch
             }
 
             val walletsCount = wallets.size
 
-            _stateFlow.value = TonConnectScreenState(
+            _stateFlow.value = TonConnectScreenState.Data(
                 wallet = if (wallet.isTonConnectSupported) wallet else wallets.first(),
                 hasWalletPicker = walletsCount > 1
             )
@@ -61,7 +61,7 @@ class TonConnectViewModel(
     ) = signUseCase(context, wallet, app.url.host!!, proofPayload)
 
     fun setWallet(wallet: WalletEntity) {
-        val state = _stateFlow.value ?: return
+        val state = _stateFlow.value as? TonConnectScreenState.Data ?: return
         _stateFlow.value = state.copy(wallet = wallet)
     }
 }

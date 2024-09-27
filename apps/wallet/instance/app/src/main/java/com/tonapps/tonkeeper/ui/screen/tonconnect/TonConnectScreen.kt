@@ -13,6 +13,7 @@ import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
+import com.tonapps.tonkeeper.extensions.debugToast
 import com.tonapps.tonkeeper.extensions.getWalletBadges
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
@@ -114,7 +115,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         if (initialWallet == null) {
             collectFlow(viewModel.stateFlow, ::applyState)
         } else {
-            applyState(TonConnectScreenState(initialWallet, false))
+            applyState(TonConnectScreenState.Data(initialWallet, false))
         }
 
         setDefaultState()
@@ -133,8 +134,10 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                     val proof = viewModel.requestProof(wallet, args.app, proofPayload)
                     setResponse(wallet, proof)
                 } catch (e: CancellationException) {
+                    context?.debugToast(e)
                     setDefaultState()
                 } catch (e: Throwable) {
+                    context?.debugToast(e)
                     setFailedState()
                 }
             }
@@ -219,6 +222,15 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     }
 
     private fun applyState(state: TonConnectScreenState) {
+        if (state is TonConnectScreenState.Data) {
+            applyDataState(state)
+        } else {
+            navigation?.toast(Localization.not_supported)
+            finish()
+        }
+    }
+
+    private fun applyDataState(state: TonConnectScreenState.Data) {
         loaderView.visibility = View.GONE
         bodyView.visibility = View.VISIBLE
 

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -26,7 +27,7 @@ sealed class RootEvent {
 
     data class BuyOrSell(
         val wallet: WalletEntity,
-        val methodEntity: PurchaseMethodEntity? = null
+        val method: WalletPurchaseMethodEntity? = null
     ): RootEvent()
 
     data class Singer(

@@ -54,6 +54,7 @@ object Dependence {
         const val annotation = "androidx.annotation:annotation:1.8.1"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.1"
         const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.1.4"
+        const val browser = "androidx.browser:browser:1.8.0"
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"

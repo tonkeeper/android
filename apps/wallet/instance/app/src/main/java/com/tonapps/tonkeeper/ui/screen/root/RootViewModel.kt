@@ -16,6 +16,7 @@ import com.tonapps.extensions.setLocales
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
+import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
@@ -361,7 +362,17 @@ class RootViewModel(
         } else if (path?.startsWith("/exchange") == true) {
             val name = uri.pathSegments.lastOrNull() ?: return
             val method = purchaseRepository.getMethod(name, wallet.testnet, settingsRepository.getLocale())
-            _eventFlow.tryEmit(RootEvent.BuyOrSell(wallet, method))
+            val methodWrapped: WalletPurchaseMethodEntity? = if (method != null) {
+                WalletPurchaseMethodEntity(
+                    method = method,
+                    wallet = wallet,
+                    currency = settingsRepository.currency.code,
+                    config = api.config
+                )
+            } else {
+                null
+            }
+            _eventFlow.tryEmit(RootEvent.BuyOrSell(wallet, methodWrapped))
         } else if (path?.startsWith("/backups") == true) {
             _eventFlow.tryEmit(RootEvent.OpenBackups(wallet))
         } else if (path?.startsWith("/dapp") == true) {

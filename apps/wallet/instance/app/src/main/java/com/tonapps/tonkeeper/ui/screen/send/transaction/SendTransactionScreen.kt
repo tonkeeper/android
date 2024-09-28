@@ -46,7 +46,7 @@ import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 import java.util.concurrent.CancellationException
 
-class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal {
+class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal, BaseFragment.SingleTask {
 
     private val args: SendTransactionArgs by lazy { SendTransactionArgs(requireArguments()) }
 

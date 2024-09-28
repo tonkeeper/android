@@ -42,7 +42,7 @@ import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
 import java.util.concurrent.CancellationException
 
-class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_tonconnect, ScreenContext.None), BaseFragment.Modal {
+class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_tonconnect, ScreenContext.None), BaseFragment.Modal, BaseFragment.SingleTask {
 
     val contract = object : ResultContract<TonConnectResponse, TonConnectResponse> {
 

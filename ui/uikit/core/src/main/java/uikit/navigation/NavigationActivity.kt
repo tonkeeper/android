@@ -28,6 +28,7 @@ import uikit.R
 import uikit.base.BaseActivity
 import uikit.base.BaseFragment
 import uikit.extensions.doOnEnd
+import uikit.extensions.findFragment
 import uikit.extensions.hapticConfirm
 import uikit.extensions.primaryFragment
 import uikit.extensions.runAnimation
@@ -158,6 +159,9 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     }
 
     override fun add(fragment: BaseFragment) {
+        if (fragment is BaseFragment.SingleTask) {
+            removeOldSingleTaskFragments()
+        }
         val removeModals = isNeedRemoveModals(fragment)
         val transaction = supportFragmentManager.beginTransaction()
         if (fragment is BaseFragment.BottomSheet || fragment is BaseFragment.Modal) {
@@ -170,6 +174,15 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
         transaction.setReorderingAllowed(true)
         transaction.commitAllowingStateLoss()
+    }
+
+    private fun removeOldSingleTaskFragments() {
+        val fragments = supportFragmentManager.fragments.filterIsInstance<BaseFragment.SingleTask>()
+        for (fragment in fragments) {
+            if (fragment is BaseFragment) {
+                fragment.finish()
+            }
+        }
     }
 
     override fun addForResult(

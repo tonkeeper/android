@@ -46,6 +46,8 @@ open class BaseFragment(
         fun createResult(result: I): Bundle
     }
 
+    interface SingleTask
+
     interface PredictiveBackGesture {
         fun onPredictiveBackCancelled() {
 

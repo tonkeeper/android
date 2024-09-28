@@ -166,10 +166,10 @@ class RootActivity: BaseWalletActivity() {
             is RootEvent.OpenSend -> openSend(event.wallet)
             is RootEvent.Transaction -> this.navigation?.add(TransactionScreen.newInstance(event.event))
             is RootEvent.BuyOrSell -> {
-                if (event.methodEntity == null) {
+                if (event.method == null) {
                     add(PurchaseScreen.newInstance(event.wallet))
                 } else {
-                    add(PurchaseWebScreen.newInstance(event.wallet, event.methodEntity))
+                    PurchaseWebScreen.open(this, event.method)
                 }
             }
             is RootEvent.OpenBackups -> add(BackupScreen.newInstance(event.wallet))

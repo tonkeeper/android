@@ -10,6 +10,8 @@ import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.flat
+import com.tonapps.extensions.getQueryLong
+import com.tonapps.extensions.hasQuery
 import com.tonapps.extensions.mapList
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
@@ -169,6 +171,9 @@ class TonConnectManager(
         fromQR: Boolean,
         refSource: Uri?
     ): Boolean {
+        if (uri.hasQuery("open")) {
+            return true
+        }
         try {
             val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
             val normalizedUri = normalizeUri(uri)

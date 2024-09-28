@@ -14,6 +14,10 @@ fun Uri.getQueryLong(key: String): Long? {
     return getQueryParameter(key)?.toLongOrNull()
 }
 
+fun Uri.hasQuery(key: String): Boolean {
+    return getQueryParameter(key) != null
+}
+
 fun Uri.getBitmap(): Bitmap? {
     return try {
         val connection: URLConnection = URL(toString()).openConnection()

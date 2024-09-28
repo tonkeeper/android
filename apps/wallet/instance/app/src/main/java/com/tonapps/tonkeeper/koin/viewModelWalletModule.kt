@@ -20,7 +20,6 @@ import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
-import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsViewModel
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
@@ -48,7 +47,6 @@ val viewModelWalletModule = module {
     viewModelOf(::BatterySettingsViewModel)
     viewModelOf(::BatteryRefillViewModel)
     viewModelOf(::BatteryRechargeViewModel)
-    viewModelOf(::PurchaseWebViewModel)
     viewModelOf(::SendContactsViewModel)
     viewModelOf(::PurchaseViewModel)
     viewModelOf(::NftViewModel)

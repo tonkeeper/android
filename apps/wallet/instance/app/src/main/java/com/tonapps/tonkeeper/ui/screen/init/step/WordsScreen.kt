@@ -16,6 +16,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.iconPrimaryColor
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -118,12 +119,16 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                 return
             }
         }
-        lifecycleScope.launch { checkWords() }
+        checkWords()
     }
 
-    private suspend fun checkWords() {
-        val mnemonic = getMnemonic()
-        button.isEnabled = mnemonic.size == 24
+    private fun checkWords(delay: Long = 0) {
+        lifecycleScope.launch {
+            if (delay > 0) {
+                delay(delay)
+            }
+            button.isEnabled = getMnemonic().size == 24
+        }
     }
 
     private suspend fun getMnemonic(): List<String> = withContext(Dispatchers.IO) {
@@ -147,6 +152,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         if (list.size == wordInputs.size) {
             context?.getCurrentFocusEditText()?.hideKeyboard()
             scrollView.scrollDown(true)
+            checkWords(500)
         }
     }
 

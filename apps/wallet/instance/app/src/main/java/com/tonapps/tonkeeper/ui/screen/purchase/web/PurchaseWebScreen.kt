@@ -3,41 +3,27 @@ package com.tonapps.tonkeeper.ui.screen.purchase.web
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.View
-import android.webkit.WebView
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.getParcelableCompat
-import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.core.CustomTabsHelper
+import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
+import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.purchase.PurchaseRepository
-import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
-import com.tonapps.wallet.data.settings.SettingsRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
-import uikit.base.BaseFragment
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.navigation.NavigationActivity
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
 import uikit.widget.webview.WebViewFixed
 
+
 class PurchaseWebScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_purchase_web, wallet) {
 
-    override val viewModel: PurchaseWebViewModel by walletViewModel()
+    override val viewModel: BaseWalletVM.EmptyViewViewModel by viewModel()
 
-    private val method: PurchaseMethodEntity by lazy {
+    private val method: WalletPurchaseMethodEntity by lazy {
         requireArguments().getParcelableCompat(METHOD_KEY)!!
     }
 
@@ -78,7 +64,7 @@ class PurchaseWebScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
         webView = view.findViewById(R.id.web)
         webView.addCallback(webViewCallback)
-        webView.loadUrl(viewModel.replaceUrl(method.actionButton.url))
+        webView.loadUrl(method.uri)
     }
 
     override fun onPause() {
@@ -101,10 +87,14 @@ class PurchaseWebScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     companion object {
         private const val METHOD_KEY = "method"
 
-        fun newInstance(wallet: WalletEntity, method: PurchaseMethodEntity): PurchaseWebScreen {
-            val fragment = PurchaseWebScreen(wallet)
-            fragment.putParcelableArg(METHOD_KEY, method)
-            return fragment
+        fun open(activity: NavigationActivity, method: WalletPurchaseMethodEntity) {
+            if (method.useCustomTabs) {
+                CustomTabsHelper.open(activity, method.uri)
+            } else {
+                val fragment = PurchaseWebScreen(method.wallet)
+                fragment.putParcelableArg(METHOD_KEY, method)
+                activity.add(fragment)
+            }
         }
     }
 }

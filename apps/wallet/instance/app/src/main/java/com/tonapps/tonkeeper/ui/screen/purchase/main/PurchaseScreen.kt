@@ -6,6 +6,7 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
@@ -15,24 +16,31 @@ import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.navigation.NavigationActivity
 import kotlin.coroutines.resume
 
 class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_purchase, wallet), BaseFragment.BottomSheet {
 
     override val viewModel: PurchaseViewModel by walletViewModel()
+
+    private val settingsRepository: SettingsRepository by inject()
+    private val api: API by inject()
 
     private val adapter: Adapter by lazy { Adapter(::open) }
     private val confirmDialog: PurchaseConfirmDialog by lazy {
@@ -86,15 +94,22 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     }
 
     private fun open(method: PurchaseMethodEntity) {
+        val activity = requireActivity() as NavigationActivity
+        val methodWrapped = WalletPurchaseMethodEntity(
+            method = method,
+            wallet = screenContext.wallet,
+            currency = settingsRepository.currency.code,
+            config = api.config
+        )
         if (viewModel.isPurchaseOpenConfirm(method)) {
             confirmDialog.show(method) { showAgain ->
                 if (!showAgain) {
                     viewModel.disableConfirmDialog(screenContext.wallet, method)
                 }
-                navigation?.add(PurchaseWebScreen.newInstance(screenContext.wallet, method))
+                PurchaseWebScreen.open(activity, methodWrapped)
             }
         } else {
-            navigation?.add(PurchaseWebScreen.newInstance(screenContext.wallet, method))
+            PurchaseWebScreen.open(activity, methodWrapped)
         }
     }
 

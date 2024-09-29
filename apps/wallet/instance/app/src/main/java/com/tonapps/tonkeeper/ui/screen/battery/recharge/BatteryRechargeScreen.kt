@@ -17,6 +17,7 @@ import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -40,7 +41,9 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
+import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.hideKeyboard
+import uikit.extensions.pinToBottomInsets
 import uikit.widget.FrescoView
 import uikit.widget.InputView
 import java.util.UUID
@@ -106,11 +109,21 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
             true -> getString(Localization.battery_gift_title)
             false -> getString(Localization.battery_recharge_title)
         }
+
+        view.doKeyboardAnimation(true) { offset, _, _ ->
+            view.translationY = -offset.toFloat()
+        }
+
         collectFlow(viewModel.tokenFlow) { token ->
             tokenTitleView.text = token.symbol
             tokenIconView.setImageURI(token.imageUri, this)
         }
         collectFlow(viewModel.eventFlow, ::onEvent)
+    }
+
+    override fun onDragging() {
+        super.onDragging()
+        activity?.hideKeyboard()
     }
 
     private fun onContinue() {
@@ -144,6 +157,7 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
     private fun onSuccess() {
         requireContext().showToast(Localization.battery_please_wait)
         navigation?.openURL("tonkeeper://activity")
+        navigation?.removeByClass(BatteryScreen::class.java)
         finish()
     }
 

@@ -124,7 +124,7 @@ abstract class BaseHolderWalletScreen<C: ScreenContext>(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.doKeyboardAnimation(::onKeyboardAnimation)
+        view.doKeyboardAnimation(block = ::onKeyboardAnimation)
         childFragmentManager.addOnBackStackChangedListener(backStackChangedListener)
     }
 

@@ -288,12 +288,14 @@ fun View.reject() {
     hapticReject()
 }
 
-inline fun View.doKeyboardAnimation(crossinline block: (
-    offset: Int,
-    progress: Float,
-    isShowing: Boolean
-) -> Unit) {
-    val animationCallback = object : KeyboardAnimationCallback(this) {
+inline fun View.doKeyboardAnimation(
+    ignoreNavBar: Boolean = false,
+    crossinline block: (
+        offset: Int,
+        progress: Float,
+        isShowing: Boolean) -> Unit
+) {
+    val animationCallback = object : KeyboardAnimationCallback(this, ignoreNavBar) {
         override fun onKeyboardOffsetChanged(offset: Int, progress: Float, isShowing: Boolean) {
             block(offset, progress, isShowing)
         }

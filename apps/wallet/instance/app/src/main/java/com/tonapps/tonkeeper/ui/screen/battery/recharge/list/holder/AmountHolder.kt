@@ -23,8 +23,8 @@ class AmountHolder(
         amountView.suffix = item.symbol
         currencyView.text = item.formattedCharges
         applyAvailable(item.formattedRemaining, item.isInsufficientBalance, item.isLessThanMin)
+        amountView.focus()
     }
-
 
     private fun applyAvailable(
         formattedRemaining: CharSequence,

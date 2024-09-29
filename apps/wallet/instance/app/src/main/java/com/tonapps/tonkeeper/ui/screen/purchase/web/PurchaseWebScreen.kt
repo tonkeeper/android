@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.View
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.core.CustomTabsHelper
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
@@ -89,7 +89,7 @@ class PurchaseWebScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
         fun open(activity: NavigationActivity, method: WalletPurchaseMethodEntity) {
             if (method.useCustomTabs) {
-                CustomTabsHelper.open(activity, method.uri)
+                BrowserHelper.open(activity, method.uri)
             } else {
                 val fragment = PurchaseWebScreen(method.wallet)
                 fragment.putParcelableArg(METHOD_KEY, method)

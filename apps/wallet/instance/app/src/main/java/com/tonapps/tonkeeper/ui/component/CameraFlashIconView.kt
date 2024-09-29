@@ -17,6 +17,7 @@ class CameraFlashIconView @JvmOverloads constructor(
 ) : AppCompatImageView(context, attrs, defStyle) {
 
     private val colorStateList = Color.parseColor("#14ffffff").stateList
+    private var isFlashEnabled: Boolean? = null
 
     init {
         setBackgroundResource(uikit.R.drawable.bg_oval)
@@ -26,24 +27,35 @@ class CameraFlashIconView @JvmOverloads constructor(
         setFlashState(false)
     }
 
-    fun setFlashState(isFlashEnabled: Boolean) {
-        if (isFlashEnabled) {
+    fun setFlashState(enabled: Boolean) {
+        if (enabled) {
             applyActiveState()
         } else {
             applyDefaultState()
         }
-        HapticHelper.impactLight(context)
     }
 
     private fun applyActiveState() {
+        if (isFlashEnabled == true) {
+            return
+        }
+
         visibility = View.VISIBLE
         backgroundTintList = ColorStateList.valueOf(Color.WHITE)
         imageTintList = ColorStateList.valueOf(Color.BLACK)
+        isFlashEnabled = true
+        HapticHelper.success(context)
     }
 
     private fun applyDefaultState() {
+        if (isFlashEnabled == false) {
+            return
+        }
+
         visibility = View.VISIBLE
         backgroundTintList = colorStateList
         imageTintList = ColorStateList.valueOf(Color.WHITE)
+        isFlashEnabled = false
+        HapticHelper.success(context)
     }
 }

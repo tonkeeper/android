@@ -10,6 +10,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.google.android.flexbox.FlexboxLayout
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
@@ -82,7 +83,7 @@ class StakeDetailsFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
             val linkView = requireContext().inflate(R.layout.view_link, linksView) as AppCompatTextView
             linkView.text = host
             linkView.setLeftDrawable(linkDrawable)
-            linkView.setOnClickListener { navigation?.openURL(link) }
+            linkView.setOnClickListener { BrowserHelper.open(requireContext(), link) }
             linksView.addView(linkView)
         }
     }

@@ -1,12 +1,12 @@
 package com.tonapps.wallet.data.settings
 
-enum class ChartPeriod(val value: String) {
-    hour("1H"),
-    day("1D"),
-    week("7D"),
-    month("1M"),
-    halfYear("6M"),
-    year("1Y");
+enum class ChartPeriod(val value: String, val title: String) {
+    hour("1H", "H"),
+    day("1D", "D"),
+    week("7D", "W"),
+    month("1M", "M"),
+    halfYear("6M", "6M"),
+    year("1Y", "Y");
 
     companion object {
 

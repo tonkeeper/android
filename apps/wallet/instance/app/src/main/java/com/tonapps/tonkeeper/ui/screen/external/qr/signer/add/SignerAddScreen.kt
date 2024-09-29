@@ -6,6 +6,7 @@ import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.safePublicKey
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.core.signer.SignerApp
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
@@ -44,8 +45,7 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
         val aboutView = view.findViewById<View>(R.id.about)
         aboutView.backgroundTintList = constantWhiteColor
         aboutView.setOnClickListener {
-            navigation?.openURL("https://tonkeeper.com/signer")
-            finish()
+            BrowserHelper.open(requireActivity(), "https://tonkeeper.com/signer")
         }
 
         cameraView = view.findViewById(R.id.camera)

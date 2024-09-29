@@ -1,14 +1,26 @@
-package com.tonapps.tonkeeper.core
+package com.tonapps.tonkeeper.helper
 
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
+import com.tonapps.extensions.activity
 import com.tonapps.extensions.locale
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textPrimaryColor
 
-object CustomTabsHelper {
+object BrowserHelper {
+
+    fun open(context: Context, url: String) {
+        context.activity?.let {
+            open(it, url)
+        }
+    }
+
+    fun open(activity: Activity, url: String) {
+        open(activity, Uri.parse(url))
+    }
 
     fun open(activity: Activity, uri: Uri) {
         val barBackgroundColor = activity.backgroundPageColor

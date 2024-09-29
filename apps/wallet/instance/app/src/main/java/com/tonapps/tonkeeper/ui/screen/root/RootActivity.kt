@@ -15,6 +15,7 @@ import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
@@ -31,7 +32,6 @@ import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
-import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -279,7 +279,7 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun openBrowser(uri: Uri) {
-        add(WebScreen.newInstance(uri))
+        BrowserHelper.open(this, uri)
         // val intent = Intent(Intent.ACTION_VIEW, uri)
         // safeStartActivity(intent)
     }
@@ -300,6 +300,8 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun processDeepLink(uri: Uri) {
-        viewModel.processDeepLink(uri, false, getReferrer())
+        if (!viewModel.processDeepLink(uri, false, getReferrer())) {
+            openBrowser(uri)
+        }
     }
 }

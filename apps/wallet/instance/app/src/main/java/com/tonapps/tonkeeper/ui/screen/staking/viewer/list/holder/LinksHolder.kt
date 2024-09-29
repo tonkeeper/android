@@ -4,6 +4,7 @@ import android.net.Uri
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.google.android.flexbox.FlexboxLayout
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
@@ -28,7 +29,7 @@ class LinksHolder(
             val linkView = context.inflate(R.layout.view_link, linksView) as AppCompatTextView
             linkView.text = host
             linkView.setLeftDrawable(linkDrawable)
-            linkView.setOnClickListener { Navigation.from(context)?.openURL(link) }
+            linkView.setOnClickListener { BrowserHelper.open(context, link) }
             linksView.addView(linkView)
         }
     }

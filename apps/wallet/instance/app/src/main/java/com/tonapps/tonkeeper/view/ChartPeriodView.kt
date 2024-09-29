@@ -58,7 +58,7 @@ class ChartPeriodView @JvmOverloads constructor(
         view.setTextColor(context.textPrimaryColor)
         view.setTextAppearance(uikit.R.style.TextAppearance_Label2)
         view.gravity = Gravity.CENTER
-        view.text = period.value
+        view.text = period.title
         return view
     }
 

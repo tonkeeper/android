@@ -1,9 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.add
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.camera.view.PreviewView
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
@@ -50,8 +50,7 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
         val aboutView = view.findViewById<View>(R.id.about)
         aboutView.backgroundTintList = constantWhiteColor
         aboutView.setOnClickListener {
-            navigation?.openURL("https://keyst.one/")
-            finish()
+            BrowserHelper.open(requireActivity(), "https://keyst.one/")
         }
 
         cameraView = view.findViewById(R.id.camera)

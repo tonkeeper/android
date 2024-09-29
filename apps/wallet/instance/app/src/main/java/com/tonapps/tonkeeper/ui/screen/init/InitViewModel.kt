@@ -239,7 +239,9 @@ class InitViewModel(
                 val account = if (apiAccount == null) {
                     AccountDetailsEntity(contract, testnet, false)
                 } else {
-                    AccountDetailsEntity(query, apiAccount, testnet, false)
+                    AccountDetailsEntity(query, apiAccount.copy(
+                        interfaces = listOf("wallet_v5r1")
+                    ), testnet, false)
                 }
                 accounts.add(0, account)
             }

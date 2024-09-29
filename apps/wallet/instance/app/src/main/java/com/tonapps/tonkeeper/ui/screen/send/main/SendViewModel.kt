@@ -22,6 +22,7 @@ import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransferType
+import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
@@ -88,6 +89,7 @@ class SendViewModel(
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
     private val signUseCase: SignUseCase,
+    private val emulationUseCase: EmulationUseCase,
 ) : BaseWalletVM(app) {
 
     private companion object {
@@ -759,9 +761,7 @@ class SendViewModel(
     }
 
     fun setMax() {
-        collectFlow(
-            uiInputAmountCurrency.take(1)
-        ) { amountCurrency ->
+        collectFlow(uiInputAmountCurrency.take(1)) { amountCurrency ->
             val token = selectedTokenFlow.value
             val coins = if (amountCurrency) {
                 token.fiat
@@ -804,11 +804,12 @@ class SendViewModel(
         } else {
             emptyList()
         }
+        val internalMessage = sendTransferType is SendTransferType.Gasless || sendTransferType is SendTransferType.Battery
         val boc = signUseCase(
             context = context,
             wallet = wallet,
             unsignedBody = transfer.getUnsignedBody(
-                internalMessage = true,
+                internalMessage = internalMessage,
                 additionalGifts = additionalGifts,
                 excessesAddress = excessesAddress,
             ),

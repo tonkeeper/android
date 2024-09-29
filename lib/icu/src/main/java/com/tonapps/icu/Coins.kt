@@ -194,7 +194,11 @@ data class Coins(
     }
 
     operator fun div(other: Coins): Coins {
-        return div(other)
+        return div(
+            other = other,
+            scale = decimals,
+            roundingMode = RoundingMode.HALF_UP
+        )
     }
 
     operator fun rem(other: Coins) = of(value.remainder(other.value), decimals)

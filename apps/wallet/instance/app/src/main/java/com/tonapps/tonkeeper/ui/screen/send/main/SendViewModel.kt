@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.equalsAddress
@@ -330,9 +331,9 @@ class SendViewModel(
     }
 
     private val transferFlow = combine(
-        uiTransactionFlow.distinctUntilChanged(),
-        userInputFlow.map { Pair(it.comment, it.encryptedComment) }.distinctUntilChanged(),
-        selectedTokenFlow,
+        uiTransactionFlow.distinctUntilChanged().debounce(300),
+        userInputFlow.map { Pair(it.comment, it.encryptedComment) }.distinctUntilChanged().debounce(300),
+        selectedTokenFlow.debounce(300),
     ) { transaction, (comment, encryptedComment), token ->
         val customPayload = getTokenCustomPayload(token.balance.token)
         val sendMetadata = getSendParams(wallet)
@@ -794,6 +795,7 @@ class SendViewModel(
         } else {
             null
         }
+
         val additionalGifts = if (sendTransferType is SendTransferType.Gasless) {
             listOf(
                 transfer.gaslessInternalGift(
@@ -804,11 +806,20 @@ class SendViewModel(
         } else {
             emptyList()
         }
-        val internalMessage = sendTransferType is SendTransferType.Gasless || sendTransferType is SendTransferType.Battery
+
+        val privateKey = if (transfer.commentEncrypted) {
+            accountRepository.getPrivateKey(wallet.id)
+        } else {
+            null
+        }
+
+        val internalMessage = excessesAddress != null
+
         val boc = signUseCase(
             context = context,
             wallet = wallet,
             unsignedBody = transfer.getUnsignedBody(
+                privateKey = privateKey,
                 internalMessage = internalMessage,
                 additionalGifts = additionalGifts,
                 excessesAddress = excessesAddress,
@@ -817,7 +828,7 @@ class SendViewModel(
             ledgerTransaction = transfer.getLedgerTransaction()
         )
         _uiEventFlow.tryEmit(SendEvent.Loading)
-        Pair(boc, transfer.wallet)
+        Triple(boc, transfer.wallet, internalMessage)
     }.catch {
         if (it !is CancellationException) {
             _uiEventFlow.tryEmit(SendEvent.Failed(it))
@@ -826,21 +837,22 @@ class SendViewModel(
 
     private suspend fun send(
         message: Cell,
-        wallet: WalletEntity
+        wallet: WalletEntity,
+        withBattery: Boolean,
     ) {
         val state = transactionManager.send(
             wallet = wallet,
             boc = message,
-            withBattery = sendTransferType is SendTransferType.WithExcessesAddress
+            withBattery = withBattery,
         )
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)
         }
     }
 
-    private fun Flow<Pair<Cell, WalletEntity>>.sendTransfer() {
-        this.map { (boc, wallet) ->
-            send(boc, wallet)
+    private fun Flow<Triple<Cell, WalletEntity, Boolean>>.sendTransfer() {
+        this.map { (boc, wallet, withBattery) ->
+            send(boc, wallet, withBattery)
             AnalyticsHelper.trackEvent("send_success")
         }.catch {
             _uiEventFlow.tryEmit(SendEvent.Failed(it))

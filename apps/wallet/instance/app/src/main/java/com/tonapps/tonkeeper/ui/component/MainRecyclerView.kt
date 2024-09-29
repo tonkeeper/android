@@ -15,6 +15,7 @@ import com.tonapps.tonkeeper.koin.api
 import com.tonapps.wallet.api.entity.FlagsEntity
 import uikit.extensions.getDimensionPixelSize
 import uikit.widget.SimpleRecyclerView
+import kotlin.system.measureTimeMillis
 
 class MainRecyclerView @JvmOverloads constructor(
     context: Context,

@@ -141,12 +141,12 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/constantBlue" />
-        <!--meta-data
+        <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_push" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="@string/default_push_channel_id" /-->
+            android:value="@string/default_push_channel_id" />
     </application>
 
 </manifest>

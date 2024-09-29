@@ -123,18 +123,30 @@ class TransactionManager(
         wallet: WalletEntity,
         boc: String,
         withBattery: Boolean
+    ) = send(wallet, boc, withBattery, 0)
+
+    private suspend fun send(
+        wallet: WalletEntity,
+        boc: String,
+        withBattery: Boolean,
+        attempt: Int
     ): SendBlockchainState {
         val state = if (withBattery) {
             sendWithBattery(wallet, boc)
         } else {
             api.sendToBlockchain(boc, wallet.testnet)
         }
-        if (state != SendBlockchainState.SUCCESS) {
+        if (state == SendBlockchainState.SUCCESS) {
+            _sentTransactionFlow.tryEmit(PendingTransaction(wallet.copy(), boc))
             return state
         }
 
-        _sentTransactionFlow.tryEmit(PendingTransaction(wallet.copy(), boc))
-        return state
+        return if (attempt > 3) {
+            state
+        } else {
+            delay(2.seconds)
+            send(wallet, boc, withBattery, attempt + 1)
+        }
     }
 
     suspend fun send(

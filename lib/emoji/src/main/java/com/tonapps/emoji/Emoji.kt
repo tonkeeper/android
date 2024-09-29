@@ -97,11 +97,12 @@ object Emoji {
         emoji: CharSequence,
     ): PictogramDrawable {
         val tmpBitmap = simpleEmojiTypeface.draw(emoji)
-        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        /*val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             tmpBitmap.copy(Bitmap.Config.HARDWARE, false)
         } else {
             tmpBitmap.copy(Bitmap.Config.ARGB_8888, false)
-        }
+        }*/
+        val bitmap = tmpBitmap.copy(Bitmap.Config.ARGB_8888, false)
         val drawable = PictogramDrawable(emoji, context, bitmap)
         drawable.alpha = 0
         return drawable

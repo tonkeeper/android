@@ -11,7 +11,7 @@ data class FunctionResponseBridgeMessage(
     constructor(invocationId: String, error: Throwable) : this(
         invocationId = invocationId,
         status = "rejected",
-        data = error.message ?: "unknown error"
+        data = error.localizedMessage ?: error.message ?: "unknown client error"
     )
 
     override fun createJSON(): JSONObject {

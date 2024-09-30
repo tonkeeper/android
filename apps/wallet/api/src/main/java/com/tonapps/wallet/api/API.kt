@@ -5,13 +5,16 @@ import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
 import androidx.core.graphics.drawable.toIcon
+import androidx.core.net.toUri
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.locale
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
@@ -62,6 +65,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
@@ -110,52 +114,47 @@ class API(
         get() = configRepository.stream
 
 
-    private fun tonapiRawUrl(testnet: Boolean, method: String): String {
-        val host = if (!testnet) config.tonapiMainnetHost else config.tonapiTestnetHost
-        return "$host/v2/$method"
-    }
-
-    private fun tonapiRawResponse(response: Response): String {
-        return if (response.isSuccessful) {
-            response.body?.string() ?: ""
-        } else if (response.code > 0) {
-            "{\"error\": \"server response ${response.code}\"}"
-        } else {
-            "{\"error\": \"client error\"}"
-        }
-    }
-
-    suspend fun tonapiPostRaw(
-        testnet: Boolean,
-        method: String,
-        json: String
+    suspend fun tonapiFetch(
+        url: String,
+        options: String
     ): String = withContext(Dispatchers.IO) {
-        try {
-            val url = tonapiRawUrl(testnet, method)
-            val response = tonAPIHttpClient.postJSON(url, json)
-            tonapiRawResponse(response)
-        } catch (e: Throwable) {
-            "{\"error\": \"unknown client error\"}"
+        val uri = url.toUriOrNull() ?: throw Exception("Invalid URL")
+        if (uri.scheme != "https") {
+            throw Exception("Invalid scheme. Should be https")
         }
-    }
+        val host = uri.host ?: throw Exception("Invalid URL")
+        if (host != "tonapi.io" && host.endsWith(".tonapi.io")) {
+            throw Exception("Invalid host. Should be tonapi.io")
+        }
 
-    suspend fun tonapiGetRaw(
-        testnet: Boolean,
-        method: String,
-        params: String
-    ): String = withContext(Dispatchers.IO) {
-        try {
-            val builder = Uri.parse(tonapiRawUrl(testnet, method)).buildUpon()
-            if (params.isBlank() && params.equals("null", ignoreCase = true)) {
-                val json = JSONObject(params)
-                for (key in json.keys()) {
-                    builder.appendQueryParameter(key, json.getString(key))
-                }
+        val builder = Request.Builder().url(url)
+
+        val parsedOptions = JSONObject(options)
+        val methodOptions = parsedOptions.optString("method") ?: "GET"
+        val headersOptions = parsedOptions.optJSONObject("headers") ?: JSONObject()
+        val bodyOptions = parsedOptions.optString("body") ?: ""
+        var contentTypeOptions = "application/json"
+
+        for (key in headersOptions.keys()) {
+            val value = headersOptions.getString(key)
+            if (key.equals("Authorization")) {
+                builder.addHeader("X-Authorization", value)
+            } else if (key.equals("Content-Type")) {
+                contentTypeOptions = value
+            } else {
+                builder.addHeader(key, value)
             }
-            val response = tonAPIHttpClient.simple(builder.toString())
-            tonapiRawResponse(response)
-        } catch (e: Throwable) {
-            "{\"error\": \"unknown client error\"}"
+        }
+
+        if (methodOptions.equals("POST", ignoreCase = true)) {
+            builder.post(bodyOptions.toRequestBody(contentTypeOptions.toMediaType()))
+        }
+
+        val response = tonAPIHttpClient.newCall(builder.build()).execute()
+        if (response.isSuccessful) {
+            response.body?.string() ?: throw Exception("Empty response")
+        } else {
+            throw Exception("Failed request: ${response.code}")
         }
     }
 

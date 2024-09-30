@@ -161,12 +161,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             connect = ::tonconnect,
             restoreConnection = viewModel::restoreConnection,
             disconnect = { viewModel.disconnect() },
-            tonapiPost = { method, params ->
-                api.tonapiPostRaw(wallet.testnet, method, params)
-            },
-            tonapiGet = { method, params ->
-                api.tonapiGetRaw(wallet.testnet, method, params)
-            }
+            tonapiFetch = api::tonapiFetch,
         )
         webView.loadUrl(args.url)
 

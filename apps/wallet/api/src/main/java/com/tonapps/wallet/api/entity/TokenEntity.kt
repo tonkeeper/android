@@ -28,6 +28,9 @@ data class TokenEntity(
     val lock: Lock? = null
 ): Parcelable {
 
+    val isLiquid: Boolean
+        get() = verification == Verification.whitelist && symbol.equals("tsTON", true)
+
     enum class Verification {
         whitelist, blacklist, none
     }

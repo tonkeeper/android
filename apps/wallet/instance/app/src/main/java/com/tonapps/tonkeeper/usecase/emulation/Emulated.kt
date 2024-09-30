@@ -13,6 +13,10 @@ data class Emulated(
     val currency: WalletCurrency,
 ) {
 
+    companion object {
+        val defaultExtra = Extra(false, Coins.ONE, Coins.ONE)
+    }
+
     val nftCount: Int
         get() = total.nftCount
 

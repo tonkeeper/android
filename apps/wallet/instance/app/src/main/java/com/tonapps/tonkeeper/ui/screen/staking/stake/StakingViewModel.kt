@@ -17,6 +17,7 @@ import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.usecase.emulation.Emulated
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.SendBlockchainState
@@ -269,7 +270,11 @@ class StakingViewModel(
     }.flowOn(Dispatchers.IO)
 
     private fun requestFee() = unsignedBodyFlow().map { message ->
-        emulationUseCase(message, wallet.testnet).extra
+        try {
+            emulationUseCase(message, wallet.testnet).extra
+        } catch (e: Throwable) {
+            Emulated.defaultExtra
+        }
     }.flowOn(Dispatchers.IO)
 
     fun requestFeeFormat() = requestFee().map { extra ->

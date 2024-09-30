@@ -164,12 +164,16 @@ class SettingsViewModel(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             uiItems.add(Item.Widget(ListCell.Position.MIDDLE))
         }
-        if (!hasW5) {
-            uiItems.add(Item.W5(ListCell.Position.MIDDLE))
+
+        if (wallet.hasPrivateKey) {
+            if (!hasW5) {
+                uiItems.add(Item.W5(ListCell.Position.MIDDLE))
+            }
+            if (!hasV4R2) {
+                uiItems.add(Item.V4R2(ListCell.Position.MIDDLE))
+            }
         }
-        if (!hasV4R2) {
-            uiItems.add(Item.V4R2(ListCell.Position.MIDDLE))
-        }
+
         if (!newWallet.isExternal && !api.config.batteryDisabled) {
             uiItems.add(Item.Battery(ListCell.Position.MIDDLE))
         }

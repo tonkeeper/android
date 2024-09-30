@@ -247,7 +247,7 @@ class RootActivity: BaseWalletActivity() {
     private fun handleIntent(intent: Intent) {
         val uri = intent.data
         val extras = intent.extras
-        if (uri != null && extras == null) {
+        if (uri != null) {
             processDeepLink(uri)
         } else if (extras != null && !extras.isEmpty) {
             viewModel.processIntentExtras(extras)

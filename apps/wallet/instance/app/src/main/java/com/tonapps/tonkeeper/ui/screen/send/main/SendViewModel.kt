@@ -89,8 +89,7 @@ class SendViewModel(
     private val collectiblesRepository: CollectiblesRepository,
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
-    private val signUseCase: SignUseCase,
-    private val emulationUseCase: EmulationUseCase,
+    private val signUseCase: SignUseCase
 ) : BaseWalletVM(app) {
 
     private companion object {

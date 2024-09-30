@@ -42,7 +42,6 @@ abstract class BaseListHolder<I: BaseListItem>(
 
     abstract fun onBind(item: I)
 
-
     fun unbind() {
         item = null
     }

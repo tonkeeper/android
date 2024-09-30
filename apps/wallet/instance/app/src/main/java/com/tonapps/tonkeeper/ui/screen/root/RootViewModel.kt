@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
@@ -14,6 +15,7 @@ import com.google.firebase.ktx.Firebase
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getQueryLong
+import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.ledger.ton.LedgerConnectData
@@ -40,6 +42,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
@@ -79,6 +82,7 @@ class RootViewModel(
     private val walletAdapter: WalletAdapter,
     private val purchaseRepository: PurchaseRepository,
     private val tonConnectManager: TonConnectManager,
+    private val browserRepository: BrowserRepository,
 ): BaseWalletVM(app) {
 
     data class Passcode(
@@ -365,7 +369,7 @@ class RootViewModel(
         } else if (path?.startsWith("/transfer/") == true) {
             val exp = uri.getQueryLong("exp") ?: 0
             if (exp > 0 && exp < System.currentTimeMillis() / 1000) {
-                toast(Localization.transaction_expired)
+                toast(Localization.expired_link)
                 return
             }
 
@@ -409,8 +413,18 @@ class RootViewModel(
         } else if (path?.startsWith("/backups") == true) {
             _eventFlow.tryEmit(RootEvent.OpenBackups(wallet))
         } else if (path?.startsWith("/dapp") == true) {
-            val dAppUrl = uri.toString().replace("https://app.tonkeeper.com/dapp/", "https://")
-            _eventFlow.tryEmit(RootEvent.Browser(wallet, Uri.parse(dAppUrl)))
+            viewModelScope.launch(Dispatchers.IO) {
+                val dAppUrl = uri.toString()
+                    .replace("https://app.tonkeeper.com/dapp/", "https://")
+                    .toUri()
+
+                val apps = browserRepository.getApps(settingsRepository.country, wallet.testnet, context.locale) ?: return@launch
+                apps.find {
+                    it.url.host == dAppUrl.host
+                }?.let {
+                    _eventFlow.tryEmit(RootEvent.Browser(wallet, dAppUrl))
+                }
+            }
         } else {
             toast(Localization.invalid_link)
         }

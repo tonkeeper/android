@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.manager.assets
 
+import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
@@ -40,13 +41,8 @@ class AssetsManager(
     ): List<AssetsEntity>? {
         val tokens = getTokens(wallet, currency, refresh)
         val staked = getStaked(wallet, tokens.map { it.token }, currency, refresh)
-
-        val liquid = staked.find { it.isTonstakers }?.liquidToken
-        val filteredTokens = if (liquid == null) {
-            tokens
-        } else {
-            tokens.filter { !liquid.token.address.contains(it.address)  }
-        }
+        Log.d("TokenLogNew", "staked: $staked")
+        val filteredTokens = tokens.filter { !it.token.isLiquid }
         val list = (filteredTokens + staked).sortedBy { it.fiat }.reversed()
         if (list.isEmpty()) {
             return null

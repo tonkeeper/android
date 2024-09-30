@@ -44,32 +44,42 @@ data class StakedEntity(
             val activePools = getActivePools(staking, tokens)
             for (pool in activePools) {
                 if (pool.implementation == StakingPool.Implementation.LiquidTF) {
+                    val isTonstakersAlready = list.any { it.isTonstakers }
+                    if (isTonstakersAlready) {
+                        continue
+                    }
+                    
                     val liquidJettonMaster = pool.liquidJettonMaster ?: continue
                     val token = tokens.find { it.address.equalsAddress(liquidJettonMaster) } ?: continue
                     val rates = ratesRepository.getRates(WalletCurrency.TON, token.address)
                     val balance = rates.convert(token.address, token.balance.value)
+                    val readyWithdraw = rates.convert(token.address, staking.getReadyWithdraw(pool))
+                    val pendingDeposit = rates.convert(token.address, staking.getPendingDeposit(pool))
+                    val pendingWithdraw = rates.convert(token.address, staking.getPendingWithdraw(pool))
                     list.add(StakedEntity(
                         pool = pool,
                         balance = balance,
-                        readyWithdraw = Coins.ZERO,
                         fiatBalance = fiatRates.convertTON(balance),
-                        fiatReadyWithdraw = Coins.ZERO,
+                        readyWithdraw = readyWithdraw,
+                        fiatReadyWithdraw = fiatRates.convertTON(readyWithdraw),
                         liquidToken = token.balance.copy(),
-                        pendingDeposit = Coins.ZERO,
-                        pendingWithdraw = Coins.ZERO,
+                        pendingDeposit = pendingDeposit,
+                        pendingWithdraw = pendingWithdraw,
                         cycleStart = pool.cycleStart,
                         cycleEnd = pool.cycleEnd,
                     ))
                 } else {
                     val balance = staking.getAmount(pool)
                     val readyWithdraw = staking.getReadyWithdraw(pool)
+                    val pendingDeposit = staking.getPendingDeposit(pool)
+
                     list.add(StakedEntity(
                         pool = pool,
                         balance = balance,
-                        readyWithdraw = readyWithdraw,
                         fiatBalance = fiatRates.convertTON(balance),
+                        readyWithdraw = readyWithdraw,
                         fiatReadyWithdraw = fiatRates.convertTON(readyWithdraw),
-                        pendingDeposit = staking.getPendingDeposit(pool),
+                        pendingDeposit = pendingDeposit,
                         pendingWithdraw = staking.getPendingWithdraw(pool),
                         cycleStart = pool.cycleStart,
                         cycleEnd = pool.cycleEnd,

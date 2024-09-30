@@ -145,7 +145,7 @@ class TokenViewModel(
             token = token.balance.token,
             wallet = wallet,
         ))
-        if (token.isUsdt && !wallet.isW5 && (wallet.hasPrivateKey || wallet.isExternal) && settingsRepository.isUSDTW5(wallet.id)) {
+        if (token.isUsdt && !wallet.isW5 && wallet.hasPrivateKey && settingsRepository.isUSDTW5(wallet.id)) {
             items.add(Item.W5Banner(
                 wallet = wallet,
                 addButton = !hasW5()

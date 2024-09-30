@@ -61,7 +61,7 @@
             android:paddingVertical="8dp"
             android:textAppearance="@style/TextAppearance.Body2"
             android:textColor="?attr/textPrimaryColor"
-            android:text="HELLO"/>
+            android:visibility="gone"/>
 
     </uikit.widget.ColumnLayout>
 

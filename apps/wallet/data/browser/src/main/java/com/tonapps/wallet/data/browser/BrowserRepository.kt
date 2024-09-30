@@ -33,6 +33,10 @@ class BrowserRepository(
         }.distinctBy { it.url }
     }
 
+    suspend fun getApps(country: String, testnet: Boolean, locale: Locale): List<BrowserAppEntity> {
+        return load(country, testnet, locale)?.categories?.map { it.apps }?.flatten() ?: emptyList()
+    }
+
     suspend fun load(country: String, testnet: Boolean, locale: Locale): BrowserDataEntity? = withContext(Dispatchers.IO) {
         loadLocal(country, locale) ?: loadRemote(country, testnet, locale)
     }

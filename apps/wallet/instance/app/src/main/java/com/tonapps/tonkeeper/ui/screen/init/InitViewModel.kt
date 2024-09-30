@@ -457,12 +457,12 @@ class InitViewModel(
                     }
                 }
 
-                val selectedWalletId = wallets.minByOrNull { it.version }!!.id
-                accountRepository.setSelectedWallet(selectedWalletId)
-
                 if (savedState.enablePush) {
                     pushManager.wallets(wallets, PushManager.State.Enable)
                 }
+
+                val selectedWalletId = wallets.minByOrNull { it.version }!!.id
+                accountRepository.setSelectedWallet(selectedWalletId)
 
                 _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {

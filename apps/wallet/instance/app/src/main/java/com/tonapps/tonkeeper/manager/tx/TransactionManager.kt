@@ -89,11 +89,11 @@ class TransactionManager(
         emit(initialTx)
 
         if (initialTx.pending) {
-            delay(20.seconds)
+            delay(25.seconds)
             while (currentCoroutineContext().isActive) {
                 val finalTx = getTransaction(wallet, hash)
                 if (finalTx == null || finalTx.pending) {
-                    delay(5.seconds)
+                    delay(10.seconds)
                     continue
                 }
                 finalTx.addEventId(hash)

@@ -22,7 +22,7 @@ data class WalletPurchaseMethodEntity(
 
     @IgnoredOnParcel
     val useCustomTabs: Boolean
-        get() = method.useCustomTabs
+        get() = true // method.useCustomTabs
 
     @IgnoredOnParcel
     val successUrlPattern: SuccessUrlPattern?

@@ -107,11 +107,9 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
                     viewModel.disableConfirmDialog(screenContext.wallet, method)
                 }
                 PurchaseWebScreen.open(activity, methodWrapped)
-                finish()
             }
         } else {
             PurchaseWebScreen.open(activity, methodWrapped)
-            finish()
         }
     }
 

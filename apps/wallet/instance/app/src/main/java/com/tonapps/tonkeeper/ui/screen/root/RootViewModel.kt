@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.os.Bundle
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.viewModelScope
@@ -13,6 +15,7 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getQueryLong
 import com.tonapps.extensions.setLocales
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
@@ -276,6 +279,36 @@ class RootViewModel(
             return true
         }
         return false
+    }
+
+    fun processIntentExtras(bundle: Bundle) {
+        val pushType = bundle.getString("type") ?: return
+        hasWalletFlow.take(1).collectFlow {
+            if (pushType == "console_dapp_notification") {
+                processDAppPush(bundle)
+            } else {
+                val deeplink = bundle.getString("deeplink")?.toUriOrNull() ?: return@collectFlow
+                processDeepLinkPush(deeplink, bundle)
+            }
+        }
+    }
+
+    private suspend fun processDAppPush(bundle: Bundle) {
+        val accountId = bundle.getString("account") ?: return
+        val dappUrl = bundle.getString("dapp_url")?.toUriOrNull() ?: return
+        val connections = tonConnectManager.accountConnectionsFlow(accountId).firstOrNull()?.filter { it.appUrl == dappUrl } ?: return
+        if (connections.isEmpty()) {
+            return
+        }
+        val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
+        val openUrl = bundle.getString("link")?.toUriOrNull() ?: dappUrl
+        _eventFlow.tryEmit(RootEvent.Browser(wallet, openUrl))
+    }
+
+    private suspend fun processDeepLinkPush(uri: Uri, bundle: Bundle) {
+        val accountId = bundle.getString("account") ?: return
+        val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
+        resolveOther(null, uri, wallet)
     }
 
     private fun resolveDeepLink(

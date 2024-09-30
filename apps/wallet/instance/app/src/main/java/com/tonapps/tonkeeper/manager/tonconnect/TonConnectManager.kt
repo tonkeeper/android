@@ -80,8 +80,10 @@ class TonConnectManager(
         }
     }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly)
 
-    fun walletConnectionsFlow(wallet: WalletEntity) = dAppsRepository.connectionsFlow.filterList { connection ->
-        connection.testnet == wallet.testnet && connection.accountId.equalsAddress(wallet.accountId)
+    fun walletConnectionsFlow(wallet: WalletEntity) = accountConnectionsFlow(wallet.accountId, wallet.testnet)
+
+    fun accountConnectionsFlow(accountId: String, testnet: Boolean = false) = dAppsRepository.connectionsFlow.filterList { connection ->
+        connection.testnet == testnet && connection.accountId.equalsAddress(accountId)
     }
 
     fun walletAppsFlow(wallet: WalletEntity) = walletConnectionsFlow(wallet).mapList { it.appUrl }.map { it.distinct() }.map { urls ->

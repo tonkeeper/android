@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
@@ -19,9 +20,7 @@ import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
-import uikit.extensions.setOnClickListener
 import uikit.extensions.withAlpha
-import uikit.navigation.Navigation.Companion.navigation
 
 class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
@@ -53,10 +52,21 @@ class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.Botto
             }
         }
 
-        collectFlow(readerFlow.map { it.toUriOrNull() }.filterNotNull()) { uri ->
+        collectFlow(readerFlow.map(::createUri).filterNotNull()) { uri ->
             rootViewModel.processDeepLink(uri, true, null)
             finish()
         }
+    }
+
+    private fun createUri(value: String): Uri? {
+        return value.toUriOrNull() ?: createTransferUri(value)
+    }
+
+    private fun createTransferUri(value: String): Uri? {
+        if (value.isValidTonAddress()) {
+            return "tonkeeper://transfer/$value".toUri()
+        }
+        return null
     }
 
     companion object {

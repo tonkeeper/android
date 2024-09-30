@@ -22,6 +22,8 @@ import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
+import com.tonapps.tonkeeper.ui.screen.camera.CameraMode
+import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
@@ -258,7 +260,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun openCamera() {
-        navigation?.add(CameraFragment.newInstance())
+        navigation?.add(CameraScreen.newInstance(CameraMode.Address))
         getCurrentFocus()?.hideKeyboard()
     }
 

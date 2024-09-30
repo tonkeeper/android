@@ -428,8 +428,19 @@ class AccountRepository(
         }
     }
 
-    suspend fun getWalletByAccountId(accountId: String, testnet: Boolean): WalletEntity? {
-        return getWalletsByAccountId(accountId, testnet).firstOrNull()
+    suspend fun getWalletByAccountId(accountId: String, testnet: Boolean = false): WalletEntity? {
+        val wallets = getWalletsByAccountId(accountId, testnet)
+        if (wallets.isEmpty()) {
+            return null
+        }
+        if (wallets.size == 1) {
+            return wallets.first()
+        }
+        return wallets.firstOrNull {
+            it.hasPrivateKey
+        } ?: wallets.firstOrNull {
+            it.isTonConnectSupported
+        } ?: wallets.first()
     }
 
     suspend fun getWalletById(id: String): WalletEntity? {

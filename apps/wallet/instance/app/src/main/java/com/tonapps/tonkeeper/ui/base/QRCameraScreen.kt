@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
+import uikit.HapticHelper
 import uikit.base.BaseFragment
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -129,7 +130,9 @@ abstract class QRCameraScreen(
     fun toggleFlash() {
         val cameraController = cameraView.controller ?: return
         val flashMode = cameraController.torchState.value == TorchState.ON
-        cameraController.enableTorch(!flashMode)
+        cameraController.enableTorch(!flashMode).addListener({
+            HapticHelper.selection(requireContext())
+        }, cameraExecutor)
     }
 
     override fun onDestroy() {

@@ -28,11 +28,8 @@ class PhraseWords @JvmOverloads constructor(
             1f
         }
 
-        /*if (layoutHeight > screenHeight) {
-            scale = screenHeight / layoutHeight.toFloat()
-            pivotY = 0f
-            translationX = measuredWidth * (1 - scale) / 2
-        }*/
+        pivotY = 0f
+        translationX = measuredWidth * (1 - scale) / 2
     }
 
     fun setWords(words: Array<String>) {

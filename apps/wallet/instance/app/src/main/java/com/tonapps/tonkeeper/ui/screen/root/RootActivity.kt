@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.view.ViewCompat
@@ -244,8 +245,13 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val uri = intent.data ?: return
-        processDeepLink(uri)
+        val uri = intent.data
+        val extras = intent.extras
+        if (uri != null && extras == null) {
+            processDeepLink(uri)
+        } else if (extras != null && !extras.isEmpty) {
+            viewModel.processIntentExtras(extras)
+        }
     }
 
     override fun openURL(url: String) {

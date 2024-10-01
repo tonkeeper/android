@@ -5,21 +5,17 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
-import android.os.Build
 import android.os.LocaleList
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.os.LocaleListCompat
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import uikit.extensions.activity
 import java.io.File
-import java.security.spec.AlgorithmParameterSpec
 import java.util.Locale
 import java.util.concurrent.CancellationException
 
@@ -97,3 +93,9 @@ fun Context.logError(e: Throwable) {
     Log.e("TonkeeperLog", e.message, e)
 }
 
+val Context.hasGMS: Boolean
+    get() {
+        val googleApiAvailability = GoogleApiAvailability.getInstance()
+        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
+        return resultCode == ConnectionResult.SUCCESS
+    }

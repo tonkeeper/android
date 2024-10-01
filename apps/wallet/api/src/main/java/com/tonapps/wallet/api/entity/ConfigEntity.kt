@@ -2,7 +2,6 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
@@ -37,6 +36,7 @@ data class ConfigEntity(
     val batteryMeanPriceSwap: String,
     val batteryMeanPriceJetton: String,
     val disableBatteryCryptoRecharge: Boolean,
+    val disableBatteryIapModule: Boolean,
     val batteryReservedAmount: String,
     val batteryMaxInputAmount: String,
     val batteryRefundEndpoint: String,
@@ -44,6 +44,7 @@ data class ConfigEntity(
     val stakingInfoUrl: String,
     val tonapiSSEEndpoint: String,
     val tonapiSSETestnetEndpoint: String,
+    val iapPackages: List<IAPPackageEntity>,
 ): Parcelable {
 
     val swapUri: Uri
@@ -83,6 +84,7 @@ data class ConfigEntity(
         batterySendDisabled = json.optBoolean("disable_battery_send", false),
         batteryMeanFees = json.optString("batteryMeanFees", "0.0055"),
         disableBatteryCryptoRecharge = json.optBoolean("disable_battery_crypto_recharge_module", false),
+        disableBatteryIapModule = json.optBoolean("disable_battery_iap_module", false),
         batteryMeanPriceNft = json.optString("batteryMeanPrice_nft", "0.03"),
         batteryMeanPriceSwap = json.optString("batteryMeanPrice_swap", "0.22"),
         batteryMeanPriceJetton = json.optString("batteryMeanPrice_jetton", "0.06"),
@@ -93,6 +95,9 @@ data class ConfigEntity(
         stakingInfoUrl = json.getString("stakingInfoUrl"),
         tonapiSSEEndpoint = json.optString("tonapi_sse_endpoint", "https://rt.tonapi.io"),
         tonapiSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint", "https://rt-testnet.tonapi.io"),
+        iapPackages = json.optJSONArray("iap_packages")?.let { array ->
+            (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
+        } ?: emptyList()
     )
 
     constructor() : this(
@@ -122,6 +127,7 @@ data class ConfigEntity(
         batterySendDisabled = false,
         batteryMeanFees = "0.0055",
         disableBatteryCryptoRecharge = false,
+        disableBatteryIapModule = false,
         batteryMeanPriceNft = "0.03",
         batteryMeanPriceSwap = "0.22",
         batteryMeanPriceJetton = "0.06",
@@ -132,6 +138,7 @@ data class ConfigEntity(
         stakingInfoUrl = "https://ton.org/stake",
         tonapiSSEEndpoint = "https://rt.tonapi.io",
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
+        iapPackages = emptyList()
     )
 
     companion object {

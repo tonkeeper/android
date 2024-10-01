@@ -39,6 +39,9 @@ data class StakedEntity(
             currency: WalletCurrency,
             ratesRepository: RatesRepository
         ): List<StakedEntity> {
+            if (true) {
+                return emptyList()
+            }
             val fiatRates = ratesRepository.getTONRates(currency)
             val list = mutableListOf<StakedEntity>()
             val activePools = getActivePools(staking, tokens)
@@ -48,7 +51,7 @@ data class StakedEntity(
                     if (isTonstakersAlready) {
                         continue
                     }
-                    
+
                     val liquidJettonMaster = pool.liquidJettonMaster ?: continue
                     val token = tokens.find { it.address.equalsAddress(liquidJettonMaster) } ?: continue
                     val rates = ratesRepository.getRates(WalletCurrency.TON, token.address)

@@ -3,6 +3,7 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
+import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.network.get
@@ -39,7 +40,7 @@ internal class InternalApi(
         path: String,
         testnet: Boolean,
         platform: String = "android", // "android_x"
-        build: String = "4.9.0", // context.packageInfo.versionName.removeSuffix("-debug"), //
+        build: String = context.appVersionName,
         locale: Locale,
     ): JSONObject {
         val url = endpoint(path, testnet, platform, build)

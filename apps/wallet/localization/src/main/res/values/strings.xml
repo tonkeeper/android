@@ -513,4 +513,9 @@
     <string name="gasless_switch_label">Tap to pay in %1$s</string>
     <string name="recharge_battery">Recharge Battery</string>
     <string name="or">or</string>
+    <string name="battery_large_pack">Large</string>
+    <string name="battery_medium_pack">Medium</string>
+    <string name="battery_small_pack">Small</string>
+    <string name="battery_disclaimer">One charge covers the average transaction fee. Some transactions may cost more.</string>
+    <string name="restore_purchases">Restore Purchases</string>
 </resources>

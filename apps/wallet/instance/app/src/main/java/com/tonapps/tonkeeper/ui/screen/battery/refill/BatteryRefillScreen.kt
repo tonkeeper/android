@@ -26,7 +26,9 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
 
     private val adapter = Adapter(
         openSettings = { primaryViewModel.routeToSettings() },
-        onSubmitPromo = { viewModel.applyPromo(it) }
+        onSubmitPromo = { viewModel.applyPromo(it) },
+        onPackSelect = { viewModel.makePurchase(it, requireActivity()) },
+        onRestorePurchases = { viewModel.restorePurchases() }
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {

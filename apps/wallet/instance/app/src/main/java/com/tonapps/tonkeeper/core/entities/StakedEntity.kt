@@ -39,9 +39,6 @@ data class StakedEntity(
             currency: WalletCurrency,
             ratesRepository: RatesRepository
         ): List<StakedEntity> {
-            if (true) {
-                return emptyList()
-            }
             val fiatRates = ratesRepository.getTONRates(currency)
             val list = mutableListOf<StakedEntity>()
             val activePools = getActivePools(staking, tokens)

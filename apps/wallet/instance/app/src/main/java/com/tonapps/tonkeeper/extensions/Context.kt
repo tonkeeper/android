@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.extensions
 import android.Manifest
 import android.content.ClipData
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -10,11 +11,13 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.extensions.bestMessage
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
@@ -24,6 +27,19 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
+
+fun Context.safeExternalOpenUri(uri: Uri) {
+    if (TonConnectManager.isTonConnectDeepLink(uri)) {
+        return
+    }
+    try {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    } catch (e: Exception) {
+        debugToast(e)
+    }
+}
 
 fun Context.showToast(@StringRes resId: Int) {
     navigation?.toast(resId)

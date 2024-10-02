@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.os.isMediatek
 import com.tonapps.wallet.api.entity.FlagsEntity
 
 val Context.featureFlags: FlagsEntity
@@ -11,6 +12,9 @@ val Context.featureFlags: FlagsEntity
 
 val Context.isLowDevice: Boolean
     get() {
+        if (isMediatek()) {
+            return true
+        }
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         return activityManager.isLowRamDevice
     }

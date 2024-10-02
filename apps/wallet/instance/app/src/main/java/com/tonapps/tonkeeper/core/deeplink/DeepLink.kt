@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.core.deeplink
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
@@ -22,6 +23,13 @@ object DeepLink {
 
     fun isSupportedUri(uri: Uri): Boolean {
         return supportedSchemes.contains(uri.scheme) || supportedHosts.contains(uri.host)
+    }
+
+    fun fixDeepLink(uri: Uri): Uri {
+        return uri.toString()
+            .replace("ton://", "https://app.tonkeeper.com/")
+            .replace("tonkeeper://", "https://app.tonkeeper.com/")
+            .toUri()
     }
 
     fun isSupportedUrl(url: String?): Boolean {

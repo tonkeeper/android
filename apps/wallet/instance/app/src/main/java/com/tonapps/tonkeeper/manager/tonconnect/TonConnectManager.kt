@@ -172,21 +172,28 @@ class TonConnectManager(
         uri: Uri,
         fromQR: Boolean,
         refSource: Uri?
-    ): Boolean {
-        if (uri.hasQuery("open")) {
-            return true
-        }
+    ): Uri? {
+        val returnUri = TonConnect.parseReturn(uri.getQueryParameter("ret"), refSource)
         try {
             val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
             val normalizedUri = normalizeUri(uri)
-            val tonConnect = TonConnect.parse(normalizedUri, refSource, fromQR)
+            val tonConnect = TonConnect.parse(
+                uri = normalizedUri,
+                refSource = refSource,
+                fromQR = fromQR,
+                returnUri = returnUri
+            )
             scope.launch {
                 connectRemoteApp(activity, tonConnect)
             }
-            return true
+            return null
         } catch (e: Exception) {
-            context.navigation?.toast(Localization.invalid_link)
-            return false
+            if (!uri.hasQuery("open") && !uri.hasQuery("ret")) {
+                context.navigation?.toast(Localization.invalid_link)
+                return null
+            } else {
+                return returnUri
+            }
         }
     }
 

@@ -145,11 +145,10 @@ class DAppBridge(
                         return new Promise((resolve, reject) => {
                             window.invokeRnFunc('tonapi.fetch', [url, options], (result) => {
                                 try {
-                                    const json = JSON.parse(result);
-                                    const headers = new Headers(json.headers);
-                                    const response = new Response(json.body, {
-                                        status: json.status,
-                                        statusText: json.statusText,
+                                    const headers = new Headers(result.headers);
+                                    const response = new Response(result.body, {
+                                        status: result.status,
+                                        statusText: result.statusText,
                                         headers: headers
                                     });
                                     resolve(response);

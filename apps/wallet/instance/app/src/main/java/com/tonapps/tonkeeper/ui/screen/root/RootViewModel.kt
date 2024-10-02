@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
@@ -27,6 +28,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.signer.SingerArgs
 import com.tonapps.tonkeeper.core.widget.Widget
+import com.tonapps.tonkeeper.extensions.safeExternalOpenUri
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
@@ -84,13 +86,15 @@ class RootViewModel(
     private val purchaseRepository: PurchaseRepository,
     private val tonConnectManager: TonConnectManager,
     private val browserRepository: BrowserRepository,
-    private val environment: Environment,
+    savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
     data class Passcode(
         val show: Boolean,
         val biometric: Boolean,
     )
+
+    private val savedState = RootModelState(savedStateHandle)
 
     private val selectedWalletFlow: Flow<WalletEntity> = accountRepository.selectedWalletFlow
 
@@ -169,6 +173,11 @@ class RootViewModel(
         } catch (e: Exception) {
             tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
         }
+
+        savedState.returnUri?.let {
+            context.safeExternalOpenUri(it)
+        }
+        savedState.returnUri = null
     }
 
     private suspend fun signRequest(
@@ -278,8 +287,10 @@ class RootViewModel(
         fromQR: Boolean,
         refSource: Uri?
     ): Boolean {
+        savedState.returnUri = null
         if (TonConnectManager.isTonConnectDeepLink(uri)) {
-            return tonConnectManager.processDeeplink(context, uri, fromQR, refSource)
+            savedState.returnUri = tonConnectManager.processDeeplink(context, uri, fromQR, refSource)
+            return true
         } else if (DeepLink.isSupportedUri(uri)) {
             resolveDeepLink(uri, fromQR, refSource)
             return true
@@ -314,7 +325,7 @@ class RootViewModel(
     private suspend fun processDeepLinkPush(uri: Uri, bundle: Bundle) {
         val accountId = bundle.getString("account") ?: return
         val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
-        resolveOther(null, uri, wallet)
+        resolveOther(DeepLink.fixDeepLink(uri), wallet)
     }
 
     private fun resolveDeepLink(
@@ -329,7 +340,7 @@ class RootViewModel(
             }
         } else {
             collectFlow(accountRepository.selectedWalletFlow.take(1)) { wallet ->
-                resolveOther(refSource, uri, wallet)
+                resolveOther(DeepLink.fixDeepLink(uri), wallet)
             }
         }
     }
@@ -343,17 +354,11 @@ class RootViewModel(
         }
     }
 
-    private fun resolveOther(
-        refSource: Uri?,
-        _uri: Uri,
-        wallet: WalletEntity
-    ) {
-        val url = _uri.toString().replace("ton://", "https://app.tonkeeper.com/").replace("tonkeeper://", "https://app.tonkeeper.com/")
-        val uri = Uri.parse(url)
+    private suspend fun resolveOther(uri: Uri, wallet: WalletEntity) {
         val path = uri.path
 
-        if (MainScreen.isSupportedDeepLink(url) || MainScreen.isSupportedDeepLink(_uri.toString())) {
-            _eventFlow.tryEmit(RootEvent.OpenTab(_uri.toString(), wallet))
+        if (MainScreen.isSupportedDeepLink(uri.toString())) {
+            _eventFlow.tryEmit(RootEvent.OpenTab(uri.toString(), wallet))
         } else if (path?.startsWith("/send") == true) {
             _eventFlow.tryEmit(RootEvent.OpenSend(wallet))
         } else if (path?.startsWith("/staking") == true) {

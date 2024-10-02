@@ -46,7 +46,7 @@ data class TonConnect(
             return !clientId.isNullOrBlank() && clientId.length == 64
         }
 
-        private fun parseReturn(
+        fun parseReturn(
             value: String?,
             refSource: Uri?
         ): Uri? {
@@ -66,7 +66,8 @@ data class TonConnect(
         fun parse(
             uri: Uri,
             refSource: Uri?,
-            fromQR: Boolean
+            fromQR: Boolean,
+            returnUri: Uri?
         ): TonConnect {
             val version = uri.getQueryParameter("v")?.toIntOrNull() ?: 0
             if (version != 2) {
@@ -80,12 +81,10 @@ data class TonConnect(
 
             val request = ConnectRequest.parse(uri.getQueryParameter("r"))
 
-            val ret = parseReturn(uri.getQueryParameter("ret"), refSource)
-
             return TonConnect(
                 clientId = clientId!!,
                 request = request,
-                returnUri = ret,
+                returnUri = returnUri,
                 fromQR = fromQR,
                 jsInject = false,
                 origin = refSource

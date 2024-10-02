@@ -39,6 +39,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -53,12 +54,13 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class RootActivity: BaseWalletActivity() {
 
-    private var rootViewModel: Lazy<RootViewModel>? = null
+    private var cachedRootViewModel: Lazy<RootViewModel>? = null
 
     override val viewModel: RootViewModel
-        get() = rootViewModel!!.value
+        get() = createOrGetViewModel()
 
     private val legacyRN: RNLegacy by inject()
+    private val settingsRepository by inject<SettingsRepository>()
 
     private lateinit var uiHandler: Handler
 
@@ -67,8 +69,7 @@ class RootActivity: BaseWalletActivity() {
     private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        rootViewModel = viewModel<RootViewModel>()
-        setTheme(viewModel.theme.resId)
+        setTheme(settingsRepository.theme.resId)
         supportFragmentManager.fragmentFactory = WalletFragmentFactory()
         super.onCreate(savedInstanceState)
         legacyRN.setActivity(this)
@@ -99,6 +100,13 @@ class RootActivity: BaseWalletActivity() {
         App.applyConfiguration(resources.configuration)
     }
 
+    private fun createOrGetViewModel(): RootViewModel {
+        if (cachedRootViewModel == null) {
+            cachedRootViewModel = viewModel<RootViewModel>()
+        }
+        return cachedRootViewModel!!.value
+    }
+
     override fun isNeedRemoveModals(fragment: BaseFragment): Boolean {
         if (fragment is QRCameraScreen || fragment is LedgerSignScreen) {
             return false
@@ -109,7 +117,7 @@ class RootActivity: BaseWalletActivity() {
     override fun onDestroy() {
         super.onDestroy()
         viewModelStore.clear()
-        rootViewModel = null
+        cachedRootViewModel = null
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -272,7 +280,7 @@ class RootActivity: BaseWalletActivity() {
         } else if (uri.scheme == "mailto") {
             openEmail(uri)
         } else {
-            openBrowser(uri)
+            BrowserHelper.open(this, uri)
         }
     }
 
@@ -280,14 +288,8 @@ class RootActivity: BaseWalletActivity() {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.`package` = "org.telegram.messenger"
         if (!safeStartActivity(intent)) {
-            openBrowser(uri)
+            BrowserHelper.open(this, uri)
         }
-    }
-
-    private fun openBrowser(uri: Uri) {
-        BrowserHelper.open(this, uri)
-        // val intent = Intent(Intent.ACTION_VIEW, uri)
-        // safeStartActivity(intent)
     }
 
     private fun openEmail(uri: Uri) {
@@ -306,8 +308,6 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun processDeepLink(uri: Uri) {
-        if (!viewModel.processDeepLink(uri, false, getReferrer())) {
-            openBrowser(uri)
-        }
+        viewModel.processDeepLink(uri, false, getReferrer())
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import androidx.core.database.getStringOrNull
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
@@ -187,8 +188,8 @@ internal class DatabaseSource(
                 accounts.add(
                     wallet.copy(
                         keystone = WalletEntity.Keystone(
-                            xfp = cursor.getString(keystoneXfpIndex),
-                            path = cursor.getString(keystonePathIndex)
+                            xfp = cursor.getStringOrNull(keystoneXfpIndex) ?: "",
+                            path = cursor.getStringOrNull(keystonePathIndex) ?: ""
                         )
                     )
                 )

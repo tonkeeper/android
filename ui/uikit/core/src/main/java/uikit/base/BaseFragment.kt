@@ -26,7 +26,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.getSpannable
@@ -170,7 +169,7 @@ open class BaseFragment(
 
     fun setResult(bundle: Bundle, finish: Boolean = true) {
         val key = resultKey ?: throw IllegalStateException("For setting result you must set result key")
-        setFragmentResult(key, bundle)
+        navigation?.setFragmentResult(key, bundle)
         if (finish) {
             finish()
         }
@@ -272,7 +271,9 @@ open class BaseFragment(
     }
 
     private fun finishInternal() {
-        resultKey?.let { setFragmentResult(it, Bundle()) }
+        resultKey?.let {
+            navigation?.setFragmentResult(it, Bundle())
+        }
         navigation?.remove(this)
     }
 

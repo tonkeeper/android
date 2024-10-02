@@ -794,11 +794,11 @@ class API(
         endDate: Long
     ): List<ChartEntity> {
         try {
-            val url = "${config.tonapiMainnetHost}/v2/rates/chart?token=$token&currency=$currency&end_date=$endDate&start_date=$startDate"
+            val url = "${config.tonapiMainnetHost}/v2/rates/chart?token=$token&currency=$currency&start_date=$startDate&end_date=$endDate"
             val array = JSONObject(tonAPIHttpClient.get(url)).getJSONArray("points")
             return (0 until array.length()).map { index ->
                 ChartEntity(array.getJSONArray(index))
-            }
+            }.asReversed()
         } catch (e: Throwable) {
             return listOf(ChartEntity(0, 0f))
         }

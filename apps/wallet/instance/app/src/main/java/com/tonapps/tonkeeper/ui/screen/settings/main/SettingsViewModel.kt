@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -45,6 +46,7 @@ class SettingsViewModel(
     private val passcodeManager: PasscodeManager,
     private val pushManager: PushManager,
     private val rnLegacy: RNLegacy,
+    private val environment: Environment,
 ): BaseWalletVM(application) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
@@ -184,7 +186,9 @@ class SettingsViewModel(
         uiItems.add(Item.Support(ListCell.Position.MIDDLE, api.config.directSupportUrl))
         uiItems.add(Item.News(ListCell.Position.MIDDLE, api.config.tonkeeperNewsUrl))
         uiItems.add(Item.Contact(ListCell.Position.MIDDLE, api.config.supportLink))
-        uiItems.add(Item.Rate(ListCell.Position.MIDDLE))
+        if (environment.isGooglePlayServicesAvailable) {
+            uiItems.add(Item.Rate(ListCell.Position.MIDDLE))
+        }
         uiItems.add(Item.Legal(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)

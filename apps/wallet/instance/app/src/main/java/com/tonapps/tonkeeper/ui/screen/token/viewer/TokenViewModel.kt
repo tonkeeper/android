@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.token.viewer
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -83,6 +84,7 @@ class TokenViewModel(
 
     private suspend fun loadChartPeriod(tokenAddress: String, period: ChartPeriod) {
         _chartFlow.value = emptyList()
+
         when (period) {
             ChartPeriod.hour -> loadHourChart(tokenAddress)
             ChartPeriod.day -> loadDayChart(tokenAddress)

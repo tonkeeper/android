@@ -236,7 +236,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
 
         appIconView.setImageURI(args.app.iconUrl)
         cryptoView.setKey(state.wallet.address)
-        applyAppTitle(args.app.url.host!!)
+        applyAppTitle(args.app.host)
         applyAppDescription(args.app.name, if (!state.hasWalletPicker) {
             state.wallet.address
         } else null)

@@ -59,6 +59,7 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.mnemonic.Mnemonic
 import uikit.navigation.Navigation
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.properties.Delegates
 
@@ -111,36 +112,36 @@ class InitViewModel(
 
     val labelFlow = savedState.labelFlow.stateIn(viewModelScope, SharingStarted.Lazily, null).filterNotNull()
 
-    private var hasPinCode by Delegates.notNull<Boolean>()
+    private val isPinSet = AtomicBoolean(false)
+
+    private val requestSetPinCode: Boolean
+        get() = (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !isPinSet.get()
 
     init {
-        savedState.publicKey = args.publicKeyEd25519?.let {
+        savedState.publicKey = args.publicKey?.let {
             InitModelState.PublicKey(publicKey = it)
         }
 
         savedState.ledgerConnectData = args.ledgerConnectData
         savedState.keystone = args.keystone
 
-        if (savedState.label == null || savedState.label?.isEmpty == true) {
-            viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            isPinSet.set(passcodeManager.hasPinCode())
+            if (savedState.isEmptyLabel) {
                 setLabel(getLabel())
             }
+            start()
         }
+    }
 
+    private suspend fun start() {
         when (type) {
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
             InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)
             InitArgs.Type.Signer, InitArgs.Type.SignerQR -> withLoading { resolveWallets(savedState.publicKey!!) }
             InitArgs.Type.Ledger -> routeTo(InitRoute.SelectAccount)
             InitArgs.Type.Keystone -> routeTo(InitRoute.LabelAccount)
-            else -> { }
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            hasPinCode = passcodeManager.hasPinCode()
-            if (type == InitArgs.Type.New) {
-                routeTo(if (hasPinCode) InitRoute.Push else InitRoute.CreatePasscode)
-            }
+            InitArgs.Type.New -> { routeTo(if (requestSetPinCode) InitRoute.Push else InitRoute.CreatePasscode)  }
         }
     }
 
@@ -259,7 +260,7 @@ class InitViewModel(
 
         if (items.size > 1) {
             routeTo(InitRoute.SelectAccount)
-        } else if (!hasPinCode) {
+        } else if (requestSetPinCode) {
             routeTo(InitRoute.CreatePasscode)
         } else {
             routeTo(InitRoute.Push)
@@ -411,13 +412,13 @@ class InitViewModel(
             execute(context)
         } else if (from == InitRoute.WatchAccount) {
             routeTo(InitRoute.Push)
-        } else if (from == InitRoute.SelectAccount) {
+        } else if (from == InitRoute.SelectAccount && !requestSetPinCode) {
             applyNameFromSelectedAccounts()
-            routeTo(if (hasPinCode) InitRoute.Push else InitRoute.CreatePasscode)
-        } else if (hasPinCode) {
-            execute(context)
-        } else {
+            routeTo(InitRoute.Push)
+        } else if (requestSetPinCode) {
             routeTo(InitRoute.CreatePasscode)
+        } else {
+            execute(context)
         }
     }
 
@@ -436,7 +437,7 @@ class InitViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if ((type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !passcodeManager.hasPinCode()) {
+                if (requestSetPinCode) {
                     passcodeManager.save(savedState.passcode!!)
                 }
 

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.helper
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
@@ -44,6 +45,18 @@ object BrowserHelper {
             .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_LIGHT, colorSchemeParams)
             .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_DARK, colorSchemeParams)
             .build()
-        intent.launchUrl(activity, uri)
+
+        try {
+            intent.launchUrl(activity, uri)
+        } catch (e: Throwable) {
+            external(activity, uri)
+        }
     }
+
+    private fun external(activity: Activity, uri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        activity.startActivity(intent)
+    }
+
 }

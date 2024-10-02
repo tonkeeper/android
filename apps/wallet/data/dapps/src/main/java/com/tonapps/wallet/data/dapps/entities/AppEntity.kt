@@ -14,6 +14,9 @@ data class AppEntity(
     val empty: Boolean
 ): Parcelable {
 
+    val host: String
+        get() = url.host ?: "unknown"
+
     constructor(json: JSONObject) : this(
         url = Uri.parse(json.getString("url").removeSuffix("/")),
         name = json.getString("name"),

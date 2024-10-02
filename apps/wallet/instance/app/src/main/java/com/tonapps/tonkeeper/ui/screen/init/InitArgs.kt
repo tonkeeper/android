@@ -16,7 +16,7 @@ import uikit.base.BaseArgs
 data class InitArgs(
     val type: Type,
     val name: String?,
-    val publicKeyEd25519: PublicKeyEd25519?,
+    val publicKey: PublicKeyEd25519?,
     val ledgerConnectData: LedgerConnectData?,
     val accounts: List<AccountItem>?,
     val keystone: WalletEntity.Keystone?
@@ -42,7 +42,7 @@ data class InitArgs(
     constructor(bundle: Bundle) : this(
         type = bundle.getEnum(ARG_TYPE, Type.New),
         name = bundle.getString(ARG_NAME),
-        publicKeyEd25519 = bundle.getString(ARG_PUBLIC_KEY)?.publicKey(),
+        publicKey = bundle.getString(ARG_PUBLIC_KEY)?.publicKey(),
         accounts = bundle.getParcelableArrayList<AccountItem>(ARG_ACCOUNTS),
         ledgerConnectData = bundle.getParcelableCompat<LedgerConnectData>(ARG_LEDGER_CONNECT_DATA),
         keystone = bundle.getParcelableCompat(ARG_KEYSTONE)
@@ -51,7 +51,7 @@ data class InitArgs(
     override fun toBundle(): Bundle = Bundle().apply {
         putEnum(ARG_TYPE, type)
         name?.let { putString(ARG_NAME, it) }
-        publicKeyEd25519?.let { putString(ARG_PUBLIC_KEY, it.base64()) }
+        publicKey?.let { putString(ARG_PUBLIC_KEY, it.base64()) }
         accounts?.let { putParcelableArrayList(ARG_ACCOUNTS, ArrayList(it)) }
         ledgerConnectData?.let { putParcelable(ARG_LEDGER_CONNECT_DATA, it) }
         keystone?.let { putParcelable(ARG_KEYSTONE, it) }

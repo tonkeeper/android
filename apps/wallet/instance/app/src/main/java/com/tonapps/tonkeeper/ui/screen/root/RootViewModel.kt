@@ -19,6 +19,7 @@ import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.deeplink.DeepLink
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
@@ -83,6 +84,7 @@ class RootViewModel(
     private val purchaseRepository: PurchaseRepository,
     private val tonConnectManager: TonConnectManager,
     private val browserRepository: BrowserRepository,
+    private val environment: Environment,
 ): BaseWalletVM(app) {
 
     data class Passcode(

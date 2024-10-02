@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
@@ -43,6 +44,7 @@ val koinModel = module {
     factory { Dispatchers.Default }
 
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
+    singleOf(::Environment)
 
     singleOf(::SettingsRepository)
     singleOf(::NetworkMonitor)
@@ -52,6 +54,7 @@ val koinModel = module {
     singleOf(::TransactionManager)
     singleOf(::TonConnectManager)
     singleOf(::PushManager)
+
 
     factoryOf(::SignUseCase)
     factoryOf(::EmulationUseCase)

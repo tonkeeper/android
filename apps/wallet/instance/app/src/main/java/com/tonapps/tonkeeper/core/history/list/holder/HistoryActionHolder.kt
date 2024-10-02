@@ -10,6 +10,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonapps.extensions.logError
+import com.tonapps.extensions.max24
 import com.tonapps.extensions.short12
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.history.ActionType
@@ -172,7 +173,7 @@ class HistoryActionHolder(
             commentView.setLeftDrawable(lockDrawable)
             commentView.setOnClickListener { requestDecryptComment(comment, txId, senderAddress) }
         } else {
-            commentView.text = comment.body
+            commentView.text = comment.body.max24
             commentView.setLeftDrawable(null)
             commentView.setOnClickListener(null)
         }

@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
+import okhttp3.Headers
+import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import uikit.widget.webview.bridge.JsBridge
@@ -14,7 +16,7 @@ class DAppBridge(
     val connect: suspend (protocolVersion: Int, request: ConnectRequest) -> JSONObject,
     val restoreConnection: suspend () -> JSONObject,
     val disconnect: suspend () -> Unit,
-    val tonapiFetch: suspend (url: String, options: String) -> String
+    val tonapiFetch: suspend (url: String, options: String) -> Response
 ): JsBridge("tonkeeper") {
 
     override val availableFunctions = arrayOf("send", "connect", "restoreConnection", "disconnect")
@@ -31,8 +33,40 @@ class DAppBridge(
             "send" -> send(args).toString()
             "restoreConnection" -> restoreConnection().toString()
             "disconnect" -> disconnect()
-            "tonapi.fetch" -> tonapiFetch(args.getString(0), args.optString(1) ?: "")
+            "tonapi.fetch" -> {
+                val response = tonapiFetch(args.getString(0), args.optString(1) ?: "")
+                webAPIResponse(response).toString()
+            }
             else -> null
+        }
+    }
+
+    private fun webAPIResponse(response: Response): JSONObject {
+        val body = response.body?.string() ?: ""
+        val json = JSONObject()
+        json.put("body", body)
+        json.put("ok", response.isSuccessful)
+        json.put("status", response.code)
+        json.put("statusText", response.message)
+        json.put("type", webAPIResponseType(response.code))
+        json.put("headers", webAPIResponseHeaders(response.headers))
+        json.put("redirected", response.isRedirect)
+        json.put("url", response.request.url.toString())
+        return json
+    }
+
+    private fun webAPIResponseHeaders(headers: Headers): JSONObject {
+        val json = JSONObject()
+        for (i in 0 until headers.size) {
+            json.put(headers.name(i), headers.value(i))
+        }
+        return json
+    }
+
+    private fun webAPIResponseType(code: Int): String {
+        return when (code) {
+            0 -> "error"
+            else -> "cors"
         }
     }
 
@@ -109,7 +143,20 @@ class DAppBridge(
                 window.tonapi = {
                     fetch: async (url, options) => {
                         return new Promise((resolve, reject) => {
-                            window.invokeRnFunc('tonapi.fetch', [url, options], resolve, reject)
+                            window.invokeRnFunc('tonapi.fetch', [url, options], (result) => {
+                                try {
+                                    const json = JSON.parse(result);
+                                    const headers = new Headers(json.headers);
+                                    const response = new Response(json.body, {
+                                        status: json.status,
+                                        statusText: json.statusText,
+                                        headers: headers
+                                    });
+                                    resolve(response);
+                                } catch (e) {
+                                    reject(e);
+                                }
+                            }, reject)
                         });
                     }
                 };

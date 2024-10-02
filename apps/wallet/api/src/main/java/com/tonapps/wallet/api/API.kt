@@ -117,7 +117,7 @@ class API(
     suspend fun tonapiFetch(
         url: String,
         options: String
-    ): String = withContext(Dispatchers.IO) {
+    ): Response = withContext(Dispatchers.IO) {
         val uri = url.toUriOrNull() ?: throw Exception("Invalid URL")
         if (uri.scheme != "https") {
             throw Exception("Invalid scheme. Should be https")
@@ -150,12 +150,7 @@ class API(
             builder.post(bodyOptions.toRequestBody(contentTypeOptions.toMediaType()))
         }
 
-        val response = tonAPIHttpClient.newCall(builder.build()).execute()
-        if (response.isSuccessful) {
-            response.body?.string() ?: throw Exception("Empty response")
-        } else {
-            throw Exception("Failed request: ${response.code}")
-        }
+        tonAPIHttpClient.newCall(builder.build()).execute()
     }
 
     private val provider: Provider by lazy {

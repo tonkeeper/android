@@ -17,6 +17,8 @@ import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.drawable.BarDrawable
@@ -46,6 +48,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.history)
+        headerView.setSubtitle(Localization.updating)
         headerView.setColor(requireContext().backgroundTransparentColor)
 
         containerView = view.findViewById(R.id.container)
@@ -64,38 +67,41 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
                 openQRCode()
             }
         }
-        collectFlow(viewModel.isUpdatingFlow) { updating ->
-            if (updating) {
+
+        collectFlow(viewModel.uiStateFlow, ::applyState)
+    }
+
+    private suspend fun applyState(state: EventsUiState) = withContext(Dispatchers.Main) {
+        if (state.isEmpty) {
+            setEmptyState()
+        } else {
+            setListState()
+            if (state.isLoading) {
                 headerView.setSubtitle(Localization.updating)
-            } else {
-                headerView.setSubtitle(null)
+            }
+            legacyAdapter.submitList(state.items) {
+                if (!state.isLoading) {
+                    headerView.setSubtitle(null)
+                }
             }
         }
-        collectFlow(viewModel.uiItemsFlow, ::setItems)
     }
 
     override fun scrollUp() {
         super.scrollUp()
         listView.scrollToPosition(0)
+        viewModel.refresh()
     }
 
     private fun openQRCode() {
         navigation?.add(QRScreen.newInstance(screenContext.wallet, TokenEntity.TON))
     }
 
-    private fun setItems(items: List<HistoryItem>) {
-        if (items.isEmpty()) {
-            setEmptyState()
-        } else {
-            setListState()
-            legacyAdapter.submitList(items)
-        }
-    }
-
     private fun setEmptyState() {
         if (emptyView.visibility == View.VISIBLE) {
             return
         }
+        headerView.setSubtitle(null)
         emptyView.visibility = View.VISIBLE
         containerView.visibility = View.GONE
     }

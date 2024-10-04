@@ -453,19 +453,19 @@ class InitViewModel(
                 }
 
                 if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
-                    for (wallet in wallets) {
-                        backupRepository.addBackup(wallet.id, BackupEntity.Source.LOCAL)
+                    post {
+                        backupRepository.addBackupsAsync(wallets.map { it.id })
                     }
                 }
 
                 if (savedState.enablePush) {
-                    pushManager.wallets(wallets, PushManager.State.Enable)
+                    post {
+                        pushManager.walletsAsync(wallets, PushManager.State.Enable)
+                    }
                 }
 
                 val selectedWalletId = wallets.minByOrNull { it.version }!!.id
                 accountRepository.setSelectedWallet(selectedWalletId)
-
-                _eventFlow.tryEmit(InitEvent.Finish)
             } catch (e: Throwable) {
                 context.logError(e)
                 setLoading(false)

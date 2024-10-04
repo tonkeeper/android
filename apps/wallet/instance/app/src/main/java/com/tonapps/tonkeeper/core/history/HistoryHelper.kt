@@ -270,6 +270,14 @@ class HistoryHelper(
         )
     }
 
+    fun transform(loading: Boolean, items: List<HistoryItem>): List<HistoryItem> {
+        return if (loading) {
+            withLoadingItem(items)
+        } else {
+            removeLoadingItem(items)
+        }
+    }
+
     fun withLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
         val last = items.lastOrNull()
         if (last is HistoryItem.Loader) {

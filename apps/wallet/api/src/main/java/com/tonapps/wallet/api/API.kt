@@ -226,7 +226,7 @@ class API(
 
     fun realtime(accountId: String, testnet: Boolean): Flow<SSEvent> {
         val endpoint = if (testnet) config.tonapiSSETestnetEndpoint else config.tonapiSSEEndpoint
-        val url = "$endpoint/sse/transactions?account=$accountId"
+        val url = "$endpoint/sse/traces?account=$accountId"
         return tonAPIHttpClient.sse(url)
     }
 

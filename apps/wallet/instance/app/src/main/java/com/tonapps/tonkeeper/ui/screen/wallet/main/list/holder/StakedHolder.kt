@@ -10,9 +10,11 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
+import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -41,6 +43,7 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
     override fun onBind(item: Item.Stake) {
         stopTicker()
 
+        item.poolAddress
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, null)
         nameView.text = item.poolName
@@ -64,8 +67,14 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
         if (item.readyWithdraw > Coins.ZERO) {
             messageView.visibility = View.VISIBLE
             messageView.text = context.getString(Localization.staking_ready_withdraw, item.readyWithdrawFormat)
+            messageView.setOnClickListener {
+                navigation?.add(StakeWithdrawScreen.newInstance(item.wallet, item.poolAddress))
+            }
         } else if (item.pendingDeposit > Coins.ZERO) {
             startTicker(Localization.staking_pending_deposit, item.pendingDepositFormat, item.cycleEnd)
+        } else if (item.pendingWithdraw > Coins.ZERO && item.poolImplementation == StakingPool.Implementation.LiquidTF) {
+            messageView.visibility = View.VISIBLE
+            messageView.text = context.getString(Localization.staking_pending_withdraw_liquid, item.pendingWithdrawFormat)
         } else if (item.pendingWithdraw > Coins.ZERO) {
             startTicker(Localization.staking_pending_withdraw, item.pendingWithdrawFormat, item.cycleEnd)
         } else {

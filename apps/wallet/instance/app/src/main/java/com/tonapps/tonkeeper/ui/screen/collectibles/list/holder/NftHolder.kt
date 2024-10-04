@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.generic.RoundingParams
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequest
 import com.facebook.imagepipeline.request.ImageRequestBuilder
@@ -79,14 +80,11 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
     }
 
     private fun loadImage(uri: Uri, blur: Boolean) {
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(320)
         if (blur) {
-            val request = ImageRequestBuilder.newBuilderWithSource(uri)
-                .setPostprocessor(BlurPostProcessor(25, context, 3))
-                .build()
-            imageView.setImageRequest(request)
-        } else {
-            imageView.setImageURI(uri, null)
+            builder.setPostprocessor(BlurPostProcessor(25, context, 3))
         }
-
+        imageView.setImageRequest(builder.build())
     }
 }

@@ -2,17 +2,24 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.app.Application
 import android.content.Context
+import android.os.Handler
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.annotation.UiThread
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.isUIThread
+import com.tonapps.tonkeeper.extensions.showToast
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.observeOn
 import kotlinx.coroutines.flow.onEach
@@ -42,6 +49,13 @@ abstract class BaseWalletVM(
     val context: Context
         get() = holder?.uiContext ?: getApplication()
 
+    private val uiHandler: Handler by lazy {
+        Handler(context.mainLooper)
+    }
+
+    private val navigation: Navigation?
+        get() = Navigation.from(context)
+
     fun attachHolder(holder: Holder) {
         holderRef = WeakReference(holder)
     }
@@ -52,6 +66,18 @@ abstract class BaseWalletVM(
 
     fun <T> Flow<T>.collectFlow(action: suspend (T) -> Unit) {
         this.onEach { action(it) }.launch()
+    }
+
+    fun <T> Flow<T>.safeCollectFlow(action: suspend (T) -> Unit) {
+        this.flowOn(Dispatchers.IO).onEach { action(it) }.catch {
+            toast(it.bestMessage)
+        }.launch()
+    }
+
+    fun <T> Flow<T>.safeCollectFlowAtPost(action: (T) -> Unit) {
+        this.safeCollectFlow {
+            post { action(it) }
+        }
     }
 
     fun detachHolder() {
@@ -74,6 +100,36 @@ abstract class BaseWalletVM(
             holder?.finish()
         } else {
             throw IllegalStateException("finish() must be called from UI thread")
+        }
+    }
+
+    fun post(action: () -> Unit) {
+        uiHandler.post(action)
+    }
+
+    fun postDelayed(delay: Long, runnable: Runnable) {
+        uiHandler.postDelayed(runnable, delay)
+    }
+
+    fun cancelPost(runnable: Runnable) {
+        uiHandler.removeCallbacks(runnable)
+    }
+
+    fun toast(@StringRes resId: Int) {
+        post {
+            context.showToast(resId)
+        }
+    }
+
+    fun toast(text: String) {
+        post {
+            context.showToast(text)
+        }
+    }
+
+    fun openScreen(screen: BaseFragment) {
+        post {
+            navigation?.add(screen)
         }
     }
 }

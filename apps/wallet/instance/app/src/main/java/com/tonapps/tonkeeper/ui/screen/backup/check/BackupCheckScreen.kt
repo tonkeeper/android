@@ -1,8 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.backup.check
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
+import androidx.core.view.updatePadding
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
@@ -17,7 +20,10 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
+import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.pinToBottomInsets
+import uikit.extensions.scrollDown
+import uikit.extensions.scrollView
 import uikit.widget.HeaderView
 import uikit.widget.TextHeaderView
 import uikit.widget.WordInput
@@ -35,6 +41,7 @@ class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     private lateinit var button: Button
     private lateinit var wordInputs: List<WordInput>
+    private lateinit var scrollView: NestedScrollView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -42,6 +49,8 @@ class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
         val textView = view.findViewById<TextHeaderView>(R.id.text)
         textView.desciption = getString(Localization.backup_check_subtitle, indexes[0] + 1, indexes[1] + 1, indexes[2] + 1)
+
+        scrollView = view.findViewById(R.id.scroll)
 
         wordInputs = listOf(
             view.findViewById(R.id.word_input_1),
@@ -66,15 +75,33 @@ class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
                 }
             }
             wordInput.doOnTextChanged = { checkEnableButton() }
-            wordInput.doOnFocus = { checkWords() }
+            wordInput.doOnFocus = { focus ->
+                if (focus) {
+                    updateScroll(wordInput)
+                }
+                checkWords()
+            }
         }
 
         button = view.findViewById(R.id.done)
         button.isEnabled = false
-        button.pinToBottomInsets()
         button.setOnClickListener { saveBackup() }
 
+        scrollView.doKeyboardAnimation { offset, progress, _ ->
+            scrollView.updatePadding(bottom = offset)
+            button.translationY = -offset.toFloat()
+            if (progress >= .9f || .1f >= progress) {
+                getCurrentFocus()?.let { updateScroll(it) }
+            }
+        }
+
         wordInputs.first().focus(true)
+    }
+
+    private fun updateScroll(view: View) {
+        scrollView.postOnAnimation {
+            scrollView.scrollView(view)
+        }
     }
 
     private fun saveBackup() {

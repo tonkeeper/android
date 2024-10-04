@@ -302,6 +302,7 @@ open class BaseFragment(
 
     fun post(action: Runnable) {
         view?.post(action)
+        view?.postOnAnimation {  }
     }
 
     @ColorInt

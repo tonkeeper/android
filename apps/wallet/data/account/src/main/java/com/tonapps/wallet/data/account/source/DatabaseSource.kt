@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import androidx.core.database.getStringOrNull
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.extensions.toByteArray

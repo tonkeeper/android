@@ -92,7 +92,12 @@ class WalletViewModel(
     private val _streamFlow = combine(updateWalletSettings, billingManager.madePurchaseFlow, _lastLtFlow) { _, _, lastLt -> lastLt }
 
     init {
-        collectFlow(transactionManager.getEventsFlow(wallet)) { event ->
+        viewModelScope.launch {
+            val cached = screenCacheSource.getWalletScreen(wallet) ?: return@launch
+            _uiItemsFlow.value = cached
+        }
+
+        collectFlow(transactionManager.eventsFlow(wallet)) { event ->
             if (event.pending) {
                 setStatus(Status.SendingTransaction)
             } else {
@@ -215,8 +220,10 @@ class WalletViewModel(
                 setup = uiSetup,
                 lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale())
             )
-            _uiItemsFlow.value = uiItems
-            setCached(state.wallet, uiItems)
+            if (uiItems.isNotEmpty()) {
+                _uiItemsFlow.value = uiItems
+                setCached(state.wallet, uiItems)
+            }
         }.launchIn(viewModelScope)
 
         loadAlertNotifications()

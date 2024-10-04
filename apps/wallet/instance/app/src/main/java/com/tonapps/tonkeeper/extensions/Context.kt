@@ -45,6 +45,10 @@ fun Context.showToast(@StringRes resId: Int) {
     navigation?.toast(resId)
 }
 
+fun Context.showToast(test: String) {
+    navigation?.toast(test)
+}
+
 fun Context.copyWithToast(text: String, color: Int = backgroundContentTintColor) {
     navigation?.toast(getString(Localization.copied), color)
     copyToClipboard(text)

@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonapps.extensions.logError
@@ -125,7 +126,10 @@ class HistoryActionHolder(
 
     private fun loadIcon(uri: Uri) {
         iconView.imageTintList = null
-        iconView.setImageURI(uri, this)
+
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(128)
+        iconView.setImageRequest(builder.build())
     }
 
     private fun bindPending(pending: Boolean) {
@@ -218,14 +222,12 @@ class HistoryActionHolder(
     }
 
     private fun loadNftImage(uri: Uri, blur: Boolean) {
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(320)
         if (blur) {
-            val request = ImageRequestBuilder.newBuilderWithSource(uri)
-                .setPostprocessor(BlurPostProcessor(25, context, 3))
-                .build()
-            nftIconView.setImageRequest(request)
-        } else {
-            nftIconView.setImageURI(uri, null)
+            builder.setPostprocessor(BlurPostProcessor(25, context, 3))
         }
+        nftIconView.setImageRequest(builder.build())
     }
 
     @ColorInt

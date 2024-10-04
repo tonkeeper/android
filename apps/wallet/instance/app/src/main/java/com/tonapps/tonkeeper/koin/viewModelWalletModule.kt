@@ -27,6 +27,8 @@ import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawViewModel
+import org.koin.androidx.viewmodel.dsl.viewModel
 
 val viewModelWalletModule = module {
     viewModelOf(::WalletViewModel)
@@ -54,4 +56,5 @@ val viewModelWalletModule = module {
     viewModelOf(::UnStakeViewModel)
     viewModelOf(::StakingViewModel)
     viewModelOf(::SendTransactionViewModel)
+    viewModelOf(::StakeWithdrawViewModel)
 }

@@ -7,5 +7,12 @@ data class SSEvent(
     val type: String?,
     val data: String
 ) {
-    val json = JSONObject(data)
+
+    val json: JSONObject by lazy {
+        try {
+            JSONObject(data)
+        } catch (e: Throwable) {
+            JSONObject()
+        }
+    }
 }

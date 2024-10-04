@@ -10,12 +10,11 @@ import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.flat
-import com.tonapps.extensions.getQueryLong
 import com.tonapps.extensions.hasQuery
 import com.tonapps.extensions.mapList
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
-import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.Bridge
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
@@ -41,7 +40,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import uikit.extensions.activity
 import uikit.extensions.addForResult
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.navigation.NavigationActivity
 import java.util.concurrent.CancellationException
 
@@ -189,7 +187,7 @@ class TonConnectManager(
             return null
         } catch (e: Exception) {
             if (!uri.hasQuery("open") && !uri.hasQuery("ret")) {
-                context.navigation?.toast(Localization.invalid_link)
+                context.showToast(Localization.invalid_link)
                 return null
             } else {
                 return returnUri

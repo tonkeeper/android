@@ -1,8 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
+import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.facebook.imagepipeline.common.ResizeOptions
+import com.facebook.imagepipeline.request.ImageRequest
+import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.buildRateString
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
@@ -39,7 +43,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
                 item.symbol
             }
             titleView.text = text
-            iconView.setImageURI(item.iconUri, this)
+            setTokenIcon(item.iconUri)
         }
 
         balanceView.text = if (item.hiddenBalance) {
@@ -60,6 +64,12 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             }
             setRate(item.rate, item.rateDiff24h, item.verified)
         }
+    }
+
+    private fun setTokenIcon(uri: Uri) {
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(128)
+        iconView.setImageRequest(builder.build())
     }
 
     private fun setRate(rate: CharSequence, rateDiff24h: String, verified: Boolean) {

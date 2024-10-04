@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
@@ -397,7 +398,7 @@ class AccountRepository(
             return
         }
 
-        val entity = database.getAccount(id)
+        val entity = database.getAccount(id) ?: database.getAccounts().firstOrNull()
         if (entity == null) {
             setSelectedWallet(null)
         } else {
@@ -486,16 +487,4 @@ class AccountRepository(
             transfers = transfers
         )
     }
-
-    /*suspend fun createSignedMessage(
-        wallet: WalletEntity,
-        seqno: Int,
-        privateKeyEd25519: PrivateKeyEd25519 = EmptyPrivateKeyEd25519,
-        validUntil: Long,
-        transfers: List<WalletTransfer>,
-        internalMessage: Boolean = false,
-    ): Cell {
-        val data = messageBody(wallet, seqno, validUntil, transfers, internalMessage)
-        return wallet.sign(privateKeyEd25519, data.seqNo, data.body)
-    }*/
 }

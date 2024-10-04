@@ -79,4 +79,22 @@ class BackupRepository(
         backportToRN(_stream.value)
         return entity
     }
+
+    fun addBackups(
+        walletIds: List<String>,
+        source: BackupEntity.Source = BackupEntity.Source.LOCAL,
+        date: Long = System.currentTimeMillis()
+    ) {
+        for (walletId in walletIds) {
+            addBackup(walletId, source, date)
+        }
+    }
+
+    fun addBackupsAsync(
+        walletIds: List<String>,
+        source: BackupEntity.Source = BackupEntity.Source.LOCAL,
+        date: Long = System.currentTimeMillis()
+    ) {
+        scope.launch(Dispatchers.IO) { addBackups(walletIds, source, date) }
+    }
 }

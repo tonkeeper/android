@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.component
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
+import android.util.Log
 import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding

@@ -21,9 +21,9 @@ class PhraseWords @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val isSmall = 1280 >= context.resources.displayMetrics.heightPixels
+        val isSmall = 1320 >= context.resources.displayMetrics.heightPixels
         scale = if (isSmall) {
-            0.8f
+            .7f
         } else {
             1f
         }

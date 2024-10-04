@@ -40,6 +40,10 @@ class PushManager(
         scope.launch { wallet(wallet, state) }
     }
 
+    fun walletsAsync(wallets: List<WalletEntity>, state: State) {
+        scope.launch { wallets(wallets, state) }
+    }
+
     suspend fun wallet(wallet: WalletEntity, state: State) = wallets(listOf(wallet), state)
 
     suspend fun wallets(wallets: List<WalletEntity>, state: State): Boolean = withContext(Dispatchers.IO) {
@@ -54,6 +58,11 @@ class PushManager(
         if (wallets.isEmpty()) {
             return true
         }
+
+        for (wallet in wallets) {
+            settingsRepository.setPushWallet(wallet.id, true)
+        }
+
         val firebaseToken = getFirebaseToken() ?: return false
         val accounts = wallets.map { it.accountId }
         val successful = api.pushSubscribe(
@@ -64,7 +73,6 @@ class PushManager(
         )
         if (successful) {
             for (wallet in wallets) {
-                settingsRepository.setPushWallet(wallet.id, true)
                 val apps = dAppsRepository.getConnections(wallet.accountId, wallet.testnet)
                 for ((app, connections) in apps) {
                     dAppPush(

@@ -5,15 +5,16 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -23,13 +24,19 @@ import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
+import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
+import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
+import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
+import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
@@ -161,30 +168,15 @@ class RootActivity: BaseWalletActivity() {
 
     fun event(event: RootEvent) {
         when (event) {
-            is RootEvent.Toast -> toast(event.resId)
             is RootEvent.Singer -> add(InitScreen.newInstance(if (event.qr) InitArgs.Type.SignerQR else InitArgs.Type.Signer, event.publicKey, event.name))
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
-            is RootEvent.Browser -> add(DAppScreen.newInstance(event.wallet, url = event.uri))
             is RootEvent.Transfer -> openSend(
                 targetAddress = event.address,
                 tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
-                amountNano = event.amount?.toLongOrNull() ?: 0L,
+                amountNano = event.amount ?: 0L,
                 text = event.text,
                 wallet = event.wallet
             )
-            is RootEvent.OpenSend -> openSend(event.wallet)
-            is RootEvent.Transaction -> this.navigation?.add(TransactionScreen.newInstance(event.event))
-            is RootEvent.BuyOrSell -> {
-                if (event.method == null) {
-                    add(PurchaseScreen.newInstance(event.wallet))
-                } else {
-                    PurchaseWebScreen.open(this, event.method)
-                }
-            }
-            is RootEvent.OpenBackups -> add(BackupScreen.newInstance(event.wallet))
-            is RootEvent.Staking -> add(StakingScreen.newInstance(event.wallet))
-            is RootEvent.StakingPool -> add(StakeViewerScreen.newInstance(event.wallet, event.poolAddress, ""))
-            is RootEvent.Battery -> add(BatteryScreen.newInstance(event.wallet, event.promocode))
             else -> { }
         }
     }

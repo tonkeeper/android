@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.purchase.web
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.View
+import com.tonapps.extensions.activity
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -86,6 +88,11 @@ class PurchaseWebScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     companion object {
         private const val METHOD_KEY = "method"
+
+        fun open(context: Context, method: WalletPurchaseMethodEntity) {
+            val activity = context.activity ?: throw IllegalStateException("Activity not found")
+            open(activity, method)
+        }
 
         fun open(activity: NavigationActivity, method: WalletPurchaseMethodEntity) {
             if (method.useCustomTabs) {

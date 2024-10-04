@@ -134,6 +134,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
             for ((index, button) in nftEntity.metadata.buttons.take(5).withIndex()) {
                 val buttonView = newNftButton(buttonsContainer, index == 0)
                 buttonView.text = button.label
+                buttonView.isEnabled = !nftEntity.inSale
                 buttonView.setOnClickListener { openButtonDApp(button.uri) }
             }
         }

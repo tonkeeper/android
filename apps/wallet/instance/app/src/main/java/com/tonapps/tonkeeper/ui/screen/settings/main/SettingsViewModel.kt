@@ -2,10 +2,14 @@ package com.tonapps.tonkeeper.ui.screen.settings.main
 
 import android.app.Application
 import android.os.Build
+import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.extensions.appVersionCode
+import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
@@ -13,6 +17,7 @@ import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -183,7 +188,7 @@ class SettingsViewModel(
 
         uiItems.add(Item.Space)
         uiItems.add(Item.FAQ(ListCell.Position.FIRST, api.config.faqUrl))
-        uiItems.add(Item.Support(ListCell.Position.MIDDLE, api.config.directSupportUrl))
+        uiItems.add(Item.Support(ListCell.Position.MIDDLE, getSupportUrl()))
         uiItems.add(Item.News(ListCell.Position.MIDDLE, api.config.tonkeeperNewsUrl))
         uiItems.add(Item.Contact(ListCell.Position.MIDDLE, api.config.supportLink))
         if (environment.isGooglePlayServicesAvailable) {
@@ -201,5 +206,12 @@ class SettingsViewModel(
         uiItems.add(Item.Logo)
 
         _uiItemsFlow.value = uiItems
+    }
+
+    private fun getSupportUrl(): String {
+        val startParams = "android${Build.VERSION.SDK_INT}app${context.appVersionCode}"
+        val builder = api.config.directSupportUrl.toUri().buildUpon()
+        builder.appendQueryParameter("start", startParams)
+        return builder.toString()
     }
 }

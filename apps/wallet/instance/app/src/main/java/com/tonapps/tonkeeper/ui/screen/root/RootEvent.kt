@@ -10,8 +10,6 @@ import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import org.ton.api.pub.PublicKeyEd25519
 
 sealed class RootEvent {
-    data class Toast(val resId: Int): RootEvent()
-
     data class OpenTab(
         val link: String,
         val wallet: WalletEntity
@@ -25,11 +23,6 @@ sealed class RootEvent {
         val to: String?
     ): RootEvent()
 
-    data class BuyOrSell(
-        val wallet: WalletEntity,
-        val method: WalletPurchaseMethodEntity? = null
-    ): RootEvent()
-
     data class Singer(
         val publicKey: PublicKeyEd25519,
         val name: String?,
@@ -41,35 +34,11 @@ sealed class RootEvent {
         val accounts: List<AccountItem>
     ): RootEvent()
 
-    data class Browser(
-        val wallet: WalletEntity,
-        val uri: Uri
-    ): RootEvent()
-
     data class Transfer(
         val wallet: WalletEntity,
         val address: String,
-        val amount: String?,
+        val amount: Long?,
         val text: String?,
         val jettonAddress: String?
     ): RootEvent()
-
-    data class OpenSend(
-        val wallet: WalletEntity,
-    ): RootEvent()
-
-    data class Transaction(
-        val event: HistoryItem.Event
-    ): RootEvent()
-
-    data class Battery(
-        val wallet: WalletEntity,
-        val promocode: String?
-    ): RootEvent()
-
-    data class OpenBackups(val wallet: WalletEntity): RootEvent()
-
-    data class Staking(val wallet: WalletEntity): RootEvent()
-
-    data class StakingPool(val wallet: WalletEntity, val poolAddress: String): RootEvent()
 }

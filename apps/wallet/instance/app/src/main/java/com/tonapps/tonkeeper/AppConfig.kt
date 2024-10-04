@@ -2,22 +2,19 @@ package com.tonapps.tonkeeper
 
 import android.app.ActivityManager
 import android.content.Context
-import android.os.Build
-import com.tonapps.tonkeeper.koin.remoteConfig
-import com.tonapps.tonkeeper.os.isMediatek
-import com.tonapps.wallet.api.entity.FlagsEntity
+import android.os.BatteryManager
 
-val Context.featureFlags: FlagsEntity
-    get() = this.remoteConfig?.flags ?: FlagsEntity()
+val Context.batteryLevel: Int
+    get() {
+        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+    }
 
 val Context.isLowDevice: Boolean
     get() {
-        if (isMediatek()) {
-            return true
-        }
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         return activityManager.isLowRamDevice
     }
 
 val Context.isBlurDisabled: Boolean
-    get() = isLowDevice || featureFlags.disableBlur || (Build.VERSION_CODES.S > Build.VERSION.SDK_INT && featureFlags.disableLegacyBlur)
+    get() = isLowDevice && 20 >= batteryLevel

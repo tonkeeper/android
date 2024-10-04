@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.manager.tx
 
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.join
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
@@ -10,27 +11,24 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.timeout
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -39,70 +37,34 @@ class TransactionManager(
     private val api: API
 ) {
 
-    private val eventFlowMap = ConcurrentHashMap<String, Flow<AccountEventEntity>>()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val _sentTransactionFlow = MutableSharedFlow<PendingTransaction>(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    private val sentTransactionFlow = _sentTransactionFlow.shareIn(scope, SharingStarted.Eagerly, 1)
 
-    fun getEventsFlow(
-        wallet: WalletEntity
-    ): Flow<AccountEventEntity> {
-        val key = eventFlowMapKey(wallet)
-        return eventFlowMap.getOrPut(key) {
-            createEventsFlow(wallet)
-        }
+    private val _sendingTransactionFlow = MutableSharedFlow<SendingTransaction>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val sendingTransactionFlow = _sendingTransactionFlow.asSharedFlow()
+
+    private val _transactionFlow = MutableSharedFlow<AccountEventEntity>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val transactionFlow = _transactionFlow.asSharedFlow()
+
+    init {
+        sendingTransactionFlow.mapNotNull { getTransaction(it.wallet, it.hash) }.onEach { transaction ->
+            _transactionFlow.tryEmit(transaction)
+        }.launchIn(scope)
+
+        accountRepository.selectedWalletFlow.flatMapLatest { wallet ->
+            realtime(wallet)
+        }.filterNotNull().onEach { transaction ->
+            _transactionFlow.tryEmit(transaction)
+        }.launchIn(scope)
     }
 
-    private fun createEventsFlow(
-        wallet: WalletEntity
-    ) = join(
-        pendingEventsFlow(wallet),
-        realtime(wallet)
-    ).distinctUntilChanged { old, new ->
-        old.pending == new.pending && old.lt == new.lt
-    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
+    fun eventsFlow(wallet: WalletEntity) = transactionFlow.filter {
+        it.accountId == wallet.accountId && it.testnet == wallet.testnet
+    }
 
     private fun realtime(wallet: WalletEntity) = api.realtime(
         accountId = wallet.accountId,
         testnet = wallet.testnet
-    ).map {
-        TransactionEvent(it.json)
-    }.flatMapLatest {
-        transactionFlow(wallet, it.hash)
-    }
-
-    private fun pendingEventsFlow(
-        wallet: WalletEntity
-    ): Flow<AccountEventEntity> = sentTransactionFlow.filter {
-        it.wallet.id == wallet.id
-    }.flatMapLatest { transactionFlow(it.wallet, it.hash) }
-
-    @OptIn(FlowPreview::class)
-    private fun transactionFlow(
-        wallet: WalletEntity,
-        hash: String,
-    ): Flow<AccountEventEntity> = flow {
-        val initialTx = getTransaction(wallet, hash) ?: return@flow
-        emit(initialTx)
-
-        if (initialTx.pending) {
-            delay(25.seconds)
-            while (currentCoroutineContext().isActive) {
-                val finalTx = getTransaction(wallet, hash)
-                if (finalTx == null || finalTx.pending) {
-                    delay(10.seconds)
-                    continue
-                }
-                finalTx.addEventId(hash)
-                finalTx.addEventId(initialTx.body.eventId)
-                emit(finalTx)
-                break
-            }
-        }
-    }.timeout(2.minutes)
+    ).map { it.data }.map { getTransaction(wallet, it) }
 
     private suspend fun getTransaction(
         wallet: WalletEntity,
@@ -137,7 +99,7 @@ class TransactionManager(
             api.sendToBlockchain(boc, wallet.testnet)
         }
         if (state == SendBlockchainState.SUCCESS) {
-            _sentTransactionFlow.tryEmit(PendingTransaction(wallet.copy(), boc))
+            _sendingTransactionFlow.tryEmit(SendingTransaction(wallet.copy(), boc))
             return state
         }
 
@@ -154,11 +116,4 @@ class TransactionManager(
         boc: Cell,
         withBattery: Boolean
     ) = send(wallet, boc.base64(), withBattery)
-
-    private fun eventFlowMapKey(wallet: WalletEntity): String {
-        if (wallet.testnet) {
-            return wallet.accountId + "_testnet"
-        }
-        return wallet.accountId
-    }
 }

@@ -84,7 +84,6 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
     private fun onEvent(event: InitEvent) {
         when (event) {
             is InitEvent.Back -> popBackStack()
-            is InitEvent.Finish -> finish()
             is InitEvent.Loading -> setLoading(event.loading)
         }
     }

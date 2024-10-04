@@ -14,6 +14,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.base.BaseFragment
 import uikit.extensions.pinToBottomInsets
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.extensions.doKeyboardAnimation
 import uikit.widget.HeaderView
 import uikit.widget.PhraseWords
 
@@ -37,13 +38,11 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
         wordsView.setWords(args.words)
 
         copyButton = view.findViewById(R.id.copy)
-        copyButton.pinToBottomInsets()
         copyButton.setOnClickListener {
             requireContext().copyToClipboard(args.words.joinToString(" "))
         }
 
         checkButton = view.findViewById(R.id.check)
-        checkButton.pinToBottomInsets()
         checkButton.setOnClickListener {
             navigation?.add(BackupCheckScreen.newInstance(screenContext.wallet, args.words, args.backupId))
             finish()
@@ -53,6 +52,11 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
             checkButton.visibility = View.VISIBLE
         } else {
             copyButton.visibility = View.VISIBLE
+        }
+
+        view.doKeyboardAnimation { offset, _, _ ->
+            copyButton.translationY = -offset.toFloat()
+            checkButton.translationY = -offset.toFloat()
         }
     }
 

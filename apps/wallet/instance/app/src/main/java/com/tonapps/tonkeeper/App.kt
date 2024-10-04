@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
@@ -88,7 +89,9 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         configBuilder.setMemoryChunkType(MemoryChunkType.BUFFER_MEMORY)
         configBuilder.setImageTranscoderType(ImageTranscoderType.JAVA_TRANSCODER)
         configBuilder.experiment().setNativeCodeDisabled(true)
-        configBuilder.setDownsampleEnabled(false)
+        configBuilder.experiment().setUseDownsampligRatioForResizing(true)
+        configBuilder.experiment().useBitmapPrepareToDraw = true
+        configBuilder.setDownsampleMode(DownsampleMode.ALWAYS)
 
         Fresco.initialize(this, configBuilder.build())
     }
@@ -97,15 +100,5 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         return CameraXConfig.Builder
             .fromConfig(Camera2Config.defaultConfig())
             .setMinimumLoggingLevel(Log.ERROR).build()
-    }
-
-    fun isOriginalAppInstalled(): Boolean {
-        val pm = packageManager
-        return try {
-            pm.getPackageInfo("com.ton_keeper", 0)
-            true
-        } catch (e: Exception) {
-            false
-        }
     }
 }

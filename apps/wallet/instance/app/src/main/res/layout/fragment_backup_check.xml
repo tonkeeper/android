@@ -5,7 +5,7 @@
 
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
         <uikit.widget.HeaderView
             android:id="@+id/header"
@@ -13,40 +13,61 @@
             android:layout_height="wrap_content"
             android:icon="@drawable/ic_chevron_left_16"/>
 
-        <uikit.widget.TextHeaderView
-            android:id="@+id/text"
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/offsetMedium"
-            android:layout_marginHorizontal="@dimen/offsetMedium"
-            android:title="@string/backup_check"/>
+            android:layout_height="match_parent"
+            android:clipToPadding="false">
 
-        <uikit.widget.ColumnLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/offsetLarge"
-            android:layout_marginTop="@dimen/offsetLarge">
-
-            <uikit.widget.WordInput
-                android:id="@+id/word_input_1"
+            <uikit.widget.ColumnLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/offsetMedium"/>
+                android:layout_height="match_parent">
 
-            <uikit.widget.WordInput
-                android:id="@+id/word_input_2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/offsetMedium"/>
+                <uikit.widget.TextHeaderView
+                    android:id="@+id/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/offsetMedium"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:title="@string/backup_check"/>
 
-            <uikit.widget.WordInput
-                android:id="@+id/word_input_3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/offsetMedium"/>
+                <uikit.widget.ColumnLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginVertical="@dimen/offsetMedium"
+                    android:layout_marginHorizontal="@dimen/offsetLarge">
 
-        </uikit.widget.ColumnLayout>
+                    <uikit.widget.WordInput
+                        android:id="@+id/word_input_1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/offsetMedium"/>
+
+                    <uikit.widget.WordInput
+                        android:id="@+id/word_input_2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/offsetMedium"/>
+
+                    <uikit.widget.WordInput
+                        android:id="@+id/word_input_3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/offsetMedium"/>
+
+                </uikit.widget.ColumnLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"/>
+
+            </uikit.widget.ColumnLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
     </uikit.widget.ColumnLayout>
+
 
     <Button
         style="@style/Widget.App.Button"

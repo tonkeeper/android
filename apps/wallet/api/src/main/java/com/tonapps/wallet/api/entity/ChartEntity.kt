@@ -1,7 +1,6 @@
 package com.tonapps.wallet.api.entity
 
 import org.json.JSONArray
-import org.json.JSONObject
 
 data class ChartEntity(
     val date: Long,

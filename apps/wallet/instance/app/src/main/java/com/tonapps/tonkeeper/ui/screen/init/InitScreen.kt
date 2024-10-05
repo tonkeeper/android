@@ -3,7 +3,11 @@ package com.tonapps.tonkeeper.ui.screen.init
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.doOnLayout
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
@@ -13,6 +17,7 @@ import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.api.pub.PublicKeyEd25519
@@ -22,13 +27,15 @@ import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
 import uikit.widget.HeaderView
 
-class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
+class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, ScreenContext.None), BaseFragment.SwipeBack {
 
-    private val args: InitArgs by lazy {
-        InitArgs(requireArguments())
+    private val args: InitArgs by lazy { InitArgs(requireArguments()) }
+
+    override val viewModel: InitViewModel by viewModel { parametersOf(args) }
+
+    private val backStackChangedListener = FragmentManager.OnBackStackChangedListener {
+        childFragmentManager.fragments.lastOrNull()?.let { onChildFragment(it) }
     }
-
-    private val initViewModel: InitViewModel by viewModel { parametersOf(args.type) }
 
     private lateinit var headerView: HeaderView
     private lateinit var loaderContainerView: View
@@ -36,17 +43,17 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        args.name?.let {
-            initViewModel.setLabelName(it)
-        }
-        args.publicKeyEd25519?.let {
-            initViewModel.setPublicKey(it)
-        }
-        args.ledgerConnectData?.let {
-            initViewModel.setLedgerConnectData(it)
-        }
-        args.accounts?.let {
-            initViewModel.setAccounts(it)
+        args.labelName?.let { viewModel.setLabelName(it) }
+        args.accounts?.let { viewModel.setAccounts(it.toList()) }
+    }
+
+    private fun onChildFragment(fragment: Fragment) {
+        if (fragment is PushScreen) {
+            headerView.background = null
+            headerView.actionView.visibility = View.GONE
+        } else {
+            headerView.actionView.visibility = View.VISIBLE
+            headerView.setBackgroundResource(uikit.R.drawable.bg_page_gradient)
         }
     }
 
@@ -54,8 +61,8 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.setBackgroundResource(uikit.R.drawable.bg_page_gradient)
-        headerView.doOnCloseClick = { initViewModel.routePopBackStack() }
-        headerView.doOnLayout { initViewModel.setUiTopOffset(it.measuredHeight) }
+        headerView.doOnCloseClick = { viewModel.routePopBackStack() }
+        headerView.doOnLayout { viewModel.setUiTopOffset(it.measuredHeight) }
 
         loaderContainerView = view.findViewById(R.id.loader_container)
         loaderContainerView.setOnClickListener { }
@@ -63,34 +70,39 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
 
         loaderIconView = view.findViewById(R.id.loader_icon)
 
-        collectFlow(initViewModel.eventFlow, ::onEvent)
+        collectFlow(viewModel.eventFlow, ::onEvent)
+        collectFlow(viewModel.routeFlow, ::onRoute)
+
+        childFragmentManager.addOnBackStackChangedListener(backStackChangedListener)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        childFragmentManager.removeOnBackStackChangedListener(backStackChangedListener)
     }
 
     private fun onEvent(event: InitEvent) {
         when (event) {
             is InitEvent.Back -> popBackStack()
-            is InitEvent.Finish -> finish()
             is InitEvent.Loading -> setLoading(event.loading)
-            is InitEvent.Step -> setStep(event)
         }
     }
 
-    private fun setStep(step: InitEvent.Step) {
-        val fragment = when (step) {
-            InitEvent.Step.CreatePasscode -> PasscodeScreen.newInstance(false)
-            InitEvent.Step.ReEnterPasscode -> PasscodeScreen.newInstance(true)
-            InitEvent.Step.ImportWords -> WordsScreen.newInstance(false)
-            InitEvent.Step.WatchAccount -> WatchScreen.newInstance()
-            InitEvent.Step.LabelAccount -> LabelScreen.newInstance()
-            InitEvent.Step.SelectAccount -> SelectScreen.newInstance()
-            InitEvent.Step.Push -> PushScreen.newInstance()
-            else -> throw IllegalArgumentException("Unknown step: $step")
+    private fun onRoute(route: InitRoute) {
+        val fragment = when (route) {
+            InitRoute.CreatePasscode -> PasscodeScreen.newInstance(false)
+            InitRoute.ReEnterPasscode -> PasscodeScreen.newInstance(true)
+            InitRoute.ImportWords -> WordsScreen.newInstance(false)
+            InitRoute.WatchAccount -> WatchScreen.newInstance()
+            InitRoute.LabelAccount -> LabelScreen.newInstance()
+            InitRoute.SelectAccount -> SelectScreen.newInstance()
+            InitRoute.Push -> PushScreen.newInstance()
         }
 
         val transaction = childFragmentManager.beginTransaction()
         transaction.setCustomAnimations(uikit.R.anim.fragment_enter_from_right, uikit.R.anim.fragment_exit_to_left, uikit.R.anim.fragment_enter_from_left, uikit.R.anim.fragment_exit_to_right)
-        transaction.replace(R.id.step_container, fragment, step.toString())
-        transaction.addToBackStack(step.toString())
+        transaction.replace(R.id.step_container, fragment, fragment.toString())
+        transaction.addToBackStack(fragment.toString())
         transaction.commit()
     }
 
@@ -106,7 +118,7 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
     }
 
     override fun onBackPressed(): Boolean {
-        initViewModel.routePopBackStack()
+        viewModel.routePopBackStack()
         return false
     }
 
@@ -127,8 +139,9 @@ class InitScreen: BaseFragment(R.layout.fragment_init), BaseFragment.SwipeBack {
             publicKeyEd25519: PublicKeyEd25519? = null,
             name: String? = null,
             ledgerConnectData: LedgerConnectData? = null,
-            accounts: List<AccountItem>? = null
-        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts))
+            accounts: List<AccountItem>? = null,
+            keystone: WalletEntity.Keystone? = null
+        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts, keystone))
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()

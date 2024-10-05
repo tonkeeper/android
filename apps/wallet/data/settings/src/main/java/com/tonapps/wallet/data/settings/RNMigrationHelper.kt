@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
@@ -69,10 +70,13 @@ internal class RNMigrationHelper(
     }
 
     fun getLegacyLanguage(): Language {
-        val value = getInAppLanguage().optString("selectedLanguage", "").lowercase().ifBlank {
+        val value = getInAppLanguage()
+
+        val lang = value.optString("selectedLanguage", "").lowercase().ifBlank {
             "system"
         }
-        return when (value) {
+
+        return when (lang) {
             "ru" -> Language("ru")
             "en" -> Language("en")
             else -> Language()
@@ -87,11 +91,11 @@ internal class RNMigrationHelper(
         }
     }
 
-    fun getLegacyBrowser(): JSONObject {
+    private fun getLegacyBrowser(): JSONObject {
         return rnLegacy.getJSONState("browser") ?: JSONObject()
     }
 
-    fun setLegacyBrowser(json: JSONObject) {
+    private fun setLegacyBrowser(json: JSONObject) {
         rnLegacy.setJSONState("browser", json)
     }
 
@@ -119,7 +123,7 @@ internal class RNMigrationHelper(
         }
     }
 
-    fun getLegacyAppTheme(): JSONObject {
+    private fun getLegacyAppTheme(): JSONObject {
         return rnLegacy.getJSONState("app-theme") ?: JSONObject()
     }
 
@@ -129,14 +133,15 @@ internal class RNMigrationHelper(
 
     fun getLegacyTheme(): Theme {
         try {
-            val theme = getLegacyAppTheme().optString("selectedTheme").lowercase().ifBlank {
+            val value = getLegacyAppTheme()
+            val theme = value.optString("selectedTheme").lowercase().ifBlank {
                 "system"
             }
             if (theme == "system") {
                 return Theme.getByKey("blue")
             }
             return Theme.getByKey(theme)
-        } catch (ignored: Exception) {}
+        } catch (ignored: Exception) { }
         return Theme.getByKey("blue")
     }
 

@@ -50,6 +50,8 @@ platform :android do
 
     desc "Build the android aab for release"
     lane :build_release do
+        gradle(task: 'clean')
+
         gradle(
             task: ":apps:wallet:instance:main:bundle",
             build_type: "Release",

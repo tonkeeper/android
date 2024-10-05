@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list
 
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
@@ -22,14 +23,16 @@ sealed class Item(type: Int): BaseListItem(type) {
         val title: String,
         val emoji: String,
         val color: Int,
-        val walletType: Wallet.Type
+        val walletType: Wallet.Type,
+        val walletVersion: WalletVersion,
     ): Item(TYPE_ACCOUNT) {
 
         constructor(wallet: WalletEntity) : this(
             title = wallet.label.name,
             emoji = wallet.label.emoji.toString(),
             color = wallet.label.color,
-            walletType = wallet.type
+            walletType = wallet.type,
+            walletVersion = wallet.version
         )
     }
 
@@ -109,6 +112,17 @@ sealed class Item(type: Int): BaseListItem(type) {
         secondaryIcon = false
     )
 
+    data class Tester(
+        override val position: ListCell.Position,
+        val url: String
+    ): Icon(
+        titleRes = Localization.testers_chat,
+        iconRes = R.drawable.ic_telegram_28,
+        position = position,
+        secondaryIcon = false,
+        dot = true
+    )
+
     data class News(
         override val position: ListCell.Position,
         val url: String
@@ -149,7 +163,8 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data class Logout(
         override val position: ListCell.Position,
-        val label: Wallet.Label
+        val label: Wallet.Label,
+        val delete: Boolean,
     ): Icon(
         titleRes = Localization.log_out,
         iconRes = R.drawable.ic_door_28,
@@ -207,6 +222,24 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Icon(
         titleRes = Localization.w5_wallet,
         iconRes = UIKitIcon.ic_wallet_28,
+        position = position,
+        secondaryIcon = false
+    )
+
+    data class V4R2(
+        override val position: ListCell.Position
+    ): Icon(
+        titleRes = Localization.v4r2_wallet,
+        iconRes = UIKitIcon.ic_wallet_28,
+        position = position,
+        secondaryIcon = false
+    )
+
+    data class Battery(
+        override val position: ListCell.Position
+    ): Icon(
+        titleRes = Localization.battery,
+        iconRes = UIKitIcon.ic_battery_28,
         position = position,
         secondaryIcon = false
     )

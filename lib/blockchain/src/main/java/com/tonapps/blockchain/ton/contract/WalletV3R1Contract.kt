@@ -17,11 +17,11 @@ open class WalletV3R1Contract(
     publicKey: PublicKeyEd25519,
 ) : BaseWalletContract(workchain, publicKey) {
 
-    override fun getWalletVersion() = WalletVersion.V3R1
+    override val features: WalletFeature = WalletFeature.NONE
 
-    override fun getSignaturePosition(): SignaturePosition {
-        return SignaturePosition.Front
-    }
+    override val maxMessages: Int = 4
+
+    override fun getWalletVersion() = WalletVersion.V3R1
 
     override fun getStateCell(): Cell {
         return CellBuilder.createCell {
@@ -37,14 +37,18 @@ open class WalletV3R1Contract(
 
     override fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
-        messageType: MessageType,
+        seqNo: Int,
+        internalMessage: Boolean,
         queryId: BigInt?,
         vararg gifts: WalletTransfer
     ) = CellBuilder.createCell {
+        if (gifts.size > maxMessages) {
+            throw IllegalArgumentException("Maximum number of messages in a single transfer is $maxMessages")
+        }
+
         storeUInt(walletId, 32)
         storeUInt(validUntil, 32)
-        storeUInt(seqno, 32)
+        storeUInt(seqNo, 32)
         for (gift in gifts) {
             var sendMode = 3
             if (gift.sendMode > -1) {

@@ -5,6 +5,12 @@ import com.squareup.moshi.adapter
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.ifPunycodeToUnicode
+import com.tonapps.extensions.max12
+import com.tonapps.extensions.max18
+import com.tonapps.extensions.max24
+import com.tonapps.extensions.short12
+import com.tonapps.extensions.short6
+import com.tonapps.extensions.short8
 import com.tonapps.tonkeeperx.R
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.AccountAddress
@@ -65,35 +71,6 @@ val PoolImplementationType.icon: Int
 val PoolImplementationType.iconURL: String
     get() = "res:/${icon}"
 
-suspend fun <R> withRetry(
-    times: Int = 5,
-    delay: Long = 1000,
-    block: () -> R
-): R? {
-    for (i in 0 until times) {
-        try {
-            return block()
-        } catch (e: Throwable) {
-            Log.e("RetryErrorLog", "error", e)
-        }
-        delay(delay)
-    }
-    return null
-}
-
-@OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T> toJSON(obj: T?): String {
-    if (obj == null) {
-        return ""
-    }
-    return Serializer.moshi.adapter<T>().toJson(obj)
-}
-
-@OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T> fromJSON(json: String): T {
-    return Serializer.moshi.adapter<T>().fromJson(json)!!
-}
-
 val AccountEvent.fee: Long
     get() {
         if (0 > extra) {
@@ -133,14 +110,23 @@ val JettonSwapAction.ton: Long
         return tonIn ?: tonOut ?: 0
     }
 
-fun AccountAddress.getNameOrAddress(testnet: Boolean): String {
-    if (!name.isNullOrBlank()) {
-        return name!!.ifPunycodeToUnicode()
+fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): String {
+    if (name.isNullOrBlank()) {
+        val value = address.toUserFriendly(
+            wallet = isWallet,
+            testnet = testnet
+        )
+        return if (short) value.shortAddress else value
     }
+    val value = name!!.ifPunycodeToUnicode()
+    return if (short) value.max18 else value
+}
+
+fun AccountAddress.getWalletAddress(testnet: Boolean): String {
     return address.toUserFriendly(
         wallet = isWallet,
         testnet = testnet
-    ).shortAddress
+    )
 }
 
 val AccountAddress.iconURL: String?
@@ -169,10 +155,10 @@ val JettonBalance.symbol: String
     get() = jetton.symbol
 
 val JettonMintAction.parsedAmount: Coins
-    get() = Coins.of(amount, jetton.decimals)
+    get() = Coins.ofNano(amount, jetton.decimals)
 
 val JettonBurnAction.parsedAmount: Coins
-    get() = Coins.of(amount, jetton.decimals)
+    get() = Coins.ofNano(amount, jetton.decimals)
 
 fun NftItem.imageBySize(size: String): ImagePreview? {
     return previews?.firstOrNull { it.resolution == size }

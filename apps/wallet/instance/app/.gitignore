@@ -1,3 +1,5 @@
 /build
 /release
 /benchmarkRelease
+/src/release
+/src/main/genereated

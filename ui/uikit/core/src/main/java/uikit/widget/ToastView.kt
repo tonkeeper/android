@@ -41,6 +41,7 @@ class ToastView @JvmOverloads constructor(
             field = value
             runData()
         }
+
     private val dataQueue = mutableListOf<Data>()
     private val loaderView: View
     private val textView: AppCompatTextView
@@ -70,17 +71,33 @@ class ToastView @JvmOverloads constructor(
     }
 
     fun show(text: CharSequence, loading: Boolean, color: Int = context.backgroundContentTintColor) {
-        val data = Data(loading, text, if (color == Color.TRANSPARENT) context.backgroundContentTintColor else color)
-        val cancelCurrent = currentData?.let {
-            it.text == text && it.color == (if (color == Color.TRANSPARENT) context.backgroundContentTintColor else color)
-        } == true
-        if (cancelCurrent) {
-            hide()
-        } else if (currentData == null) {
-            currentData = data
-        } else {
-            dataQueue.add(data)
+        val data = createData(loading, text, color)
+        run(data)
+    }
+
+    private fun run(data: Data) {
+        val cancelCurrent = currentData != null && currentData?.text == data.text && currentData?.color == data.color
+        postOnAnimation {
+            if (cancelCurrent) {
+                hide()
+            } else if (currentData == null) {
+                currentData = data
+            } else {
+                dataQueue.add(data)
+            }
         }
+    }
+
+    private fun createData(loading: Boolean, text: CharSequence, color: Int): Data {
+        return Data(
+            loading = loading,
+            text = text,
+            color = if (color == Color.TRANSPARENT) {
+                context.backgroundContentTintColor
+            } else {
+                color
+            }
+        )
     }
 
     private fun nextQueue() {

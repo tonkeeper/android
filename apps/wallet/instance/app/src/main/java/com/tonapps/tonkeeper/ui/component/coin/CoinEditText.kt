@@ -5,6 +5,8 @@ import android.util.AttributeSet
 import androidx.appcompat.R
 import androidx.core.widget.doAfterTextChanged
 import com.tonapps.icu.Coins
+import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.extensions.setBigDecimal
 import com.tonapps.tonkeeper.ui.component.coin.drawable.SuffixDrawable
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingConfig
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingFilter
@@ -13,6 +15,7 @@ import uikit.extensions.dp
 import uikit.extensions.replaceAll
 import uikit.extensions.setRightDrawable
 import uikit.widget.input.InputTextView
+import java.math.BigDecimal
 
 class CoinEditText @JvmOverloads constructor(
     context: Context,
@@ -21,6 +24,8 @@ class CoinEditText @JvmOverloads constructor(
 ) : InputTextView(context, attrs, defStyle) {
 
     private val suffixDrawable = SuffixDrawable(context)
+
+    private lateinit var formattingConfig: CoinFormattingConfig
 
     var doOnValueChange: ((Double) -> Unit)? = null
 
@@ -35,13 +40,20 @@ class CoinEditText @JvmOverloads constructor(
         setMaxLength(24)
         setRightDrawable(suffixDrawable)
         compoundDrawablePadding = 38.dp
-        val formattingConfig = CoinFormattingConfig(decimals = 9)
-        setFormattingTextWatcher(CoinFormattingTextWatcher(formattingConfig))
-        setFormattingInputFilter(CoinFormattingFilter(formattingConfig))
+        setDecimals(9)
         doAfterTextChanged {
             val value = getValue()
             doOnValueChange?.invoke(value)
         }
+    }
+
+    val decimals: Int
+        get() = formattingConfig.decimals
+
+    fun setDecimals(decimals: Int) {
+        formattingConfig = CoinFormattingConfig(decimals = decimals)
+        setFormattingTextWatcher(CoinFormattingTextWatcher(formattingConfig))
+        setFormattingInputFilter(CoinFormattingFilter(formattingConfig))
     }
 
     fun getValue(): Double {
@@ -59,6 +71,10 @@ class CoinEditText @JvmOverloads constructor(
         } else {
             editable.replaceAll(value.toString().removeSuffix(".0"))
         }
+    }
+
+    fun setValue(value: BigDecimal) {
+        setBigDecimal(value)
     }
 
     fun clear() {

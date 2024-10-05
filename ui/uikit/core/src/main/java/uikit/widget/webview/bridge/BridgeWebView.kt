@@ -2,18 +2,9 @@ package uikit.widget.webview.bridge
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.os.Build
-import android.os.Message
 import android.util.AttributeSet
 import android.util.Log
-import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +16,6 @@ import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.message.BridgeMessage
 import uikit.widget.webview.bridge.message.FunctionInvokeBridgeMessage
 import uikit.widget.webview.bridge.message.FunctionResponseBridgeMessage
-import java.util.LinkedList
 
 class BridgeWebView @JvmOverloads constructor(
     context: Context,
@@ -35,71 +25,25 @@ class BridgeWebView @JvmOverloads constructor(
 
     var jsBridge: JsBridge? = null
 
-    private var isPageLoaded = false
-        set(value) {
-            field = value
-            if (value) {
-                executeJsQueue()
-            }
-        }
-
-    private val clientCallbacks = mutableListOf<WebViewClient>()
-    private val jsExecuteQueue = LinkedList<String>()
     private val scope: CoroutineScope
         get() = findViewTreeLifecycleOwner()?.lifecycleScope ?: throw IllegalStateException("No lifecycle owner")
 
+    private val webViewCallback = object : Callback() {
+        override fun onPageStarted(url: String, favicon: Bitmap?) {
+            super.onPageStarted(url, favicon)
+            initBridge()
+        }
+    }
+
     init {
         addJavascriptInterface(this, "ReactNativeWebView")
-        webViewClient = object : WebViewClient() {
-
-            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                super.onPageStarted(view, url, favicon)
-                isPageLoaded = true
-                initBridge()
-                clientCallbacks.forEach { it.onPageStarted(view, url, favicon) }
-            }
-
-            @RequiresApi(Build.VERSION_CODES.N)
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                return clientCallbacks.map { it.shouldOverrideUrlLoading(view, request) }.firstOrNull() ?: false
-            }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                clientCallbacks.forEach { it.onPageFinished(view, url) }
-            }
-        }
-    }
-
-    fun addClientCallback(callback: WebViewClient) {
-        clientCallbacks.add(callback)
-    }
-
-    fun removeClientCallback(callback: WebViewClient) {
-        clientCallbacks.remove(callback)
-    }
-
-    fun executeJS(code: String) {
-        if (isPageLoaded) {
-            evaluateJavascript(code)
-        } else {
-            jsExecuteQueue.add(code)
-        }
+        addCallback(webViewCallback)
+        initBridge()
     }
 
     private fun initBridge() {
         val value = jsBridge ?: return
         executeJS(value.jsInjection())
-    }
-
-    private fun executeJsQueue() {
-        while (jsExecuteQueue.isNotEmpty()) {
-            jsExecuteQueue.poll()?.let { evaluateJavascript(it) }
-        }
-    }
-
-    private fun evaluateJavascript(code: String) {
-        evaluateJavascript(code, null)
     }
 
     private suspend fun postMessage(
@@ -117,7 +61,6 @@ class BridgeWebView @JvmOverloads constructor(
 
     @JavascriptInterface
     fun postMessage(message: String) {
-        Log.d("DAppBridgeLog", "postMessage: $message")
         val json = JSONObject(message)
         val type = json.getString("type")
         if (type == BridgeMessage.Type.InvokeRnFunc.value) {

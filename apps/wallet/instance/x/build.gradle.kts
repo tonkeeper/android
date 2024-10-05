@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.tonapps.tonkeeperx"
-        minSdk = 27 // Build.minSdkVersion
+        minSdk = Build.minSdkVersion
         targetSdk = 34
         versionCode = 49
         versionName = "0.0.49"
@@ -51,5 +51,6 @@ android {
 }
 
 dependencies {
+    "baselineProfile"(project(":baselineprofile:x"))
     implementation(project(Dependence.Wallet.app))
 }

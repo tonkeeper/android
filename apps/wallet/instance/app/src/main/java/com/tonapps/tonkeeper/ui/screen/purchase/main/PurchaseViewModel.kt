@@ -1,8 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.purchase.main
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
@@ -12,37 +12,32 @@ import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 
 class PurchaseViewModel(
-    private val accountRepository: AccountRepository,
+    app: Application,
+    private val wallet: WalletEntity,
     private val settingsRepository: SettingsRepository,
     private val purchaseRepository: PurchaseRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     enum class Tab {
         BUY, SELL
     }
 
     val countryFlow = settingsRepository.countryFlow
-    val walletFlow = accountRepository.selectedWalletFlow
 
     private val _tabFlow = MutableStateFlow(Tab.BUY)
     val tabFlow = _tabFlow.asStateFlow()
 
-    private val dataFlow = combine(
-        accountRepository.selectedWalletFlow,
-        settingsRepository.countryFlow
-    ) { wallet, country ->
-        purchaseRepository.get(wallet.testnet, country)
-    }.flowOn(Dispatchers.IO)
+    private val dataFlow = settingsRepository.countryFlow.map { country ->
+        purchaseRepository.get(wallet.testnet, country, settingsRepository.getLocale())
+    }.filterNotNull().flowOn(Dispatchers.IO)
 
     val uiItemsFlow = combine(dataFlow, tabFlow) { (buy, sell), tab ->
         val categories = if (tab == Tab.BUY) buy else sell
@@ -61,9 +56,7 @@ class PurchaseViewModel(
         items
     }
 
-    fun open(method: PurchaseMethodEntity) = walletFlow.take(1).map { wallet ->
-        settingsRepository.isPurchaseOpenConfirm(wallet.id, method.id)
-    }
+    fun isPurchaseOpenConfirm(method: PurchaseMethodEntity) = settingsRepository.isPurchaseOpenConfirm(wallet.id, method.id)
 
     fun disableConfirmDialog(
         wallet: WalletEntity,

@@ -1,6 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list.holder
 
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.view.ViewGroup
+import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.iconSecondaryColor
@@ -17,14 +20,20 @@ class IconHolder(
     override fun onBind(item: Item.Icon) {
         itemIconView.background = item.position.drawable(context)
         itemIconView.setOnClickListener { onClick.invoke(item) }
-        itemIconView.text = getString(item.titleRes)
         if (item.secondaryIcon) {
             itemIconView.setIconTintColor(context.iconSecondaryColor)
         } else {
             itemIconView.setIconTintColor(context.accentBlueColor)
         }
+        if (item is Item.Logout) {
+            val builder = SpannableStringBuilder(getString(item.titleRes))
+            builder.append(" ")
+            builder.append(item.label.getTitle(context, itemIconView.textView))
+            itemIconView.text = builder
+        } else {
+            itemIconView.text = getString(item.titleRes)
+        }
         itemIconView.iconRes = item.iconRes
-        itemIconView.text = getString(item.titleRes)
         itemIconView.dot = item.dot
     }
 }

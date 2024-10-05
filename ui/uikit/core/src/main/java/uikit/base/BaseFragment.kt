@@ -5,9 +5,8 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.Handler
+import android.os.Parcelable
 import android.text.SpannableString
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +15,6 @@ import android.view.WindowManager
 import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.activity.BackEventCompat
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,23 +22,30 @@ import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
-import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.navigation.ScreenResultContract
 import uikit.widget.BottomSheetLayout
 import uikit.widget.ModalView
 import uikit.widget.SwipeBackLayout
 import java.util.concurrent.Executor
+import java.util.concurrent.atomic.AtomicBoolean
 
 open class BaseFragment(
     @LayoutRes layoutId: Int
 ): Fragment(layoutId) {
+
+    interface ResultContract<I, O> {
+        fun parseResult(bundle: Bundle): O
+        fun createResult(result: I): Bundle
+    }
+
+    interface SingleTask
 
     interface PredictiveBackGesture {
         fun onPredictiveBackCancelled() {
@@ -85,6 +90,12 @@ open class BaseFragment(
         val behavior: BottomSheetBehavior<FrameLayout>
             get() = view.behavior
 
+        val bottomSheetView: FrameLayout
+            get() = view.bottomSheetView
+
+        val coordinatorView: CoordinatorLayout
+            get() = view.coordinatorView
+
         val scaleBackground: Boolean
             get() = false
 
@@ -106,17 +117,62 @@ open class BaseFragment(
             }
         }
 
-    val mainExecutor: Executor
-        get() = ContextCompat.getMainExecutor(requireContext())
+    val mainExecutor: Executor by lazy {
+        ContextCompat.getMainExecutor(requireContext())
+    }
 
     open val disableShowAnimation: Boolean = false
 
     open val secure: Boolean = false
 
-    private var isFinished: Boolean = false
+    open val title: CharSequence? = null
+
+    private val isFinished = AtomicBoolean(false)
+
+    private val resultKey: String? by lazy {
+        arguments?.getString(ARG_RESULT_KEY)?.ifBlank { null }
+    }
+
+    fun setArgs(bundle: Bundle) {
+        val args = arguments ?: Bundle()
+        args.putAll(bundle)
+        arguments = args
+    }
 
     fun setArgs(args: BaseArgs) {
-        arguments = args.toBundle()
+        setArgs(args.toBundle())
+    }
+
+    fun putParcelableArg(key: String, value: Parcelable) {
+        setArgs(Bundle().apply {
+            putParcelable(key, value)
+        })
+    }
+
+    fun putStringArg(key: String, value: String? = null) {
+        if (value != null) {
+            setArgs(Bundle().apply {
+                putString(key, value)
+            })
+        }
+    }
+
+    fun putBooleanArg(key: String, value: Boolean) {
+        setArgs(Bundle().apply {
+            putBoolean(key, value)
+        })
+    }
+
+    fun setResultKey(key: String) {
+        putStringArg(ARG_RESULT_KEY, key)
+    }
+
+    fun setResult(bundle: Bundle, finish: Boolean = true) {
+        val key = resultKey ?: throw IllegalStateException("For setting result you must set result key")
+        navigation?.setFragmentResult(key, bundle)
+        if (finish) {
+            finish()
+        }
     }
 
     fun getSpannable(@StringRes id: Int): SpannableString {
@@ -198,23 +254,26 @@ open class BaseFragment(
     }
 
     open fun finish() {
-        if (isFinished) {
+        if (isFinished.get()) {
             return
         }
 
         val view = view ?: return
 
-        isFinished = true
-
-        when (view) {
-            is SwipeBackLayout -> view.startHideAnimation()
-            is BottomSheetLayout -> view.hide(true)
-            is ModalView -> view.hide(true)
-            else -> finishInternal()
+        if (isFinished.compareAndSet(false, true)) {
+            when (view) {
+                is SwipeBackLayout -> view.startHideAnimation()
+                is BottomSheetLayout -> view.hide(true)
+                is ModalView -> view.hide(true)
+                else -> finishInternal()
+            }
         }
     }
 
     private fun finishInternal() {
+        resultKey?.let {
+            navigation?.setFragmentResult(it, Bundle())
+        }
         navigation?.remove(this)
     }
 
@@ -243,6 +302,7 @@ open class BaseFragment(
 
     fun post(action: Runnable) {
         view?.post(action)
+        view?.postOnAnimation {  }
     }
 
     @ColorInt
@@ -269,4 +329,7 @@ open class BaseFragment(
         return requireActivity().currentFocus as? EditText
     }
 
+    private companion object {
+        private const val ARG_RESULT_KEY = "_uikit_result_key_"
+    }
 }

@@ -21,7 +21,7 @@ class PasscodeStore(context: Context) {
     private val keyValue = Security.pref(context, KEY_ALIAS, NAME)
 
     val hasPinCode: Boolean
-        get() = keyValue.contains(CODE_KEY)
+        get() = keyValue.contains(CODE_KEY) && !keyValue.getString(CODE_KEY, null).isNullOrBlank()
 
     suspend fun setPinCode(code: String) = withContext(Dispatchers.IO) {
         keyValue.putString(CODE_KEY, code)

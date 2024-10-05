@@ -5,6 +5,9 @@ import androidx.annotation.StringRes
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import io.tonapi.models.AccountAddress
+import io.tonapi.models.Action
 
 @get:DrawableRes
 val ActionType.iconRes: Int
@@ -19,6 +22,7 @@ val ActionType.iconRes: Int
         ActionType.JettonBurn -> R.drawable.ic_fire_28
         ActionType.UnSubscribe -> R.drawable.ic_xmark_28
         ActionType.Subscribe -> R.drawable.ic_bell_28
+        ActionType.Fee, ActionType.Refund -> R.drawable.ic_ton_28
     }
 
 
@@ -40,4 +44,12 @@ val ActionType.nameRes: Int
         ActionType.JettonBurn -> Localization.burned
         ActionType.UnSubscribe -> Localization.unsubscribed
         ActionType.Subscribe -> Localization.subscribed
+        ActionType.Fee -> Localization.network_fee
+        ActionType.Refund -> Localization.refund
     }
+
+val Action.recipient: AccountAddress?
+    get() = tonTransfer?.recipient ?: jettonTransfer?.recipient ?: nftItemTransfer?.recipient ?: jettonSwap?.userWallet ?: jettonMint?.recipient ?: depositStake?.staker ?: withdrawStake?.staker ?: withdrawStakeRequest?.staker
+
+val Action.sender: AccountAddress?
+    get() = tonTransfer?.sender ?: jettonTransfer?.sender ?: nftItemTransfer?.sender ?: jettonSwap?.userWallet ?: jettonBurn?.sender ?: depositStake?.staker ?: withdrawStake?.staker ?: withdrawStakeRequest?.staker

@@ -1,52 +1,50 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
-import android.util.Log
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.net.Uri
+import com.tonapps.extensions.appVersionName
+import com.tonapps.extensions.filterList
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.filterNotNull
+import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.take
-import uikit.extensions.collectFlow
+import kotlinx.coroutines.flow.map
+import org.json.JSONObject
 
 class DAppViewModel(
-    private val url: String,
-    private val accountRepository: AccountRepository,
-    private val tonConnectRepository: TonConnectRepository
-): ViewModel() {
+    app: Application,
+    private val wallet: WalletEntity,
+    private val url: Uri,
+    private val tonConnectManager: TonConnectManager
+): BaseWalletVM(app) {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun getApp() = accountRepository.selectedWalletFlow.mapLatest {
-        tonConnectRepository.getApp(url, it)
-    }.flowOn(Dispatchers.IO).take(1)
+    val connectionFlow = tonConnectManager.walletConnectionsFlow(wallet).filterList { connection ->
+        connection.appUrl == url && connection.type == AppConnectEntity.Type.Internal
+    }.map { it.firstOrNull() }
 
     fun mute() {
-        collectFlow(getApp().filterNotNull()) { app ->
-            tonConnectRepository.setPushEnabled(app, false)
-        }
+        DAppPushToggleWorker.run(
+            context = context,
+            wallet = wallet,
+            appUrl = url,
+            enable = false
+        )
     }
 
     fun disconnect() {
-        collectFlow(getApp().filterNotNull()) { app ->
-            tonConnectRepository.disconnect(app)
+        tonConnectManager.disconnect(wallet, url, AppConnectEntity.Type.Internal)
+    }
+
+    suspend fun restoreConnection(): JSONObject {
+        val connection = connectionFlow.firstOrNull()
+        return if (connection == null) {
+            JsonBuilder.connectEventError(BridgeError.UNKNOWN_APP)
+        } else {
+            JsonBuilder.connectEventSuccess(wallet, null, null, context.appVersionName)
         }
-    }
-
-    suspend fun restoreConnection(url: String): String {
-        val (wallet, _) = get(url)
-        val reply = tonConnectRepository.autoConnect(wallet)
-        return reply.toJSON().toString()
-    }
-
-    private suspend fun get(url: String): Pair<WalletEntity, DAppEntity> {
-        val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: throw IllegalStateException("No active wallet")
-        val app = tonConnectRepository.getApp(url, wallet) ?: throw IllegalStateException("No app")
-        return wallet to app
     }
 }

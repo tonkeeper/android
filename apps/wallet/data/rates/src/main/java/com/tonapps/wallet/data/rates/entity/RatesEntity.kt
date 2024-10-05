@@ -5,14 +5,16 @@ import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import kotlinx.parcelize.Parcelize
+import java.math.RoundingMode
 
 @Parcelize
 data class RatesEntity(
     val currency: WalletCurrency,
-    private val map: HashMap<String, RateEntity>
+    private val map: Map<String, RateEntity>
 ): Parcelable {
 
     companion object {
+
         fun empty(currency: WalletCurrency): RatesEntity {
             return RatesEntity(currency, hashMapOf())
         }
@@ -24,17 +26,25 @@ data class RatesEntity(
     private val isUSD: Boolean
         get() = currency.code == "USD"
 
-    fun merge(rates: RatesEntity) {
-        for ((key, value) in rates.map) {
-            map[key] = value
+    fun hasToken(token: String): Boolean {
+        return map.containsKey(token)
+    }
+
+    fun hasTokens(tokens: List<String>): Boolean {
+        for (token in tokens) {
+            if (!hasToken(token)) {
+                return false
+            }
         }
+        return true
     }
 
     fun merge(rates: List<RateEntity>): RatesEntity {
+        val newMap = map.toMutableMap()
         for (rate in rates) {
-            map[rate.tokenCode] = rate
+            newMap[rate.tokenCode] = rate.copy()
         }
-        return this
+        return copy(map = newMap.toMap())
     }
 
     fun filter(tokens: List<String>): RatesEntity {
@@ -58,14 +68,26 @@ data class RatesEntity(
         return rate(token)?.diff
     }
 
+    fun convertTON(value: Coins): Coins {
+        return convert(TokenEntity.TON.address, value)
+    }
+
     fun convert(token: String, value: Coins): Coins {
+        if (currency.code == token || value == Coins.ZERO) {
+            return value
+        }
+
         val rate = rateValue(token)
         return (value * rate)
     }
 
     fun convertFromFiat(token: String, value: Coins): Coins {
+        if (currency.code == token) {
+            return value
+        }
+
         val rate = rateValue(token)
-        return (value / rate)
+        return value.div(rate, roundingMode = RoundingMode.HALF_DOWN)
     }
 
     fun getRate(token: String): Coins {

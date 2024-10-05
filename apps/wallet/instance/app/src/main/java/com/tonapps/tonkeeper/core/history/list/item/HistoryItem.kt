@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.core.history.list.item
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
@@ -11,10 +13,16 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.tonkeeper.core.history.ActionType
-import com.tonapps.tonkeeper.helper.DateFormat
+import com.tonapps.tonkeeper.core.history.recipient
+import com.tonapps.tonkeeper.core.history.sender
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import io.tonapi.models.AccountAddress
+import io.tonapi.models.EncryptedComment
+import kotlinx.parcelize.IgnoredOnParcel
+import kotlinx.parcelize.Parcelize
 
 sealed class HistoryItem(
     type: Int,
@@ -42,7 +50,7 @@ sealed class HistoryItem(
             is Event -> this.timestamp - this.index
             is Loader -> this.date
             is App -> this.timestamp
-            else -> 0L
+            is Header -> this.date
         }
     }
 
@@ -51,7 +59,7 @@ sealed class HistoryItem(
             is Event -> "event_${this.txId}_${this.index}"
             is Loader -> "loader_${this.index}"
             is App -> "app_${this.timestamp}"
-            else -> ""
+            is Header -> "header_${this.title}"
         }
     }
 
@@ -95,14 +103,13 @@ sealed class HistoryItem(
         val date: Long,
     ): HistoryItem(TYPE_HEADER) {
 
-        constructor(timestamp: Long) : this(
-            title = DateFormat.monthWithDate(timestamp),
-            date = timestamp
+        constructor(parcel: Parcel) : this(
+            parcel.readString()!!,
+            parcel.readLong()
         )
 
-        constructor(parcel: Parcel) : this(parcel.readLong())
-
         override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeString(title)
             dest.writeLong(date)
         }
 
@@ -122,7 +129,8 @@ sealed class HistoryItem(
         val date: String,
         val host: String,
         val timestamp: Long,
-        val deepLink: String
+        val deepLink: String,
+        val wallet: WalletEntity,
     ): HistoryItem(TYPE_APP) {
 
         constructor(parcel: Parcel) : this(
@@ -132,7 +140,8 @@ sealed class HistoryItem(
             date = parcel.readString()!!,
             host = parcel.readString()!!,
             timestamp = parcel.readLong(),
-            deepLink = parcel.readString()!!
+            deepLink = parcel.readString()!!,
+            wallet = parcel.readParcelableCompat()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -143,6 +152,7 @@ sealed class HistoryItem(
             dest.writeString(host)
             dest.writeLong(timestamp)
             dest.writeString(deepLink)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<App> {
@@ -150,6 +160,38 @@ sealed class HistoryItem(
 
             override fun newArray(size: Int): Array<App?> {
                 return arrayOfNulls(size)
+            }
+        }
+    }
+
+    @Parcelize
+    data class Account(
+        val address: String,
+        val name: String?,
+        val isWallet: Boolean,
+        val icon: String?,
+        val isScam: Boolean,
+    ): Parcelable {
+
+        constructor(account: AccountAddress, testnet: Boolean) : this(
+            address = account.address.toUserFriendly(
+                wallet = account.isWallet,
+                testnet = testnet,
+            ),
+            name = account.name?.ifPunycodeToUnicode(),
+            isWallet = account.isWallet,
+            icon = account.icon,
+            isScam = account.isScam
+        )
+
+        companion object {
+
+            fun ofSender(action: io.tonapi.models.Action, testnet: Boolean): Account? {
+                return action.sender?.let { Account(it, testnet) }
+            }
+
+            fun ofRecipient(action: io.tonapi.models.Action, testnet: Boolean): Account? {
+                return action.recipient?.let { Account(it, testnet) }
             }
         }
     }
@@ -162,30 +204,87 @@ sealed class HistoryItem(
         val title: String,
         val subtitle: String,
         val timestamp: Long = 0L,
-        val comment: String? = null,
+        val comment: Comment? = null,
         val value: CharSequence,
         val value2: CharSequence = "",
         val currency: CharSequence? = null,
         val nft: NftEntity? = null,
         val tokenCode: String? = null,
         val date: String = "",
+        val dateDetails: String = "",
         val pending: Boolean = false,
         val position: ListCell.Position = ListCell.Position.SINGLE,
         val coinIconUrl: String = "",
+        val coinIconUrl2: String = "",
         val fee: CharSequence? = null,
         val feeInCurrency: CharSequence? = null,
         val isOut: Boolean,
-        val address: String? = null,
-        val addressName: String? = null,
+        val sender: Account?,
+        val recipient: Account?,
         val lt: Long = 0L,
         val failed: Boolean,
-        val cipherText: String? = null,
         val hiddenBalance: Boolean = false,
-        val unverifiedToken: Boolean = false
+        val unverifiedToken: Boolean = false,
+        val isScam: Boolean,
+        val refund: CharSequence? = null,
+        val refundInCurrency: CharSequence? = null,
+        val wallet: WalletEntity,
     ): HistoryItem(TYPE_ACTION) {
 
+        val account: Account?
+            get() = if (isOut) recipient else sender
+
+        @Parcelize
+        data class Comment(
+            val type: Type,
+            val body: String,
+        ): Parcelable {
+
+            enum class Type {
+                Text, Simple
+            }
+
+            companion object {
+
+                fun create(
+                    text: String?,
+                    encrypted: EncryptedComment?,
+                    localText: String?
+                ): Comment? {
+                    if (!text.isNullOrBlank()) {
+                        return Comment(text)
+                    }
+                    if (!localText.isNullOrBlank()) {
+                        return Comment(localText)
+                    }
+                    val data = encrypted ?: return null
+                    if (data.encryptionType == "simple" && data.cipherText.isNotBlank()) {
+                        return Comment(Type.Simple, data.cipherText)
+                    }
+                    return null
+                }
+            }
+
+            val isEncrypted: Boolean
+                get() = type != Type.Text
+
+            constructor(body: String) : this(
+                type = Type.Text,
+                body = body
+            )
+        }
+
+        @IgnoredOnParcel
+        val isSwap: Boolean
+            get() = action == ActionType.Swap
+
+        @IgnoredOnParcel
         val hasNft: Boolean
             get() = nft != null
+
+        @IgnoredOnParcel
+        val isTon: Boolean
+            get() = tokenCode == "TON"
 
         constructor(parcel: Parcel) : this(
             index = parcel.readInt(),
@@ -195,7 +294,7 @@ sealed class HistoryItem(
             title = parcel.readString()!!,
             subtitle = parcel.readString()!!,
             timestamp = parcel.readLong(),
-            comment = parcel.readString(),
+            comment = parcel.readParcelableCompat(),
             value = parcel.readCharSequenceCompat()!!,
             value2 = parcel.readCharSequenceCompat()!!,
             currency = parcel.readCharSequenceCompat(),
@@ -205,16 +304,20 @@ sealed class HistoryItem(
             pending = parcel.readBooleanCompat(),
             position = parcel.readEnum(ListCell.Position::class.java)!!,
             coinIconUrl = parcel.readString()!!,
+            coinIconUrl2 = parcel.readString()!!,
             fee = parcel.readCharSequenceCompat(),
             feeInCurrency = parcel.readCharSequenceCompat(),
             isOut = parcel.readBooleanCompat(),
-            address = parcel.readString(),
-            addressName = parcel.readString(),
+            sender = parcel.readParcelableCompat(),
+            recipient = parcel.readParcelableCompat(),
             lt = parcel.readLong(),
             failed = parcel.readBooleanCompat(),
-            cipherText = parcel.readString(),
             hiddenBalance = parcel.readBooleanCompat(),
-            unverifiedToken = parcel.readBooleanCompat()
+            unverifiedToken = parcel.readBooleanCompat(),
+            isScam = parcel.readBooleanCompat(),
+            refund = parcel.readCharSequenceCompat(),
+            refundInCurrency = parcel.readCharSequenceCompat(),
+            wallet = parcel.readParcelableCompat()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -225,7 +328,7 @@ sealed class HistoryItem(
             dest.writeString(title)
             dest.writeString(subtitle)
             dest.writeLong(timestamp)
-            dest.writeString(comment)
+            dest.writeParcelable(comment, flags)
             dest.writeCharSequenceCompat(value)
             dest.writeCharSequenceCompat(value2)
             dest.writeCharSequenceCompat(currency)
@@ -235,16 +338,20 @@ sealed class HistoryItem(
             dest.writeBooleanCompat(pending)
             dest.writeEnum(position)
             dest.writeString(coinIconUrl)
+            dest.writeString(coinIconUrl2)
             dest.writeCharSequenceCompat(fee)
             dest.writeCharSequenceCompat(feeInCurrency)
             dest.writeBooleanCompat(isOut)
-            dest.writeString(address)
-            dest.writeString(addressName)
+            dest.writeParcelable(sender, flags)
+            dest.writeParcelable(recipient, flags)
             dest.writeLong(lt)
             dest.writeBooleanCompat(failed)
-            dest.writeString(cipherText)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(unverifiedToken)
+            dest.writeBooleanCompat(isScam)
+            dest.writeCharSequenceCompat(refund)
+            dest.writeCharSequenceCompat(refundInCurrency)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

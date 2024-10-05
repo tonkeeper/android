@@ -11,8 +11,8 @@
         android:layout_height="42dp"
         android:layout_gravity="center"/>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/content"
+    <uikit.widget.ColumnLayout
+        android:id="@+id/app_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="@dimen/offsetMedium"
@@ -30,7 +30,7 @@
             android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
             android:background="@drawable/bg_oval_button_secondary"/>
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <uikit.widget.RowLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -59,7 +59,7 @@
                 android:scaleType="centerCrop"
                 app:roundedCornerRadius="20dp"/>
 
-        </androidx.appcompat.widget.LinearLayoutCompat>
+        </uikit.widget.RowLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/name"
@@ -77,8 +77,9 @@
             android:layout_marginTop="@dimen/offsetExtraExtraSmall"
             android:textAppearance="@style/TextAppearance.Body1"
             android:textColor="?attr/textSecondaryColor"
+            android:singleLine="false"
+            android:lines="2"
             android:gravity="center"/>
-
 
         <uikit.widget.RowLayout
             android:id="@+id/allow_notification"
@@ -134,6 +135,6 @@
             android:textColor="?attr/textTertiaryColor"
             android:gravity="center"
             android:text="@string/ton_connect_subtitle"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </uikit.widget.ColumnLayout>
 
 </FrameLayout>

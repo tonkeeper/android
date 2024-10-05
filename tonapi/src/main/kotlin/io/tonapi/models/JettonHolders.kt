@@ -24,7 +24,7 @@ import com.squareup.moshi.JsonClass
  * 
  *
  * @param addresses 
- * @param total 
+ * @param total total number of holders
  */
 
 
@@ -33,6 +33,7 @@ data class JettonHolders (
     @Json(name = "addresses")
     val addresses: kotlin.collections.List<JettonHoldersAddressesInner>,
 
+    /* total number of holders */
     @Json(name = "total")
     val total: kotlin.Long
 

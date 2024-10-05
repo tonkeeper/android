@@ -15,7 +15,7 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_brows
 
     override fun onBind(item: Item.App) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(DAppScreen.newInstance(item.name, item.host, item.url.toString()))
+            Navigation.from(context)?.add(DAppScreen.newInstance(item.wallet, item.name, item.url))
         }
         iconView.setImageURI(item.icon)
         nameView.text = item.name

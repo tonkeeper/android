@@ -12,30 +12,29 @@
     <uikit.widget.CameraOverlayView
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
-    
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/flash"
-        android:layout_width="@dimen/itemHeight"
-        android:layout_height="@dimen/itemHeight"
-        android:layout_marginBottom="108dp"
-        android:background="@drawable/bg_oval"
-        android:backgroundTint="#14ffffff"
-        android:layout_gravity="bottom|center_horizontal"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_flash"
-        android:visibility="gone"/>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="@dimen/barHeight"
+        android:layout_marginHorizontal="@dimen/offsetMedium">
 
-        <uikit.widget.HeaderView
-            android:id="@+id/header"
-            android:icon="@drawable/ic_chevron_down_16"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:ignoreSystemOffset="true"/>
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="start|center_vertical"
+            android:background="@drawable/bg_oval"
+            android:src="@drawable/ic_chevron_down_16"
+            android:scaleType="centerInside"
+            android:tint="@color/constantWhite"/>
+
+    </FrameLayout>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingHorizontal="48dp">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="match_parent"
@@ -45,6 +44,19 @@
             android:textAppearance="@style/TextAppearance.H2"
             android:text="@string/scan_qr_code"/>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+        <uikit.widget.SquareImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/offsetLarge"/>
+
+        <com.tonapps.tonkeeper.ui.component.CameraFlashIconView
+            android:id="@+id/flash"
+            android:layout_width="@dimen/itemHeight"
+            android:layout_height="@dimen/itemHeight"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
+
+    </uikit.widget.ColumnLayout>
 
 </FrameLayout>

@@ -13,10 +13,27 @@ import androidx.security.crypto.MasterKeys
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.KeyGenerator
+import javax.crypto.Mac
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
 object Security {
+
+    fun hmacSha512(key: ByteArray, data: ByteArray): ByteArray {
+        val mac = Mac.getInstance("HmacSHA512")
+        val keySpec = SecretKeySpec(key, "HmacSHA512")
+        mac.init(keySpec)
+        return mac.doFinal(data)
+    }
+
+    fun sha256(input: ByteArray): ByteArray {
+        val md = MessageDigest.getInstance("SHA-256")
+        return md.digest(input)
+    }
+
+    fun sha256(input: String): ByteArray {
+        return sha256(input.toByteArray())
+    }
 
     fun pref(context: Context, keyAlias: String, name: String): SharedPreferences {
         KeyHelper.createIfNotExists(keyAlias)

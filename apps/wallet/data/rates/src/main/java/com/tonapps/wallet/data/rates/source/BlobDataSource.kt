@@ -10,8 +10,7 @@ import com.tonapps.wallet.data.rates.entity.RatesEntity
 
 internal class BlobDataSource(context: Context): BlobDataSource<RatesEntity>(
     context = context,
-    path = "rates",
-    lruInitialCapacity = 12
+    path = "rates"
 ) {
 
     override fun onUnmarshall(bytes: ByteArray) = bytes.toParcel<RatesEntity>()

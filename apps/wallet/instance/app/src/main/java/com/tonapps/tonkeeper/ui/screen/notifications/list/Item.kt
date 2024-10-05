@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.list
 
+import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -14,8 +16,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     }
 
     data class Wallet(
+        val wallet: WalletEntity,
         val pushEnabled: Boolean,
-        val walletId: String,
     ): Item(TYPE_WALLET)
 
     data object Space: Item(TYPE_SPACE)
@@ -23,26 +25,19 @@ sealed class Item(type: Int): BaseListItem(type) {
     data object AppsHeader: Item(TYPE_APPS_HEADER)
 
     data class App(
-        val id: String,
-        val name: String,
-        val icon: String,
+        val app: AppEntity,
+        val wallet: WalletEntity,
         val pushEnabled: Boolean,
-        val position: ListCell.Position,
-        val walletId: String,
-        val url: String,
+        val position: ListCell.Position
     ): Item(TYPE_APP) {
 
-        constructor(
-            app: DAppEntity,
-            position: ListCell.Position
-        ) : this(
-            id = app.uniqueId,
-            name = app.manifest.name,
-            icon = app.manifest.iconUrl,
-            pushEnabled = app.enablePush,
-            position = position,
-            walletId = app.walletId,
-            url = app.url,
-        )
+        val icon: String
+            get() = app.iconUrl
+
+        val name: String
+            get() = app.name
+
+        val uri: Uri
+            get() = app.url
     }
 }

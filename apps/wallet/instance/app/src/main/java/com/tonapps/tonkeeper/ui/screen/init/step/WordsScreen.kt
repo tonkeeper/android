@@ -16,11 +16,13 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.iconPrimaryColor
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
+import uikit.extensions.clear
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.getCurrentFocusEditText
@@ -112,18 +114,32 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private fun onTextChanged(index: Int, editable: Editable) {
         if (index == 0) {
             val words = TonMnemonic.parseMnemonic(editable.toString())
-            if (words.size > 1) {
-                editable.clear()
-                setWords(words)
-                return
+            post {
+                applyWords(words)
+            }
+        } else {
+            post {
+                checkWords()
             }
         }
-        lifecycleScope.launch { checkWords() }
     }
 
-    private suspend fun checkWords() {
-        val mnemonic = getMnemonic()
-        button.isEnabled = mnemonic.size == 24
+    private fun applyWords(words: List<String>) {
+        if (words.size > 1) {
+            wordInputs.first().clear()
+            setWords(words)
+        } else {
+            checkWords()
+        }
+    }
+
+    private fun checkWords(delay: Long = 0) {
+        lifecycleScope.launch {
+            if (delay > 0) {
+                delay(delay)
+            }
+            button.isEnabled = getMnemonic().size == 24
+        }
     }
 
     private suspend fun getMnemonic(): List<String> = withContext(Dispatchers.IO) {
@@ -147,6 +163,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         if (list.size == wordInputs.size) {
             context?.getCurrentFocusEditText()?.hideKeyboard()
             scrollView.scrollDown(true)
+            checkWords(500)
         }
     }
 

@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="@dimen/offsetLarge"
                 android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:background="@drawable/bg_content_tint_16">
+                android:background="@drawable/bg_content">
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_wallet"
@@ -76,6 +76,7 @@
                     android:id="@+id/review_amount"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:visibility="gone"
                     android:title="@string/amount"/>
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
@@ -118,7 +119,7 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             app:successLabel="@string/done"
-            app:errorLabel="@string/error"/>
+            app:errorLabel="@string/sending_error"/>
 
     </FrameLayout>
 

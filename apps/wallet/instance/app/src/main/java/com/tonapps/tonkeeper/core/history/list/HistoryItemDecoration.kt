@@ -9,7 +9,7 @@ import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListCell
 import uikit.extensions.dp
 
-object HistoryItemDecoration: RecyclerView.ItemDecoration() {
+class HistoryItemDecoration: RecyclerView.ItemDecoration() {
 
     override fun getItemOffsets(
         outRect: Rect,
@@ -25,9 +25,9 @@ object HistoryItemDecoration: RecyclerView.ItemDecoration() {
             }
             return
         }
-        if (position == 0) {
+        /*if (position == 0) {
             return
-        }
+        }*/
         val holder = parent.findViewHolderForAdapterPosition(position) ?: return
         val item = (holder as? BaseListHolder<*>)?.item ?: return
 

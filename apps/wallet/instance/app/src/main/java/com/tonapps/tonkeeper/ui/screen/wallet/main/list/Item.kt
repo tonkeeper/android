@@ -17,16 +17,16 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.push.entities.AppPushEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.staking.StakingPool
-import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
 
 sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
@@ -71,12 +71,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         TransactionConfirmed,
         Unknown,
         LastUpdated,
-    }
-
-    enum class BalanceType {
-        Zero,
-        Positive,
-        Huge,
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -128,38 +122,50 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
     data class Balance(
         val balance: CharSequence,
-        val address: String,
-        val walletType: Wallet.Type,
-        val walletVersion: WalletVersion,
+        val wallet: WalletEntity,
         val status: Status,
         val hiddenBalance: Boolean,
         val hasBackup: Boolean,
-        val balanceType: BalanceType,
+        val balanceType: Int,
         val lastUpdatedFormat: String,
+        val batteryBalance: Coins,
+        val showBattery: Boolean,
+        val batteryEmptyState: BatteryView.EmptyState,
     ): Item(TYPE_BALANCE) {
 
+        val address: String
+            get() = wallet.address
+
+        val walletType: Wallet.Type
+            get() = wallet.type
+
+        val walletVersion: WalletVersion
+            get() = wallet.version
+
         constructor(parcel: Parcel) : this(
-            parcel.readString()!!,
-            parcel.readString()!!,
-            parcel.readEnum(Wallet.Type::class.java)!!,
-            parcel.readEnum(WalletVersion::class.java)!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readParcelableCompat()!!,
             parcel.readEnum(Status::class.java)!!,
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
-            parcel.readEnum(BalanceType::class.java)!!,
-            parcel.readString()!!
+            parcel.readInt(),
+            parcel.readString()!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readBooleanCompat(),
+            parcel.readEnum(BatteryView.EmptyState::class.java)!!,
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeString(balance.toString())
-            dest.writeString(address)
-            dest.writeEnum(walletType)
-            dest.writeEnum(walletVersion)
+            dest.writeCharSequenceCompat(balance)
+            dest.writeParcelable(wallet, flags)
             dest.writeEnum(status)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(hasBackup)
-            dest.writeEnum(balanceType)
+            dest.writeInt(balanceType)
             dest.writeString(lastUpdatedFormat)
+            dest.writeParcelable(batteryBalance, flags)
+            dest.writeBooleanCompat(showBattery)
+            dest.writeEnum(batteryEmptyState)
         }
 
         companion object CREATOR : Parcelable.Creator<Balance> {
@@ -170,25 +176,28 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
     }
 
     data class Actions(
-        val address: String,
+        val wallet: WalletEntity,
         val token: TokenEntity,
-        val walletType: Wallet.Type,
         val swapUri: Uri,
         val disableSwap: Boolean
     ): Item(TYPE_ACTIONS) {
 
+        val address: String
+            get() = wallet.address
+
+        val walletType: Wallet.Type
+            get() = wallet.type
+
         constructor(parcel: Parcel) : this(
-            parcel.readString()!!,
             parcel.readParcelableCompat()!!,
-            parcel.readEnum(Wallet.Type::class.java)!!,
+            parcel.readParcelableCompat()!!,
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeString(address)
+            dest.writeParcelable(wallet, flags)
             dest.writeParcelable(token, flags)
-            dest.writeEnum(walletType)
             dest.writeParcelable(swapUri, flags)
             dest.writeBooleanCompat(disableSwap)
         }
@@ -210,6 +219,15 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val message: String?,
         val fiat: Coins,
         val fiatFormat: CharSequence,
+        val hiddenBalance: Boolean,
+        val wallet: WalletEntity,
+        val readyWithdraw: Coins,
+        val readyWithdrawFormat: CharSequence,
+        val pendingDeposit: Coins,
+        val pendingDepositFormat: CharSequence,
+        val pendingWithdraw: Coins,
+        val pendingWithdrawFormat: CharSequence,
+        val cycleEnd: Long,
     ): Item(TYPE_STAKED) {
 
         val iconUri: Uri
@@ -224,7 +242,16 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readCharSequenceCompat()!!,
             parcel.readString(),
             parcel.readParcelableCompat()!!,
-            parcel.readCharSequenceCompat()!!
+            parcel.readCharSequenceCompat()!!,
+            parcel.readBooleanCompat(),
+            parcel.readParcelableCompat()!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readCharSequenceCompat()!!,
+            parcel.readLong()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -237,6 +264,15 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeString(message)
             dest.writeParcelable(fiat, flags)
             dest.writeCharSequenceCompat(fiatFormat)
+            dest.writeBooleanCompat(hiddenBalance)
+            dest.writeParcelable(wallet, flags)
+            dest.writeParcelable(readyWithdraw, flags)
+            dest.writeCharSequenceCompat(readyWithdrawFormat)
+            dest.writeParcelable(pendingDeposit, flags)
+            dest.writeCharSequenceCompat(pendingDepositFormat)
+            dest.writeParcelable(pendingWithdraw, flags)
+            dest.writeCharSequenceCompat(pendingWithdrawFormat)
+            dest.writeLong(cycleEnd)
         }
 
         companion object CREATOR : Parcelable.Creator<Stake> {
@@ -261,7 +297,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val verified: Boolean,
         val testnet: Boolean,
         val hiddenBalance: Boolean,
-        val blacklist: Boolean
+        val blacklist: Boolean,
+        val wallet: WalletEntity,
     ): Item(TYPE_TOKEN) {
 
         val isTON = symbol == TokenEntity.TON.symbol
@@ -274,6 +311,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             hiddenBalance: Boolean,
             testnet: Boolean,
             currencyCode: String,
+            wallet: WalletEntity
         ) : this(
             position = position,
             iconUri = token.imageUri,
@@ -289,7 +327,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             verified = token.verified,
             testnet = testnet,
             hiddenBalance = hiddenBalance,
-            blacklist = token.blacklist
+            blacklist = token.blacklist,
+            wallet = wallet
         )
 
         constructor(parcel: Parcel) : this(
@@ -307,7 +346,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat()
+            parcel.readBooleanCompat(),
+            parcel.readParcelableCompat()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -326,6 +366,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(testnet)
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(blacklist)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<Token> {
@@ -370,23 +411,20 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
     }
 
     data class Push(
-        val events: List<AppPushEntity>,
-        val apps: List<DAppEntity>
+        val apps: List<AppEntity>
     ): Item(TYPE_PUSH) {
 
         constructor(parcel: Parcel) : this(
-            parcel.readArrayCompat(AppPushEntity::class.java)?.toList()!!,
-            parcel.readArrayCompat(DAppEntity::class.java)?.toList()!!,
+            parcel.readArrayCompat(AppEntity::class.java)?.toList()!!
         )
 
-        val text = events.first().message
+        val text = "line"
 
         val iconUris: List<Uri> by lazy {
-            apps.map { Uri.parse(it.manifest.iconUrl) }
+            apps.map { Uri.parse(it.iconUrl) }
         }
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeArrayCompat(events.toTypedArray())
             dest.writeArrayCompat(apps.toTypedArray())
         }
 
@@ -420,14 +458,16 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         }
     }
 
-    data class Manage(val value: Boolean): Item(TYPE_MANAGE) {
+    data class Manage(
+        val wallet: WalletEntity
+    ): Item(TYPE_MANAGE) {
 
         constructor(parcel: Parcel) : this(
-            parcel.readBooleanCompat()
+            parcel.readParcelableCompat<WalletEntity>()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeBooleanCompat(value)
+            dest.writeParcelable(wallet, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<Manage> {
@@ -464,17 +504,29 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val iconRes: Int,
         val textRes: Int,
         val enabled: Boolean,
-        val isPush: Boolean,
-        val walletId: String,
+        val wallet: WalletEntity,
+        val settingsType: Int
     ): Item(TYPE_SETUP_SWITCH) {
+
+        companion object {
+            const val TYPE_BIOMETRIC = 1
+            const val TYPE_PUSH = 2
+
+            @JvmField
+            val CREATOR = object : Parcelable.Creator<SetupSwitch> {
+                override fun createFromParcel(parcel: Parcel) = SetupSwitch(parcel)
+
+                override fun newArray(size: Int): Array<SetupSwitch?> = arrayOfNulls(size)
+            }
+        }
 
         constructor(parcel: Parcel) : this(
             parcel.readEnum(ListCell.Position::class.java)!!,
             parcel.readInt(),
             parcel.readInt(),
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat(),
-            parcel.readString()!!
+            parcel.readParcelableCompat()!!,
+            parcel.readInt()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -482,53 +534,51 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeInt(iconRes)
             dest.writeInt(textRes)
             dest.writeBooleanCompat(enabled)
-            dest.writeBooleanCompat(isPush)
-            dest.writeString(walletId)
-        }
-
-        companion object CREATOR : Parcelable.Creator<SetupSwitch> {
-            override fun createFromParcel(parcel: Parcel) = SetupSwitch(parcel)
-
-            override fun newArray(size: Int): Array<SetupSwitch?> {
-                return arrayOfNulls(size)
-            }
+            dest.writeParcelable(wallet, flags)
+            dest.writeInt(settingsType)
         }
     }
 
     data class SetupLink(
         val position: ListCell.Position,
+        val walletId: String,
         val iconRes: Int,
         val textRes: Int,
         val link: String,
-        val external: Boolean,
         val blue: Boolean,
+        val settingsType: Int
     ): Item(TYPE_SETUP_LINK) {
+
+        companion object {
+            const val TYPE_NONE = 1
+            const val TYPE_TELEGRAM_CHANNEL = 2
+
+            @JvmField
+            val CREATOR = object : Parcelable.Creator<SetupLink> {
+                override fun createFromParcel(parcel: Parcel) = SetupLink(parcel)
+
+                override fun newArray(size: Int): Array<SetupLink?> = arrayOfNulls(size)
+            }
+        }
 
         constructor(parcel: Parcel) : this(
             parcel.readEnum(ListCell.Position::class.java)!!,
+            parcel.readString()!!,
             parcel.readInt(),
             parcel.readInt(),
             parcel.readString()!!,
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat()
+            parcel.readInt(),
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
             dest.writeEnum(position)
+            dest.writeString(walletId)
             dest.writeInt(iconRes)
             dest.writeInt(textRes)
             dest.writeString(link)
-            dest.writeBooleanCompat(external)
             dest.writeBooleanCompat(blue)
-        }
-
-        companion object CREATOR : Parcelable.Creator<SetupLink> {
-            override fun createFromParcel(parcel: Parcel) = SetupLink(parcel)
-
-            override fun newArray(size: Int): Array<SetupLink?> {
-                return arrayOfNulls(size)
-            }
+            dest.writeInt(settingsType)
         }
     }
-
 }

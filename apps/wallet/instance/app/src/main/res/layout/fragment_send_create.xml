@@ -13,6 +13,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:title="@string/send"
+            android:icon="@drawable/ic_qr_viewfinder_outline_28"
+            android:iconTint="?attr/accentBlueColor"
             android:action="@drawable/ic_close_16"
             app:ignoreSystemOffset="true"/>
 
@@ -21,11 +23,49 @@
             android:layout_height="wrap_content"
             android:paddingHorizontal="@dimen/offsetMedium">
 
-            <uikit.widget.InputView
-                android:id="@+id/address"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/address_hint"/>
+                android:layout_height="wrap_content">
+
+                <uikit.widget.InputView
+                    android:id="@+id/address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/address_hint"/>
+
+                <uikit.widget.RowLayout
+                    android:id="@+id/address_actions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginRight="@dimen/offsetMedium">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/paste"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:paddingHorizontal="@dimen/offsetMedium"
+                        android:background="@drawable/bg_button_tertiary"
+                        android:textAppearance="@style/TextAppearance.Label2"
+                        android:gravity="center"
+                        android:textColor="?attr/buttonTertiaryForegroundColor"
+                        android:text="@string/paste"/>
+
+                    <View
+                        android:layout_width="@dimen/offsetMedium"
+                        android:layout_height="wrap_content"/>
+                    
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/address_book"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:tint="?attr/accentBlueColor"
+                        android:src="@drawable/ic_address_book_28"/>
+
+                </uikit.widget.RowLayout>
+
+            </FrameLayout>
 
             <com.tonapps.tonkeeper.ui.component.coin.CoinInputView
                 android:id="@+id/amount"
@@ -86,11 +126,39 @@
                 android:layout_marginTop="@dimen/offsetLarge"
                 android:hint="@string/comment"/>
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_encrypt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"
+                android:visibility="gone"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_decrypt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"
+                android:visibility="gone"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_required"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/accentOrangeColor"
+                android:text="@string/send_request_comment"
+                android:visibility="gone"/>
+
         </uikit.widget.ColumnLayout>
 
     </uikit.widget.ColumnLayout>
 
-    <Button
+    <uikit.widget.LoadableButton
         style="@style/Widget.App.Button"
         android:id="@+id/button"
         android:layout_width="match_parent"

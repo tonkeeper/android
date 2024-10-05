@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
@@ -26,6 +27,7 @@ class PoolHolder(
     private val maxApyView = findViewById<View>(R.id.max_apy)
     private val descriptionView = findViewById<AppCompatTextView>(R.id.description)
     private val radioView = findViewById<RadioView>(R.id.radio)
+    private val arrowView = findViewById<View>(R.id.arrow)
 
     init {
         iconView.setCircular()
@@ -47,10 +49,16 @@ class PoolHolder(
             View.GONE
         }
 
-        radioView.checked = item.selected
-        descriptionView.text = "%s\n%s".format(
-            context.getString(Localization.staking_minimum_deposit, item.minimumDepositFormat),
-            item.entity.apy
-        )
+        if (item.entity.pools.size > 1) {
+            arrowView.visibility = View.VISIBLE
+            radioView.visibility = View.GONE
+        } else {
+            arrowView.visibility = View.GONE
+            radioView.visibility = View.VISIBLE
+            radioView.isClickable = false
+            radioView.checked = item.selected
+        }
+
+        descriptionView.text = item.getDescription(context).withCustomSymbol(context)
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -22,51 +22,66 @@
         android:textColor="?attr/textSecondaryColor"
         android:textAppearance="@style/TextAppearance.Body1"/>
 
-    <uikit.widget.ActionCellView
-        android:id="@+id/import_wallet"
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/offsetLarge"
-        android:icon="@drawable/ic_key_28"
-        android:title="@string/import_wallet"
-        android:subtitle="@string/import_wallet_words"/>
+        android:fillViewport="true">
 
-    <uikit.widget.ActionCellView
-        android:id="@+id/watch_wallet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/offsetMedium"
-        android:icon="@drawable/ic_magnifying_glass_28"
-        android:title="@string/watch_wallet"
-        android:subtitle="@string/watch_wallet_subtitle"/>
+        <uikit.widget.RowLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <uikit.widget.ActionCellView
-        android:id="@+id/testnet_wallet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/offsetMedium"
-        android:icon="@drawable/ic_testnet_28"
-        android:title="@string/testnet_wallet"
-        android:subtitle="@string/testnet_wallet_subtitle"/>
 
-    <uikit.widget.ActionCellView
-        android:id="@+id/signer_wallet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/offsetMedium"
-        android:icon="@drawable/ic_globe_28"
-        android:title="@string/signer_wallet"
-        android:subtitle="@string/signer_wallet_subtitle">
+            <uikit.widget.ActionCellView
+                android:id="@+id/import_wallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge"
+                android:icon="@drawable/ic_key_28"
+                android:title="@string/import_wallet"
+                android:subtitle="@string/import_wallet_words"/>
 
-    </uikit.widget.ActionCellView>
+            <uikit.widget.ActionCellView
+                android:id="@+id/watch_wallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:icon="@drawable/ic_magnifying_glass_28"
+                android:title="@string/watch_wallet"
+                android:subtitle="@string/watch_wallet_subtitle"/>
 
-    <uikit.widget.ActionCellView
-        android:id="@+id/ledger_wallet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginVertical="@dimen/offsetMedium"
-        android:icon="@drawable/ic_ledger_28"
-        android:subtitle="@string/ledger_subtitle"
-        android:title="@string/ledger_title" />
+            <uikit.widget.ActionCellView
+                android:id="@+id/testnet_wallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:icon="@drawable/ic_testnet_28"
+                android:title="@string/testnet_wallet"
+                android:subtitle="@string/testnet_wallet_subtitle"/>
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+            <uikit.widget.ActionCellView
+                android:id="@+id/signer_wallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:icon="@drawable/ic_globe_28"
+                android:title="@string/signer_wallet"
+                android:visibility="gone"
+                android:subtitle="@string/signer_wallet_subtitle">
+
+            </uikit.widget.ActionCellView>
+
+            <uikit.widget.ActionCellView
+                android:id="@+id/ledger_wallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/offsetMedium"
+                android:icon="@drawable/ic_ledger_28"
+                android:subtitle="@string/ledger_subtitle"
+                android:title="@string/ledger_title" />
+
+        </uikit.widget.RowLayout>
+    </ScrollView>
+
+</uikit.widget.RowLayout>

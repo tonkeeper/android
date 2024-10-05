@@ -5,38 +5,49 @@ import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.Holder
+import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.TokenHolder
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 
-class TokensManageScreen: BaseListFragment(), BaseFragment.BottomSheet {
+class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
-    private val tokensManageViewModel: TokensManageViewModel by viewModel()
+    override val viewModel: TokensManageViewModel by walletViewModel()
+
     private val adapter: Adapter by lazy {
-        Adapter(tokensManageViewModel::onPinChange, tokensManageViewModel::onHiddenChange)
+        Adapter(viewModel::onPinChange, viewModel::onHiddenChange, ::onDrag)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(tokensManageViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
+    }
+
+    private fun onDrag(holder: TokenHolder) {
+        getTouchHelper()?.startDrag(holder)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setTitle(getString(Localization.manage))
+        setTitle(getString(Localization.home_screen))
         setAdapter(adapter)
         val horizontalOffset = requireContext().getDimensionPixelSize(uikit.R.dimen.cornerMedium)
         setListPadding(horizontalOffset, 0, horizontalOffset, 0)
         setTouchHelperCallback(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
 
-            override fun isLongPressDragEnabled() = true
+            override fun isLongPressDragEnabled() = false
 
             override fun onMove(
                 recyclerView: RecyclerView,
@@ -59,7 +70,7 @@ class TokensManageScreen: BaseListFragment(), BaseFragment.BottomSheet {
                 super.clearView(recyclerView, viewHolder)
                 val item = (viewHolder as? Holder<*>)?.item ?: return
                 if (item is Item.Token && item.pinned) {
-                    tokensManageViewModel.changeOrder(item.address, viewHolder.bindingAdapterPosition)
+                    viewModel.changeOrder(item.address, viewHolder.bindingAdapterPosition)
                 }
             }
 
@@ -69,6 +80,6 @@ class TokensManageScreen: BaseListFragment(), BaseFragment.BottomSheet {
     }
 
     companion object {
-        fun newInstance() = TokensManageScreen()
+        fun newInstance(wallet: WalletEntity) = TokensManageScreen(wallet)
     }
 }

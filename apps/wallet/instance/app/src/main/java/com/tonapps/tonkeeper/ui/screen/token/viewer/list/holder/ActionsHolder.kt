@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder
 import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
-import com.tonapps.tonkeeper.ui.screen.send.SendScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.tonkeeperx.R
@@ -21,14 +21,17 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     override fun onBind(item: Item.Actions) {
         sendView.isEnabled = item.send
         sendView.setOnClickListener {
-            navigation?.add(SendScreen.newInstance(tokenAddress = item.tokenAddress))
+            navigation?.add(SendScreen.newInstance(
+                wallet = item.wallet,
+                tokenAddress = item.tokenAddress
+            ))
         }
         receiveView.setOnClickListener {
             navigation?.add(QRScreen.newInstance(item.walletAddress, item.token, item.walletType))
         }
         swapView.isEnabled = item.swap
         swapView.setOnClickListener {
-            navigation?.add(SwapScreen.newInstance(item.swapUri, item.walletAddress, item.tokenAddress))
+            navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.walletAddress, item.tokenAddress))
         }
     }
 }

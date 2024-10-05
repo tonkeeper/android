@@ -4,24 +4,35 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
+import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.stake.confirm.StakeConfirmFragment
+import com.tonapps.tonkeeper.ui.screen.staking.stake.options.StakeOptionsFragment
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.map
 import uikit.extensions.collectFlow
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 import uikit.extensions.withAlpha
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
+import uikit.widget.HeaderView
 
-class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_amount) {
+class StakeAmountFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_amount) {
 
     private lateinit var amountView: CoinEditText
     private lateinit var poolItemView: View
@@ -35,14 +46,22 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val headerView = view.findViewById<HeaderView>(R.id.header)
+        headerView.doOnCloseClick = {
+            remoteConfig?.stakingInfoUrl?.let {
+                navigation?.openURL(it)
+            }
+        }
+        headerView.doOnActionClick = { finish() }
+
         amountView = view.findViewById(R.id.stake_amount)
         amountView.suffix = "TON"
-        amountView.doOnValueChange = stakeViewModel::updateAmount
+        amountView.doOnValueChange = primaryViewModel::updateAmount
 
         currencyView = view.findViewById(R.id.stake_currency)
 
         poolItemView = view.findViewById(R.id.pool_item)
-        poolItemView.setOnClickListener { stakeViewModel.openOptions() }
+        poolItemView.setOnClickListener { setFragment(StakeOptionsFragment.newInstance(primaryFragment.screenContext.wallet)) }
 
         poolIconView = view.findViewById(R.id.pool_icon)
         poolIconView.setCircular()
@@ -56,12 +75,22 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
         availableView = view.findViewById(R.id.available)
 
         button = view.findViewById(R.id.next_button)
-        button.setOnClickListener { stakeViewModel.confirm() }
+        button.setOnClickListener { setFragment(StakeConfirmFragment.newInstance()) }
 
-        collectFlow(stakeViewModel.selectedPoolFlow, ::applyPoolInfo)
-        collectFlow(stakeViewModel.availableUiStateFlow, ::applyAvailableState)
-        collectFlow(stakeViewModel.fiatFormatFlow, ::applyFiat)
-        collectFlow(stakeViewModel.apyFormatFlow, poolDescriptionView::setText)
+        view.findViewById<View>(R.id.max).setOnClickListener { applyMax() }
+
+        collectFlow(primaryViewModel.selectedPoolFlow, ::applyPoolInfo)
+        collectFlow(primaryViewModel.availableUiStateFlow, ::applyAvailableState)
+        collectFlow(primaryViewModel.fiatFormatFlow, ::applyFiat)
+        collectFlow(primaryViewModel.apyFormatFlow.map {
+            it.withCustomSymbol(requireContext())
+        }, poolDescriptionView::setText)
+    }
+
+    private fun applyMax() {
+        collectFlow(primaryViewModel.requestMax()) {
+            amountView.setValue(it.value)
+        }
     }
 
     override fun onKeyboardAnimation(offset: Int, progress: Float, isShowing: Boolean) {
@@ -78,10 +107,10 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
         }
     }
 
-    override fun getTitle() = getString(Localization.stake)
+    override fun toString() = TAG
 
     private fun applyFiat(fiatFormat: CharSequence) {
-        currencyView.text = fiatFormat
+        currencyView.text = fiatFormat.withCustomSymbol(requireContext())
     }
 
     private fun applyAvailableState(state: StakingViewModel.AvailableUiState) {
@@ -90,15 +119,15 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
             availableView.setTextColor(requireContext().accentRedColor)
             button.isEnabled = false
         } else if (state.remainingFormat == state.balanceFormat) {
-            availableView.text = getString(Localization.available_balance, state.balanceFormat)
+            availableView.text = if (state.hiddenBalance) HIDDEN_BALANCE else getString(Localization.available_balance, state.balanceFormat).withCustomSymbol(requireContext())
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = false
         } else if (state.requestMinStake) {
-            availableView.text = getString(Localization.staking_minimum_deposit, state.minStakeFormat)
-            availableView.setTextColor(requireContext().textSecondaryColor)
+            availableView.text = getString(Localization.minimum_amount, state.minStakeFormat).withCustomSymbol(requireContext())
+            availableView.setTextColor(requireContext().accentRedColor)
             button.isEnabled = false
         } else {
-            availableView.text = getString(Localization.remaining_balance, state.remainingFormat)
+            availableView.text = getString(Localization.remaining_balance, state.remainingFormat).withCustomSymbol(requireContext())
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = true
         }
@@ -106,10 +135,16 @@ class StakeAmountFragment: StakingScreen.ChildFragment(R.layout.fragment_stake_a
 
     private fun applyPoolInfo(pool: PoolEntity) {
         poolIconView.setLocalRes(StakingPool.getIcon(pool.implementation))
-        poolTitleView.setText(StakingPool.getTitle(pool.implementation))
+        poolTitleView.text = pool.name.ifBlank {
+            getString(StakingPool.getTitle(pool.implementation))
+        }
+        poolMaxApyView.visibility = if (pool.maxApy) View.VISIBLE else View.GONE
     }
 
     companion object {
+
+        const val TAG = "stake_amount_fragment"
+
         fun newInstance() = StakeAmountFragment()
     }
 }

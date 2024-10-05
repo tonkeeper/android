@@ -4,10 +4,12 @@ import android.content.Context
 import android.graphics.Paint
 import android.text.TextPaint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged
 import com.tonapps.icu.Coins
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.component.TokenPickerView
 import com.tonapps.tonkeeper.ui.component.coin.drawable.SuffixDrawable
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingConfig
@@ -16,6 +18,7 @@ import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingTextWatcher
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.dp
 import uikit.extensions.focusWithKeyboard
@@ -24,6 +27,7 @@ import uikit.extensions.replaceAll
 import uikit.extensions.setRightDrawable
 import uikit.widget.input.BaseInputView
 import uikit.widget.input.InputTextView
+import java.math.BigDecimal
 
 class CoinInputView @JvmOverloads constructor(
     context: Context,
@@ -31,7 +35,7 @@ class CoinInputView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : BaseInputView(context, attrs, defStyle) {
 
-    var doOnValueChanged: ((Double) -> Unit)? = null
+    var doOnValueChanged: ((Coins) -> Unit)? = null
     var doOnTokenChanged: ((TokenEntity) -> Unit)? = null
 
     private val suffixDrawable = SuffixDrawable(context, TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
@@ -53,6 +57,9 @@ class CoinInputView @JvmOverloads constructor(
                 editText.setFormattingInputFilter(CoinFormattingFilter(value))
             }
         }
+
+    private val decimals: Int
+        get() = formattingConfig.decimals
 
     var suffix: String? = suffixDrawable.text
         set(value) {
@@ -83,6 +90,10 @@ class CoinInputView @JvmOverloads constructor(
         findViewById<View>(R.id.coin_input_container).setOnClickListener { focusWithKeyboard() }
     }
 
+    fun setWallet(wallet: WalletEntity) {
+        tokenPickerView.setWallet(wallet)
+    }
+
     private fun updateSuffix() {
         if (suffix.isNullOrBlank() || expanded) {
             suffixDrawable.text = null
@@ -103,25 +114,25 @@ class CoinInputView @JvmOverloads constructor(
         }
     }
 
-    fun getValue(): Double {
+    fun getValue(): Coins {
         val text = editText.text.toString()
         if (text.isEmpty()) {
-            return 0.0
+            return Coins.ZERO
         }
-        return Coins.safeParseDouble(text)
+        return Coins.of(text, decimals)
     }
 
-    fun setValue(value: Double) {
-        val editable = editText.getText() ?: return
-        if (0 >= value) {
+    fun setValue(value: BigDecimal) {
+        if (BigDecimal.ZERO == value) {
             clear()
         } else {
-            editable.replaceAll(value.toString().removeSuffix(".0"))
+            val text = value.stripTrailingZeros().toPlainString().removeSuffix(".0")
+            editText.setText(text.replace(".", CurrencyFormatter.monetaryDecimalSeparator))
         }
     }
 
     fun clear() {
-        editText.text?.clear()
+        editText.text = null
     }
 
     fun setToken(token: TokenEntity): Boolean {

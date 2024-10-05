@@ -2,6 +2,7 @@ package com.tonapps.emoji
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
@@ -41,6 +42,14 @@ object Emoji {
 
         return all.toTypedArray()
     }
+
+    fun isCustomIcon(
+        emoji: CharSequence
+    ): Boolean {
+        return customIcons.contains(emoji)
+    }
+
+    fun getCustomEmoji(emoji: CharSequence) = customIcons[emoji]
 
     suspend fun isValid(
         context: Context,
@@ -88,11 +97,12 @@ object Emoji {
         emoji: CharSequence,
     ): PictogramDrawable {
         val tmpBitmap = simpleEmojiTypeface.draw(emoji)
-        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        /*val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             tmpBitmap.copy(Bitmap.Config.HARDWARE, false)
         } else {
             tmpBitmap.copy(Bitmap.Config.ARGB_8888, false)
-        }
+        }*/
+        val bitmap = tmpBitmap.copy(Bitmap.Config.ARGB_8888, false)
         val drawable = PictogramDrawable(emoji, context, bitmap)
         drawable.alpha = 0
         return drawable

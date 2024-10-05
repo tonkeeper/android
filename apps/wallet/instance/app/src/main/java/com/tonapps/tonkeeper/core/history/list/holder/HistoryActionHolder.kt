@@ -7,38 +7,47 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
-import com.facebook.drawee.view.SimpleDraweeView
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
-import com.tonapps.tonkeeperx.R
+import com.tonapps.extensions.logError
+import com.tonapps.extensions.max24
+import com.tonapps.extensions.short12
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.iconRes
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
-import com.tonapps.tonkeeper.dialog.TransactionDialog
-import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
+import com.tonapps.tonkeeper.koin.historyHelper
+import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
-import com.tonapps.uikit.color.UIKitColor
+import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
+import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import uikit.extensions.clearDrawables
 import uikit.extensions.drawable
+import uikit.extensions.reject
 import uikit.extensions.setLeftDrawable
 import uikit.navigation.Navigation
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
 
 class HistoryActionHolder(
     parent: ViewGroup,
-    private val disableOpenAction: Boolean
-): HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
+    private val disableOpenAction: Boolean,
+) : HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
 
     private val amountColorReceived = context.accentGreenColor
     private val amountColorDefault = context.textPrimaryColor
@@ -75,12 +84,20 @@ class HistoryActionHolder(
         }
 
         if (!disableOpenAction) {
-            itemView.setOnClickListener { TransactionDialog.open(context, item) }
+            itemView.setOnClickListener { context.navigation?.add(TransactionScreen.newInstance(item)) }
         }
 
         itemView.background = item.position.drawable(context)
-        titleView.setText(item.action.nameRes)
+        if (item.isScam) {
+            titleView.setText(Localization.spam)
+            subtitleView.setTextColor(amountColorTertiary)
+        } else {
+            titleView.setText(item.action.nameRes)
+            subtitleView.setTextColor(context.textSecondaryColor)
+        }
+
         subtitleView.text = item.subtitle
+
         dateView.text = item.date
 
         if (item.failed) {
@@ -97,24 +114,22 @@ class HistoryActionHolder(
         }
 
         bindPending(item.pending)
-        if (item.comment == null && item.cipherText == null) {
+        if (item.comment == null || item.isScam) {
             commentView.visibility = View.GONE
         } else {
-            bindComment(item.comment)
-            bindEncryptedComment(item.cipherText, item.address?:"")
+            bindComment(item.comment, item.txId, item.sender?.address ?: "")
         }
 
         bindNft(item)
         bindAmount(item)
     }
 
-    private fun decryptComment(cipherText: String, senderAddress: String) {
-        Navigation.from(context)?.add(EncryptedCommentScreen.newInstance(cipherText, senderAddress))
-    }
-
     private fun loadIcon(uri: Uri) {
         iconView.imageTintList = null
-        iconView.setImageURI(uri, this)
+
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(128)
+        iconView.setImageRequest(builder.build())
     }
 
     private fun bindPending(pending: Boolean) {
@@ -126,7 +141,7 @@ class HistoryActionHolder(
     }
 
     private fun bindAmount(item: HistoryItem.Event) {
-        if (item.action == ActionType.WithdrawStakeRequest) {
+        if (item.isScam || item.action == ActionType.WithdrawStakeRequest) {
             amountView.setTextColor(amountColorTertiary)
         } else {
             amountView.setTextColor(getAmountColor(item.value))
@@ -134,9 +149,8 @@ class HistoryActionHolder(
         if (item.hiddenBalance) {
             amountView.text = HIDDEN_BALANCE
         } else {
-            amountView.text = item.value
+            amountView.text = item.value.withCustomSymbol(context)
         }
-
 
         if (item.value2.isEmpty()) {
             amount2View.visibility = View.GONE
@@ -144,33 +158,48 @@ class HistoryActionHolder(
             amount2View.visibility = View.VISIBLE
             if (item.hiddenBalance) {
                 amount2View.text = HIDDEN_BALANCE
+            } else if (item.isScam) {
+                amount2View.text = item.value2.toString()
             } else {
-                amount2View.text = item.value2
+                amount2View.text = item.value2.withCustomSymbol(context)
             }
         }
     }
 
-    private fun bindComment(comment: String?) {
-        if (comment == null) {
-            return
-        }
+    private fun bindComment(
+        comment: HistoryItem.Event.Comment,
+        txId: String,
+        senderAddress: String,
+    ) {
         commentView.visibility = View.VISIBLE
-        commentView.text = comment
-        commentView.setOnClickListener(null)
+        if (comment.isEncrypted) {
+            commentView.text = context.getString(Localization.encrypted_comment)
+            commentView.setLeftDrawable(lockDrawable)
+            commentView.setOnClickListener { requestDecryptComment(comment, txId, senderAddress) }
+        } else {
+            commentView.text = comment.body.max24
+            commentView.setLeftDrawable(null)
+            commentView.setOnClickListener(null)
+        }
     }
 
-    private fun bindEncryptedComment(cipherText: String?, senderAddress: String) {
-        if (cipherText == null) {
-            return
-        }
-        commentView.visibility = View.VISIBLE
-        commentView.text = context.getString(Localization.encrypted_comment)
-        commentView.setLeftDrawable(lockDrawable)
-        commentView.setOnClickListener { decryptComment(cipherText, senderAddress) }
+    private fun requestDecryptComment(
+        comment: HistoryItem.Event.Comment,
+        txId: String,
+        senderAddress: String
+    ) {
+        val scope = lifecycleScope ?: return
+        val flow = context.historyHelper?.requestDecryptComment(context, comment, txId, senderAddress) ?: return
+        flow.catch {
+            context.logError(it)
+            commentView.reject()
+        }.onEach {
+            bindComment(it, txId, senderAddress)
+        }.launchIn(scope)
     }
 
     private fun bindNft(item: HistoryItem.Event) {
-        if (!item.hasNft) {
+        if (!item.hasNft || item.isScam) {
             nftView.visibility = View.GONE
             return
         }
@@ -178,7 +207,7 @@ class HistoryActionHolder(
         val nft = item.nft!!
         nftView.visibility = View.VISIBLE
         nftView.setOnClickListener {
-            Navigation.from(context)?.add(NftScreen.newInstance(nft))
+            Navigation.from(context)?.add(NftScreen.newInstance(item.wallet, nft))
         }
         loadNftImage(nft.mediumUri, item.hiddenBalance)
         if (item.hiddenBalance) {
@@ -193,14 +222,12 @@ class HistoryActionHolder(
     }
 
     private fun loadNftImage(uri: Uri, blur: Boolean) {
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(320)
         if (blur) {
-            val request = ImageRequestBuilder.newBuilderWithSource(uri)
-                .setPostprocessor(BlurPostProcessor(25, context, 3))
-                .build()
-            nftIconView.setImageRequest(request)
-        } else {
-            nftIconView.setImageURI(uri, null)
+            builder.setPostprocessor(BlurPostProcessor(25, context, 3))
         }
+        nftIconView.setImageRequest(builder.build())
     }
 
     @ColorInt

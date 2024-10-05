@@ -1,16 +1,25 @@
 package com.tonapps.wallet.data.core.entity
 
 import android.os.Parcelable
+import android.util.Log
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.loadOpCode
 import com.tonapps.blockchain.ton.extensions.safeParseCell
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.toTlb
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 import org.ton.block.AddrStd
 import org.ton.block.Coins
+import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
+import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.loadTlb
+import org.ton.tlb.storeTlb
 
 @Parcelize
 data class RawMessageEntity(
@@ -20,26 +29,24 @@ data class RawMessageEntity(
     val payloadValue: String
 ): Parcelable {
 
-    val address: AddrStd
-        get() = AddrStd.parse(addressValue)
+    @IgnoredOnParcel
+    val address: AddrStd by lazy {
+        AddrStd.parse(addressValue)
+    }
 
-    val coins: Coins
-        get() = Coins.ofNano(amount)
+    @IgnoredOnParcel
+    val coins: Coins by lazy {
+        Coins.ofNano(amount)
+    }
 
-    val stateInit: StateInit?
-        get() = stateInitValue?.toTlb()
+    @IgnoredOnParcel
+    val stateInit: StateInit? by lazy {
+        stateInitValue?.toTlb()
+    }
 
-    val payload: Cell
-        get() = payloadValue.safeParseCell() ?: Cell()
-
-    val walletTransfer: WalletTransfer by lazy {
-        val builder = WalletTransferBuilder()
-        builder.stateInit = stateInit
-        builder.destination = address
-        builder.body = payload
-        // builder.bounceable = address.isBounceable()
-        builder.coins = coins
-        builder.build()
+    @IgnoredOnParcel
+    val payload: Cell by lazy {
+        payloadValue.safeParseCell() ?: Cell()
     }
 
     constructor(json: JSONObject) : this(

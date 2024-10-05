@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton.extensions
 
+import android.util.Log
 import io.ktor.util.encodeBase64
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
@@ -10,7 +11,6 @@ import org.ton.crypto.hex
 fun String.toBoc(): BagOfCells {
     return try {
         BagOfCells(hex(this))
-
     } catch (e: Throwable) {
         BagOfCells(base64())
     }
@@ -21,6 +21,9 @@ fun String.parseCell(): Cell {
 }
 
 fun String.safeParseCell(): Cell? {
+    if (this.isBlank()) {
+        return null
+    }
     return try {
         parseCell()
     } catch (e: Throwable) {

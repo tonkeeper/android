@@ -9,7 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:ignoreSystemOffset="true"
-        android:icon="@drawable/ic_chevron_down_16"/>
+        android:icon="@drawable/ic_chevron_down_16"
+        android:action="@drawable/ic_ellipsis_16"/>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/content"
@@ -36,6 +37,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.Label1"
                     android:text="@string/report_spam"/>
 
@@ -49,6 +51,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.Label1"
                     android:text="@string/not_spam"/>
             </uikit.widget.RowLayout>

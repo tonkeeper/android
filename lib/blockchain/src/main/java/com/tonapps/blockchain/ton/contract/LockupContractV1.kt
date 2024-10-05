@@ -15,9 +15,9 @@ class LockupContractV1(
     private val allowedDestinations: Boolean
 ): BaseWalletContract(publicKey = publicKey) {
 
-    override fun getSignaturePosition(): SignaturePosition {
-        return SignaturePosition.Front
-    }
+    override val features: WalletFeature = WalletFeature.NONE
+
+    override val maxMessages: Int = 4
 
     override fun getStateCell(): Cell {
         return CellBuilder.createCell {
@@ -28,20 +28,6 @@ class LockupContractV1(
         }
     }
 
-    /*
-
-
-    if (allowedDestinations) {
-      data = data.storeBit(1);
-      data = data.storeRef(Cell.fromBoc(Buffer.from(allowedDestinations, 'base64'))[0]);
-    } else {
-      data = data.storeBit(0);
-    }
-
-    data = data.storeCoins(0).storeBit(0).storeCoins(0).storeBit(0);
-
-    let cell = data.endCell();
-     */
     override fun getCode(): Cell {
         return CODE
     }
@@ -50,8 +36,8 @@ class LockupContractV1(
 
     override fun createTransferUnsignedBody(
         validUntil: Long,
-        seqno: Int,
-        messageType: MessageType,
+        seqNo: Int,
+        internalMessage: Boolean,
         queryId: BigInteger?,
         vararg gifts: WalletTransfer
     ): Cell {

@@ -31,7 +31,7 @@
     <color name="buttonSecondaryBackgroundHighlightedBlue">#222C3B</color>
     <color name="buttonSecondaryForegroundBlue">#FFFFFF</color>
 
-    <color name="buttonTertiaryBackgroundBlue">#2E3847</color>
+    <color name="buttonTertiaryBackgroundBlue">#2e3846</color>
     <color name="buttonTertiaryBackgroundDisabledBlue">#28303D</color>
     <color name="buttonTertiaryBackgroundHighlightedBlue">#364052</color>
     <color name="buttonTertiaryForegroundBlue">#FFFFFF</color>

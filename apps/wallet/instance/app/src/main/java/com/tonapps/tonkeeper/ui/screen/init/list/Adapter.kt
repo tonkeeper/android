@@ -6,7 +6,7 @@ import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
 
-class Adapter(private val onClick: (AccountItem) -> Unit): BaseListAdapter() {
+class Adapter(private val onClick: (AccountItem, Boolean) -> Boolean): BaseListAdapter() {
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return Holder(parent, onClick)

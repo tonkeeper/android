@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.widget.RemoteViews
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.App
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
@@ -34,13 +35,13 @@ class WidgetBalanceProvider: Widget() {
         val tokenRepository = koin.get<TokenRepository>()
         scope.launch(Dispatchers.IO) {
             val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: return@launch displayPlaceholder(context, manager, id)
-            val tokens = tokenRepository.get(settingsRepository.currency, wallet.address, wallet.testnet)
+            val tokens = tokenRepository.get(settingsRepository.currency, wallet.address, wallet.testnet) ?: return@launch displayPlaceholder(context, manager, id)
             val token = tokens.firstOrNull { it.isTon } ?: return@launch displayPlaceholder(context, manager, id)
             val balanceFormat = CurrencyFormatter.format("TON", token.balance.value)
             val fiatBalance = CurrencyFormatter.formatFiat(settingsRepository.currency.code, token.fiat)
             val entity = WidgetBalanceEntity(
-                tonBalance = balanceFormat,
-                currencyBalance = fiatBalance,
+                tonBalance = balanceFormat.withCustomSymbol(context),
+                currencyBalance = fiatBalance.withCustomSymbol(context),
                 walletAddress = wallet.address,
                 label = wallet.label.title
             )

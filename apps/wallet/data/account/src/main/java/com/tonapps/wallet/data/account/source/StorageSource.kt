@@ -1,8 +1,11 @@
 package com.tonapps.wallet.data.account.source
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.edit
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.prefs
+import org.ton.api.pub.PublicKeyEd25519
 
 internal class StorageSource(context: Context) {
 
@@ -14,16 +17,17 @@ internal class StorageSource(context: Context) {
 
     private val prefs = context.prefs(NAME)
 
-    fun getTonProofToken(id: String): String? {
-        val value = prefs.getString(tonProofToken(id), null)
+    fun getTonProofToken(publicKey: PublicKeyEd25519): String? {
+        val key = tonProofToken(publicKey)
+        val value = prefs.getString(key, null)
         if (value.isNullOrBlank()) {
             return null
         }
         return value
     }
 
-    fun setTonProofToken(id: String, token: String) {
-        val key = tonProofToken(id)
+    fun setTonProofToken(publicKey: PublicKeyEd25519, token: String) {
+        val key = tonProofToken(publicKey)
         if (!prefs.contains(key)) {
             prefs.edit {
                 putString(key, token)
@@ -49,8 +53,8 @@ internal class StorageSource(context: Context) {
         }
     }
 
-    private fun tonProofToken(id: String): String {
-        return key(TON_PROOF_TOKEN_PREFIX, id)
+    private fun tonProofToken(publicKey: PublicKeyEd25519): String {
+        return key(TON_PROOF_TOKEN_PREFIX, publicKey.hex())
     }
 
     private fun key(prefix: String, id: String): String {

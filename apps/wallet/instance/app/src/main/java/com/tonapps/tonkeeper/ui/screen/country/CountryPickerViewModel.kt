@@ -1,13 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.country
 
 import android.app.Application
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.locale
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.extensions.countryName
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.country.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -20,14 +17,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import uikit.extensions.context
 import java.util.Locale
 
 class CountryPickerViewModel(
     app: Application,
     private val settingsRepository: SettingsRepository,
     private val api: API,
-): AndroidViewModel(app) {
+): BaseWalletVM(app) {
 
     private data class Country(
         val code: String,
@@ -138,8 +134,14 @@ class CountryPickerViewModel(
         api.resolveCountry()?.let {
             list.add(it)
         }
-        list.add(settingsRepository.country)
-        list.add(context.locale.country)
+        val country = settingsRepository.country
+        if (country.isNotBlank()) {
+            list.add(country)
+        }
+        val langCountry = settingsRepository.getLocale().country
+        if (langCountry.isNotBlank()) {
+            list.add(langCountry)
+        }
         return list.distinct()
     }
 }

@@ -20,7 +20,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val position: ListCell.Position,
         val raw: AccountTokenEntity,
         val selected: Boolean,
-        val balance: CharSequence
+        val balance: CharSequence,
+        val hiddenBalance: Boolean
     ): Item(TYPE_TOKEN) {
 
         val iconUri: Uri

@@ -4,19 +4,25 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.label.LabelEditorView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.widget.HeaderView
 
-class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.BottomSheet {
+class EditNameScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_name_edit, wallet), BaseFragment.BottomSheet {
 
-    private val editNameViewModel: EditNameViewModel by viewModel()
+    override val viewModel: EditNameViewModel by walletViewModel()
 
     private lateinit var editorView: LabelEditorView
 
@@ -27,11 +33,13 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
 
         editorView = view.findViewById(R.id.editor)
         editorView.doOnDone = ::saveLabel
+        editorView.name = screenContext.wallet.label.name
+        editorView.emoji = screenContext.wallet.label.emoji
+        editorView.color = screenContext.wallet.label.color
 
         view.doKeyboardAnimation { offset, progress, _ ->
             editorView.setBottomOffset(offset, progress)
         }
-        collectFlow(editNameViewModel.uiLabelFlow, ::setLabel)
     }
 
     override fun onResume() {
@@ -40,20 +48,12 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
     }
 
     override fun onPause() {
-        editNameViewModel.save(editorView.name, editorView.emoji, editorView.color)
+        viewModel.save(editorView.name, editorView.emoji, editorView.color)
         super.onPause()
     }
 
-    private fun setLabel(label: Wallet.Label) {
-        with(editorView) {
-            name = label.name
-            emoji = label.emoji
-            color = label.color
-        }
-    }
-
     private fun saveLabel(name: String, emoji: String, color: Int) {
-        editNameViewModel.save(name, emoji, color)
+        viewModel.save(name, emoji, color)
         finish()
     }
 
@@ -63,6 +63,7 @@ class EditNameScreen: BaseFragment(R.layout.fragment_name_edit), BaseFragment.Bo
     }
 
     companion object {
-        fun newInstance() = EditNameScreen()
+
+        fun newInstance(wallet: WalletEntity) = EditNameScreen(wallet)
     }
 }

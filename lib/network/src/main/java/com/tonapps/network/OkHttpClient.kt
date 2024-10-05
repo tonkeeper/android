@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.retry
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
@@ -55,18 +56,41 @@ fun OkHttpClient.post(
     headers?.forEach { (key, value) ->
         builder.addHeader(key, value)
     }
-    return newCall(builder.build()).execute()
+    return execute(builder.build())
 }
 
 fun OkHttpClient.get(
     url: String,
     headers: ArrayMap<String, String>? = null
 ): String {
+    return simple(url, headers).body?.string() ?: throw Exception("Empty response")
+}
+
+fun OkHttpClient.simple(
+    url: String,
+    headers: ArrayMap<String, String>? = null
+): Response {
     val builder = requestBuilder(url)
     headers?.forEach { (key, value) ->
         builder.addHeader(key, value)
     }
-    return newCall(builder.build()).execute().body?.string() ?: throw Exception("Empty response")
+    return execute(builder.build())
+}
+
+private fun OkHttpClient.execute(request: Request): Response {
+    val response = newCall(request).execute()
+    if (!response.isSuccessful) {
+        throw OkHttpError(response)
+    }
+    return response
+}
+
+class OkHttpError(
+    private val response: Response
+) : Exception("HTTP error: ${response.code}") {
+
+    val statusCode: Int
+        get() = response.code
 }
 
 fun OkHttpClient.getBitmap(url: String): Bitmap {
@@ -79,37 +103,39 @@ fun OkHttpClient.getBitmap(url: String): Bitmap {
 
 fun OkHttpClient.sseFactory() = EventSources.createFactory(this)
 
-fun OkHttpClient.sse(url: String): Flow<SSEvent> = callbackFlow {
-    Log.d("TonConnectBridge", "SSE: $url")
+fun OkHttpClient.sse(
+    url: String,
+    lastEventId: Long? = null
+): Flow<SSEvent> = callbackFlow {
     val listener = object : EventSourceListener() {
         override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
-            Log.d("TonConnectBridge", "SSE event: $id, $type, $data")
             this@callbackFlow.trySendBlocking(SSEvent(id, type, data))
         }
 
         override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-            Log.e("TonConnectBridge", "SSE failure($response)", t)
             this@callbackFlow.close(t)
         }
 
         override fun onClosed(eventSource: EventSource) {
-            Log.d("TonConnectBridge", "SSE closed")
             this@callbackFlow.close()
         }
 
         override fun onOpen(eventSource: EventSource, response: Response) {
             super.onOpen(eventSource, response)
-            Log.d("TonConnectBridge", "SSE opened: $response")
         }
     }
-    val request = requestBuilder(url)
+    val builder = requestBuilder(url)
         .addHeader("Accept", "text/event-stream")
         .addHeader("Cache-Control", "no-cache")
         .addHeader("Connection", "keep-alive")
-        .build()
+
+    if (lastEventId != null) {
+        builder.addHeader("Last-Event-ID", lastEventId.toString())
+    }
+    val request = builder.build()
     val events = sseFactory().newEventSource(request, listener)
     awaitClose { events.cancel() }
-}.retry { _ ->
+}.cancellable().retry { _ ->
     delay(1000)
     true
-}
+}.cancellable()

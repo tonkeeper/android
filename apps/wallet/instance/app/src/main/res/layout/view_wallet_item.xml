@@ -2,6 +2,7 @@
 <uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="78dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/offsetMedium">
     
     <FrameLayout
@@ -24,33 +25,31 @@
         android:layout_marginHorizontal="@dimen/offsetMedium"
         android:layout_weight="1">
 
-        <uikit.widget.RowLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+        <com.google.android.flexbox.FlexboxLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:alignItems="center"
+            app:alignContent="center"
+            app:flexDirection="row"
+            app:flexWrap="nowrap">
+
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/wallet_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.Label1"
-                android:textColor="?attr/textPrimaryColor"/>
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textColor="?attr/textPrimaryColor"
+                app:layout_flexShrink="10000"/>
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/wallet_type"
+                android:id="@+id/wallet_types"
                 android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:layout_weight="1"
-                android:layout_gravity="center"
-                android:layout_marginHorizontal="@dimen/offsetExtraSmall"
-                android:paddingHorizontal="@dimen/offsetExtraSmall"
-                android:gravity="center"
-                android:visibility="gone"
-                android:background="@drawable/bg_wallet_type"
-                android:singleLine="true"
-                android:textAppearance="@style/TextAppearance.Body4CAPS"
-                android:textColor="?attr/textSecondaryColor"/>
+                android:layout_height="wrap_content"
+                android:maxLines="1"/>
 
-        </uikit.widget.RowLayout>
+        </com.google.android.flexbox.FlexboxLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/wallet_balance"
@@ -65,10 +64,11 @@
     
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/check"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_gravity="center"
-        android:tint="?attr/iconTertiaryColor"/>
+        android:scaleType="centerInside"
+        android:tint="?attr/colorAccent"/>
 
     <uikit.widget.RowLayout
         android:id="@+id/edit"

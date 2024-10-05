@@ -63,6 +63,12 @@ class QRDrawable(
         currentBitmapDrawable?.draw(canvas)
     }
 
+    fun setData(size: Int, chunks: List<String>) {
+        clear()
+        data = Data(size, chunks, animation)
+        drawData()
+    }
+
     fun setData(size: Int, content: String) {
         clear()
         data = Data(size, content, animation)
@@ -154,16 +160,22 @@ class QRDrawable(
 
     private data class Data(
         val size: Int,
-        val content: String,
+        val chunks: List<String>,
         val animation: Boolean
     ) {
 
-        val chunks: List<String> by lazy {
-            if (animation) {
+        constructor(
+            size: Int,
+            content: String,
+            animation: Boolean
+        ) : this(
+            size = size,
+            chunks = if (animation) {
                 content.chunked(CHUNK_SIZE)
             } else {
                 listOf(content)
-            }
-        }
+            },
+            animation = animation
+        )
     }
 }

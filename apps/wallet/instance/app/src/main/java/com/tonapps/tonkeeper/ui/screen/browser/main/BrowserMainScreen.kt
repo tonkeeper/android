@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.browser.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -10,11 +11,15 @@ import androidx.core.view.updateLayoutParams
 import com.aptabase.Aptabase
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.flagEmoji
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchScreen
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
@@ -23,12 +28,18 @@ import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.navigation.Navigation.Companion.navigation
 
-class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
+class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_main, wallet) {
 
-    private val mainViewModel: BrowserMainViewModel by viewModel()
+    override val viewModel: BrowserMainViewModel by viewModel()
 
-    private val exploreScreen = BrowserExploreScreen.newInstance()
-    private val connectedScreen = BrowserConnectedScreen.newInstance()
+    private val exploreScreen: BrowserExploreScreen by lazy {
+        BrowserExploreScreen.newInstance(screenContext.wallet)
+    }
+
+    private val connectedScreen: BrowserConnectedScreen by lazy {
+        BrowserConnectedScreen.newInstance(screenContext.wallet)
+    }
+
     private var currentScreen: BaseFragment? = null
 
     private lateinit var headerDrawable: HeaderDrawable
@@ -84,15 +95,15 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
 
         searchView = view.findViewById(R.id.search)
         searchView.setOnClickListener {
-            navigation?.add(BrowserSearchScreen.newInstance())
+            navigation?.add(BrowserSearchScreen.newInstance(screenContext.wallet))
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(view, ::onApplyWindowInsets)
         setTab(tabs.first())
 
-        collectFlow(mainViewModel.childTopScrolled, headerDrawable::setDivider)
-        collectFlow(mainViewModel.childBottomScrolled, footerDrawable::setDivider)
-        collectFlow(mainViewModel.countryFlow) { country ->
+        collectFlow(viewModel.childTopScrolled, headerDrawable::setDivider)
+        collectFlow(viewModel.childBottomScrolled, footerDrawable::setDivider)
+        collectFlow(viewModel.countryFlow) { country ->
             countryView.text = country.flagEmoji
         }
     }
@@ -145,7 +156,7 @@ class BrowserMainScreen : BaseFragment(R.layout.fragment_browser_main) {
 
         private val CONTAINER_ID = R.id.browser_fragment_container
 
-        fun newInstance() = BrowserMainScreen()
+        fun newInstance(wallet: WalletEntity) = BrowserMainScreen(wallet)
     }
 
 }

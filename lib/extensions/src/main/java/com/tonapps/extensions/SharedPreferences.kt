@@ -1,7 +1,10 @@
 package com.tonapps.extensions
 
 import android.content.SharedPreferences
+import android.os.Parcelable
+import android.util.Log
 import androidx.core.content.edit
+import androidx.core.os.BundleCompat
 
 fun SharedPreferences.getByteArray(key: String): ByteArray? {
     val bytes = getString(key, null)?.base64 ?: return null
@@ -18,6 +21,35 @@ fun SharedPreferences.putByteArray(key: String, value: ByteArray?) {
         edit {
             putString(key, value.base64)
         }
+    }
+}
+
+fun SharedPreferences.getIntArray(key: String): IntArray? {
+    if (!contains(key)) {
+        return null
+    }
+    val value = getString(key, null) ?: return null
+    return value.split(",").mapNotNull { it.toIntOrNull() }.toIntArray()
+}
+
+inline fun <reified R: Parcelable> SharedPreferences.getParcelable(key: String): R? {
+    val bytes = getByteArray(key) ?: return null
+    return bytes.toParcel<R>()
+}
+
+fun SharedPreferences.putParcelable(key: String, value: Parcelable?) {
+    if (value == null) {
+        remove(key)
+    } else {
+        edit {
+            putByteArray(key, value.toByteArray())
+        }
+    }
+}
+
+fun SharedPreferences.putIntArray(key: String, value: IntArray) {
+    edit {
+        putString(key, value.joinToString(","))
     }
 }
 

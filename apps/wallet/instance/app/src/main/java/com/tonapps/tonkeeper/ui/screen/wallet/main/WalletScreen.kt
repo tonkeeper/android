@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.component.MainRecyclerView
 import com.tonapps.tonkeeper.ui.component.wallet.WalletHeaderView
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
@@ -10,16 +11,15 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.flow.filterNotNull
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 
-class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
+class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wallet, wallet) {
 
-    private val walletViewModel: WalletViewModel by viewModel()
+    override val viewModel: WalletViewModel by walletViewModel()
 
     private val adapter: WalletAdapter by inject()
 
@@ -28,27 +28,27 @@ class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(walletViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance()) }
-        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance()) }
+        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(wallet)) }
         headerView.doWalletSwipe = { right ->
             if (right) {
-                walletViewModel.prevWallet()
+                viewModel.prevWallet()
             } else {
-                walletViewModel.nextWallet()
+                viewModel.nextWallet()
             }
         }
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
 
-        collectFlow(walletViewModel.uiLabelFlow.filterNotNull(), headerView::setWallet)
-        collectFlow(walletViewModel.hasBackupFlow, headerView::setDot)
+        collectFlow(viewModel.uiLabelFlow.filterNotNull(), headerView::setWallet)
+        collectFlow(viewModel.hasBackupFlow, headerView::setDot)
     }
 
     override fun getRecyclerView(): RecyclerView? {
@@ -66,6 +66,6 @@ class WalletScreen: MainScreen.Child(R.layout.fragment_wallet) {
     }
 
     companion object {
-        fun newInstance() = WalletScreen()
+        fun newInstance(wallet: WalletEntity) = WalletScreen(wallet)
     }
 }

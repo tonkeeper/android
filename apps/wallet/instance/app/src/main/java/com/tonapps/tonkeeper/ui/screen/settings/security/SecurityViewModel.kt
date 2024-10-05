@@ -1,22 +1,21 @@
 package com.tonapps.tonkeeper.ui.screen.settings.security
 
+import android.app.Application
 import android.content.Context
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
 
 class SecurityViewModel(
+    app: Application,
     private val settingsRepository: SettingsRepository,
     private val rnLegacy: RNLegacy,
     private val passcodeManager: PasscodeManager,
-): ViewModel() {
+): BaseWalletVM(app) {
 
     var lockScreen: Boolean
         get() = settingsRepository.lockScreen

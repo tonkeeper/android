@@ -39,7 +39,7 @@ class BannersHolder(parent: ViewGroup): Holder<Item.Banners>(parent, R.layout.vi
     }
 
     override fun onBind(item: Item.Banners) {
-        val items = BannerAppItem.createApps(item.apps)
+        val items = BannerAppItem.createApps(item.wallet, item.apps)
         interval = item.interval.toLong()
         adapter.submitList(items) {
             if (currentPosition == 0) {

@@ -1,10 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.settings.language
 
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
-import androidx.lifecycle.ViewModel
+import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.extensions.capitalized
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.language.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -17,8 +16,9 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 class LanguageViewModel(
+    app: Application,
     private val settingsRepository: SettingsRepository
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }

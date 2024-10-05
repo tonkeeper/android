@@ -4,23 +4,34 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.getByteArray
-import kotlinx.coroutines.flow.asSharedFlow
+import com.tonapps.extensions.getIntArray
+import com.tonapps.extensions.putIntArray
+import com.tonapps.extensions.state
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.shareIn
 
 internal abstract class BaseSettingsFolder(
-    private val context: Context,
-    private val name: String
+    context: Context,
+    scope: CoroutineScope,
+    name: String
 ) {
 
     private val prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE)
 
     private val _changedFlow = MutableEffectFlow<Unit>()
-    val changedFlow = _changedFlow.asSharedFlow()
+    val changedFlow = _changedFlow.shareIn(scope, SharingStarted.Lazily, 1)
 
     init {
         notifyChanged()
     }
 
-    fun notifyChanged() {
+    fun clear() {
+        prefs.edit().clear().apply()
+        notifyChanged()
+    }
+
+    private fun notifyChanged() {
         _changedFlow.tryEmit(Unit)
     }
 
@@ -31,6 +42,15 @@ internal abstract class BaseSettingsFolder(
     fun getInt(key: String, defValue: Int = 0) = prefs.getInt(key, defValue)
 
     fun getLong(key: String, defValue: Long = 0) = prefs.getLong(key, defValue)
+
+    fun getIntArray(key: String, def: IntArray? = null) = prefs.getIntArray(key) ?: def
+
+    fun putIntArray(key: String, value: IntArray, notify: Boolean = true) {
+        prefs.putIntArray(key, value)
+        if (notify) {
+            notifyChanged()
+        }
+    }
 
     fun putLong(key: String, value: Long, notify: Boolean = true) {
         prefs.edit().putLong(key, value).apply()

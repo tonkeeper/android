@@ -2,10 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.settings.legal
 
 import android.os.Bundle
 import android.view.View
-import com.tonapps.tonkeeper.ui.screen.web.WebScreen
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
 class LegalScreen: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBack {
@@ -21,12 +20,12 @@ class LegalScreen: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBack
 
         termsView = view.findViewById(R.id.terms)
         termsView.setOnClickListener {
-            navigation?.add(WebScreen.newInstance("https://tonkeeper.com/terms/"))
+            BrowserHelper.open(requireActivity(), "https://tonkeeper.com/terms/")
         }
 
         privacyView = view.findViewById(R.id.privacy)
         privacyView.setOnClickListener {
-            navigation?.add(WebScreen.newInstance("https://tonkeeper.com/privacy/"))
+            BrowserHelper.open(requireActivity(), "https://tonkeeper.com/privacy/")
         }
     }
 

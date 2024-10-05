@@ -18,11 +18,11 @@ class ActionsHolder(
 
     override fun onBind(item: Item.Actions) {
         plusView.setOnClickListener {
-            navigation?.add(StakingScreen.newInstance(item.poolAddress))
+            navigation?.add(StakingScreen.newInstance(item.wallet, item.poolAddress))
         }
 
         minusView.setOnClickListener {
-            navigation?.add(UnStakeScreen.newInstance(item.poolAddress))
+            navigation?.add(UnStakeScreen.newInstance(item.wallet, item.poolAddress))
         }
     }
 

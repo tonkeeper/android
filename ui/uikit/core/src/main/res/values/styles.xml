@@ -39,12 +39,19 @@
         <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
     </style>
 
-    <style name="Widget.App.Button.Small.Secondary" parent="Base.Widget.App.Button">
-        <item name="android:background">@drawable/bg_small_button_secondary</item>
-        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+    <style name="Widget.App.Button.Small" parent="Base.Widget.App.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">@dimen/tertiaryHeight</item>
+        <item name="android:background">@drawable/bg_small_button_primary</item>
+        <item name="android:textColor">@color/button_primary_foreground_selector</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textAppearance">@style/TextAppearance.Label2</item>
         <item name="minHeight">0dp</item>
+    </style>
+
+    <style name="Widget.App.Button.Small.Secondary" parent="Widget.App.Button.Small">
+        <item name="android:background">@drawable/bg_small_button_secondary</item>
+        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
     </style>
 
     <style name="Widget.App.Button.Tertiary" parent="android:Widget.Material.TextView">

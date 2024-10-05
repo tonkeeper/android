@@ -10,6 +10,10 @@ import com.tonapps.uikit.list.BaseListItem
 class Adapter: BaseListAdapter() {
 
     init {
+        applySkeleton()
+    }
+
+    fun applySkeleton() {
         submitList(listOf(Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton(), Item.Skeleton()))
     }
 

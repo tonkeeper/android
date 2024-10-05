@@ -51,11 +51,16 @@ data class WalletCurrency(
         val DEFAULT = WalletCurrency(FIAT.first())
         val TON = WalletCurrency("TON")
 
+        val USD = WalletCurrency("USD", true)
+
         val ALL = FIAT + CRYPTO
 
         fun of(code: String?): WalletCurrency {
             if (code.isNullOrBlank()) {
                 return DEFAULT
+            }
+            if (code in CRYPTO) {
+                return WalletCurrency(code)
             }
             if (code in FIAT) {
                 return WalletCurrency(code)

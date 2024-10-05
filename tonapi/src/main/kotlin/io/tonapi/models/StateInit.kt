@@ -23,13 +23,17 @@ import com.squareup.moshi.JsonClass
  * 
  *
  * @param boc 
+ * @param interfaces 
  */
 
 
 data class StateInit (
 
     @Json(name = "boc")
-    val boc: kotlin.String
+    val boc: kotlin.String,
+
+    @Json(name = "interfaces")
+    val interfaces: kotlin.collections.List<kotlin.String>? = null
 
 )
 

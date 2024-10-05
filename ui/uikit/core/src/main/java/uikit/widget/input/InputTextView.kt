@@ -8,6 +8,7 @@ import android.view.inputmethod.EditorInfo
 import androidx.appcompat.R
 import androidx.appcompat.widget.AppCompatEditText
 import com.tonapps.uikit.color.accentBlueColor
+import uikit.extensions.focusWithKeyboard
 import uikit.extensions.setCursorColor
 
 open class InputTextView @JvmOverloads constructor(
@@ -33,6 +34,10 @@ open class InputTextView @JvmOverloads constructor(
                 false
             }
         }
+    }
+
+    fun focus() {
+        focusWithKeyboard()
     }
 
     fun setFormattingInputFilter(filter: InputFilter) {

@@ -2,69 +2,55 @@
 <uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="@dimen/offsetMedium">
+    android:background="@drawable/bg_content"
+    android:paddingHorizontal="@dimen/offsetMedium"
+    android:paddingVertical="8dp">
 
-    <uikit.widget.ColumnLayout
+    <uikit.widget.RowLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_content"
-        android:paddingHorizontal="@dimen/offsetMedium"
-        android:paddingVertical="8dp">
+        android:layout_height="@dimen/tertiaryHeight">
 
-        <uikit.widget.RowLayout
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/apy_title"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/tertiaryHeight">
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:text="@string/staking_apy"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_gravity="center"
-                android:text="@string/staking_apy"
-                android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="?attr/textSecondaryColor"/>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/apy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/apy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="?attr/textPrimaryColor"/>
+    </uikit.widget.RowLayout>
 
-        </uikit.widget.RowLayout>
-
-        <uikit.widget.RowLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/tertiaryHeight">
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_gravity="center"
-                android:text="@string/staking_minimal_deposit"
-                android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="?attr/textSecondaryColor"/>
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/min_deposit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="?attr/textPrimaryColor"/>
-
-        </uikit.widget.RowLayout>
-
-    </uikit.widget.ColumnLayout>
-
-    <androidx.appcompat.widget.AppCompatTextView
+    <uikit.widget.RowLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/offsetMedium"
-        android:text="@string/staking_details_description"
-        android:textAppearance="@style/TextAppearance.Body3"
-        android:textColor="?attr/textTertiaryColor"/>
+        android:layout_height="@dimen/tertiaryHeight">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:text="@string/staking_minimal_deposit"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/min_deposit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
+
+    </uikit.widget.RowLayout>
 
 </uikit.widget.ColumnLayout>

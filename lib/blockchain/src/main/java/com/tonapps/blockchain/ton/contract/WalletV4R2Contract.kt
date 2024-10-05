@@ -17,11 +17,9 @@ class WalletV4R2Contract(
     publicKey: PublicKeyEd25519,
 ) : WalletV4R1Contract(workchain, publicKey) {
 
-    override fun getWalletVersion() = WalletVersion.V4R2
+    override val features: WalletFeature = WalletFeature.NONE
 
-    override fun getSignaturePosition(): SignaturePosition {
-        return SignaturePosition.Front
-    }
+    override fun getWalletVersion() = WalletVersion.V4R2
 
     override fun getCode(): Cell {
         return CODE

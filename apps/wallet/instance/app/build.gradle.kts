@@ -1,11 +1,9 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
     id("kotlin-parcelize")
     id("kotlinx-serialization")
     id("kotlin-kapt")
-    id("androidx.baselineprofile")
 }
 
 android {
@@ -13,7 +11,7 @@ android {
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
-        minSdk = 27 // Build.minSdkVersion
+        minSdk = Build.minSdkVersion
     }
 
     buildFeatures {
@@ -24,16 +22,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
 }
 
 dependencies {
-    "baselineProfile"(project(":baselineprofile:x"))
-
     implementation(Dependence.Koin.core)
+    implementation(Dependence.Koin.workmanager)
     implementation(Dependence.KotlinX.datetime)
+    implementation(Dependence.j2objc)
+    implementation(Dependence.cbor)
 
     implementation(project(Dependence.Wallet.localization))
     implementation(project(Dependence.Wallet.api))
@@ -45,14 +45,14 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.rates))
     implementation(project(Dependence.Wallet.Data.collectibles))
     implementation(project(Dependence.Wallet.Data.events))
-    implementation(project(Dependence.Wallet.Data.tonconnect))
-    implementation(project(Dependence.Wallet.Data.push))
     implementation(project(Dependence.Wallet.Data.browser))
     implementation(project(Dependence.Wallet.Data.backup))
     implementation(project(Dependence.Wallet.Data.rn))
     implementation(project(Dependence.Wallet.Data.passcode))
     implementation(project(Dependence.Wallet.Data.staking))
     implementation(project(Dependence.Wallet.Data.purchase))
+    implementation(project(Dependence.Wallet.Data.battery))
+    implementation(project(Dependence.Wallet.Data.dapps))
 
     implementation(project(Dependence.UIKit.core))
 
@@ -67,6 +67,8 @@ dependencies {
     implementation(Dependence.AndroidX.biometric)
     implementation(Dependence.AndroidX.swiperefreshlayout)
     implementation(Dependence.AndroidX.lifecycle)
+    implementation(Dependence.AndroidX.webkit)
+    implementation(Dependence.AndroidX.browser)
 
     implementation(Dependence.guava)
 
@@ -80,6 +82,7 @@ dependencies {
     implementation(Dependence.Firebase.analytics)
     implementation(Dependence.Firebase.crashlytics)
     implementation(Dependence.Firebase.messaging)
+    implementation(Dependence.Firebase.performance)
 
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Module.blur))
@@ -92,6 +95,7 @@ dependencies {
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.ledger))
+    implementation(project(Dependence.Lib.ur))
 
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)
@@ -99,6 +103,7 @@ dependencies {
     implementation(Dependence.AndroidX.Camera.view)
 
     implementation(Dependence.GooglePlay.review)
+    implementation(Dependence.GooglePlay.billing)
 
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)

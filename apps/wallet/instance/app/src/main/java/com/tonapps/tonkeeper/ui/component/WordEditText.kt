@@ -10,6 +10,7 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
+import androidx.appcompat.R
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.findViewTreeLifecycleOwner
@@ -28,7 +29,7 @@ import uikit.extensions.setStartDrawable
 class WordEditText @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyle: Int = 0,
+    defStyle: Int = R.attr.editTextStyle,
 ) : AppCompatEditText(context, attrs, defStyle) {
 
     var doOnTextChanged: ((Editable) -> Unit)? = null

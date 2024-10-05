@@ -6,10 +6,16 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.applyNavBottomPadding
@@ -20,10 +26,13 @@ import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 
-class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragment.BottomSheet {
+class TokenPickerScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_token_picker, wallet), BaseFragment.BottomSheet {
 
-    private val requestKey: String by lazy { requireArguments().getString(ARG_REQUEST_KEY)!! }
-    private val tokenPickerViewModel: TokenPickerViewModel by viewModel()
+    private val args: TokenPickerArgs by lazy { TokenPickerArgs(requireArguments()) }
+
+    override val viewModel: TokenPickerViewModel by walletViewModel {
+        parametersOf(args.selectedToken, args.allowedTokens)
+    }
 
     private val adapter = Adapter { item ->
         val token = item.raw.balance.token
@@ -37,9 +46,7 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        tokenPickerViewModel.setSelectedToken(requireArguments().getParcelableCompat<TokenEntity>(ARG_SELECTED_TOKEN)!!)
-        collectFlow(tokenPickerViewModel.uiItems, adapter::submitList)
+        collectFlow(viewModel.uiItems, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -51,7 +58,7 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
         searchContainer.background = headerDrawable
 
         searchInput = view.findViewById(R.id.search_input)
-        searchInput.doOnTextChanged { text, _, _, _ -> tokenPickerViewModel.search(text.toString().trim()) }
+        searchInput.doOnTextChanged { text, _, _, _ -> viewModel.search(text.toString().trim()) }
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
@@ -61,8 +68,7 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
     }
 
     private fun returnToken(token: TokenEntity) {
-        tokenPickerViewModel.setSelectedToken(token)
-        navigation?.setFragmentResult(requestKey, Bundle().apply {
+        navigation?.setFragmentResult(args.requestKey, Bundle().apply {
             putParcelable(TOKEN, token)
         })
         finish()
@@ -76,18 +82,14 @@ class TokenPickerScreen: BaseFragment(R.layout.fragment_token_picker), BaseFragm
     companion object {
         const val TOKEN = "token"
 
-        private const val ARG_SELECTED_TOKEN = "selected_token"
-        private const val ARG_REQUEST_KEY = "request_key"
-
         fun newInstance(
+            wallet: WalletEntity,
             requestKey: String,
-            selectedToken: TokenEntity
+            selectedToken: TokenEntity,
+            allowedTokens: List<String> = emptyList()
         ): TokenPickerScreen {
-            val screen = TokenPickerScreen()
-            screen.arguments = Bundle().apply {
-                putString(ARG_REQUEST_KEY, requestKey)
-                putParcelable(ARG_SELECTED_TOKEN, selectedToken)
-            }
+            val screen = TokenPickerScreen(wallet)
+            screen.setArgs(TokenPickerArgs(requestKey, selectedToken, allowedTokens))
             return screen
         }
     }

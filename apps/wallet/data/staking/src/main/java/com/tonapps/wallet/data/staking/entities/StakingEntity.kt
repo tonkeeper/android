@@ -47,4 +47,14 @@ data class StakingEntity(
         val info = info.find { it.pool == pool.address } ?: return Coins.ZERO
         return info.readyWithdraw
     }
+
+    fun getPendingDeposit(pool: PoolEntity): Coins {
+        val info = info.find { it.pool == pool.address } ?: return Coins.ZERO
+        return info.pendingDeposit
+    }
+
+    fun getPendingWithdraw(pool: PoolEntity): Coins {
+        val info = info.find { it.pool == pool.address } ?: return Coins.ZERO
+        return info.pendingWithdraw
+    }
 }

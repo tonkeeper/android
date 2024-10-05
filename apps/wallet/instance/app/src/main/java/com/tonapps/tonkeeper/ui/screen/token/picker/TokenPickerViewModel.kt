@@ -1,13 +1,17 @@
 package com.tonapps.tonkeeper.ui.screen.token.picker
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import kotlinx.coroutines.Dispatchers
@@ -17,32 +21,49 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import uikit.extensions.context
 
 class TokenPickerViewModel(
-    private val accountRepository: AccountRepository,
+    app: Application,
+    wallet: WalletEntity,
+    selectedToken: TokenEntity,
+    allowedTokens: List<String>,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
-): ViewModel() {
+): BaseWalletVM(app) {
 
-    private val _selectedTokenFlow = MutableStateFlow<TokenEntity?>(null)
+    private val _selectedTokenFlow = MutableStateFlow(selectedToken)
     private val selectedTokenFlow = _selectedTokenFlow.asStateFlow().filterNotNull()
 
     private val _queryFlow = MutableStateFlow("")
     private val queryFlow = _queryFlow.asSharedFlow()
 
-    private val tokensFlow = combine(accountRepository.selectedWalletFlow, settingsRepository.currencyFlow) { wallet, currency ->
-        tokenRepository.getLocal(currency, wallet.accountId, wallet.testnet)
+    private val tokensFlow = settingsRepository.currencyFlow.map { currency ->
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet)?.filter {
+            it.balance.isTransferable
+        } ?: emptyList()
+
+        if (allowedTokens.isNotEmpty()) {
+            tokens.filter { allowedTokens.contains(it.address) }
+        } else {
+            tokens
+        }
     }
 
     private val searchTokensFlow = combine(tokensFlow, queryFlow) { tokens, query ->
         tokens.filter { it.symbol.contains(query, ignoreCase = true) }
     }
 
-    val uiItems = combine(accountRepository.selectedWalletFlow, selectedTokenFlow, searchTokensFlow) { wallet, selectedToken, tokens ->
+    val uiItems = combine(
+        selectedTokenFlow,
+        searchTokensFlow
+    ) { selectedToken, tokens ->
         val sortedTokens = tokens.map {
             AssetsExtendedEntity(
                 raw = AssetsEntity.Token(it),
-                prefs = settingsRepository.getTokenPrefs(wallet.id, it.address, it.blacklist)
+                prefs = settingsRepository.getTokenPrefs(wallet.id, it.address, it.blacklist),
+                accountId = wallet.accountId,
             )
         }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator)
 
@@ -52,14 +73,11 @@ class TokenPickerViewModel(
                 position = ListCell.getPosition(sortedTokens.size, index),
                 raw = token,
                 selected = token.address == selectedToken.address,
-                balance = CurrencyFormatter.format(token.symbol, token.balance.value)
+                balance = CurrencyFormatter.format(token.symbol, token.balance.value),
+                hiddenBalance = settingsRepository.hiddenBalances
             )
         }
     }.flowOn(Dispatchers.IO)
-
-    fun setSelectedToken(token: TokenEntity) {
-        _selectedTokenFlow.value = token
-    }
 
     fun search(query: String) {
         _queryFlow.tryEmit(query)

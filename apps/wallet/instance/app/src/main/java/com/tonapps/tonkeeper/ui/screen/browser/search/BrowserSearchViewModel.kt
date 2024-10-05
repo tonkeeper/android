@@ -1,40 +1,31 @@
 package com.tonapps.tonkeeper.ui.screen.browser.search
 
+import android.app.Application
 import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.network.get
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.tonconnect.TonConnectRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-import uikit.extensions.collectFlow
 
 class BrowserSearchViewModel(
+    app: Application,
     private val settingsRepository: SettingsRepository,
-    private val tonConnectRepository: TonConnectRepository,
     private val browserRepository: BrowserRepository,
     private val api: API
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _queryFlow = MutableEffectFlow<String>()
 
@@ -55,7 +46,7 @@ class BrowserSearchViewModel(
         }
 
         val uri = uri(query)
-        val apps = browserRepository.search(settingsRepository.country, query, false)
+        val apps = browserRepository.search(settingsRepository.country, query, false, settingsRepository.getLocale())
         val appsCount = if (uri == null) {
             apps.size
         } else {

@@ -1,113 +1,155 @@
 package com.tonapps.tonkeeper.helper
 
 import android.content.Context
-import android.icu.text.SimpleDateFormat
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.wallet.localization.Localization
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toJavaInstant
 import kotlinx.datetime.toLocalDateTime
-import java.util.Calendar
+import kotlinx.datetime.todayIn
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.util.Date
+import java.util.Locale
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 object DateHelper {
 
-    private val todayCalendar = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-
-    private val dateFormatMonth = SimpleDateFormat("dd MMM")
-    private val dateFormatYear = SimpleDateFormat("yyyy")
-
-    private val dateFormatHour = SimpleDateFormat("HH:mm")
-    private val dateFormatHourMonth = SimpleDateFormat("dd MMM, HH:mm")
-    private val dateFormatHourYear = SimpleDateFormat("MMM dd yyyy, HH:mm")
-
-    fun formatDate(context: Context, timestamp: Long): String {
-        if (isToday(timestamp)) {
-            return context.getString(Localization.today)
-        } else if (isYesterday(timestamp)) {
-            return context.getString(Localization.yesterday)
-        } else if (isThisYear(timestamp)) {
-            return formatMonth(timestamp)
+    fun formatTransactionDetailsTime(date: Long, locale: Locale): String {
+        if (0 >= date) {
+            return ""
         }
-        return formatYear(timestamp)
+        val instant = Instant.fromEpochMilliseconds(date * 1000)
+        return formatTransactionDetailsTime(instant, locale)
     }
 
-    fun formatMonth(timestamp: Long): String {
-        return dateFormatMonth.format(timestamp * 1000)
+    fun formatTransactionDetailsTime(date: Instant, locale: Locale): String {
+        val shortMonth = formatDate(date, "MMM", locale).replace(".", "") + ","
+        val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
+        val time = formatDate(date, "HH:mm", locale)
+        val day = formatDate(date, "d", locale)
+        val year = formatDate(date, "yyyy", locale)
+        return if (isThisYear(date)) {
+            "$day $month $time"
+        } else {
+            "$day $month $year, $time"
+        }
     }
 
-    fun formatYear(timestamp: Long): String {
-        return dateFormatYear.format(timestamp * 1000)
+    fun timestampToDateString(timestamp: Long, locale: Locale): String {
+        val date = Instant.fromEpochSeconds(timestamp)
+        return formatDate(date, "yyyy-MM-dd", locale)
     }
 
-    fun formatHour(timestamp: Long): String {
-        return dateFormatHour.format(timestamp * 1000)
+    fun formatTransactionTime(date: Long, locale: Locale): String {
+        if (0 >= date) {
+            return ""
+        }
+        val instant = Instant.fromEpochMilliseconds(date * 1000)
+        return formatTransactionTime(instant, locale)
     }
 
-    fun formatHourMonth(timestamp: Long): String {
-        return dateFormatHourMonth.format(timestamp * 1000)
+    fun formatTransactionTime(date: Instant, locale: Locale): String {
+        val shortMonth = formatDate(date, "MMM", locale).replace(".", "") + ","
+        val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
+        val time = formatDate(date, "HH:mm", locale)
+        val day = formatDate(date, "d", locale)
+        return if (isThisMonth(date)) {
+            time
+        } else {
+            "$day $month $time"
+        }
     }
 
-    fun formatHourYear(timestamp: Long): String {
-        return dateFormatHourYear.format(timestamp * 1000)
-    }
-
-    fun formatTime(timestamp: Long): String {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timestamp * 1000
+    fun formatTransactionsGroupDate(context: Context, timestamp: Long, locale: Locale): String {
+        val date = Instant.fromEpochMilliseconds(timestamp * 1000)
         return when {
-            isToday(timestamp) -> formatHour(timestamp)
-            isYesterday(timestamp) -> formatHour(timestamp)
-            isThisYear(timestamp) -> formatHourMonth(timestamp)
-            else -> formatHourYear(timestamp)
+            isToday(date) -> context.getString(Localization.today)
+            isYesterday(date) -> context.getString(Localization.yesterday)
+            isThisMonth(date) -> formatDate(date, "d MMMM", locale)
+            isThisYear(date) -> formatDate(date, "MMMM", locale).capitalized
+            else -> formatDate(date, "MMMM yyyy", locale).capitalized
         }
     }
 
-    fun isToday(timestamp: Long): Boolean {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timestamp * 1000
-        return calendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR) &&
-                calendar.get(Calendar.MONTH) == todayCalendar.get(Calendar.MONTH) &&
-                calendar.get(Calendar.DAY_OF_MONTH) == todayCalendar.get(Calendar.DAY_OF_MONTH)
+    fun isToday(date: Instant): Boolean {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        return date.toLocalDateTime(TimeZone.currentSystemDefault()).date == today
     }
 
-    fun isYesterday(timestamp: Long): Boolean {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timestamp * 1000
-        return calendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR) &&
-                calendar.get(Calendar.MONTH) == todayCalendar.get(Calendar.MONTH) &&
-                calendar.get(Calendar.DAY_OF_MONTH) == todayCalendar.get(Calendar.DAY_OF_MONTH) - 1
+    fun isYesterday(date: Instant): Boolean {
+        val yesterday = Clock.System.todayIn(TimeZone.currentSystemDefault()).minus(1, DateTimeUnit.DAY)
+        return date.toLocalDateTime(TimeZone.currentSystemDefault()).date == yesterday
     }
 
-    fun isThisMonth(timestamp: Long): Boolean {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timestamp * 1000
-        return calendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR) &&
-                calendar.get(Calendar.MONTH) == todayCalendar.get(Calendar.MONTH)
+    fun isThisYear(date: Instant): Boolean {
+        val now = Clock.System.now()
+        return now.minus(date, DateTimeUnit.YEAR, TimeZone.currentSystemDefault()) < 1
     }
 
-    fun isThisYear(timestamp: Long): Boolean {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timestamp * 1000
-        return calendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR)
+    fun isThisMonth(date: Instant): Boolean {
+        val now = Clock.System.now()
+        return now.minus(date, DateTimeUnit.MONTH, TimeZone.currentSystemDefault()) < 1
     }
 
-    fun formattedDate(unixTimestamp: Long): String {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createModernFormatter(pattern: String, locale: Locale): DateTimeFormatter {
+        return DateTimeFormatterBuilder()
+            .appendPattern(pattern)
+            .toFormatter(locale)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun formatModernDate(instant: Instant, formatString: String, locale: Locale): String {
+        val formatter = createModernFormatter(formatString, locale)
+        val zonedDateTime = instant.toJavaInstant().atZone(java.time.ZoneId.systemDefault())
+        return formatter.format(zonedDateTime)
+    }
+
+    private fun formatLegacyDate(date: Date, formatString: String, locale: Locale): String {
+        val formatter = SimpleDateFormat(formatString, locale)
+        return formatter.format(date)
+    }
+
+    fun formatDate(instant: Instant, formatString: String, locale: Locale): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return formatModernDate(instant, formatString, locale)
+        } else {
+            val date = Date(instant.toEpochMilliseconds())
+            return formatLegacyDate(date, formatString, locale)
+        }
+    }
+
+    fun formattedDate(unixTimestamp: Long, locale: Locale): String {
         if (0 >= unixTimestamp) {
             return ""
         }
+        val formatString = "d MMM, HH:mm"
         val instant = Instant.fromEpochMilliseconds(unixTimestamp * 1000)
-        val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+        return formatDate(instant, formatString, locale)
+    }
 
-        val month = dateTime.month.name.take(3)
-        val day = dateTime.dayOfMonth
-        val hour = dateTime.hour.toString().padStart(2, '0')
-        val minute = dateTime.minute.toString().padStart(2, '0')
+    fun formatCycleEnd(timestamp: Long): String {
+        val now = Clock.System.now()
+        var estimateInstant = Instant.fromEpochSeconds(timestamp)
+        if (estimateInstant < now) {
+            estimateInstant = now
+        }
 
-        return "$month $day, $hour:$minute"
+        val duration = estimateInstant - now
+        val hours = duration.inWholeHours
+        val minutes = (duration - hours.hours).inWholeMinutes
+        val seconds = (duration - hours.hours - minutes.minutes).inWholeSeconds
+
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 
 }

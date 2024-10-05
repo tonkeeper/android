@@ -1,26 +1,38 @@
 package com.tonapps.wallet.data.core
 
 import android.content.Context
+import android.os.Parcelable
 import android.util.Log
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.file
+import com.tonapps.extensions.toByteArray
+import com.tonapps.extensions.toParcel
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 abstract class BlobDataSource<D>(
-    context: Context,
-    path: String,
-    lruInitialCapacity: Int = 5,
+    private val context: Context,
+    private val path: String,
     private val timeout: Long = TimeUnit.DAYS.toMillis(90)
 ) {
 
-    private val lruCache = ConcurrentHashMap<String, D>(lruInitialCapacity, 1.0f, 2)
-    private val diskFolder = context.cacheFolder(path)
+    companion object {
+
+        inline fun <reified T: Parcelable> simple(
+            context: Context,
+            path: String
+        ): BlobDataSource<T> {
+            return object : BlobDataSource<T>(context, path) {
+                override fun onMarshall(data: T) = data.toByteArray()
+                override fun onUnmarshall(bytes: ByteArray) = bytes.toParcel<T>()
+            }
+        }
+    }
 
     fun getCache(key: String): D? {
-        return getLruCache(key) ?: getDiskCache(key)
+        return getDiskCache(key)
     }
 
     fun setCache(key: String, value: D) {
@@ -28,22 +40,12 @@ abstract class BlobDataSource<D>(
     }
 
     fun clearCache(key: String) {
-        lruCache.remove(key)
         diskFile(key).delete()
-    }
-
-    private fun getLruCache(key: String): D? {
-        return lruCache[key]
-    }
-
-    private fun setLruCache(key: String, value: D) {
-        lruCache[key] = value
     }
 
     private fun getDiskCache(key: String): D? {
         val bytes = readDiskCache(key) ?: return null
         val value = onUnmarshall(bytes) ?: return null
-        setLruCache(key, value)
         return value
     }
 
@@ -51,11 +53,10 @@ abstract class BlobDataSource<D>(
         val file = diskFile(key)
         val bytes = onMarshall(value)
         file.writeBytes(bytes)
-        setLruCache(key, value)
     }
 
     private fun diskFile(key: String): File {
-        return diskFolder.file("${key}.dat")
+        return context.cacheFolder(path).file("${key}.dat")
     }
 
     private fun readDiskCache(key: String): ByteArray? {

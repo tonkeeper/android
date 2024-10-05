@@ -1,17 +1,21 @@
 pluginManagement {
+    includeBuild("buildLogic")
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
         maven("https://jitpack.io")
+        maven("https://plugins.gradle.org/m2/")
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
         maven("https://jitpack.io")
+        maven("https://plugins.gradle.org/m2/")
     }
 }
 
@@ -20,6 +24,7 @@ rootProject.name = "TON Apps"
 include(":apps:signer")
 
 
+include(":baselineprofile:main")
 include(":baselineprofile:x")
 
 
@@ -43,6 +48,8 @@ include(":lib:emoji")
 include(":lib:blockchain")
 include(":lib:sqlite")
 include(":lib:ledger")
+include(":lib:ur")
+
 
 include(":apps:wallet:instance:app")
 include(":apps:wallet:instance:main")
@@ -57,11 +64,11 @@ include(":apps:wallet:data:rates")
 include(":apps:wallet:data:tokens")
 include(":apps:wallet:data:events")
 include(":apps:wallet:data:collectibles")
-include(":apps:wallet:data:tonconnect")
-include(":apps:wallet:data:push")
 include(":apps:wallet:data:browser")
 include(":apps:wallet:data:backup")
 include(":apps:wallet:data:rn")
 include(":apps:wallet:data:passcode")
 include(":apps:wallet:data:staking")
 include(":apps:wallet:data:purchase")
+include(":apps:wallet:data:battery")
+include(":apps:wallet:data:dapps")

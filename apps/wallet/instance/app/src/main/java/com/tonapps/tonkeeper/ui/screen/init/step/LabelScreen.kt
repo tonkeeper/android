@@ -7,6 +7,7 @@ import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.component.label.LabelEditorView
 import com.tonapps.tonkeeper.ui.screen.init.InitEvent
+import com.tonapps.tonkeeper.ui.screen.init.InitRoute
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.R
@@ -31,7 +32,7 @@ class LabelScreen: BaseFragment(R.layout.fragment_init_label) {
         }
         editorView.doOnDone = { name, emoji, color ->
             initViewModel.setLabel(name, emoji, color)
-            initViewModel.nextStep(requireContext(), InitEvent.Step.LabelAccount)
+            initViewModel.nextStep(requireContext(), InitRoute.LabelAccount)
         }
 
         view.doKeyboardAnimation { offset, progress, _ ->
@@ -42,11 +43,12 @@ class LabelScreen: BaseFragment(R.layout.fragment_init_label) {
             view.updatePadding(top = it)
         }
 
-        val label = initViewModel.getLabel()
-        with(editorView) {
-            name = label.name
-            emoji = label.emoji
-            color = label.color
+        collectFlow(initViewModel.labelFlow) { label ->
+            with(editorView) {
+                name = label.name
+                emoji = label.emoji
+                color = label.color
+            }
         }
     }
 

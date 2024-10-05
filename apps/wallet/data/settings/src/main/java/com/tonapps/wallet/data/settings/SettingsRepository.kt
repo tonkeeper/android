@@ -1,42 +1,32 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
-import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.collection.ArrayMap
-import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.isMainVersion
+import com.tonapps.extensions.clear
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.data.settings.entities.NftPrefsEntity
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
-import com.tonapps.wallet.data.settings.folder.ImportLegacyFolder
-import com.tonapps.wallet.data.settings.folder.NftPrefsFolder
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
 import com.tonapps.wallet.localization.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 // TODO need to be refactored
 class SettingsRepository(
@@ -57,7 +47,9 @@ class SettingsRepository(
         private const val FIREBASE_TOKEN_KEY = "firebase_token"
         private const val INSTALL_ID_KEY = "install_id"
         private const val SEARCH_ENGINE_KEY = "search_engine"
-        private const val TELEGRAM_CHANNEL_KEY = "telegram_channel"
+        private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
+        private const val BATTERY_VIEWED_KEY = "battery_viewed"
+        private const val CHART_PERIOD_KEY = "chart_period"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -66,20 +58,11 @@ class SettingsRepository(
     private val _languageFlow = MutableEffectFlow<Language>()
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _telegramChannelFlow = MutableStateFlow(true)
-    val telegramChannelFlow = _telegramChannelFlow.stateIn(scope, SharingStarted.Eagerly, true)
-
-    private val _themeFlow = MutableEffectFlow<Theme>()
-    val themeFlow = _themeFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
-
     private val _hiddenBalancesFlow = MutableEffectFlow<Boolean>()
     val hiddenBalancesFlow = _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _firebaseTokenFlow = MutableEffectFlow<String?>()
-    val firebaseTokenFlow = _firebaseTokenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
-
     private val _countryFlow = MutableEffectFlow<String>()
-    val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull().map { fixCountryCode(it) }
 
     private val _biometricFlow = MutableStateFlow<Boolean?>(null)
     val biometricFlow = _biometricFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
@@ -90,13 +73,12 @@ class SettingsRepository(
     private val _searchEngineFlow = MutableEffectFlow<SearchEngine>()
     val searchEngineFlow = _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
-    private val _walletPush = MutableStateFlow<Map<String, Boolean>?>(null)
-    val walletPush = _walletPush.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    private val _walletPush = MutableEffectFlow<Unit>()
+    val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
-    private val tokenPrefsFolder = TokenPrefsFolder(context)
-    private val walletPrefsFolder = WalletPrefsFolder(context)
-    private val nftPrefsFolder = NftPrefsFolder(context)
+    private val tokenPrefsFolder = TokenPrefsFolder(context, scope)
+    private val walletPrefsFolder = WalletPrefsFolder(context, scope)
     private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)
 
     val walletPrefsChangedFlow: Flow<Unit>
@@ -104,9 +86,6 @@ class SettingsRepository(
 
     val tokenPrefsChangedFlow: Flow<Unit>
         get() = tokenPrefsFolder.changedFlow
-
-    val nftPrefsChangedFlow: Flow<Unit>
-        get() = nftPrefsFolder.changedFlow
 
     val installId: String
         get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
@@ -130,17 +109,23 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putString(THEME_KEY, value.key).apply()
                 field = value
-                _themeFlow.tryEmit(value)
                 migrationHelper.setLegacyTheme(value)
             }
         }
 
-    var telegramChannel: Boolean = prefs.getBoolean(TELEGRAM_CHANNEL_KEY, true)
+    var chartPeriod: ChartPeriod = ChartPeriod.of(prefs.getString(CHART_PERIOD_KEY, ""))
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(TELEGRAM_CHANNEL_KEY, value).apply()
+                prefs.edit().putString(CHART_PERIOD_KEY, value.value).apply()
                 field = value
-                _telegramChannelFlow.tryEmit(value)
+            }
+        }
+
+    var showEncryptedCommentModal: Boolean = prefs.getBoolean(ENCRYPTED_COMMENT_MODAL_KEY, true)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(ENCRYPTED_COMMENT_MODAL_KEY, value).apply()
+                field = value
             }
         }
 
@@ -149,7 +134,6 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putString(FIREBASE_TOKEN_KEY, value).apply()
                 field = value
-                _firebaseTokenFlow.tryEmit(value)
             }
         }
 
@@ -163,13 +147,23 @@ class SettingsRepository(
             }
         }
 
-    var language: Language = Language(prefs.getString(LANGUAGE_CODE_KEY, "en") ?: Language.DEFAULT)
+    var language: Language = Language(prefs.getString(LANGUAGE_CODE_KEY, Language.DEFAULT) ?: Language.DEFAULT)
         set(value) {
             if (value != field) {
                 field = value
                 prefs.edit().putString(LANGUAGE_CODE_KEY, field.code).apply()
                 _languageFlow.tryEmit(field)
                 migrationHelper.setLegacyLanguage(value)
+            }
+        }
+
+    val localeList: LocaleListCompat
+        get() {
+            if (language.code.isBlank() || language.code == Language.DEFAULT) {
+                return LocaleListCompat.getEmptyLocaleList()
+            } else {
+                val newLocale = Locale.forLanguageTag(language.code)
+                return LocaleListCompat.create(newLocale)
             }
         }
 
@@ -193,7 +187,7 @@ class SettingsRepository(
             }
         }
 
-    var country: String = prefs.getString(COUNTRY_KEY, null) ?: context.locale.country
+    var country: String = fixCountryCode(prefs.getString(COUNTRY_KEY, null))
         set(value) {
             if (value != field) {
                 prefs.edit().putString(COUNTRY_KEY, value).apply()
@@ -213,6 +207,22 @@ class SettingsRepository(
             }
         }
 
+    var batteryViewed: Boolean = prefs.getBoolean(BATTERY_VIEWED_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(BATTERY_VIEWED_KEY, value).apply()
+                field = value
+            }
+        }
+
+    fun isUSDTW5(walletId: String) = walletPrefsFolder.isUSDTW5(walletId)
+
+    fun disableUSDTW5(walletId: String) = walletPrefsFolder.disableUSDTW5(walletId)
+
+    fun getSpamStateTransaction(walletId: String, id: String) = walletPrefsFolder.getSpamStateTransaction(walletId, id)
+
+    fun isSpamTransaction(walletId: String, id: String) = getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
+
     fun isPurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.isPurchaseOpenConfirm(walletId, id)
 
     fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
@@ -221,16 +231,61 @@ class SettingsRepository(
 
     fun setPushWallet(walletId: String, value: Boolean) {
         walletPrefsFolder.setPushEnabled(walletId, value)
-
-        val map = (_walletPush.value ?: mapOf()).toMutableMap()
-        map[walletId] = value
-        _walletPush.tryEmit(map)
+        rnLegacy.setNotificationsEnabled(walletId, value)
+        _walletPush.tryEmit(Unit)
     }
 
     fun isSetupHidden(walletId: String): Boolean = walletPrefsFolder.isSetupHidden(walletId)
 
     fun setupHide(walletId: String) {
         walletPrefsFolder.setupHide(walletId)
+        rnLegacy.setSetupDismissed(walletId)
+    }
+
+    fun setTelegramChannel(walletId: String) {
+        walletPrefsFolder.setTelegramChannel(walletId)
+        rnLegacy.setHasOpenedTelegramChannel(walletId)
+    }
+
+    fun isTelegramChannel(walletId: String) = walletPrefsFolder.isTelegramChannel(walletId)
+
+    fun setLastBackupAt(walletId: String, date: Long) {
+        rnLegacy.setSetupLastBackupAt(walletId, date)
+    }
+
+    fun getBatteryTxEnabled(accountId: String) = walletPrefsFolder.getBatteryTxEnabled(accountId)
+
+    fun setBatteryTxEnabled(accountId: String, types: Array<BatteryTransaction>) {
+        walletPrefsFolder.setBatteryTxEnabled(accountId, types)
+    }
+
+    fun batteryEnableTx(
+        accountId: String,
+        type: BatteryTransaction,
+        enable: Boolean
+    ): Array<BatteryTransaction> {
+        val types = getBatteryTxEnabled(accountId).toMutableSet()
+        if (enable && !types.contains(type)) {
+            types.add(type)
+        } else if (!enable && !types.remove(type)) {
+            return types.toTypedArray()
+        }
+        setBatteryTxEnabled(accountId, types.toTypedArray())
+        return types.toTypedArray()
+    }
+
+    fun batteryIsEnabledTx(accountId: String, type: BatteryTransaction): Boolean {
+        if (type == BatteryTransaction.UNKNOWN) {
+            return false
+        }
+        return getBatteryTxEnabled(accountId).contains(type)
+    }
+
+    fun getLocale(): Locale {
+        if (language.code == Language.DEFAULT) {
+            return context.locale
+        }
+        return language.locale
     }
 
     suspend fun setTokenHidden(
@@ -242,20 +297,12 @@ class SettingsRepository(
         rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
     }
 
-    suspend fun setNftHidden(
+    suspend fun setTokenState(
         walletId: String,
-        nftAddress: String,
-        hidden: Boolean = true
+        tokenAddress: String,
+        state: TokenPrefsEntity.State
     ) = withContext(Dispatchers.IO) {
-        nftPrefsFolder.setHidden(walletId, nftAddress, hidden)
-    }
-
-    suspend fun setNftTrust(
-        walletId: String,
-        nftAddress: String,
-        trust: Boolean = true
-    ) = withContext(Dispatchers.IO) {
-        nftPrefsFolder.setTrust(walletId, nftAddress, trust)
+        tokenPrefsFolder.setState(walletId, tokenAddress, state)
     }
 
     fun setTokenPinned(walletId: String, tokenAddress: String, pinned: Boolean) {
@@ -281,25 +328,18 @@ class SettingsRepository(
     suspend fun getTokenPrefs(
         walletId: String,
         tokenAddress: String,
-        blacklist: Boolean,
+        blacklist: Boolean = false,
     ): TokenPrefsEntity = withContext(Dispatchers.IO) {
         tokenPrefsFolder.get(walletId, tokenAddress, blacklist)
     }
 
-    suspend fun getNftPrefs(
-        walletId: String,
-        nftAddress: String
-    ): NftPrefsEntity = withContext(Dispatchers.IO) {
-        nftPrefsFolder.get(walletId, nftAddress)
-    }
-
     init {
-        languageFlow.onEach {
-            AppCompatDelegate.setApplicationLocales(getLocales())
-        }.launchIn(scope)
-
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
+                prefs.clear()
+                tokenPrefsFolder.clear()
+                walletPrefsFolder.clear()
+
                 val legacyValues = importFromLegacy()
                 biometric = legacyValues.biometric
                 lockScreen = legacyValues.lockScreen
@@ -316,15 +356,13 @@ class SettingsRepository(
             }
 
             _currencyFlow.tryEmit(currency)
-            _themeFlow.tryEmit(theme)
             _languageFlow.tryEmit(language)
             _hiddenBalancesFlow.tryEmit(hiddenBalances)
-            _firebaseTokenFlow.tryEmit(firebaseToken)
             _countryFlow.tryEmit(country)
             _searchEngineFlow.tryEmit(searchEngine)
             _biometricFlow.tryEmit(biometric)
             _lockscreenFlow.tryEmit(lockScreen)
-            _walletPush.tryEmit(mapOf())
+            _walletPush.tryEmit(Unit)
         }
     }
 
@@ -358,18 +396,40 @@ class SettingsRepository(
 
         val wallets = data.wallets
         for (wallet in wallets) {
-            val key = "${wallet.identifier}/notifications"
-            val isSubscribed = rnLegacy.getJSONValue(key)?.getBoolean("isSubscribed") ?: false
-            walletPrefsFolder.setPushEnabled(wallet.identifier, isSubscribed)
+            val walletId = wallet.identifier
+
+            walletPrefsFolder.setPushEnabled(walletId, rnLegacy.getNotificationsEnabled(walletId))
+
+            val hiddenTokens = rnLegacy.getHiddenTokens(walletId)
+            for (tokenAddress in hiddenTokens) {
+                tokenPrefsFolder.setHidden(walletId, tokenAddress, true)
+            }
+
+            val (setupDismissed, hasOpenedTelegramChannel) = rnLegacy.getSetup(walletId)
+
+            if (hasOpenedTelegramChannel) {
+                walletPrefsFolder.setTelegramChannel(walletId)
+            }
+            if (setupDismissed) {
+                walletPrefsFolder.setupHide(walletId)
+            }
+
+            val spamTransactions = rnLegacy.getSpamTransactions(walletId)
+            for (transactionId in spamTransactions.spam) {
+                walletPrefsFolder.setSpamStateTransaction(walletId, transactionId, SpamTransactionState.SPAM)
+            }
+
+            for (transactionId in spamTransactions.nonSpam) {
+                walletPrefsFolder.setSpamStateTransaction(walletId, transactionId, SpamTransactionState.NOT_SPAM)
+            }
         }
     }
 
-    private fun getLocales(): LocaleListCompat {
-        val code = language.code
-        return if (code == Language.DEFAULT) {
-            LocaleListCompat.getEmptyLocaleList()
+    private fun fixCountryCode(code: String?): String {
+        return if (code.isNullOrBlank()) {
+            getLocale().country
         } else {
-            LocaleListCompat.forLanguageTags(code)
+            code
         }
     }
 

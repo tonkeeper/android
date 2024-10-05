@@ -1,6 +1,8 @@
 package com.tonapps.ledger.ton
 
+import io.ktor.util.reflect.instanceOf
 import org.ton.block.AddrStd
+import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import java.math.BigInteger
@@ -20,6 +22,10 @@ object LedgerWriter {
         }.array()
     }
 
+    fun putUint48(value: BigInteger): ByteArray {
+        return CellBuilder.createCell { storeUInt(value, 48) }.beginParse().bits.toByteArray()
+    }
+
     fun putUint64(value: BigInteger): ByteArray {
         return CellBuilder.createCell { storeUInt(value, 64) }.beginParse().bits.toByteArray()
     }
@@ -36,7 +42,8 @@ object LedgerWriter {
         return byteArrayOf(value.toByte())
     }
 
-    fun putAddress(address: AddrStd): ByteArray {
+    fun putAddress(value: MsgAddressInt): ByteArray {
+        val address = AddrStd.parse(MsgAddressInt.toString(value))
         return putUint8(if (address.workchainId == -1) 0xff else address.workchainId) + address.address.toByteArray()
     }
 

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_content_20"
+    android:layout_margin="@dimen/offsetMedium"
+    android:padding="@dimen/offsetMedium">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/w5_usdt_title"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/w5_usdt_subtitle"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <uikit.widget.RowLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium">
+
+            <Button
+                style="@style/Widget.App.Button.Green"
+                android:id="@+id/stories"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:paddingVertical="0dp"
+                android:gravity="center"
+                android:background="@drawable/bg_button_green_18"
+                android:text="@string/w5_about_button"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:textColor="?attr/textPrimaryColor"/>
+
+            <Button
+                style="@style/Widget.App.Button.Secondary"
+                android:id="@+id/hide"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginLeft="8dp"
+                android:paddingVertical="0dp"
+                android:background="@drawable/bg_button_tertiary_18"
+                android:gravity="center"
+                android:text="@string/hide"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:textColor="?attr/textPrimaryColor"/>
+
+        </uikit.widget.RowLayout>
+
+    </uikit.widget.ColumnLayout>
+    
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:src="@drawable/ic_round_w5"
+        android:layout_marginLeft="@dimen/offsetMedium"/>
+
+</uikit.widget.RowLayout>

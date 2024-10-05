@@ -29,6 +29,7 @@ import com.squareup.moshi.JsonClass
  * @param status 
  * @param getMethods 
  * @param isWallet 
+ * @param currenciesBalance {'USD': 1, 'IDR': 1000}
  * @param interfaces 
  * @param name 
  * @param isScam 
@@ -58,6 +59,10 @@ data class Account (
 
     @Json(name = "is_wallet")
     val isWallet: kotlin.Boolean,
+
+    /* {'USD': 1, 'IDR': 1000} */
+    @Json(name = "currencies_balance")
+    val currenciesBalance: kotlin.collections.Map<kotlin.String, kotlin.Any>? = null,
 
     @Json(name = "interfaces")
     val interfaces: kotlin.collections.List<kotlin.String>? = null,

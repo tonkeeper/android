@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.explore.list
 
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -15,7 +16,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Title(val title: String): Item(TYPE_TITLE)
 
     data class App(
-        val app: BrowserAppEntity
+        val app: BrowserAppEntity,
+        val wallet: WalletEntity,
     ): Item(TYPE_APP) {
 
         val icon: Uri
@@ -37,6 +39,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Banners(
         val apps: List<BrowserAppEntity>,
         val interval: Int,
+        val wallet: WalletEntity,
     ): Item(TYPE_BANNERS)
 
 }

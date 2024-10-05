@@ -15,7 +15,8 @@ import com.tonapps.uikit.list.DiffCallback
 
 class Adapter(
     private val doOnPinChange: (tokenAddress: String, pin: Boolean) -> Unit,
-    private val doOnHiddeChange: (tokenAddress: String, hidden: Boolean) -> Unit
+    private val doOnHiddeChange: (tokenAddress: String, hidden: Boolean) -> Unit,
+    private val doOnDrag: (holder: TokenHolder) -> Unit,
 ): RecyclerView.Adapter<Holder<*>>() {
 
     private var list = listOf<Item>()
@@ -41,7 +42,7 @@ class Adapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder<*> {
         return when(viewType) {
             Item.TYPE_TITLE -> TitleHolder(parent)
-            Item.TYPE_TOKEN -> TokenHolder(parent, doOnPinChange, doOnHiddeChange)
+            Item.TYPE_TOKEN -> TokenHolder(parent, doOnPinChange, doOnHiddeChange, doOnDrag)
             Item.TYPE_SPACE -> SpaceHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }

@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Button xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Widget.App.Button.Green"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:textAppearance="@style/TextAppearance.Label1"
-    android:drawableEnd="@drawable/ic_link_28"/>
+    android:layout_height="wrap_content">
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/nft_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/offsetLarge"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:singleLine="true"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginRight="@dimen/offsetMedium"
+        android:src="@drawable/ic_link_28"/>
+
+</FrameLayout>

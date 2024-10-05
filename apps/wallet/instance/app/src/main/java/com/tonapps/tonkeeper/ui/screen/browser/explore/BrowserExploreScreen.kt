@@ -2,16 +2,23 @@ package com.tonapps.tonkeeper.ui.screen.browser.explore
 
 import android.graphics.Rect
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
@@ -20,9 +27,10 @@ import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.HeaderView
 
-class BrowserExploreScreen : BaseFragment(R.layout.fragment_browser_explore) {
+class BrowserExploreScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_explore, wallet) {
 
-    private val exploreViewModel: BrowserExploreViewModel by viewModel()
+    override val viewModel: BrowserExploreViewModel by walletViewModel()
+
     private val mainViewModel: BrowserMainViewModel by lazy {
         requireParentFragment().getViewModel()
     }
@@ -39,7 +47,7 @@ class BrowserExploreScreen : BaseFragment(R.layout.fragment_browser_explore) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(exploreViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -129,6 +137,6 @@ class BrowserExploreScreen : BaseFragment(R.layout.fragment_browser_explore) {
 
         private const val SPAN_COUNT = 4
 
-        fun newInstance() = BrowserExploreScreen()
+        fun newInstance(wallet: WalletEntity) = BrowserExploreScreen(wallet)
     }
 }

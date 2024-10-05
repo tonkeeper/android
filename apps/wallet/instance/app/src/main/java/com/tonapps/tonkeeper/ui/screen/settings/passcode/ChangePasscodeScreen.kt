@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.settings.passcode
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.localization.Localization
@@ -10,9 +12,9 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 
-class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), BaseFragment.SwipeBack {
+class ChangePasscodeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_change_passcode, ScreenContext.None), BaseFragment.SwipeBack {
 
-    private val changePasscodeViewModel: ChangePasscodeViewModel by viewModel()
+    override val viewModel: ChangePasscodeViewModel by viewModel()
 
     private lateinit var headerView: HeaderView
     private lateinit var passcodeView: PasscodeView
@@ -23,8 +25,8 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         headerView.doOnCloseClick = { finish() }
 
         passcodeView = view.findViewById(R.id.passcode)
-        collectFlow(changePasscodeViewModel.stepFlow, ::setStep)
-        collectFlow(changePasscodeViewModel.errorFlow) { applyError() }
+        collectFlow(viewModel.stepFlow, ::setStep)
+        collectFlow(viewModel.errorFlow) { applyError() }
     }
 
     private fun setStep(step: ChangePasscodeViewModel.Step) {
@@ -40,7 +42,7 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         passcodeView.clear()
         passcodeView.setTitle(Localization.passcode_current)
         passcodeView.doOnCheck = {
-            changePasscodeViewModel.checkCurrent(requireContext(), it)
+            viewModel.checkCurrent(requireContext(), it)
         }
     }
 
@@ -48,7 +50,7 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         passcodeView.clear()
         passcodeView.setTitle(Localization.passcode_new)
         passcodeView.doOnCheck = {
-            changePasscodeViewModel.setNew(it)
+            viewModel.setNew(it)
         }
     }
 
@@ -56,7 +58,7 @@ class ChangePasscodeScreen: BaseFragment(R.layout.fragment_change_passcode), Bas
         passcodeView.clear()
         passcodeView.setTitle(Localization.passcode_re_enter)
         passcodeView.doOnCheck = {
-            changePasscodeViewModel.save(requireContext(), it)
+            viewModel.save(requireContext(), it)
         }
     }
 

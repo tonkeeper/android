@@ -1,11 +1,9 @@
 package uikit.widget.item
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
@@ -21,12 +19,12 @@ class ItemIconView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : BaseItemView(context, attrs, defStyle) {
 
-    private val textView: AppCompatTextView
+    val textView: AppCompatTextView
     private val descriptionView: AppCompatTextView
     private val iconView: AppCompatImageView
 
-    var text: String?
-        get() = textView.text.toString()
+    var text: CharSequence?
+        get() = textView.text
         set(value) {
             textView.text = value
         }

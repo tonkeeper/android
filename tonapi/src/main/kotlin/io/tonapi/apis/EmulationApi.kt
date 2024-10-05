@@ -55,7 +55,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Decode a given message. Only external incoming messages can be decoded currently.
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @return DecodedMessage
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -86,7 +86,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Decode a given message. Only external incoming messages can be decoded currently.
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @return ApiResponse<DecodedMessage?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -104,7 +104,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * To obtain the request config of the operation decodeMessage
      *
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @return RequestConfig
      */
     fun decodeMessageRequestConfig(decodeMessageRequest: DecodeMessageRequest) : RequestConfig<DecodeMessageRequest> {
@@ -128,7 +128,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      * 
      * Emulate sending message to blockchain
      * @param accountId account ID
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param acceptLanguage  (optional, default to "en")
      * @param ignoreSignatureCheck  (optional)
      * @return AccountEvent
@@ -162,7 +162,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      * 
      * Emulate sending message to blockchain
      * @param accountId account ID
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param acceptLanguage  (optional, default to "en")
      * @param ignoreSignatureCheck  (optional)
      * @return ApiResponse<AccountEvent?>
@@ -183,7 +183,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
      * To obtain the request config of the operation emulateMessageToAccountEvent
      *
      * @param accountId account ID
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param acceptLanguage  (optional, default to "en")
      * @param ignoreSignatureCheck  (optional)
      * @return RequestConfig
@@ -214,7 +214,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param acceptLanguage  (optional, default to "en")
      * @param ignoreSignatureCheck  (optional)
      * @return Event
@@ -247,7 +247,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param acceptLanguage  (optional, default to "en")
      * @param ignoreSignatureCheck  (optional)
      * @return ApiResponse<Event?>
@@ -267,7 +267,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * To obtain the request config of the operation emulateMessageToEvent
      *
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param acceptLanguage  (optional, default to "en")
      * @param ignoreSignatureCheck  (optional)
      * @return RequestConfig
@@ -298,7 +298,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param ignoreSignatureCheck  (optional)
      * @return Trace
      * @throws IllegalStateException If the request is not correctly configured
@@ -330,7 +330,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param ignoreSignatureCheck  (optional)
      * @return ApiResponse<Trace?>
      * @throws IllegalStateException If the request is not correctly configured
@@ -349,7 +349,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * To obtain the request config of the operation emulateMessageToTrace
      *
-     * @param decodeMessageRequest bag-of-cells serialized to base64
+     * @param decodeMessageRequest bag-of-cells serialized to hex
      * @param ignoreSignatureCheck  (optional)
      * @return RequestConfig
      */
@@ -378,7 +378,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64 and additional parameters to configure emulation
+     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64/hex and additional parameters to configure emulation
      * @param acceptLanguage  (optional, default to "en")
      * @return MessageConsequences
      * @throws IllegalStateException If the request is not correctly configured
@@ -398,7 +398,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
             ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
             ResponseType.ClientError -> {
                 val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.body} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
             }
             ResponseType.ServerError -> {
                 val localVarError = localVarResponse as ServerError<*>
@@ -410,7 +410,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * 
      * Emulate sending message to blockchain
-     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64 and additional parameters to configure emulation
+     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64/hex and additional parameters to configure emulation
      * @param acceptLanguage  (optional, default to "en")
      * @return ApiResponse<MessageConsequences?>
      * @throws IllegalStateException If the request is not correctly configured
@@ -429,7 +429,7 @@ class EmulationApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClie
     /**
      * To obtain the request config of the operation emulateMessageToWallet
      *
-     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64 and additional parameters to configure emulation
+     * @param emulateMessageToWalletRequest bag-of-cells serialized to base64/hex and additional parameters to configure emulation
      * @param acceptLanguage  (optional, default to "en")
      * @return RequestConfig
      */

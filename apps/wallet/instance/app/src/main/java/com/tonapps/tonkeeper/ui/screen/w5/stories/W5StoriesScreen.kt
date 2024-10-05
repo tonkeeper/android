@@ -7,6 +7,11 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerMode
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -20,9 +25,11 @@ import uikit.extensions.round
 import uikit.widget.FrescoView
 import uikit.widget.RowLayout
 
-class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
+class W5StoriesScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_w5_stories, ScreenContext.None) {
 
-    private val w5StoriesViewModel: W5StoriesViewModel by viewModel()
+    override val viewModel: W5StoriesViewModel by viewModel()
+
+    private val showAddButton: Boolean by lazy { requireArguments().getBoolean(ARG_ADD_BUTTON) }
 
     private lateinit var contentView: FrameLayout
     private lateinit var linesView: RowLayout
@@ -42,9 +49,9 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
                     val x = event.x
                     val width = v.width
                     if (x < width / 2) {
-                        w5StoriesViewModel.prevStory()
+                        viewModel.prevStory()
                     } else {
-                        w5StoriesViewModel.nextStory()
+                        viewModel.nextStory()
                     }
                 }
             }
@@ -71,7 +78,7 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
             insets
         }
 
-        collectFlow(w5StoriesViewModel.storyFlow, ::applyStory)
+        collectFlow(viewModel.storyFlow, ::applyStory)
     }
 
     private fun applyLines() {
@@ -79,9 +86,12 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
     }
 
     private fun addWallet() {
-        w5StoriesViewModel.addWallet(requireContext()).catch {
+        viewModel.addWallet(requireContext()).catch {
 
-        }.onEach {
+
+        }.onEach { walletId ->
+            navigation?.add(PickerScreen.newInstance(PickerMode.Focus(walletId)))
+            navigation?.removeByClass(SettingsScreen::class.java)
             finish()
         }.launchIn(lifecycleScope)
     }
@@ -90,7 +100,7 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
         imageView.setLocalRes(story.imageResId)
         titleView.setText(story.titleResId)
         descriptionView.setText(story.descriptionResId)
-        addButton.visibility = if (story.showButton) {
+        addButton.visibility = if (story.showButton && showAddButton) {
             View.VISIBLE
         } else {
             View.GONE
@@ -99,6 +109,12 @@ class W5StoriesScreen: BaseFragment(R.layout.fragment_w5_stories) {
 
     companion object {
 
-        fun newInstance() = W5StoriesScreen()
+        private const val ARG_ADD_BUTTON = "add_button"
+
+        fun newInstance(addButton: Boolean): W5StoriesScreen {
+            val fragment = W5StoriesScreen()
+            fragment.putBooleanArg(ARG_ADD_BUTTON, addButton)
+            return fragment
+        }
     }
 }

@@ -4,8 +4,12 @@ import java.util.Locale
 
 data class Language(val code: String = DEFAULT) {
 
-    private val locale: Locale by lazy {
-        Locale(code)
+    private val langCode: String by lazy {
+        code.split("-")[0]
+    }
+
+    val locale: Locale by lazy {
+        Locale(langCode)
     }
 
     val name: String by lazy {

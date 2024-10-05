@@ -3,7 +3,6 @@
     android:id="@+id/link"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
     android:paddingHorizontal="18dp"
     android:paddingVertical="10dp"
     android:background="@drawable/bg_button_secondary_18"

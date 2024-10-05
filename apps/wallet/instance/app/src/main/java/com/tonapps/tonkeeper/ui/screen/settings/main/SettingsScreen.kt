@@ -9,13 +9,17 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
 import com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
+import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
-import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsScreen
+import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsManageScreen
 import com.tonapps.tonkeeper.ui.screen.settings.legal.LegalScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
@@ -23,20 +27,19 @@ import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeScreen
 import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.localization.Localization
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
-import uikit.base.BaseListFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.item.ItemTextView
 
-class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
+class SettingsScreen(
+    wallet: WalletEntity
+): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
-    private val settingsViewModel: SettingsViewModel by viewModel()
+    override val viewModel: SettingsViewModel by walletViewModel()
 
     private val searchEngineMenu: ActionSheet by lazy {
         ActionSheet(requireContext())
@@ -49,29 +52,32 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
         setTitle(getString(Localization.settings))
         setAdapter(adapter)
 
-        collectFlow(settingsViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     private fun onClickItem(item: Item) {
         when (item) {
-            is Item.Backup -> navigation?.add(BackupScreen.newInstance())
+            is Item.Backup -> navigation?.add(BackupScreen.newInstance(screenContext.wallet))
             is Item.Currency -> navigation?.add(CurrencyScreen.newInstance())
             is Item.Language -> navigation?.add(LanguageScreen.newInstance())
-            is Item.Account -> navigation?.add(EditNameScreen.newInstance())
+            is Item.Account -> navigation?.add(EditNameScreen.newInstance(screenContext.wallet))
             is Item.Theme -> navigation?.add(ThemeScreen.newInstance())
             is Item.Widget -> installWidget()
             is Item.Security -> navigation?.add(SecurityScreen.newInstance())
             is Item.Legal -> navigation?.add(LegalScreen.newInstance())
-            is Item.News -> navigation?.openURL(item.url, true)
-            is Item.Support -> navigation?.openURL(item.url, true)
-            is Item.Contact -> navigation?.openURL(item.url, true)
-            is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance())
-            is Item.Logout -> signOut(item.label)
+            is Item.News -> navigation?.openURL(item.url)
+            is Item.Support -> navigation?.openURL(item.url)
+            is Item.Contact -> navigation?.openURL(item.url)
+            is Item.Tester -> navigation?.openURL(item.url)
+            is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance(!screenContext.wallet.isW5))
+            is Item.Battery -> navigation?.add(BatteryScreen.newInstance(screenContext.wallet))
+            is Item.Logout -> if (item.delete) deleteAccount() else showSignOutDialog()
             is Item.SearchEngine -> searchPicker(item)
-            is Item.DeleteWatchAccount -> deleteWatchAccount()
+            is Item.DeleteWatchAccount -> deleteAccount()
             is Item.Rate -> openRate()
-            is Item.Notifications -> navigation?.add(NotificationsScreen.newInstance())
-            is Item.FAQ -> navigation?.openURL(item.url, true)
+            is Item.V4R2 -> viewModel.createV4R2Wallet()
+            is Item.Notifications -> navigation?.add(NotificationsManageScreen.newInstance(screenContext.wallet))
+            is Item.FAQ -> navigation?.openURL(item.url)
             else -> return
         }
     }
@@ -105,7 +111,7 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
             searchEngineMenu.addItem(searchEngine.id, searchEngine.title, icon = checkedIcon)
         }
         searchEngineMenu.doOnItemClick = {
-            settingsViewModel.setSearchEngine(SearchEngine.byId(it.id))
+            viewModel.setSearchEngine(SearchEngine.byId(it.id))
         }
         searchEngineMenu.show(itemView.dataView)
     }
@@ -127,26 +133,24 @@ class SettingsScreen: BaseListFragment(), BaseFragment.SwipeBack {
         }
     }
 
-    private fun signOut(label: Wallet.Label) {
-        val dialog = SignOutDialog(requireContext())
-        dialog.show(label) {
-            settingsViewModel.signOut()
-            finish()
-        }
+    private fun showSignOutDialog() {
+        val dialog = SignOutDialog(requireContext(), screenContext.wallet)
+        dialog.show { signOut() }
     }
 
-    private fun deleteWatchAccount() {
+    private fun deleteAccount() {
         val builder = AlertDialog.Builder(requireContext())
-        builder.setMessage(Localization.delete_watch_account_alert)
-        builder.setNegativeButton(Localization.delete) {
-            settingsViewModel.signOut()
-            finish()
-        }
+        builder.setMessage(Localization.delete_account_alert)
+        builder.setNegativeButton(Localization.delete) { signOut() }
         builder.setPositiveButton(Localization.cancel)
         builder.show()
     }
 
+    private fun signOut() {
+        viewModel.signOut()
+    }
+
     companion object {
-        fun newInstance() = SettingsScreen()
+        fun newInstance(wallet: WalletEntity) = SettingsScreen(wallet)
     }
 }

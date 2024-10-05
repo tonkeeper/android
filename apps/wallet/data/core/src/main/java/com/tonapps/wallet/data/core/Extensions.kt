@@ -10,7 +10,10 @@ fun accountId(accountId: String, testnet: Boolean): String {
     return accountId
 }
 
-fun isAvailableBiometric(context: Context, authenticators: Int = BiometricManager.Authenticators.BIOMETRIC_STRONG): Boolean {
+fun isAvailableBiometric(
+    context: Context,
+    authenticators: Int = BiometricManager.Authenticators.BIOMETRIC_STRONG
+): Boolean {
     val authStatus = BiometricManager.from(context).canAuthenticate(authenticators)
-    return authStatus == BiometricManager.BIOMETRIC_SUCCESS || authStatus == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
+    return authStatus == BiometricManager.BIOMETRIC_SUCCESS
 }

@@ -29,12 +29,14 @@ sealed class Item(type: Int): BaseListItem(type) {
         val balance: Coins,
         val balanceFormat: CharSequence,
         val pinned: Boolean,
-        val hidden: Boolean
+        val hidden: Boolean,
+        val hiddenBalance: Boolean,
     ): Item(TYPE_TOKEN) {
 
         constructor(
             position: ListCell.Position,
             token: AssetsExtendedEntity,
+            hiddenBalance: Boolean,
         ) : this(
             position = position,
             iconUri = token.imageUri,
@@ -43,7 +45,8 @@ sealed class Item(type: Int): BaseListItem(type) {
             balance = token.balance.value,
             balanceFormat = CurrencyFormatter.format(token.symbol, token.balance.value),
             pinned = token.pinned,
-            hidden = token.hidden
+            hidden = token.hidden,
+            hiddenBalance = hiddenBalance
         )
     }
 

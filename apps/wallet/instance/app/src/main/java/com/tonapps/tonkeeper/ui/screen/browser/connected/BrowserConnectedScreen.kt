@@ -4,28 +4,32 @@ import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.connected.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.tonconnect.entities.DAppEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.getViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 
-class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) {
+class BrowserConnectedScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_connected, wallet) {
 
-    private val connectedViewModel: BrowserConnectedViewModel by viewModel()
+    override val viewModel: BrowserConnectedViewModel by walletViewModel()
+
     private val mainViewModel: BrowserMainViewModel by lazy {
         requireParentFragment().getViewModel()
     }
 
-    private val adapter = Adapter { deleteAppConfirm(it) }
+    private val adapter = Adapter { app ->
+        deleteAppConfirm(app)
+    }
 
     private val scrollListener = object : RecyclerVerticalScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
@@ -48,7 +52,7 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
 
         placeholderView = view.findViewById(R.id.placeholder)
 
-        collectFlow(connectedViewModel.uiItemsFlow, ::setList)
+        collectFlow(viewModel.uiItemsFlow, ::setList)
     }
 
     private fun setList(items: List<Item>) {
@@ -62,12 +66,12 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
         }
     }
 
-    private fun deleteAppConfirm(app: DAppEntity) {
-        val message = getString(Localization.remove_dapp_confirm, app.manifest.name)
+    private fun deleteAppConfirm(app: AppEntity) {
+        val message = getString(Localization.remove_dapp_confirm, app.name)
         AlertDialog.Builder(requireContext())
             .setMessage(message)
             .setNegativeButton(Localization.confirm) {
-                connectedViewModel.deleteApp(app)
+                viewModel.deleteConnect(app)
             }
             .setPositiveButton(Localization.cancel) {
 
@@ -105,6 +109,6 @@ class BrowserConnectedScreen: BaseFragment(R.layout.fragment_browser_connected) 
 
         private const val SPAN_COUNT = 4
 
-        fun newInstance() = BrowserConnectedScreen()
+        fun newInstance(wallet: WalletEntity) = BrowserConnectedScreen(wallet)
     }
 }

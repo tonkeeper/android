@@ -1,8 +1,10 @@
 package uikit.widget
 
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -11,6 +13,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.WindowInsetsCompat
 import uikit.R
 import uikit.drawable.BarDrawable
@@ -35,8 +38,21 @@ open class HeaderView @JvmOverloads constructor(
     val actionView: AppCompatImageView
     val titleView: AppCompatTextView
 
+    private val rightContentView: LinearLayoutCompat
+
     private val barHeight = context.getDimensionPixelSize(R.dimen.barHeight)
-    private var ignoreSystemOffset = false
+
+    var ignoreSystemOffset = false
+        set(value) {
+            if (field != value) {
+                field = value
+                if (value) {
+                    setPaddingTop(0)
+                }
+                requestLayout()
+            }
+        }
+
     private var topOffset: Int = 0
         set(value) {
             if (field != value) {
@@ -73,7 +89,7 @@ open class HeaderView @JvmOverloads constructor(
         }
 
 
-    var title: CharSequence
+    var title: CharSequence?
         get() = titleView.text
         set(value) {
             titleView.text = value
@@ -92,11 +108,17 @@ open class HeaderView @JvmOverloads constructor(
         subtitleView = findViewById(R.id.header_subtitle)
         loaderView = findViewById(R.id.header_loader)
         textView = findViewById(R.id.header_text)
+        rightContentView = findViewById(R.id.header_right_content)
 
         context.useAttributes(attrs, R.styleable.HeaderView) {
             ignoreSystemOffset = it.getBoolean(R.styleable.HeaderView_ignoreSystemOffset, false)
             val iconResId = it.getResourceId(R.styleable.HeaderView_android_icon, 0)
             setIcon(iconResId)
+
+            val iconTintColor = it.getColor(R.styleable.HeaderView_android_iconTint, Color.TRANSPARENT)
+            if (iconTintColor != Color.TRANSPARENT) {
+                closeView.setColorFilter(iconTintColor)
+            }
 
             titleView.text = it.getString(R.styleable.HeaderView_android_title)
 
@@ -105,14 +127,11 @@ open class HeaderView @JvmOverloads constructor(
         }
     }
 
-    fun setIgnoreSystemOffset(value: Boolean = true) {
-        ignoreSystemOffset = value
-    }
-
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         if (ignoreSystemOffset) {
             return super.onApplyWindowInsets(insets)
         }
+
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
         val statusInsets = compatInsets.getInsets(WindowInsetsCompat.Type.statusBars())
         topOffset = statusInsets.top
@@ -135,6 +154,16 @@ open class HeaderView @JvmOverloads constructor(
         setDrawableForView(actionView, resId)
     }
 
+    fun setRightContent(view: View?) {
+        rightContentView.removeAllViews()
+        if (view != null) {
+            rightContentView.visibility = View.VISIBLE
+            rightContentView.addView(view)
+        } else {
+            rightContentView.visibility = View.GONE
+        }
+    }
+
     fun contentMatchParent() {
         titleView.layoutParams = titleView.layoutParams.apply {
             width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -150,6 +179,7 @@ open class HeaderView @JvmOverloads constructor(
     private fun setDrawableForView(view: AppCompatImageView, @DrawableRes resId: Int) {
         if (resId == 0) {
             view.alpha = 0f
+            view.setOnClickListener(null)
         } else {
             view.setImageResource(resId)
             view.alpha = 1f
@@ -185,6 +215,16 @@ open class HeaderView @JvmOverloads constructor(
         }
     }
 
+    fun hideIcon() {
+        closeView.visibility = View.GONE
+    }
+
+    fun setTitleGravity(gravity: Int) {
+        val layoutParams = titleView.layoutParams as LayoutParams
+        layoutParams.gravity = gravity
+        titleView.gravity = gravity
+    }
+
     fun hideText() {
         withAnimation(duration = ANIMATION_DURATION) {
             textView.alpha = 0f
@@ -198,7 +238,8 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(barHeight + topOffset, MeasureSpec.EXACTLY))
+        val size = if (ignoreSystemOffset) barHeight else barHeight + topOffset
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY))
     }
 
 }

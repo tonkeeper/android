@@ -1,17 +1,18 @@
 package com.tonapps.tonkeeper.ui.screen.notifications.list.holder
 
 import android.view.ViewGroup
-import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.extensions.drawable
 import uikit.widget.SwitchView
 
-class WalletPushHolder(parent: ViewGroup): Holder<Item.Wallet>(parent, R.layout.view_notifications_wallet) {
+class WalletPushHolder(
+    parent: ViewGroup,
+    private val onWalletCallback: (WalletEntity, Boolean) -> Unit
+): Holder<Item.Wallet>(parent, R.layout.view_notifications_wallet) {
 
-    private val settingsRepository: SettingsRepository? by lazy { context.settingsRepository }
     private val switchView = findViewById<SwitchView>(R.id.push)
 
     init {
@@ -25,7 +26,7 @@ class WalletPushHolder(parent: ViewGroup): Holder<Item.Wallet>(parent, R.layout.
         switchView.setChecked(item.pushEnabled, false)
         switchView.doCheckedChanged = { checked, byUser ->
             if (byUser) {
-                settingsRepository?.setPushWallet(item.walletId, checked)
+                onWalletCallback(item.wallet, checked)
             }
         }
     }

@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.backup.main.list
 
 import android.view.ViewGroup
+import com.tonapps.tonkeeper.ui.screen.backup.main.list.holder.AlertHolder
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.holder.BackupHolder
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.holder.HeaderHolder
+import com.tonapps.tonkeeper.ui.screen.backup.main.list.holder.ManualAccentHolder
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.holder.ManualHolder
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.holder.RecoveryPhraseHolder
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.holder.SpaceHolder
@@ -21,6 +23,8 @@ class Adapter(
             Item.TYPE_RECOVERY_PHRASE -> RecoveryPhraseHolder(parent, onClick)
             Item.TYPE_SPACE -> SpaceHolder(parent)
             Item.TYPE_MANUAL_BACKUP -> ManualHolder(parent, onClick)
+            Item.TYPE_MANUAL_ACCENT_BACKUP -> ManualAccentHolder(parent, onClick)
+            Item.TYPE_ALERT -> AlertHolder(parent)
             else -> throw IllegalArgumentException("Unknown viewType: $viewType")
         }
     }

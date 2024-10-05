@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.RowLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/itemHeight"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:text="@string/confirm_action"
+            android:textAppearance="@style/TextAppearance.H3"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:scaleType="centerInside"/>
+
+    </uikit.widget.RowLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:paddingBottom="@dimen/offsetMedium">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/offsetMedium"
+                android:background="@drawable/bg_content"
+                android:padding="@dimen/offsetMedium">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor"
+                    android:text="@string/step_1"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/step_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:textColor="?attr/textPrimaryColor"/>
+
+            </uikit.widget.ColumnLayout>
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="@dimen/offsetMedium"
+                android:background="@color/constantWhite"
+                android:padding="@dimen/offsetMedium">
+
+                <com.tonapps.qr.ui.QRView
+                    android:id="@+id/qr"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/transaction"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginTop="@dimen/offsetExtraSmall"
+                    android:textSize="14sp"
+                    android:textAllCaps="true"
+                    android:fontFamily="@font/roboto_mono"
+                    android:textColor="@color/constantBlack"
+                    android:text="@string/transaction"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginTop="@dimen/offsetExtraSmall"
+                    android:singleLine="true"
+                    android:textSize="14sp"
+                    android:textAllCaps="true"
+                    android:fontFamily="@font/roboto_mono"
+                    android:textColor="@color/constantBlack"/>
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/offsetMedium"
+                android:background="@drawable/bg_content"
+                android:padding="@dimen/offsetMedium">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor"
+                    android:text="@string/step_2"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/step_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:textColor="?attr/textPrimaryColor"/>
+
+            </uikit.widget.ColumnLayout>
+
+            <uikit.widget.ColumnLayout
+                android:id="@+id/camera_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/offsetMedium"
+                android:background="@drawable/bg_content">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:layout_marginTop="@dimen/offsetMedium"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor"
+                    android:text="@string/step_3"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/step_3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:textColor="?attr/textPrimaryColor"/>
+
+                <uikit.widget.SquareFrameLayout
+                    android:id="@+id/camera_frame"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/offsetMedium"
+                    android:background="@color/constantBlack">
+
+                    <androidx.camera.view.PreviewView
+                        android:id="@+id/camera"
+                        android:background="@color/constantBlack"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:implementationMode="compatible"/>
+
+                    <uikit.widget.CameraOverlayView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+
+                </uikit.widget.SquareFrameLayout>
+
+            </uikit.widget.ColumnLayout>
+
+        </uikit.widget.ColumnLayout>
+    </androidx.core.widget.NestedScrollView>
+</uikit.widget.ColumnLayout>

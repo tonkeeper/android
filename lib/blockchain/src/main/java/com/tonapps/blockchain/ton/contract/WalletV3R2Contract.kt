@@ -10,11 +10,11 @@ class WalletV3R2Contract(
     publicKey: PublicKeyEd25519,
 ) : WalletV3R1Contract(workchain, publicKey) {
 
-    override fun getWalletVersion() = WalletVersion.V3R2
+    override val features: WalletFeature = WalletFeature.NONE
 
-    override fun getSignaturePosition(): SignaturePosition {
-        return SignaturePosition.Front
-    }
+    override val maxMessages: Int = 4
+
+    override fun getWalletVersion() = WalletVersion.V3R2
 
     override fun getCode(): Cell {
         return CODE

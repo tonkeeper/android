@@ -1,11 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
@@ -13,22 +15,26 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
-class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
+class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_main_events_list, wallet) {
 
-    private val eventsViewModel: EventsViewModel by viewModel()
+    override val viewModel: EventsViewModel by walletViewModel()
 
     private val legacyAdapter = HistoryAdapter()
     private val paginationListener = object : ListPaginationListener() {
         override fun onLoadMore() {
-            eventsViewModel.loadMore()
+            viewModel.loadMore()
         }
     }
 
@@ -42,6 +48,7 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.history)
+        headerView.setSubtitle(Localization.updating)
         headerView.setColor(requireContext().backgroundTransparentColor)
 
         containerView = view.findViewById(R.id.container)
@@ -50,50 +57,51 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
         listView = view.findViewById(R.id.list)
         listView.adapter = legacyAdapter
         listView.addOnScrollListener(paginationListener)
-        listView.addItemDecoration(HistoryItemDecoration)
+        listView.addItemDecoration(HistoryItemDecoration())
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
             if (first) {
-                navigation?.add(PurchaseScreen.newInstance())
+                navigation?.add(PurchaseScreen.newInstance(screenContext.wallet))
             } else {
                 openQRCode()
             }
         }
-        collectFlow(eventsViewModel.isUpdatingFlow) { updating ->
-            if (updating) {
+
+        collectFlow(viewModel.uiStateFlow, ::applyState)
+    }
+
+    private suspend fun applyState(state: EventsUiState) = withContext(Dispatchers.Main) {
+        if (state.isEmpty) {
+            setEmptyState()
+        } else {
+            setListState()
+            if (state.isLoading) {
                 headerView.setSubtitle(Localization.updating)
-            } else {
-                headerView.setSubtitle(null)
+            }
+            legacyAdapter.submitList(state.items) {
+                if (!state.isLoading) {
+                    headerView.setSubtitle(null)
+                }
             }
         }
-        collectFlow(eventsViewModel.uiItemsFlow, ::setItems)
     }
 
     override fun scrollUp() {
         super.scrollUp()
-        eventsViewModel.update()
+        listView.scrollToPosition(0)
+        viewModel.refresh()
     }
 
     private fun openQRCode() {
-        collectFlow(eventsViewModel.openQRCode()) { walletEntity ->
-            navigation?.add(QRScreen.newInstance(walletEntity.address, TokenEntity.TON, walletEntity.type))
-        }
-    }
-
-    private fun setItems(items: List<HistoryItem>) {
-        if (items.isEmpty()) {
-            setEmptyState()
-        } else {
-            setListState()
-            legacyAdapter.submitList(items)
-        }
+        navigation?.add(QRScreen.newInstance(screenContext.wallet, TokenEntity.TON))
     }
 
     private fun setEmptyState() {
         if (emptyView.visibility == View.VISIBLE) {
             return
         }
+        headerView.setSubtitle(null)
         emptyView.visibility = View.VISIBLE
         containerView.visibility = View.GONE
     }
@@ -121,6 +129,6 @@ class EventsScreen: MainScreen.Child(R.layout.fragment_main_events_list) {
     }
 
     companion object {
-        fun newInstance() = EventsScreen()
+        fun newInstance(wallet: WalletEntity) = EventsScreen(wallet)
     }
 }

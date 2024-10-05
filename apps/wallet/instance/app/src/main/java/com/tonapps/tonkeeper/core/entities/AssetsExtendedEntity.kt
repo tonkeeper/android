@@ -9,6 +9,7 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 data class AssetsExtendedEntity(
     val raw: AssetsEntity,
     val prefs: TokenPrefsEntity,
+    val accountId: String
 ) {
 
     companion object {
@@ -27,7 +28,12 @@ data class AssetsExtendedEntity(
         get() = when (raw) {
             is AssetsEntity.Token -> raw.token
             is AssetsEntity.Staked -> AccountTokenEntity(
-                balance = raw.staked.balance,
+                balance = BalanceEntity.create(
+                    accountId = accountId,
+                    value = raw.staked.balance,
+                    isCompressed = false,
+                    isTransferable = true
+                ),
             )
         }
 
@@ -62,7 +68,7 @@ data class AssetsExtendedEntity(
         get() = prefs.pinned
 
     val hidden: Boolean
-        get() = prefs.hidden
+        get() = prefs.isHidden
 
     val index: Int
         get() = prefs.index

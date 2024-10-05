@@ -4,9 +4,18 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:icon="@drawable/ic_chevron_left_16"
+        android:action="@drawable/ic_close_16"/>
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/barHeight">
 
         <uikit.widget.ColumnLayout
             android:layout_width="match_parent"
@@ -94,7 +103,7 @@
         android:enabled="false"
         android:textAppearance="@style/TextAppearance.Label1"
         android:textColor="?attr/textPrimaryColor"
-        android:text="@string/staking_confirm"/>
+        android:text="@string/unstake_confirm"/>
 
 
 </FrameLayout>

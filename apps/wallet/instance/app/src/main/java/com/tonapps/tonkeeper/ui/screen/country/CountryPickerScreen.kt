@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.country
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.country.list.Adapter
 import com.tonapps.tonkeeperx.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -15,10 +17,11 @@ import uikit.extensions.topScrolled
 import uikit.widget.HeaderView
 import uikit.widget.SearchInput
 
-class CountryPickerScreen: BaseFragment(R.layout.fragment_country), BaseFragment.BottomSheet {
+class CountryPickerScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_country, ScreenContext.None), BaseFragment.BottomSheet {
+
+    override val viewModel: CountryPickerViewModel by viewModel()
 
     private val requestKey: String by lazy { requireArguments().getString(ARG_REQUEST_KEY)!! }
-    private val countryPickerViewModel: CountryPickerViewModel by viewModel()
     private val adapter = Adapter(::setCountry)
 
     private lateinit var headerDrawable: HeaderDrawable
@@ -30,7 +33,7 @@ class CountryPickerScreen: BaseFragment(R.layout.fragment_country), BaseFragment
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         resultContract = CountryResultContract(requestKey, requireContext())
-        collectFlow(countryPickerViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -42,7 +45,7 @@ class CountryPickerScreen: BaseFragment(R.layout.fragment_country), BaseFragment
 
         searchView = view.findViewById(R.id.search)
         searchView.background = headerDrawable
-        searchView.doOnTextChanged = countryPickerViewModel::search
+        searchView.doOnTextChanged = viewModel::search
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
@@ -52,7 +55,7 @@ class CountryPickerScreen: BaseFragment(R.layout.fragment_country), BaseFragment
     }
 
     private fun setCountry(code: String) {
-        countryPickerViewModel.setCountry(code)
+        viewModel.setCountry(code)
         resultContract.setResult(code)
         finish()
     }

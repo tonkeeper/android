@@ -46,30 +46,17 @@
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/subtitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/offsetMedium"
         android:layout_marginTop="2dp"
         android:singleLine="true"
-        android:maxLength="18"
+        android:ellipsize="end"
         android:textAppearance="@style/TextAppearance.Body2"
         android:textColor="?attr/textSecondaryColor"
         app:layout_constraintStart_toEndOf="@+id/icon"
+        app:layout_constraintEnd_toStartOf="@id/date"
         app:layout_constraintTop_toBottomOf="@+id/title"/>
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/warning"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/offsetMedium"
-        android:layout_marginTop="6dp"
-        android:singleLine="true"
-        android:text="@string/failed"
-        android:maxLength="18"
-        android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="?attr/accentOrangeColor"
-        app:layout_constraintStart_toEndOf="@+id/icon"
-        app:layout_constraintTop_toBottomOf="@+id/subtitle"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/amount"
@@ -120,13 +107,24 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/date">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <uikit.widget.ColumnLayout
             android:id="@+id/body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="60dp"
-            android:paddingHorizontal="@dimen/offsetMedium"
-            android:orientation="vertical">
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/warning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:singleLine="true"
+                android:text="@string/failed"
+                android:maxLength="18"
+                android:visibility="gone"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/accentOrangeColor"/>
 
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/nft"
@@ -189,7 +187,7 @@
                 android:textColor="?attr/textPrimaryColor"
                 android:textSize="14sp"/>
 
-        </androidx.appcompat.widget.LinearLayoutCompat>
+        </uikit.widget.ColumnLayout>
 
     </FrameLayout>
 

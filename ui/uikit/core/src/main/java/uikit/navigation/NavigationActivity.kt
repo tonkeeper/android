@@ -20,6 +20,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.backgroundContentTintColor
@@ -27,17 +28,17 @@ import uikit.R
 import uikit.base.BaseActivity
 import uikit.base.BaseFragment
 import uikit.extensions.doOnEnd
+import uikit.extensions.findFragment
 import uikit.extensions.hapticConfirm
 import uikit.extensions.primaryFragment
 import uikit.extensions.runAnimation
 import uikit.widget.ToastView
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.OnPreDrawListener {
 
-    companion object {
-        val hostFragmentId = R.id.root_container
-        val hostSheetId = R.id.sheet_container
-    }
+    open val hostFragmentId: Int = R.id.root_container
+    open val hostSheetId: Int = R.id.sheet_container
 
     open val isInitialized: Boolean
         get() = supportFragmentManager.fragments.isNotEmpty()
@@ -48,6 +49,8 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     private lateinit var baseView: View
     private lateinit var contentView: View
     private lateinit var toastView: ToastView
+
+    private val nextFragmentRequestCode = AtomicInteger()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,6 +121,13 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
+    override fun resetFragmentResult(requestKey: String) {
+        supportFragmentManager.apply {
+            clearFragmentResult(requestKey)
+            clearFragmentResultListener(requestKey)
+        }
+    }
+
     fun setPrimaryFragment(
         fragment: BaseFragment,
         recreate: Boolean = false,
@@ -144,8 +154,15 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         return true
     }
 
+    open fun isNeedRemoveModals(fragment: BaseFragment): Boolean {
+        return fragment !is BaseFragment.Modal
+    }
+
     override fun add(fragment: BaseFragment) {
-        val removeModals = fragment !is BaseFragment.Modal
+        if (fragment is BaseFragment.SingleTask) {
+            removeOldSingleTaskFragments()
+        }
+        val removeModals = isNeedRemoveModals(fragment)
         val transaction = supportFragmentManager.beginTransaction()
         if (fragment is BaseFragment.BottomSheet || fragment is BaseFragment.Modal) {
             transaction.add(hostSheetId, fragment)
@@ -159,14 +176,45 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         transaction.commitAllowingStateLoss()
     }
 
+    private fun removeOldSingleTaskFragments() {
+        val fragments = supportFragmentManager.fragments.filterIsInstance<BaseFragment.SingleTask>()
+        for (fragment in fragments) {
+            if (fragment is BaseFragment) {
+                fragment.finish()
+            }
+        }
+    }
+
+    override fun addForResult(
+        fragment: BaseFragment,
+        callback: (Bundle) -> Unit
+    ) {
+        val requestKey = "fragment_rq#" + nextFragmentRequestCode.getAndIncrement()
+        fragment.setResultKey(requestKey)
+        setFragmentResultListener(requestKey) { bundle ->
+            resetFragmentResult(requestKey)
+            callback(bundle)
+        }
+        add(fragment)
+    }
+
     override fun remove(fragment: Fragment) {
         if (supportFragmentManager.primaryNavigationFragment == fragment) {
             finish()
-        } else {
-            supportFragmentManager.commit {
-                remove(fragment)
-            }
+        } else if (!isStateSaved()) {
+            val transaction = supportFragmentManager.beginTransaction()
+            transaction.remove(fragment)
+            transaction.commitAllowingStateLoss()
         }
+    }
+
+    override fun removeByClass(clazz: Class<out Fragment>) {
+        val fragment = supportFragmentManager.fragments.find { it.javaClass == clazz }
+        fragment?.let { remove(it) }
+    }
+
+    private fun isStateSaved(): Boolean {
+        return supportFragmentManager.isStateSaved || isFinishing || isDestroyed
     }
 
     private fun clearBackStack() {

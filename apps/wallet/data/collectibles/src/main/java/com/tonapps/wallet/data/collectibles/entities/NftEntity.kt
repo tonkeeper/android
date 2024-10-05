@@ -2,11 +2,10 @@ package com.tonapps.wallet.data.collectibles.entities
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.entity.AccountEntity
+import com.tonapps.wallet.data.core.Trust
 import io.tonapi.models.NftItem
-import io.tonapi.models.TrustType
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -20,7 +19,7 @@ data class NftEntity(
     val verified: Boolean,
     val inSale: Boolean,
     val dns: String?,
-    val isTrusted: Boolean,
+    val trust: Trust,
 ): Parcelable {
 
     val id: String
@@ -36,13 +35,22 @@ data class NftEntity(
         get() = metadata.description ?: ""
 
     val collectionName: String
-        get() = collection?.name ?: ""
+        get() {
+            val name = collection?.name
+            if (name.isNullOrBlank() && isDomain) {
+                return "TON DNS"
+            }
+            return name ?: ""
+        }
 
     val collectionDescription: String
         get() = collection?.description ?: ""
 
     val isDomain: Boolean
         get() = dns != null
+
+    val ownerAddress: String
+        get() = owner?.address ?: address
 
     val thumbUri: Uri by lazy {
         getImageUri(64, 320) ?: previews.first().url.let { Uri.parse(it) }
@@ -55,6 +63,12 @@ data class NftEntity(
     val bigUri: Uri by lazy {
         getImageUri(512, 1024) ?: previews.last().url.let { Uri.parse(it) }
     }
+
+    val isTrusted: Boolean
+        get() = trust == Trust.whitelist
+
+    val suspicious: Boolean
+        get() =  trust == Trust.none || trust == Trust.blacklist
 
     private fun getImage(minSize: Int, maxSize: Int): NftPreviewEntity? {
         return previews.find {
@@ -82,6 +96,6 @@ data class NftEntity(
         verified = item.approvedBy.isNotEmpty(),
         inSale = item.sale != null,
         dns = item.dns,
-        isTrusted = item.trust == TrustType.whitelist
+        trust = Trust(item.trust),
     )
 }

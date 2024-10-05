@@ -2,29 +2,25 @@ package uikit.widget
 
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
-import android.view.MotionEvent
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowInsets
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
-import androidx.core.math.MathUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
-import androidx.core.view.updateLayoutParams
-import androidx.customview.widget.ViewDragHelper
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import uikit.R
-import uikit.base.BaseFragment
 import uikit.extensions.activity
 import uikit.extensions.dp
+import uikit.extensions.findFragments
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.range
 import uikit.extensions.roundTop
@@ -50,9 +46,26 @@ class BottomSheetLayout @JvmOverloads constructor(
     var doOnDragging: (() -> Unit)? = null
     var fragment: Fragment? = null
 
+    private val parentRadius = context.getDimensionPixelSize(R.dimen.cornerMedium)
+
+    private val fragmentManager: FragmentManager?
+        get() = (context.activity as? FragmentActivity)?.supportFragmentManager
+
     private val parentRootView: View? by lazy {
-        val v = context.activity?.findViewById<View>(R.id.root_container)
-        v
+        context.activity?.findViewById(R.id.root_container)
+    }
+
+    private val sheetContainerView: View? by lazy {
+        context.activity?.findViewById(R.id.sheet_container)
+    }
+
+    private val stackFragments: List<Fragment> by lazy {
+        fragmentManager?.findFragments(R.id.sheet_container) ?: emptyList()
+    }
+
+    private val stackViews: List<View> by lazy {
+        val stackViews = stackFragments.dropLast(1).map { it.view }
+        (listOf(parentRootView) + stackViews).asReversed().filterNotNull()
     }
 
     private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
@@ -95,6 +108,7 @@ class BottomSheetLayout @JvmOverloads constructor(
         contentView = findViewById(R.id.sheet_content)
 
         behavior = BottomSheetBehavior.from(contentView)
+        behavior.hideFriction = 0.4f
         behavior.addBottomSheetCallback(bottomSheetCallback)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
@@ -140,11 +154,14 @@ class BottomSheetLayout @JvmOverloads constructor(
     }
 
     private fun onAnimationUpdateParent(progress: Float) {
-        val parentView = parentRootView ?: return
-        val radius = context.getDimensionPixelSize(R.dimen.cornerMedium)
-        parentView.roundTop(progress.range(0, radius))
-        parentView.scale = progress.range(1f, parentScale)
-        parentView.alpha = progress.range(1f, parentAlpha)
+        if (stackViews.size > 1) {
+            return
+        }
+
+        val lastView = stackViews.lastOrNull() ?: return
+        lastView.roundTop(progress.range(0, parentRadius))
+        lastView.scale = progress.range(1f, parentScale)
+        lastView.alpha = progress.range(1f, parentAlpha)
     }
 
     private fun releaseScreen() {

@@ -1,39 +1,36 @@
 package com.tonapps.tonkeeper.ui.screen.browser.search
 
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.net.toUri
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 import uikit.extensions.isMaxScrollReached
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 
-class BrowserSearchScreen: BaseFragment(R.layout.fragment_browser_search) {
+class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_search, wallet) {
 
-    private val searchViewModel: BrowserSearchViewModel by viewModel()
+    override val viewModel: BrowserSearchViewModel by viewModel()
+
     private val adapter = Adapter { title, url ->
-        val host = Uri.parse(url).host ?: url
-        navigation?.add(DAppScreen.newInstance(title, host, url))
+        navigation?.add(DAppScreen.newInstance(screenContext.wallet, title, url.toUri()))
         finish()
     }
 
@@ -56,7 +53,7 @@ class BrowserSearchScreen: BaseFragment(R.layout.fragment_browser_search) {
         footerDrawable.setColor(requireContext().backgroundTransparentColor)
 
         searchContainer = view.findViewById(R.id.search_container)
-        searchContainer.doKeyboardAnimation { offset, progress, isShowing ->
+        searchContainer.doKeyboardAnimation { offset, _, isShowing ->
             view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 bottomMargin = offset
             }
@@ -66,15 +63,17 @@ class BrowserSearchScreen: BaseFragment(R.layout.fragment_browser_search) {
         }
 
         searchInput = view.findViewById(R.id.search_input)
-        searchInput.doAfterTextChanged { searchViewModel.query(it.toString()) }
+        searchInput.doAfterTextChanged { viewModel.query(it.toString()) }
         contentView = view.findViewById(R.id.content)
+
+        view.findViewById<View>(R.id.search_icon).setOnClickListener { searchInput.hideKeyboard() }
 
         placeholderView = view.findViewById(R.id.placeholder)
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
 
-        collectFlow(searchViewModel.uiItemsFlow) {
+        collectFlow(viewModel.uiItemsFlow) {
             submitList(it)
             placeholderView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
         }
@@ -98,6 +97,6 @@ class BrowserSearchScreen: BaseFragment(R.layout.fragment_browser_search) {
     }
 
     companion object {
-        fun newInstance() = BrowserSearchScreen()
+        fun newInstance(wallet: WalletEntity) = BrowserSearchScreen(wallet)
     }
 }

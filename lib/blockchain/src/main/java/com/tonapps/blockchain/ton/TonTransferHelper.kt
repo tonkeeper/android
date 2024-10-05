@@ -1,11 +1,16 @@
 package com.tonapps.blockchain.ton
 
+import com.tonapps.blockchain.ton.extensions.storeMaybeRef
+import com.tonapps.blockchain.ton.extensions.storeOpCode
+import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
+import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.buildCell
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
+import org.ton.tlb.loadTlb
 import org.ton.tlb.storeRef
 import org.ton.tlb.storeTlb
 import java.math.BigInteger
@@ -41,24 +46,20 @@ object TonTransferHelper {
         responseAddress: MsgAddressInt,
         queryId: BigInteger = BigInteger.ZERO,
         forwardAmount: Long = 1L,
-        body: Any? = null,
+        forwardPayload: Any? = null,
+        customPayload: Cell? = null
     ): Cell {
-        val payload = body(body)
+        val payload = body(forwardPayload)
 
         return buildCell {
-            storeUInt(0xf8a7ea5, 32)
+            storeOpCode(TONOpCode.JETTON_TRANSFER)
             storeUInt(queryId, 64)
             storeTlb(Coins, coins)
             storeTlb(MsgAddressInt, toAddress)
             storeTlb(MsgAddressInt, responseAddress)
-            storeBit(false)
+            storeMaybeRef(customPayload)
             storeTlb(Coins, Coins.ofNano(forwardAmount))
-            if (payload == null) {
-                storeBit(false)
-            } else {
-                storeBit(true)
-                storeRef(AnyTlbConstructor, CellRef(payload))
-            }
+            storeMaybeRef(payload)
         }
     }
 
@@ -72,7 +73,7 @@ object TonTransferHelper {
         val payload = body(body)
 
         return buildCell {
-            storeUInt(0x5fcc3d14, 32)
+            storeOpCode(TONOpCode.NFT_TRANSFER)
             storeUInt(queryId, 64)
             storeTlb(MsgAddressInt, newOwnerAddress)
             storeTlb(MsgAddressInt, excessesAddress)

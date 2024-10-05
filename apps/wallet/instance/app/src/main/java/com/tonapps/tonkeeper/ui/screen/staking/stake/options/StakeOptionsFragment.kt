@@ -4,10 +4,20 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragment
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.list.Item
+import com.tonapps.tonkeeper.ui.screen.staking.stake.pool.StakePoolFragment
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
+import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
@@ -15,19 +25,17 @@ import kotlinx.coroutines.flow.onEach
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 
-class StakeOptionsFragment: StakingScreen.ChildFragment(R.layout.fragment_simple_list) {
+class StakeOptionsFragment(wallet: WalletEntity): BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, StakingScreen, StakingViewModel>(ScreenContext.Wallet(wallet)) {
 
-    private val adapter = Adapter { pool ->
-        stakeViewModel.details(pool)
+    private val adapter = Adapter { info ->
+        openPool(info)
     }
-
-    private lateinit var listView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         combine(
-            stakeViewModel.poolsFlow,
-            stakeViewModel.selectedPoolFlow
+            primaryViewModel.poolsFlow,
+            primaryViewModel.selectedPoolFlow
         ) { pools, selectedPool ->
             val uniquePools = pools.distinctBy { it.implementation }
             Item.map(uniquePools, selectedPool)
@@ -36,14 +44,22 @@ class StakeOptionsFragment: StakingScreen.ChildFragment(R.layout.fragment_simple
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        listView = view.findViewById(R.id.list)
-        listView.adapter = adapter
-        listView.setPaddingHorizontal(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
+        setAdapter(adapter)
+        setCloseIcon(UIKitIcon.ic_chevron_left_16) { popBackStack() }
+        setActionIcon(UIKitIcon.ic_close_16) { finish() }
+        setTitle(getString(Localization.staking_options))
     }
 
-    override fun getTitle() = getString(Localization.staking_options)
+    private fun openPool(info: PoolInfoEntity) {
+        if (info.pools.size > 1) {
+            setFragment(StakePoolFragment.newInstance(screenContext.wallet, info))
+        } else {
+            val singlePool = info.pools.firstOrNull() ?: return
+            setFragment(StakeDetailsFragment.newInstance(info, singlePool.address))
+        }
+    }
 
     companion object {
-        fun newInstance() = StakeOptionsFragment()
+        fun newInstance(wallet: WalletEntity) = StakeOptionsFragment(wallet)
     }
 }

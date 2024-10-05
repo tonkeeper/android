@@ -22,9 +22,11 @@ import android.view.animation.Animation
 import android.widget.TextView
 import androidx.annotation.AnimRes
 import androidx.annotation.DrawableRes
+import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -128,6 +130,20 @@ fun View.roundTop(radius: Int) {
     }
 }
 
+fun View.roundBottom(radius: Int) {
+    if (radius == 0) {
+        outlineProvider = null
+        clipToOutline = false
+    } else {
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, -radius * 2, view.width, view.height, radius.toFloat())
+            }
+        }
+        clipToOutline = true
+    }
+}
+
 fun View.round(radius: Int) {
     if (radius == 0) {
         outlineProvider = null
@@ -181,6 +197,19 @@ fun View.expandTouchArea(extraPadding: Int) {
         val rect = Rect()
         getHitRect(rect)
         rect.inset(-extraPadding, -extraPadding)
+        parent.touchDelegate = TouchDelegate(rect, this)
+    }
+}
+
+fun View.expandTouchArea(left: Int, top: Int, right: Int, bottom: Int) {
+    val parent = parent as? View ?: return
+    parent.post {
+        val rect = Rect()
+        getHitRect(rect)
+        rect.top -= top
+        rect.left -= left
+        rect.right += right
+        rect.bottom += bottom
         parent.touchDelegate = TouchDelegate(rect, this)
     }
 }
@@ -259,12 +288,14 @@ fun View.reject() {
     hapticReject()
 }
 
-inline fun View.doKeyboardAnimation(crossinline block: (
-    offset: Int,
-    progress: Float,
-    isShowing: Boolean
-) -> Unit) {
-    val animationCallback = object : KeyboardAnimationCallback(this) {
+inline fun View.doKeyboardAnimation(
+    ignoreNavBar: Boolean = false,
+    crossinline block: (
+        offset: Int,
+        progress: Float,
+        isShowing: Boolean) -> Unit
+) {
+    val animationCallback = object : KeyboardAnimationCallback(this, ignoreNavBar) {
         override fun onKeyboardOffsetChanged(offset: Int, progress: Float, isShowing: Boolean) {
             block(offset, progress, isShowing)
         }
@@ -305,4 +336,32 @@ fun TextView.setRightDrawable(drawable: Drawable?) {
 
 fun TextView.clearDrawables() {
     setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
+}
+
+fun View.setChildText(@IdRes id: Int, textRes: Int) {
+    findViewById<TextView>(id).setText(textRes)
+}
+
+fun View.gone(@IdRes id: Int) {
+    findViewById<View>(id).visibility = View.GONE
+}
+
+fun View.round(@IdRes id: Int, radius: Int) {
+    findViewById<View>(id).round(radius)
+}
+
+fun View.roundBottom(@IdRes id: Int, radius: Int) {
+    findViewById<View>(id).roundBottom(radius)
+}
+
+fun View.setOnClickListener(@IdRes id: Int, block: () -> Unit) {
+    findViewById<View>(id).setOnClickListener { block() }
+}
+
+fun View.setBackgroundColor(@IdRes id: Int, color: Int) {
+    findViewById<View>(id).setBackgroundColor(color)
+}
+
+fun View.setBackground(@IdRes id: Int, drawable: Drawable) {
+    findViewById<View>(id).background = drawable
 }

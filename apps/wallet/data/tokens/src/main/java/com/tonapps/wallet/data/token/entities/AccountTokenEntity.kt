@@ -12,16 +12,19 @@ import kotlinx.parcelize.Parcelize
 data class AccountTokenEntity(
     val balance: BalanceEntity,
     @IgnoredOnParcel
-    var rate: TokenRateEntity? = null,
+    private var fiatRate: TokenRateEntity? = null,
 ): Parcelable {
 
     companion object {
 
         val EMPTY = AccountTokenEntity(
-            BalanceEntity(
-                TokenEntity.TON,
-                Coins.ZERO,
-                ""
+            balance = BalanceEntity(
+                token = TokenEntity.TON,
+                value = Coins.ZERO,
+                walletAddress = "",
+                initializedAccount = false,
+                isCompressed = false,
+                isTransferable = true,
             )
         )
     }
@@ -44,21 +47,27 @@ data class AccountTokenEntity(
     val isTon: Boolean
         get() = address == TokenEntity.TON.address
 
+    val isLiquid: Boolean
+        get() = balance.token.isLiquid
+
     val isUsdt: Boolean
         get() = address == TokenEntity.USDT.address
 
     val fiat: Coins
-        get() = rate?.fiat ?: Coins.ZERO
+        get() = fiatRate?.fiat ?: Coins.ZERO
 
     val rateNow: Coins
-        get() = rate?.rate ?: Coins.ZERO
+        get() = fiatRate?.rate ?: Coins.ZERO
 
     val rateDiff24h: String
-        get() = rate?.rateDiff24h ?: ""
+        get() = fiatRate?.rateDiff24h ?: ""
 
     val verified: Boolean
-        get() = balance.token.verification == TokenEntity.Verification.whitelist
+        get() = balance.token.verified
 
     val blacklist: Boolean
-        get() = balance.token.verification == TokenEntity.Verification.blacklist
+        get() = balance.token.blacklist
+
+    val isCompressed: Boolean
+        get() = balance.isCompressed
 }

@@ -10,6 +10,8 @@ sealed class UnStakeEvent {
         val amount: Coins
     ): UnStakeEvent()
 
+    data object RouteToAmount: UnStakeEvent()
+
     data object Finish: UnStakeEvent()
 
 }

@@ -9,6 +9,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.AccountEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.localization.Localization
 
@@ -32,7 +33,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val value: CharSequence? = null,
         val value2: CharSequence? = null,
         val valueColorRef: Int = UIKitColor.textPrimaryColor,
-        val nft: NftEntity? = null
+        val nft: NftEntity? = null,
+        val wallet: WalletEntity,
     ): Item(TYPE_ACTION)
 
     class SendAction(
@@ -41,7 +43,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         comment: String?,
         loading: Boolean,
         value: CharSequence,
-        nft: NftEntity? = null
+        nft: NftEntity? = null,
+        wallet: WalletEntity
     ): Action(
         position = position,
         iconUri = account.iconUri ?: UIKitIcon.ic_tray_arrow_up_28.uri(),
@@ -50,7 +53,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         comment = comment,
         loading = loading,
         value = value,
-        nft = nft
+        nft = nft,
+        wallet = wallet
     )
 
     class ReceiveAction(
@@ -59,7 +63,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         comment: String?,
         loading: Boolean,
         value: CharSequence,
-        nft: NftEntity? = null
+        nft: NftEntity? = null,
+        wallet: WalletEntity
     ): Action(
         position = position,
         iconUri = account.iconUri ?: R.drawable.ic_tray_arrow_down_28.uri(),
@@ -69,7 +74,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         loading = loading,
         value = value,
         valueColorRef = UIKitColor.accentGreenColor,
-        nft = nft
+        nft = nft,
+        wallet = wallet
     )
 
     class Swap(
@@ -78,6 +84,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         accountName: String,
         value: String,
         value2: String,
+        wallet: WalletEntity
     ): Action(
         position = position,
         iconUri = R.drawable.ic_swap_horizontal_alternative_28.uri(),
@@ -86,17 +93,20 @@ sealed class Item(type: Int): BaseListItem(type) {
         loading = loading,
         value = value,
         valueColorRef = UIKitColor.accentGreenColor,
-        value2 = value2
+        value2 = value2,
+        wallet = wallet
     )
 
     class UnknownAction(
         position: ListCell.Position,
+        wallet: WalletEntity
     ): Action(
         position = position,
         iconUri = UIKitIcon.ic_gear_28.uri(),
         titleRes = Localization.unknown,
         subtitle = "",
-        comment = null
+        comment = null,
+        wallet = wallet
     )
 
     data object Space: Item(TYPE_SPACE)

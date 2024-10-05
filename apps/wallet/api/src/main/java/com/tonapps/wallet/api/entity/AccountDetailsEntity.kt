@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import io.tonapi.models.Account
@@ -13,7 +14,8 @@ data class AccountDetailsEntity(
     val preview: AccountEntity,
     val active: Boolean,
     val walletVersion: WalletVersion,
-    val balance: Long
+    val balance: Long,
+    val new: Boolean = false,
 ): Parcelable {
 
     val address: String
@@ -25,28 +27,30 @@ data class AccountDetailsEntity(
     val isWallet: Boolean
         get() = preview.isWallet
 
-    constructor(contract: BaseWalletContract, testnet: Boolean) : this(
+    constructor(contract: BaseWalletContract, testnet: Boolean, new: Boolean = false) : this(
         query = "",
         preview = AccountEntity(contract.address, testnet),
         active = true,
         walletVersion = contract.getWalletVersion(),
-        balance = 0
+        balance = 0,
+        new = new
     )
 
-    constructor(query: String, account: Account, testnet: Boolean) : this(
+    constructor(query: String, account: Account, testnet: Boolean, new: Boolean = false) : this(
         query = query,
         preview = AccountEntity(account, testnet),
         active = account.status == AccountStatus.active,
         walletVersion = resolveVersion(account.interfaces),
-        balance = account.balance
+        balance = account.balance,
+        new = new
     )
 
     private companion object {
         private fun resolveVersion(interfaces: List<String>?): WalletVersion {
             interfaces ?: return WalletVersion.UNKNOWN
-            return if(interfaces.contains("wallet_v5_beta")) {
-                WalletVersion.V5R1BETA
-            } else if (interfaces.contains("wallet_v5")) {
+            return if (interfaces.contains("wallet_v5_beta")) {
+                WalletVersion.V5BETA
+            } else if (interfaces.contains("wallet_v5") || interfaces.contains("wallet_v5r1")) {
                 WalletVersion.V5R1
             } else if (interfaces.contains("wallet_v4r2")) {
                 WalletVersion.V4R2

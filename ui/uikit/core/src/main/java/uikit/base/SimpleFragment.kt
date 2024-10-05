@@ -25,6 +25,10 @@ abstract class SimpleFragment<P: BaseFragment>(
             }
         }
 
+    fun setArgs(args: BaseArgs) {
+        arguments = args.toBundle()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.setOnClickListener {  }

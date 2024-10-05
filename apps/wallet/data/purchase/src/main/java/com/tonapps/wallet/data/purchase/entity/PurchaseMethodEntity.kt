@@ -17,6 +17,9 @@ data class PurchaseMethodEntity(
     val successUrlPattern: SuccessUrlPattern?,
 ): Parcelable {
 
+    val useCustomTabs: Boolean
+        get() = id == "mercuryo"
+
     companion object {
 
         fun parse(array: JSONArray): List<PurchaseMethodEntity> {

@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.component
 
 import android.content.Context
 import android.graphics.Canvas
-import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.view.WindowInsets
@@ -11,8 +10,6 @@ import androidx.core.view.updatePadding
 import blur.BlurCompat
 import com.tonapps.tonkeeper.isBlurDisabled
 import com.tonapps.tonkeeper.isLowDevice
-import com.tonapps.tonkeeper.koin.api
-import com.tonapps.wallet.api.entity.FlagsEntity
 import uikit.extensions.getDimensionPixelSize
 import uikit.widget.SimpleRecyclerView
 

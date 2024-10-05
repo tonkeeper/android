@@ -6,27 +6,42 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.countryEmoji
+import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.navigation.NavigationActivity
 import kotlin.coroutines.resume
 
-class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.BottomSheet {
+class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_purchase, wallet), BaseFragment.BottomSheet {
 
-    private val purchaseViewModel: PurchaseViewModel by viewModel()
+    override val viewModel: PurchaseViewModel by walletViewModel()
+
+    private val settingsRepository: SettingsRepository by inject()
+    private val api: API by inject()
+
     private val adapter: Adapter by lazy { Adapter(::open) }
     private val confirmDialog: PurchaseConfirmDialog by lazy {
         PurchaseConfirmDialog(requireContext())
@@ -39,7 +54,7 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectFlow(purchaseViewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,10 +65,10 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
         }
 
         tabBuyView = view.findViewById(R.id.tab_buy)
-        tabBuyView.setOnClickListener { purchaseViewModel.setTab(PurchaseViewModel.Tab.BUY) }
+        tabBuyView.setOnClickListener { viewModel.setTab(PurchaseViewModel.Tab.BUY) }
 
         tabSellView = view.findViewById(R.id.tab_sell)
-        tabSellView.setOnClickListener { purchaseViewModel.setTab(PurchaseViewModel.Tab.SELL) }
+        tabSellView.setOnClickListener { viewModel.setTab(PurchaseViewModel.Tab.SELL) }
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
@@ -61,11 +76,11 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
 
         view.findViewById<View>(R.id.close).setOnClickListener { finish() }
 
-        collectFlow(purchaseViewModel.countryFlow) { country ->
+        collectFlow(viewModel.countryFlow) { country ->
             countryView.text = country.countryEmoji
         }
 
-        collectFlow(purchaseViewModel.tabFlow, ::applyTab)
+        collectFlow(viewModel.tabFlow, ::applyTab)
     }
 
     private fun applyTab(tab: PurchaseViewModel.Tab) {
@@ -79,28 +94,28 @@ class PurchaseScreen: BaseFragment(R.layout.fragment_purchase), BaseFragment.Bot
     }
 
     private fun open(method: PurchaseMethodEntity) {
-        combine(
-            purchaseViewModel.open(method),
-            purchaseViewModel.walletFlow
-        ) { showConfirmDialog, wallet ->
-            if (showConfirmDialog && !confirmDialog(method)) {
-                purchaseViewModel.disableConfirmDialog(wallet, method)
+        val activity = requireActivity() as NavigationActivity
+        val methodWrapped = WalletPurchaseMethodEntity(
+            method = method,
+            wallet = screenContext.wallet,
+            currency = settingsRepository.currency.code,
+            config = api.config
+        )
+        if (viewModel.isPurchaseOpenConfirm(method)) {
+            confirmDialog.show(method) { showAgain ->
+                if (!showAgain) {
+                    viewModel.disableConfirmDialog(screenContext.wallet, method)
+                }
+                PurchaseWebScreen.open(activity, methodWrapped)
             }
-            navigation?.add(PurchaseWebScreen.newInstance(method))
-            finish()
-        }.launchIn(lifecycleScope)
-    }
-
-    private suspend fun confirmDialog(
-        method: PurchaseMethodEntity
-    ): Boolean = suspendCancellableCoroutine { continuation ->
-        confirmDialog.show(method) { showAgain ->
-            continuation.resume(showAgain)
+        } else {
+            PurchaseWebScreen.open(activity, methodWrapped)
         }
     }
 
     companion object {
         private const val COUNTRY_REQUEST_KEY = "buy_country_request"
-        fun newInstance() = PurchaseScreen()
+
+        fun newInstance(wallet: WalletEntity) = PurchaseScreen(wallet)
     }
 }

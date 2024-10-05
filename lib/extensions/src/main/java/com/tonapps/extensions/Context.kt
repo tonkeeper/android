@@ -5,25 +5,45 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
-import android.os.Build
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
+import android.os.LocaleList
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.ActivityCompat
+import androidx.core.os.LocaleListCompat
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
+import uikit.extensions.activity
 import java.io.File
-import java.security.spec.AlgorithmParameterSpec
 import java.util.Locale
+import java.util.concurrent.CancellationException
+
+val isUIThread: Boolean
+    get() = Thread.currentThread() == android.os.Looper.getMainLooper().thread
 
 val Context.locale: Locale
     get() {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            resources.configuration.locales.get(0)
-        } else {
-            resources.configuration.locale
-        }
+        return resources.configuration.locales.get(0)
     }
+
+val Context.locales: LocaleList
+    get() {
+        return resources.configuration.locales
+    }
+
+fun Context.setLocales(locales: LocaleListCompat) {
+    try {
+        AppCompatDelegate.setApplicationLocales(locales)
+    } catch (e: Throwable) {
+        recreate()
+    }
+}
+
+fun Context.recreate() {
+    val activity = activity ?: return
+    ActivityCompat.recreate(activity)
+}
 
 val Context.isDebug: Boolean
     get() = 0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE
@@ -49,9 +69,6 @@ val Context.appVersionName: String
 val Context.appVersionCode: Long
     get() = packageInfo.versionCodeCompat
 
-val Context.isMainVersion: Boolean
-    get() = packageInfo.packageName == "com.ton_keeper"
-
 fun Context.prefs(name: String): SharedPreferences {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
@@ -68,3 +85,17 @@ val Context.activity: ComponentActivity?
         return null
     }
 
+
+fun Context.logError(e: Throwable) {
+    if (e is CancellationException) {
+        return
+    }
+    Log.e("TonkeeperLog", e.message, e)
+}
+
+val Context.hasGMS: Boolean
+    get() {
+        val googleApiAvailability = GoogleApiAvailability.getInstance()
+        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
+        return resultCode == ConnectionResult.SUCCESS
+    }

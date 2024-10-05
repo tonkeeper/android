@@ -1,6 +1,5 @@
 package uikit.insets
 
-import android.util.Log
 import android.view.View
 import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
@@ -10,11 +9,16 @@ import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.insetsBottomTypeMask
 
 abstract class KeyboardAnimationCallback(
-    private val view: View
-): InsetsAnimationCallback(view, insetsBottomTypeMask) {
+    private val view: View,
+    private val ignoreNavBar: Boolean,
+): InsetsAnimationCallback(view, if (ignoreNavBar) WindowInsetsCompat.Type.ime() else insetsBottomTypeMask) {
 
     private val navigationOffset: Int by lazy {
-        view.getRootWindowInsetsCompat()?.getInsets(WindowInsetsCompat.Type.systemBars())?.bottom ?: 0
+        if (ignoreNavBar) {
+            0
+        } else {
+            view.getRootWindowInsetsCompat()?.getInsets(WindowInsetsCompat.Type.systemBars())?.bottom ?: 0
+        }
     }
 
     private val imeOffset: Int
@@ -36,7 +40,11 @@ abstract class KeyboardAnimationCallback(
 
     override fun onUpdateInsets(insets: WindowInsetsCompat, animation: WindowInsetsAnimationCompat) {
         val fraction = animation.interpolatedFraction
-        val offset = insets.bottomBarsOffset
+        val offset = if (ignoreNavBar) {
+            insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+        } else {
+            insets.bottomBarsOffset
+        }
         keyboardOffsetChanged(offset, fraction)
     }
 

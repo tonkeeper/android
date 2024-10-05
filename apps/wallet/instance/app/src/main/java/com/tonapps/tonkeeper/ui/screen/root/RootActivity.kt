@@ -1,54 +1,73 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.tonkeeper.dialog.TransactionDialog
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.fragment.tonconnect.auth.TCAuthFragment
+import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
+import com.tonapps.tonkeeper.ui.base.QRCameraScreen
+import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
+import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
+import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
+import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
+import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
+import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
+import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
+import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
-import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
-import com.tonapps.tonkeeper.ui.screen.web.WebScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.data.tonconnect.entities.DAppEventEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
-import uikit.navigation.NavigationActivity
+import uikit.extensions.findFragment
+import uikit.navigation.Navigation.Companion.navigation
 
-class RootActivity: NavigationActivity() {
+class RootActivity: BaseWalletActivity() {
 
-    private val rootViewModel: RootViewModel by viewModel()
+    private var cachedRootViewModel: Lazy<RootViewModel>? = null
+
+    override val viewModel: RootViewModel
+        get() = createOrGetViewModel()
+
     private val legacyRN: RNLegacy by inject()
-
-    val transactionDialog: TransactionDialog by lazy {
-        TransactionDialog(this, lifecycleScope)
-    }
+    private val settingsRepository by inject<SettingsRepository>()
 
     private lateinit var uiHandler: Handler
 
@@ -57,11 +76,12 @@ class RootActivity: NavigationActivity() {
     private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(rootViewModel.theme.resId)
+        setTheme(settingsRepository.theme.resId)
+        supportFragmentManager.fragmentFactory = WalletFragmentFactory()
         super.onCreate(savedInstanceState)
         legacyRN.setActivity(this)
-        windowInsetsController.isAppearanceLightStatusBars = rootViewModel.theme.light
-        windowInsetsController.isAppearanceLightNavigationBars = rootViewModel.theme.light
+        windowInsetsController.isAppearanceLightStatusBars = viewModel.theme.light
+        windowInsetsController.isAppearanceLightNavigationBars = viewModel.theme.light
         uiHandler = Handler(mainLooper)
 
         handleIntent(intent)
@@ -80,14 +100,36 @@ class RootActivity: NavigationActivity() {
             insets
         }
 
-        collectFlow(rootViewModel.tonConnectEventsFlow, ::onDAppEvent)
-        collectFlow(rootViewModel.hasWalletFlow) { init(it) }
-        collectFlow(rootViewModel.eventFlow) { event(it) }
-        collectFlow(rootViewModel.passcodeFlow, ::passcodeFlow)
+        collectFlow(viewModel.hasWalletFlow) { init(it) }
+        collectFlow(viewModel.eventFlow) { event(it) }
+        collectFlow(viewModel.passcodeFlow, ::passcodeFlow)
 
-        collectFlow(rootViewModel.themeFlow) {
-            recreate()
+        App.applyConfiguration(resources.configuration)
+    }
+
+    private fun createOrGetViewModel(): RootViewModel {
+        if (cachedRootViewModel == null) {
+            cachedRootViewModel = viewModel<RootViewModel>()
         }
+        return cachedRootViewModel!!.value
+    }
+
+    override fun isNeedRemoveModals(fragment: BaseFragment): Boolean {
+        if (fragment is QRCameraScreen || fragment is LedgerSignScreen) {
+            return false
+        }
+        return super.isNeedRemoveModals(fragment)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModelStore.clear()
+        cachedRootViewModel = null
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        App.applyConfiguration(newConfig)
     }
 
     private fun passcodeFlow(config: RootViewModel.Passcode) {
@@ -112,26 +154,8 @@ class RootActivity: NavigationActivity() {
         }
     }
 
-    private suspend fun onDAppEvent(event: DAppEventEntity) {
-        if (event.method != "sendTransaction") {
-            return
-        }
-
-        val params = event.params
-        for (i in 0 until params.length()) {
-            val param = DAppEventEntity.parseParam(params.get(i))
-            val request = SignRequestEntity(param)
-            try {
-                val boc = rootViewModel.requestSign(this, event.wallet, request)
-                rootViewModel.tonconnectBoc(event.id, event.app, boc)
-            } catch (e: Throwable) {
-                rootViewModel.tonconnectReject(event.id, event.app)
-            }
-        }
-    }
-
     private fun checkPasscode(code: String) {
-        rootViewModel.checkPasscode(this, code).catch {
+        viewModel.checkPasscode(this, code).catch {
             lockPasscodeView.setError()
         }.onEach {
             lockPasscodeView.setSuccess()
@@ -144,22 +168,46 @@ class RootActivity: NavigationActivity() {
 
     fun event(event: RootEvent) {
         when (event) {
-            is RootEvent.Toast -> toast(event.resId)
             is RootEvent.Singer -> add(InitScreen.newInstance(if (event.qr) InitArgs.Type.SignerQR else InitArgs.Type.Signer, event.publicKey, event.name))
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
-            is RootEvent.TonConnect -> add(TCAuthFragment.newInstance(event.request))
-            is RootEvent.Browser -> add(WebScreen.newInstance(event.uri))
-            // is RootEvent.Transfer -> add(SendScreen.newInstance(event.address, event.text, event.amount, event.jettonAddress))
-            is RootEvent.Transaction -> TransactionDialog.open(this, event.event)
-            is RootEvent.BuyOrSell -> {
-                if (event.methodEntity == null) {
-                    add(PurchaseScreen.newInstance())
-                } else {
-                    add(PurchaseWebScreen.newInstance(event.methodEntity))
-                }
-            }
-            is RootEvent.OpenBackups -> add(BackupScreen.newInstance())
+            is RootEvent.Transfer -> openSend(
+                targetAddress = event.address,
+                tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
+                amountNano = event.amount ?: 0L,
+                text = event.text,
+                wallet = event.wallet
+            )
             else -> { }
+        }
+    }
+
+    private fun openSend(
+        wallet: WalletEntity,
+        targetAddress: String? = null,
+        tokenAddress: String = TokenEntity.TON.address,
+        amountNano: Long = 0,
+        text: String? = null,
+        nftAddress: String? = null
+    ) {
+        val fragment = supportFragmentManager.findFragment<SendScreen>()
+        if (fragment == null) {
+            add(
+                SendScreen.newInstance(
+                    wallet = wallet,
+                    targetAddress = targetAddress,
+                    tokenAddress = tokenAddress,
+                    amountNano = amountNano,
+                    text = text,
+                    nftAddress = nftAddress,
+                )
+            )
+        } else {
+            fragment.initializeArgs(
+                targetAddress = targetAddress,
+                tokenAddress = tokenAddress,
+                amountNano = amountNano,
+                text = text,
+            )
         }
     }
 
@@ -168,7 +216,7 @@ class RootActivity: NavigationActivity() {
         builder.setTitle(Localization.sign_out_all_title)
         builder.setMessage(Localization.sign_out_all_description)
         builder.setNegativeButton(Localization.sign_out) {
-            rootViewModel.signOut()
+            viewModel.signOut()
             setIntroFragment()
         }
         builder.setPositiveButton(Localization.cancel)
@@ -197,32 +245,61 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val uri = intent.data ?: return
-        processDeepLink(uri, false)
+        val uri = intent.data
+        val extras = intent.extras
+        if (uri != null) {
+            processDeepLink(uri)
+        } else if (extras != null && !extras.isEmpty) {
+            viewModel.processIntentExtras(extras)
+        }
     }
 
-    override fun openURL(url: String, external: Boolean) {
+    override fun openURL(url: String) {
         if (url.isBlank()) {
             return
         }
-
-        val uri = Uri.parse(url)
-
-        if (external) {
-            val action = if (url.startsWith("mailto:")) {
-                Intent.ACTION_SENDTO
-            } else {
-                Intent.ACTION_VIEW
-            }
-            val intent = Intent(action, uri)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
+        val uri = url.toUriOrNull() ?: return
+        if (uri.scheme == "tonkeeper" || uri.scheme == "ton" || uri.scheme == "tc" || uri.host == "app.tonkeeper.com") {
+            processDeepLink(uri)
         } else {
-            processDeepLink(uri, false)
+            openExternalLink(uri)
         }
     }
 
-    private fun processDeepLink(uri: Uri, fromQR: Boolean) {
-        rootViewModel.processDeepLink(uri, fromQR)
+    private fun openExternalLink(uri: Uri) {
+        return if (uri.host == "t.me" || uri.scheme == "tg") {
+            openTelegramLink(uri)
+        } else if (uri.scheme == "mailto") {
+            openEmail(uri)
+        } else {
+            BrowserHelper.open(this, uri)
+        }
+    }
+
+    private fun openTelegramLink(uri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.`package` = "org.telegram.messenger"
+        if (!safeStartActivity(intent)) {
+            BrowserHelper.open(this, uri)
+        }
+    }
+
+    private fun openEmail(uri: Uri) {
+        val intent = Intent(Intent.ACTION_SENDTO, uri)
+        safeStartActivity(intent)
+    }
+
+    private fun safeStartActivity(intent: Intent): Boolean {
+        try {
+            startActivity(intent)
+            return true
+        } catch (e: Throwable) {
+            toast(Localization.unknown_error)
+            return false
+        }
+    }
+
+    private fun processDeepLink(uri: Uri) {
+        viewModel.processDeepLink(uri, false, getReferrer())
     }
 }

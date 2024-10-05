@@ -1,8 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
+import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.facebook.imagepipeline.common.ResizeOptions
+import com.facebook.imagepipeline.request.ImageRequest
+import com.facebook.imagepipeline.request.ImageRequestBuilder
+import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.buildRateString
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
@@ -12,7 +17,7 @@ import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.withDefaultBadge
 import uikit.widget.FrescoView
 
 class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_cell_jetton) {
@@ -26,20 +31,25 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
     override fun onBind(item: Item.Token) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
-            context.navigation?.add(TokenScreen.newInstance(item.address, item.name, item.symbol))
+            navigation?.add(TokenScreen.newInstance(item.wallet, item.address, item.name, item.symbol))
         }
         if (item.blacklist) {
-            titleView.text = "FAKE"
+            titleView.text = getString(Localization.fake)
             iconView.clear(null)
         } else {
-            titleView.text = item.symbol
-            iconView.setImageURI(item.iconUri, this)
+            val text = if (item.isUSDT) {
+                item.symbol.withDefaultBadge(context, Localization.ton)
+            } else {
+                item.symbol
+            }
+            titleView.text = text
+            setTokenIcon(item.iconUri)
         }
 
         balanceView.text = if (item.hiddenBalance) {
             HIDDEN_BALANCE
         } else {
-            item.balanceFormat
+            item.balanceFormat.withCustomSymbol(context)
         }
 
         if (item.testnet) {
@@ -50,16 +60,22 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             if (item.hiddenBalance) {
                 balanceFiatView.text = HIDDEN_BALANCE
             } else {
-                balanceFiatView.text = item.fiatFormat
+                balanceFiatView.text = item.fiatFormat.withCustomSymbol(context)
             }
             setRate(item.rate, item.rateDiff24h, item.verified)
         }
     }
 
+    private fun setTokenIcon(uri: Uri) {
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(128)
+        iconView.setImageRequest(builder.build())
+    }
+
     private fun setRate(rate: CharSequence, rateDiff24h: String, verified: Boolean) {
         rateView.visibility = View.VISIBLE
         if (verified) {
-            rateView.text = context.buildRateString(rate, rateDiff24h)
+            rateView.text = context.buildRateString(rate, rateDiff24h).withCustomSymbol(context)
             rateView.setTextColor(context.textSecondaryColor)
         } else {
             rateView.setText(Localization.unverified_token)

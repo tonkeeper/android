@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.rates
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -10,6 +11,8 @@ import com.tonapps.wallet.data.rates.entity.RateEntity
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.rates.source.BlobDataSource
 import io.tonapi.models.TokenRates
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 
 class RatesRepository(
@@ -34,7 +37,7 @@ class RatesRepository(
         if (!tokens.contains(TokenEntity.USDT.address)) {
             tokens.add(TokenEntity.USDT.address)
         }
-        val rates = api.getRates(currency.code, tokens)
+        val rates = api.getRates(currency.code, tokens) ?: return
         insertRates(currency, rates)
     }
 
@@ -57,11 +60,28 @@ class RatesRepository(
         localDataSource.add(currency, entities)
     }
 
-    fun getRates(currency: WalletCurrency, token: String): RatesEntity {
+    private fun getCachedRates(currency: WalletCurrency, tokens: List<String>): RatesEntity {
+        return localDataSource.get(currency).filter(tokens)
+    }
+
+    suspend fun getRates(currency: WalletCurrency, token: String): RatesEntity {
         return getRates(currency, listOf(token))
     }
 
-    fun getRates(currency: WalletCurrency, tokens: List<String>): RatesEntity {
-        return localDataSource.get(currency).filter(tokens)
+    suspend fun getTONRates(currency: WalletCurrency): RatesEntity {
+        return getRates(currency, TokenEntity.TON.address)
+    }
+
+    suspend fun getRates(
+        currency: WalletCurrency,
+        tokens: List<String>
+    ): RatesEntity = withContext(Dispatchers.IO) {
+        val rates = getCachedRates(currency, tokens)
+        if (rates.hasTokens(tokens)) {
+            rates
+        } else {
+            load(currency, tokens.toMutableList())
+            getCachedRates(currency, tokens)
+        }
     }
 }

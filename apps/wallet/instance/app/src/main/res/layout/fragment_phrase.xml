@@ -9,51 +9,58 @@
         android:layout_height="wrap_content"
         android:icon="@drawable/ic_chevron_left_16"/>
 
-    <uikit.widget.ColumnLayout
+
+    <uikit.widget.TextHeaderView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center">
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:title="@string/phrase_title"
+        android:description="@string/phrase_description"/>
 
-        <uikit.widget.TextHeaderView
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/offsetMedium"
-            android:layout_marginHorizontal="@dimen/offsetLarge"
-            android:title="@string/phrase_title"
-            android:description="@string/phrase_description"/>
+            android:layout_height="wrap_content">
 
-        <uikit.widget.PhraseWords
-            android:id="@+id/words"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_marginTop="@dimen/offsetMedium"/>
+            <uikit.widget.PhraseWords
+                android:id="@+id/words"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:layout_gravity="center"/>
 
-        <Button
-            style="@style/Widget.App.Button.Secondary"
-            android:id="@+id/copy"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/offsetLarge"
-            android:layout_marginTop="@dimen/offsetLarge"
-            android:layout_marginBottom="@dimen/offsetMedium"
-            android:visibility="gone"
-            android:text="@string/copy"
-            android:textAppearance="@style/TextAppearance.Label1"/>
+        </androidx.core.widget.NestedScrollView>
 
-        <Button
-            style="@style/Widget.App.Button"
-            android:id="@+id/check"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/offsetLarge"
-            android:layout_marginTop="@dimen/offsetLarge"
-            android:layout_marginBottom="@dimen/offsetMedium"
-            android:visibility="gone"
-            android:text="@string/manual_backup_check"
-            android:textAppearance="@style/TextAppearance.Label1"/>
+    </FrameLayout>
 
-    </uikit.widget.ColumnLayout>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/copy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:visibility="gone"
+        android:text="@string/copy"
+        android:textAppearance="@style/TextAppearance.Label1"/>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/check"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:visibility="gone"
+        android:text="@string/manual_backup_check"
+        android:textAppearance="@style/TextAppearance.Label1"/>
 
 </uikit.widget.ColumnLayout>

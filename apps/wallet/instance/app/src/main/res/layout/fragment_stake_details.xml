@@ -2,12 +2,21 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="@dimen/offsetMedium">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:icon="@drawable/ic_chevron_left_16"
+        android:action="@drawable/ic_close_16"/>
 
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetMedium"
+        android:layout_marginTop="@dimen/barHeight">
 
         <uikit.widget.ColumnLayout
             android:layout_width="match_parent"
@@ -21,6 +30,7 @@
                 android:layout_height="36dp">
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/pool_apy_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -88,14 +98,15 @@
             android:textAppearance="@style/TextAppearance.H3"
             android:textColor="?attr/textPrimaryColor"/>
 
-        <com.google.android.flexbox.FlexboxLayout
+        <uikit.widget.FlexboxWithGapLayout
             android:id="@+id/links"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:gapVertical="8dp"
+            app:gapHorizontal="8dp"
             app:flexDirection="row"
             app:flexWrap="wrap"
             app:layout_flexGrow="1"/>
-
 
     </uikit.widget.ColumnLayout>
 
@@ -105,7 +116,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_marginBottom="@dimen/offsetMedium"
+        android:layout_margin="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
         android:textColor="?attr/textPrimaryColor"
         android:text="@string/staking_choose"/>

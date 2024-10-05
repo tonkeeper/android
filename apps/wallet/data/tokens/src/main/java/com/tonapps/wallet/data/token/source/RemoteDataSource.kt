@@ -13,34 +13,42 @@ internal class RemoteDataSource(
     private val api: API
 ) {
 
+    fun getJetton(accountId: String, testnet: Boolean) = api.getJetton(accountId, testnet)
+
     suspend fun load(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
-    ): List<BalanceEntity> = withContext(Dispatchers.IO) {
-        val entities = mutableListOf<BalanceEntity>()
-
-        val tonBalanceDeferred = async {
-            api.getTonBalance(accountId, testnet)
+    ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
+        val tonBalanceDeferred = async { api.getTonBalance(accountId, testnet) }
+        val jettonBalancesDeferred = async { api.getJettonsBalances(
+            accountId = accountId,
+            testnet = testnet,
+            currency = currency.code,
+            extensions = listOf(
+                TokenEntity.Extension.CustomPayload.value,
+                TokenEntity.Extension.NonTransferable.value
+            ))
         }
+        val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
+        val jettons = jettonBalancesDeferred.await()?.toMutableList() ?: mutableListOf()
 
-        val jettonBalancesDeferred = async {
-            api.getJettonsBalances(accountId, testnet, currency.code)
-        }
-
-        entities.add(tonBalanceDeferred.await())
-        val jettons = jettonBalancesDeferred.await().toMutableList()
         val usdtIndex = jettons.indexOfFirst {
             it.token.address == TokenEntity.USDT.address
         }
 
-        if (usdtIndex == -1) {
+        val entities = mutableListOf<BalanceEntity>()
+        entities.add(tonBalance)
+        if (usdtIndex == -1 && !testnet) {
             entities.add(BalanceEntity(
                 token = TokenEntity.USDT,
                 value = Coins.ZERO,
-                walletAddress = accountId
+                walletAddress = accountId,
+                initializedAccount = tonBalance.initializedAccount,
+                isCompressed = false,
+                isTransferable = true
             ))
-        } else {
+        } else if (usdtIndex >= 0) {
             jettons[usdtIndex] = jettons[usdtIndex].copy(
                 token = TokenEntity.USDT
             )

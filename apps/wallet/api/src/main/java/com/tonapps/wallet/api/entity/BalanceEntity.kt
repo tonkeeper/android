@@ -13,8 +13,34 @@ import java.math.BigDecimal
 data class BalanceEntity(
     val token: TokenEntity,
     val value: Coins,
-    val walletAddress: String
+    val walletAddress: String,
+    val initializedAccount: Boolean = true,
+    val isCompressed: Boolean = false,
+    val isTransferable: Boolean = true,
 ): Parcelable {
+
+    companion object {
+
+        fun empty(
+            accountId: String,
+            isCompressed: Boolean,
+            isTransferable: Boolean
+        ) = create(accountId, Coins.ZERO, isCompressed, isTransferable)
+
+        fun create(
+            accountId: String,
+            value: Coins,
+            isCompressed: Boolean = false,
+            isTransferable: Boolean = true
+        ) = BalanceEntity(
+            token = TokenEntity.TON,
+            value = value,
+            walletAddress = accountId,
+            initializedAccount = false,
+            isCompressed = isCompressed,
+            isTransferable = isTransferable
+        )
+    }
 
     @IgnoredOnParcel
     var rates: TokenRates? = null
@@ -22,10 +48,16 @@ data class BalanceEntity(
     val isTon: Boolean
         get() = token.isTon
 
+    val decimals: Int
+        get() = token.decimals
+
     constructor(jettonBalance: JettonBalance) : this(
-        token = TokenEntity(jettonBalance.jetton),
+        token = TokenEntity(jettonBalance.jetton, jettonBalance.extensions, jettonBalance.lock),
         value = Coins.of(BigDecimal(jettonBalance.balance).movePointLeft(jettonBalance.jetton.decimals), jettonBalance.jetton.decimals),
         walletAddress = jettonBalance.walletAddress.address,
+        initializedAccount = true,
+        isCompressed = jettonBalance.extensions?.contains(TokenEntity.Extension.CustomPayload.value) == true,
+        isTransferable = jettonBalance.extensions?.contains(TokenEntity.Extension.NonTransferable.value) != true
     ) {
         rates = jettonBalance.price
     }

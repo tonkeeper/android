@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.generic.RoundingParams
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
 import com.facebook.imagepipeline.request.ImageRequest
 import com.facebook.imagepipeline.request.ImageRequestBuilder
@@ -19,6 +20,7 @@ import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.getDimension
 import uikit.extensions.round
@@ -43,7 +45,7 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
 
     override fun onBind(item: Item.Nft) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(NftScreen.newInstance(item.entity))
+            Navigation.from(context)?.add(NftScreen.newInstance(item.wallet, item.entity))
         }
         loadImage(item.imageURI, item.hiddenBalance)
         if (item.hiddenBalance) {
@@ -52,14 +54,15 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
             titleView.text = item.title
         }
         saleBadgeView.visibility = if (item.sale) View.VISIBLE else View.GONE
-        setCollectionName(item.collectionName, item.isTrusted, item.hiddenBalance)
+        setCollectionName(item.collectionName, item.trust, item.hiddenBalance)
     }
 
     private fun setCollectionName(
         collectionName: String?,
-        isTrusted: Boolean,
+        trust: Trust,
         hiddenBalance: Boolean
     ) {
+        val isTrusted = trust == Trust.whitelist || trust == Trust.graylist
         if (isTrusted) {
             collectionView.setTextColor(context.textSecondaryColor)
         } else {
@@ -77,14 +80,11 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
     }
 
     private fun loadImage(uri: Uri, blur: Boolean) {
+        val builder = ImageRequestBuilder.newBuilderWithSource(uri)
+        builder.resizeOptions = ResizeOptions.forSquareSize(320)
         if (blur) {
-            val request = ImageRequestBuilder.newBuilderWithSource(uri)
-                .setPostprocessor(BlurPostProcessor(25, context, 3))
-                .build()
-            imageView.setImageRequest(request)
-        } else {
-            imageView.setImageURI(uri, null)
+            builder.setPostprocessor(BlurPostProcessor(25, context, 3))
         }
-
+        imageView.setImageRequest(builder.build())
     }
 }

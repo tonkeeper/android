@@ -1,12 +1,21 @@
 package com.tonapps.wallet.data.account.entities
 
+import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
+import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.ton.extensions.publicKey
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.extensions.readEnum
+import com.tonapps.extensions.readParcelableCompat
+import com.tonapps.extensions.writeEnum
 import com.tonapps.wallet.data.account.Wallet
 import kotlinx.parcelize.Parcelize
 import org.ton.api.pk.PrivateKeyEd25519
@@ -21,23 +30,53 @@ data class WalletEntity(
     val version: WalletVersion,
     val label: Wallet.Label,
     val ledger: Ledger? = null,
-) {
+    val keystone: Keystone? = null
+): Parcelable {
 
     companion object {
-        const val WORKCHAIN = 0
+
+        val EMPTY = WalletEntity(
+            id = "",
+            publicKey = EmptyPrivateKeyEd25519.publicKey(),
+            type = Wallet.Type.Default,
+            version = WalletVersion.V5BETA,
+            label = Wallet.Label("", "", 0),
+            ledger = null,
+            keystone = null
+        )
+
+        @JvmField
+        val CREATOR = object : Parcelable.Creator<WalletEntity> {
+            override fun createFromParcel(parcel: Parcel) = WalletEntity(parcel)
+
+            override fun newArray(size: Int): Array<WalletEntity?> = arrayOfNulls(size)
+        }
     }
 
     @Parcelize
     data class Ledger(
         val deviceId: String,
         val accountIndex: Int
-    ): Parcelable
+    ) : Parcelable
+
+    @Parcelize
+    data class Keystone(
+        val xfp: String,
+        val path: String
+    ) : Parcelable {
+
+        val isEmpty: Boolean
+            get() = xfp.isBlank() || path.isBlank()
+    }
 
     val contract: BaseWalletContract by lazy {
         val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value
 
         BaseWalletContract.create(publicKey, version.title, network)
     }
+
+    val maxMessages: Int
+        get() = if (isLedger) 1 else contract.maxMessages
 
     val testnet: Boolean
         get() = type == Wallet.Type.Testnet
@@ -46,7 +85,7 @@ data class WalletEntity(
         get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR
 
     val hasPrivateKey: Boolean
-        get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet
+        get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet || type == Wallet.Type.Lockup
 
     val accountId: String = contract.address.toAccountId()
 
@@ -55,35 +94,77 @@ data class WalletEntity(
     val isWatchOnly: Boolean
         get() = type == Wallet.Type.Watch
 
+    val isLedger: Boolean
+        get() = type == Wallet.Type.Ledger
+
+    val isKeystone: Boolean
+        get() = type == Wallet.Type.Keystone
+
+    val isW5: Boolean
+        get() = version == WalletVersion.V5BETA || version == WalletVersion.V5R1
+
     val isExternal: Boolean
-        get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR || type == Wallet.Type.Ledger
+        get() = signer || isLedger || isKeystone
+
+    val isTonConnectSupported: Boolean
+        get() = !testnet && type != Wallet.Type.Watch
+
+    constructor(parcel: Parcel) : this(
+        id = parcel.readString()!!,
+        publicKey = parcel.readString()!!.publicKey(),
+        type = parcel.readEnum(Wallet.Type::class.java)!!,
+        version = parcel.readEnum(WalletVersion::class.java)!!,
+        label = parcel.readParcelableCompat()!!,
+        ledger = parcel.readParcelableCompat(),
+        keystone = parcel.readParcelableCompat()
+    )
 
     fun isMyAddress(address: String): Boolean {
         return address.toRawAddress().equals(accountId, ignoreCase = true)
     }
 
+    fun isSupportedFeature(feature: WalletFeature): Boolean {
+        return contract.isSupportedFeature(feature)
+    }
+
     fun createBody(
-        seqno: Int,
+        seqNo: Int,
         validUntil: Long,
-        gifts: List<WalletTransfer>
+        gifts: List<WalletTransfer>,
+        internalMessage: Boolean,
     ): Cell {
         return contract.createTransferUnsignedBody(
             validUntil = validUntil,
-            seqno = seqno,
-            gifts = gifts.toTypedArray()
+            seqNo = seqNo,
+            gifts = gifts.toTypedArray(),
+            internalMessage = internalMessage,
         )
     }
 
     fun sign(
-        privateKeyEd25519: PrivateKeyEd25519,
-        seqno: Int,
+        privateKey: PrivateKeyEd25519,
+        seqNo: Int,
         body: Cell
     ): Cell {
         return contract.createTransferMessageCell(
             address = contract.address,
-            privateKey = privateKeyEd25519,
-            seqno = seqno,
+            privateKey = privateKey,
+            seqNo = seqNo,
             unsignedBody = body,
         )
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(id)
+        parcel.writeString(publicKey.hex())
+        parcel.writeEnum(type)
+        parcel.writeEnum(version)
+        parcel.writeParcelable(label, flags)
+        parcel.writeParcelable(ledger, flags)
+        parcel.writeParcelable(keystone, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
     }
 }

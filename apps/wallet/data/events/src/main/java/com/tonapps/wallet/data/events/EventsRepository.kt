@@ -1,38 +1,46 @@
 package com.tonapps.wallet.data.events
 
 import android.content.Context
+import android.util.Log
+import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.prefs
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.events.entities.AccountEventsResult
 import com.tonapps.wallet.data.events.entities.EventEntity
 import com.tonapps.wallet.data.events.source.LocalDataSource
 import com.tonapps.wallet.data.events.source.RemoteDataSource
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import io.tonapi.models.AccountEvents
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 class EventsRepository(
-    private val context: Context,
+    scope: CoroutineScope,
+    context: Context,
     private val api: API
 ) {
 
-    private val localDataSource = LocalDataSource(context)
+    private val localDataSource = LocalDataSource(scope, context)
     private val remoteDataSource = RemoteDataSource(api)
-    private val decryptedComments = context.getSharedPreferences("events.decrypted_comments", Context.MODE_PRIVATE)
 
-    private fun decryptedCommentKey(txId: String): String {
-        return "tx_$txId"
+    val decryptedCommentFlow = localDataSource.decryptedCommentFlow
+
+    fun getDecryptedComment(txId: String) = localDataSource.getDecryptedComment(txId)
+
+    fun saveDecryptedComment(txId: String, comment: String) {
+        localDataSource.saveDecryptedComment(txId, comment)
     }
 
-    fun getDecryptedComment(txId: String): String? {
-        return decryptedComments.getString(decryptedCommentKey(txId), null)
-    }
-
-    fun setDecryptedComment(txId: String, comment: String) {
-        decryptedComments.edit().putString(decryptedCommentKey(txId), comment).apply()
-    }
+    suspend fun getSingle(eventId: String, testnet: Boolean) = remoteDataSource.getSingle(eventId, testnet)
 
     suspend fun getLast(
         accountId: String,
@@ -62,6 +70,26 @@ class EventsRepository(
         }
     }
 
+    fun getFlow(
+        accountId: String,
+        testnet: Boolean
+    ) = flow {
+        try {
+            val local = getLocal(accountId, testnet)
+            if (local != null && local.events.isNotEmpty()) {
+                emit(AccountEventsResult(cache = true, events = local))
+            }
+
+            val remote = getRemote(accountId, testnet) ?: return@flow
+            emit(AccountEventsResult(cache = false, events = remote))
+        } catch (ignored: Throwable) { }
+    }.cancellable()
+
+    suspend fun get(
+        accountId: String,
+        testnet: Boolean
+    ) = getLocal(accountId, testnet) ?: getRemote(accountId, testnet)
+
     suspend fun getRemote(
         accountId: String,
         testnet: Boolean,
@@ -71,8 +99,9 @@ class EventsRepository(
             if (beforeLt != null) {
                 remoteDataSource.get(accountId, testnet, beforeLt)
             } else {
-                val events = remoteDataSource.get(accountId, testnet)
-                localDataSource.setCache(cacheKey(accountId, testnet), events)
+                val events = remoteDataSource.get(accountId, testnet)?.also {
+                    localDataSource.setCache(cacheKey(accountId, testnet), it)
+                }
                 events
             }
         } catch (e: Throwable) {

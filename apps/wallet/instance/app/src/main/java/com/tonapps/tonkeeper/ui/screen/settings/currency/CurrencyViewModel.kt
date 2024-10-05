@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.settings.currency
 
+import android.app.Application
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.currency.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.core.WalletCurrency
@@ -17,8 +19,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
 class CurrencyViewModel(
+    app: Application,
     private val settings: SettingsRepository
-): ViewModel() {
+): BaseWalletVM(app) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }

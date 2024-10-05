@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -50,12 +51,13 @@ class PasscodeManager(
 
     suspend fun isValid(context: Context, code: String): Boolean = withContext(Dispatchers.IO) {
         if (!isRequestMigration()) {
-            helper.isValid(code)
+            helper.isValid(context, code)
         } else {
             try {
                 migration(context, code)
                 true
             } catch (e: Throwable) {
+                context.logError(e)
                 false
             }
         }
@@ -65,7 +67,7 @@ class PasscodeManager(
         if (isRequestMigration()) {
             migration(context, old)
         }
-        if (!helper.change(old, new)) {
+        if (!helper.change(context, old, new)) {
             false
         } else {
             try {
@@ -75,6 +77,7 @@ class PasscodeManager(
                 }
                 true
             } catch (e: Throwable) {
+                context.logError(e)
                 false
             }
         }
@@ -94,7 +97,7 @@ class PasscodeManager(
         title: String
     ): Boolean = withContext(Dispatchers.Main) {
         if (isRequestMigration()) {
-            return@withContext confirmationMigration(context, title)
+            return@withContext confirmationMigration(context)
         }
 
         val showDialog = if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context)) {
@@ -110,9 +113,25 @@ class PasscodeManager(
         }
     }
 
+    suspend fun legacyGetPasscode(
+        context: Context
+    ): String? {
+        return legacyGetPasscodeByBiometry() ?: PasscodeDialog.request(context)
+    }
+
+    private suspend fun legacyGetPasscodeByBiometry(): String? {
+        try {
+            if (settingsRepository.biometric) {
+                return rnLegacy.exportPasscodeWithBiometry()
+            }
+            throw Exception("biometry is disabled")
+        } catch (e: Throwable) {
+            return null
+        }
+    }
+
     private suspend fun confirmationMigration(
         context: Context,
-        title: String
     ): Boolean = withContext(Dispatchers.Main) {
         try {
             val passcode = if (settingsRepository.biometric) {
@@ -126,6 +145,7 @@ class PasscodeManager(
             migration(context, passcode)
             true
         } catch (e: Throwable) {
+            context.logError(e)
             false
         }
     }

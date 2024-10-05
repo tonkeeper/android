@@ -5,6 +5,7 @@ import android.os.Parcelable
 import android.util.Log
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.MathContext
 import java.math.RoundingMode
 import kotlin.math.pow
 
@@ -31,9 +32,23 @@ data class Coins(
             value: String,
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
-            val divisor = BigDecimal.TEN.pow(decimals)
-            val bigDecimal = safeBigDecimal(prepareValue(value)).divide(divisor, decimals, RoundingMode.FLOOR)
-            return of(bigDecimal.toDouble(), decimals)
+            /*val divisor = BigDecimal.TEN.pow(decimals)
+            val preparedValue = prepareValue(value)
+            val bigDecimal = safeBigDecimal(preparedValue).divide(divisor, decimals, RoundingMode.FLOOR)
+            return of(bigDecimal.toDouble(), decimals)*/
+            val bigDecimal = safeBigDecimal2(value)
+            return Coins(bigDecimal, decimals)
+        }
+
+        fun ofNano(
+            value: String,
+            decimals: Int = DEFAULT_DECIMALS
+        ): Coins {
+            if (value.length > 19) {
+                return of(BigInteger(value), decimals)
+            }
+            val long = value.toLongOrNull() ?: return ZERO
+            return of(long, decimals)
         }
 
         fun of(
@@ -44,9 +59,20 @@ data class Coins(
         }
 
         fun of(
+            value: BigInteger,
+            decimals: Int = DEFAULT_DECIMALS
+        ): Coins {
+            val bigDecimal = BigDecimal(value)
+            return Coins(bigDecimal, decimals)
+        }
+
+        fun of(
             value: Long,
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
+            if (value == 0L) {
+                return ZERO
+            }
             val bigDecimal = safeBigDecimal(value).movePointLeft(decimals)
             return Coins(bigDecimal, decimals)
         }
@@ -57,6 +83,20 @@ data class Coins(
         ): Coins {
             val bigDecimal = safeBigDecimal(value) //.movePointLeft(decimals)
             return Coins(bigDecimal, decimals)
+        }
+
+        private fun safeBigDecimal2(
+            value: String
+        ): BigDecimal {
+            if (value.isBlank()) {
+                return BigDecimal.ZERO
+            }
+            try {
+                val input = prepareValue(value).filter { it.isDigit() or (it == '.') }
+                return BigDecimal.ZERO.max(BigDecimal(input, MathContext.DECIMAL128))
+            } catch (e: Throwable) {
+                return BigDecimal.ZERO
+            }
         }
 
         private fun safeBigDecimal(
@@ -98,6 +138,7 @@ data class Coins(
                 v = "0"
             }
             return v
+
         }
 
         inline fun <T> Iterable<T>.sumOf(selector: (T) -> Coins): Coins {
@@ -115,6 +156,9 @@ data class Coins(
     val isPositive: Boolean
         get() = value > ZERO.value
 
+    val isNegative: Boolean
+        get() = value < ZERO.value
+
     constructor(parcel: Parcel) : this(
         parcel.readSerializable() as BigDecimal,
         parcel.readInt(),
@@ -125,19 +169,53 @@ data class Coins(
         parcel.writeInt(decimals)
     }
 
-    operator fun plus(other: Coins) = of(value + other.value, decimals)
+    operator fun plus(other: Coins): Coins {
+        return of(value + other.value, decimals)
+    }
 
     operator fun minus(other: Coins) = of(value - other.value, decimals)
 
-    operator fun times(other: Coins) = of(value * other.value, decimals)
+    operator fun times(other: Coins): Coins {
+        //  = of(value * other.value, decimals)
+        return of(value.multiply(other.value), decimals)
+    }
 
-    operator fun div(other: Coins) = of(value / other.value, decimals)
+    fun div(
+        other: Coins,
+        scale: Int = decimals,
+        roundingMode: RoundingMode = RoundingMode.HALF_UP
+    ): Coins {
+        try {
+            val result = value.divide(other.value, scale, roundingMode)
+            return of(result, scale)
+        } catch (e: Throwable) {
+            return ZERO
+        }
+    }
+
+    operator fun div(other: Coins): Coins {
+        return div(
+            other = other,
+            scale = decimals,
+            roundingMode = RoundingMode.HALF_UP
+        )
+    }
 
     operator fun rem(other: Coins) = of(value.remainder(other.value), decimals)
 
     operator fun inc() = Coins(value + ONE.value, decimals)
 
     operator fun dec() = Coins(value - ONE.value, decimals)
+
+    fun multiply(other: Coins) = of(value.multiply(other.value), decimals)
+
+    fun multiply(other: BigDecimal) = of(value.multiply(other), decimals)
+
+    fun multiply(other: String) = of(value.multiply(BigDecimal(other)), decimals)
+
+    fun divide(divisor: Coins, roundingMode: RoundingMode = RoundingMode.HALF_DOWN) = of(value.divide(divisor.value, roundingMode))
+
+    fun divide(divisor: Int, roundingMode: RoundingMode = RoundingMode.HALF_DOWN) = of(value.divide(BigDecimal(divisor), roundingMode))
 
     override operator fun compareTo(other: Coins) = value.compareTo(other.value)
 
@@ -151,7 +229,19 @@ data class Coins(
         return multipliedValue.toLong()
     }
 
-    fun toDouble(): Double = value.toDouble()
+    fun diff(coins: Coins): Float {
+        if (coins.isZero || isZero) {
+            return 0f
+        }
+        val percentage = coins.value.divide(value, 4, RoundingMode.HALF_UP)
+            .multiply(BigDecimal("100"))
+            .setScale(2, RoundingMode.HALF_UP)
+        return percentage.toFloat()
+    }
+
+    fun setScale(scale: Int, roundingMode: RoundingMode = RoundingMode.HALF_UP): Coins {
+        return of(value.setScale(scale, roundingMode), scale)
+    }
 
     override fun describeContents(): Int {
         return 0

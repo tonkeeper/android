@@ -25,7 +25,7 @@ import com.squareup.moshi.JsonClass
  * @param usedCells 
  * @param usedBits 
  * @param usedPublicCells 
- * @param lastPaid 
+ * @param lastPaid time of the last payment
  * @param duePayment 
  */
 
@@ -41,6 +41,7 @@ data class AccountStorageInfo (
     @Json(name = "used_public_cells")
     val usedPublicCells: kotlin.Long,
 
+    /* time of the last payment */
     @Json(name = "last_paid")
     val lastPaid: kotlin.Long,
 

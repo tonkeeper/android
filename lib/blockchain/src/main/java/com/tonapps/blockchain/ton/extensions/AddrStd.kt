@@ -49,3 +49,11 @@ fun String.isValidTonAddress(): Boolean {
         false
     }
 }
+
+fun String.equalsAddress(other: String): Boolean {
+    return try {
+        toRawAddress().equals(other.toRawAddress(), ignoreCase = true)
+    } catch (e: Throwable) {
+        false
+    }
+}

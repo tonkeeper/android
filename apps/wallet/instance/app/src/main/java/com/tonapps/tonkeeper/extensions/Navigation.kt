@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.extensions
 import android.content.Context
 import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
-import com.tonapps.tonkeeper.fragment.camera.CameraFragment
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation
@@ -27,6 +26,3 @@ fun Navigation.toastLoading(loading: Boolean) {
     toast(context.getString(Localization.loading), loading, context.backgroundContentTintColor)
 }
 
-fun Navigation.openCamera() {
-    add(CameraFragment.newInstance())
-}

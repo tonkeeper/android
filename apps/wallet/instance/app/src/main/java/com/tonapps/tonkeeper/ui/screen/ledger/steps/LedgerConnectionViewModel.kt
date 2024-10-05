@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.ledger.steps
 
-import android.Manifest
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
@@ -8,10 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.util.Log
-import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ledger.live.ble.BleManager
@@ -27,9 +23,11 @@ import com.tonapps.ledger.devices.Devices
 import com.tonapps.ledger.ton.AccountPath
 import com.tonapps.ledger.ton.LedgerAccount
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.ledger.ton.TonPayloadFormat
 import com.tonapps.ledger.ton.TonTransport
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.ledger.transport.TransportStatusException
+import com.tonapps.tonkeeper.extensions.isVersionLowerThan
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -44,20 +42,24 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import io.ktor.util.reflect.instanceOf
 import io.tonapi.models.Account
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.context
+import java.math.BigInteger
+
+data class ProofData(
+    val domain: String,
+    val timestamp: BigInteger,
+    val payload: String,
+)
 
 class LedgerConnectionViewModel(
     app: Application,
@@ -73,6 +75,7 @@ class LedgerConnectionViewModel(
 
     private var _walletId: String? = null
     private var _transaction: Transaction? = null
+    private var _proofData: ProofData? = null
     private var _connectedDevice: ConnectedDevice? = null
     private var _tonTransport: TonTransport? = null
 
@@ -137,6 +140,11 @@ class LedgerConnectionViewModel(
 
     fun setSignData(transaction: Transaction, walletId: String) {
         _transaction = transaction
+        _walletId = walletId
+    }
+
+    fun setProofData(domain: String, timestamp: BigInteger, payload: String, walletId: String) {
+        _proofData = ProofData(domain, timestamp, payload)
         _walletId = walletId
     }
 
@@ -243,11 +251,61 @@ class LedgerConnectionViewModel(
         }
     }
 
+    suspend fun signDomainProof() {
+        viewModelScope.launch {
+            try {
+                if (_tonTransport == null || _connectedDevice == null || _walletId == null || _proofData == null) {
+                    throw IllegalStateException()
+                }
+
+                val version = _tonTransport!!.getVersion()
+                val requiredVersion = "2.1.0"
+
+                if (version.isVersionLowerThan(requiredVersion)) {
+                    _eventFlow.tryEmit(LedgerEvent.WrongVersion(version))
+                    return@launch
+                }
+
+                val ledgerConfig = getLedgerConfig()
+
+                val proof = _tonTransport!!.signAddressProof(
+                    AccountPath(ledgerConfig.accountIndex),
+                    _proofData!!.domain,
+                    _proofData!!.timestamp,
+                    _proofData!!.payload,
+                )
+
+                _connectionState.tryEmit(ConnectionState.Signed)
+                _eventFlow.tryEmit(LedgerEvent.SignedProof(proof))
+            } catch (e: Exception) {
+                Log.d("LEDGER", "Error signing transaction", e)
+                if (e.instanceOf(TransportStatusException.DeniedByUser::class)) {
+                    _eventFlow.tryEmit(LedgerEvent.Rejected)
+                } else {
+                    _eventFlow.tryEmit(
+                        LedgerEvent.Error(
+                            e.message ?: context.getString(Localization.error)
+                        )
+                    )
+                }
+
+            }
+        }
+    }
+
     suspend fun signTransaction() {
         viewModelScope.launch {
             try {
                 if (_tonTransport == null || _connectedDevice == null || _walletId == null || _transaction == null) {
                     throw IllegalStateException()
+                }
+
+                val version = _tonTransport!!.getVersion()
+                val requiredVersion = getRequiredVersion(_transaction!!)
+
+                if (version.isVersionLowerThan(requiredVersion)) {
+                    _eventFlow.tryEmit(LedgerEvent.WrongVersion(version))
+                    return@launch
                 }
 
                 val ledgerConfig = getLedgerConfig()
@@ -271,6 +329,26 @@ class LedgerConnectionViewModel(
                     )
                 }
 
+            }
+        }
+    }
+
+    private fun getRequiredVersion(transaction: Transaction): String {
+        val defaultVersion = "2.0.0"
+
+        if (transaction.payload == null) {
+            return defaultVersion
+        }
+
+        return when(transaction.payload!!::class) {
+            TonPayloadFormat.JettonTransfer::class -> {
+                defaultVersion
+            }
+            TonPayloadFormat.Comment::class -> {
+                defaultVersion
+            }
+            else -> {
+                "2.1.0"
             }
         }
     }
@@ -299,21 +377,21 @@ class LedgerConnectionViewModel(
             val deferredTokens = mutableListOf<Deferred<List<AccountTokenEntity>>>()
             for (account in ledgerData.accounts) {
                 deferredTokens.add(async {
-                    tokenRepository.getRemote(
+                    tokenRepository.get(
                         settingsRepository.currency,
                         account.address.toAccountId(),
                         false
-                    )
+                    ) ?: emptyList()
                 })
             }
 
             val deferredCollectibles = mutableListOf<Deferred<List<NftEntity>>>()
             for (account in ledgerData.accounts) {
                 deferredCollectibles.add(async {
-                    collectiblesRepository.getRemoteNftItems(
+                    collectiblesRepository.get(
                         account.address.toAccountId(),
                         false
-                    )
+                    ) ?: emptyList()
                 })
             }
 
@@ -386,7 +464,7 @@ class LedgerConnectionViewModel(
         if (_walletId != null) {
             uiItems.add(
                 Item.Step(
-                    context.getString(Localization.ledger_confirm_tx),
+                    if (_proofData !== null) context.getString(Localization.ledger_confirm_proof) else context.getString(Localization.ledger_confirm_tx),
                     currentStep == LedgerStep.DONE,
                     currentStep == LedgerStep.CONFIRM_TX
                 )

@@ -19,11 +19,12 @@ class StakingRepository(context: Context, api: API) {
         accountId: String,
         testnet: Boolean,
         ignoreCache: Boolean = false,
+        initializedAccount: Boolean = true
     ): StakingEntity = withContext(Dispatchers.IO) {
         val cacheKey = cacheKey(accountId, testnet)
         val local: StakingEntity? = if (ignoreCache) null else localDataSource.getCache(cacheKey)
         if (local == null) {
-            val remote = remoteDataSource.load(accountId, testnet)
+            val remote = remoteDataSource.load(accountId, testnet, initializedAccount)
             localDataSource.setCache(cacheKey, remote)
             return@withContext remote
         }
@@ -36,5 +37,4 @@ class StakingRepository(context: Context, api: API) {
         }
         return "${accountId}_testnet_2"
     }
-
 }

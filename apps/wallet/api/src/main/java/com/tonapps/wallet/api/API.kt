@@ -495,16 +495,14 @@ class API(
         clientId: String,
         body: String
     ) {
-        try {
-            val mimeType = "text/plain".toMediaType()
-            val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
-            val response = withRetry {
-                tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
-            } ?: throw Exception("Empty response")
-            if (!response.isSuccessful) {
-                throw Exception("Failed sending event[code=${response.code};body=${response.body?.string()}]")
-            }
-        } catch (e: Throwable) { }
+        val mimeType = "text/plain".toMediaType()
+        val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
+        val response = withRetry {
+            tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
+        } ?: throw Exception("Null response")
+        if (!response.isSuccessful) {
+            throw Exception("Failed sending event[code=${response.code};body=${response.body?.string()}]")
+        }
     }
 
     fun estimateGaslessCost(
@@ -716,12 +714,16 @@ class API(
         json.put("silent", silent)
         val data = json.toString().replace("\\/", "/").trim()
 
-        return withRetry {
-            tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
-                set("X-TonConnect-Auth", token)
-                set("Connection", "close")
-            }).isSuccessful
-        } ?: false
+        val headers = ArrayMap<String, String>().apply {
+            set("X-TonConnect-Auth", token)
+            set("Connection", "close")
+        }
+
+        val response = withRetry {
+            tonAPIHttpClient.postJSON(url, data, headers)
+        }
+
+        return response?.isSuccessful ?: false
     }
 
     fun pushTonconnectUnsubscribe(

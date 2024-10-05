@@ -71,6 +71,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -336,21 +337,15 @@ class RootViewModel(
     ): Boolean {
         savedState.returnUri = null
         val deeplink = DeepLink(uri, fromQR, refSource)
-        postDelayed(1000) {
+        accountRepository.selectedStateFlow.take(1).onEach { state ->
+            delay(1000)
             if (deeplink.route is DeepLinkRoute.Signer) {
                 processSignerDeepLink(deeplink.route, fromQR)
-            } else {
-                processDeepLink(deeplink)
+            } else if (state is AccountRepository.SelectedState.Wallet) {
+                processDeepLink(state.wallet, deeplink)
             }
-        }
+        }.launch()
         return true
-    }
-
-    @OptIn(FlowPreview::class)
-    private fun processDeepLink(deeplink: DeepLink) {
-        accountRepository.selectedWalletFlow.take(1).timeout(5.seconds).collectFlow { wallet ->
-            processDeepLink(wallet, deeplink)
-        }
     }
 
     private suspend fun processDeepLink(wallet: WalletEntity, deeplink: DeepLink) {
@@ -447,7 +442,7 @@ class RootViewModel(
         }
     }
 
-    private fun processTransferDeepLink(wallet: WalletEntity, route: DeepLinkRoute.Transfer) {
+    private suspend fun processTransferDeepLink(wallet: WalletEntity, route: DeepLinkRoute.Transfer) {
         if (route.isExpired) {
             toast(Localization.expired_link)
             return
@@ -461,7 +456,7 @@ class RootViewModel(
         ))
     }
 
-    private fun processSignerDeepLink(route: DeepLinkRoute.Signer, fromQR: Boolean) {
+    private suspend fun processSignerDeepLink(route: DeepLinkRoute.Signer, fromQR: Boolean) {
         _eventFlow.tryEmit(RootEvent.Singer(
             publicKey = route.publicKey,
             name = route.name,

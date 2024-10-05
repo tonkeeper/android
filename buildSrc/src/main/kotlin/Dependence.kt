@@ -13,18 +13,18 @@ object Dependence {
 
     object KotlinX {
         const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0"
-        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.2"
-        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2"
-        const val serializationCBOR = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.2"
+        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3"
+        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
+        const val serializationCBOR = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.3"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
-        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.5.3"
+        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.5.4"
     }
 
     object GooglePlay {
-        const val cronet = "com.google.android.gms:play-services-cronet:18.0.1"
+        const val cronet = "com.google.android.gms:play-services-cronet:18.1.0"
         const val cronetOkhttp = "com.google.net.cronet:cronet-okhttp:0.1.0"
         const val review = "com.google.android.play:review-ktx:2.0.1"
-        const val billing = "com.android.billingclient:billing-ktx:7.0.0"
+        const val billing = "com.android.billingclient:billing-ktx:7.1.1"
     }
 
     object UI {
@@ -33,7 +33,8 @@ object Dependence {
     }
 
     object Koin {
-        const val core = "io.insert-koin:koin-android:3.5.6"
+        const val core = "io.insert-koin:koin-android:4.0.0"
+        const val workmanager = "io.insert-koin:koin-androidx-workmanager:4.0.0"
     }
 
     object ML {
@@ -44,24 +45,24 @@ object Dependence {
         const val core = "androidx.core:core-ktx:1.13.1"
         const val shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
         const val appCompat = "androidx.appcompat:appcompat:1.7.0"
-        const val activity = "androidx.activity:activity-ktx:1.9.1"
-        const val fragment = "androidx.fragment:fragment-ktx:1.8.2"
+        const val activity = "androidx.activity:activity-ktx:1.9.2"
+        const val fragment = "androidx.fragment:fragment-ktx:1.8.4"
         const val recyclerView = "androidx.recyclerview:recyclerview:1.3.2"
         const val viewPager2 = "androidx.viewpager2:viewpager2:1.1.0"
         const val security = "androidx.security:security-crypto:1.0.0"
         const val workManager = "androidx.work:work-runtime-ktx:2.9.1"
         const val biometric = "androidx.biometric:biometric:1.1.0"
-        const val annotation = "androidx.annotation:annotation:1.8.1"
+        const val annotation = "androidx.annotation:annotation:1.8.2"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.1"
         const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.1.4"
         const val browser = "androidx.browser:browser:1.8.0"
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
-        const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.3.1"
-        const val webkit = "androidx.webkit:webkit:1.11.0"
+        const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.4.1"
+        const val webkit = "androidx.webkit:webkit:1.12.1"
 
-        const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
-        const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.4"
+        const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.6"
+        const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.6"
 
         object Camera {
             private const val version = "1.4.0-alpha04"
@@ -73,7 +74,7 @@ object Dependence {
         }
 
         object Emoji {
-            const val core = "androidx.emoji2:emoji2:1.4.0"
+            const val core = "androidx.emoji2:emoji2:1.5.0"
         }
     }
 
@@ -86,7 +87,7 @@ object Dependence {
     }
 
     object Firebase {
-        const val bom = "com.google.firebase:firebase-bom:33.2.0"
+        const val bom = "com.google.firebase:firebase-bom:33.4.0"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
         const val messaging = "com.google.firebase:firebase-messaging-ktx"

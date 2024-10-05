@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.manager.push
 
 import android.content.Context
+import android.util.Log
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
@@ -24,8 +25,14 @@ class PushManager(
     private val dAppsRepository: DAppsRepository,
 ) {
 
-    enum class State {
-        Enable, Disable, Delete
+    enum class State(val code: Int) {
+        Enable(1), Disable(0), Delete(-1);
+
+        companion object {
+            fun of(code: Int): State {
+                return entries.firstOrNull { it.code == code } ?: Disable
+            }
+        }
     }
 
     fun newFirebaseToken() {
@@ -34,14 +41,6 @@ class PushManager(
             wallets(wallets.filter { isPushEnabled(it) }, State.Enable)
             wallets(wallets.filter { !isPushEnabled(it) }, State.Disable)
         }
-    }
-
-    fun walletAsync(wallet: WalletEntity, state: State) {
-        scope.launch { wallet(wallet, state) }
-    }
-
-    fun walletsAsync(wallets: List<WalletEntity>, state: State) {
-        scope.launch { wallets(wallets, state) }
     }
 
     suspend fun wallet(wallet: WalletEntity, state: State) = wallets(listOf(wallet), state)

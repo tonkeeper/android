@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge
 
+import android.util.Log
 import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.extensions.base64
 import com.tonapps.extensions.optStringCompat

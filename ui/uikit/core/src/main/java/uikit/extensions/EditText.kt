@@ -8,11 +8,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
 import java.lang.reflect.Field
 
-
 fun EditText.cursorToEnd() {
     try {
         setSelection(text.length)
     } catch (ignored: Throwable) { }
+}
+
+fun EditText.clear() {
+    text?.clear()
 }
 
 fun EditText.requestFocusWithSelection() {

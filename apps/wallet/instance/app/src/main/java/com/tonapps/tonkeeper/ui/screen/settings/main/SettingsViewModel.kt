@@ -17,6 +17,7 @@ import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
+import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -76,7 +77,7 @@ class SettingsViewModel(
 
     fun signOut() {
         tonConnectManager.clear(wallet)
-        pushManager.walletAsync(wallet, PushManager.State.Delete)
+        PushToggleWorker.run(context, wallet, PushManager.State.Delete)
         viewModelScope.launch(Dispatchers.IO) {
             AnalyticsHelper.trackEvent("delete_wallet")
             accountRepository.delete(wallet.id)
@@ -191,7 +192,7 @@ class SettingsViewModel(
         uiItems.add(Item.Support(ListCell.Position.MIDDLE, getSupportUrl()))
         uiItems.add(Item.News(ListCell.Position.MIDDLE, api.config.tonkeeperNewsUrl))
         uiItems.add(Item.Contact(ListCell.Position.MIDDLE, api.config.supportLink))
-        if (environment.isGooglePlayServicesAvailable) {
+        if (environment.isGooglePlayAvailable) {
             uiItems.add(Item.Rate(ListCell.Position.MIDDLE))
         }
         uiItems.add(Item.Legal(ListCell.Position.LAST))

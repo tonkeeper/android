@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.manager.tonconnect
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
-import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.proof.TONProof
@@ -22,6 +21,7 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.manager.tonconnect.exceptions.ManifestException
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
+import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
@@ -137,7 +137,7 @@ class TonConnectManager(
         proof: TONProof.Result?,
         pushEnabled: Boolean,
         type: AppConnectEntity.Type
-    ): AppConnectEntity {
+    ): AppConnectEntity = withContext(Dispatchers.IO) {
         val timestamp = proof?.timestamp ?: (System.currentTimeMillis() / 1000L)
         val connection = AppConnectEntity(
             accountId = wallet.accountId,
@@ -154,15 +154,7 @@ class TonConnectManager(
         if (!dAppsRepository.newConnect(connection)) {
             throw Exception("Failed to save connection")
         }
-        setPushEnabled(wallet, appUrl, pushEnabled)
-        return connection
-    }
-
-    suspend fun setPushEnabled(wallet: WalletEntity, appUrl: Uri, enabled: Boolean) {
-        val connections = dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, enabled)
-        if (!pushManager.dAppPush(wallet, connections, enabled)) {
-            dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, !enabled)
-        }
+        connection
     }
 
     fun processDeeplink(
@@ -222,7 +214,7 @@ class TonConnectManager(
             )
             val bundle = activity.addForResult(screen)
             val response = screen.contract.parseResult(bundle)
-            newConnect(
+            val connect = newConnect(
                 wallet = response.wallet,
                 keyPair = keyPair,
                 clientId = clientId,
@@ -231,6 +223,16 @@ class TonConnectManager(
                 pushEnabled = response.notifications,
                 type = if (tonConnect.jsInject) AppConnectEntity.Type.Internal else AppConnectEntity.Type.External
             )
+
+            activity.runOnUiThread {
+                DAppPushToggleWorker.run(
+                    context = activity,
+                    wallet = response.wallet,
+                    appUrl = app.url,
+                    enable = response.notifications
+                )
+            }
+
             JsonBuilder.connectEventSuccess(
                 wallet = response.wallet,
                 proof = response.proof,

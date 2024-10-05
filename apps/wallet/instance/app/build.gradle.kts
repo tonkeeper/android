@@ -30,6 +30,7 @@ android {
 
 dependencies {
     implementation(Dependence.Koin.core)
+    implementation(Dependence.Koin.workmanager)
     implementation(Dependence.KotlinX.datetime)
     implementation(Dependence.j2objc)
     implementation(Dependence.cbor)

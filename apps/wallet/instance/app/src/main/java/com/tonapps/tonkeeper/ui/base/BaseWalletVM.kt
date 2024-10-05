@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.extensions.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.observeOn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
@@ -49,10 +51,6 @@ abstract class BaseWalletVM(
     val context: Context
         get() = holder?.uiContext ?: getApplication()
 
-    private val uiHandler: Handler by lazy {
-        Handler(context.mainLooper)
-    }
-
     private val navigation: Navigation?
         get() = Navigation.from(context)
 
@@ -66,18 +64,6 @@ abstract class BaseWalletVM(
 
     fun <T> Flow<T>.collectFlow(action: suspend (T) -> Unit) {
         this.onEach { action(it) }.launch()
-    }
-
-    fun <T> Flow<T>.safeCollectFlow(action: suspend (T) -> Unit) {
-        this.flowOn(Dispatchers.IO).onEach { action(it) }.catch {
-            toast(it.bestMessage)
-        }.launch()
-    }
-
-    fun <T> Flow<T>.safeCollectFlowAtPost(action: (T) -> Unit) {
-        this.safeCollectFlow {
-            post { action(it) }
-        }
     }
 
     fun detachHolder() {
@@ -103,33 +89,15 @@ abstract class BaseWalletVM(
         }
     }
 
-    fun post(action: () -> Unit) {
-        uiHandler.post(action)
+    suspend fun toast(@StringRes resId: Int) = withContext(Dispatchers.Main) {
+        context.showToast(resId)
     }
 
-    fun postDelayed(delay: Long, runnable: Runnable) {
-        uiHandler.postDelayed(runnable, delay)
+    suspend fun toast(text: String) = withContext(Dispatchers.Main) {
+        context.showToast(text)
     }
 
-    fun cancelPost(runnable: Runnable) {
-        uiHandler.removeCallbacks(runnable)
-    }
-
-    fun toast(@StringRes resId: Int) {
-        post {
-            context.showToast(resId)
-        }
-    }
-
-    fun toast(text: String) {
-        post {
-            context.showToast(text)
-        }
-    }
-
-    fun openScreen(screen: BaseFragment) {
-        post {
-            navigation?.add(screen)
-        }
+    suspend fun openScreen(screen: BaseFragment) = withContext(Dispatchers.Main) {
+        navigation?.add(screen)
     }
 }

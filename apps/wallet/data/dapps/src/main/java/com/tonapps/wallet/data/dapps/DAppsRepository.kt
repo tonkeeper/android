@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.dapps
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.toRawAddress

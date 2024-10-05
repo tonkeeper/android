@@ -1,12 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.send.transaction
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
-import co.touchlab.stately.concurrency.AtomicBoolean
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.ledger.ton.Transaction
-import com.tonapps.security.base64
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
@@ -31,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 class SendTransactionViewModel(
     app: Application,
@@ -64,7 +62,7 @@ class SendTransactionViewModel(
                     useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType),
                     forceRelayer = forceRelayer
                 )
-                isBattery.value = emulated.withBattery
+                isBattery.set(emulated.withBattery)
 
                 val details = historyHelper.create(wallet, emulated)
 
@@ -104,7 +102,7 @@ class SendTransactionViewModel(
     }
 
     fun send() = flow {
-        val isBattery = isBattery.value
+        val isBattery = isBattery.get()
         val message = messageBody(false)
         val unsignedBody = message.createUnsignedBody(isBattery)
         val ledgerTransaction = getLedgerTransaction(message)
@@ -126,7 +124,7 @@ class SendTransactionViewModel(
 
     private suspend fun messageBody(forEmulation: Boolean): MessageBodyEntity {
         val compressedTokens = getCompressedTokens()
-        val excessesAddress = if (!forEmulation && isBattery.value) {
+        val excessesAddress = if (!forEmulation && isBattery.get()) {
             batteryRepository.getConfig(wallet.testnet).excessesAddress
         } else null
 

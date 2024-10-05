@@ -15,8 +15,11 @@ import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -35,8 +38,7 @@ class EventsViewModel(
     private val transactionManager: TransactionManager,
 ): BaseWalletVM(app) {
 
-    private val autoRefreshRunnable = Runnable { checkAutoRefresh() }
-
+    private var autoRefreshJob: Job? = null
     private var events: Array<AccountEventWrap>? = null
     private val isLoading: AtomicBoolean = AtomicBoolean(true)
 
@@ -58,28 +60,26 @@ class EventsViewModel(
             updateState()
         }
 
-        transactionManager.eventsFlow(wallet).safeCollectFlowAtPost { event ->
+        transactionManager.eventsFlow(wallet).collectFlow { event ->
             if (event.pending) {
                 appendEvent(AccountEventWrap(event.body))
             }
             refresh()
         }
-    }
 
-    private fun checkAutoRefresh() {
-        val hasPendingEvents = hasPendingEvents()
-        if (hasPendingEvents) {
-            refresh()
+        autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
+            while (true) {
+                checkAutoRefresh()
+                delay(25000)
+            }
         }
     }
 
-    private fun startAutoRefresh() {
-        stopAutoRefresh()
-        postDelayed(25000, autoRefreshRunnable)
-    }
-
-    private fun stopAutoRefresh() {
-        cancelPost(autoRefreshRunnable)
+    private suspend fun checkAutoRefresh() {
+        if (hasPendingEvents()) {
+            setLoading()
+            requestRefresh()
+        }
     }
 
     fun refresh() {
@@ -88,8 +88,12 @@ class EventsViewModel(
         }
         setLoading()
         viewModelScope.launch(Dispatchers.IO) {
-            submitEvents(load(), false)
+            requestRefresh()
         }
+    }
+
+    private suspend fun requestRefresh() = withContext(Dispatchers.IO) {
+        submitEvents(load(), false)
     }
 
     fun loadMore() {
@@ -156,13 +160,6 @@ class EventsViewModel(
         events = newEvents.distinctBy { it.eventId }
             .sortedByDescending { it.timestamp }
             .toTypedArray()
-
-        if (hasPendingEvents()) {
-            startAutoRefresh()
-        } else {
-            stopAutoRefresh()
-        }
-
         isLoading.set(loading)
         updateState()
     }
@@ -176,10 +173,8 @@ class EventsViewModel(
         submitEvents(list, false)
     }
 
-    private fun appendEvent(event: AccountEventWrap) {
-        viewModelScope.launch {
-            appendEvents(listOf(event.copy()))
-        }
+    private suspend fun appendEvent(event: AccountEventWrap) {
+        appendEvents(listOf(event.copy()))
     }
 
     private fun getLastLt(): Long? {
@@ -209,6 +204,12 @@ class EventsViewModel(
             testnet = wallet.testnet
         )?.events?.map { AccountEventWrap.cached(it)}
         return list ?: emptyList()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        autoRefreshJob?.cancel()
+        autoRefreshJob = null
     }
 
     private companion object {

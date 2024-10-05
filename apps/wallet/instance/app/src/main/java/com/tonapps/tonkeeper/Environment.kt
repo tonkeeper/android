@@ -16,7 +16,7 @@ class Environment(context: Context) {
         resultCode == ConnectionResult.SUCCESS
     }
 
-    val isGooglePlayBillingAvailable: Boolean by lazy {
+    val isGooglePlayAvailable: Boolean by lazy {
         installerSource == AppInstall.Source.GOOGLE_PLAY && isGooglePlayServicesAvailable
     }
 }

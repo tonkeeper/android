@@ -17,6 +17,7 @@ import com.tonapps.tonkeeper.koin.rnLegacy
 import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
+import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.stateList
@@ -32,7 +33,6 @@ import uikit.widget.SwitchView
 class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.layout.view_wallet_setup_switch) {
 
     private val settingsRepository = context.settingsRepository
-    private val pushManager = context.pushManager
     private val passcodeManager = context.passcodeManager
     private val rnLegacy = context.rnLegacy
 
@@ -65,12 +65,12 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
 
     private fun togglePush(wallet: WalletEntity, enable: Boolean) {
         if (!enable) {
-            pushManager?.walletAsync(wallet, PushManager.State.Disable)
+            PushToggleWorker.run(context, wallet, PushManager.State.Disable)
             return
         }
 
         if (context.hasPushPermission()) {
-            pushManager?.walletAsync(wallet, PushManager.State.Enable)
+            PushToggleWorker.run(context, wallet, PushManager.State.Enable)
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val activity = context.activity ?: return
             switchView.setChecked(newChecked = false, byUser = false)

@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
+import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -57,8 +58,11 @@ class NotificationsManageViewModel(
     }
 
     fun toggleDAppPush(url: Uri, enabled: Boolean) {
-        viewModelScope.launch {
-            tonConnectManager.setPushEnabled(wallet, url, enabled)
-        }
+        DAppPushToggleWorker.run(
+            context = context,
+            wallet = wallet,
+            appUrl = url,
+            enable = enabled
+        )
     }
 }

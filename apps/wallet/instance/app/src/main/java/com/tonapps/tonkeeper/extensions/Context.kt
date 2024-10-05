@@ -15,6 +15,7 @@ import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import androidx.work.WorkManager
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
@@ -27,6 +28,9 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
+
+val Context.workManager: WorkManager
+    get() = WorkManager.getInstance(this)
 
 fun Context.safeExternalOpenUri(uri: Uri) {
     if (TonConnectManager.isTonConnectDeepLink(uri)) {

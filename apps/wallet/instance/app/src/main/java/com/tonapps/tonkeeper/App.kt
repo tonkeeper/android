@@ -17,6 +17,7 @@ import com.tonapps.extensions.setLocales
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel
 import com.tonapps.tonkeeper.koin.viewModelWalletModule
+import com.tonapps.tonkeeper.koin.workerModule
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.wallet.api.apiModule
 import com.tonapps.wallet.data.account.accountModule
@@ -39,6 +40,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
 import org.koin.core.component.KoinComponent
 import org.koin.android.ext.android.inject
+import org.koin.androidx.workmanager.koin.workManagerFactory
 import java.util.concurrent.Executors
 
 class App: Application(), CameraXConfig.Provider, KoinComponent {
@@ -72,7 +74,8 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         instance = this
         startKoin {
             androidContext(this@App)
-            modules(koinModel, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, workerModule, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            workManagerFactory()
         }
         setLocales(settingsRepository.localeList)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

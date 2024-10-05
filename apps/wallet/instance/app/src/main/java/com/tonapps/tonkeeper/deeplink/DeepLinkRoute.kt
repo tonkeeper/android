@@ -142,7 +142,7 @@ sealed class DeepLinkRoute {
             val domain = uri.hostOrNull ?: return Unknown(uri)
             try {
                 return when (domain) {
-                    "backup" -> Backups
+                    "backup", "backups" -> Backups
                     "staking" -> Staking
                     "buy-ton" -> Purchase
                     "send" -> Send

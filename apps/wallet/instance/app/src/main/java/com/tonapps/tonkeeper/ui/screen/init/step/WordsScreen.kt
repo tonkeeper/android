@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
+import uikit.extensions.clear
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.getCurrentFocusEditText
@@ -113,13 +114,23 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private fun onTextChanged(index: Int, editable: Editable) {
         if (index == 0) {
             val words = TonMnemonic.parseMnemonic(editable.toString())
-            if (words.size > 1) {
-                editable.clear()
-                setWords(words)
-                return
+            post {
+                applyWords(words)
+            }
+        } else {
+            post {
+                checkWords()
             }
         }
-        checkWords()
+    }
+
+    private fun applyWords(words: List<String>) {
+        if (words.size > 1) {
+            wordInputs.first().clear()
+            setWords(words)
+        } else {
+            checkWords()
+        }
     }
 
     private fun checkWords(delay: Long = 0) {

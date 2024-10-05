@@ -24,6 +24,7 @@ import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
+import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
@@ -453,15 +454,11 @@ class InitViewModel(
                 }
 
                 if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
-                    post {
-                        backupRepository.addBackupsAsync(wallets.map { it.id })
-                    }
+                    backupRepository.addBackups(wallets.map { it.id })
                 }
 
                 if (savedState.enablePush) {
-                    post {
-                        pushManager.walletsAsync(wallets, PushManager.State.Enable)
-                    }
+                    PushToggleWorker.run(context, wallets, PushManager.State.Enable)
                 }
 
                 val selectedWalletId = wallets.minByOrNull { it.version }!!.id

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -11,86 +11,17 @@
         app:ignoreSystemOffset="true"
         android:action="@drawable/ic_close_16"/>
 
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1">
-
-        <uikit.widget.ColumnLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <uikit.widget.FrescoView
-                android:id="@+id/icon"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
-                android:layout_gravity="center"/>
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:text="@string/confirm_action"
-                android:gravity="center"
-                android:textAppearance="@style/TextAppearance.Body1"
-                android:textColor="?attr/textSecondaryColor"/>
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/staking_get_withdraw"
-                android:gravity="center"
-                android:textAppearance="@style/TextAppearance.H3"
-                android:textColor="?attr/textPrimaryColor"/>
-
-            <uikit.widget.ColumnLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="@dimen/offsetLarge"
-                android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:background="@drawable/bg_content_tint_16">
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/line_wallet"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="@string/wallet"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/line_recipient"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="@string/recipient"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/line_amount"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="@string/staking_withdrawal_amount"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/line_fee"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="@string/fee"/>
-
-            </uikit.widget.ColumnLayout>
-
-        </uikit.widget.ColumnLayout>
-    </androidx.core.widget.NestedScrollView>
-
     <FrameLayout
+        android:id="@+id/action"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="@dimen/itemHeight"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="@dimen/offsetMedium">
 
         <uikit.widget.ProcessTaskView
             android:id="@+id/task"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginHorizontal="@dimen/offsetMedium"
-            android:layout_marginBottom="@dimen/offsetMedium"
+            android:layout_height="match_parent"
             android:visibility="gone"
             app:successLabel="@string/done"
             app:errorLabel="@string/error"/>
@@ -98,20 +29,17 @@
         <uikit.widget.RowLayout
             android:id="@+id/buttons"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
             <Button
                 style="@style/Widget.App.Button.Secondary"
                 android:id="@+id/cancel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:layout_marginBottom="@dimen/offsetMedium"
-                android:enabled="false"
+                android:layout_weight="1"
                 android:textAppearance="@style/TextAppearance.Label1"
                 android:textColor="?attr/textPrimaryColor"
-                android:text="@string/staking_confirm"/>
+                android:text="@string/cancel"/>
 
             <View
                 android:layout_width="@dimen/offsetMedium"
@@ -122,17 +50,79 @@
                 android:id="@+id/confirm"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:layout_marginBottom="@dimen/offsetMedium"
+                android:layout_weight="1"
                 android:enabled="false"
                 android:textAppearance="@style/TextAppearance.Label1"
                 android:textColor="?attr/textPrimaryColor"
-                android:text="@string/staking_confirm"/>
+                android:text="@string/confirm"/>
 
         </uikit.widget.RowLayout>
 
 
     </FrameLayout>
 
-</uikit.widget.ColumnLayout>
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/barHeight">
+
+        <uikit.widget.FrescoView
+            android:id="@+id/icon"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/confirm_action"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/staking_get_withdraw"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.H3"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/offsetLarge"
+            android:layout_marginHorizontal="@dimen/offsetMedium"
+            android:background="@drawable/bg_content_tint_16">
+
+            <com.tonapps.tonkeeper.view.TransactionDetailView
+                android:id="@+id/line_wallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/wallet"/>
+
+            <com.tonapps.tonkeeper.view.TransactionDetailView
+                android:id="@+id/line_recipient"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/recipient"/>
+
+            <com.tonapps.tonkeeper.view.TransactionDetailView
+                android:id="@+id/line_amount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/staking_withdrawal_amount"/>
+
+            <com.tonapps.tonkeeper.view.TransactionDetailView
+                android:id="@+id/line_fee"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/fee"/>
+
+        </uikit.widget.ColumnLayout>
+
+    </uikit.widget.ColumnLayout>
+
+</FrameLayout>

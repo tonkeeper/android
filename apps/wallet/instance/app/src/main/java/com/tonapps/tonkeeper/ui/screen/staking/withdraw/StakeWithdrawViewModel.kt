@@ -71,7 +71,7 @@ class StakeWithdrawViewModel(
     private val _poolFlow = MutableStateFlow<Pair<StakedEntity, PoolDetailsEntity>?>(null)
     private val poolFlow = _poolFlow.asStateFlow().filterNotNull()
 
-    private val stakeFlow = poolFlow.map { it.first }
+    val stakeFlow = poolFlow.map { it.first }
     val poolDetailsFlow = poolFlow.map { it.second }
 
     private val amountFlow = stakeFlow.map {

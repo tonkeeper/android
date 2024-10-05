@@ -178,7 +178,7 @@ class EventsViewModel(
     }
 
     private fun getLastLt(): Long? {
-        val lt = events?.last { !it.inProgress }?.lt ?: return null
+        val lt = events?.lastOrNull { !it.inProgress }?.lt ?: return null
         if (0 >= lt) {
             return null
         }

@@ -14,18 +14,23 @@ import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.staking.StakingPool
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
+import uikit.base.BaseFragment
+import uikit.extensions.applyNavBottomMargin
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.extensions.getDimensionPixelSize
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
 import uikit.widget.ProcessTaskView
 
-class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_stake_withdraw, wallet) {
+class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_stake_withdraw, wallet), BaseFragment.BottomSheet {
 
     override val viewModel: StakeWithdrawViewModel by walletViewModel {
         parametersOf(requireArguments().getString(ARG_POOL_ADDRESS))
@@ -46,6 +51,7 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         headerView.doOnActionClick = { finish() }
 
         iconView = view.findViewById(R.id.icon)
+        iconView.setCircular()
 
         walletView = view.findViewById(R.id.line_wallet)
         walletView.value = wallet.label.getTitle(requireContext(), walletView.valueView, 12)
@@ -62,15 +68,17 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
         confirmButton = view.findViewById(R.id.confirm)
         confirmButton.setOnClickListener { send() }
-        confirmButton.isEnabled = false
 
         buttonsView = view.findViewById(R.id.buttons)
 
+        val actionView = view.findViewById<View>(R.id.action)
+        actionView.applyNavBottomMargin(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
+
         collectFlow(viewModel.taskStateFlow, ::setTaskState)
 
-        collectFlow(viewModel.poolDetailsFlow) { poolDetails ->
-            iconView.setImageURI(poolDetails.url, null)
-            recipientView.value = poolDetails.name
+        collectFlow(viewModel.stakeFlow) { staked ->
+            iconView.setLocalRes(StakingPool.getIcon(staked.pool.implementation))
+            recipientView.value = staked.pool.name
         }
 
         collectFlow(viewModel.amountFormatFlow) { (amount, fiat) ->

@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.core.history
 import android.content.Context
 import android.util.Log
 import androidx.collection.arrayMapOf
+import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.max24
@@ -35,6 +37,7 @@ import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
 import com.tonapps.tonkeeper.usecase.emulation.Emulated
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -47,6 +50,7 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
+import io.tonapi.models.Account
 import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.flow.Flow
@@ -75,6 +79,7 @@ class HistoryHelper(
     private val settingsRepository: SettingsRepository,
     private val eventsRepository: EventsRepository,
     private val passcodeManager: PasscodeManager,
+    private val api: API,
 ) {
 
     private val currency: WalletCurrency
@@ -117,6 +122,14 @@ class HistoryHelper(
             }
             return list.toList()
         }
+    }
+
+    private fun isBurnAccount(account: AccountAddress): Boolean {
+        val burnAddress = api.getBurnAddress()
+        if (burnAddress.equalsAddress(account.address) || (account.name != null && burnAddress == account.name)) {
+            return true
+        }
+        return "UQCNzZIsoe75gjl8KIwUJW1Fawt-7IbsFwd0ubGIFkig159E".equalsAddress(account.address)
     }
 
     private fun sort(list: List<HistoryItem>): List<HistoryItem.Event> {
@@ -471,13 +484,21 @@ class HistoryHelper(
             val symbol = jettonTransfer.jetton.symbol
             val isOut = !wallet.isMyAddress(jettonTransfer.recipient?.address ?: "")
 
+            val isBurn = jettonTransfer.recipient?.let {
+                isBurnAccount(it)
+            } ?: false
+
             val amount = Coins.ofNano(jettonTransfer.amount, jettonTransfer.jetton.decimals)
             var value = CurrencyFormatter.format(symbol, amount, 2)
 
             val itemAction: ActionType
             val accountAddress: AccountAddress?
 
-            if (isOut) {
+            if (isBurn) {
+                itemAction = ActionType.JettonBurn
+                accountAddress = jettonTransfer.recipient
+                value = value.withMinus
+            } else if (isOut) {
                 itemAction = ActionType.Send
                 accountAddress = jettonTransfer.recipient
                 value = value.withMinus
@@ -502,7 +523,11 @@ class HistoryHelper(
                 iconURL = accountAddress?.iconURL ?: "",
                 action = itemAction,
                 title = simplePreview.name,
-                subtitle = accountAddress?.getNameOrAddress(wallet.testnet, true) ?: "",
+                subtitle = if (!isBurn) {
+                    accountAddress?.getNameOrAddress(wallet.testnet, true) ?: ""
+                } else {
+                    api.getBurnAddress()
+                },
                 comment = comment,
                 value = value,
                 tokenCode = "",
@@ -602,12 +627,19 @@ class HistoryHelper(
 
             val isOut = !wallet.isMyAddress(nftItemTransfer.recipient?.address ?: "-")
             val sender = nftItemTransfer.sender ?: action.simplePreview.accounts.firstOrNull()
+            val isBurn = nftItemTransfer.recipient?.let {
+                isBurnAccount(it)
+            } ?: false
 
             val itemAction: ActionType
             val iconURL: String?
             val subtitle: String
 
-            if (isOut) {
+            if (isBurn) {
+                itemAction = ActionType.JettonBurn
+                iconURL = nftItemTransfer.recipient?.iconURL
+                subtitle = api.getBurnAddress()
+            } else if (isOut) {
                 itemAction = ActionType.NftSend
                 iconURL = nftItemTransfer.recipient?.iconURL
                 subtitle = sender?.getNameOrAddress(wallet.testnet, true) ?: ""

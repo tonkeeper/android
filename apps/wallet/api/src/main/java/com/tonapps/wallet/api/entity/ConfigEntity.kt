@@ -45,6 +45,7 @@ data class ConfigEntity(
     val tonapiSSEEndpoint: String,
     val tonapiSSETestnetEndpoint: String,
     val iapPackages: List<IAPPackageEntity>,
+    val burnZeroDomain: String,
 ): Parcelable {
 
     val swapUri: Uri
@@ -97,7 +98,8 @@ data class ConfigEntity(
         tonapiSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint", "https://rt-testnet.tonapi.io"),
         iapPackages = json.optJSONArray("iap_packages")?.let { array ->
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
-        } ?: emptyList()
+        } ?: emptyList(),
+        burnZeroDomain = json.optString("burnZeroDomain", "tonkeeper-zero.ton")
     )
 
     constructor() : this(
@@ -138,7 +140,8 @@ data class ConfigEntity(
         stakingInfoUrl = "https://ton.org/stake",
         tonapiSSEEndpoint = "https://rt.tonapi.io",
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
-        iapPackages = emptyList()
+        iapPackages = emptyList(),
+        burnZeroDomain = "tonkeeper-zero.ton"
     )
 
     companion object {

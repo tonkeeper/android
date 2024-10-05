@@ -15,6 +15,7 @@
     <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>
     <string name="staking_pending_deposit">%1$s will be deposited in %2$s</string>
     <string name="staking_pending_withdraw">%1$s will be withdrawn in %2$s</string>
+    <string name="burn">Burn</string>
     <string name="staking_get_withdraw">Get withdraw</string>
     <string name="staking_withdrawal_amount">Withdrawal amount</string>
     <string name="staking_pending_withdraw_liquid">%1$s unstaked after the end of the cycle</string>

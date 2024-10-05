@@ -14,6 +14,7 @@ import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.TokenAdapter
 import com.tonapps.tonkeeperx.R
@@ -115,12 +116,35 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
         }
 
         val actionSheet = ActionSheet(requireContext())
-        actionSheet.addItem(0, Localization.view_details, R.drawable.ic_globe_16)
-        actionSheet.doOnItemClick = { navigation?.openURL(detailsUrl.toString()) }
+        actionSheet.addItem(VIEWER_ID, Localization.view_details, R.drawable.ic_globe_16)
+        if (!token.verified) {
+            actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)
+        }
+        actionSheet.doOnItemClick = {
+            if (it.id == VIEWER_ID) {
+                navigation?.openURL(detailsUrl.toString())
+            } else if (it.id == BURN_ID) {
+                burn(token)
+            }
+        }
         actionSheet.show(view)
     }
 
+    private fun burn(token: AccountTokenEntity) {
+        navigation?.add(SendScreen.newInstance(
+            wallet = screenContext.wallet,
+            targetAddress = viewModel.burnAddress,
+            tokenAddress = token.address,
+            amountNano = token.balance.value.toLong()
+        ))
+        finish()
+    }
+
     companion object {
+
+        private const val VIEWER_ID = 1L
+        private const val BURN_ID = 2L
+
         fun newInstance(
             wallet: WalletEntity,
             address: String,

@@ -9,9 +9,13 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
+import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.extensions.showToast
+import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -29,6 +33,11 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
@@ -190,6 +199,15 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         }
     }
 
+    private fun burn() {
+        navigation?.add(SendScreen.newInstance(
+            wallet = wallet,
+            targetAddress = viewModel.burnAddress,
+            nftAddress = nftEntity.address
+        ))
+        finish()
+    }
+
     private fun mustOpenButtonDApp(url: String) {
         navigation?.add(DAppScreen.newInstance(wallet, url = url.toUri()))
         finish()
@@ -215,11 +233,15 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
         actionSheet.addItem(HIDE_AND_REPORT_ID, Localization.hide_and_report_collection, UIKitIcon.ic_block_16)
         actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
+        if (!nftEntity.inSale && !nftEntity.isTrusted) {
+            actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)
+        }
         actionSheet.doOnItemClick = { item ->
             when (item.id) {
                 HIDE_NFT_ID -> hideCollection()
                 HIDE_AND_REPORT_ID -> reportSpam(true)
                 VIEWER_ID -> openTonViewer()
+                BURN_ID -> burn()
             }
         }
         actionSheet.show(view)
@@ -229,10 +251,14 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
         actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
+        if (!nftEntity.inSale && !nftEntity.isTrusted) {
+            actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)
+        }
         actionSheet.doOnItemClick = { item ->
             when (item.id) {
                 HIDE_NFT_ID -> hideCollection()
                 VIEWER_ID -> openTonViewer()
+                BURN_ID -> burn()
             }
         }
         actionSheet.show(view)
@@ -306,6 +332,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         private const val HIDE_NFT_ID = 1L
         private const val HIDE_AND_REPORT_ID = 2L
         private const val VIEWER_ID = 3L
+        private const val BURN_ID = 4L
 
         private const val ARG_ENTITY = "entity"
 

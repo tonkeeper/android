@@ -419,6 +419,9 @@
     <string name="promocode_hint">Kupon kodi</string>
     <string name="refund">To\'lovni qaytarish</string>
     <string name="gasless_switch_label">%1$s orqali toʻlash uchun bosing</string>
+    <string name="battery_large_pack">Katta</string>
+    <string name="battery_medium_pack">O\'rta</string>
+    <string name="battery_small_pack">Kichik</string>
     <string name="backup_alert_message">Balansingiz %1$s va u faqat siz hali yozmagan tiklash iborasi bilan himoyalangan. Qurilma bilan bog\'liq muammolarda mablag\'ni yo\'qotmaslik uchun iborani zaxiralang.</string>
 
     <plurals name="battery_nft">
@@ -434,4 +437,19 @@
         <item quantity="other">≈ %1$s ta token uzatish</item>
     </plurals>
     <string name="or">yoki</string>
+    <string name="battery_disclaimer">Bitta toʻlov oʻrtacha tranzaksiya toʻlovini qoplaydi. Ayrim tranzaksiyalar koʻproq xarajat boʻlishi mumkin.</string>
+    <string name="restore_purchases">Xaridlarni tiklash</string>
+    <string name="battery_refilled">Batareya qayta to\'ldirilgan</string>
+    <string name="burn">Kuyish</string>
+    <string name="staking_get_withdraw">Chiqib oling</string>
+    <string name="staking_withdrawal_amount">Olib tashlash miqdori</string>
+    <string name="staking_pending_withdraw_liquid">Tsikl tugaganidan keyin %1$s hisobdan chiqarildi</string>
+    <string name="expired_link">Muddati tugagan havola</string>
+    <string name="payment_method_not_found">Toʻlov usuli mavjud emas</string>
+    <string name="app_not_found">Ilova topilmadi</string>
+    <string name="insufficient_balance_in_wallet">Hamyonda mablag\' yetarli emas</string>
+    <string name="insufficient_balance_fees">Blokcheyn to‘lovlari uchun talab qilinadi: %1$s.\\nBalansingiz: %2$s.</string>
+    <string name="insufficient_balance_default">Toʻlanishi kerak: %1$s.\\nBalansingiz: %2$s.</string>
+    <string name="buy_ton">TON sotib oling</string>
+    <string name="recharge_battery">Batareyani qayta zaryadlash</string>
 </resources>

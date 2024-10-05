@@ -44,6 +44,10 @@ class TokenViewModel(
     private val historyHelper: HistoryHelper,
 ): BaseWalletVM(app) {
 
+    val burnAddress: String by lazy {
+        api.getBurnAddress()
+    }
+
     private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
     val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 

@@ -64,10 +64,23 @@
     <string name="all_assets">Всички активи</string>
     <string name="sorted_by_price">Сортирано по цена</string>
     <string name="spam">Спам</string>
+    <string name="burn">Изгори</string>
+    <string name="staking_get_withdraw">Вземете теглене</string>
+    <string name="staking_withdrawal_amount">Сума за теглене</string>
+    <string name="staking_pending_withdraw_liquid">%1$s не е заложен след края на цикъла</string>
+    <string name="expired_link">Изтекла връзка</string>
+    <string name="payment_method_not_found">Методът на плащане не е наличен</string>
+    <string name="app_not_found">Приложението не е намерено</string>
+    <string name="insufficient_balance_in_wallet">Недостатъчно средства в портфейла</string>
+    <string name="insufficient_balance_fees">Изисква се за такси за блокчейн: %1$s.\\nВашето салдо: %2$s.</string>
+    <string name="insufficient_balance_default">За плащане: %1$s.\\nВашето салдо: %2$s.</string>
     <string name="staking_max_apy" translatable="false">MAX APY</string>
     <string name="staking_minimum_deposit">Минимален депозит %1$s.</string>
     <string name="staking_options">Опции</string>
     <string name="gasless_switch_label">Докоснете, за да платите в %1$s</string>
+    <string name="battery_disclaimer">Едно таксуване покрива средната такса за транзакция. Някои транзакции може да струват повече.</string>
+    <string name="restore_purchases">Възстановяване на покупките</string>
+    <string name="battery_refilled">Заредена батерия</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="staking_minimal_deposit">Минимален депозит</string>
     <string name="staking_details_description">Стейкингът е базиран на умни договори от трети страни. Tonkeeper не носи отговорност за изживяването по време на стейкинг.</string>
@@ -141,6 +154,9 @@
     <string name="wallet_initialized">Портфейлът е инициализиран</string>
     <string name="bid">Залог</string>
     <string name="theme">Тема</string>
+    <string name="battery_large_pack">Голям</string>
+    <string name="battery_medium_pack">Среден</string>
+    <string name="battery_small_pack">Малък</string>
     <string name="backup_alert_message">Вашият баланс е %1$s и е защитен само от фраза за възстановяване, която още не сте записали. Архивирайте фразата, за да избегнете загуба на средства в случай на проблеми с устройството.</string>
     <string name="testnet" translatable="false">Testnet</string>
     <string name="unstake_request">Искане за изтегляне на стейк</string>
@@ -390,6 +406,7 @@
     <string name="signer_about">Относно Signer</string>
     <string name="signer_open">Отворете Signer на това устройство</string>
     <string name="later">По-късно</string>
+    <string name="buy_ton">Купете TON</string>
     <string name="signer" translatable="false">Signer</string>
     <string name="choose_wallet_title">Изберете портфейл</string>
     <string name="choose_wallet_subtitle">Изберете портфейли, които искате да добавите.</string>
@@ -479,4 +496,5 @@
         <item quantity="other">≈ %1$s трансфера на токен</item>
     </plurals>
     <string name="or">или</string>
+    <string name="recharge_battery">Презареждане на батерията</string>
 </resources>

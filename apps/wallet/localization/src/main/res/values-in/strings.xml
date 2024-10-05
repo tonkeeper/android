@@ -417,6 +417,9 @@
     <string name="promocode_hint">Kode Promo</string>
     <string name="refund">Pengembalian</string>
     <string name="gasless_switch_label">Ketuk untuk membayar dalam %1$s</string>
+    <string name="battery_large_pack">Besar</string>
+    <string name="battery_medium_pack">Sedang</string>
+    <string name="battery_small_pack">Kecil</string>
     <string name="backup_alert_message">Saldo Anda adalah %1$s, dan saldo tersebut hanya dilindungi oleh frasa pemulihan yang belum Anda tulis. Cadangkan frasa tersebut untuk menghindari kehilangan dana jika terjadi masalah pada perangkat.</string>
 
     <plurals name="battery_nft">
@@ -429,4 +432,19 @@
         <item quantity="other">≈ %1$s transfer token</item>
     </plurals>
     <string name="or">atau</string>
+    <string name="battery_disclaimer">Satu biaya mencakup biaya transaksi rata-rata. Beberapa transaksi mungkin lebih mahal.</string>
+    <string name="restore_purchases">Pulihkan Pembelian</string>
+    <string name="battery_refilled">Baterai diisi ulang</string>
+    <string name="burn">Membakar</string>
+    <string name="staking_get_withdraw">Dapatkan penarikan</string>
+    <string name="staking_withdrawal_amount">Jumlah penarikan</string>
+    <string name="staking_pending_withdraw_liquid">%1$s tidak dipertaruhkan setelah akhir siklus</string>
+    <string name="expired_link">Tautan kedaluwarsa</string>
+    <string name="payment_method_not_found">Metode pembayaran tidak tersedia</string>
+    <string name="app_not_found">Aplikasi tidak ditemukan</string>
+    <string name="insufficient_balance_in_wallet">Dana tidak mencukupi di dompet</string>
+    <string name="insufficient_balance_fees">Diperlukan untuk biaya blockchain: %1$s.\\nSaldo Anda: %2$s.</string>
+    <string name="insufficient_balance_default">Yang akan dibayar: %1$s.\\nSaldo Anda: %2$s.</string>
+    <string name="buy_ton">Beli TON</string>
+    <string name="recharge_battery">Isi Ulang Baterai</string>
 </resources>

@@ -51,5 +51,9 @@ fun String.isValidTonAddress(): Boolean {
 }
 
 fun String.equalsAddress(other: String): Boolean {
-    return toRawAddress().equals(other.toRawAddress(), ignoreCase = true)
+    return try {
+        toRawAddress().equals(other.toRawAddress(), ignoreCase = true)
+    } catch (e: Throwable) {
+        false
+    }
 }

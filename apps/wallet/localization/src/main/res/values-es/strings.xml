@@ -419,6 +419,9 @@
     <string name="promocode_hint">Código promocional</string>
     <string name="refund">Reembolso</string>
     <string name="gasless_switch_label">Toque para pagar en %1$s</string>
+    <string name="battery_large_pack">Grande</string>
+    <string name="battery_medium_pack">Medio</string>
+    <string name="battery_small_pack">Pequeño</string>
     <string name="backup_alert_message">Tu saldo es %1$s y solo está protegido por una frase de recuperación que aún no has escrito. Haz una copia de seguridad de la frase para evitar perder fondos en caso de problemas con el dispositivo.</string>
 
     <plurals name="battery_nft">
@@ -434,4 +437,19 @@
         <item quantity="other">≈ %1$s transferencias de tokens</item>
     </plurals>
     <string name="or">o</string>
+    <string name="battery_disclaimer">Un cargo cubre la tarifa de transacción promedio. Algunas transacciones pueden costar más.</string>
+    <string name="restore_purchases">Restaurar compras</string>
+    <string name="battery_refilled">Batería recargada</string>
+    <string name="burn">Quemar</string>
+    <string name="staking_get_withdraw">Obtener retiro</string>
+    <string name="staking_withdrawal_amount">Monto del retiro</string>
+    <string name="staking_pending_withdraw_liquid">%1$s no se han apostado después del final del ciclo</string>
+    <string name="expired_link">Enlace caducado</string>
+    <string name="payment_method_not_found">Método de pago no disponible</string>
+    <string name="app_not_found">Aplicación no encontrada</string>
+    <string name="insufficient_balance_in_wallet">Fondos insuficientes en la billetera</string>
+    <string name="insufficient_balance_fees">Requerido para las tarifas de blockchain: %1$s.\\nSu saldo: %2$s.</string>
+    <string name="insufficient_balance_default">A pagar: %1$s.\\nSu saldo: %2$s.</string>
+    <string name="buy_ton">Comprar TON</string>
+    <string name="recharge_battery">Recargar la batería</string>
 </resources>

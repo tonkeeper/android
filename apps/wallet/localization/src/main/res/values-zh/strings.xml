@@ -417,6 +417,9 @@
     <string name="promocode_hint">促销代码</string>
     <string name="refund">退款</string>
     <string name="gasless_switch_label">%1$s 后即可轻触付款</string>
+    <string name="battery_large_pack">大的</string>
+    <string name="battery_medium_pack">中等的</string>
+    <string name="battery_small_pack">小的</string>
     <string name="backup_alert_message">您的余额为 %1$s，并且仅受您尚未记下的恢复短语保护。请备份该短语，以免在设备出现问题时丢失资金。</string>
 
     <plurals name="battery_nft">
@@ -429,4 +432,19 @@
         <item quantity="other">≈ %1$s 代币转移</item>
     </plurals>
     <string name="or">或</string>
+    <string name="battery_disclaimer">一次收费即可涵盖平均交易费用。某些交易可能收费更高。</string>
+    <string name="restore_purchases">恢复购买</string>
+    <string name="battery_refilled">电池已充满</string>
+    <string name="burn">烧伤</string>
+    <string name="staking_get_withdraw">获取提款</string>
+    <string name="staking_withdrawal_amount">提款金额</string>
+    <string name="staking_pending_withdraw_liquid">周期结束后，%1$s 被取消质押</string>
+    <string name="expired_link">链接已过期</string>
+    <string name="payment_method_not_found">付款方式不可用</string>
+    <string name="app_not_found">未找到应用程序</string>
+    <string name="insufficient_balance_in_wallet">钱包资金不足</string>
+    <string name="insufficient_balance_fees">区块链费用所需：%1$s。\\n您的余额：%2$s。</string>
+    <string name="insufficient_balance_default">待付款：%1$s。\\n您的余额：%2$s。</string>
+    <string name="buy_ton">购买 TON</string>
+    <string name="recharge_battery">给电池充电</string>
 </resources>

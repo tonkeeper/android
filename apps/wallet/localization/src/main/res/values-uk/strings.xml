@@ -423,6 +423,9 @@
     <string name="promocode_hint">Промокод</string>
     <string name="refund">Повернення</string>
     <string name="gasless_switch_label">Торкніться, щоб оплатити %1$s</string>
+    <string name="battery_large_pack">Великий</string>
+    <string name="battery_medium_pack">Середній</string>
+    <string name="battery_small_pack">Маленький</string>
     <string name="backup_alert_message">Ваш баланс становить %1$s, і він захищений лише фразою відновлення, яку ви ще не записали. Створіть резервну копію фрази, щоб уникнути втрати коштів у разі проблем із пристроєм.</string>
 
     <plurals name="battery_nft">
@@ -444,4 +447,19 @@
         <item quantity="other">≈ %1$s переказів токена</item>
     </plurals>
     <string name="or">або</string>
+    <string name="battery_disclaimer">Одне стягнення покриває середню комісію за транзакцію. Деякі транзакції можуть коштувати дорожче.</string>
+    <string name="restore_purchases">Відновити покупки</string>
+    <string name="battery_refilled">Батарея заправлена</string>
+    <string name="burn">Спалити</string>
+    <string name="staking_get_withdraw">Отримати зняття</string>
+    <string name="staking_withdrawal_amount">Сума зняття</string>
+    <string name="staking_pending_withdraw_liquid">%1$s знято зі ставок після завершення циклу</string>
+    <string name="expired_link">Термін дії посилання закінчився</string>
+    <string name="payment_method_not_found">Спосіб оплати недоступний</string>
+    <string name="app_not_found">Додаток не знайдено</string>
+    <string name="insufficient_balance_in_wallet">Недостатньо коштів у гаманці</string>
+    <string name="insufficient_balance_fees">Необхідно для комісій за блокчейн: %1$s.\\nВаш баланс: %2$s.</string>
+    <string name="insufficient_balance_default">До оплати: %1$s.\\nВаш баланс: %2$s.</string>
+    <string name="buy_ton">Купити TON</string>
+    <string name="recharge_battery">Перезарядіть батарею</string>
 </resources>

@@ -237,6 +237,10 @@ class API(
         return defaultHttpClient.get(url, headers)
     }
 
+    fun getBurnAddress() = config.burnZeroDomain.ifBlank {
+        "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"
+    }
+
     fun getEvents(
         accountId: String,
         testnet: Boolean,

@@ -419,6 +419,9 @@
     <string name="promocode_hint">Promosyon Kodu</string>
     <string name="refund">Geri ödemek</string>
     <string name="gasless_switch_label">%1$s ile ödeme yapmak için dokunun</string>
+    <string name="battery_large_pack">Büyük</string>
+    <string name="battery_medium_pack">Orta</string>
+    <string name="battery_small_pack">Küçük</string>
     <string name="backup_alert_message">Bakiyeniz %1$s ve henüz yazmadığınız bir kurtarma ifadesiyle korunuyor. Cihaz sorunları durumunda para kaybetmemek için ifadeyi yedekleyin.</string>
 
     <plurals name="battery_nft">
@@ -434,4 +437,19 @@
         <item quantity="other">≈ %1$s token transferi</item>
     </plurals>
     <string name="or">veya</string>
+    <string name="battery_disclaimer">Bir ücret ortalama işlem ücretini kapsar. Bazı işlemler daha pahalı olabilir.</string>
+    <string name="restore_purchases">Satın Alımları Geri Yükle</string>
+    <string name="battery_refilled">Pil yeniden dolduruldu</string>
+    <string name="burn">Yakmak</string>
+    <string name="staking_get_withdraw">Para çekme işlemini gerçekleştirin</string>
+    <string name="staking_withdrawal_amount">Çekilecek miktar</string>
+    <string name="staking_pending_withdraw_liquid">Döngünün sonunda %1$s stake edilmedi</string>
+    <string name="expired_link">Süresi dolmuş bağlantı</string>
+    <string name="payment_method_not_found">Ödeme yöntemi mevcut değil</string>
+    <string name="app_not_found">Uygulama bulunamadı</string>
+    <string name="insufficient_balance_in_wallet">Cüzdanda yetersiz bakiye</string>
+    <string name="insufficient_balance_fees">Blockchain ücretleri için gerekli: %1$s.\\nBakiyeniz: %2$s.</string>
+    <string name="insufficient_balance_default">Ödenecek tutar: %1$s.\\nBakiyeniz: %2$s.</string>
+    <string name="buy_ton">TON satın al</string>
+    <string name="recharge_battery">Aküyü şarj edin</string>
 </resources>

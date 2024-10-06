@@ -147,8 +147,8 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
         transaction.replace(hostFragmentId, fragment)
         transaction.setPrimaryNavigationFragment(fragment)
-        runnable?.let {
-            transaction.runOnCommit(it)
+        transaction.runOnCommit {
+            runnable?.run()
         }
         transaction.commitAllowingStateLoss()
         return true
@@ -159,6 +159,13 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     }
 
     override fun add(fragment: BaseFragment) {
+        if (supportFragmentManager.primaryNavigationFragment == null) {
+            baseView.postDelayed({
+                add(fragment)
+            }, 800)
+            return
+        }
+
         if (fragment is BaseFragment.SingleTask) {
             removeOldSingleTaskFragments()
         }

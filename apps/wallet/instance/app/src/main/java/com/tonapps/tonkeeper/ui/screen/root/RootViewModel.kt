@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -70,7 +69,6 @@ import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,10 +84,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.seconds
 
 class RootViewModel(
     app: Application,
@@ -338,7 +334,6 @@ class RootViewModel(
         savedState.returnUri = null
         val deeplink = DeepLink(uri, fromQR, refSource)
         accountRepository.selectedStateFlow.take(1).onEach { state ->
-            delay(1000)
             if (deeplink.route is DeepLinkRoute.Signer) {
                 processSignerDeepLink(deeplink.route, fromQR)
             } else if (state is AccountRepository.SelectedState.Wallet) {
@@ -456,7 +451,7 @@ class RootViewModel(
         ))
     }
 
-    private suspend fun processSignerDeepLink(route: DeepLinkRoute.Signer, fromQR: Boolean) {
+    private fun processSignerDeepLink(route: DeepLinkRoute.Signer, fromQR: Boolean) {
         _eventFlow.tryEmit(RootEvent.Singer(
             publicKey = route.publicKey,
             name = route.name,

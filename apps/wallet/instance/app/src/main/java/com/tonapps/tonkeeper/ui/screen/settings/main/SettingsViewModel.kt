@@ -60,14 +60,13 @@ class SettingsViewModel(
 
     init {
         combine(
-            accountRepository.selectedWalletFlow,
             settingsRepository.currencyFlow,
             settingsRepository.languageFlow,
             settingsRepository.searchEngineFlow,
             backupRepository.stream,
-        ) { newWallet, currency, language, searchEngine, backups ->
-            val hasBackup = backups.indexOfFirst { it.walletId == newWallet.id } > -1
-            buildUiItems(newWallet, currency, language, searchEngine, hasBackup)
+        ) { currency, language, searchEngine, backups ->
+            val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
+            buildUiItems(currency, language, searchEngine, hasBackup)
         }.launchIn(viewModelScope)
     }
 
@@ -138,7 +137,6 @@ class SettingsViewModel(
     }
 
     private suspend fun buildUiItems(
-        newWallet: WalletEntity,
         currency: WalletCurrency,
         language: Language,
         searchEngine: SearchEngine,
@@ -147,22 +145,20 @@ class SettingsViewModel(
         val hasW5 = hasW5()
         val hasV4R2 = hasV4R2()
         val uiItems = mutableListOf<Item>()
-        uiItems.add(Item.Account(newWallet))
+        uiItems.add(Item.Account(wallet))
         uiItems.add(Item.Space)
 
         uiItems.add(Item.Tester(ListCell.Position.SINGLE, "https://t.me/tonkeeper_android"))
 
-        uiItems.add(Item.Space)
-        if (!newWallet.isExternal && !newWallet.isWatchOnly) {
+        if (wallet.hasPrivateKey) {
+            uiItems.add(Item.Space)
             uiItems.add(Item.Backup(ListCell.Position.FIRST, hasBackup))
             uiItems.add(Item.Security(ListCell.Position.LAST))
-        } else {
-            uiItems.add(Item.Security(ListCell.Position.SINGLE))
         }
 
         uiItems.add(Item.Space)
         uiItems.add(Item.Notifications(ListCell.Position.FIRST))
-        if (!newWallet.testnet) {
+        if (!wallet.testnet) {
             uiItems.add(Item.Currency(currency.code, ListCell.Position.MIDDLE))
             uiItems.add(Item.SearchEngine(searchEngine, ListCell.Position.MIDDLE))
         }
@@ -182,7 +178,7 @@ class SettingsViewModel(
             }
         }
 
-        if (!newWallet.isExternal && !api.config.batteryDisabled) {
+        if (!wallet.isExternal && !api.config.batteryDisabled) {
             uiItems.add(Item.Battery(ListCell.Position.MIDDLE))
         }
         uiItems.add(Item.Theme(ListCell.Position.LAST))
@@ -198,10 +194,10 @@ class SettingsViewModel(
         uiItems.add(Item.Legal(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
-        if (newWallet.type == Wallet.Type.Watch) {
+        if (wallet.type == Wallet.Type.Watch) {
             uiItems.add(Item.DeleteWatchAccount(ListCell.Position.SINGLE))
         } else {
-            uiItems.add(Item.Logout(ListCell.Position.SINGLE, newWallet.label, !newWallet.hasPrivateKey))
+            uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label, !wallet.hasPrivateKey))
         }
         uiItems.add(Item.Space)
         uiItems.add(Item.Logo)

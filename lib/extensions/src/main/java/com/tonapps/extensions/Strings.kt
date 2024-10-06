@@ -92,11 +92,13 @@ fun String.fromHex(): ByteArray {
 }
 
 fun String.toUriOrNull(): Uri? {
-    if (!contains("://")) {
-        return null
-    }
     return try {
-        toUri()
+        val uri = toUri()
+        if (uri.scheme.isNullOrBlank()) {
+            null
+        } else {
+            uri
+        }
     } catch (e: Throwable) {
         null
     }

@@ -202,8 +202,8 @@ class WalletViewModel(
                 val walletPushEnabled = settingsRepository.getPushWallet(state.wallet.id)
                 State.Setup(
                     pushEnabled = context.hasPushPermission() && walletPushEnabled,
-                    biometryEnabled = settingsRepository.biometric,
-                    hasBackup = state.hasBackup,
+                    biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
+                    hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
                     showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id)
                 )
             }

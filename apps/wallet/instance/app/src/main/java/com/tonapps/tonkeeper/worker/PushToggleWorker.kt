@@ -51,7 +51,7 @@ class PushToggleWorker(
                 .putStringArray(ARG_WALLET_IDS, wallets.map { it.id }.toTypedArray())
                 .putInt(ARG_PUSH_STATE, state.code)
                 .build()
-            return context.workManager.oneTime<DAppPushToggleWorker>(inputData)
+            return context.workManager.oneTime<PushToggleWorker>(inputData)
         }
     }
 

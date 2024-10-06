@@ -501,11 +501,8 @@ class API(
     ) {
         val mimeType = "text/plain".toMediaType()
         val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
-        val response = withRetry {
+        withRetry {
             tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
-        } ?: throw Exception("Null response")
-        if (!response.isSuccessful) {
-            throw Exception("Failed sending event[code=${response.code};body=${response.body?.string()}]")
         }
     }
 

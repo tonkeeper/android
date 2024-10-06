@@ -80,9 +80,7 @@ class SettingsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             AnalyticsHelper.trackEvent("delete_wallet")
             accountRepository.delete(wallet.id)
-            withContext(Dispatchers.Main) {
-                finish()
-            }
+            finish()
         }
     }
 
@@ -107,9 +105,7 @@ class SettingsViewModel(
             accountRepository.importWallet(walletIds, newLabel, mnemonic, versions, wallet.testnet)
             backupRepository.addBackup(walletId)
             accountRepository.setSelectedWallet(walletId)
-            withContext(Dispatchers.Main) {
-                finish()
-            }
+            finish()
         }
     }
 

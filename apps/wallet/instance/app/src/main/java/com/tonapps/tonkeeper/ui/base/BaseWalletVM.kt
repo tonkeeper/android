@@ -81,12 +81,8 @@ abstract class BaseWalletVM(
     }
 
     @UiThread
-    fun finish() {
-        if (isUIThread) {
-            holder?.finish()
-        } else {
-            throw IllegalStateException("finish() must be called from UI thread")
-        }
+    suspend fun finish() = withContext(Dispatchers.Main) {
+        holder?.finish()
     }
 
     suspend fun toast(@StringRes resId: Int) = withContext(Dispatchers.Main) {

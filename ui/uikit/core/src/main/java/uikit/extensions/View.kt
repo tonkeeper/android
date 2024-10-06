@@ -3,8 +3,10 @@ package uikit.extensions
 import android.animation.ValueAnimator
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
@@ -163,7 +165,11 @@ fun View.round(radius: Float) {
 }
 
 fun View.getDrawable(@DrawableRes resId: Int): Drawable {
-    return AppCompatResources.getDrawable(context, resId)!!
+    return try {
+        AppCompatResources.getDrawable(context, resId) ?: throw IllegalArgumentException()
+    } catch (e: Throwable) {
+        ColorDrawable(Color.TRANSPARENT)
+    }
 }
 
 fun View.withAnimation(duration: Long = 120, block: () -> Unit) {

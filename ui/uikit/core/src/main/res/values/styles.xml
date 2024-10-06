@@ -31,7 +31,7 @@
 
     <style name="Widget.App.Button.Green" parent="Base.Widget.App.Button">
         <item name="android:background">@drawable/bg_button_green</item>
-        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+        <item name="android:textColor">@color/button_green_foreground_selector</item>
     </style>
 
     <style name="Widget.App.Button.Orange" parent="Base.Widget.App.Button">

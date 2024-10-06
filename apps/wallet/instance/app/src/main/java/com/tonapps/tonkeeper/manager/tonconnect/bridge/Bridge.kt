@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge
 
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.extensions.base64
 import com.tonapps.extensions.optStringCompat
@@ -79,8 +80,9 @@ internal class Bridge(private val api: API) {
         message: String
     ) = withContext(Dispatchers.IO) {
         if (connection.type != AppConnectEntity.Type.Internal) {
-            val encrypted = connection.encryptMessage(message.toByteArray())
-            api.tonconnectSend(connection.publicKeyHex, connection.clientId, encrypted.base64)
+            // val encrypted = connection.encryptMessage(message.toByteArray())
+            // api.tonconnectSend(connection.publicKeyHex, connection.clientId, encrypted.base64)
+            send(connection.clientId, connection.keyPair, message)
         }
     }
 
@@ -89,8 +91,12 @@ internal class Bridge(private val api: API) {
         keyPair: CryptoBox.KeyPair,
         unencryptedMessage: String
     ) = withContext(Dispatchers.IO) {
-        val encryptedMessage = AppConnectEntity.encryptMessage(clientId.hex(), keyPair.privateKey, unencryptedMessage.toByteArray())
-        api.tonconnectSend(hex(keyPair.publicKey), clientId, encryptedMessage.base64)
+        try {
+            val encryptedMessage = AppConnectEntity.encryptMessage(clientId.hex(), keyPair.privateKey, unencryptedMessage.toByteArray())
+            api.tonconnectSend(hex(keyPair.publicKey), clientId, encryptedMessage.base64)
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
     }
 
     fun eventsFlow(

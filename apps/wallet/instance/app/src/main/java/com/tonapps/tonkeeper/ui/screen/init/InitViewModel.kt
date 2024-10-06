@@ -73,7 +73,6 @@ class InitViewModel(
     private val api: API,
     private val backupRepository: BackupRepository,
     private val rnLegacy: RNLegacy,
-    private val pushManager: PushManager,
     savedStateHandle: SavedStateHandle
 ): BaseWalletVM(app) {
 
@@ -116,7 +115,7 @@ class InitViewModel(
     private val isPinSet = AtomicBoolean(false)
 
     private val requestSetPinCode: Boolean
-        get() = (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !isPinSet.get()
+        get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !isPinSet.get()
 
     init {
         savedState.publicKey = args.publicKey?.let {
@@ -127,10 +126,13 @@ class InitViewModel(
         savedState.keystone = args.keystone
 
         viewModelScope.launch(Dispatchers.IO) {
+            setLoading(true)
             isPinSet.set(passcodeManager.hasPinCode())
-            if (savedState.isEmptyLabel) {
-                setLabel(getLabel())
+
+            if (!args.labelName.isNullOrBlank()) {
+                setLabelName(args.labelName!!)
             }
+
             start()
         }
     }
@@ -139,15 +141,16 @@ class InitViewModel(
         when (type) {
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
             InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)
-            InitArgs.Type.Signer, InitArgs.Type.SignerQR -> withLoading { resolveWallets(savedState.publicKey!!) }
+            InitArgs.Type.Signer, InitArgs.Type.SignerQR -> resolveWallets(savedState.publicKey!!)
             InitArgs.Type.Ledger -> routeTo(InitRoute.SelectAccount)
             InitArgs.Type.Keystone -> routeTo(InitRoute.LabelAccount)
-            InitArgs.Type.New -> { routeTo(if (requestSetPinCode) InitRoute.Push else InitRoute.CreatePasscode)  }
+            InitArgs.Type.New -> { routeTo(if (requestSetPinCode) InitRoute.CreatePasscode else InitRoute.Push) }
         }
     }
 
     private fun routeTo(route: InitRoute) {
         _routeFlow.tryEmit(route)
+        setLoading(false)
     }
 
     fun enablePush(enable: Boolean) {
@@ -169,14 +172,6 @@ class InitViewModel(
         items[index] = newItem
         setAccounts(items.toList())
         return true
-    }
-
-    private fun withLoading(block: suspend () -> Unit) {
-        setLoading(true)
-        viewModelScope.launch(Dispatchers.IO) {
-            block()
-            setLoading(false)
-        }
     }
 
     private fun setLoading(loading: Boolean) {
@@ -262,9 +257,31 @@ class InitViewModel(
         if (items.size > 1) {
             routeTo(InitRoute.SelectAccount)
         } else if (requestSetPinCode) {
+            applyAccountName(items.first())
             routeTo(InitRoute.CreatePasscode)
         } else {
             routeTo(InitRoute.Push)
+        }
+    }
+
+    private fun applyAccountName() {
+        viewModelScope.launch {
+            val selectedAccounts = getSelectedAccounts()
+            val account = if (selectedAccounts.size == 1) {
+                selectedAccounts.first()
+            } else {
+                selectedAccounts.firstOrNull { !it.name.isNullOrBlank() }
+            }
+            applyAccountName(account ?: selectedAccounts.first())
+        }
+    }
+
+    private suspend fun applyAccountName(account: AccountItem) {
+        val accountName = account.name
+        if (savedState.isEmptyName && !accountName.isNullOrBlank()) {
+            setLabelName(accountName)
+        } else {
+            setLabelName(getDefaultWalletName())
         }
     }
 
@@ -312,7 +329,7 @@ class InitViewModel(
 
         savedState.watchAccount = account
 
-        internalSetLabelName(account?.name ?: getDefaultWalletName())
+        setLabelName(account?.name ?: getDefaultWalletName())
     }
 
     private suspend fun getDefaultWalletName(): String {
@@ -390,13 +407,8 @@ class InitViewModel(
         label
     }
 
-    fun setLabelName(name: String) {
-        viewModelScope.launch {
-            internalSetLabelName(name)
-        }
-    }
-
-    private suspend fun internalSetLabelName(name: String) {
+    private suspend fun setLabelName(name: String) {
+        Log.d("InitViewModelLog", "setLabelName: $name")
         val oldLabel = getLabel()
         val emoji = Emoji.getEmojiFromPrefix(name) ?: oldLabel.emoji
 
@@ -414,24 +426,17 @@ class InitViewModel(
         } else if (from == InitRoute.WatchAccount) {
             routeTo(InitRoute.Push)
         } else if (from == InitRoute.SelectAccount && !requestSetPinCode) {
-            applyNameFromSelectedAccounts()
+            applyAccountName()
             routeTo(InitRoute.Push)
         } else if (requestSetPinCode) {
+            applyAccountName()
             routeTo(InitRoute.CreatePasscode)
         } else {
             execute(context)
         }
     }
 
-    private fun applyNameFromSelectedAccounts() {
-        viewModelScope.launch {
-            val walletName = getSelectedAccounts().firstOrNull {
-                !it.name.isNullOrBlank()
-            }?.name ?: getDefaultWalletName()
 
-            internalSetLabelName(walletName)
-        }
-    }
 
     private fun execute(context: Context) {
         setLoading(true)
@@ -458,11 +463,14 @@ class InitViewModel(
                 }
 
                 if (savedState.enablePush) {
-                    PushToggleWorker.run(context, wallets, PushManager.State.Enable)
+                    withContext(Dispatchers.Main) {
+                        PushToggleWorker.run(context, wallets, PushManager.State.Enable)
+                    }
                 }
 
                 val selectedWalletId = wallets.minByOrNull { it.version }!!.id
                 accountRepository.setSelectedWallet(selectedWalletId)
+                finish()
             } catch (e: Throwable) {
                 context.logError(e)
                 setLoading(false)

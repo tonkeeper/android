@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -246,7 +247,7 @@ class RootViewModel(
             return list
         }
         for (wallet in wallets) {
-            if (wallet == currentWallet) {
+            if (wallet == currentWallet || wallet.label.name.isBlank()) {
                 continue
             }
             list.add(ShortcutHelper.shortcutWallet(context, wallet))

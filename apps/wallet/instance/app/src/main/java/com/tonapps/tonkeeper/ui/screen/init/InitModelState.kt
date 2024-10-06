@@ -67,8 +67,8 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         get() = savedStateHandle[LABEL_KEY]
         set(value) = savedStateHandle.set(LABEL_KEY, value)
 
-    val isEmptyLabel: Boolean
-        get() = label == null || label?.isEmpty == true
+    val isEmptyName: Boolean
+        get() = label == null || label?.name.isNullOrBlank()
 
     var watchAccount: AccountDetailsEntity?
         get() = savedStateHandle[WATCH_ACCOUNT_KEY]

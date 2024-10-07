@@ -43,7 +43,6 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
     override fun onBind(item: Item.Stake) {
         stopTicker()
 
-        item.poolAddress
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, null)
         nameView.text = item.poolName

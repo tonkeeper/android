@@ -21,6 +21,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/offsetMedium"
         android:layout_weight="1">
 
         <androidx.core.widget.NestedScrollView
@@ -31,7 +32,6 @@
                 android:id="@+id/words"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetMedium"
                 android:layout_gravity="center"/>
 
         </androidx.core.widget.NestedScrollView>

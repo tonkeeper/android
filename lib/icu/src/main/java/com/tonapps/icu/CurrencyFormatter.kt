@@ -26,10 +26,21 @@ object CurrencyFormatter {
         Locale("si"),
     )
 
-    private var format = CurrencyFormat(Locale.getDefault(Locale.Category.FORMAT))
+    private fun getFixedLocale(locale: Locale): Locale {
+        return if (customDigitLocales.any { it.language.equals(locale.language) } || locale.isO3Country.equals("IRN", ignoreCase = true)) {
+            Locale.US
+        } else {
+            locale
+        }
+    }
+
+    private var format = CurrencyFormat(getFixedLocale(Locale.getDefault(Locale.Category.FORMAT)))
 
     val monetaryDecimalSeparator: String
         get() = format.monetaryDecimalSeparator
+
+    val locale: Locale
+        get() = format.locale
 
     fun onConfigurationChanged(newConfig: Configuration) {
         val newLocale = newConfig.locales[0]
@@ -37,13 +48,7 @@ object CurrencyFormatter {
     }
 
     private fun onLocaleChanged(newLocale: Locale) {
-        val newLanguage = newLocale.language
-
-        if (customDigitLocales.any { it.language.equals(newLanguage) } || newLocale.isO3Country.equals("IRN", ignoreCase = true)) {
-            onLocaleChanged(Locale.ENGLISH)
-        } else if (newLanguage != format.locale.language) {
-            format = CurrencyFormat(newLocale)
-        }
+        format = CurrencyFormat(getFixedLocale(newLocale))
     }
 
     fun formatPercent(

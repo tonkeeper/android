@@ -511,7 +511,7 @@ class InitViewModel(
     }
 
     private suspend fun newWallet(context: Context): WalletEntity {
-        AndroidSecureRandom.seed(entropyHelper.getSeed(64))
+        AndroidSecureRandom.seed(entropyHelper.getSeed(512))
 
         val mnemonic = Mnemonic.generate(random = AndroidSecureRandom)
         val walletId = AccountRepository.newWalletId()

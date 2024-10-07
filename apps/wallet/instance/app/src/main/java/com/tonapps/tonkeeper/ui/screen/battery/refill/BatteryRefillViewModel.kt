@@ -2,13 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.app.Activity
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
-import com.android.billingclient.api.Purchase
-import com.tonapps.extensions.hasGMS
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -44,7 +42,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import uikit.extensions.collectFlow
 import java.math.BigDecimal
 import java.net.URLEncoder
 
@@ -58,6 +55,7 @@ class BatteryRefillViewModel(
     private val ratesRepository: RatesRepository,
     private val settingsRepository: SettingsRepository,
     private val billingManager: BillingManager,
+    private val environment: Environment,
 ) : BaseWalletVM(app) {
 
     private val promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
@@ -87,7 +85,7 @@ class BatteryRefillViewModel(
             uiItems.add(Item.Space)
         }
 
-        if (context.hasGMS && !api.config.disableBatteryIapModule) {
+        if (environment.isGooglePlayAvailable && !api.config.disableBatteryIapModule) {
             val tonPriceInUsd =
                 ratesRepository.getTONRates(WalletCurrency.USD).getRate(TokenEntity.TON.address)
 
@@ -132,7 +130,7 @@ class BatteryRefillViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            if (context.hasGMS) {
+            if (environment.isGooglePlayAvailable) {
                 billingManager.getProducts(api.config.iapPackages.map { it.productId })
             }
 

@@ -125,9 +125,16 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
                 navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))
                 finish()
             }
-            domainRenewButton.setOnClickListener {
-                navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))
-                finish()
+            if (nftEntity.isTelegramUsername) {
+                domainLinkButton.setBackgroundResource(uikit.R.drawable.bg_button_secondary)
+                domainLinkButton.setTextColor(getColor(uikit.R.color.button_secondary_foreground_selector))
+                domainRenewButton.visibility = View.GONE
+            } else {
+                domainRenewButton.visibility = View.VISIBLE
+                domainRenewButton.setOnClickListener {
+                    navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))
+                    finish()
+                }
             }
         } else {
             domainLinkButton.visibility = View.GONE

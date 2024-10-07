@@ -6,6 +6,7 @@ import android.content.ClipDescription
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.PersistableBundle
@@ -33,6 +34,12 @@ import uikit.navigation.Navigation.Companion.navigation
 
 val Context.workManager: WorkManager
     get() = WorkManager.getInstance(this)
+
+val Context.uiMode: Int
+    get() = resources.configuration.uiMode
+
+val Context.isDarkMode: Boolean
+    get() = uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
 fun Context.safeExternalOpenUri(uri: Uri) {
     if (TonConnectManager.isTonConnectDeepLink(uri)) {

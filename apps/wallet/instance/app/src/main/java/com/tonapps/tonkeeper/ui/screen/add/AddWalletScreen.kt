@@ -1,32 +1,37 @@
-package com.tonapps.tonkeeper.ui.screen.add.imprt
+package com.tonapps.tonkeeper.ui.screen.add
 
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
-import com.tonapps.tonkeeper.ui.screen.add.imprt.list.Adapter
-import com.tonapps.tonkeeper.ui.screen.add.imprt.list.Item
+import com.tonapps.tonkeeper.ui.screen.add.list.Adapter
+import com.tonapps.tonkeeper.ui.screen.add.list.Item
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.add.KeystoneAddScreen
 import com.tonapps.tonkeeper.ui.screen.external.qr.signer.add.SignerAddScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.pair.PairLedgerScreen
-import com.tonapps.tonkeeperx.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
-import uikit.widget.HeaderView
-import uikit.widget.SimpleRecyclerView
 
-class ImportWalletScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_import_wallet, ScreenContext.None), BaseFragment.Modal {
+class AddWalletScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.Modal {
 
-    override val viewModel: ImportWalletViewModel by viewModel()
+    override val viewModel: AddWalletViewModel by viewModel {
+        parametersOf(requireArguments().getBoolean(ARG_WITH_NEW, false))
+    }
 
     private val adapter = Adapter { item ->
         when(item.id) {
+            Item.NEW_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.New))
             Item.IMPORT_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.Import))
             Item.WATCH_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.Watch))
             Item.TESTNET_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.Testnet))
@@ -43,10 +48,7 @@ class ImportWalletScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val header = view.findViewById<HeaderView>(R.id.header)
-        header.doOnActionClick = { finish() }
-
-        val listView = view.findViewById<SimpleRecyclerView>(R.id.list)
+        listView.maxHeight = 680.dp
         listView.adapter = adapter
         listView.addItemDecoration(object : RecyclerView.ItemDecoration() {
 
@@ -66,6 +68,13 @@ class ImportWalletScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment
                 outRect.top = offset
             }
         })
+
+        listView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            val margin = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+            marginStart = margin
+            marginEnd = margin
+        }
+        listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
     }
 
     private fun openScreen(screen: BaseFragment) {
@@ -75,6 +84,12 @@ class ImportWalletScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment
 
     companion object {
 
-        fun newInstance() = ImportWalletScreen()
+        private const val ARG_WITH_NEW = "with_new"
+
+        fun newInstance(withNew: Boolean): AddWalletScreen {
+            val fragment = AddWalletScreen()
+            fragment.putBooleanArg(ARG_WITH_NEW, withNew)
+            return fragment
+        }
     }
 }

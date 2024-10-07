@@ -121,9 +121,6 @@ class RootViewModel(
     private val _passcodeFlow = MutableStateFlow<Passcode?>(null)
     val passcodeFlow = _passcodeFlow.asStateFlow().filterNotNull()
 
-    val theme: Theme
-        get() = settingsRepository.theme
-
     init {
         tonConnectManager.transactionRequestFlow.collectFlow(::sendTransaction)
 

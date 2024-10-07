@@ -53,6 +53,7 @@ class SelectScreen: BaseFragment(R.layout.fragment_init_select) {
             val insetsNav = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             val bottom = insetsNav + requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
             listView.updatePadding(bottom = bottom)
+            button.translationY = -bottom.toFloat()
             insets
         }
     }

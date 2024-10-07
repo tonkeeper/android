@@ -67,6 +67,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         }
 
         super.onCreate()
+        Theme.add("system", 0)
         Theme.add("blue", uikit.R.style.Theme_App_Blue)
         Theme.add("dark", uikit.R.style.Theme_App_Dark)
         Theme.add("light", uikit.R.style.Theme_App_Light, true)
@@ -78,7 +79,6 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
             workManagerFactory()
         }
         setLocales(settingsRepository.localeList)
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         initFresco()
     }
 

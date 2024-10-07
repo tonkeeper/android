@@ -2,49 +2,38 @@ package com.tonapps.tonkeeper.ui.screen.root
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.biometric.BiometricPrompt
-import androidx.core.net.toUri
+import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
+import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
-import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
-import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
-import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
-import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
-import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
-import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
-import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
-import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
-import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
-import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
-import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
-import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -59,7 +48,6 @@ import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
-import uikit.navigation.Navigation.Companion.navigation
 
 class RootActivity: BaseWalletActivity() {
 
@@ -78,12 +66,17 @@ class RootActivity: BaseWalletActivity() {
     private lateinit var lockSignOut: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(settingsRepository.theme.resId)
+        val theme = settingsRepository.theme
+        setTheme(theme)
         supportFragmentManager.fragmentFactory = WalletFragmentFactory()
         super.onCreate(savedInstanceState)
+        if (theme.isSystem) {
+            setAppearanceLight(!isDarkMode)
+        } else {
+            setAppearanceLight(theme.light)
+        }
+
         legacyRN.setActivity(this)
-        windowInsetsController.isAppearanceLightStatusBars = viewModel.theme.light
-        windowInsetsController.isAppearanceLightNavigationBars = viewModel.theme.light
         uiHandler = Handler(mainLooper)
 
         handleIntent(intent)
@@ -132,6 +125,26 @@ class RootActivity: BaseWalletActivity() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         App.applyConfiguration(newConfig)
+        if (settingsRepository.theme.isSystem) {
+            ActivityCompat.recreate(this)
+        }
+    }
+
+    private fun setTheme(theme: Theme) {
+        if (!theme.isSystem) {
+            setTheme(theme.resId)
+        } else if (isDarkMode) {
+            setTheme(uikit.R.style.Theme_App_Blue)
+        } else {
+            setTheme(uikit.R.style.Theme_App_Light)
+        }
+    }
+
+    private fun setAppearanceLight(light: Boolean) {
+        with(windowInsetsController) {
+            isAppearanceLightStatusBars = light
+            isAppearanceLightNavigationBars = light
+        }
     }
 
     private fun passcodeFlow(config: RootViewModel.Passcode) {

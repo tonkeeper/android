@@ -42,8 +42,10 @@ class EntropyHelper(private val context: Context): SensorEventListener {
 
     fun getSeed(size: Int): ByteArray {
         val byteArray = byteArrayOutputStream.toByteArray()
-        byteArray.shuffle()
-        return byteArray.copyOf(size)
+        if (size >= byteArray.size) {
+            return byteArray
+        }
+        return byteArray.copyOfRange(byteArray.size - size, byteArray.size)
     }
 
     override fun onSensorChanged(event: SensorEvent) {

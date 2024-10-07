@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder
 
 import android.view.View
 import android.view.ViewGroup
-import com.tonapps.tonkeeper.ui.screen.add.main.AddScreen
+import com.tonapps.tonkeeper.ui.screen.add.AddWalletScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
 
@@ -14,7 +14,7 @@ class AddHolder(
 
     init {
         addButton.setOnClickListener {
-            navigation?.add(AddScreen.newInstance())
+            navigation?.add(AddWalletScreen.newInstance(true))
         }
     }
 

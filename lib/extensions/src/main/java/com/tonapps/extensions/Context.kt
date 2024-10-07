@@ -92,10 +92,3 @@ fun Context.logError(e: Throwable) {
     }
     Log.e("TonkeeperLog", e.message, e)
 }
-
-val Context.hasGMS: Boolean
-    get() {
-        val googleApiAvailability = GoogleApiAvailability.getInstance()
-        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
-        return resultCode == ConnectionResult.SUCCESS
-    }

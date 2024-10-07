@@ -6,6 +6,9 @@ data class Theme(
     val light: Boolean
 ) {
 
+    val isSystem: Boolean
+        get() = key == "system" || key == "auto" || resId == 0
+
     companion object {
 
         private val supportedThemes = mutableListOf<Theme>()

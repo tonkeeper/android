@@ -29,7 +29,7 @@
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/offsetLarge"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
         android:layout_gravity="bottom"
         android:enabled="false"
         android:textAppearance="@style/TextAppearance.Label1"

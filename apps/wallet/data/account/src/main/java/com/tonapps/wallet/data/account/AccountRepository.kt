@@ -54,17 +54,6 @@ class AccountRepository(
         fun newWalletId(): String {
             return UUID.randomUUID().toString()
         }
-
-        private fun createLabelName(
-            name: String,
-            suffix: String,
-            size: Int
-        ): String {
-            if (size == 1) {
-                return name
-            }
-            return "$name $suffix"
-        }
     }
 
     sealed class SelectedState {
@@ -227,9 +216,9 @@ class AccountRepository(
     }
 
     suspend fun pairLedger(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         ledgerAccounts: List<LedgerAccount>,
-        deviceId: String,
+        deviceId: String
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
         for ((index, account) in ledgerAccounts.withIndex()) {
@@ -238,9 +227,7 @@ class AccountRepository(
                 publicKey = account.publicKey,
                 type = Wallet.Type.Ledger,
                 version = WalletVersion.V4R2,
-                label = label.copy(
-                    accountName = createLabelName(label.accountName, index.toString(), ledgerAccounts.size),
-                ),
+                label = label.create(index),
                 ledger = WalletEntity.Ledger(
                     deviceId = deviceId,
                     accountIndex = account.path.index
@@ -254,7 +241,7 @@ class AccountRepository(
     }
 
     suspend fun pairSigner(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
         qr: Boolean
@@ -264,7 +251,7 @@ class AccountRepository(
     }
 
     suspend fun pairKeystone(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         keystone: WalletEntity.Keystone,
     ): List<WalletEntity> {
@@ -273,7 +260,7 @@ class AccountRepository(
             publicKey = publicKey,
             type = Wallet.Type.Keystone,
             version = WalletVersion.V4R2,
-            label = label,
+            label = label.create(0),
             keystone = keystone
         )
 
@@ -284,7 +271,7 @@ class AccountRepository(
 
     suspend fun importWallet(
         ids: List<String>,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         mnemonic: List<String>,
         versions: List<WalletVersion>,
         testnet: Boolean
@@ -296,7 +283,7 @@ class AccountRepository(
 
     suspend fun addWallet(
         ids: List<String>,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
         type: Wallet.Type
@@ -308,11 +295,7 @@ class AccountRepository(
                 publicKey = publicKey,
                 type = type,
                 version = version,
-                label = label.copy(
-                    accountName = createLabelName(
-                        label.accountName, version.title, versions.size,
-                    )
-                )
+                label = label.create(index)
             )
             list.add(entity)
         }
@@ -322,7 +305,7 @@ class AccountRepository(
     }
 
     suspend fun addWatchWallet(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         version: WalletVersion,
     ): WalletEntity {
@@ -331,7 +314,7 @@ class AccountRepository(
 
     suspend fun addNewWallet(
         id: String,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         mnemonic: List<String>
     ): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
@@ -340,7 +323,7 @@ class AccountRepository(
 
     private suspend fun addWallet(
         id: String,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         type: Wallet.Type,
         version: WalletVersion,
@@ -351,7 +334,7 @@ class AccountRepository(
             publicKey = publicKey,
             type = type,
             version = version,
-            label = label
+            label = label.create(0)
         )
 
         insertWallets(listOf(entity), new)

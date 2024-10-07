@@ -80,7 +80,7 @@ class W5StoriesViewModel(
         .map { wallet ->
             accountRepository.addWallet(
                 ids = listOf(AccountRepository.newWalletId()),
-                label = wallet.label,
+                label = Wallet.NewLabel(listOf(wallet.label.name), wallet.label.emoji, wallet.label.color),
                 publicKey = wallet.publicKey,
                 versions = listOf(WalletVersion.V5R1),
                 type = wallet.type

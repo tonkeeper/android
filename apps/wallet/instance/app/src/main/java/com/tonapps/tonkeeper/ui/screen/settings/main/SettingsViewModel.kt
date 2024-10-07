@@ -102,7 +102,11 @@ class SettingsViewModel(
             val versions = listOf(version)
 
             rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
-            accountRepository.importWallet(walletIds, newLabel, mnemonic, versions, wallet.testnet)
+            accountRepository.importWallet(walletIds, Wallet.NewLabel(
+                names = listOf(newLabel.name),
+                emoji = newLabel.emoji,
+                color = newLabel.color,
+            ), mnemonic, versions, wallet.testnet)
             backupRepository.addBackup(walletId)
             accountRepository.setSelectedWallet(walletId)
             finish()

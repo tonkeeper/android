@@ -129,9 +129,8 @@ class InitViewModel(
             setLoading(true)
             isPinSet.set(passcodeManager.hasPinCode())
 
-            if (!args.labelName.isNullOrBlank()) {
-                setLabelName(args.labelName!!)
-            }
+            val labelName = args.labelName ?: getDefaultWalletName()
+            setLabelName(labelName)
 
             start()
         }
@@ -257,7 +256,10 @@ class InitViewModel(
         if (items.size > 1) {
             routeTo(InitRoute.SelectAccount)
         } else if (requestSetPinCode) {
-            applyAccountName(items.first())
+            val accountName = items.first().name
+            if (!accountName.isNullOrBlank()) {
+                setLabelName(accountName)
+            }
             routeTo(InitRoute.CreatePasscode)
         } else {
             routeTo(InitRoute.Push)
@@ -267,21 +269,15 @@ class InitViewModel(
     private fun applyAccountName() {
         viewModelScope.launch {
             val selectedAccounts = getSelectedAccounts()
-            val account = if (selectedAccounts.size == 1) {
+            val accountName = (if (selectedAccounts.size == 1) {
                 selectedAccounts.first()
             } else {
                 selectedAccounts.firstOrNull { !it.name.isNullOrBlank() }
-            }
-            applyAccountName(account ?: selectedAccounts.first())
-        }
-    }
+            })?.name
 
-    private suspend fun applyAccountName(account: AccountItem) {
-        val accountName = account.name
-        if (savedState.isEmptyName && !accountName.isNullOrBlank()) {
-            setLabelName(accountName)
-        } else {
-            setLabelName(getDefaultWalletName())
+            if (!accountName.isNullOrBlank()) {
+                setLabelName(accountName)
+            }
         }
     }
 
@@ -336,10 +332,8 @@ class InitViewModel(
         val count = getWalletsCount()
         return if (count == 0 && type == InitArgs.Type.New) {
             getString(Localization.app_name)
-        } else if (count == 0) {
+        } else  {
             getString(Localization.wallet)
-        } else {
-            getString(Localization.wallet) + " " + (count + 1)
         }
     }
 
@@ -379,16 +373,6 @@ class InitViewModel(
         savedState.label = label
     }
 
-    private suspend fun getFixedLabel(): Wallet.Label {
-        val label = getLabel()
-        if (label.name.isBlank()) {
-            return label.copy(
-                accountName = getDefaultWalletName()
-            )
-        }
-        return label
-    }
-
     private suspend fun getLabel(): Wallet.Label = withContext(Dispatchers.IO) {
         var label = savedState.label ?: Wallet.Label(
             accountName = getDefaultWalletName(),
@@ -408,7 +392,6 @@ class InitViewModel(
     }
 
     private suspend fun setLabelName(name: String) {
-        Log.d("InitViewModelLog", "setLabelName: $name")
         val oldLabel = getLabel()
         val emoji = Emoji.getEmojiFromPrefix(name) ?: oldLabel.emoji
 
@@ -435,8 +418,6 @@ class InitViewModel(
             execute(context)
         }
     }
-
-
 
     private fun execute(context: Context) {
         setLoading(true)
@@ -478,10 +459,42 @@ class InitViewModel(
         }
     }
 
+    private suspend fun buildNewLabel(accounts: List<SimpleAccount>): Wallet.NewLabel {
+        val versions = accounts.map { it.version }
+        val walletsCount = getWalletsCount()
+        val label = getLabel()
+        val isMultipleVersions = versions.distinct().size > 1
+        val isUsingDefaultName = label.name == getDefaultWalletName()
+
+        val names = mutableListOf<String>()
+        for ((index, account) in accounts.withIndex()) {
+            val builder = StringBuilder(label.name)
+            if (isMultipleVersions) {
+                builder.append(" ")
+                builder.append(account.version.title)
+            }
+            if (isUsingDefaultName && (accounts.size > 1 || walletsCount > 1)) {
+                builder.append(" ")
+                builder.append(walletsCount + index)
+            }
+            names.add(builder.toString())
+        }
+
+        return Wallet.NewLabel(
+            names = names,
+            emoji = label.emoji,
+            color = label.color
+        )
+    }
+
+    private suspend fun buildNewLabel(account: SimpleAccount): Wallet.NewLabel {
+        return buildNewLabel(listOf(account))
+    }
+
     private suspend fun saveWatchWallet(): WalletEntity {
         val account = getWatchAccount() ?: throw IllegalStateException("Account is not set")
-        val label = getFixedLabel()
         val publicKey = api.safeGetPublicKey(account.address, testnet)
+        val label = buildNewLabel(SimpleAccount(account))
 
         return accountRepository.addWatchWallet(label, publicKey, account.walletVersion)
     }
@@ -490,8 +503,8 @@ class InitViewModel(
         val mnemonic = Mnemonic.generate(random = AndroidSecureRandom)
         val walletId = AccountRepository.newWalletId()
         saveMnemonic(context, listOf(walletId), mnemonic)
+        val label = buildNewLabel(SimpleAccount(version = WalletVersion.V5R1))
 
-        val label = getFixedLabel()
         val wallet = accountRepository.addNewWallet(walletId, label, mnemonic)
 
         AnalyticsHelper.trackEvent("generate_wallet")
@@ -500,8 +513,8 @@ class InitViewModel(
     }
 
     private suspend fun importWallet(context: Context): List<WalletEntity> = withContext(Dispatchers.IO) {
-        val versions = getSelectedAccounts().map { it.walletVersion }
-        if (versions.isEmpty()) {
+        val accounts = getSelectedAccounts()
+        if (accounts.isEmpty()) {
             throw IllegalStateException("Wallet versions are not set")
         }
 
@@ -509,44 +522,66 @@ class InitViewModel(
         if (!TonMnemonic.isValid(mnemonic)) {
             throw IllegalStateException("Invalid mnemonic")
         }
-        val ids = versions.map { AccountRepository.newWalletId() }
+        val ids = accounts.map { AccountRepository.newWalletId() }
         saveMnemonic(context, ids, mnemonic)
 
-        val label = getFixedLabel()
-        val wallets = accountRepository.importWallet(ids, label, mnemonic, versions, testnet)
+        val label = buildNewLabel(accounts.map {
+            SimpleAccount(
+                name = it.name,
+                version = it.walletVersion
+            )
+        })
+
+        val wallets = accountRepository.importWallet(ids, label, mnemonic, accounts.map { it.walletVersion }, testnet)
         AnalyticsHelper.trackEvent("import_wallet")
         wallets
     }
 
     private suspend fun ledgerWallets(): List<WalletEntity> {
-        val ledgerConnectData =
-            savedState.ledgerConnectData ?: throw IllegalStateException("Ledger connect data is not set")
+        val ledgerConnectData = savedState.ledgerConnectData ?: throw IllegalStateException("Ledger connect data is not set")
 
-        val accounts = getSelectedAccounts().map { selectedAccount ->
-            ledgerConnectData.accounts.find { account -> account.path.index == selectedAccount.ledgerIndex }
-                ?: throw IllegalStateException("Ledger account is not found")
+        val accounts = getSelectedAccounts()
+
+        val ledgerAccounts = accounts.map { selectedAccount ->
+            ledgerConnectData.accounts.find {
+                account -> account.path.index == selectedAccount.ledgerIndex
+            } ?: throw IllegalStateException("Ledger account is not found")
         }
-        val label = getFixedLabel()
+
+        val label = buildNewLabel(accounts.map {
+            SimpleAccount(
+                name = it.name,
+                version = WalletVersion.V4R2
+            )
+        })
 
         return accountRepository.pairLedger(
             label = label,
-            ledgerAccounts = accounts,
+            ledgerAccounts = ledgerAccounts,
             deviceId = ledgerConnectData.deviceId,
         )
     }
 
     private suspend fun signerWallets(qr: Boolean): List<WalletEntity> {
-        val versions = getSelectedAccounts().map { it.walletVersion }
-        val label = getFixedLabel()
+        val accounts = getSelectedAccounts()
         val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
+        val label = buildNewLabel(accounts.map {
+            SimpleAccount(
+                name = it.name,
+                version = it.walletVersion
+            )
+        })
 
-        return accountRepository.pairSigner(label, publicKey.publicKey, versions, qr)
+        return accountRepository.pairSigner(label, publicKey.publicKey, accounts.map { it.walletVersion }, qr)
     }
 
     private suspend fun keystoneWallet(): List<WalletEntity> {
-        val label = getFixedLabel()
         val publicKey = savedState.publicKey ?: throw IllegalStateException("Public key is not set")
         val keystone = savedState.keystone ?: throw IllegalStateException("Keystone is not set")
+
+        val label = buildNewLabel(SimpleAccount(
+            version = WalletVersion.V4R2
+        ))
 
         return accountRepository.pairKeystone(label, publicKey.publicKey, keystone)
     }
@@ -566,5 +601,16 @@ class InitViewModel(
             throw IllegalStateException("wrong passcode")
         }
         rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
+    }
+
+    private data class SimpleAccount(
+        val name: String? = null,
+        val version: WalletVersion
+    ) {
+
+        constructor(account: AccountDetailsEntity): this(
+            name = account.name,
+            version = account.walletVersion
+        )
     }
 }

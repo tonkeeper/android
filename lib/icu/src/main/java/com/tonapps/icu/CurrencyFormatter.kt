@@ -23,7 +23,7 @@ object CurrencyFormatter {
         Locale("th"),
         Locale("lo"),
         Locale("my"),
-        Locale("si")
+        Locale("si"),
     )
 
     private var format = CurrencyFormat(Locale.getDefault(Locale.Category.FORMAT))
@@ -38,7 +38,8 @@ object CurrencyFormatter {
 
     private fun onLocaleChanged(newLocale: Locale) {
         val newLanguage = newLocale.language
-        if (newLanguage.equals(Locale.ENGLISH.language) && customDigitLocales.any { it.language.equals(newLanguage) }) {
+
+        if (newLanguage.equals(Locale.ENGLISH.language) || customDigitLocales.any { it.language.equals(newLanguage) } || newLocale.isO3Country.equals("IRN", ignoreCase = true)) {
             onLocaleChanged(Locale.ENGLISH)
         } else if (newLanguage != format.locale.language) {
             format = CurrencyFormat(newLocale)

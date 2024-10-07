@@ -66,7 +66,7 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
             }
 
             val xfp = cryptoHDKey.origin?.let { hex(it.sourceFingerprint) }
-            val path = cryptoHDKey.origin?.let { "m/$it" }
+            val path = cryptoHDKey.origin?.let { "m/${it.path}" }
 
             KeystoneData(
                 publicKey = PublicKeyEd25519(cryptoHDKey.key),

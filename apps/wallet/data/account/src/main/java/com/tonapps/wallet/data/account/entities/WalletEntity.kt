@@ -51,6 +51,7 @@ data class WalletEntity(
 
             override fun newArray(size: Int): Array<WalletEntity?> = arrayOfNulls(size)
         }
+
     }
 
     @Parcelize
@@ -63,11 +64,7 @@ data class WalletEntity(
     data class Keystone(
         val xfp: String,
         val path: String
-    ) : Parcelable {
-
-        val isEmpty: Boolean
-            get() = xfp.isBlank() || path.isBlank()
-    }
+    ) : Parcelable
 
     val contract: BaseWalletContract by lazy {
         val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value

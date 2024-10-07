@@ -35,6 +35,7 @@ import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
+import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
@@ -253,6 +254,13 @@ class RootActivity: BaseWalletActivity() {
         } else if (extras != null && !extras.isEmpty) {
             viewModel.processIntentExtras(extras)
         }
+    }
+
+    override fun add(fragment: BaseFragment) {
+        if (fragment is SendTransactionScreen) {
+            removeByClass(SendTransactionScreen::class.java)
+        }
+        super.add(fragment)
     }
 
     override fun openURL(url: String) {

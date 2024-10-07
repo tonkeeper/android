@@ -36,8 +36,17 @@ data class InitArgs(
         private const val ARG_KEYSTONE = "keystone"
     }
 
+    private val ledgerAccountName: String?
+        get() = accounts?.firstOrNull {
+            !it.name.isNullOrBlank()
+        }?.name
+
+    private val ledgerName: String?
+        get() = ledgerConnectData?.model?.productName ?: ledgerAccountName
+
     val labelName: String?
-        get() = name ?: ledgerConnectData?.model?.productName
+        get() = name ?: ledgerName
+
 
     constructor(bundle: Bundle) : this(
         type = bundle.getEnum(ARG_TYPE, Type.New),

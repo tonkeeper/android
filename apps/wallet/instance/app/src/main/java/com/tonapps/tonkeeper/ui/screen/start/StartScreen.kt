@@ -6,7 +6,9 @@ import android.widget.Button
 import com.tonapps.tonkeeper.ui.screen.add.imprt.ImportWalletScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.navigation.Navigation.Companion.navigation

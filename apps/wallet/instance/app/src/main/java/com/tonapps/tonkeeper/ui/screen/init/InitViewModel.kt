@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.AndroidSecureRandom
+import com.tonapps.blockchain.ton.EntropyHelper
 import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.WalletV5R1Contract
@@ -76,6 +77,10 @@ class InitViewModel(
     savedStateHandle: SavedStateHandle
 ): BaseWalletVM(app) {
 
+    private val entropyHelper: EntropyHelper by lazy {
+        EntropyHelper(context)
+    }
+
     private val savedState = InitModelState(savedStateHandle)
     private val type = args.type
     private val testnet: Boolean = type == InitArgs.Type.Testnet
@@ -131,6 +136,12 @@ class InitViewModel(
 
             val labelName = args.labelName ?: getDefaultWalletName()
             setLabelName(labelName)
+
+            if (type == InitArgs.Type.New) {
+                withContext(Dispatchers.Main) {
+                    entropyHelper.start()
+                }
+            }
 
             start()
         }
@@ -500,6 +511,8 @@ class InitViewModel(
     }
 
     private suspend fun newWallet(context: Context): WalletEntity {
+        AndroidSecureRandom.seed(entropyHelper.getSeed(64))
+
         val mnemonic = Mnemonic.generate(random = AndroidSecureRandom)
         val walletId = AccountRepository.newWalletId()
         saveMnemonic(context, listOf(walletId), mnemonic)
@@ -601,6 +614,11 @@ class InitViewModel(
             throw IllegalStateException("wrong passcode")
         }
         rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        entropyHelper.stop()
     }
 
     private data class SimpleAccount(

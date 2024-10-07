@@ -250,7 +250,7 @@ class RootActivity: BaseWalletActivity() {
         val uri = intent.data
         val extras = intent.extras
         if (uri != null) {
-            processDeepLink(uri)
+            processDeepLink(uri, false)
         } else if (extras != null && !extras.isEmpty) {
             viewModel.processIntentExtras(extras)
         }
@@ -269,7 +269,7 @@ class RootActivity: BaseWalletActivity() {
         }
         val uri = url.toUriOrNull() ?: return
         if (uri.scheme == "tonkeeper" || uri.scheme == "ton" || uri.scheme == "tc" || uri.host == "app.tonkeeper.com") {
-            processDeepLink(uri)
+            processDeepLink(uri, true)
         } else {
             openExternalLink(uri)
         }
@@ -308,7 +308,7 @@ class RootActivity: BaseWalletActivity() {
         }
     }
 
-    private fun processDeepLink(uri: Uri) {
-        viewModel.processDeepLink(uri, false, getReferrer())
+    private fun processDeepLink(uri: Uri, internal: Boolean) {
+        viewModel.processDeepLink(uri, false, getReferrer(), internal)
     }
 }

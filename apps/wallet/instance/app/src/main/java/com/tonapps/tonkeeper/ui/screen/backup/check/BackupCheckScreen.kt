@@ -32,6 +32,8 @@ class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     private val args: BackupCheckArgs by lazy { BackupCheckArgs(requireArguments()) }
 
+    override val secure: Boolean = true
+
     override val viewModel: BackupCheckViewModel by walletViewModel()
 
     private val indexes: IntArray by lazy {

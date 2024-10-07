@@ -38,6 +38,8 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
+    override val secure: Boolean = true
+
     private lateinit var scrollView: NestedScrollView
     private lateinit var contentView: ColumnLayout
     private lateinit var button: Button

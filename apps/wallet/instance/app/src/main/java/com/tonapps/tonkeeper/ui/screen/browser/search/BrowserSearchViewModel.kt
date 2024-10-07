@@ -74,6 +74,9 @@ class BrowserSearchViewModel(
         }
         return try {
             val uri = Uri.parse(query)
+            if (uri.scheme != "https") {
+                return null
+            }
             if (uri.host != null) {
                 uri
             } else {

@@ -39,7 +39,7 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
 
         copyButton = view.findViewById(R.id.copy)
         copyButton.setOnClickListener {
-            requireContext().copyToClipboard(args.words.joinToString(" "))
+            requireContext().copyToClipboard(args.words.joinToString(" "), true)
         }
 
         checkButton = view.findViewById(R.id.check)

@@ -330,10 +330,17 @@ class RootViewModel(
     fun processDeepLink(
         uri: Uri,
         fromQR: Boolean,
-        refSource: Uri?
+        refSource: Uri?,
+        internal: Boolean,
     ): Boolean {
         savedState.returnUri = null
         val deeplink = DeepLink(uri, fromQR, refSource)
+        if (deeplink.route is DeepLinkRoute.Unknown) {
+            return false
+        }
+        if (deeplink.route is DeepLinkRoute.Internal && !internal) {
+            return true
+        }
         accountRepository.selectedStateFlow.take(1).onEach { state ->
             if (deeplink.route is DeepLinkRoute.Signer) {
                 processSignerDeepLink(deeplink.route, fromQR)
@@ -344,15 +351,20 @@ class RootViewModel(
         return true
     }
 
+    fun processTonConnectDeepLink(deeplink: DeepLink) {
+        val route = deeplink.route as DeepLinkRoute.TonConnect
+        savedState.returnUri = tonConnectManager.processDeeplink(
+            context = context,
+            uri = route.uri,
+            fromQR = deeplink.fromQR,
+            refSource = deeplink.referrer
+        )
+    }
+
     private suspend fun processDeepLink(wallet: WalletEntity, deeplink: DeepLink) {
         val route = deeplink.route
         if (route is DeepLinkRoute.TonConnect) {
-            savedState.returnUri = tonConnectManager.processDeeplink(
-                context = context,
-                uri = route.uri,
-                fromQR = deeplink.fromQR,
-                refSource = deeplink.referrer
-            )
+            processTonConnectDeepLink(deeplink)
         } else if (route is DeepLinkRoute.Tabs) {
             _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri, wallet))
         } else if (route is DeepLinkRoute.Send) {

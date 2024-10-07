@@ -2,11 +2,13 @@ package com.tonapps.tonkeeper.extensions
 
 import android.Manifest
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.PersistableBundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
@@ -69,9 +71,18 @@ fun Context.copyToClipboard(uri: Uri) {
     copyToClipboard(uri.toString())
 }
 
-fun Context.copyToClipboard(text: String) {
+fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     val clip = ClipData.newPlainText("", text)
+    if (sensitive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        val extras = PersistableBundle()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+        } else {
+            extras.putBoolean("android.content.extra.IS_SENSITIVE", true)
+        }
+        clip.description.extras = extras
+    }
     clipboard.setPrimaryClip(clip)
 }
 

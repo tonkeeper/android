@@ -16,6 +16,8 @@ import androidx.core.view.updateLayoutParams
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.koin.walletViewModel
@@ -84,10 +86,12 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             if (scheme == "https") {
                 return false
             }
-            if (rootViewModel.processDeepLink(url, false, refererUri)) {
-                return true
+            val deeplink = DeepLink(url, false, refererUri)
+            if (deeplink.route is DeepLinkRoute.TonConnect) {
+                rootViewModel.processTonConnectDeepLink(deeplink)
+            } else if (deeplink.route is DeepLinkRoute.Unknown) {
+                navigation?.openURL(url.toString())
             }
-            navigation?.openURL(url.toString())
             return true
         }
 

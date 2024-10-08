@@ -2,19 +2,15 @@ package com.tonapps.tonkeeper.ui.screen.root
 
 import android.content.Intent
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.extensions.isDarkMode
@@ -35,7 +31,9 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.Theme
+import com.tonapps.wallet.data.passcode.LockScreen
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -59,6 +57,7 @@ class RootActivity: BaseWalletActivity() {
 
     private val legacyRN: RNLegacy by inject()
     private val settingsRepository by inject<SettingsRepository>()
+    private val passcodeManager by inject<PasscodeManager>()
 
     private lateinit var uiHandler: Handler
 
@@ -84,7 +83,9 @@ class RootActivity: BaseWalletActivity() {
 
         lockView = findViewById(R.id.lock)
         lockPasscodeView = findViewById(R.id.lock_passcode)
-        lockPasscodeView.doOnCheck = ::checkPasscode
+        lockPasscodeView.doOnCheck = {
+            passcodeManager.lockscreenCheck(this, it)
+        }
 
         lockSignOut = findViewById(R.id.lock_sign_out)
         lockSignOut.setOnClickListener { signOutAll() }
@@ -98,9 +99,34 @@ class RootActivity: BaseWalletActivity() {
 
         collectFlow(viewModel.hasWalletFlow) { init(it) }
         collectFlow(viewModel.eventFlow) { event(it) }
-        collectFlow(viewModel.passcodeFlow, ::passcodeFlow)
+        collectFlow(passcodeManager.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
+    }
+
+    private fun pinState(state: LockScreen.State) {
+        if (state == LockScreen.State.None) {
+            lockView.visibility = View.GONE
+            lockPasscodeView.setSuccess()
+        } else if (state == LockScreen.State.Error) {
+            lockPasscodeView.setError()
+        } else {
+            lockView.visibility = View.VISIBLE
+            if (state is LockScreen.State.Biometric) {
+                PasscodeBiometric.showPrompt(this, getString(Localization.app_name), object : BiometricPrompt.AuthenticationCallback() {
+
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        passcodeManager.lockscreenBiometric(result)
+                    }
+
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                        toast(Localization.authorization_required)
+                    }
+                })
+            }
+        }
     }
 
     private fun createOrGetViewModel(): RootViewModel {
@@ -146,36 +172,6 @@ class RootActivity: BaseWalletActivity() {
             isAppearanceLightStatusBars = light
             isAppearanceLightNavigationBars = light
         }
-    }
-
-    private fun passcodeFlow(config: RootViewModel.Passcode) {
-        if (!config.show) {
-            lockView.visibility = View.GONE
-            return
-        }
-        lockView.visibility = View.VISIBLE
-        if (config.biometric) {
-            PasscodeBiometric.showPrompt(this, getString(Localization.app_name), object : BiometricPrompt.AuthenticationCallback() {
-
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    super.onAuthenticationSucceeded(result)
-                    lockView.visibility = View.GONE
-                }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    toast(Localization.authorization_required)
-                }
-            })
-        }
-    }
-
-    private fun checkPasscode(code: String) {
-        viewModel.checkPasscode(this, code).catch {
-            lockPasscodeView.setError()
-        }.onEach {
-            lockPasscodeView.setSuccess()
-        }.launchIn(lifecycleScope)
     }
 
     override fun setContentView(layoutResID: Int) {
@@ -233,6 +229,7 @@ class RootActivity: BaseWalletActivity() {
         builder.setMessage(Localization.sign_out_all_description)
         builder.setNegativeButton(Localization.sign_out) {
             viewModel.signOut()
+            passcodeManager.deleteAll()
             setIntroFragment()
         }
         builder.setPositiveButton(Localization.cancel)

@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import androidx.biometric.BiometricPrompt
 import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
@@ -8,10 +9,12 @@ import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.navigation.Navigation
+import java.util.concurrent.atomic.AtomicBoolean
 
 class PasscodeManager(
     private val accountRepository: AccountRepository,
@@ -21,12 +24,32 @@ class PasscodeManager(
     private val scope: CoroutineScope
 ) {
 
+    private val lockscreen = LockScreen(this, settingsRepository)
+
+    val lockscreenFlow: Flow<LockScreen.State>
+        get() = lockscreen.stateFlow
+
     init {
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
                 helper.reset()
             }
+            lockscreen.init()
         }
+    }
+
+    fun lockscreenBiometric(result: BiometricPrompt.AuthenticationResult) {
+        lockscreen.biometric(result)
+    }
+
+    fun deleteAll() {
+        scope.launch {
+            reset()
+        }
+    }
+
+    fun lockscreenCheck(context: Context, code: String) {
+        scope.launch { lockscreen.check(context, code) }
     }
 
     suspend fun hasPinCode(): Boolean = withContext(Dispatchers.IO) {

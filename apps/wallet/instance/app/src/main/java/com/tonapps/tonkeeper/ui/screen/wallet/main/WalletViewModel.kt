@@ -25,6 +25,7 @@ import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,9 +34,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class WalletViewModel(
     app: Application,
@@ -53,6 +57,7 @@ class WalletViewModel(
     private val assetsManager: AssetsManager,
 ): BaseWalletVM(app) {
 
+    private var autoRefreshJob: Job? = null
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
 
     private val _uiLabelFlow = MutableStateFlow<Wallet.Label?>(null)
@@ -227,11 +232,30 @@ class WalletViewModel(
         }.launchIn(viewModelScope)
 
         loadAlertNotifications()
+
+        autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                checkAutoRefresh()
+                delay(2.minutes)
+            }
+        }
     }
 
     fun refresh() {
         _statusFlow.value = Status.Updating
         _lastLtFlow.value += 1
+    }
+
+    private suspend fun checkAutoRefresh() {
+        if (hasPendingTransaction()) {
+            withContext(Dispatchers.Main) {
+                refresh()
+            }
+        }
+    }
+
+    private fun hasPendingTransaction(): Boolean {
+        return _statusFlow.value == Status.SendingTransaction
     }
 
     private fun loadAlertNotifications() {
@@ -292,6 +316,12 @@ class WalletViewModel(
 
     private fun setCached(wallet: WalletEntity, items: List<Item>) {
         screenCacheSource.set(CACHE_NAME, wallet.id, items)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        autoRefreshJob?.cancel()
+        autoRefreshJob = null
     }
 
     companion object {

@@ -49,7 +49,7 @@ fun Context.safeExternalOpenUri(uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         debugToast(e)
     }
 }

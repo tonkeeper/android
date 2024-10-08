@@ -1,10 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.app.Application
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -62,24 +60,18 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
-import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
-import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -90,7 +82,6 @@ import kotlinx.coroutines.withContext
 
 class RootViewModel(
     app: Application,
-    private val passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
     private val api: API,
@@ -103,11 +94,6 @@ class RootViewModel(
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
-    data class Passcode(
-        val show: Boolean,
-        val biometric: Boolean,
-    )
-
     private val savedState = RootModelState(savedStateHandle)
 
     private val selectedWalletFlow: Flow<WalletEntity> = accountRepository.selectedWalletFlow
@@ -118,23 +104,11 @@ class RootViewModel(
     private val _eventFlow = MutableEffectFlow<RootEvent?>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
-    private val _passcodeFlow = MutableStateFlow<Passcode?>(null)
-    val passcodeFlow = _passcodeFlow.asStateFlow().filterNotNull()
-
     init {
         tonConnectManager.transactionRequestFlow.collectFlow(::sendTransaction)
 
         settingsRepository.languageFlow.collectFlow {
             context.setLocales(settingsRepository.localeList)
-        }
-
-        combine(
-            settingsRepository.biometricFlow.take(1),
-            settingsRepository.lockscreenFlow.take(1)
-        ) { biometric, lockscreen ->
-            Passcode(lockscreen, biometric)
-        }.collectFlow {
-            _passcodeFlow.value = it
         }
 
         combine(
@@ -270,28 +244,12 @@ class RootViewModel(
     fun signOut() {
         viewModelScope.launch {
             accountRepository.logout()
-            passcodeManager.reset()
-            hidePasscode()
         }
-    }
-
-    private fun hidePasscode() {
-        _passcodeFlow.value = Passcode(show = false, biometric = false)
     }
 
     fun connectLedger(connectData: LedgerConnectData, accounts: List<AccountItem>) {
         _eventFlow.tryEmit(RootEvent.Ledger(connectData, accounts))
     }
-
-    fun checkPasscode(context: Context, code: String): Flow<Unit> = flow {
-        val valid = passcodeManager.isValid(context, code)
-        if (valid) {
-            hidePasscode()
-            emit(Unit)
-        } else {
-            throw Exception("invalid passcode")
-        }
-    }.take(1)
 
     fun processIntentExtras(bundle: Bundle) {
         val pushType = bundle.getString("type") ?: return

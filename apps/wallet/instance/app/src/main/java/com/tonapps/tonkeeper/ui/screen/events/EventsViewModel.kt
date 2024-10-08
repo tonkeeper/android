@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
@@ -69,7 +70,7 @@ class EventsViewModel(
         }
 
         autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
-            while (true) {
+            while (isActive) {
                 checkAutoRefresh()
                 delay(35.seconds)
             }

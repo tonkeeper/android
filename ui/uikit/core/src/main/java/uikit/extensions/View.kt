@@ -371,3 +371,19 @@ fun View.setBackgroundColor(@IdRes id: Int, color: Int) {
 fun View.setBackground(@IdRes id: Int, drawable: Drawable) {
     findViewById<View>(id).background = drawable
 }
+
+inline fun <reified R: View> View.findViewByClass(): R? {
+    val clazz = R::class.java
+    if (clazz.isInstance(this)) {
+        return this as R
+    }
+    if (this is ViewGroup) {
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            if (clazz.isInstance(child)) {
+                return child as R
+            }
+        }
+    }
+    return null
+}

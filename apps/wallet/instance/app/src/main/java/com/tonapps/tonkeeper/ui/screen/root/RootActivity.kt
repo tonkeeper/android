@@ -30,6 +30,7 @@ import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
+import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -270,8 +271,9 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun add(fragment: BaseFragment) {
-        if (fragment is SendTransactionScreen) {
+        if (fragment is SendTransactionScreen || fragment is TonConnectScreen) {
             removeByClass(SendTransactionScreen::class.java)
+            removeByClass(TonConnectScreen::class.java)
         }
         super.add(fragment)
     }

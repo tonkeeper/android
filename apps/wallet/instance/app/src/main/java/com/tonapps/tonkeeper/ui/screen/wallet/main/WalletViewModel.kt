@@ -59,8 +59,8 @@ class WalletViewModel(
     val uiLabelFlow = _uiLabelFlow.asStateFlow()
 
     private val _lastLtFlow = MutableStateFlow(0L)
-    private val _statusFlow = MutableStateFlow(Status.Updating)
-    private val statusFlow = _statusFlow.asStateFlow()
+    private val _statusFlow = MutableStateFlow<Status?>(null)
+    val statusFlow = _statusFlow.asStateFlow().filterNotNull()
 
     private val _stateMainFlow = MutableStateFlow<State.Main?>(null)
     private val stateMainFlow = _stateMainFlow.asStateFlow().filterNotNull()
@@ -227,6 +227,11 @@ class WalletViewModel(
         }.launchIn(viewModelScope)
 
         loadAlertNotifications()
+    }
+
+    fun refresh() {
+        _statusFlow.value = Status.Updating
+        _lastLtFlow.value += 1
     }
 
     private fun loadAlertNotifications() {

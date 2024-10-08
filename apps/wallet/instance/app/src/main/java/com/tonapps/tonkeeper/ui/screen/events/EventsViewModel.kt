@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.seconds
 
 // TODO: Refactor this class
 class EventsViewModel(
@@ -61,16 +62,16 @@ class EventsViewModel(
         }
 
         transactionManager.eventsFlow(wallet).collectFlow { event ->
-            if (event.pending) {
+            /*if (event.pending) {
                 appendEvent(AccountEventWrap(event.body))
-            }
+            }*/
             refresh()
         }
 
         autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
             while (true) {
                 checkAutoRefresh()
-                delay(25000)
+                delay(35.seconds)
             }
         }
     }
@@ -124,7 +125,7 @@ class EventsViewModel(
     private fun setUiItems(uiItems: List<HistoryItem>) {
         val loading = isLoading.get()
         _uiStateFlow.value = EventsUiState(
-            items = if (loading) {
+            items = if (loading && uiItems.isNotEmpty()) {
                 historyHelper.withLoadingItem(uiItems)
             } else {
                 uiItems

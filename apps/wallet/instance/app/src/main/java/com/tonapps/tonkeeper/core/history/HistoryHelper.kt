@@ -1,29 +1,23 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
-import android.util.Log
 import androidx.collection.arrayMapOf
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
-import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.max24
 import com.tonapps.extensions.short4
-import com.tonapps.extensions.short8
 import com.tonapps.extensions.withMinus
 import com.tonapps.extensions.withPlus
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.api.amount
 import com.tonapps.tonkeeper.api.fee
 import com.tonapps.tonkeeper.api.getNameOrAddress
-import com.tonapps.tonkeeper.api.getWalletAddress
 import com.tonapps.tonkeeper.api.iconURL
 import com.tonapps.tonkeeper.api.jettonPreview
 import com.tonapps.tonkeeper.api.parsedAmount
 import com.tonapps.tonkeeper.api.refund
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
-import com.tonapps.tonkeeper.api.ton
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
@@ -31,7 +25,6 @@ import io.tonapi.models.Action
 import io.tonapi.models.ActionSimplePreview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.tonapps.tonkeeper.api.totalFees
 import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
@@ -50,25 +43,16 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
-import io.tonapi.models.Account
 import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toJavaLocalDate
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.until
 import java.text.SimpleDateFormat
-import java.time.format.DateTimeFormatterBuilder
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 
 // TODO request refactoring
 class HistoryHelper(
@@ -208,11 +192,20 @@ class HistoryHelper(
         isBattery: Boolean = false,
     ): Details {
         val items = mapping(wallet, response.event, true, positionExtra = 1).toMutableList()
+        val extra = response.event.extra
 
-        val fee = Coins.of(response.totalFees)
+        val fee = if (0 > extra) Coins.of(abs(extra)) else Coins.ZERO
         val feeFormat = "≈ " + CurrencyFormatter.format("TON", fee)
         val feeFiat = rates.convert("TON", fee)
         val feeFiatFormat = CurrencyFormatter.formatFiat(rates.currency.code, feeFiat)
+
+        val refund = if (extra > 0) Coins.of(extra) else Coins.ZERO
+        val refundFormat = "≈ " + CurrencyFormatter.format("TON", refund)
+        val refundFiat = rates.convert("TON", refund)
+        val refundFiatFormat = CurrencyFormatter.formatFiat(rates.currency.code, refundFiat)
+
+        val isRefund = extra > 0
+
 
         items.add(
             HistoryItem.Event(
@@ -220,11 +213,11 @@ class HistoryHelper(
                 position = ListCell.Position.LAST,
                 txId = "fee",
                 iconURL = "",
-                action = ActionType.Fee,
+                action = if (isRefund) ActionType.Refund else ActionType.Fee,
                 title = "",
                 subtitle = if (isBattery) context.getString(Localization.will_be_paid_with_battery) else "",
-                value = feeFormat,
-                date = feeFiatFormat.toString(),
+                value = if (isRefund) refundFormat else feeFormat,
+                date = if (isRefund) refundFiatFormat.toString() else feeFiatFormat.toString(),
                 isOut = true,
                 sender = null,
                 recipient = null,

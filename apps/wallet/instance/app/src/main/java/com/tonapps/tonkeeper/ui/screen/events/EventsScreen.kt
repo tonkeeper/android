@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -40,6 +41,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
 
     private lateinit var headerView: HeaderView
     private lateinit var containerView: View
+    private lateinit var refreshView: SwipeRefreshLayout
     private lateinit var listView: RecyclerView
     private lateinit var filtersView: RecyclerView
     private lateinit var emptyView: EmptyLayout
@@ -52,6 +54,11 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         headerView.setColor(requireContext().backgroundTransparentColor)
 
         containerView = view.findViewById(R.id.container)
+        refreshView = view.findViewById(R.id.refresh)
+        refreshView.setOnRefreshListener {
+            viewModel.refresh()
+        }
+
         filtersView = view.findViewById(R.id.filters)
 
         listView = view.findViewById(R.id.list)
@@ -74,16 +81,28 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     private suspend fun applyState(state: EventsUiState) = withContext(Dispatchers.Main) {
         if (state.isEmpty) {
             setEmptyState()
+            setLoading(false)
         } else {
             setListState()
             if (state.isLoading) {
-                headerView.setSubtitle(Localization.updating)
+                setLoading(true)
             }
             legacyAdapter.submitList(state.items) {
                 if (!state.isLoading) {
-                    headerView.setSubtitle(null)
+                    setLoading(false)
                 }
             }
+        }
+    }
+
+    private fun setLoading(loading: Boolean) {
+        if (refreshView.isRefreshing) {
+            refreshView.isRefreshing = loading
+        }
+        if (loading) {
+            headerView.setSubtitle(Localization.updating)
+        } else {
+            headerView.setSubtitle(null)
         }
     }
 

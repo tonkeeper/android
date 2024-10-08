@@ -38,8 +38,15 @@ fun TokenRates.to(toCurrency: String, value: Float): Float {
     return price.toFloat() * value
 }
 
-val MessageConsequences.totalFees: Long
-    get() = trace.transaction.totalFees
+/*val MessageConsequences.totalFees: Long
+    get() {
+        // = event.extra // trace.transaction.totalFees
+        val extra = event.extra
+        if (0 > extra) {
+            return abs(extra)
+        }
+        return 0
+    }*/
 
 val AccountEvent.withTON: Boolean
     get() {

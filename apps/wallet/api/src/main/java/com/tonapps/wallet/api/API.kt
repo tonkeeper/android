@@ -630,10 +630,16 @@ class API(
         accountId: String,
         testnet: Boolean
     ): Account? {
-        val normalizedAccountId = if (accountId.endsWith(".ton")) {
-            accountId.lowercase().trim().unicodeToPunycode()
-        } else {
-            accountId
+        var normalizedAccountId = accountId
+        if (normalizedAccountId.startsWith("https://")) {
+            normalizedAccountId = normalizedAccountId.replace("https://", "")
+        }
+        if (normalizedAccountId.startsWith("t.me/")) {
+            normalizedAccountId = normalizedAccountId.replace("t.me/", "")
+            normalizedAccountId = "$normalizedAccountId.t.me"
+        }
+        if (!normalizedAccountId.isValidTonAddress()) {
+            normalizedAccountId = normalizedAccountId.lowercase().trim().unicodeToPunycode()
         }
         return withRetry { accounts(testnet).getAccount(normalizedAccountId) }
     }

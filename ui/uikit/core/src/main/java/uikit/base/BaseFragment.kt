@@ -121,6 +121,8 @@ open class BaseFragment(
         ContextCompat.getMainExecutor(requireContext())
     }
 
+    private val resultIsSet = AtomicBoolean(false)
+
     open val disableShowAnimation: Boolean = false
 
     open val secure: Boolean = false
@@ -170,6 +172,7 @@ open class BaseFragment(
     fun setResult(bundle: Bundle, finish: Boolean = true) {
         val key = resultKey ?: throw IllegalStateException("For setting result you must set result key")
         navigation?.setFragmentResult(key, bundle)
+        resultIsSet.set(true)
         if (finish) {
             finish()
         }
@@ -270,10 +273,14 @@ open class BaseFragment(
         }
     }
 
-    private fun finishInternal() {
-        resultKey?.let {
-            navigation?.setFragmentResult(it, Bundle())
+    override fun onDestroy() {
+        if (resultKey != null && resultIsSet.get()) {
+            navigation?.setFragmentResult(resultKey!!, Bundle())
         }
+        super.onDestroy()
+    }
+
+    private fun finishInternal() {
         navigation?.remove(this)
     }
 

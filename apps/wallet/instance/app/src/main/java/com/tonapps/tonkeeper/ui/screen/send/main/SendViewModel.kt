@@ -9,7 +9,7 @@ import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.api.totalFees
+import com.tonapps.tonkeeper.api.fee
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
@@ -73,6 +73,7 @@ import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.abs
 
 @OptIn(FlowPreview::class)
 class SendViewModel(
@@ -131,7 +132,7 @@ class SendViewModel(
     private val _tokensFlow = MutableStateFlow<List<AccountTokenEntity>?>(null)
     private val tokensFlow = _tokensFlow.asStateFlow().filterNotNull()
 
-    private val _feeFlow = MutableStateFlow<Coins>(Coins.of(0))
+    private val _feeFlow = MutableStateFlow(Coins.of(0))
 
     private val selectedTokenFlow = combine(
         tokensFlow,
@@ -634,11 +635,10 @@ class SendViewModel(
             return calculateFeeDefault(transfer, isSupportsGasless)
         }
 
-        val message =
-            transfer.toSignedMessage(
-                internalMessage = true,
-                excessesAddress = excessesAddress
-            )
+        val message = transfer.toSignedMessage(
+            internalMessage = true,
+            excessesAddress = excessesAddress
+        )
 
         val (consequences, _) = batteryRepository.emulate(
             tonProofToken = tonProofToken,
@@ -649,7 +649,9 @@ class SendViewModel(
 
         sendTransferType = SendTransferType.Battery(excessesAddress)
 
-        return Pair(Coins.of(consequences.totalFees), isSupportsGasless)
+        val fee = consequences.event.fee
+
+        return Pair(Coins.of(fee), isSupportsGasless)
     }
 
     private suspend fun calculateFeeGasless(
@@ -706,8 +708,9 @@ class SendViewModel(
             internalMessage = false
         )
         val emulated = api.emulate(message, transfer.wallet.testnet)
+        val extra = emulated?.event?.extra ?: 0
 
-        lastFee.set(emulated?.totalFees ?: 0)
+        lastFee.set(if (0 > extra) abs(extra) else 0)
 
         sendTransferType = SendTransferType.Default
 

@@ -25,7 +25,7 @@ class MainRecyclerView @JvmOverloads constructor(
     private var topOffset = 0
     private var bottomOffset = 0
 
-    private val topPadding: Int
+    val topPadding: Int
         get() = topOffset + barSize
 
     private val bottomPadding: Int
@@ -39,7 +39,6 @@ class MainRecyclerView @JvmOverloads constructor(
         if (bottomBlur?.hasBlur == true) {
             overScrollMode = OVER_SCROLL_NEVER
         }
-        context.isLowDevice
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {

@@ -215,16 +215,21 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
-    override fun removeByClass(clazz: Class<out Fragment>) {
-        val fragments = supportFragmentManager.fragments.filter { it.javaClass == clazz }
-        if (fragments.isNotEmpty()) {
+    override fun removeByClass(runnable: Runnable, vararg clazz: Class<out Fragment>) {
+        if (isStateSaved()) {
+            return
+        }
+
+        val fragments = supportFragmentManager.fragments.filter { it.javaClass in clazz }
+        if (fragments.isEmpty()) {
+            runnable.run()
+            return
+        }
+        supportFragmentManager.commitNow {
             for (fragment in fragments) {
-                if (fragment is BaseFragment) {
-                    fragment.finish()
-                } else {
-                    remove(fragment)
-                }
+                remove(fragment)
             }
+            runOnCommit(runnable)
         }
     }
 

@@ -381,8 +381,9 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     private fun setSuccess() {
         processTaskView.state = ProcessTaskView.State.SUCCESS
         navigation?.openURL("tonkeeper://activity")
-        navigation?.removeByClass(TokenScreen::class.java)
-        postDelayed(2000, ::finish)
+        navigation?.removeByClass({
+            postDelayed(2000, ::finish)
+        }, TokenScreen::class.java)
     }
 
     private fun setDefault() {

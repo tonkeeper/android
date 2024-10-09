@@ -104,6 +104,16 @@ class RootActivity: BaseWalletActivity() {
         App.applyConfiguration(resources.configuration)
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.connectTonConnectBridge()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.disconnectTonConnectBridge()
+    }
+
     private fun pinState(state: LockScreen.State) {
         if (state == LockScreen.State.None) {
             lockView.visibility = View.GONE
@@ -189,12 +199,13 @@ class RootActivity: BaseWalletActivity() {
                 text = event.text,
                 wallet = event.wallet
             )
-            is RootEvent.CloseCurrentTonConnect -> {
-                removeByClass(SendTransactionScreen::class.java)
-                removeByClass(TonConnectScreen::class.java)
-            }
+            is RootEvent.CloseCurrentTonConnect -> closeCurrentTonConnect {}
             else -> { }
         }
+    }
+
+    private fun closeCurrentTonConnect(runnable: Runnable) {
+        removeByClass(runnable, SendTransactionScreen::class.java, TonConnectScreen::class.java)
     }
 
     private fun openSend(
@@ -273,10 +284,12 @@ class RootActivity: BaseWalletActivity() {
 
     override fun add(fragment: BaseFragment) {
         if (fragment is SendTransactionScreen || fragment is TonConnectScreen) {
-            removeByClass(SendTransactionScreen::class.java)
-            removeByClass(TonConnectScreen::class.java)
+            closeCurrentTonConnect {
+                super.add(fragment)
+            }
+        } else {
+            super.add(fragment)
         }
-        super.add(fragment)
     }
 
     override fun openURL(url: String) {

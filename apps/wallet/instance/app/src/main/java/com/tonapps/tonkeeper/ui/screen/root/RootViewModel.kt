@@ -70,6 +70,7 @@ import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
@@ -83,6 +84,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.seconds
 
 class RootViewModel(
     app: Application,
@@ -108,8 +110,20 @@ class RootViewModel(
     private val _eventFlow = MutableEffectFlow<RootEvent?>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
+    private val ignoreTonConnectTransaction = mutableListOf<String>()
+
     init {
-        tonConnectManager.transactionRequestFlow.collectFlow(::sendTransaction)
+        tonConnectManager.transactionRequestFlow.map { (connection, message) ->
+            val tx = RootSignTransaction(connection, message, savedState.returnUri)
+            savedState.returnUri = null
+            tx
+        }.filter { !ignoreTonConnectTransaction.contains(it.hash) }.collectFlow {
+            _eventFlow.tryEmit(RootEvent.CloseCurrentTonConnect)
+            viewModelScope.launch {
+                ignoreTonConnectTransaction.add(it.hash)
+                signTransaction(it)
+            }
+        }
 
         settingsRepository.languageFlow.collectFlow {
             context.setLocales(settingsRepository.localeList)
@@ -150,28 +164,32 @@ class RootViewModel(
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
     }
 
-    private suspend fun sendTransaction(pair: Pair<AppConnectEntity, BridgeEvent.Message>) {
-        _eventFlow.tryEmit(RootEvent.CloseCurrentTonConnect)
+    fun connectTonConnectBridge() {
+        tonConnectManager.connectBridge()
+    }
 
-        val (connection, message) = pair
-        val eventId = message.id
+    fun disconnectTonConnectBridge() {
+        tonConnectManager.disconnectBridge()
+    }
+
+    private suspend fun signTransaction(tx: RootSignTransaction) {
+        val eventId = tx.id
         try {
-            val signRequests = message.params.map { SignRequestEntity(it) }
+            val signRequests = tx.params.map { SignRequestEntity(it) }
             if (signRequests.isEmpty()) {
                 throw IllegalArgumentException("Empty sign requests")
             }
             for (signRequest in signRequests) {
-                signRequest(eventId, connection, signRequest)
+                signRequest(eventId, tx.connection, signRequest)
             }
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
-            tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
+            tonConnectManager.sendBridgeError(tx.connection, BridgeError.BAD_REQUEST, eventId)
         }
 
-        savedState.returnUri?.let {
+        tx.returnUri?.let {
             context.safeExternalOpenUri(it)
         }
-        savedState.returnUri = null
     }
 
     private suspend fun signRequest(

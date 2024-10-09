@@ -139,9 +139,10 @@ class W5StoriesViewModel(
 
     fun addWallet(context: Context) = accountRepository.selectedWalletFlow.take(1)
         .map { wallet ->
+            val fixedLabel = wallet.label.name.replace(wallet.version.title, "") + " " + WalletVersion.V5R1.title
             accountRepository.addWallet(
                 ids = listOf(AccountRepository.newWalletId()),
-                label = Wallet.NewLabel(listOf(wallet.label.name), wallet.label.emoji, wallet.label.color),
+                label = Wallet.NewLabel(listOf(fixedLabel), wallet.label.emoji, wallet.label.color),
                 publicKey = wallet.publicKey,
                 versions = listOf(WalletVersion.V5R1),
                 type = wallet.type

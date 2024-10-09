@@ -125,8 +125,9 @@ class W5StoriesScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_w5
 
         }.onEach { walletId ->
             navigation?.add(PickerScreen.newInstance(PickerMode.Focus(walletId)))
-            navigation?.removeByClass(SettingsScreen::class.java)
-            finish()
+            navigation?.removeByClass({
+                finish()
+            }, SettingsScreen::class.java)
         }.launchIn(lifecycleScope)
     }
 

@@ -497,6 +497,12 @@ class SendViewModel(
                         onContinue()
                     }
                 }
+            } else if (isNft) {
+                if (!withRelayer && fee.value > tonBalance.value) {
+                    showInsufficientBalance(tonBalance, fee)
+                } else {
+                    onContinue()
+                }
             } else {
                 val totalAmount = fee + TransferEntity.BASE_FORWARD_AMOUNT
                 if (!withRelayer && totalAmount.value > tonBalance.value) {

@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.textSecondaryColor
@@ -49,6 +50,10 @@ import java.util.concurrent.CancellationException
 class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal, BaseFragment.SingleTask {
 
     private val args: SendTransactionArgs by lazy { SendTransactionArgs(requireArguments()) }
+
+    private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
+        InsufficientFundsDialog(requireContext())
+    }
 
     override val viewModel: SendTransactionViewModel by walletViewModel {
         parametersOf(args.request, args.batteryTransactionType, args.forceRelayer)
@@ -166,10 +171,15 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
     }
 
     private fun applyState(state: SendTransactionState) {
-        if (state is SendTransactionState.Details) {
-            applyDetails(state)
-        } else if (state is SendTransactionState.Failed) {
-            setErrorTask(BridgeError.UNKNOWN)
+        when (state) {
+            is SendTransactionState.Details -> applyDetails(state)
+            is SendTransactionState.Failed -> setErrorTask(BridgeError.UNKNOWN)
+            is SendTransactionState.FailedEmulation -> finish()
+            is SendTransactionState.InsufficientBalance -> {
+                insufficientFundsDialog.show(state.wallet, state.balance, state.required, state.withRechargeBattery, state.singleWallet)
+                finish()
+            }
+            else -> { }
         }
     }
 

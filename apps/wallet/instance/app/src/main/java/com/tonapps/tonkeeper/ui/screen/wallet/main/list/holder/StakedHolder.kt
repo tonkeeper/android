@@ -67,7 +67,9 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
             messageView.visibility = View.VISIBLE
             messageView.text = context.getString(Localization.staking_ready_withdraw, item.readyWithdrawFormat)
             messageView.setOnClickListener {
-                navigation?.add(StakeWithdrawScreen.newInstance(item.wallet, item.poolAddress))
+                if (item.poolImplementation != StakingPool.Implementation.LiquidTF) {
+                    navigation?.add(StakeWithdrawScreen.newInstance(item.wallet, item.poolAddress))
+                }
             }
         } else if (item.pendingDeposit > Coins.ZERO) {
             startTicker(Localization.staking_pending_deposit, item.pendingDepositFormat, item.cycleEnd)

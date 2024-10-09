@@ -28,16 +28,15 @@ class UnStakeScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
         collectFlow(viewModel.eventFlow, ::onEvent)
     }
 
-    private suspend fun onEvent(event: UnStakeEvent) {
+    private fun onEvent(event: UnStakeEvent) {
         when(event) {
             is UnStakeEvent.RouteToAmount -> setFragment(UnStakeAmountFragment.newInstance())
             is UnStakeEvent.OpenConfirm -> setFragment(UnStakeConfirmFragment.newInstance())
             is UnStakeEvent.Finish -> {
                 navigation?.openURL("tonkeeper://activity")
-                navigation?.removeByClass(UnStakeScreen::class.java)
-                navigation?.removeByClass(StakeViewerScreen::class.java)
-                delay(2000)
-                finish()
+                navigation?.removeByClass({
+                    finish()
+                }, UnStakeScreen::class.java, StakeViewerScreen::class.java)
             }
         }
     }

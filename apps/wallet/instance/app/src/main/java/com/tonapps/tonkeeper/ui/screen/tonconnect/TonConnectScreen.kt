@@ -160,8 +160,10 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     private fun setResponse(response: TonConnectResponse) {
         setSuccessState()
         setResult(contract.createResult(response), false)
-        returnToApp()
-        finish()
+        postDelayed(2000) {
+            returnToApp()
+            finish()
+        }
     }
 
     private fun setTaskState() {

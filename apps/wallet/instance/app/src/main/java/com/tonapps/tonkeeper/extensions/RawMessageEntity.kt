@@ -96,6 +96,15 @@ fun RawMessageEntity.getWalletTransfer(
         payload
     }
     // builder.bounceable = address.isBounceable()
-    builder.coins = coins
+    if (newCustomPayload != null) {
+        val defCoins = Coins.of(0.5)
+        if (defCoins.amount.value > coins.amount.value) {
+            builder.coins = defCoins
+        } else {
+            builder.coins = coins
+        }
+    } else {
+        builder.coins = coins
+    }
     return builder.build()
 }

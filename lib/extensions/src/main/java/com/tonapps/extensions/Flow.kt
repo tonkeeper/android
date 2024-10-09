@@ -94,6 +94,8 @@ fun <T> join(vararg flows: Flow<T>): Flow<T> = channelFlow<Result<T>> {
     }
 }.map { it.getOrThrow() }
 
+fun <T> List<Flow<T>>.flatter() = join(*this.toTypedArray())
+
 
 @OptIn(ExperimentalCoroutinesApi::class)
 inline fun <T, R> Flow<T>.flat(crossinline transform: suspend (value: T) -> List<Flow<R>>): Flow<R> {

@@ -150,8 +150,9 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
     private fun onSuccess() {
         requireContext().showToast(Localization.battery_please_wait)
         navigation?.openURL("tonkeeper://activity")
-        navigation?.removeByClass(BatteryScreen::class.java)
-        finish()
+        navigation?.removeByClass({
+            finish()
+        }, BatteryScreen::class.java)
     }
 
     private fun sign(request: SignRequestEntity, forceRelayer: Boolean) {

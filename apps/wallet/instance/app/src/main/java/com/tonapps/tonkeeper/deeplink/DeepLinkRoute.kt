@@ -73,7 +73,7 @@ sealed class DeepLinkRoute {
             address = uri.pathOrNull ?: throw IllegalArgumentException("Address is required"),
             amount = uri.queryPositiveLong("amount"),
             text = uri.query("text"),
-            jettonAddress = uri.query("jettonAddress"),
+            jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
             bin = uri.query("bin")
         )
     }

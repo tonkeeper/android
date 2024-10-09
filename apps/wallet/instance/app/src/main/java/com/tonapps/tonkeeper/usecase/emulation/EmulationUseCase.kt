@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.usecase.emulation
 
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
@@ -21,6 +22,7 @@ import io.tonapi.models.Risk
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import java.math.BigDecimal
+import java.math.BigInteger
 import kotlin.math.abs
 
 class EmulationUseCase(
@@ -95,7 +97,7 @@ class EmulationUseCase(
                 cell = boc,
                 testnet = wallet.testnet,
                 address = wallet.address,
-                balance = (Coins.ONE + Coins.ONE).toLong() + calculateTransferAmount(message.transfers)
+                balance = ((Coins.ONE + Coins.ONE) + calculateTransferAmount(message.transfers)).toLong()
             )
         } else {
             api.emulate(boc, wallet.testnet)
@@ -103,17 +105,6 @@ class EmulationUseCase(
         return parseEmulated(wallet, consequences, false)
     }
 
-
-    private fun calculateTransferAmount(transfers: List<WalletTransfer>): Long {
-        if (transfers.isEmpty()) {
-            return 0
-        }
-        var grams = Coins.ZERO.toGrams()
-        transfers.forEach {
-            grams = grams.plus(it.coins.coins)
-        }
-        return grams.amount.toLong()
-    }
 
     private suspend fun parseEmulated(
         wallet: WalletEntity,
@@ -188,5 +179,15 @@ class EmulationUseCase(
             ))
         }
         return list.toList()
+    }
+
+    companion object {
+
+        fun calculateTransferAmount(transfers: List<WalletTransfer>): Coins {
+            return transfers.sumOf {
+                val value = it.coins.coins.toString()
+                Coins.of(value)
+            }
+        }
     }
 }

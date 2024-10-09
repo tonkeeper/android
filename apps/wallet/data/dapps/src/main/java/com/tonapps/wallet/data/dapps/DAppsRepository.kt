@@ -87,6 +87,10 @@ class DAppsRepository(
         return result
     }
 
+    suspend fun getConnections(): List<AppConnectEntity> {
+        return database.getConnections()
+    }
+
     fun getLastAppRequestId(clientId: String): Long {
         return database.getLastAppRequestId(clientId)
     }

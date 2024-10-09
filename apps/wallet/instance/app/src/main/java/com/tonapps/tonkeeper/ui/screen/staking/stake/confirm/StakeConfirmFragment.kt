@@ -92,10 +92,9 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)
             navigation?.openURL("tonkeeper://activity")
-            navigation?.removeByClass(StakingScreen::class.java)
-            navigation?.removeByClass(StakeViewerScreen::class.java)
-            delay(2000)
-            finish()
+            navigation?.removeByClass({
+                finish()
+            }, StakingScreen::class.java, StakeViewerScreen::class.java)
         }.launchIn(lifecycleScope)
     }
 

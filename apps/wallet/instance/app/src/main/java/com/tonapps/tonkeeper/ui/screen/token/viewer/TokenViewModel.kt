@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -138,11 +139,13 @@ class TokenViewModel(
         token: AccountTokenEntity,
         charts: List<ChartEntity>
     ) {
+
+        val currency = settingsRepository.currency.code
         val items = mutableListOf<Item>()
         items.add(
             Item.Balance(
             balance = CurrencyFormatter.format(token.symbol, token.balance.value, token.decimals),
-            fiat = CurrencyFormatter.format(settingsRepository.currency.code, token.fiat),
+            fiat = CurrencyFormatter.format(currency, token.fiat),
             iconUri = token.imageUri,
             hiddenBalance = settingsRepository.hiddenBalances,
         ))
@@ -159,12 +162,36 @@ class TokenViewModel(
         }
 
         if (token.verified) {
-            items.add(Item.Price(
-                fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.rateNow),
-                rateDiff24h = token.rateDiff24h
-            ))
-
             val period = settingsRepository.chartPeriod
+            if (2 >= charts.size) {
+                items.add(Item.Price(
+                    fiatPrice = CurrencyFormatter.format(currency, token.rateNow, 4),
+                    rateDiff24h = token.rateDiff24h,
+                    delta = "",
+                ))
+            } else {
+                val firstFiatPrice = charts.last().price
+                val lastFiatPrice = charts.first().price
+                val growPercent = (firstFiatPrice - lastFiatPrice) / firstFiatPrice * 100
+                val growPercentFormat = if (0f == growPercent) {
+                    "%.2f%%".format(growPercent)
+                } else if (0 > growPercent) {
+                    "%.2f%%".format(growPercent)
+                } else {
+                    "+%.2f%%".format(growPercent)
+                }
+
+                val priceDelta = Coins.of(firstFiatPrice - lastFiatPrice, token.decimals).abs()
+                val priceDeltaFormat = CurrencyFormatter.formatFiat(currency, priceDelta)
+
+                items.add(Item.Price(
+                    fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.rateNow, 4),
+                    rateDiff24h = growPercentFormat,
+                    delta = priceDeltaFormat,
+                ))
+            }
+
+
             items.add(Item.Chart(
                 data = charts,
                 square = period == ChartPeriod.hour,

@@ -34,8 +34,12 @@ enum class JettonVerificationType(val value: kotlin.String) {
     @Json(name = "blacklist")
     blacklist("blacklist"),
 
+    @Json(name = "graylist")
+    graylist("graylist"),
+
     @Json(name = "none")
     none("none");
+
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

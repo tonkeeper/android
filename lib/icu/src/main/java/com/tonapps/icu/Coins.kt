@@ -40,6 +40,13 @@ data class Coins(
             return Coins(bigDecimal, decimals)
         }
 
+        fun of(
+            value: Float,
+            decimals: Int = DEFAULT_DECIMALS
+        ): Coins {
+            return of(value.toDouble(), decimals)
+        }
+
         fun ofNano(
             value: String,
             decimals: Int = DEFAULT_DECIMALS

@@ -49,7 +49,8 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data class Price(
         val fiatPrice: CharSequence,
-        val rateDiff24h: CharSequence
+        val rateDiff24h: CharSequence,
+        val delta: CharSequence
     ): Item(TYPE_PRICE)
 
     data class Chart(

@@ -33,6 +33,7 @@ fun <R> withRetry(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
+            Log.e("TonkeeperLog", "Error in retry block", e)
             val statusCode = when (e) {
                 is ClientException -> e.statusCode
                 is OkHttpError -> e.statusCode

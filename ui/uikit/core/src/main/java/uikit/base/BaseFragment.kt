@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Parcelable
 import android.text.SpannableString
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -274,7 +275,7 @@ open class BaseFragment(
     }
 
     override fun onDestroy() {
-        if (resultKey != null && resultIsSet.get()) {
+        if (resultKey != null && !resultIsSet.get()) {
             navigation?.setFragmentResult(resultKey!!, Bundle())
         }
         super.onDestroy()

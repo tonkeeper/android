@@ -3,6 +3,8 @@ package com.tonapps.wallet.data.core.entity
 import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import kotlinx.datetime.Clock
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -13,7 +15,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @Parcelize
 data class SignRequestEntity(
-    val fromValue: String?,
+    private val fromValue: String?,
+    private val sourceValue: String?,
     val validUntil: Long,
     val messages: List<RawMessageEntity>,
     val network: TonNetwork
@@ -21,10 +24,18 @@ data class SignRequestEntity(
 
     @IgnoredOnParcel
     val from: AddrStd?
-        get() = fromValue?.let { AddrStd.parse(it) }
+        get() {
+            val value = fromValue ?: return null
+            return try {
+                AddrStd.parse(value)
+            } catch (e: Throwable) {
+                null
+            }
+        }
 
     constructor(json: JSONObject) : this(
-        fromValue = parseFrom(json),
+        fromValue = json.optString("from"),
+        sourceValue = json.optString("source"),
         validUntil = parseValidUnit(json),
         messages = parseMessages(json.getJSONArray("messages")),
         network = parseNetwork(json.opt("network"))
@@ -33,6 +44,31 @@ data class SignRequestEntity(
     constructor(value: String) : this(JSONObject(value))
 
     constructor(value: Any) : this(value.toString())
+
+    class Builder {
+        private var from: AddrStd? = null
+        private var validUntil: Long? = null
+        private var network: TonNetwork = TonNetwork.MAINNET
+        private val messages = mutableListOf<RawMessageEntity>()
+
+        fun setFrom(from: AddrStd) = apply { this.from = from }
+
+        fun setValidUntil(validUntil: Long) = apply { this.validUntil = validUntil }
+
+        fun setNetwork(network: TonNetwork) = apply { this.network = network }
+
+        fun addMessage(message: RawMessageEntity) = apply { messages.add(message) }
+
+        fun build(): SignRequestEntity {
+            return SignRequestEntity(
+                fromValue = from?.toAccountId(),
+                sourceValue = null,
+                validUntil = validUntil ?: 0,
+                messages = messages.toList(),
+                network = network
+            )
+        }
+    }
 
     companion object {
 
@@ -59,19 +95,16 @@ data class SignRequestEntity(
             val messages = mutableListOf<RawMessageEntity>()
             for (i in 0 until array.length()) {
                 val json = array.getJSONObject(i)
-                messages.add(RawMessageEntity(json))
+                val raw = RawMessageEntity(json)
+                if (0 >= raw.amount) {
+                    throw IllegalArgumentException("Invalid amount: ${raw.amount}")
+                }
+                if (!raw.addressValue.isValidTonAddress()) {
+                    throw IllegalArgumentException("Invalid address: ${raw.addressValue}")
+                }
+                messages.add(raw)
             }
             return messages
-        }
-
-        private fun parseFrom(json: JSONObject): String? {
-            return if (json.has("from")) {
-                json.getString("from")
-            } else if (json.has("source")) {
-                json.getString("source")
-            } else {
-                null
-            }
         }
 
         private fun parseNetwork(value: Any?): TonNetwork {

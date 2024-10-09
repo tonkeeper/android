@@ -3,15 +3,19 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
@@ -152,10 +156,14 @@ class RootViewModel(
         val eventId = message.id
         try {
             val signRequests = message.params.map { SignRequestEntity(it) }
+            if (signRequests.isEmpty()) {
+                throw IllegalArgumentException("Empty sign requests")
+            }
             for (signRequest in signRequests) {
                 signRequest(eventId, connection, signRequest)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
         }
 
@@ -174,6 +182,12 @@ class RootViewModel(
             tonConnectManager.sendBridgeError(connection, BridgeError.METHOD_NOT_SUPPORTED, eventId)
             return
         }
+
+        if (signRequest.from != null && !signRequest.from!!.toAccountId().equalsAddress(connection.accountId)) {
+            tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
+            return
+        }
+
         val wallets = accountRepository.getWalletsByAccountId(
             accountId = connection.accountId,
             testnet = connection.testnet

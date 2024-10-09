@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.usecase.emulation
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
+import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
@@ -18,6 +19,7 @@ import io.tonapi.models.JettonQuantity
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.Risk
 import org.ton.cell.Cell
+import org.ton.contract.wallet.WalletTransfer
 import java.math.BigDecimal
 import kotlin.math.abs
 
@@ -34,11 +36,16 @@ class EmulationUseCase(
         message: MessageBodyEntity,
         useBattery: Boolean = false,
         forceRelayer: Boolean = false,
+        params: Boolean = false,
     ): Emulated {
         return if (forceRelayer || useBattery) {
-            emulateWithBattery(message, forceRelayer)
+            emulateWithBattery(
+                message = message,
+                forceRelayer = forceRelayer,
+                params = params
+            )
         } else {
-            emulate(message)
+            emulate(message, params)
         }
     }
 
@@ -55,6 +62,7 @@ class EmulationUseCase(
     private suspend fun emulateWithBattery(
         message: MessageBodyEntity,
         forceRelayer: Boolean,
+        params: Boolean,
     ): Emulated {
         try {
             if (api.config.isBatteryDisabled) {
@@ -75,15 +83,36 @@ class EmulationUseCase(
 
             return parseEmulated(wallet, consequences, withBattery)
         } catch (e: Throwable) {
-            return emulate(message)
+            return emulate(message, params)
         }
     }
 
-    private suspend fun emulate(message: MessageBodyEntity): Emulated {
+    private suspend fun emulate(message: MessageBodyEntity, params: Boolean): Emulated {
         val wallet = message.wallet
         val boc = createMessage(message, false)
-        val consequences = api.emulate(boc, wallet.testnet) ?: throw IllegalArgumentException("Emulation failed")
+        val consequences = (if (params) {
+            api.emulate(
+                cell = boc,
+                testnet = wallet.testnet,
+                address = wallet.address,
+                balance = (Coins.ONE + Coins.ONE).toLong() + calculateTransferAmount(message.transfers)
+            )
+        } else {
+            api.emulate(boc, wallet.testnet)
+        }) ?: throw IllegalArgumentException("Emulation failed")
         return parseEmulated(wallet, consequences, false)
+    }
+
+
+    private fun calculateTransferAmount(transfers: List<WalletTransfer>): Long {
+        if (transfers.isEmpty()) {
+            return 0
+        }
+        var grams = Coins.ZERO.toGrams()
+        transfers.forEach {
+            grams = grams.plus(it.coins.coins)
+        }
+        return grams.amount.toLong()
     }
 
     private suspend fun parseEmulated(

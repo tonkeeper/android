@@ -334,19 +334,18 @@ class BatteryRechargeViewModel(
         }
 
         if (token.isTon) {
-            val request = SignRequestEntity(
-                fromValue = wallet.contract.address.toAccountId(),
-                validUntil = validUntil,
-                messages = listOf(
-                    RawMessageEntity(
-                        addressValue = fundReceiver,
-                        amount = amount.toLong(),
-                        stateInitValue = null,
-                        payloadValue = payload.base64()
-                    )
-                ),
-                network = network,
-            )
+            val request = SignRequestEntity.Builder()
+                .setFrom(wallet.contract.address)
+                .setValidUntil(validUntil)
+                .addMessage(RawMessageEntity(
+                    addressValue = fundReceiver,
+                    amount = amount.toLong(),
+                    stateInitValue = null,
+                    payloadValue = payload.base64()
+                ))
+                .setNetwork(network)
+                .build()
+
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
         } else {
             val queryId = TransferEntity.newWalletQueryId()
@@ -364,19 +363,19 @@ class BatteryRechargeViewModel(
                 forwardPayload = payload,
                 customPayload = customPayload?.customPayload
             )
-            val request = SignRequestEntity(
-                fromValue = wallet.contract.address.toAccountId(),
-                validUntil = validUntil,
-                messages = listOf(
-                    RawMessageEntity(
-                        addressValue = token.balance.walletAddress,
-                        amount = Coins.of(0.1).toLong(),
-                        stateInitValue = null,
-                        payloadValue = jettonPayload.base64()
-                    )
-                ),
-                network = network,
-            )
+
+            val request = SignRequestEntity.Builder()
+                .setFrom(wallet.contract.address)
+                .setValidUntil(validUntil)
+                .addMessage(RawMessageEntity(
+                    addressValue = token.balance.walletAddress,
+                    amount = Coins.of(0.1).toLong(),
+                    stateInitValue = null,
+                    payloadValue = jettonPayload.base64()
+                ))
+                .setNetwork(network)
+                .build()
+
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
         }
     }.catch {

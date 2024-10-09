@@ -87,7 +87,11 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         lifecycleScope.launch {
             val words = getMnemonic()
             if (words.isEmpty() || !Mnemonic.isValid(words)) {
-                navigation?.toast(Localization.incorrect_phrase)
+                if (TonMnemonic.isValidTONKeychain(words)) {
+                    navigation?.toast(Localization.multi_account_secret_wrong)
+                } else {
+                    navigation?.toast(Localization.incorrect_phrase)
+                }
                 return@launch
             }
             setLoading()

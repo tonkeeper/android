@@ -209,7 +209,7 @@
     <string name="open_anyway">Открыть всё равно</string>
     <string name="nft_warning_buttton_title">Вы уверены, что хотите открыть внешнюю ссылку?</string>
     <string name="fiat_open_description">Вы открываете внешнее приложение, которым не управляет Tonkeeper.</string>
-
+    <string name="multi_account_secret_wrong">Пожалуйста, используйте Tonkeeper Desktop для акаунта мульти-кошелька</string>
 
 
 

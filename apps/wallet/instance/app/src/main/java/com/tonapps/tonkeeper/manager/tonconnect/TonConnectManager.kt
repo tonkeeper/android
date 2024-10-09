@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.manager.tonconnect
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
+import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.proof.TONProof
@@ -61,9 +62,8 @@ class TonConnectManager(
             if (lastAppRequestId >= event.message.id) {
                 return@mapNotNull null
             }
-            dAppsRepository.setLastAppRequestId(event.connection.clientId, event.message.id)
             event
-        }.shareIn(scope, SharingStarted.Eagerly)
+        }.shareIn(scope, SharingStarted.Eagerly, 1)
 
     val transactionRequestFlow = eventsFlow.mapNotNull { event ->
         if (event.method == BridgeMethod.SEND_TRANSACTION) {
@@ -76,12 +76,16 @@ class TonConnectManager(
             }
             null
         }
-    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly)
+    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
 
     fun walletConnectionsFlow(wallet: WalletEntity) = accountConnectionsFlow(wallet.accountId, wallet.testnet)
 
     fun accountConnectionsFlow(accountId: String, testnet: Boolean = false) = dAppsRepository.connectionsFlow.filterList { connection ->
         connection.testnet == testnet && connection.accountId.equalsAddress(accountId)
+    }
+
+    fun setLastAppRequestId(clientId: String, messageId: Long) {
+        dAppsRepository.setLastAppRequestId(clientId, messageId)
     }
 
     fun walletAppsFlow(wallet: WalletEntity) = walletConnectionsFlow(wallet).mapList { it.appUrl }.map { it.distinct() }.map { urls ->
@@ -119,10 +123,12 @@ class TonConnectManager(
 
     suspend fun sendBridgeError(connection: AppConnectEntity, error: BridgeError, id: Long) {
         bridge.sendError(connection, error, id)
+        setLastAppRequestId(connection.clientId, id)
     }
 
     suspend fun sendTransactionResponseSuccess(connection: AppConnectEntity, boc: String, id: Long) {
         bridge.sendTransactionResponseSuccess(connection, boc, id)
+        setLastAppRequestId(connection.clientId, id)
     }
 
     fun isPushEnabled(wallet: WalletEntity, appUrl: Uri): Boolean {

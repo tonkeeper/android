@@ -55,8 +55,8 @@ class ChartPeriodView @JvmOverloads constructor(
 
     private fun createButton(period: ChartPeriod): View {
         val view = AppCompatTextView(context)
-        view.setTextColor(context.textPrimaryColor)
         view.setTextAppearance(uikit.R.style.TextAppearance_Label2)
+        view.setTextColor(context.textPrimaryColor)
         view.gravity = Gravity.CENTER
         view.text = period.title
         return view

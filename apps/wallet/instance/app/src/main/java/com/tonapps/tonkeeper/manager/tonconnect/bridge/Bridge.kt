@@ -48,27 +48,6 @@ internal class Bridge(private val api: API) {
         return message
     }
 
-    suspend fun sendConnectError(
-        connection: AppConnectEntity,
-        error: BridgeError
-    ): String {
-        val message = JsonBuilder.connectEventError(error).toString()
-        send(connection, message)
-        return message
-    }
-
-    suspend fun sendConnectSuccess(
-        connection: AppConnectEntity,
-        wallet: WalletEntity,
-        proof: TONProof.Result?,
-        proofError: BridgeError?,
-        appVersion: String,
-    ): String {
-        val message = JsonBuilder.connectEventSuccess(wallet, proof, proofError, appVersion).toString()
-        send(connection, message)
-        return message
-    }
-
     suspend fun sendDisconnect(connection: AppConnectEntity): String {
         val message = JsonBuilder.disconnectEvent().toString()
         send(connection, message)
@@ -78,11 +57,11 @@ internal class Bridge(private val api: API) {
     suspend fun send(
         connection: AppConnectEntity,
         message: String
-    ) = withContext(Dispatchers.IO) {
+    ): Boolean = withContext(Dispatchers.IO) {
         if (connection.type != AppConnectEntity.Type.Internal) {
-            // val encrypted = connection.encryptMessage(message.toByteArray())
-            // api.tonconnectSend(connection.publicKeyHex, connection.clientId, encrypted.base64)
             send(connection.clientId, connection.keyPair, message)
+        } else {
+            true
         }
     }
 
@@ -90,12 +69,14 @@ internal class Bridge(private val api: API) {
         clientId: String,
         keyPair: CryptoBox.KeyPair,
         unencryptedMessage: String
-    ) = withContext(Dispatchers.IO) {
+    ): Boolean = withContext(Dispatchers.IO) {
         try {
             val encryptedMessage = AppConnectEntity.encryptMessage(clientId.hex(), keyPair.privateKey, unencryptedMessage.toByteArray())
             api.tonconnectSend(hex(keyPair.publicKey), clientId, encryptedMessage.base64)
+            true
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
+            false
         }
     }
 

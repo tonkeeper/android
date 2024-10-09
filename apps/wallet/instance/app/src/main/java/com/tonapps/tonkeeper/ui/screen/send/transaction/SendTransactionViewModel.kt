@@ -98,8 +98,19 @@ class SendTransactionViewModel(
                     )
                 }
             } catch (e: Throwable) {
-                toast(Localization.unknown_error)
-                _stateFlow.value = SendTransactionState.FailedEmulation
+                val tonBalance = getTONBalance()
+                if (tonBalance == Coins.ZERO) {
+                    _stateFlow.value = SendTransactionState.InsufficientBalance(
+                        wallet = wallet,
+                        balance = tonBalance,
+                        required = Coins.of(0.1),
+                        withRechargeBattery = false,
+                        singleWallet = isSingleWallet()
+                    )
+                } else {
+                    toast(Localization.unknown_error)
+                    _stateFlow.value = SendTransactionState.FailedEmulation
+                }
             }
         }
     }

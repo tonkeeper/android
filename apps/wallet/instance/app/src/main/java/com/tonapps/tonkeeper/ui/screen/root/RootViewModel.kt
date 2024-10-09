@@ -129,7 +129,6 @@ class RootViewModel(
             Widget.updateAll()
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
-
         viewModelScope.launch(Dispatchers.IO) {
             settingsRepository.firebaseToken = FirebasePush.requestToken()
         }
@@ -152,6 +151,8 @@ class RootViewModel(
     }
 
     private suspend fun sendTransaction(pair: Pair<AppConnectEntity, BridgeEvent.Message>) {
+        _eventFlow.tryEmit(RootEvent.CloseCurrentTonConnect)
+
         val (connection, message) = pair
         val eventId = message.id
         try {

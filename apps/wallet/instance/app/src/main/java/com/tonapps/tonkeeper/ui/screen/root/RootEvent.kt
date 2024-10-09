@@ -41,4 +41,6 @@ sealed class RootEvent {
         val text: String?,
         val jettonAddress: String?
     ): RootEvent()
+
+    data object CloseCurrentTonConnect: RootEvent()
 }

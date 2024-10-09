@@ -189,6 +189,10 @@ class RootActivity: BaseWalletActivity() {
                 text = event.text,
                 wallet = event.wallet
             )
+            is RootEvent.CloseCurrentTonConnect -> {
+                removeByClass(SendTransactionScreen::class.java)
+                removeByClass(TonConnectScreen::class.java)
+            }
             else -> { }
         }
     }

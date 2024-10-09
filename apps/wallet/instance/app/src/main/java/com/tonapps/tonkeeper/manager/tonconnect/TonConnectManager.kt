@@ -76,7 +76,7 @@ class TonConnectManager(
             }
             null
         }
-    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 1)
+    }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 0)
 
     fun walletConnectionsFlow(wallet: WalletEntity) = accountConnectionsFlow(wallet.accountId, wallet.testnet)
 

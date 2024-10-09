@@ -38,7 +38,7 @@ class BaselineProfileGenerator {
     }
 
     private fun MacrobenchmarkScope.startWalletActions() {
-        sleep(2000)
+        sleep(5000)
         addWatchWallet("UQDYzZmfsrGzhObKJUw4gzdeIxEai3jAFbiGKGwxvxHinf4K")
         sleep(2000)
         clickTabs()

@@ -484,9 +484,9 @@ class InitViewModel(
                 builder.append(" ")
                 builder.append(account.version.title)
             }
-            if (isUsingDefaultName && (accounts.size > 1 || walletsCount > 1)) {
+            if (isUsingDefaultName && !isMultipleVersions && (accounts.size > 1 || walletsCount > 1)) {
                 builder.append(" ")
-                builder.append(walletsCount + index)
+                builder.append((walletsCount + index) + 1)
             }
             names.add(builder.toString())
         }

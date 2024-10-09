@@ -38,6 +38,23 @@ fun MacrobenchmarkScope.click(resId: String, delay: Long = 0): Boolean {
     return true
 }
 
+fun MacrobenchmarkScope.clickByText(test: String, delay: Long): Boolean {
+    sleep(delay)
+
+    val selector = By.text(test)
+    if (!waitVisible(selector)) {
+        return false
+    }
+
+    val obj = device.findObject(selector) ?: return false
+    if (!obj.isEnabled) {
+        return false
+    }
+    obj.click()
+
+    return true
+}
+
 fun MacrobenchmarkScope.clickListItem(resId: String, index: Int, delay: Long = 0) {
     sleep(delay)
 

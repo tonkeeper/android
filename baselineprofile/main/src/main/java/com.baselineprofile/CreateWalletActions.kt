@@ -7,7 +7,7 @@ import androidx.test.uiautomator.Until
 fun MacrobenchmarkScope.createWalletAction() {
     click("import_wallet")
 
-    clickListItem("list", 0)
+    clickListItem("list", 1, 1000)
 
     // Enter seed phrase
     setText("word_1", "donkey caught shift recipe husband wide number enough oil number head addict color speak canal rent dry believe shine category prevent math avocado dumb")
@@ -17,14 +17,16 @@ fun MacrobenchmarkScope.createWalletAction() {
         setText("word_24", "")
         sleep(100)
         setText("word_24", "dumb")
-        click("button", 1000)
+        click("button", 2000)
     }
 
     // Click button on select wallets screen
-    click("button", 2000)
+    click("button", 5000)
 
     // Set pin code
     crossPinScreen()
+
+    sleep(5000)
 
     // Repeat pin code
     crossPinScreen()

@@ -62,8 +62,8 @@ class InsufficientFundsDialog(context: Context): ModalDialog(context, R.layout.d
     }
 
     private fun applyDescription(balance: Coins, required: Coins, withRechargeBattery: Boolean) {
-        val balanceFormat = CurrencyFormatter.format("TON", balance).withCustomSymbol(context)
-        val requiredFormat = CurrencyFormatter.format("TON", required).withCustomSymbol(context)
+        val balanceFormat = CurrencyFormatter.format("TON", balance, 9).withCustomSymbol(context)
+        val requiredFormat = CurrencyFormatter.format("TON", required, 9).withCustomSymbol(context)
 
         val resId = if (withRechargeBattery) Localization.insufficient_balance_fees else Localization.insufficient_balance_default
         textView.descriptionView.text = context.getString(resId, requiredFormat, balanceFormat)

@@ -78,7 +78,7 @@ class SendTransactionViewModel(
 
                 val tonBalance = getTONBalance()
                 val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
-                val transferFee = if (!emulated.extra.isRefund) Coins.ZERO else emulated.extra.value
+                val transferFee = if (!emulated.extra.isRefund) Coins.ZERO else (emulated.extra.value + Coins.of(0.05))
                 val transferTotal = transferAmount + transferFee
 
                 if (transferTotal > tonBalance) {
@@ -156,6 +156,7 @@ class SendTransactionViewModel(
             seqNo = message.seqNo,
             ledgerTransaction = ledgerTransaction
         ).base64()
+
         val status = transactionManager.send(wallet, boc, isBattery)
         if (status == SendBlockchainState.SUCCESS) {
             emit(boc)

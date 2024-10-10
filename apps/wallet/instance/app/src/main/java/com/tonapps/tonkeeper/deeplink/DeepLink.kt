@@ -8,6 +8,18 @@ data class DeepLink(
     val referrer: Uri?,
 ) {
 
+    companion object {
+
+        fun fixBadUri(uri: Uri): Uri {
+            var url = uri.toString()
+
+            // fix for bad tg scheme
+            url = url.replace("tg:resolve", "tg://resolve")
+
+            return Uri.parse(url)
+        }
+    }
+
     val isUnknown: Boolean
         get() = route is DeepLinkRoute.Unknown
 

@@ -165,7 +165,7 @@ class UnStakeViewModel(
 
     fun requestFee() = unsignedBodyFlow().map { message ->
         try {
-            emulationUseCase(message, wallet.testnet).extra
+            emulationUseCase(message, wallet.testnet, params = true).extra
         } catch (e: Throwable) {
             Emulated.defaultExtra
         }

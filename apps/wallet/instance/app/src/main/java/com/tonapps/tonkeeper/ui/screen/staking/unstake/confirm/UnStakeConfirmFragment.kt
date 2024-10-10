@@ -96,10 +96,15 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)
             navigation?.openURL("tonkeeper://activity")
-            navigation?.removeByClass({
-                finish()
-            }, UnStakeScreen::class.java, StakeViewerScreen::class.java)
+            close()
         }.launchIn(lifecycleScope)
+    }
+
+    private fun close() {
+        val runnable = Runnable {
+            finish()
+        }
+        navigation?.removeByClass(runnable, StakeViewerScreen::class.java)
     }
 
     private fun applyPool(pool: PoolEntity) {

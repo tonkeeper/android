@@ -44,7 +44,7 @@
                 android:tint="?attr/colorAccent"
                 android:background="@drawable/bg_content_20"/>
 
-            <com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
+            <com.tonapps.tonkeeper.ui.component.TonConnectCryptoView
                 android:id="@+id/crypto"
                 android:layout_width="86dp"
                 android:layout_height="match_parent"

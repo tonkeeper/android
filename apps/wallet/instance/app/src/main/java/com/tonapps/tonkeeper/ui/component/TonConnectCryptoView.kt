@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.dialog.tc
+package com.tonapps.tonkeeper.ui.component
 
 import android.animation.ValueAnimator
 import android.content.Context

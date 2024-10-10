@@ -12,7 +12,7 @@ import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
-import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
+import com.tonapps.tonkeeper.ui.component.TonConnectCryptoView
 import com.tonapps.tonkeeper.extensions.debugToast
 import com.tonapps.tonkeeper.extensions.getWalletBadges
 import com.tonapps.tonkeeper.extensions.toast

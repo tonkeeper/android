@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -117,14 +118,19 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
 
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(VIEWER_ID, Localization.view_details, R.drawable.ic_globe_16)
-        if (!token.verified) {
+        if (!token.verified && !screenContext.wallet.isWatchOnly) {
             actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)
+        }
+        if (token.verified) {
+            actionSheet.addItem(WIDGET_ID, Localization.widget, UIKitIcon.ic_apps_16)
         }
         actionSheet.doOnItemClick = {
             if (it.id == VIEWER_ID) {
                 navigation?.openURL(detailsUrl.toString())
             } else if (it.id == BURN_ID) {
                 burn(token)
+            } else if (it.id == WIDGET_ID) {
+                WidgetManager.installRate(requireActivity(), screenContext.wallet.id, token.address)
             }
         }
         actionSheet.show(view)
@@ -144,6 +150,7 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
 
         private const val VIEWER_ID = 1L
         private const val BURN_ID = 2L
+        private const val WIDGET_ID = 3L
 
         fun newInstance(
             wallet: WalletEntity,

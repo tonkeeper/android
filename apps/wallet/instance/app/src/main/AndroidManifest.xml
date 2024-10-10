@@ -155,6 +155,9 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+        <receiver
+            android:name="com.tonapps.tonkeeper.manager.widget.WidgetManager$PinnedReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

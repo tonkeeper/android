@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -25,15 +24,14 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.safeExternalOpenUri
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.tonkeeper.manager.push.FirebasePush
+import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
@@ -70,7 +68,6 @@ import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
@@ -84,7 +81,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.seconds
 
 class RootViewModel(
     app: Application,
@@ -97,6 +93,7 @@ class RootViewModel(
     private val purchaseRepository: PurchaseRepository,
     private val tonConnectManager: TonConnectManager,
     private val browserRepository: BrowserRepository,
+    private val pushManager: PushManager,
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
@@ -113,6 +110,8 @@ class RootViewModel(
     private val ignoreTonConnectTransaction = mutableListOf<String>()
 
     init {
+        pushManager.clearNotifications()
+
         tonConnectManager.transactionRequestFlow.map { (connection, message) ->
             val tx = RootSignTransaction(connection, message, savedState.returnUri)
             savedState.returnUri = null
@@ -140,7 +139,6 @@ class RootViewModel(
                 val items = screenCacheSource.getWalletScreen(state.wallet) ?: listOf(Item.Skeleton(true))
                 submitWalletList(items)
             }
-            Widget.updateAll()
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -351,13 +349,13 @@ class RootViewModel(
 
     private suspend fun processDeepLink(wallet: WalletEntity, deeplink: DeepLink) {
         val route = deeplink.route
-        if (route is DeepLinkRoute.TonConnect) {
+        if (route is DeepLinkRoute.TonConnect && !wallet.isWatchOnly) {
             processTonConnectDeepLink(deeplink)
         } else if (route is DeepLinkRoute.Tabs) {
             _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri, wallet))
-        } else if (route is DeepLinkRoute.Send) {
+        } else if (route is DeepLinkRoute.Send && !wallet.isWatchOnly) {
             openScreen(SendScreen.newInstance(wallet))
-        } else if (route is DeepLinkRoute.Staking) {
+        } else if (route is DeepLinkRoute.Staking && !wallet.isWatchOnly) {
             openScreen(StakingScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.StakingPool) {
             openScreen(StakeViewerScreen.newInstance(wallet, route.poolAddress, ""))
@@ -367,7 +365,7 @@ class RootViewModel(
             } else {
                 showTransaction(route.address, route.eventId)
             }
-        } else if (route is DeepLinkRoute.Transfer) {
+        } else if (route is DeepLinkRoute.Transfer && !wallet.isWatchOnly) {
             processTransferDeepLink(wallet, route)
         } else if (route is DeepLinkRoute.PickWallet) {
             accountRepository.setSelectedWallet(route.walletId)
@@ -379,11 +377,11 @@ class RootViewModel(
                 from = route.from,
                 to = route.to
             ))
-        } else if (route is DeepLinkRoute.Battery) {
+        } else if (route is DeepLinkRoute.Battery && !wallet.isWatchOnly) {
             openScreen(BatteryScreen.newInstance(wallet, route.promocode))
-        } else if (route is DeepLinkRoute.Purchase) {
+        } else if (route is DeepLinkRoute.Purchase && !wallet.isWatchOnly) {
             openScreen(PurchaseScreen.newInstance(wallet))
-        } else if (route is DeepLinkRoute.Exchange) {
+        } else if (route is DeepLinkRoute.Exchange && !wallet.isWatchOnly) {
             val method = purchaseRepository.getMethod(
                 id = route.methodName,
                 testnet = wallet.testnet,
@@ -399,11 +397,11 @@ class RootViewModel(
                     config = api.config
                 ))
             }
-        } else if (route is DeepLinkRoute.Backups) {
+        } else if (route is DeepLinkRoute.Backups && wallet.hasPrivateKey) {
             openScreen(BackupScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.Settings) {
             openScreen(SettingsScreen.newInstance(wallet))
-        } else if (route is DeepLinkRoute.DApp) {
+        } else if (route is DeepLinkRoute.DApp && !wallet.isWatchOnly) {
             val dAppUri = route.url.toUri()
             val dApp = browserRepository.getApps(
                 country = settingsRepository.country,
@@ -415,7 +413,7 @@ class RootViewModel(
             } else {
                 openScreen(DAppScreen.newInstance(wallet, url = dAppUri))
             }
-        } else if (route is DeepLinkRoute.SettingsSecurity) {
+        } else if (route is DeepLinkRoute.SettingsSecurity && wallet.hasPrivateKey) {
             openScreen(SettingsScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.SettingsCurrency) {
             openScreen(CurrencyScreen.newInstance())
@@ -425,7 +423,7 @@ class RootViewModel(
             openScreen(SettingsScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.EditWalletLabel) {
             openScreen(EditNameScreen.newInstance(wallet))
-        } else if (route is DeepLinkRoute.Camera) {
+        } else if (route is DeepLinkRoute.Camera && !wallet.isWatchOnly) {
             openScreen(CameraScreen.newInstance())
         } else if (route is DeepLinkRoute.Receive) {
             openScreen(QRScreen.newInstance(wallet, TokenEntity.TON))

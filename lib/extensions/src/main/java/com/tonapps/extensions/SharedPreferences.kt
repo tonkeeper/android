@@ -117,7 +117,11 @@ fun <T : Enum<T>> SharedPreferences.Editor.putEnum(key: String, value: T?) = app
 }
 
 fun SharedPreferences.string(key: String): String? {
-    return this.getString(key, null)
+    val value = this.getString(key, null)
+    if (value.isNullOrEmpty()) {
+        return null
+    }
+    return value
 }
 
 fun SharedPreferences.string(key: String, value: String?) {

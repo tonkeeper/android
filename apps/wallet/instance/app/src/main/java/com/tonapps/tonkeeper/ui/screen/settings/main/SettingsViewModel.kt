@@ -15,6 +15,7 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.worker.PushToggleWorker
@@ -165,7 +166,7 @@ class SettingsViewModel(
         uiItems.add(Item.Language(language.nameLocalized.ifEmpty {
             getString(Localization.system)
         }.capitalized, ListCell.Position.MIDDLE))
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (WidgetManager.isRequestPinAppWidgetSupported) {
             uiItems.add(Item.Widget(ListCell.Position.MIDDLE))
         }
 

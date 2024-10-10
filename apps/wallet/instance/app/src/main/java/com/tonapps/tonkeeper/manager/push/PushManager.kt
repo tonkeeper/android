@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.manager.push
 
 import android.content.Context
-import android.util.Log
+import androidx.core.app.NotificationManagerCompat
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
@@ -33,6 +33,12 @@ class PushManager(
                 return entries.firstOrNull { it.code == code } ?: Disable
             }
         }
+    }
+
+    private val notificationManager = NotificationManagerCompat.from(context)
+
+    fun clearNotifications() {
+        notificationManager.cancelAll()
     }
 
     fun newFirebaseToken() {

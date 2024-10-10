@@ -38,9 +38,6 @@ import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment

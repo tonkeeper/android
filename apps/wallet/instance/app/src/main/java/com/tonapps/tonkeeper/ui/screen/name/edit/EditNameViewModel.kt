@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.name.edit
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.manager.widget.WidgetManager
+import com.tonapps.tonkeeper.manager.widget.updateBalanceWidgets
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -27,5 +29,6 @@ class EditNameViewModel(
             emoji = emoji,
             color = color
         )
+        WidgetManager.updateBalanceWidgets(context, wallet.id)
     }
 }

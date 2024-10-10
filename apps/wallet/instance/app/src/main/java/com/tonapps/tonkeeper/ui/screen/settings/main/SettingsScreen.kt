@@ -1,21 +1,18 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main
 
-import android.app.PendingIntent
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
+import com.tonapps.tonkeeper.core.widget.Widget
 import com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider
 import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
-import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
@@ -117,20 +114,7 @@ class SettingsScreen(
     }
 
     private fun installWidget() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val context = requireContext()
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val myProvider = ComponentName(context, WidgetBalanceProvider::class.java)
-            if (!appWidgetManager.isRequestPinAppWidgetSupported) {
-                return
-            }
-            val pinnedWidgetCallbackIntent = Intent(context, RootActivity::class.java)
-            val successCallback = PendingIntent.getActivity(
-                context, 0,
-                pinnedWidgetCallbackIntent, PendingIntent.FLAG_IMMUTABLE
-            )
-            appWidgetManager.requestPinAppWidget(myProvider, null, successCallback)
-        }
+        WidgetManager.installBalance(requireActivity(), screenContext.wallet.id)
     }
 
     private fun showSignOutDialog() {

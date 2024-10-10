@@ -460,20 +460,14 @@ class RootViewModel(
 
     private suspend fun showTransaction(hash: String) {
         val wallet = selectedWalletFlow.firstOrNull() ?: return
-        historyHelper.getEvent(wallet, hash)
-            .filterIsInstance<HistoryItem.Event>()
-            .firstOrNull()?.let {
-                openScreen(TransactionScreen.newInstance(it))
-            }
+        val tx = historyHelper.getEvent(wallet, hash).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
+        openScreen(TransactionScreen.newInstance(tx))
     }
 
     private suspend fun showTransaction(accountId: String, hash: String) {
         val wallet = accountRepository.getWalletByAccountId(accountId, false) ?: return
         val event = api.getTransactionEvents(wallet.accountId, wallet.testnet, hash) ?: return
-        historyHelper.mapping(wallet, event)
-            .find { it is HistoryItem.Event }?.let {
-                openScreen(TransactionScreen.newInstance(it as HistoryItem.Event))
-            }
-
+        val tx = historyHelper.mapping(wallet, event).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
+        openScreen(TransactionScreen.newInstance(tx))
     }
 }

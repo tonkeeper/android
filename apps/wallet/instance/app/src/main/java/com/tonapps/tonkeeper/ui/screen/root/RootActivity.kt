@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -276,7 +277,7 @@ class RootActivity: BaseWalletActivity() {
         val uri = intent.data
         val extras = intent.extras
         if (uri != null) {
-            processDeepLink(uri, false)
+            processDeepLink(DeepLink.fixBadUri(uri), false)
         } else if (extras != null && !extras.isEmpty) {
             viewModel.processIntentExtras(extras)
         }

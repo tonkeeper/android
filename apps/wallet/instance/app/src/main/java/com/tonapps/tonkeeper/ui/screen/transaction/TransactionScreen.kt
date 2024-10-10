@@ -51,19 +51,17 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     companion object {
 
-        private const val ARG_ACTION = "action"
+        private const val ARG_ACTION = "action_event"
 
         fun newInstance(action: HistoryItem.Event): TransactionScreen {
             val screen = TransactionScreen()
-            screen.arguments = Bundle().apply {
-                putParcelable(ARG_ACTION, action)
-            }
+            screen.putParcelableArg(ARG_ACTION, action)
             return screen
         }
     }
 
-    private val action: HistoryItem.Event by lazy {
-        requireArguments().getParcelableCompat(ARG_ACTION)!!
+    private val actionArgs: HistoryItem.Event? by lazy {
+        requireArguments().getParcelableCompat(ARG_ACTION)
     }
 
     private val historyHelper: HistoryHelper by inject()
@@ -93,6 +91,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val action = actionArgs
+        if (action == null) {
+            finish()
+            return
+        }
 
         view.findViewById<View>(R.id.close).setOnClickListener {
             finish()
@@ -142,16 +146,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         } else {
             amountView.text = action.value.withCustomSymbol(requireContext())
             if (action.refund != null) {
-                feeView.setData(action.refund!!.withCustomSymbol(requireContext()), action.refundInCurrency!!.withCustomSymbol(requireContext()))
+                feeView.setData(action.refund.withCustomSymbol(requireContext()), action.refundInCurrency!!.withCustomSymbol(requireContext()))
             } else if (action.fee != null) {
-                feeView.setData(action.fee!!.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
+                feeView.setData(action.fee.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
             } else {
                 feeView.visibility = View.GONE
             }
         }
 
         if (action.comment != null && !action.isScam) {
-            applyComment(action.comment!!)
+            applyComment(action, action.comment)
         } else {
             commentView.visibility = View.GONE
             feeView.position = ListCell.Position.LAST
@@ -228,7 +232,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
     }
 
-    private fun applyComment(comment: HistoryItem.Event.Comment) {
+    private fun applyComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment) {
         commentView.visibility = View.VISIBLE
         if (!comment.isEncrypted) {
             val text = comment.body
@@ -236,16 +240,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             commentView.setOnClickListener { context?.copyWithToast(text) }
         } else {
             commentView.setData(getString(Localization.encrypted_comment), "", lockDrawable)
-            commentView.setOnClickListener { decryptComment(comment) }
+            commentView.setOnClickListener { decryptComment(action, comment) }
         }
     }
 
-    private fun decryptComment(comment: HistoryItem.Event.Comment) {
+    private fun decryptComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment) {
         historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.sender?.address ?: "").catch {
             context?.logError(it)
             commentView.reject()
         }.onEach {
-            applyComment(it)
+            applyComment(action, it)
         }.launchIn(lifecycleScope)
     }
 

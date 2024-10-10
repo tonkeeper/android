@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.isUIThread
 import com.tonapps.tonkeeper.extensions.showToast
@@ -94,6 +95,10 @@ abstract class BaseWalletVM(
     }
 
     suspend fun openScreen(screen: BaseFragment) = withContext(Dispatchers.Main) {
-        navigation?.add(screen)
+        try {
+            navigation?.add(screen)
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
     }
 }

@@ -8,8 +8,10 @@ import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import com.tonapps.extensions.activity
 import com.tonapps.extensions.locale
+import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textPrimaryColor
+import com.tonapps.wallet.localization.Localization
 
 object BrowserHelper {
 
@@ -24,6 +26,11 @@ object BrowserHelper {
     }
 
     fun open(activity: Activity, uri: Uri) {
+        if (uri.scheme != "http" && uri.scheme != "https") {
+            external(activity, uri)
+            return
+        }
+
         val barBackgroundColor = activity.backgroundPageColor
         val textColor = activity.textPrimaryColor
 
@@ -54,9 +61,13 @@ object BrowserHelper {
     }
 
     private fun external(activity: Activity, uri: Uri) {
-        val intent = Intent(Intent.ACTION_VIEW, uri)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        activity.startActivity(intent)
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            activity.startActivity(intent)
+        } catch (e: Throwable) {
+            activity.showToast(Localization.unknown_error)
+        }
     }
 
 }

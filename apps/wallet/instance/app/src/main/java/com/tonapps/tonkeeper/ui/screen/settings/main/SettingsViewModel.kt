@@ -178,7 +178,7 @@ class SettingsViewModel(
             }
         }
 
-        if (!wallet.isExternal && !api.config.batteryDisabled) {
+        if (wallet.hasPrivateKey && !api.config.batteryDisabled) {
             uiItems.add(Item.Battery(ListCell.Position.MIDDLE))
         }
         uiItems.add(Item.Theme(ListCell.Position.LAST))

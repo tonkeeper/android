@@ -12,6 +12,7 @@ import com.tonapps.extensions.filterList
 import com.tonapps.extensions.flat
 import com.tonapps.extensions.flatter
 import com.tonapps.extensions.hasQuery
+import com.tonapps.extensions.isEmptyQuery
 import com.tonapps.extensions.mapList
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
@@ -225,11 +226,11 @@ class TonConnectManager(
             }
             return null
         } catch (e: Exception) {
-            if (!uri.hasQuery("open") && !uri.hasQuery("ret")) {
+            if (uri.isEmptyQuery || uri.hasQuery("open") || uri.hasQuery("ret")) {
+                return returnUri
+            } else {
                 context.showToast(Localization.invalid_link)
                 return null
-            } else {
-                return returnUri
             }
         }
     }

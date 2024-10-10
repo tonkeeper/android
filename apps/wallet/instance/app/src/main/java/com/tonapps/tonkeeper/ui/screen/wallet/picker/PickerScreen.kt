@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item.Companion.height
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.WalletHolder
 import com.tonapps.uikit.color.buttonSecondaryForegroundColor
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
@@ -90,6 +91,9 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
+                if (viewHolder !is WalletHolder || target !is WalletHolder) {
+                    return false
+                }
                 val fromPosition = viewHolder.bindingAdapterPosition
                 val toPosition = target.bindingAdapterPosition
                 val item = adapter.getItem(fromPosition) as? Item.Wallet ?: return false

@@ -50,7 +50,7 @@ import uikit.extensions.findFragment
 
 class RootActivity: BaseWalletActivity() {
 
-    private var cachedRootViewModel: Lazy<RootViewModel>? = null
+    private var cachedRootViewModel: RootViewModel? = null
 
     override val viewModel: RootViewModel
         get() = createOrGetViewModel()
@@ -140,10 +140,13 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun createOrGetViewModel(): RootViewModel {
-        if (cachedRootViewModel == null) {
-            cachedRootViewModel = viewModel<RootViewModel>()
+        return cachedRootViewModel ?: createViewModel()
+    }
+
+    private fun createViewModel(): RootViewModel {
+        return viewModel<RootViewModel>().value.also {
+            cachedRootViewModel = it
         }
-        return cachedRootViewModel!!.value
     }
 
     override fun isNeedRemoveModals(fragment: BaseFragment): Boolean {
@@ -154,9 +157,9 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         viewModelStore.clear()
         cachedRootViewModel = null
+        super.onDestroy()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

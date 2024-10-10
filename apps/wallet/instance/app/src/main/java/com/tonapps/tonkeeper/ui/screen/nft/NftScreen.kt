@@ -10,6 +10,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
@@ -56,6 +57,9 @@ import uikit.widget.HeaderView
 class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft, wallet), BaseFragment.BottomSheet {
 
     private val nftEntity: NftEntity by lazy { requireArguments().getParcelableCompat(ARG_ENTITY)!! }
+
+    private val isCanSend: Boolean
+        get() = !wallet.isWatchOnly && !nftEntity.inSale && nftEntity.ownerAddress.equalsAddress(wallet.address)
 
     override val viewModel: NftViewModel by walletViewModel { parametersOf(nftEntity) }
 
@@ -150,14 +154,14 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
             for ((index, button) in nftEntity.metadata.buttons.take(5).withIndex()) {
                 val buttonView = newNftButton(buttonsContainer, index == 0)
                 buttonView.text = button.label
-                buttonView.isEnabled = !nftEntity.inSale
+                buttonView.isEnabled = isCanSend
                 buttonView.setOnClickListener { openButtonDApp(button.uri) }
             }
         }
 
         val transferDisabled = view.findViewById<View>(R.id.transfer_disabled)
 
-        if (nftEntity.inSale) {
+        if (!isCanSend) {
             transferButton.isEnabled = false
             transferDisabled.visibility = View.VISIBLE
         }
@@ -240,7 +244,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
         actionSheet.addItem(HIDE_AND_REPORT_ID, Localization.hide_and_report_collection, UIKitIcon.ic_block_16)
         actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
-        if (!nftEntity.inSale && !nftEntity.isTrusted) {
+        if (isCanSend && !nftEntity.isTrusted) {
             actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)
         }
         actionSheet.doOnItemClick = { item ->
@@ -258,7 +262,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
         actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
-        if (!nftEntity.inSale && !nftEntity.isTrusted) {
+        if (isCanSend && !nftEntity.isTrusted) {
             actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)
         }
         actionSheet.doOnItemClick = { item ->
@@ -294,7 +298,9 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private fun reportSpam(spam: Boolean) {
         setTrust(if (spam) Trust.blacklist else Trust.whitelist)
-        viewModel.reportSpam(spam) { finish() }
+        viewModel.reportSpam(spam) {
+            // finish()
+        }
     }
 
     private fun hideCollection() {

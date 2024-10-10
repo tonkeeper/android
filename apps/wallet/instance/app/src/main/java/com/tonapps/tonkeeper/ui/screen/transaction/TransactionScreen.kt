@@ -306,8 +306,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
 
         for (i in 0 until visibleViews.size) {
-            visibleViews[i].position =
-                com.tonapps.uikit.list.ListCell.getPosition(visibleViews.size, i)
+            visibleViews[i].position = ListCell.getPosition(visibleViews.size, i)
         }
     }
 }

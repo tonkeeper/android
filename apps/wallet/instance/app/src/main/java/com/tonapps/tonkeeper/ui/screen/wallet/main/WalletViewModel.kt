@@ -147,8 +147,8 @@ class WalletViewModel(
             val walletCurrency = getCurrency(wallet, currency)
 
             val localAssets = getAssets(walletCurrency, false)
-            val batteryBalance = getBatteryBalance(wallet)
             if (localAssets != null) {
+                val batteryBalance = getBatteryBalance(wallet)
                 _stateMainFlow.value = State.Main(
                     wallet = wallet,
                     assets = localAssets,
@@ -290,14 +290,18 @@ class WalletViewModel(
         wallet: WalletEntity,
         ignoreCache: Boolean = false
     ): Coins = withContext(Dispatchers.IO) {
-        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return@withContext Coins.ZERO
-        val battery = batteryRepository.getBalance(
-            tonProofToken = tonProofToken,
-            publicKey = wallet.publicKey,
-            testnet = wallet.testnet,
-            ignoreCache = ignoreCache
-        )
-        return@withContext battery.balance
+        if (wallet.hasPrivateKey) {
+            val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return@withContext Coins.ZERO
+            val battery = batteryRepository.getBalance(
+                tonProofToken = tonProofToken,
+                publicKey = wallet.publicKey,
+                testnet = wallet.testnet,
+                ignoreCache = ignoreCache
+            )
+            battery.balance
+        } else {
+            Coins.ZERO
+        }
     }
 
     private suspend fun getAssets(

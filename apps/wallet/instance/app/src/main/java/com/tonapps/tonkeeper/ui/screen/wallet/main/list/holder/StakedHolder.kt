@@ -63,6 +63,8 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
             Navigation.from(context)?.add(StakeViewerScreen.newInstance(item.wallet, item.poolAddress, item.poolName))
         }
 
+        messageView.setOnClickListener(null)
+
         if (item.readyWithdraw > Coins.ZERO) {
             messageView.visibility = View.VISIBLE
             messageView.text = context.getString(Localization.staking_ready_withdraw, item.readyWithdrawFormat)

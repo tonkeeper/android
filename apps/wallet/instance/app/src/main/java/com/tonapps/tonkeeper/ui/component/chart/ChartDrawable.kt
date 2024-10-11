@@ -9,6 +9,7 @@ import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.Shader
+import android.util.Log
 import androidx.core.graphics.withTranslation
 import com.tonapps.wallet.api.entity.ChartEntity
 import uikit.extensions.withAlpha
@@ -80,7 +81,7 @@ class ChartDrawable(context: Context): BaseChartDrawable(context) {
     private fun buildPath() {
         val maxPrice = data.maxOf { it.price }
         val minPrice = data.minOf { it.price }
-        val priceRange = max(maxPrice - minPrice, 0.01f)
+        val priceRange = max(maxPrice - minPrice, 0.000000000f)
 
         val points = mutableListOf<PointF>()
         for ((index, entity) in data.withIndex()) {
@@ -93,6 +94,8 @@ class ChartDrawable(context: Context): BaseChartDrawable(context) {
             path.moveTo(point.x - strokeSize, point.y)
             path.lineTo(point.x, point.y)
         }
+
+        buildPath(points)
 
         /*if (isSquare) {
             buildSquarePath(points)

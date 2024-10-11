@@ -16,6 +16,7 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
 import com.tonapps.extensions.toUriOrNull
@@ -204,6 +205,11 @@ class RootViewModel(
         }
 
         if (signRequest.from != null && !signRequest.from!!.toAccountId().equalsAddress(connection.accountId)) {
+            tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
+            return
+        }
+
+        if (currentTimeSeconds() >= signRequest.validUntil) {
             tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
             return
         }

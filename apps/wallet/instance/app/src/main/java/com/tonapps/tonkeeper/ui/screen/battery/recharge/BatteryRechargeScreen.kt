@@ -1,12 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.inflate
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
@@ -40,6 +44,7 @@ import uikit.extensions.hideKeyboard
 import uikit.widget.FrescoView
 import uikit.widget.InputView
 import java.util.UUID
+import kotlin.math.max
 
 class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
@@ -61,6 +66,7 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         onSubmitPromo = { viewModel.applyPromo(it) }
     )
 
+    private lateinit var listContainer: View
     private lateinit var tokenIconView: FrescoView
     private lateinit var tokenTitleView: AppCompatTextView
 
@@ -86,6 +92,7 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        listContainer = view.findViewById(uikit.R.id.list_container)
 
         setAdapter(adapter)
 
@@ -104,7 +111,7 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         }
 
         view.doKeyboardAnimation(true) { offset, _, _ ->
-            view.translationY = -offset.toFloat()
+            updateContainerMargin(offset)
         }
 
         collectFlow(viewModel.tokenFlow) { token ->
@@ -112,6 +119,24 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
             tokenIconView.setImageURI(token.imageUri, this)
         }
         collectFlow(viewModel.eventFlow, ::onEvent)
+    }
+
+    // Dirty hack because of bad design
+    private fun updateContainerMargin(offset: Int) {
+        listContainer.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            bottomMargin = offset
+        }
+        listContainer.postOnAnimation { checkScroll() }
+    }
+
+    private fun checkScroll() {
+        val layoutManager = listView.layoutManager as? LinearLayoutManager ?: return
+        val itemCount = layoutManager.itemCount
+        val lastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition()
+        val scrollToIndex = max(lastVisiblePosition + 3, itemCount - 1)
+        listView.postOnAnimation {
+            listView.smoothScrollToPosition(scrollToIndex)
+        }
     }
 
     override fun onDragging() {

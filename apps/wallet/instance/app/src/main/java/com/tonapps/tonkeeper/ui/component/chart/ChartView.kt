@@ -28,7 +28,21 @@ class ChartView @JvmOverloads constructor(
     }
 
     fun setData(data: List<ChartEntity>, isSquare: Boolean) {
-        chartDrawable.setData(data, isSquare)
+        if (data.isEmpty()) {
+            chartDrawable.setData(emptyList(), isSquare)
+        } else if (data.size > 100) {
+            chartDrawable.setData(data, isSquare)
+        } else {
+            val newData = mutableListOf<ChartEntity>()
+            val countCopy = 4
+            for (entity in data) {
+                for (i in 0 until countCopy) {
+                    newData.add(entity)
+                }
+            }
+            chartDrawable.setData(newData, isSquare)
+        }
+
         if (width > 0 && height > 0) {
             checkLoadingAnimation()
         }

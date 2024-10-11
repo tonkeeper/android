@@ -57,6 +57,22 @@ object DateHelper {
         return formatTransactionTime(instant, locale)
     }
 
+    fun formatChartTime(epochSeconds: Long, locale: Locale, hasHHmm: Boolean): String {
+        if (0 >= epochSeconds) {
+            return ""
+        }
+        val instant = Instant.fromEpochSeconds(epochSeconds)
+        val shortMonth = formatDate(instant, "MMM", locale).replace(".", "") + ","
+        val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
+        val time = formatDate(instant, "HH:mm", locale)
+        val day = formatDate(instant, "d", locale)
+        return if (hasHHmm) {
+            "$day $month $time"
+        } else {
+            "$day $month".replace(",", "")
+        }
+    }
+
     fun formatTransactionTime(date: Instant, locale: Locale): String {
         val shortMonth = formatDate(date, "MMM", locale).replace(".", "") + ","
         val month = if (locale.language == "en") shortMonth.capitalized else shortMonth

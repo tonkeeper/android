@@ -49,6 +49,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
+import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel.Companion.getWalletScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
@@ -66,6 +67,7 @@ import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -94,6 +96,7 @@ class RootViewModel(
     private val tonConnectManager: TonConnectManager,
     private val browserRepository: BrowserRepository,
     private val pushManager: PushManager,
+    private val tokenRepository: TokenRepository,
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
@@ -431,9 +434,16 @@ class RootViewModel(
             openScreen(TokensManageScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.WalletPicker) {
             openScreen(PickerScreen.newInstance())
+        } else if (route is DeepLinkRoute.Jetton) {
+            openTokenViewer(wallet, route)
         } else {
             toast(Localization.invalid_link)
         }
+    }
+
+    private suspend fun openTokenViewer(wallet: WalletEntity, route: DeepLinkRoute.Jetton) {
+        val token = tokenRepository.getToken(route.address, wallet.testnet) ?: return
+        openScreen(TokenScreen.newInstance(wallet, token.address, token.name, token.symbol))
     }
 
     private suspend fun processTransferDeepLink(wallet: WalletEntity, route: DeepLinkRoute.Transfer) {

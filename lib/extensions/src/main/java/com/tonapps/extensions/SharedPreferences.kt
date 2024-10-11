@@ -124,6 +124,12 @@ fun SharedPreferences.string(key: String): String? {
     return value
 }
 
+fun SharedPreferences.putStringIfNotExists(key: String, value: String) {
+    if (!contains(key)) {
+        putString(key, value)
+    }
+}
+
 fun SharedPreferences.string(key: String, value: String?) {
     edit {
         if (value.isNullOrBlank()) {

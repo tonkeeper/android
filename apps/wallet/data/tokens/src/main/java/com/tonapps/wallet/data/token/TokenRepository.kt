@@ -31,7 +31,12 @@ class TokenRepository(
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
 
-    fun getToken(accountId: String, testnet: Boolean) = remoteDataSource.getJetton(accountId, testnet)
+    fun getToken(accountId: String, testnet: Boolean): TokenEntity? {
+        if (accountId.equals("TON", ignoreCase = true)) {
+            return TokenEntity.TON
+        }
+        return remoteDataSource.getJetton(accountId, testnet)
+    }
 
     suspend fun getTON(
         currency: WalletCurrency,

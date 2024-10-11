@@ -171,11 +171,19 @@ class UnStakeViewModel(
         }
     }.take(1).flowOn(Dispatchers.IO)
 
-    fun requestFeeFormat() = requestFee().map { extra ->
+    fun requestFeeFormat() = combine(
+        requestFee(),
+        poolFlow
+    ) { extra, pool ->
         val currency = settingsRepository.currency
+        val rates = ratesRepository.getTONRates(currency)
+        val fee = StakingPool.getTotalFee(extra.value, pool.implementation)
+
+        val fiat = rates.convertTON(fee)
+
         Pair(
-            CurrencyFormatter.format(TokenEntity.TON.symbol, extra.value, TokenEntity.TON.decimals),
-            CurrencyFormatter.format(currency.code, extra.fiat, currency.decimals)
+            CurrencyFormatter.format(TokenEntity.TON.symbol, fee, TokenEntity.TON.decimals),
+            CurrencyFormatter.format(currency.code, fiat, currency.decimals)
         )
     }
 

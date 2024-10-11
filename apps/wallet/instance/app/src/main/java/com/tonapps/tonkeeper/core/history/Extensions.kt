@@ -2,12 +2,41 @@ package com.tonapps.tonkeeper.core.history
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import com.tonapps.icu.Coins
+import com.tonapps.tonkeeper.api.amount
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.Action
+import io.tonapi.models.JettonSwapAction
+
+val JettonSwapAction.tokenIn: TokenEntity
+    get() {
+        val jetton = jettonMasterIn?.let { TokenEntity(it) }
+        return jetton ?: TokenEntity.TON
+    }
+
+val JettonSwapAction.amountCoinsIn: Coins
+    get() {
+        val tonAmount = tonIn ?: return Coins.ofNano(amount, tokenIn.decimals)
+        return Coins.of(tonAmount, tokenIn.decimals)
+    }
+
+val JettonSwapAction.tokenOut: TokenEntity
+    get() {
+        val jetton = jettonMasterOut?.let { TokenEntity(it) }
+        return jetton ?: TokenEntity.TON
+    }
+
+val JettonSwapAction.amountCoinsOut: Coins
+    get() {
+        val tonAmount = tonOut ?: return Coins.ofNano(amount, tokenOut.decimals)
+        return Coins.of(tonAmount, tokenOut.decimals)
+    }
+
 
 @get:DrawableRes
 val ActionType.iconRes: Int

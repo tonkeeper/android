@@ -413,35 +413,11 @@ class HistoryHelper(
             val jettonPreview = jettonSwap.jettonPreview!!
             val token = jettonSwap.jettonPreview!!.address
             val amount = Coins.ofNano(jettonSwap.amount, jettonPreview.decimals)
+            val tokenIn = jettonSwap.tokenIn
+            val tokenOut = jettonSwap.tokenOut
 
-
-            val amountIn = if (jettonSwap.tonIn != null) {
-                CurrencyFormatter.format(
-                    TokenEntity.TON.symbol,
-                    Coins.of(jettonSwap.tonIn!!),
-                    2
-                ).withMinus
-            } else if (jettonSwap.jettonMasterIn != null) {
-                CurrencyFormatter.format(
-                    jettonSwap.jettonMasterIn!!.symbol,
-                    Coins.ofNano(jettonSwap.amountIn, jettonSwap.jettonMasterIn!!.decimals),
-                    2
-                ).withMinus
-            } else "-"
-
-            val amountOut = if (jettonSwap.tonOut != null) {
-                CurrencyFormatter.format(
-                    TokenEntity.TON.symbol,
-                    Coins.of(jettonSwap.tonOut!!),
-                    2
-                ).withPlus
-            } else if (jettonSwap.jettonMasterOut != null) {
-                CurrencyFormatter.format(
-                    jettonSwap.jettonMasterOut!!.symbol,
-                    Coins.ofNano(jettonSwap.amountOut, jettonSwap.jettonMasterOut!!.decimals),
-                    2
-                ).withPlus
-            } else "-"
+            val value = CurrencyFormatter.format(tokenOut.symbol, jettonSwap.amountCoinsOut, 2).withPlus
+            val value2 = CurrencyFormatter.format(tokenIn.symbol, jettonSwap.amountCoinsIn, 2).withMinus
 
             val rates = ratesRepository.getRates(currency, token)
             val inCurrency = rates.convert(token, amount)
@@ -453,12 +429,10 @@ class HistoryHelper(
                 action = ActionType.Swap,
                 title = simplePreview.name,
                 subtitle = wallet.address.short4,
-                value = amountOut,
-                value2 = amountIn,
-                coinIconUrl = jettonSwap.jettonMasterIn?.image
-                    ?: TokenEntity.TON.imageUri.toString(),
-                coinIconUrl2 = jettonSwap.jettonMasterOut?.image
-                    ?: TokenEntity.TON.imageUri.toString(),
+                value = value,
+                value2 = value2,
+                coinIconUrl = tokenIn.imageUri.toString(),
+                coinIconUrl2 = tokenOut.imageUri.toString(),
                 timestamp = timestamp,
                 date = date,
                 dateDetails = dateDetails,

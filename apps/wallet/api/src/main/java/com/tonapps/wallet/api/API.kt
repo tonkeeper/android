@@ -695,8 +695,11 @@ class API(
         json.put("device", deviceId)
         json.put("accounts", accountsArray)
 
+        Log.d("PushManagerLog", "Unsubscribing from $accounts")
+
         return withRetry {
             val response = tonAPIHttpClient.postJSON(url, json.toString())
+            Log.d("PushManagerLog", "Unsubscribed from $accounts: ${response}")
             response.isSuccessful
         } ?: false
     }

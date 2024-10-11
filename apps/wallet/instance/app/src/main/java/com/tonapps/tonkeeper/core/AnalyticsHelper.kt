@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.core
 
 import android.content.Context
+import androidx.annotation.UiThread
 import com.aptabase.Aptabase
 import com.aptabase.InitOptions
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -12,10 +13,12 @@ object AnalyticsHelper {
         initAptabase(context, config.aptabaseAppKey, config.aptabaseEndpoint)
     }
 
+    @UiThread
     fun trackEvent(name: String) {
         Aptabase.instance.trackEvent(name)
     }
 
+    @UiThread
     fun trackEventClickDApp(url: String) {
         Aptabase.instance.trackEvent("click_dapp", hashMapOf(url to "url"))
     }

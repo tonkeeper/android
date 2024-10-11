@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.view
+package com.tonapps.tonkeeper.ui.component.chart
 
 import android.content.Context
 import android.graphics.Canvas
@@ -7,36 +7,27 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
+import android.graphics.Rect
 import android.graphics.Shader
-import android.util.AttributeSet
-import android.util.Log
-import android.view.View
 import androidx.core.graphics.withTranslation
-import androidx.core.view.doOnLayout
-import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.wallet.api.entity.ChartEntity
-import uikit.extensions.dp
 import uikit.extensions.withAlpha
 import kotlin.math.max
 
-class ChartView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyle: Int = 0,
-) : View(context, attrs, defStyle) {
+class ChartDrawable(context: Context): BaseChartDrawable(context) {
 
-    private val strokeSize = 2f.dp
-
-    private val chartWidth: Float
-        get() = (width - paddingLeft - paddingRight) + strokeSize * 2
-
-    private val chartHeight: Float
-        get() = (height - paddingTop - paddingBottom) - (strokeSize * 2)
-
-    private val accentColor = context.accentBlueColor
+    private var data = listOf<ChartEntity>()
     private val path = Path()
-    private var data = listOf(ChartEntity(0, 0f))
     private var isSquare = false
+
+    val entities: List<ChartEntity>
+        get() = data.toList()
+
+    val stepX: Float
+        get() = chartWidth / data.size
+
+    val isEmpty: Boolean
+        get() = data.isEmpty()
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = accentColor
@@ -52,43 +43,45 @@ class ChartView @JvmOverloads constructor(
     fun setData(data: List<ChartEntity>, isSquare: Boolean) {
         this.data = data
         this.isSquare = isSquare
-        if (width > 0 && height > 0) {
+
+        path.reset()
+    }
+
+    fun getDotY(entity: ChartEntity): Float {
+        val y = chartHeight - ((entity.price - data.minOf { it.price }) / (data.maxOf { it.price } - data.minOf { it.price })) * chartHeight
+        return y
+    }
+
+    override fun draw(canvas: Canvas) {
+        if (data.isEmpty()) {
+            return
+        }
+
+        if (path.isEmpty) {
             buildPath()
+        }
+
+        canvas.withTranslation(bounds.left.toFloat(), bounds.top + strokeSize) {
+            drawPath(path, linePaint)
+            drawPath(path, gradientPaint)
         }
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
+    override fun onBoundsChange(bounds: Rect) {
+        super.onBoundsChange(bounds)
         gradientPaint.shader = LinearGradient(
             0f, 0f, 0f, chartHeight,
             accentColor.withAlpha(76),
             Color.TRANSPARENT,
             Shader.TileMode.CLAMP
         )
-
-        buildPath()
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        canvas.withTranslation(paddingLeft.toFloat(), paddingTop + strokeSize) {
-            drawPath(path, linePaint)
-            drawPath(path, gradientPaint)
-        }
     }
 
     private fun buildPath() {
-        path.reset()
-        if (data.isEmpty()) {
-            invalidate()
-            return
-        }
-
         val maxPrice = data.maxOf { it.price }
         val minPrice = data.minOf { it.price }
         val priceRange = max(maxPrice - minPrice, 0.01f)
 
-        val stepX = chartWidth / data.size
         val points = mutableListOf<PointF>()
         for ((index, entity) in data.withIndex()) {
             val x = index * stepX
@@ -110,8 +103,6 @@ class ChartView @JvmOverloads constructor(
         buildPath(points)
 
         path.close()
-
-        invalidate()
     }
 
     private fun buildPath(points: List<PointF>) {

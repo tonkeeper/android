@@ -1,14 +1,18 @@
 package com.tonapps.tonkeeper.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.Operation
 import androidx.work.WorkerParameters
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class PushToggleWorker(
     context: Context,
@@ -22,17 +26,30 @@ class PushToggleWorker(
         PushManager.State.of(code)
     }
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        Log.d("PushManagerLog", "PushToggleWorker.doWork")
         val wallets = getWallets()
-        if (pushManager.wallets(wallets, state)) {
-            return Result.success()
+        Log.d("PushManagerLog", "PushToggleWorker.doWork wallets: $wallets")
+        try {
+            if (wallets.isNotEmpty() && !pushManager.wallets(wallets, state)) {
+                throw IllegalStateException("Failed to toggle push")
+            }
+            Log.d("PushManagerLog", "Push toggled")
+            Result.success()
+        } catch (e: Throwable) {
+            Log.e("PushManagerLog", "Failed to toggle push", e)
+            FirebaseCrashlytics.getInstance().recordException(e)
+            Result.failure()
         }
-        return Result.failure()
     }
 
     private suspend fun getWallets(): List<WalletEntity> {
-        val walletIds = inputData.getStringArray(ARG_WALLET_IDS) ?: emptyArray()
-        return accountRepository.getWallets().filter {
+        val walletIds = (inputData.getStringArray(ARG_WALLET_IDS) ?: emptyArray()).toList()
+        Log.d("PushManagerLog", "PushToggleWorker.getWallets walletIds: $walletIds")
+        val allWallets = accountRepository.getWallets()
+        Log.d("PushManagerLog", "PushToggleWorker.getWallets allWallets: $allWallets")
+
+        return allWallets.filter {
             it.id in walletIds
         }
     }
@@ -47,6 +64,7 @@ class PushToggleWorker(
         }
 
         fun run(context: Context, wallets: List<WalletEntity>, state: PushManager.State): Operation {
+            Log.d("PushManagerLog", "PushToggleWorker.run: wallets: $wallets, state: $state")
             val inputData = Data.Builder()
                 .putStringArray(ARG_WALLET_IDS, wallets.map { it.id }.toTypedArray())
                 .putInt(ARG_PUSH_STATE, state.code)

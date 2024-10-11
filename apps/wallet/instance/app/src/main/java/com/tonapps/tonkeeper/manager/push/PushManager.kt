@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.manager.push
 
 import android.content.Context
+import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.api.API
@@ -52,6 +53,7 @@ class PushManager(
     suspend fun wallet(wallet: WalletEntity, state: State) = wallets(listOf(wallet), state)
 
     suspend fun wallets(wallets: List<WalletEntity>, state: State): Boolean = withContext(Dispatchers.IO) {
+        Log.d("PushManagerLog", "state: $state, wallets: $wallets")
         if (state == State.Enable) {
             walletSubscribe(wallets.filter { !it.testnet })
         } else {
@@ -64,19 +66,22 @@ class PushManager(
             return true
         }
 
-        for (wallet in wallets) {
-            settingsRepository.setPushWallet(wallet.id, true)
-        }
+        try {
+            for (wallet in wallets) {
+                settingsRepository.setPushWallet(wallet.id, true)
+            }
 
-        val firebaseToken = getFirebaseToken() ?: return false
-        val accounts = wallets.map { it.accountId }
-        val successful = api.pushSubscribe(
-            locale = context.locale,
-            firebaseToken = firebaseToken,
-            deviceId = settingsRepository.installId,
-            accounts = accounts,
-        )
-        if (successful) {
+            val firebaseToken = getFirebaseToken() ?: throw IllegalStateException("Firebase token not found")
+            val accounts = wallets.map { it.accountId }
+            val successful = api.pushSubscribe(
+                locale = context.locale,
+                firebaseToken = firebaseToken,
+                deviceId = settingsRepository.installId,
+                accounts = accounts,
+            )
+            if (!successful) {
+                throw IllegalStateException("Failed to subscribe")
+            }
             for (wallet in wallets) {
                 val apps = dAppsRepository.getConnections(wallet.accountId, wallet.testnet)
                 for ((app, connections) in apps) {
@@ -89,21 +94,30 @@ class PushManager(
                 }
             }
             return true
-        } else {
+        } catch (e: Throwable) {
+            for (wallet in wallets) {
+                settingsRepository.setPushWallet(wallet.id, false)
+            }
             return false
         }
     }
 
     private suspend fun walletUnsubscribe(wallets: List<WalletEntity>, delete: Boolean): Boolean {
+        Log.d("PushManagerLog", "walletUnsubscribe: ${wallets}")
         if (wallets.isEmpty()) {
             return true
         }
-        val accounts = wallets.map { it.accountId }
-        val successful = api.pushUnsubscribe(
-            deviceId = settingsRepository.installId,
-            accounts = accounts,
-        )
-        if (successful) {
+
+        try {
+            val accounts = wallets.map { it.accountId }
+            val successful = api.pushUnsubscribe(
+                deviceId = settingsRepository.installId,
+                accounts = accounts,
+            )
+            if (!successful) {
+                throw IllegalStateException("Failed to unsubscribe")
+            }
+
             for (wallet in wallets) {
                 settingsRepository.setPushWallet(wallet.id, false)
                 if (!delete) {
@@ -119,7 +133,10 @@ class PushManager(
                 }
             }
             return true
-        } else {
+        } catch (e: Throwable) {
+            for (wallet in wallets) {
+                settingsRepository.setPushWallet(wallet.id, true)
+            }
             return false
         }
     }
@@ -130,16 +147,21 @@ class PushManager(
         commercial: Boolean,
         silent: Boolean = settingsRepository.getPushWallet(wallet.id),
     ): Boolean = withContext(Dispatchers.IO) {
-        if (wallet.testnet) {
-            return@withContext false
+        try {
+            if (wallet.testnet) {
+                throw IllegalStateException("Testnet wallet not supported")
+            }
+            val tonProof = getTonProof(wallet) ?: throw IllegalStateException("Ton proof not found")
+            val firebaseToken = getFirebaseToken() ?: throw IllegalStateException("Firebase token not found")
+            val tasks = mutableListOf<Deferred<Boolean>>()
+            for (connection in connections) {
+                tasks.add(async { dAppPush(wallet, tonProof, firebaseToken, connection, commercial, silent) })
+            }
+            tasks.map { it.await() }.all { it }
+            true
+        } catch (e: Throwable) {
+            false
         }
-        val tonProof = getTonProof(wallet) ?: return@withContext false
-        val firebaseToken = getFirebaseToken() ?: return@withContext false
-        val tasks = mutableListOf<Deferred<Boolean>>()
-        for (connection in connections) {
-            tasks.add(async { dAppPush(wallet, tonProof, firebaseToken, connection, commercial, silent) })
-        }
-        tasks.map { it.await() }.all { it }
     }
 
     private fun dAppPush(

@@ -100,17 +100,26 @@ class StakeWithdrawViewModel(
         }
     }
 
-    fun requestFee() = unsignedBodyFlow().map { message ->
+    private fun requestExtra() = unsignedBodyFlow().map { message ->
         try {
             emulationUseCase(message, wallet.testnet).extra
         } catch (e: Throwable) {
             Emulated.defaultExtra
         }
-    }.take(1).flowOn(Dispatchers.IO).map { extra ->
-        val amount = CurrencyFormatter.format(TokenEntity.TON.symbol, extra.value, TokenEntity.TON.decimals)
-        val fiat = CurrencyFormatter.format(currency.code, extra.fiat, currency.decimals, replaceSymbol = false)
-        Pair(amount, fiat)
     }
+
+    fun requestFee() = combine(
+        requestExtra(),
+        stakeFlow
+    ) { extra, stake ->
+        val currency = settingsRepository.currency
+        val rates = ratesRepository.getTONRates(currency)
+        val fee = StakingPool.getTotalFee(extra.value, stake.pool.implementation)
+
+        val amount = CurrencyFormatter.format(TokenEntity.TON.symbol, fee, TokenEntity.TON.decimals)
+        val fiat = CurrencyFormatter.format(currency.code, rates.convertTON(fee), currency.decimals, replaceSymbol = false)
+        Pair(amount, fiat)
+    }.flowOn(Dispatchers.IO)
 
     private fun unsignedBodyFlow() = combine(
         amountFlow.take(1),

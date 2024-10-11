@@ -20,9 +20,6 @@ data class DeepLink(
         }
     }
 
-    val isUnknown: Boolean
-        get() = route is DeepLinkRoute.Unknown
-
     constructor(
         uri: Uri,
         fromQR: Boolean,

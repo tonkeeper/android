@@ -76,7 +76,7 @@ class AccountRepository(
         it.wallet
     }.shareIn(scope, SharingStarted.Eagerly, 1).distinctUntilChanged()
 
-    val selectedId: String?
+    private val selectedId: String?
         get() = (selectedStateFlow.value as? SelectedState.Wallet)?.wallet?.id
 
     init {
@@ -390,8 +390,8 @@ class AccountRepository(
         }
     }
 
-    suspend fun delete(id: String) = withContext(scope.coroutineContext) {
-        database.deleteAccount(id)
+    suspend fun delete(wallet: WalletEntity) = withContext(scope.coroutineContext) {
+        database.deleteAccount(wallet.id)
         setSelectedWallet(database.getFirstAccountId())
     }
 

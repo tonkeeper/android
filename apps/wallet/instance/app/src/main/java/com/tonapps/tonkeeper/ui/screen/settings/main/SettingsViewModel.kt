@@ -4,6 +4,7 @@ import android.app.Application
 import android.os.Build
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 class SettingsViewModel(
     application: Application,
@@ -75,13 +77,15 @@ class SettingsViewModel(
         settingsRepository.searchEngine = searchEngine ?: SearchEngine.GOOGLE
     }
 
-    fun signOut() {
-        tonConnectManager.clear(wallet)
-        PushToggleWorker.run(context, wallet, PushManager.State.Delete)
+    fun signOut(callback: () -> Unit) {
+        AnalyticsHelper.trackEvent("delete_wallet")
         viewModelScope.launch(Dispatchers.IO) {
-            AnalyticsHelper.trackEvent("delete_wallet")
-            accountRepository.delete(wallet.id)
-            finish()
+            tonConnectManager.clear(wallet)
+            PushToggleWorker.run(context, wallet, PushManager.State.Delete).result.get(5, TimeUnit.SECONDS)
+            withContext(Dispatchers.Main) {
+                callback()
+            }
+            accountRepository.delete(wallet)
         }
     }
 
@@ -147,9 +151,6 @@ class SettingsViewModel(
         val hasV4R2 = hasV4R2()
         val uiItems = mutableListOf<Item>()
         uiItems.add(Item.Account(wallet))
-        uiItems.add(Item.Space)
-
-        uiItems.add(Item.Tester(ListCell.Position.SINGLE, "https://t.me/tonkeeper_android"))
 
         if (wallet.hasPrivateKey) {
             uiItems.add(Item.Space)

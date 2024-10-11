@@ -135,6 +135,13 @@ sealed class DeepLinkRoute {
 
     data class TonConnect(val uri: Uri): DeepLinkRoute()
 
+    data class Jetton(val address: String): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            address = uri.pathOrNull ?: uri.query("jetton") ?: "TON"
+        )
+    }
+
     companion object {
 
         private const val PREFIX = "tonkeeper://"
@@ -176,6 +183,7 @@ sealed class DeepLinkRoute {
                     "qr", "receive" -> Receive
                     "manage" -> ManageAssets
                     "picker", "wallets" -> WalletPicker
+                    "jetton", "token" -> Jetton(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {

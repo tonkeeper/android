@@ -7,6 +7,7 @@ import android.text.method.LinkMovementMethod
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.short4
@@ -397,8 +398,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransaction(transaction: SendTransaction) {
-        reviewWalletView.value =
-            transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView, 16)
+        reviewWalletView.value = transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView, 16)
         applyTransactionAccount(transaction.destination)
         applyTransactionAmount(transaction.amount)
         applyTransactionComment(transaction.comment, transaction.encryptedComment)
@@ -430,9 +430,22 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransactionAccount(destination: SendDestination.Account) {
-        val shortAddress = destination.query.shortAddress
+        var name = destination.name
+        val shortAddress = if (destination.query.isValidTonAddress()) {
+            destination.query.shortAddress
+        } else {
+            destination.query.lowercase().also {
+                if (name.isNullOrEmpty()) {
+                    name = it
+                }
+            }
+        }
 
-        if (destination.name.isNullOrEmpty()) {
+        reviewRecipientView.setOnClickListener {
+            requireContext().copyToClipboard(shortAddress)
+        }
+
+        if (name.isNullOrEmpty()) {
             reviewRecipientView.value = shortAddress
             reviewRecipientAddressView.visibility = View.GONE
         } else {
@@ -445,6 +458,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 )
             }
         }
+
     }
 
     private fun setFee(event: SendEvent.Fee?) {

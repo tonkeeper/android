@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.staking
 
+import com.tonapps.icu.Coins
 import io.tonapi.models.PoolImplementationType
 
 object StakingPool {
@@ -37,6 +38,14 @@ object StakingPool {
             Implementation.Whales -> R.drawable.whales
             Implementation.TF -> R.drawable.tf
             Implementation.LiquidTF -> R.drawable.ic_tonstakers
+        }
+    }
+
+    fun getTotalFee(fee: Coins, implementation: Implementation): Coins {
+        return when (implementation) {
+            Implementation.Whales -> fee.abs() + Coins.of(0.2)
+            Implementation.TF -> fee.abs() + Coins.ONE
+            else -> fee.abs()
         }
     }
 

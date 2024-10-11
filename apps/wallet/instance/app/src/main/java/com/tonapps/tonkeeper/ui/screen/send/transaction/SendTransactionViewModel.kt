@@ -81,12 +81,12 @@ class SendTransactionViewModel(
                 val transferFee = if (!emulated.extra.isRefund) Coins.ZERO else (emulated.extra.value + Coins.of(0.05))
                 val transferTotal = transferAmount + transferFee
 
-                if (transferTotal > tonBalance) {
+                if (!emulated.withBattery && transferTotal > tonBalance) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
                         balance = tonBalance,
                         required = emulated.extra.value,
-                        withRechargeBattery = emulated.withBattery,
+                        withRechargeBattery = false,
                         singleWallet = isSingleWallet()
                     )
                 } else {
@@ -98,6 +98,7 @@ class SendTransactionViewModel(
                     )
                 }
             } catch (e: Throwable) {
+                Log.e("SendTransactionViewModel", "Failed to emulate transaction", e)
                 val tonBalance = getTONBalance()
                 if (tonBalance == Coins.ZERO) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
@@ -180,7 +181,7 @@ class SendTransactionViewModel(
     }
 
     private suspend fun getCompressedTokens(): List<AccountTokenEntity> {
-        return tokenRepository.get(currency, wallet.accountId, wallet.testnet)?.filter { it.isCompressed } ?: emptyList()
+        return tokenRepository.get(currency, wallet.accountId, wallet.testnet, true)?.filter { it.isCompressed } ?: emptyList()
     }
 
 }

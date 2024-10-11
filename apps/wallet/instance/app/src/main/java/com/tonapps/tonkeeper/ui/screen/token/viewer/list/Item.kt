@@ -1,11 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.token.viewer.list
 
 import android.net.Uri
+import com.tonapps.icu.Coins
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.settings.ChartPeriod
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -13,9 +15,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     companion object {
         const val TYPE_BALANCE = 0
         const val TYPE_ACTIONS = 1
-        const val TYPE_PRICE = 2
-        const val TYPE_CHART = 3
-        const val TYPE_W5_BANNER = 4
+        const val TYPE_CHART = 2
+        const val TYPE_W5_BANNER = 3
     }
 
     data class Balance(
@@ -47,16 +48,15 @@ sealed class Item(type: Int): BaseListItem(type) {
             get() = token.verified && !wallet.isWatchOnly
     }
 
-    data class Price(
-        val fiatPrice: CharSequence,
-        val rateDiff24h: CharSequence,
-        val delta: CharSequence
-    ): Item(TYPE_PRICE)
-
     data class Chart(
         val data: List<ChartEntity>,
         val square: Boolean,
         val period: ChartPeriod,
+        val fiatPrice: CharSequence,
+        val rateNow: Coins,
+        val rateDiff24h: CharSequence,
+        val delta: CharSequence,
+        val currency: WalletCurrency
     ): Item(TYPE_CHART)
 
     data class W5Banner(

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.explore.banners
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListHolder
@@ -20,8 +21,8 @@ class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.l
             Navigation.from(context)?.add(DAppScreen.newInstance(item.wallet, item.name, item.url))
         }
 
-        bgView.setImageURI(item.poster)
-        iconView.setImageURI(item.icon)
+        bgView.setImageURI(item.poster, ResizeOptions.forSquareSize(256))
+        iconView.setImageURI(item.icon, ResizeOptions.forSquareSize(44))
 
         titleView.setTextColor(item.textColor)
         titleView.text = item.name

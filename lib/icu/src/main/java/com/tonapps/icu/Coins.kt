@@ -236,6 +236,10 @@ data class Coins(
         return multipliedValue.toLong()
     }
 
+    fun toFloat(): Float {
+        return value.toFloat()
+    }
+
     fun diff(coins: Coins): Float {
         if (coins.isZero || isZero) {
             return 0f

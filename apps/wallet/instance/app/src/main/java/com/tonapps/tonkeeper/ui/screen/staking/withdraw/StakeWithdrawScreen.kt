@@ -60,6 +60,7 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
         amountView = view.findViewById(R.id.line_amount)
         feeView = view.findViewById(R.id.line_fee)
+        feeView.setLoading()
 
         taskView = view.findViewById(R.id.task)
 

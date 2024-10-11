@@ -61,6 +61,9 @@ object BrowserHelper {
     }
 
     private fun external(activity: Activity, uri: Uri) {
+        if (uri.scheme == "blob") {
+            return
+        }
         try {
             val intent = Intent(Intent.ACTION_VIEW, uri)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

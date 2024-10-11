@@ -14,7 +14,9 @@ import com.facebook.drawee.drawable.RoundedCornersDrawable
 import com.facebook.drawee.drawable.RoundedDrawable
 import com.facebook.drawee.generic.RoundingParams
 import com.facebook.drawee.view.SimpleDraweeView
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.request.ImageRequest
+import com.facebook.imagepipeline.request.ImageRequestBuilder
 import uikit.extensions.getDrawable
 
 class FrescoView @JvmOverloads constructor(
@@ -63,6 +65,13 @@ class FrescoView @JvmOverloads constructor(
         } else {
             setImageDrawable(drawable, callerContext)
         }
+    }
+
+    fun setImageURI(uri: Uri, resizeOptions: ResizeOptions) {
+        val request = ImageRequestBuilder.newBuilderWithSource(uri)
+            .setResizeOptions(resizeOptions)
+            .build()
+        setImageRequest(request)
     }
 
     override fun setImageRequest(request: ImageRequest) {

@@ -153,14 +153,12 @@ class TonConnectManager(
         }
     }
 
-    fun clear(wallet: WalletEntity) {
-        scope.launch(Dispatchers.IO) {
-            val connections = dAppsRepository.deleteApps(wallet.accountId, wallet.testnet)
-            for (connection in connections) {
-                bridge.sendDisconnect(connection)
-            }
-            pushManager.dAppUnsubscribe(wallet, connections)
+    suspend fun clear(wallet: WalletEntity) = withContext(Dispatchers.IO) {
+        val connections = dAppsRepository.deleteApps(wallet.accountId, wallet.testnet)
+        for (connection in connections) {
+            bridge.sendDisconnect(connection)
         }
+        pushManager.dAppUnsubscribe(wallet, connections)
     }
 
     suspend fun sendBridgeError(connection: AppConnectEntity, error: BridgeError, id: Long) {

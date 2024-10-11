@@ -133,10 +133,14 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
 
     private fun promptEnableBluetooth() {
         if (isPermissionGranted()) {
-            val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
-            if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled) {
-                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                enableBluetoothLauncher.launch(enableBtIntent)
+            try {
+                val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
+                if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled) {
+                    val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                    enableBluetoothLauncher.launch(enableBtIntent)
+                }
+            } catch (e: Throwable) {
+                showBluetoothPermissionsAlert()
             }
         } else {
             requestPermissionLauncher.launch(blePermissions)
@@ -155,9 +159,9 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             hasPermission(Manifest.permission.BLUETOOTH_SCAN) && hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
         } else {
-            hasPermission(Manifest.permission.BLUETOOTH) && hasPermission(Manifest.permission.BLUETOOTH_ADMIN) && hasPermission(
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
+            hasPermission(Manifest.permission.BLUETOOTH) &&
+            hasPermission(Manifest.permission.BLUETOOTH_ADMIN) &&
+            hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 

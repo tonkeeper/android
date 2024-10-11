@@ -4,6 +4,8 @@ import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.loadMaybeRef
 import com.tonapps.blockchain.ton.extensions.loadOpCode
+import com.tonapps.blockchain.ton.extensions.storeAddress
+import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import org.ton.block.AddrStd
@@ -27,12 +29,12 @@ private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
         TONOpCode.STONFI_SWAP -> {
             builder
                 .storeOpCode(TONOpCode.STONFI_SWAP)
-                .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
-                .storeTlb(Coins, slice.loadTlb(Coins.tlbCodec()))
-                .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
+                .storeAddress(slice.loadTlb(MsgAddressInt.tlbCodec()))
+                .storeCoins(slice.loadTlb(Coins.tlbCodec()))
+                .storeAddress(slice.loadTlb(MsgAddressInt.tlbCodec()))
 
             if (slice.loadBit()) {
-                slice.loadTlb(AddrStd.tlbCodec())
+                slice.loadTlb(MsgAddressInt.tlbCodec())
             }
             slice.endParse()
 
@@ -59,8 +61,8 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
 
     val queryId = slice.loadUInt(64)
     val jettonAmount = slice.loadTlb(Coins.tlbCodec())
-    val receiverAddress = slice.loadTlb(AddrStd.tlbCodec())
-    val excessesAddress = slice.loadTlb(AddrStd.tlbCodec())
+    val receiverAddress = slice.loadTlb(MsgAddressInt.tlbCodec())
+    val excessesAddress = slice.loadTlb(MsgAddressInt.tlbCodec())
     val customPayload = slice.loadMaybeRef()
     if (customPayload != null) {
         return payload

@@ -163,14 +163,15 @@ class TokenViewModel(
 
         if (token.verified) {
             val period = settingsRepository.chartPeriod
+            val fiatPrice: CharSequence
+            val rateDiff24h: String
+            val delta: CharSequence
             if (2 >= charts.size) {
-                items.add(Item.Price(
-                    fiatPrice = CurrencyFormatter.format(currency, token.rateNow, 4),
-                    rateDiff24h = token.rateDiff24h,
-                    delta = "",
-                ))
+                fiatPrice = CurrencyFormatter.format(currency, token.rateNow, 4)
+                rateDiff24h = token.rateDiff24h
+                delta = ""
             } else {
-                val firstFiatPrice = charts.last().price
+                val firstFiatPrice = token.rateNow.toFloat()
                 val lastFiatPrice = charts.first().price
                 val growPercent = (firstFiatPrice - lastFiatPrice) / firstFiatPrice * 100
                 val growPercentFormat = if (0f == growPercent) {
@@ -184,18 +185,21 @@ class TokenViewModel(
                 val priceDelta = Coins.of(firstFiatPrice - lastFiatPrice, token.decimals).abs()
                 val priceDeltaFormat = CurrencyFormatter.formatFiat(currency, priceDelta)
 
-                items.add(Item.Price(
-                    fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.rateNow, 4),
-                    rateDiff24h = growPercentFormat,
-                    delta = priceDeltaFormat,
-                ))
+                fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.rateNow, 4)
+                rateDiff24h = growPercentFormat
+                delta = priceDeltaFormat
             }
 
 
             items.add(Item.Chart(
                 data = charts,
                 square = period == ChartPeriod.hour,
-                period = period
+                period = period,
+                fiatPrice = fiatPrice,
+                rateDiff24h = rateDiff24h,
+                delta = delta,
+                currency = settingsRepository.currency,
+                rateNow = token.rateNow
             ))
         }
 

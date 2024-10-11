@@ -301,7 +301,9 @@ class RootActivity: BaseWalletActivity() {
         if (uri.scheme == "tonkeeper" || uri.scheme == "ton" || uri.scheme == "tc" || uri.host == "app.tonkeeper.com") {
             processDeepLink(uri, true)
         } else {
-            openExternalLink(uri)
+            runOnUiThread {
+                openExternalLink(uri)
+            }
         }
     }
 

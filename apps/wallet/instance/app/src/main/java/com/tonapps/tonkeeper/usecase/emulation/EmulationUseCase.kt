@@ -185,8 +185,7 @@ class EmulationUseCase(
 
         fun calculateTransferAmount(transfers: List<WalletTransfer>): Coins {
             return transfers.sumOf {
-                val value = it.coins.coins.toString()
-                Coins.of(value)
+                Coins.of(it.coins.coins.amount.toLong())
             }
         }
     }

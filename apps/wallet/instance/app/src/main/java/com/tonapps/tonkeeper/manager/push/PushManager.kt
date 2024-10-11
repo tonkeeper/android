@@ -53,7 +53,6 @@ class PushManager(
     suspend fun wallet(wallet: WalletEntity, state: State) = wallets(listOf(wallet), state)
 
     suspend fun wallets(wallets: List<WalletEntity>, state: State): Boolean = withContext(Dispatchers.IO) {
-        Log.d("PushManagerLog", "state: $state, wallets: $wallets")
         if (state == State.Enable) {
             walletSubscribe(wallets.filter { !it.testnet })
         } else {

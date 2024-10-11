@@ -150,14 +150,6 @@ abstract class Widget<T: Widget.Params>: AppWidgetProvider() {
         super.onEnabled(context)
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) {
-            val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-            val extras = intent.extras?.keySet()?.joinToString(", ")
-        }
-    }
-
     override fun onRestored(context: Context, oldIds: IntArray, newIds: IntArray) {
         super.onRestored(context, oldIds, newIds)
     }

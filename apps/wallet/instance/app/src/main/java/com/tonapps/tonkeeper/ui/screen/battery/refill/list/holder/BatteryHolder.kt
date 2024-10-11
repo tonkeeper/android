@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -15,6 +16,7 @@ import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.Plurals
+import uikit.extensions.hideKeyboard
 import uikit.extensions.withAlpha
 import uikit.span.ClickableSpanCompat
 
@@ -32,6 +34,9 @@ class BatteryHolder(
     }
 
     override fun onBind(item: Item.Battery) {
+        itemView.setOnClickListener {
+            context.hideKeyboard()
+        }
         batteryView.setBatteryLevel(item.balance)
         if (item.beta) {
             val color = context.accentOrangeColor

@@ -8,12 +8,15 @@ import android.view.ViewGroup
 import android.view.ViewGroup.inflate
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.view.setPadding
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
@@ -41,6 +44,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.hideKeyboard
+import uikit.extensions.setPaddingBottom
 import uikit.widget.FrescoView
 import uikit.widget.InputView
 import java.util.UUID
@@ -60,10 +64,16 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         onAddressChange = { viewModel.updateAddress(it) },
         openAddressBook = ::openAddressBook,
         onAmountChange = { viewModel.updateAmount(it) },
-        onPackSelect = { viewModel.setSelectedPack(it) },
+        onPackSelect = {
+            hideKeyboard()
+            viewModel.setSelectedPack(it)
+        },
         onCustomAmountSelect = { viewModel.onCustomAmountSelect() },
         onContinue = ::onContinue,
-        onSubmitPromo = { viewModel.applyPromo(it) }
+        onSubmitPromo = {
+            hideKeyboard()
+            viewModel.applyPromo(it)
+        }
     )
 
     private lateinit var listContainer: View
@@ -111,7 +121,7 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         }
 
         view.doKeyboardAnimation(true) { offset, _, _ ->
-            updateContainerMargin(offset)
+            updateContainerOffset(offset)
         }
 
         collectFlow(viewModel.tokenFlow) { token ->
@@ -122,36 +132,37 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
     }
 
     // Dirty hack because of bad design
-    private fun updateContainerMargin(offset: Int) {
-        listContainer.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            bottomMargin = offset
-        }
+    private fun updateContainerOffset(offset: Int) {
+        listContainer.setPaddingBottom(offset)
         listContainer.postOnAnimation { checkScroll() }
     }
 
     private fun checkScroll() {
         val layoutManager = listView.layoutManager as? LinearLayoutManager ?: return
         val itemCount = layoutManager.itemCount
+        val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
         val lastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition()
         val scrollToIndex = max(lastVisiblePosition + 3, itemCount - 1)
-        listView.postOnAnimation {
-            listView.smoothScrollToPosition(scrollToIndex)
-        }
+    }
+
+    override fun finish() {
+        hideKeyboard()
+        super.finish()
     }
 
     override fun onDragging() {
         super.onDragging()
-        activity?.hideKeyboard()
+        hideKeyboard()
     }
 
     private fun onContinue() {
-        requireContext().hideKeyboard()
+        hideKeyboard()
         viewModel.onContinue()
     }
 
     private fun openAddressBook() {
         navigation?.add(SendContactsScreen.newInstance(screenContext.wallet, contractsRequestKey))
-        getCurrentFocus()?.hideKeyboard()
+        hideKeyboard()
     }
 
     private fun openTokenSelector() {

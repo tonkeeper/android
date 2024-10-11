@@ -101,7 +101,7 @@ class SendTransactionViewModel(
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
                         balance = tonBalance,
-                        required = emulated.extra.value,
+                        required = transferTotal,
                         withRechargeBattery = false,
                         singleWallet = isSingleWallet()
                     )

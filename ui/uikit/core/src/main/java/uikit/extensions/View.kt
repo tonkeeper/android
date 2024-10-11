@@ -377,11 +377,23 @@ inline fun <reified R: View> View.findViewByClass(): R? {
     if (clazz.isInstance(this)) {
         return this as R
     }
+    return findViewByClass(clazz) as R?
+}
+
+fun View.findViewByClass(clazz: Class<out View>): View? {
+    if (clazz.isInstance(this)) {
+        return this
+    }
     if (this is ViewGroup) {
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             if (clazz.isInstance(child)) {
-                return child as R
+                return child
+            } else if (child is ViewGroup) {
+                val view = child.findViewByClass(clazz)
+                if (view != null) {
+                    return view
+                }
             }
         }
     }

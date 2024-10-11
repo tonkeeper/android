@@ -10,12 +10,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
-class BrowserRepository(
-    private val context: Context,
-    private val api: API
-) {
+class BrowserRepository(context: Context, api: API) {
 
-    private val localDataSource = LocalDataSource(context)
+    private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        LocalDataSource(context)
+    }
+
     private val remoteDataSource = RemoteDataSource(api)
 
     suspend fun search(

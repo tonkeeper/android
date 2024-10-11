@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder
 
+import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
@@ -8,6 +9,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.localization.Localization
+import uikit.extensions.hideKeyboard
 
 class AmountHolder(
     parent: ViewGroup,
@@ -21,6 +23,7 @@ class AmountHolder(
     override fun onBind(item: Item.Amount) {
         amountView.doOnValueChange = onValueChange
         amountView.suffix = item.symbol
+
         if (amountView.decimals != item.decimals) {
             amountView.setDecimals(item.decimals)
         }
@@ -31,7 +34,7 @@ class AmountHolder(
 
     override fun onUnbind() {
         super.onUnbind()
-
+        amountView.hideKeyboard()
         amountView.setValue(0.0)
     }
 
@@ -53,4 +56,5 @@ class AmountHolder(
             availableView.setTextColor(context.textSecondaryColor)
         }
     }
+
 }

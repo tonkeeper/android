@@ -86,6 +86,10 @@ class InputView @JvmOverloads constructor(
         addUpdateListener(this@InputView)
     }
 
+    override fun isFocused(): Boolean {
+        return editText.isFocused || super.isFocused()
+    }
+
     private val inputDrawable = InputDrawable(context)
     private val hintView: AppCompatTextView
     private val editText: AppCompatEditText
@@ -163,6 +167,8 @@ class InputView @JvmOverloads constructor(
                 value?.invoke()
             }
         }
+
+    var doOnFocusChange: ((Boolean) -> Unit)? = null
 
     var doOnIconClick: (() -> Unit)? = null
         set(value) {
@@ -309,6 +315,7 @@ class InputView @JvmOverloads constructor(
     }
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {
+        doOnFocusChange?.invoke(hasFocus)
         inputDrawable.active = hasFocus
         updateVisibleClearButton()
     }

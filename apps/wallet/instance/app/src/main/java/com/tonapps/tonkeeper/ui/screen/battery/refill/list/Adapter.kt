@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill.list
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AddressHolder
+import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AmountHolder
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder.BatteryHolder
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder.GiftHolder
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder.IAPPackHolder
@@ -14,6 +16,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder.SpaceHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
+import uikit.extensions.hideKeyboard
 
 class Adapter(
     private val openSettings: () -> Unit,
@@ -21,6 +24,7 @@ class Adapter(
     private val onPackSelect: (String) -> Unit,
     private val onRestorePurchases: () -> Unit,
 ): BaseListAdapter() {
+
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when(viewType) {
             Item.TYPE_BATTERY -> BatteryHolder(parent, openSettings)
@@ -33,6 +37,13 @@ class Adapter(
             Item.TYPE_IAP -> IAPPackHolder(parent, onPackSelect)
             Item.TYPE_RESTORE_IAP -> IAPRestoreHolder(parent, onRestorePurchases)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
+        }
+    }
+
+    override fun onViewDetachedFromWindow(holder: BaseListHolder<out BaseListItem>) {
+        super.onViewDetachedFromWindow(holder)
+        if (holder is PromoHolder) {
+            holder.context.hideKeyboard()
         }
     }
 

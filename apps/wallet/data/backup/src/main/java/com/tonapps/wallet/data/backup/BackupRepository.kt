@@ -20,7 +20,10 @@ class BackupRepository(
     private val rnLegacy: RNLegacy,
 ) {
 
-    private val localDataSource = LocalDataSource(context)
+    private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        LocalDataSource(context)
+    }
+
     private val _stream = MutableStateFlow<List<BackupEntity>?>(null)
     val stream = _stream.asStateFlow().filterNotNull().shareIn(scope, SharingStarted.Eagerly, 1)
 

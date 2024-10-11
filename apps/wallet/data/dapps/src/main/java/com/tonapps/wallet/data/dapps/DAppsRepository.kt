@@ -42,7 +42,9 @@ class DAppsRepository(
     private val _connectionsFlow = MutableStateFlow<List<AppConnectEntity>?>(null)
     val connectionsFlow = _connectionsFlow.shareIn(scope, SharingStarted.Eagerly, 1).filterNotNull()
 
-    private val database = DatabaseSource(context)
+    private val database: DatabaseSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        DatabaseSource(context)
+    }
 
     var lastEventId: Long
         get() = database.getLastEventId()

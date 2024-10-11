@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeperx.R
+import uikit.extensions.hideKeyboard
 import uikit.widget.InputView
 import uikit.widget.RowLayout
 
@@ -37,5 +38,10 @@ class AddressHolder(
         pasteView.setOnClickListener {
             inputView.text = context.clipboardText()
         }
+    }
+
+    override fun onUnbind() {
+        super.onUnbind()
+        inputView.hideKeyboard()
     }
 }

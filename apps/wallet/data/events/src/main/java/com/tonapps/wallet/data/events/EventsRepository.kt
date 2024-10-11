@@ -29,7 +29,10 @@ class EventsRepository(
     private val api: API
 ) {
 
-    private val localDataSource = LocalDataSource(scope, context)
+    private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        LocalDataSource(scope, context)
+    }
+
     private val remoteDataSource = RemoteDataSource(api)
 
     val decryptedCommentFlow = localDataSource.decryptedCommentFlow

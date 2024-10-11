@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.SpaceHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
+import uikit.extensions.hideKeyboard
 
 class Adapter(
     private val onAddressChange: (String) -> Unit,
@@ -23,6 +24,7 @@ class Adapter(
     private val onContinue: () -> Unit,
     private val onSubmitPromo: (String) -> Unit,
 ): BaseListAdapter() {
+
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when(viewType) {
             Item.TYPE_RECHARGE_PACK -> RechargePackHolder(parent, onPackSelect)
@@ -33,6 +35,13 @@ class Adapter(
             Item.TYPE_BUTTON -> ButtonHolder(parent, onContinue)
             Item.TYPE_PROMO -> PromoHolder(parent, onSubmitPromo)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
+        }
+    }
+
+    override fun onViewDetachedFromWindow(holder: BaseListHolder<out BaseListItem>) {
+        super.onViewDetachedFromWindow(holder)
+        if (holder is AmountHolder || holder is AddressHolder) {
+            holder.context.hideKeyboard()
         }
     }
 

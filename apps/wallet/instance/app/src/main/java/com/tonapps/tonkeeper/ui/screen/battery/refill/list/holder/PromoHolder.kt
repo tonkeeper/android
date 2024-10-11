@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -17,8 +18,10 @@ class PromoHolder(
     private val inputView = itemView.findViewById<InputView>(R.id.promo_input)
     private val actionsView = itemView.findViewById<RowLayout>(R.id.actions)
     private val pasteView = itemView.findViewById<AppCompatTextView>(R.id.paste)
+    private var isFocused = false
 
     override fun onBind(item: Item.Promo) {
+        isFocused = false
         inputView.singleLine = true
         inputView.doOnTextChange = { text ->
             inputView.error = false
@@ -37,16 +40,27 @@ class PromoHolder(
             inputView.text = item.appliedPromo
         }
 
+        inputView.doOnFocusChange = { hasFocus ->
+            if (!hasFocus && isFocused) {
+                applyPromoCode(item)
+            }
+            isFocused = hasFocus
+        }
+
         inputView.setOnDoneActionListener {
             inputView.hideKeyboard()
-            if (inputView.text.isNotBlank() && inputView.text != item.appliedPromo && !item.isLoading) {
-                onSubmitPromo(inputView.text)
-            }
+            applyPromoCode(item)
         }
 
         pasteView.setOnClickListener {
             inputView.text = context.clipboardText()
             inputView.hideKeyboard()
+            onSubmitPromo(inputView.text)
+        }
+    }
+
+    private fun applyPromoCode(item: Item.Promo) {
+        if (inputView.text.isNotBlank() && inputView.text != item.appliedPromo && !item.isLoading) {
             onSubmitPromo(inputView.text)
         }
     }

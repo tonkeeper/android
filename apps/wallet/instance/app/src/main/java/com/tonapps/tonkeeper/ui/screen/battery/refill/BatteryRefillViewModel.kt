@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.billing.priceFormatted
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
@@ -79,6 +80,7 @@ class BatteryRefillViewModel(
         val uiItems = mutableListOf<Item>()
         uiItems.add(uiItemBattery(batteryBalance, api.config))
         uiItems.add(Item.Space)
+
 
         if (!api.config.batteryPromoDisabled) {
             uiItems.add(Item.Promo(promoState))

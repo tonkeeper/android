@@ -8,6 +8,7 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.Formatter
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -171,19 +172,27 @@ class TokenViewModel(
                 rateDiff24h = token.rateDiff24h
                 delta = ""
             } else {
+
+                val maxPrice = charts.maxOf { it.price }
+                val minPrice = charts.minOf { it.price }
+
                 val firstFiatPrice = token.rateNow.toFloat()
                 val lastFiatPrice = charts.first().price
-                val growPercent = (firstFiatPrice - lastFiatPrice) / firstFiatPrice * 100
-                val growPercentFormat = if (0f == growPercent) {
-                    "%.2f%%".format(growPercent)
-                } else if (0 > growPercent) {
-                    "%.2f%%".format(growPercent)
+
+                val priceDelta: Coins
+                val growPercent: Float
+
+                if (maxPrice == minPrice) {
+                    priceDelta = Coins.ZERO
+                    growPercent = 0f
                 } else {
-                    "+%.2f%%".format(growPercent)
+                    priceDelta = Coins.of(firstFiatPrice - lastFiatPrice, token.decimals)
+                    growPercent = (firstFiatPrice - lastFiatPrice) / firstFiatPrice * 100
                 }
 
-                val priceDelta = Coins.of(firstFiatPrice - lastFiatPrice, token.decimals).abs()
+
                 val priceDeltaFormat = CurrencyFormatter.formatFiat(currency, priceDelta)
+                val growPercentFormat = Formatter.percent(growPercent)
 
                 fiatPrice = CurrencyFormatter.format(settingsRepository.currency.code, token.rateNow, 4)
                 rateDiff24h = growPercentFormat

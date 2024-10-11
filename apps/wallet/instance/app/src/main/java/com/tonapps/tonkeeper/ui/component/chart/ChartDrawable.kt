@@ -50,6 +50,9 @@ class ChartDrawable(context: Context): BaseChartDrawable(context) {
 
     fun getDotY(entity: ChartEntity): Float {
         val y = chartHeight - ((entity.price - data.minOf { it.price }) / (data.maxOf { it.price } - data.minOf { it.price })) * chartHeight
+        if (y.isNaN() || y.isInfinite()) {
+            return chartHeight / 2f
+        }
         return y
     }
 
@@ -79,8 +82,14 @@ class ChartDrawable(context: Context): BaseChartDrawable(context) {
     }
 
     private fun buildPath() {
-        val maxPrice = data.maxOf { it.price }
-        val minPrice = data.minOf { it.price }
+        var maxPrice = data.maxOf { it.price }
+        var minPrice = data.minOf { it.price }
+
+        if (maxPrice == minPrice) {
+            maxPrice += 1f
+            minPrice = 0f
+        }
+
         val priceRange = max(maxPrice - minPrice, 0.000000000f)
 
         val points = mutableListOf<PointF>()

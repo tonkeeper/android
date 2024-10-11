@@ -42,9 +42,14 @@ class ChartHolder(
     }
 
     private fun setPrice(chart: ChartEntity?) {
-        item?.let {
-            setData(chart?.date ?: 0, it)
-            setPrice(chart?.price ?: -1f, it)
+        val currentItem = item ?: return
+        if (chart == null) {
+            dateView.setText(Localization.price)
+            priceView.text = currentItem.fiatPrice.withCustomSymbol(context)
+            setDiffPrice(currentItem.rateNow.toFloat(), currentItem)
+        } else {
+            setData(chart.date, currentItem)
+            setPrice(chart.price, currentItem)
         }
     }
 

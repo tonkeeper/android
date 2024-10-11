@@ -102,7 +102,7 @@
             android:theme="@style/Theme.Hidden">
         </activity>
         <receiver
-            android:name="com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider"
+            android:name="com.tonapps.tonkeeper.manager.widget.WidgetReceiver$Balance"
             android:exported="true"
             android:label="@string/wallet_balance">
             <intent-filter>
@@ -112,7 +112,7 @@
                 android:resource="@xml/widget_balance" />
         </receiver>
         <receiver
-            android:name="com.tonapps.tonkeeper.core.widget.rate.WidgetRateProvider"
+            android:name="com.tonapps.tonkeeper.manager.widget.WidgetReceiver$Rate"
             android:exported="true"
             android:label="@string/rate">
             <intent-filter>

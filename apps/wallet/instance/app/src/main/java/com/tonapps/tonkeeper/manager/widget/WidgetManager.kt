@@ -7,31 +7,18 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import androidx.core.content.IntentCompat
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.whileTimeoutOrNull
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.core.widget.Widget
-import com.tonapps.tonkeeper.core.widget.balance.WidgetBalanceProvider
-import com.tonapps.tonkeeper.core.widget.rate.WidgetRateProvider
-import com.tonapps.tonkeeper.ui.screen.root.RootActivity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.time.withTimeoutOrNull
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.math.exp
+import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
 import kotlin.time.Duration.Companion.seconds
 
 object WidgetManager {
 
     class PinnedReceiver: BroadcastReceiver() {
+
         override fun onReceive(context: Context, intent: Intent) {
             val type = intent.getStringExtra(ARG_TYPE) ?: return
             val extras = intent.extras ?: return
@@ -43,14 +30,17 @@ object WidgetManager {
         }
 
         private fun pinnedBalance(context: Context, args: Bundle) {
-            val params = args.getParcelableCompat<Widget.Params.Balance>(ARG_PARAMS) ?: return
-            val widgetId = getWidgetIds(context, WidgetBalanceProvider::class.java).lastOrNull() ?: return
+            val params = args.getParcelableCompat<WidgetParams.Balance>(ARG_PARAMS) ?: return
+            val widgetId = getWidgetIds(context).lastOrNull() ?: return
+            settings.setType(widgetId, TYPE_BALANCE)
             settings.setParams(widgetId, params)
+
         }
 
         private fun pinnedRate(context: Context, args: Bundle) {
-            val params = args.getParcelableCompat<Widget.Params.Rate>(ARG_PARAMS) ?: return
-            val widgetId = getWidgetIds(context, WidgetRateProvider::class.java).lastOrNull() ?: return
+            val params = args.getParcelableCompat<WidgetParams.Rate>(ARG_PARAMS) ?: return
+            val widgetId = getWidgetIds(context).lastOrNull() ?: return
+            settings.setType(widgetId, TYPE_RATE)
             settings.setParams(widgetId, params)
         }
     }
@@ -73,28 +63,28 @@ object WidgetManager {
         get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && appWidgetManager.isRequestPinAppWidgetSupported
 
     fun installBalance(activity: Activity, walletId: String, jettonAddress: String? = null) {
-        val params = Widget.Params.Balance(walletId, jettonAddress)
-        install(activity, WidgetBalanceProvider::class.java, TYPE_BALANCE, params)
+        val params = WidgetParams.Balance(walletId, jettonAddress)
+        install(activity, WidgetReceiver.Balance::class.java, TYPE_BALANCE, params)
     }
 
     fun installRate(activity: Activity, walletId: String, jettonAddress: String) {
-        val params = Widget.Params.Rate(walletId, jettonAddress)
-        install(activity, WidgetRateProvider::class.java, TYPE_RATE, params)
+        val params = WidgetParams.Rate(walletId, jettonAddress)
+        install(activity, WidgetReceiver.Rate::class.java, TYPE_RATE, params)
     }
 
-    suspend fun getBalanceParams(widgetId: Int): Widget.Params.Balance? {
+    suspend fun getBalanceParams(widgetId: Int): WidgetParams.Balance? {
         return whileTimeoutOrNull(5.seconds) {
-            settings.getParams<Widget.Params.Balance>(widgetId)
+            settings.getParams<WidgetParams.Balance>(widgetId)
         }
     }
 
-    suspend fun getRateParams(widgetId: Int): Widget.Params.Rate? {
+    suspend fun getRateParams(widgetId: Int): WidgetParams.Rate? {
         return whileTimeoutOrNull(5.seconds) {
-            settings.getParams<Widget.Params.Rate>(widgetId)
+            settings.getParams<WidgetParams.Rate>(widgetId)
         }
     }
 
-    private fun install(activity: Activity, cls: Class<*>, type: String, params: Widget.Params) {
+    private fun install(activity: Activity, cls: Class<*>, type: String, params: WidgetParams) {
         if (!isRequestPinAppWidgetSupported) {
             return
         }
@@ -120,30 +110,57 @@ object WidgetManager {
         return AppWidgetManager.getInstance(context).getAppWidgetIds(provider).sortedArray()
     }
 
-    fun update(context: Context, cls: Class<*>) {
+    private fun getWidgetIds(context: Context): IntArray {
+        val balanceIds = getWidgetIds(context, WidgetReceiver.Balance::class.java)
+        val rateIds = getWidgetIds(context, WidgetReceiver.Rate::class.java)
+        return (balanceIds + rateIds).sortedArray()
+    }
+
+    suspend fun getWidgets(context: Context): List<WidgetEntity> {
+        val ids = getWidgetIds(context)
+        val list = mutableListOf<WidgetEntity>()
+        for (id in ids) {
+            val type = settings.getType(id) ?: continue
+
+            if (type == TYPE_RATE) {
+                val params = getRateParams(id) ?: continue
+                list.add(WidgetEntity(
+                    id = id,
+                    params = params,
+                    type = TYPE_RATE
+                ))
+                continue
+            } else if (type == TYPE_BALANCE) {
+                val params = getBalanceParams(id) ?: continue
+                list.add(WidgetEntity(
+                    id = id,
+                    params = params,
+                    type = TYPE_BALANCE
+                ))
+            }
+        }
+        return list.toList()
+    }
+
+    fun onUpdateInstalledWidgets(context: Context) {
+        val widgetIds = getWidgetIds(context)
+        if (widgetIds.isEmpty()) {
+            WidgetUpdaterWorker.stop(context)
+        } else {
+            WidgetUpdaterWorker.start(context)
+        }
+    }
+
+    fun hasWidgets(context: Context): Boolean {
+        return getWidgetIds(context).isNotEmpty()
+    }
+
+    /*fun update(context: Context, cls: Class<*>) {
         val ids = getWidgetIds(context, cls)
         val intent = Intent(context, cls)
         intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
         context.sendBroadcast(intent)
-    }
-
-    fun getWidgets(context: Context, type: String): List<WidgetEntity> {
-        val ids = getWidgetIds(context, when (type) {
-            TYPE_BALANCE -> WidgetBalanceProvider::class.java
-            TYPE_RATE -> WidgetRateProvider::class.java
-            else -> return emptyList()
-        })
-        val list = mutableListOf<WidgetEntity>()
-        for (id in ids) {
-            val params = settings.getParams<Widget.Params.Balance>(id) ?: continue
-            list.add(WidgetEntity(id, params, type))
-        }
-        return list.toList()
-    }
-
-    fun getWidgets(context: Context, type: String, walletId: String): List<WidgetEntity> {
-        return getWidgets(context, type).filter { it.params.walletId == walletId }
-    }
+    }*/
 
 }

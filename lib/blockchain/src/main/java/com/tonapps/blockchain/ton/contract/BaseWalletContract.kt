@@ -1,5 +1,7 @@
 package com.tonapps.blockchain.ton.contract
 
+import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.tlb.CellStringTlbConstructor
 import kotlinx.io.bytestring.ByteString
 import org.ton.api.pk.PrivateKeyEd25519
@@ -45,6 +47,41 @@ abstract class BaseWalletContract(
                 "v5r1" -> WalletV5R1Contract(publicKey = publicKey, networkGlobalId = networkGlobalId)
                 else -> throw IllegalArgumentException("Unsupported contract version: $v")
             }
+        }
+
+        fun resolveVersion(publicKey: PublicKeyEd25519, accountId: String, testnet: Boolean): WalletVersion {
+            return resolveVersion(publicKey, accountId, if (testnet) -3 else -239)
+        }
+
+        fun resolveVersion(publicKey: PublicKeyEd25519, accountId: String, networkGlobalId: Int): WalletVersion {
+            val v4r2 = WalletV4R2Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v4r2)) {
+                return WalletVersion.V4R2
+            }
+            val v5r1 = WalletV5R1Contract(publicKey = publicKey, networkGlobalId = networkGlobalId).address.toAccountId()
+            if (accountId.equalsAddress(v5r1)) {
+                return WalletVersion.V5R1
+            }
+            val v5beta = WalletV5BetaContract(publicKey = publicKey, networkGlobalId = networkGlobalId).address.toAccountId()
+            if (accountId.equalsAddress(v5beta)) {
+                return WalletVersion.V5BETA
+            }
+            val v4r1 = WalletV4R1Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v4r1)) {
+                return WalletVersion.V4R1
+            }
+
+            val v3r2 = WalletV3R2Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v3r2)) {
+                return WalletVersion.V3R2
+            }
+
+            val v3r1 = WalletV3R1Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v3r1)) {
+                return WalletVersion.V3R1
+            }
+
+            return WalletVersion.UNKNOWN
         }
 
         fun create(publicKey: PublicKeyEd25519, v: String, testnet: Boolean): BaseWalletContract {

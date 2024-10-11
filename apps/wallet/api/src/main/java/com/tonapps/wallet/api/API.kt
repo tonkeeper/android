@@ -7,11 +7,14 @@ import android.util.Log
 import androidx.core.graphics.drawable.toIcon
 import androidx.core.net.toUri
 import com.squareup.moshi.JsonAdapter
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
@@ -375,10 +378,22 @@ class API(
     ): AccountDetailsEntity? {
         return try {
             val account = getAccount(query, testnet) ?: return null
-            AccountDetailsEntity(query, account, testnet)
+            val details = AccountDetailsEntity(query, account, testnet)
+            if (details.walletVersion != WalletVersion.UNKNOWN) {
+                details
+            } else {
+                details.copy(
+                    walletVersion = getWalletVersionByAddress(account.address, testnet)
+                )
+            }
         } catch (e: Throwable) {
             null
         }
+    }
+
+    private fun getWalletVersionByAddress(address: String, testnet: Boolean): WalletVersion {
+        val pk = getPublicKey(address, testnet) ?: return WalletVersion.UNKNOWN
+        return BaseWalletContract.resolveVersion(pk, address.toRawAddress(), testnet)
     }
 
     fun resolvePublicKey(
@@ -390,7 +405,15 @@ class API(
             val wallets = withRetry {
                 wallet(testnet).getWalletsByPublicKey(query).accounts
             } ?: return emptyList()
-            wallets.map { AccountDetailsEntity(query, it, testnet) }
+            wallets.map { AccountDetailsEntity(query, it, testnet) }.map {
+                if (it.walletVersion == WalletVersion.UNKNOWN) {
+                    it.copy(
+                        walletVersion = BaseWalletContract.resolveVersion(pk, it.address.toRawAddress(), testnet)
+                    )
+                } else {
+                    it
+                }
+            }
         } catch (e: Throwable) {
             emptyList()
         }

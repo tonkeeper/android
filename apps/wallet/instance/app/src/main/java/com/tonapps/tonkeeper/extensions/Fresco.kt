@@ -1,14 +1,16 @@
 package com.tonapps.tonkeeper.extensions
 
 import android.graphics.Bitmap
+import android.net.Uri
 import com.facebook.common.executors.CallerThreadExecutor
 import com.facebook.common.references.CloseableReference
 import com.facebook.datasource.DataSource
-import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.core.ImagePipeline
 import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber
 import com.facebook.imagepipeline.image.CloseableImage
 import com.facebook.imagepipeline.request.ImageRequest
+import com.facebook.imagepipeline.request.ImageRequestBuilder
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -30,4 +32,12 @@ suspend fun ImagePipeline.getBitmap(request: ImageRequest) = suspendCoroutine { 
     getBitmap(request) {
         continuation.resume(it)
     }
+}
+
+suspend fun ImagePipeline.loadSquare(uri: Uri, size: Int): Bitmap? {
+    val imageRequest = ImageRequestBuilder.newBuilderWithSource(uri)
+        .setResizeOptions(ResizeOptions.forSquareSize(size))
+        .build()
+
+    return getBitmap(imageRequest)
 }

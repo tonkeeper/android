@@ -104,7 +104,7 @@ class InitViewModel(
         .filter { it.isNotBlank() }
         .map {
             val account = api.resolveAddressOrName(it, testnet)
-            if (account == null || !account.active) {
+            if (account == null) {
                 setWatchAccount(null)
                 return@map null
             }
@@ -232,7 +232,7 @@ class InitViewModel(
             mutableListOf()
         } else {
             api.resolvePublicKey(publicKey.publicKey, testnet).filter {
-                it.isWallet && it.walletVersion != WalletVersion.UNKNOWN && it.active
+                it.walletVersion != WalletVersion.UNKNOWN
             }.sortedByDescending { it.walletVersion.index }.toMutableList()
         }
 

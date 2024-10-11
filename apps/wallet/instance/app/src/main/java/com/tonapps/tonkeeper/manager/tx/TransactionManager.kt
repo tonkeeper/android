@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.manager.tx
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.join
+import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.AccountEventEntity
@@ -54,6 +56,11 @@ class TransactionManager(
             realtime(wallet)
         }.filterNotNull().onEach { transaction ->
             _transactionFlow.tryEmit(transaction)
+        }.launchIn(scope)
+
+        sendingTransactionFlow.onEach {
+            delay(5000)
+            WidgetUpdaterWorker.update(App.instance)
         }.launchIn(scope)
     }
 

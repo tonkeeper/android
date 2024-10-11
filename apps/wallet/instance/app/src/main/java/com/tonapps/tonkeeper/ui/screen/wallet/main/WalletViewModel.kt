@@ -9,8 +9,6 @@ import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
-import com.tonapps.tonkeeper.manager.widget.WidgetManager
-import com.tonapps.tonkeeper.manager.widget.updateBalanceWidgets
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
@@ -182,9 +180,6 @@ class WalletViewModel(
                     )
                     settingsRepository.setWalletLastUpdated(wallet.id)
                     setStatus(Status.Default)
-                    withContext(Dispatchers.Main) {
-                        WidgetManager.updateBalanceWidgets(context, wallet.id)
-                    }
                 }
             }
         }.launchIn(viewModelScope)

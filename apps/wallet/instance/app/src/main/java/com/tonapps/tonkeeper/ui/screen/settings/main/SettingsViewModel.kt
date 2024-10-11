@@ -35,6 +35,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Language
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -53,7 +54,6 @@ class SettingsViewModel(
     private val backupRepository: BackupRepository,
     private val tonConnectManager: TonConnectManager,
     private val passcodeManager: PasscodeManager,
-    private val pushManager: PushManager,
     private val rnLegacy: RNLegacy,
     private val environment: Environment,
 ): BaseWalletVM(application) {
@@ -81,7 +81,8 @@ class SettingsViewModel(
         AnalyticsHelper.trackEvent("delete_wallet")
         viewModelScope.launch(Dispatchers.IO) {
             tonConnectManager.clear(wallet)
-            PushToggleWorker.run(context, wallet, PushManager.State.Delete).result.get(5, TimeUnit.SECONDS)
+            PushToggleWorker.run(context, wallet, PushManager.State.Delete)
+            delay(2000)
             withContext(Dispatchers.Main) {
                 callback()
             }

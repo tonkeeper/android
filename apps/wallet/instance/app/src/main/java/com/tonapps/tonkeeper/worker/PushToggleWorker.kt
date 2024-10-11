@@ -27,17 +27,13 @@ class PushToggleWorker(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        Log.d("PushManagerLog", "PushToggleWorker.doWork")
         val wallets = getWallets()
-        Log.d("PushManagerLog", "PushToggleWorker.doWork wallets: $wallets")
         try {
             if (wallets.isNotEmpty() && !pushManager.wallets(wallets, state)) {
                 throw IllegalStateException("Failed to toggle push")
             }
-            Log.d("PushManagerLog", "Push toggled")
             Result.success()
         } catch (e: Throwable) {
-            Log.e("PushManagerLog", "Failed to toggle push", e)
             FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
         }
@@ -45,9 +41,7 @@ class PushToggleWorker(
 
     private suspend fun getWallets(): List<WalletEntity> {
         val walletIds = (inputData.getStringArray(ARG_WALLET_IDS) ?: emptyArray()).toList()
-        Log.d("PushManagerLog", "PushToggleWorker.getWallets walletIds: $walletIds")
         val allWallets = accountRepository.getWallets()
-        Log.d("PushManagerLog", "PushToggleWorker.getWallets allWallets: $allWallets")
 
         return allWallets.filter {
             it.id in walletIds
@@ -64,7 +58,6 @@ class PushToggleWorker(
         }
 
         fun run(context: Context, wallets: List<WalletEntity>, state: PushManager.State): Operation {
-            Log.d("PushManagerLog", "PushToggleWorker.run: wallets: $wallets, state: $state")
             val inputData = Data.Builder()
                 .putStringArray(ARG_WALLET_IDS, wallets.map { it.id }.toTypedArray())
                 .putInt(ARG_PUSH_STATE, state.code)

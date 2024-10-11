@@ -10,7 +10,6 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.billing.priceFormatted
-import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
@@ -39,8 +38,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.net.URLEncoder
 
@@ -56,6 +58,10 @@ class BatteryRefillViewModel(
     private val billingManager: BillingManager,
     private val environment: Environment,
 ) : BaseWalletVM(app) {
+
+    private val purchasesFlow = billingManager.purchasesUpdatedFlow
+        .map { it.purchases }
+        .filter { it.isNotEmpty() }
 
     private val promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
 
@@ -93,7 +99,7 @@ class BatteryRefillViewModel(
                     tonPriceInUsd = tonPriceInUsd,
                     batteryBalance = batteryBalance,
                     config = api.config,
-                    products = iapProducts ?: emptyList(),
+                    products = iapProducts,
                     isProcessing = isProcessing,
                 )
             )
@@ -139,6 +145,8 @@ class BatteryRefillViewModel(
                 promoStateFlow.tryEmit(PromoState.Applied(appliedPromo))
             }
         }
+
+        purchasesFlow.collectFlow(::handlePurchases)
     }
 
     private fun uiItemsPackages(
@@ -294,7 +302,7 @@ class BatteryRefillViewModel(
         }
     }
 
-    private suspend fun handlePurchases(purchases: List<Purchase>) {
+    private suspend fun handlePurchases(purchases: List<Purchase>) = withContext(Dispatchers.IO) {
         try {
             purchaseInProgress.tryEmit(true)
             val tonProofToken = accountRepository.requestTonProofToken(wallet)
@@ -315,21 +323,17 @@ class BatteryRefillViewModel(
                 )
                 billingManager.consumeProduct(purchase.purchaseToken)
             }
-            context.showToast(Localization.battery_refilled)
+            toast(Localization.battery_refilled)
         } catch (e: Exception) {
-            context.showToast(Localization.error)
+            toast(Localization.error)
         } finally {
             purchaseInProgress.tryEmit(false)
         }
     }
 
     fun makePurchase(productId: String, activity: Activity) {
-        viewModelScope.launch {
-            val product = billingManager.productsFlow.value!!.find { it.productId == productId }!!
-            val purchases = billingManager.requestPurchase(activity, product)
-            if (purchases.isNotEmpty()) {
-                handlePurchases(purchases)
-            }
+        billingManager.productFlow(productId).collectFlow { product ->
+            billingManager.requestPurchase(activity, product)
         }
     }
 
@@ -340,10 +344,10 @@ class BatteryRefillViewModel(
                 if (pendingPurchases.isNotEmpty()) {
                     handlePurchases(pendingPurchases)
                 } else {
-                    context.showToast(Localization.nothing_to_restore)
+                    toast(Localization.nothing_to_restore)
                 }
             } catch (_: Exception) {
-                context.showToast(Localization.error)
+                toast(Localization.error)
             }
         }
     }

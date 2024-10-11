@@ -59,7 +59,8 @@ class SendTransactionViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val transfers = transfers(true)
+                val tokens = getTokens()
+                val transfers = transfers(tokens.filter { it.isCompressed }, true)
                 val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
                 val emulated = emulationUseCase(
                     message = message,
@@ -76,9 +77,24 @@ class SendTransactionViewModel(
                     totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
                 }
 
+                val jettonsAddress = emulated.consequences.risk.jettons.map { it.jetton.address }
+                val sendTokens = tokens.filter { it.balance.token.address in jettonsAddress }
+                val hasCompressedJetton = sendTokens.any { it.isCompressed }
+
                 val tonBalance = getTONBalance()
                 val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
-                val transferFee = if (!emulated.extra.isRefund) Coins.ZERO else (emulated.extra.value + Coins.of(0.05))
+                var transferFee = (if (!emulated.extra.isRefund) {
+                    Coins.ZERO
+                } else {
+                    emulated.extra.value
+                }) + Coins.of(0.05)
+
+                if (hasCompressedJetton) {
+                    transferFee += Coins.of(0.1)
+                } else if (sendTokens.size > 1) {
+                    transferFee += Coins.of(0.05)
+                }
+
                 val transferTotal = transferAmount + transferFee
 
                 if (!emulated.withBattery && transferTotal > tonBalance) {
@@ -98,7 +114,6 @@ class SendTransactionViewModel(
                     )
                 }
             } catch (e: Throwable) {
-                Log.e("SendTransactionViewModel", "Failed to emulate transaction", e)
                 val tonBalance = getTONBalance()
                 if (tonBalance == Coins.ZERO) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
@@ -145,7 +160,8 @@ class SendTransactionViewModel(
 
     fun send() = flow {
         val isBattery = isBattery.get()
-        val transfers = transfers(false)
+        val compressedTokens = getTokens().filter { it.isCompressed }
+        val transfers = transfers(compressedTokens, false)
         val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
         val unsignedBody = message.createUnsignedBody(isBattery)
         val ledgerTransaction = getLedgerTransaction(message)
@@ -166,8 +182,7 @@ class SendTransactionViewModel(
         }
     }.flowOn(Dispatchers.IO)
 
-    private suspend fun transfers(forEmulation: Boolean): List<WalletTransfer> {
-        val compressedTokens = getCompressedTokens()
+    private suspend fun transfers(compressedTokens: List<AccountTokenEntity>, forEmulation: Boolean): List<WalletTransfer> {
         val excessesAddress = if (!forEmulation && isBattery.get()) {
             batteryRepository.getConfig(wallet.testnet).excessesAddress
         } else null
@@ -180,8 +195,8 @@ class SendTransactionViewModel(
         )
     }
 
-    private suspend fun getCompressedTokens(): List<AccountTokenEntity> {
-        return tokenRepository.get(currency, wallet.accountId, wallet.testnet, true)?.filter { it.isCompressed } ?: emptyList()
+    private suspend fun getTokens(): List<AccountTokenEntity> {
+        return tokenRepository.get(currency, wallet.accountId, wallet.testnet, true) ?: emptyList()
     }
 
 }

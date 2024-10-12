@@ -29,6 +29,7 @@ import uikit.extensions.getCurrentFocusEditText
 import uikit.extensions.getViews
 import uikit.extensions.hideKeyboard
 import uikit.extensions.scrollDown
+import uikit.extensions.scrollView
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ColumnLayout
@@ -66,21 +67,31 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         loaderView.setColor(requireContext().iconPrimaryColor)
 
         for ((index, wordInput) in wordInputs.withIndex()) {
+            val isLast = index == wordInputs.size - 1
             wordInput.doOnTextChanged = { onTextChanged(index, it) }
-        }
-
-        wordInputs.last().setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                next()
-                true
-            } else {
-                false
+            wordInput.imeOptions = if (isLast) EditorInfo.IME_ACTION_DONE else EditorInfo.IME_ACTION_NEXT
+            wordInput.setOnEditorActionListener { _, actionId, _ ->
+                if (isLast && actionId == EditorInfo.IME_ACTION_DONE) {
+                    next()
+                    true
+                } else if (isLast && actionId == EditorInfo.IME_ACTION_NEXT) {
+                    nextInput(index)
+                    true
+                } else {
+                    false
+                }
             }
         }
 
         collectFlow(initViewModel.uiTopOffset) {
             contentView.updatePadding(top = it)
         }
+    }
+
+    private fun nextInput(index: Int) {
+        val nextView = wordInputs.getOrNull(index + 1) ?: return
+        nextView.requestFocus()
+        scrollView.scrollView(nextView, false)
     }
 
     private fun next() {

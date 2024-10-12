@@ -375,9 +375,6 @@ fun View.setBackground(@IdRes id: Int, drawable: Drawable) {
 
 inline fun <reified R: View> View.findViewByClass(): R? {
     val clazz = R::class.java
-    if (clazz.isInstance(this)) {
-        return this as R
-    }
     return findViewByClass(clazz) as R?
 }
 
@@ -401,10 +398,10 @@ fun View.findViewByClass(clazz: Class<out View>): View? {
     return null
 }
 
-fun View.hideKeyboard() {
+fun View.hideKeyboard(ignoreFocus: Boolean = true) {
     val editText = if (this is EditText) this else findViewByClass<EditText>() ?: return
     val controller = editText.getInsetsControllerCompat() ?: return
-    if (editText.hasFocus()) {
+    if (ignoreFocus || editText.hasFocus()) {
         editText.clearFocus()
         controller.hide(WindowInsetsCompat.Type.ime())
     }

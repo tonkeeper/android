@@ -43,7 +43,7 @@ class Adapter(
     override fun onViewDetachedFromWindow(holder: BaseListHolder<out BaseListItem>) {
         super.onViewDetachedFromWindow(holder)
         if (holder is InputHolder) {
-            holder.inputFieldView.hideKeyboard()
+            holder.inputFieldView.hideKeyboard(false)
         }
     }
 

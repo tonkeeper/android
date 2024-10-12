@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder
 
-import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
@@ -9,16 +9,18 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.localization.Localization
-import uikit.extensions.hideKeyboard
 
 class AmountHolder(
     parent: ViewGroup,
     private val onValueChange: (Double) -> Unit
-) : Holder<Item.Amount>(parent, R.layout.fragment_recharge_amount) {
+) : InputHolder<Item.Amount>(parent, R.layout.fragment_recharge_amount) {
 
     private val amountView = itemView.findViewById<CoinEditText>(R.id.amount)
     private val currencyView = itemView.findViewById<AppCompatTextView>(R.id.currency)
     private val availableView = itemView.findViewById<AppCompatTextView>(R.id.available)
+
+    override val inputFieldView: View
+        get() = amountView
 
     override fun onBind(item: Item.Amount) {
         amountView.doOnValueChange = onValueChange
@@ -29,12 +31,11 @@ class AmountHolder(
         }
         currencyView.text = item.formattedCharges
         applyAvailable(item.formattedRemaining, item.formattedMinAmount, item.isInsufficientBalance, item.isLessThanMin)
-        amountView.focus()
+        amountView.requestFocus()
     }
 
     override fun onUnbind() {
         super.onUnbind()
-        amountView.hideKeyboard()
         amountView.setValue(0.0)
     }
 

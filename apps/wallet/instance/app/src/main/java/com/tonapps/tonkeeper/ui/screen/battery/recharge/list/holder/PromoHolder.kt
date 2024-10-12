@@ -12,12 +12,15 @@ import uikit.widget.RowLayout
 class PromoHolder(
     parent: ViewGroup,
     private val onSubmitPromo: (String) -> Unit,
-): Holder<Item.Promo>(parent, R.layout.fragment_battery_promo) {
+): InputHolder<Item.Promo>(parent, R.layout.fragment_battery_promo) {
 
     private val inputView = itemView.findViewById<InputView>(R.id.promo_input)
     private val actionsView = itemView.findViewById<RowLayout>(R.id.actions)
     private val pasteView = itemView.findViewById<AppCompatTextView>(R.id.paste)
     private var isFocused = false
+
+    override val inputFieldView: View
+        get() = inputView
 
     override fun onBind(item: Item.Promo) {
         isFocused = false

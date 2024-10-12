@@ -15,12 +15,15 @@ class AddressHolder(
     parent: ViewGroup,
     private val onTextChange: (String) -> Unit,
     private val openAddressBook: () -> Unit,
-) : Holder<Item.Address>(parent, R.layout.fragment_recharge_address) {
+) : InputHolder<Item.Address>(parent, R.layout.fragment_recharge_address) {
 
     private val inputView = itemView.findViewById<InputView>(R.id.address)
     private val addressActionsView = itemView.findViewById<RowLayout>(R.id.address_actions)
     private val pasteView = itemView.findViewById<AppCompatTextView>(R.id.paste)
     private val addressBookView = itemView.findViewById<AppCompatImageView>(R.id.address_book)
+
+    override val inputFieldView: View
+        get() = inputView
 
     override fun onBind(item: Item.Address) {
         inputView.doOnTextChange = { text ->

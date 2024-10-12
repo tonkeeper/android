@@ -67,9 +67,10 @@ class SettingsViewModel(
             settingsRepository.languageFlow,
             settingsRepository.searchEngineFlow,
             backupRepository.stream,
-        ) { currency, language, searchEngine, backups ->
+            accountRepository.selectedWalletFlow,
+        ) { currency, language, searchEngine, backups, wallet ->
             val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
-            buildUiItems(currency, language, searchEngine, hasBackup)
+            buildUiItems(wallet, currency, language, searchEngine, hasBackup)
         }.launchIn(viewModelScope)
     }
 
@@ -143,6 +144,7 @@ class SettingsViewModel(
     }
 
     private suspend fun buildUiItems(
+        displayWallet: WalletEntity,
         currency: WalletCurrency,
         language: Language,
         searchEngine: SearchEngine,
@@ -151,7 +153,7 @@ class SettingsViewModel(
         val hasW5 = hasW5()
         val hasV4R2 = hasV4R2()
         val uiItems = mutableListOf<Item>()
-        uiItems.add(Item.Account(wallet))
+        uiItems.add(Item.Account(displayWallet))
 
         if (wallet.hasPrivateKey) {
             uiItems.add(Item.Space)

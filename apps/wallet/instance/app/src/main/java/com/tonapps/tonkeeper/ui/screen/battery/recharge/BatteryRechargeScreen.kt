@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import android.view.ViewGroup.inflate
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.setPadding
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
@@ -41,6 +43,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
+import uikit.extensions.applyBottomInsets
+import uikit.extensions.bottomBarsOffset
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.hideKeyboard
@@ -51,6 +55,8 @@ import java.util.UUID
 import kotlin.math.max
 
 class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+
+    override val hasApplyWindowInsets: Boolean = false
 
     private val args: RechargeArgs by lazy { RechargeArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
@@ -120,8 +126,11 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
             false -> getString(Localization.battery_recharge_title)
         }
 
-        view.doKeyboardAnimation(true) { offset, _, _ ->
+
+        ViewCompat.setOnApplyWindowInsetsListener(listContainer) { _, insets ->
+            val offset = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
             updateContainerOffset(offset)
+            insets
         }
 
         collectFlow(viewModel.tokenFlow) { token ->
@@ -134,15 +143,6 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
     // Dirty hack because of bad design
     private fun updateContainerOffset(offset: Int) {
         listContainer.setPaddingBottom(offset)
-        listContainer.postOnAnimation { checkScroll() }
-    }
-
-    private fun checkScroll() {
-        val layoutManager = listView.layoutManager as? LinearLayoutManager ?: return
-        val itemCount = layoutManager.itemCount
-        val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
-        val lastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition()
-        val scrollToIndex = max(lastVisiblePosition + 3, itemCount - 1)
     }
 
     override fun finish() {

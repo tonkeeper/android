@@ -20,20 +20,24 @@ sealed class Item(type: Int): BaseListItem(type) {
     }
 
     data class Account(
-        val title: String,
-        val emoji: String,
-        val color: Int,
-        val walletType: Wallet.Type,
-        val walletVersion: WalletVersion,
+        val wallet: WalletEntity
     ): Item(TYPE_ACCOUNT) {
 
-        constructor(wallet: WalletEntity) : this(
-            title = wallet.label.name,
-            emoji = wallet.label.emoji.toString(),
-            color = wallet.label.color,
-            walletType = wallet.type,
-            walletVersion = wallet.version
-        )
+        val title: String
+            get() = wallet.label.name
+
+        val emoji: String
+            get() = wallet.label.emoji.toString()
+
+        val color: Int
+            get() = wallet.label.color
+
+        val walletType: Wallet.Type
+            get() = wallet.type
+
+        val walletVersion: WalletVersion
+            get() = wallet.version
+
     }
 
     data object Space: Item(TYPE_SPACE)

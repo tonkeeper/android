@@ -66,18 +66,22 @@ class WidgetUpdaterWorker(
         get() = settingsRepository.currency
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        Log.d("WidgetUpdaterWorker", "start doWork")
         try {
-            val widgets = WidgetManager.getWidgets(context)
+            val widgets = WidgetManager.getWidgets(context).reversed()
+            Log.d("WidgetUpdaterWorker", "widgets=${widgets.size}")
             for (widget in widgets) {
                 if (widget.type == WidgetManager.TYPE_RATE) {
                     updateRateWidget(widget)
                 } else if (widget.type == WidgetManager.TYPE_BALANCE) {
                     updateBalanceWidget(widget)
+                } else {
+                    Log.w("WidgetUpdaterWorker", "unknown widget type=${widget.type}")
                 }
             }
             Result.success()
         } catch (e: Throwable) {
-            Log.e("WidgetUpdaterWorker", "doWork", e)
+            Log.e("WidgetUpdaterWorker", "error doWork", e)
             FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
         }
@@ -89,10 +93,10 @@ class WidgetUpdaterWorker(
     }
 
     private suspend fun updateRateWidget(widget: WidgetEntity) {
-        val params = widget.params as? WidgetParams.Rate ?: return
+        val params = widget.params as WidgetParams.Rate
         val wallet = getWallet(params.walletId)
-        val token = getToken(wallet, params.jettonAddress) ?: return
-        val rate = getRates(token.address) ?: return
+        val token = getToken(wallet, params.jettonAddress) ?: throw IllegalStateException("Token not found params=${params}; wallet=${wallet}")
+        val rate = getRates(token.address) ?: throw IllegalStateException("Rate not found token=${token}")
 
         updateRateWidget(
             widgetId = widget.id,
@@ -114,6 +118,7 @@ class WidgetUpdaterWorker(
         updatedDate: String,
         icon: Bitmap
     ) = withContext(Dispatchers.Main) {
+        Log.d("WidgetUpdaterWorker", "updateRateWidget: widgetId=$widgetId; jettonAddress=$jettonAddress; symbol=$symbol; price=$price; diff=$diff; updatedDate=$updatedDate")
         val removeView = RemoteViews(context.packageName, R.layout.widget_rate)
         removeView.setTextViewText(R.id.symbol, symbol)
         removeView.setOnClickIntent(context, R.id.content, Uri.parse("tonkeeper://token/$jettonAddress"))
@@ -136,9 +141,9 @@ class WidgetUpdaterWorker(
     }
 
     private suspend fun updateBalanceWidget(widget: WidgetEntity) {
-        val params = widget.params as? WidgetParams.Balance ?: return
-        val wallet = getWallet(params.walletId) ?: return
-        val balance = assetsManager.getTotalBalance(wallet, currency, refresh = true, sorted = true) ?: return
+        val params = widget.params as WidgetParams.Balance
+        val wallet = getWallet(params.walletId) ?: throw IllegalStateException("Wallet not found params=${params}")
+        val balance = assetsManager.getTotalBalance(wallet, currency, refresh = true, sorted = true) ?: throw IllegalStateException("Balance not found params=${params}; wallet=${wallet}")
         val balanceFormat = CurrencyFormatter.formatFiat(currency.code, balance)
         val drawable = context.drawable(R.drawable.ic_widget_logo_24, wallet.label.color)
 
@@ -158,6 +163,7 @@ class WidgetUpdaterWorker(
         balance: CharSequence,
         icon: Bitmap,
     ) = withContext(Dispatchers.Main) {
+        Log.d("WidgetUpdaterWorker", "updateBalanceWidget: widgetId=$widgetId; walletId=$walletId; label=$label; balance=$balance")
         val removeView = RemoteViews(context.packageName, R.layout.widget_balance)
         removeView.setOnClickIntent(context, R.id.content, Uri.parse("tonkeeper://pick/$walletId"))
         removeView.setTextViewText(R.id.fiat, balance)

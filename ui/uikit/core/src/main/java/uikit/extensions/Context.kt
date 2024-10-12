@@ -132,11 +132,6 @@ fun Context.getCurrentFocusEditText(): EditText? {
 }
 
 fun Context.hideKeyboard() {
-    val view = getCurrentFocus() ?: return
-    if (view is EditText) {
-        view.hideKeyboard()
-    } else {
-        view.getInsetsControllerCompat()?.hide(WindowInsetsCompat.Type.ime())
-        view.findViewByClass<EditText>()?.clearFocus()
-    }
+    getCurrentFocus()?.hideKeyboard()
 }
+

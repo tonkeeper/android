@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list
 
+import android.util.Log
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
@@ -7,6 +8,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AddressHolde
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AmountHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.ButtonHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.CustomAmountHolder
+import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.InputHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.PromoHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.RechargePackHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.SpaceHolder
@@ -40,8 +42,8 @@ class Adapter(
 
     override fun onViewDetachedFromWindow(holder: BaseListHolder<out BaseListItem>) {
         super.onViewDetachedFromWindow(holder)
-        if (holder is AmountHolder || holder is AddressHolder) {
-            holder.context.hideKeyboard()
+        if (holder is InputHolder) {
+            holder.inputFieldView.hideKeyboard()
         }
     }
 

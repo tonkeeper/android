@@ -21,6 +21,7 @@ import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.Window
 import android.view.animation.Animation
+import android.widget.EditText
 import android.widget.TextView
 import androidx.annotation.AnimRes
 import androidx.annotation.DrawableRes
@@ -398,4 +399,13 @@ fun View.findViewByClass(clazz: Class<out View>): View? {
         }
     }
     return null
+}
+
+fun View.hideKeyboard() {
+    val editText = if (this is EditText) this else findViewByClass<EditText>() ?: return
+    val controller = editText.getInsetsControllerCompat() ?: return
+    if (editText.hasFocus()) {
+        editText.clearFocus()
+        controller.hide(WindowInsetsCompat.Type.ime())
+    }
 }

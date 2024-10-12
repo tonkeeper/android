@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -48,6 +49,7 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
     }
 
     private val mode: PickerMode by lazy {  requireArguments().getParcelableCompat<PickerMode>(ARG_MODE)!! }
+    private var hasWalletPicked = false
 
     override val scaleBackground: Boolean
         get() = mode !is PickerMode.TonConnect
@@ -58,6 +60,7 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
         if (mode is PickerMode.TonConnect) {
             setResult(contract.createResult(wallet))
         } else {
+            hasWalletPicked = true
             viewModel.setWallet(wallet)
             finish()
         }
@@ -126,6 +129,10 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
     }
 
     private fun setNewList(list: List<Item>) {
+        if (hasWalletPicked) {
+            return
+        }
+
         updateBottomSheetHeight(list.height + headerContainer.height + (16.dp * 2))
         adapter.submitList(list)
     }
@@ -141,6 +148,10 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
     }
 
     private fun applyEditMove(edit: Boolean) {
+        if (hasWalletPicked) {
+            return
+        }
+
         actionButton.setText(if (edit) Localization.done else Localization.edit)
 
         adapter.submitList(adapter.currentList.map {

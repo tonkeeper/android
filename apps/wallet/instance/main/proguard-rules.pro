@@ -31,3 +31,8 @@
 }
 
 -keep class java.time.** { *; }
+
+-keep class com.tonapps.tonkeeper.worker.** { *; }
+
+-keep class com.tonapps.tonkeeper.manager.** { *; }
+

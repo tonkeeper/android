@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/content"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_widget"
@@ -24,7 +24,7 @@
             android:id="@+id/fiat"
             android:singleLine="true"
             android:textSize="32sp"
-            android:text="$ 0"
+            android:text="@string/loading"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/montserrat_medium"
             android:layout_width="match_parent"

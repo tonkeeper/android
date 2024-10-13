@@ -14,5 +14,5 @@ import org.koin.dsl.module
 val workerModule = module {
     worker { DAppPushToggleWorker(get(), get(), get(), get(), get()) }
     worker { PushToggleWorker(get<Context>(), get<WorkerParameters>(), get<AccountRepository>(), get<PushManager>()) }
-    workerOf(::WidgetUpdaterWorker)
+    worker { WidgetUpdaterWorker(get(), get(), get(), get(), get(), get(), get()) }
 }

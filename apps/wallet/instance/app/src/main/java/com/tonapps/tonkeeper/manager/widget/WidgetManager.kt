@@ -9,10 +9,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.whileTimeoutOrNull
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
+import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
 object WidgetManager {
@@ -27,6 +29,7 @@ object WidgetManager {
             } else if (type == TYPE_RATE) {
                 pinnedRate(context, extras)
             }
+            WidgetUpdaterWorker.update(context)
         }
 
         private fun pinnedBalance(context: Context, args: Bundle) {
@@ -34,7 +37,6 @@ object WidgetManager {
             val widgetId = getWidgetIds(context).lastOrNull() ?: return
             settings.setType(widgetId, TYPE_BALANCE)
             settings.setParams(widgetId, params)
-
         }
 
         private fun pinnedRate(context: Context, args: Bundle) {
@@ -72,15 +74,19 @@ object WidgetManager {
         install(activity, WidgetReceiver.Rate::class.java, TYPE_RATE, params)
     }
 
-    suspend fun getBalanceParams(widgetId: Int): WidgetParams.Balance? {
-        return whileTimeoutOrNull(5.seconds) {
+    private suspend fun getBalanceParams(widgetId: Int): WidgetParams.Balance {
+        return whileTimeoutOrNull(1.seconds) {
             settings.getParams<WidgetParams.Balance>(widgetId)
+        } ?: WidgetParams.Balance().also {
+            settings.setParams(widgetId, it)
         }
     }
 
-    suspend fun getRateParams(widgetId: Int): WidgetParams.Rate? {
-        return whileTimeoutOrNull(5.seconds) {
+    private suspend fun getRateParams(widgetId: Int): WidgetParams.Rate {
+        return whileTimeoutOrNull(1.seconds) {
             settings.getParams<WidgetParams.Rate>(widgetId)
+        } ?: WidgetParams.Rate().also {
+            settings.setParams(widgetId, it)
         }
     }
 
@@ -116,14 +122,37 @@ object WidgetManager {
         return (balanceIds + rateIds).sortedArray()
     }
 
-    suspend fun getWidgets(context: Context): List<WidgetEntity> {
+    private fun getType(widgetId: Int): String? {
+        val type = settings.getType(widgetId)
+        if (type != null) {
+            return type
+        }
+        try {
+            val info = appWidgetManager.getAppWidgetInfo(widgetId) ?: return null
+            return when (info.provider.className) {
+                WidgetReceiver.Balance::class.java.name -> {
+                    settings.setType(widgetId, TYPE_BALANCE)
+                    TYPE_BALANCE
+                }
+                WidgetReceiver.Rate::class.java.name -> {
+                    settings.setType(widgetId, TYPE_RATE)
+                    TYPE_RATE
+                }
+                else -> null
+            }
+        } catch (e: Throwable) {
+            return null
+        }
+    }
+
+    suspend fun getWidgets(context: Context, attempt: Int = 0): List<WidgetEntity> {
         val ids = getWidgetIds(context)
         val list = mutableListOf<WidgetEntity>()
         for (id in ids) {
-            val type = settings.getType(id) ?: continue
+            val type = getType(id) ?: continue
 
             if (type == TYPE_RATE) {
-                val params = getRateParams(id) ?: continue
+                val params = getRateParams(id)
                 list.add(WidgetEntity(
                     id = id,
                     params = params,
@@ -131,13 +160,18 @@ object WidgetManager {
                 ))
                 continue
             } else if (type == TYPE_BALANCE) {
-                val params = getBalanceParams(id) ?: continue
+                val params = getBalanceParams(id)
                 list.add(WidgetEntity(
                     id = id,
                     params = params,
                     type = TYPE_BALANCE
                 ))
+                continue
             }
+        }
+        if (list.isEmpty() && 3 > attempt) {
+            delay(200)
+            return getWidgets(context, attempt + 1)
         }
         return list.toList()
     }

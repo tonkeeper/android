@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.manager.widget
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.tonapps.extensions.constructor
 import com.tonapps.extensions.string
 
@@ -22,11 +23,7 @@ internal class WidgetSettings(context: Context) {
     }
 
      inline fun <reified T: WidgetParams> getParams(widgetId: Int): T? {
-         val params = resolveParams<T>(widgetId) ?: return null
-         if (params.isEmpty) {
-             return null
-         }
-         return params
+         return resolveParams<T>(widgetId)
      }
 
     private inline fun <reified T : WidgetParams> resolveParams(widgetId: Int): T? {
@@ -34,6 +31,7 @@ internal class WidgetSettings(context: Context) {
             val constructor = T::class.constructor(String::class, SharedPreferences::class)
             constructor.newInstance(keyParamsPrefix(widgetId), prefs)
         } catch (e: Throwable) {
+            Log.e("WidgetUpdaterWorker", "resolveParams", e)
             null
         }
     }

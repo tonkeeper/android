@@ -17,6 +17,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.circle
 import com.tonapps.extensions.isLocal
 import com.tonapps.extensions.short12
@@ -41,6 +42,7 @@ import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import uikit.extensions.activity
 import uikit.extensions.dp
 import uikit.extensions.drawable
 import java.text.SimpleDateFormat
@@ -66,29 +68,32 @@ class WidgetUpdaterWorker(
         get() = settingsRepository.currency
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        Log.d("WidgetUpdaterWorker", "start doWork")
         try {
             val widgets = WidgetManager.getWidgets(context).reversed()
-            Log.d("WidgetUpdaterWorker", "widgets=${widgets.size}")
+            if (widgets.isEmpty()) {
+                throw IllegalStateException("Widgets not found")
+            }
+            updateRates(widgets)
             for (widget in widgets) {
-                if (widget.type == WidgetManager.TYPE_RATE) {
-                    updateRateWidget(widget)
-                } else if (widget.type == WidgetManager.TYPE_BALANCE) {
-                    updateBalanceWidget(widget)
-                } else {
-                    Log.w("WidgetUpdaterWorker", "unknown widget type=${widget.type}")
+                when (widget.type) {
+                    WidgetManager.TYPE_RATE -> updateRateWidget(widget)
+                    WidgetManager.TYPE_BALANCE -> updateBalanceWidget(widget)
+                    else -> throw IllegalStateException("Unknown widget type=${widget.type}")
                 }
             }
             Result.success()
         } catch (e: Throwable) {
-            Log.e("WidgetUpdaterWorker", "error doWork", e)
             FirebaseCrashlytics.getInstance().recordException(e)
             Result.failure()
         }
     }
 
+    private suspend fun updateRates(widgets: List<WidgetEntity>) = withContext(Dispatchers.IO) {
+        val tokens = widgets.map { it.params }.filterIsInstance<WidgetParams.Rate>().map { it.jettonAddress.toRawAddress() }
+        ratesRepository.load(currency, tokens.distinct().toMutableList())
+    }
+
     private suspend fun getRates(tokenAddress: String): RateEntity? {
-        ratesRepository.load(currency, tokenAddress)
         return ratesRepository.getRates(currency, tokenAddress).rate(tokenAddress)
     }
 
@@ -118,7 +123,6 @@ class WidgetUpdaterWorker(
         updatedDate: String,
         icon: Bitmap
     ) = withContext(Dispatchers.Main) {
-        Log.d("WidgetUpdaterWorker", "updateRateWidget: widgetId=$widgetId; jettonAddress=$jettonAddress; symbol=$symbol; price=$price; diff=$diff; updatedDate=$updatedDate")
         val removeView = RemoteViews(context.packageName, R.layout.widget_rate)
         removeView.setTextViewText(R.id.symbol, symbol)
         removeView.setOnClickIntent(context, R.id.content, Uri.parse("tonkeeper://token/$jettonAddress"))
@@ -163,7 +167,6 @@ class WidgetUpdaterWorker(
         balance: CharSequence,
         icon: Bitmap,
     ) = withContext(Dispatchers.Main) {
-        Log.d("WidgetUpdaterWorker", "updateBalanceWidget: widgetId=$widgetId; walletId=$walletId; label=$label; balance=$balance")
         val removeView = RemoteViews(context.packageName, R.layout.widget_balance)
         removeView.setOnClickIntent(context, R.id.content, Uri.parse("tonkeeper://pick/$walletId"))
         removeView.setTextViewText(R.id.fiat, balance)
@@ -206,11 +209,21 @@ class WidgetUpdaterWorker(
         }
 
         fun update(context: Context) {
+            val activity = context.activity
+            if (activity == null) {
+                updateInternal(context)
+            } else {
+                activity.runOnUiThread {
+                    updateInternal(context)
+                }
+            }
+        }
+
+        private fun updateInternal(context: Context) {
             if (WidgetManager.hasWidgets(context)) {
                 start(context)
             }
         }
     }
-
 
 }

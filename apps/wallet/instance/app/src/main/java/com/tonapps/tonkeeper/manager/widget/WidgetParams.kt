@@ -14,19 +14,16 @@ abstract class WidgetParams(open val walletId: String): Parcelable {
         private fun key(prefix: String, key: String) = "${prefix}.${key}"
     }
 
-    open val isEmpty: Boolean
-        get() = walletId.isEmpty()
-
     abstract fun save(prefix: String, prefs: SharedPreferences)
 
     @Parcelize
     data class Rate(
-        override val walletId: String,
-        val jettonAddress: String
+        override val walletId: String = "",
+        val jettonAddress: String = "TON"
     ): WidgetParams(walletId) {
 
         constructor(prefix: String, prefs: SharedPreferences) : this(
-            walletId = prefs.getString(key(prefix, KEY_WALLET_ID), "")!!,
+            walletId = prefs.string(key(prefix, KEY_WALLET_ID)) ?: "",
             jettonAddress = prefs.string(key(prefix, KEY_JETTON_ADDRESS)) ?: "TON"
         )
 
@@ -41,13 +38,13 @@ abstract class WidgetParams(open val walletId: String): Parcelable {
 
     @Parcelize
     data class Balance(
-        override val walletId: String,
+        override val walletId: String = "",
         val jettonAddress: String? = null
     ): WidgetParams(walletId) {
 
         constructor(prefix: String, prefs: SharedPreferences) : this(
-            walletId = prefs.getString(key(prefix, KEY_WALLET_ID), "")!!,
-            jettonAddress = prefs.getString(key(prefix, KEY_JETTON_ADDRESS), null)
+            walletId = prefs.string(key(prefix, KEY_WALLET_ID)) ?: "",
+            jettonAddress = prefs.string(key(prefix, KEY_JETTON_ADDRESS))
         )
 
         override fun save(prefix: String, prefs: SharedPreferences) {

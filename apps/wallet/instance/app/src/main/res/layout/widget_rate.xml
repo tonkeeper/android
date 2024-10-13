@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/content"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_widget"
@@ -19,7 +19,7 @@
             android:textColor="#8994A3"
             android:textSize="13sp"
             android:fontFamily="@font/montserrat_medium"
-            android:text="TON"/>
+            android:text="@string/loading"/>
 
         <TextView
             android:id="@+id/diff"
@@ -28,7 +28,7 @@
             android:layout_marginLeft="6dp"
             android:textColor="#8994A3"
             android:textSize="13sp"
-            android:text="0%"
+            android:text="@string/loading"
             android:fontFamily="@font/montserrat_medium"
             android:singleLine="true"/>
     </LinearLayout>
@@ -51,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="32sp"
-            android:text="$ 0"
+            android:text="@string/loading"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/montserrat_medium"
             android:singleLine="true"/>

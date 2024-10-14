@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.app.Activity
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -82,7 +81,7 @@ class BatteryRefillViewModel(
         uiItems.add(uiItemBattery(batteryBalance, api.config))
         uiItems.add(Item.Space)
 
-        if (!api.config.batteryPromoDisabled) {
+        if (api.config.batteryPromoEnabled) {
             uiItems.add(Item.Promo(promoState))
             uiItems.add(Item.Space)
         }
@@ -286,6 +285,7 @@ class BatteryRefillViewModel(
     fun applyPromo(promo: String, isInitial: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             if (promo.isEmpty()) {
+                batteryRepository.setAppliedPromo(wallet.testnet, null)
                 promoStateFlow.tryEmit(PromoState.Default)
                 return@launch
             }
@@ -299,6 +299,7 @@ class BatteryRefillViewModel(
                 batteryRepository.setAppliedPromo(wallet.testnet, promo)
                 promoStateFlow.tryEmit(PromoState.Applied(promo))
             } catch (_: Exception) {
+                batteryRepository.setAppliedPromo(wallet.testnet, null)
                 promoStateFlow.tryEmit(PromoState.Error)
             }
         }

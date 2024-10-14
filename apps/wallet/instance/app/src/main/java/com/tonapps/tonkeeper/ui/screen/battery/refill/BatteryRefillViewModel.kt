@@ -81,7 +81,7 @@ class BatteryRefillViewModel(
         uiItems.add(uiItemBattery(batteryBalance, api.config))
         uiItems.add(Item.Space)
 
-        if (api.config.batteryPromoEnabled) {
+        if (!api.config.batteryPromoDisable) {
             uiItems.add(Item.Promo(promoState))
             uiItems.add(Item.Space)
         }

@@ -84,7 +84,7 @@ class BatteryRefillViewModel(
         uiItems.add(uiItemBattery(batteryBalance, api.config))
         uiItems.add(Item.Space)
 
-        if (!api.config.batteryPromoDisable) {
+        if (BuildConfig.DEBUG || !api.config.batteryPromoDisable) {
             uiItems.add(Item.Promo(promoState))
             uiItems.add(Item.Space)
         }
@@ -137,7 +137,11 @@ class BatteryRefillViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            billingManager.getProducts(api.config.iapPackages.map { it.productId })
+            if (environment.isGooglePlayAvailable) {
+                billingManager.loadProducts(api.config.iapPackages.map { it.productId })
+            } else {
+                billingManager.setEmptyProducts()
+            }
 
             val appliedPromo = batteryRepository.getAppliedPromo(wallet.testnet)
 
@@ -296,11 +300,12 @@ class BatteryRefillViewModel(
                 if (isInitial) {
                     delay(2000)
                 }
-                val token = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("proof token is null")
-                api.batteryVerifyPurchasePromo(wallet.testnet, promo)
-                api.batteryApplyPromoCode(token, wallet.testnet, promo)
-                batteryRepository.setAppliedPromo(wallet.testnet, promo)
-                _promoStateFlow.value = PromoState.Applied(promo)
+                if (api.batteryVerifyPurchasePromo(wallet.testnet, promo)) {
+                    batteryRepository.setAppliedPromo(wallet.testnet, promo)
+                    _promoStateFlow.value = PromoState.Applied(promo)
+                } else {
+                    throw IllegalStateException("promo code is invalid")
+                }
             } catch (_: Exception) {
                 batteryRepository.setAppliedPromo(wallet.testnet, null)
                 _promoStateFlow.value = PromoState.Error

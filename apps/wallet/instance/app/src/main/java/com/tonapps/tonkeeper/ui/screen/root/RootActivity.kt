@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
@@ -13,7 +14,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.toUriOrNull
+import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
@@ -34,6 +38,8 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.Theme
+import com.tonapps.wallet.data.core.entity.RawMessageEntity
+import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.LockScreen
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -43,6 +49,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.ton.cell.Cell
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
@@ -200,7 +207,8 @@ class RootActivity: BaseWalletActivity() {
                 tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
                 amountNano = event.amount ?: 0L,
                 text = event.text,
-                wallet = event.wallet
+                wallet = event.wallet,
+                bin = event.bin
             )
             is RootEvent.CloseCurrentTonConnect -> closeCurrentTonConnect {}
             else -> { }
@@ -211,14 +219,48 @@ class RootActivity: BaseWalletActivity() {
         removeByClass(runnable, SendTransactionScreen::class.java, TonConnectScreen::class.java)
     }
 
+    private fun openSign(
+        wallet: WalletEntity,
+        targetAddress: String,
+        amountNano: Long,
+        bin: Cell
+    ) {
+
+        val request = SignRequestEntity.Builder()
+            .setFrom(wallet.contract.address)
+            .setValidUntil(currentTimeSeconds())
+            .addMessage(RawMessageEntity(
+                addressValue = targetAddress,
+                amount = amountNano,
+                stateInitValue = null,
+                payloadValue = bin.base64()
+            ))
+            .setTestnet(wallet.testnet)
+            .build()
+
+        val screen = SendTransactionScreen.newInstance(wallet, request)
+        add(screen)
+    }
+
     private fun openSend(
         wallet: WalletEntity,
         targetAddress: String? = null,
         tokenAddress: String = TokenEntity.TON.address,
         amountNano: Long = 0,
         text: String? = null,
-        nftAddress: String? = null
+        nftAddress: String? = null,
+        bin: Cell? = null
     ) {
+        if (bin != null && 0 >= amountNano) {
+            toast(Localization.invalid_link)
+            return
+        }
+
+        if (targetAddress != null && amountNano > 0 && bin != null) {
+            openSign(wallet, targetAddress, amountNano, bin)
+            return
+        }
+
         val fragment = supportFragmentManager.findFragment<SendScreen>()
         if (fragment == null) {
             add(
@@ -229,6 +271,7 @@ class RootActivity: BaseWalletActivity() {
                     amountNano = amountNano,
                     text = text,
                     nftAddress = nftAddress,
+                    bin = bin
                 )
             )
         } else {
@@ -237,6 +280,7 @@ class RootActivity: BaseWalletActivity() {
                 tokenAddress = tokenAddress,
                 amountNano = amountNano,
                 text = text,
+                bin = bin
             )
         }
     }
@@ -320,9 +364,7 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun openTelegramLink(uri: Uri) {
-        val intent = Intent(Intent.ACTION_VIEW, uri)
-        intent.`package` = "org.telegram.messenger"
-        if (!safeStartActivity(intent)) {
+        if (!safeStartActivity(Intent(Intent.ACTION_VIEW, uri))) {
             BrowserHelper.open(this, uri)
         }
     }

@@ -57,6 +57,8 @@ data class SignRequestEntity(
 
         fun setNetwork(network: TonNetwork) = apply { this.network = network }
 
+        fun setTestnet(testnet: Boolean) = setNetwork(if (testnet) TonNetwork.TESTNET else TonNetwork.MAINNET)
+
         fun addMessage(message: RawMessageEntity) = apply { messages.add(message) }
 
         fun build(): SignRequestEntity {

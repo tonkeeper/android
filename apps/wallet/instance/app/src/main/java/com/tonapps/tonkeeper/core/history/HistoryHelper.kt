@@ -113,7 +113,7 @@ class HistoryHelper(
         if (burnAddress.equalsAddress(account.address) || (account.name != null && burnAddress == account.name)) {
             return true
         }
-        return "UQCNzZIsoe75gjl8KIwUJW1Fawt-7IbsFwd0ubGIFkig159E".equalsAddress(account.address)
+        return "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ".equalsAddress(account.address)
     }
 
     private fun sort(list: List<HistoryItem>): List<HistoryItem.Event> {
@@ -410,7 +410,17 @@ class HistoryHelper(
 
         if (action.jettonSwap != null) {
             val jettonSwap = action.jettonSwap!!
-            val jettonPreview = jettonSwap.jettonPreview!!
+            val jettonPreview = jettonSwap.jettonPreview ?: return createUnknown(
+                index = index,
+                txId = txId,
+                action = action,
+                date = date,
+                timestamp = timestamp,
+                simplePreview = simplePreview,
+                dateDetails = dateDetails,
+                isScam = isScam,
+                wallet = wallet
+            )
             val token = jettonSwap.jettonPreview!!.address
             val amount = Coins.ofNano(jettonSwap.amount, jettonPreview.decimals)
             val tokenIn = jettonSwap.tokenIn

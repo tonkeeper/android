@@ -22,6 +22,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -176,7 +177,7 @@ class BatteryRechargeViewModel(
 
         uiItems.addAll(uiItemsPacks(packs, selectedPackType, customAmount))
 
-        if (!api.config.batteryPromoDisable) {
+        if (BuildConfig.DEBUG || !api.config.batteryPromoDisable) {
             uiItems.add(Item.Space)
             uiItems.add(Item.Promo(promoState))
         }
@@ -519,11 +520,13 @@ class BatteryRechargeViewModel(
             }
             promoStateFlow.tryEmit(PromoState.Loading())
             try {
-                api.batteryVerifyPurchasePromo(wallet.testnet, promo)
-                val token = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("proof token is null")
-                batteryRepository.setAppliedPromo(wallet.testnet, promo)
-                api.batteryApplyPromoCode(token, wallet.testnet, promo)
-                promoStateFlow.tryEmit(PromoState.Applied(promo))
+                if (api.batteryVerifyPurchasePromo(wallet.testnet, promo)) {
+                    batteryRepository.setAppliedPromo(wallet.testnet, promo)
+                    promoStateFlow.tryEmit(PromoState.Applied(promo))
+                } else {
+                    throw IllegalStateException("promo code is invalid")
+                }
+
             } catch (_: Exception) {
                 batteryRepository.setAppliedPromo(wallet.testnet, null)
                 promoStateFlow.tryEmit(PromoState.Error)

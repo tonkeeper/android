@@ -14,6 +14,9 @@ import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toastLoading
@@ -23,6 +26,7 @@ import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
@@ -39,6 +43,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
@@ -60,6 +65,8 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private val isCanSend: Boolean
         get() = !wallet.isWatchOnly && !nftEntity.inSale && nftEntity.ownerAddress.equalsAddress(wallet.address)
+
+    private val rootViewModel: RootViewModel by activityViewModel()
 
     override val viewModel: NftViewModel by walletViewModel { parametersOf(nftEntity) }
 
@@ -220,7 +227,12 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     }
 
     private fun mustOpenButtonDApp(url: String) {
-        navigation?.add(DAppScreen.newInstance(wallet, url = url.toUri()))
+        if (url.startsWith("ton:")) {
+            val uri = url.toUriOrNull() ?: return
+            rootViewModel.processDeepLink(uri, false, null, false)
+        } else {
+            navigation?.add(DAppScreen.newInstance(wallet, url = url.toUri()))
+        }
         finish()
     }
 

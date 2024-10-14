@@ -104,6 +104,7 @@ class SendViewModel(
         val encryptedComment: Boolean = false,
         val max: Boolean = false,
         val amountCurrency: Boolean = false,
+        val bin: Cell? = null
     )
 
     private val currency = settingsRepository.currency
@@ -790,6 +791,12 @@ class SendViewModel(
         }.filterNotNull().onEach {
             _uiEventFlow.tryEmit(it)
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+    }
+
+    fun userInputBin(bin: Cell?) {
+        _userInputFlow.update {
+            it.copy(bin = bin)
+        }
     }
 
     fun userInputEncryptedComment(encrypted: Boolean) {

@@ -15,6 +15,7 @@ data class DeepLink(
 
             // fix for bad tg scheme
             url = url.replace("tg:resolve", "tg://resolve")
+            url = url.replace("\\u0026", "&")
 
             return Uri.parse(url)
         }

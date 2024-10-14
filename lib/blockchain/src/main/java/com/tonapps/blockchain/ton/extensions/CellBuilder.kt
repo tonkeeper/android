@@ -44,6 +44,15 @@ fun CellBuilder.storeStringTail(src: String) = apply {
     writeBytes(src.toByteArray(), this)
 }
 
+fun CellBuilder.storeMaybeStringTail(src: String?) = apply {
+    if (src.isNullOrEmpty()) {
+        storeBit(false)
+    } else {
+        storeBit(true)
+        storeStringTail(src)
+    }
+}
+
 private fun writeBytes(src: ByteArray, builder: CellBuilder) {
     if (src.isNotEmpty()) {
         val bytes = floor(builder.availableBits / 8f).toInt()
@@ -75,6 +84,15 @@ fun CellBuilder.storeMaybeRef(value: Cell?) = apply {
     } else {
         storeBit(true)
         storeRef(value)
+    }
+}
+
+fun CellBuilder.storeMaybeAddress(value: MsgAddressInt?) = apply {
+    if (value == null) {
+        storeBit(false)
+    } else {
+        storeBit(true)
+        storeAddress(value)
     }
 }
 

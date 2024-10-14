@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
@@ -45,9 +47,7 @@ class BillingManager(
         .build()
 
     private val _productsFlow = MutableStateFlow<List<ProductDetails>?>(null)
-    val productsFlow = _productsFlow.asStateFlow().filterNotNull().filter {
-        it.isNotEmpty()
-    }
+    val productsFlow = _productsFlow.asStateFlow().filterNotNull()
 
     private val _purchasesUpdatedFlow = MutableEffectFlow<PurchasesUpdated>()
     val purchasesUpdatedFlow = _purchasesUpdatedFlow.shareIn(scope, SharingStarted.Lazily, 0).distinctUntilChanged()
@@ -63,12 +63,37 @@ class BillingManager(
         client.consumePurchase(params)
     }
 
-    suspend fun getProducts(
+    suspend fun loadProducts(
         productIds: List<String>,
         productType: String = ProductType.INAPP
-    ) = billingClient.ready { client ->
+    ) {
+        val products = withTimeoutOrNull(5.seconds) {
+            getProducts(productIds, productType)
+        } ?: emptyList()
+
+        _productsFlow.value = products
+    }
+
+    fun setEmptyProducts() {
+        _productsFlow.value = emptyList()
+    }
+
+    private suspend fun getProductDetails(client: BillingClient, params: QueryProductDetailsParams): List<ProductDetails> = suspendCancellableCoroutine { continuation ->
+        client.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                continuation.resume(productDetailsList)
+            } else {
+                continuation.resumeWithException(BillingException(billingResult))
+            }
+        }
+    }
+
+    private suspend fun getProducts(
+        productIds: List<String>,
+        productType: String = ProductType.INAPP
+    ): List<ProductDetails> = billingClient.ready { client ->
         if (productIds.isEmpty()) {
-            return@ready
+            return@ready emptyList()
         }
 
         val productList = productIds.map { productId ->
@@ -82,17 +107,7 @@ class BillingManager(
             .setProductList(productList)
             .build()
 
-        client.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                _productsFlow.value = productDetailsList
-            } else {
-                _productsFlow.value = emptyList()  // In case of an error
-            }
-        }
-    }
-
-    fun setEmptyProducts() {
-        _productsFlow.value = emptyList()
+        getProductDetails(client, params)
     }
 
     private suspend fun getPendingPurchases(client: BillingClient): List<Purchase> {

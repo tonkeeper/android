@@ -53,7 +53,7 @@ val Uri.hostOrNull: String?
     get() = host?.ifBlank { null }
 
 fun Uri.query(key: String): String? {
-    return getQueryParameter(key)?.ifBlank { null }
+    return getQueryParameter(key)?.trim()?.ifBlank { null }
 }
 
 fun Uri.queryLong(key: String): Long? {

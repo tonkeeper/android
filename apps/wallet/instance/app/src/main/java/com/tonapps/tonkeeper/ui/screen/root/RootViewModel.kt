@@ -21,6 +21,7 @@ import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.currentTimeSeconds
@@ -94,6 +95,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.ton.cell.Cell
 import uikit.extensions.activity
 
 class RootViewModel(
@@ -432,7 +434,7 @@ class RootViewModel(
                 to = route.to
             ))
         } else if (route is DeepLinkRoute.Battery && !wallet.isWatchOnly) {
-            openScreen(BatteryScreen.newInstance(wallet, route.promocode))
+            openBattery(wallet, route)
         } else if (route is DeepLinkRoute.Purchase && !wallet.isWatchOnly) {
             openScreen(PurchaseScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.Exchange && !wallet.isWatchOnly) {
@@ -492,6 +494,10 @@ class RootViewModel(
         }
     }
 
+    private suspend fun openBattery(wallet: WalletEntity, route: DeepLinkRoute.Battery) {
+        openScreen(BatteryScreen.newInstance(wallet, route.promocode))
+    }
+
     private suspend fun openTokenViewer(wallet: WalletEntity, route: DeepLinkRoute.Jetton) {
         val token = tokenRepository.getToken(wallet.accountId, wallet.testnet, route.address) ?: return
         openScreen(TokenScreen.newInstance(wallet, token.address, token.name, token.symbol))
@@ -502,12 +508,24 @@ class RootViewModel(
             toast(Localization.expired_link)
             return
         }
+        val bin: Cell? = if (route.bin.isNullOrEmpty()) {
+            null
+        } else {
+            try {
+                route.bin.parseCell()
+            } catch (e: Throwable) {
+                toast(Localization.invalid_link)
+                return
+            }
+        }
+
         _eventFlow.tryEmit(RootEvent.Transfer(
             wallet = wallet,
             address = route.address,
             amount = route.amount,
             text = route.text,
             jettonAddress = route.jettonAddress,
+            bin = bin
         ))
     }
 

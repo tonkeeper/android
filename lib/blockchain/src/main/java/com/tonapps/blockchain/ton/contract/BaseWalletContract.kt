@@ -1,6 +1,12 @@
 package com.tonapps.blockchain.ton.contract
 
+import android.util.Log
+import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.storeAddress
+import com.tonapps.blockchain.ton.extensions.storeMaybeAddress
+import com.tonapps.blockchain.ton.extensions.storeMaybeStringTail
+import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeStringTail
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.tlb.CellStringTlbConstructor
@@ -256,18 +262,14 @@ abstract class BaseWalletContract(
         return cell
     }
 
-    fun createBatteryBody(address: MsgAddressInt? = null, appliedPromo: String? = null): Cell {
-        val cell = buildCell {
-            storeUInt(0xb7b2515f, 32)
-            storeBit(address != null)
-            if (address != null) {
-                storeTlb(MsgAddressInt, address)
-            }
-            storeBit(appliedPromo.isNullOrEmpty())
-            if (!appliedPromo.isNullOrEmpty()) {
-               storeStringTail(appliedPromo)
-            }
+    fun createBatteryBody(
+        address: MsgAddressInt? = null,
+        appliedPromo: String? = null
+    ): Cell {
+        return buildCell {
+            storeOpCode(TONOpCode.BATTERY_PAYLOAD)
+            storeMaybeAddress(address)
+            storeMaybeStringTail(appliedPromo)
         }
-        return cell
     }
 }

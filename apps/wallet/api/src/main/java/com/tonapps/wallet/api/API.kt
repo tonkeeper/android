@@ -505,14 +505,6 @@ class API(
         }
     }
 
-    fun batteryApplyPromoCode(token: String, testnet: Boolean, code: String): Boolean {
-        return withRetry {
-            battery(testnet).promoCodeBatteryPurchase(token, PromoCodeBatteryPurchaseRequest(
-                promoCode = code
-            )).success
-        } ?: false
-    }
-
     fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean {
         return withRetry {
             battery(testnet).verifyPurchasePromo(code)

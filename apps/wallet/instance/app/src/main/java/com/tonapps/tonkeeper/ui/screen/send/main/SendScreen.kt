@@ -43,6 +43,7 @@ import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
 import org.koin.core.parameter.parametersOf
+import org.ton.cell.Cell
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
@@ -257,7 +258,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             }
         }
 
-        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress)
+        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress, args.bin)
     }
 
     private fun signAndSend() {
@@ -275,7 +276,11 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     fun initializeArgs(
-        targetAddress: String?, amountNano: Long, text: String?, tokenAddress: String
+        targetAddress: String?,
+        amountNano: Long,
+        text: String?,
+        tokenAddress: String,
+        bin: Cell?
     ) {
         viewModel.initializeTokenAndAmount(
             tokenAddress = tokenAddress,
@@ -284,6 +289,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
         text?.let { commentInput.text = it }
         targetAddress?.let { addressInput.text = it }
+        bin?.let { viewModel.userInputBin(it) }
     }
 
     private fun applyCommentEncryptState(enabled: Boolean) {
@@ -545,12 +551,13 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             tokenAddress: String = TokenEntity.TON.address,
             amountNano: Long = 0,
             text: String? = null,
-            nftAddress: String? = null
+            nftAddress: String? = null,
+            bin: Cell? = null
         ): SendScreen {
             val screen = SendScreen(wallet)
             screen.setArgs(
                 SendArgs(
-                    targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""
+                    targetAddress, tokenAddress, amountNano, text, nftAddress ?: "", bin
                 )
             )
             return screen

@@ -15,6 +15,7 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.consumePurchase
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -108,6 +109,7 @@ class BillingManager(
 
     suspend fun requestPurchase(
         activity: Activity,
+        wallet: WalletEntity,
         productDetails: ProductDetails
     ) = billingClient.ready { client ->
         val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
@@ -115,6 +117,8 @@ class BillingManager(
             .build()
 
         val billingFlowParams = BillingFlowParams.newBuilder()
+            .setObfuscatedAccountId(wallet.accountId)
+            .setObfuscatedProfileId(wallet.accountId)
             .setProductDetailsParamsList(listOf(productDetailsParams))
             .build()
 

@@ -352,12 +352,12 @@ class AccountRepository(
     }
 
     private fun createTonProofToken(wallet: WalletEntity): String? {
+        val payload = api.tonconnectPayload() ?: return null
         return try {
             val publicKey = wallet.publicKey
             val contract = BaseWalletContract.create(publicKey, WalletVersion.V4R2.title, wallet.testnet)
             val secretKey = vaultSource.getPrivateKey(publicKey) ?: throw Exception("private key not found")
             val address = contract.address
-            val payload = api.tonconnectPayload() ?: throw Exception("payload not found")
             val proof = WalletProof.signTonkeeper(
                 address = address,
                 secretKey = secretKey,

@@ -11,6 +11,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.deeplink.DeepLink

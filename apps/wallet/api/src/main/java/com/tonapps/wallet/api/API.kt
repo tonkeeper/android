@@ -42,6 +42,7 @@ import io.batteryapi.apis.BatteryApi
 import io.batteryapi.apis.BatteryApi.UnitsGetBalance
 import io.batteryapi.models.Balance
 import io.batteryapi.models.Config
+import io.batteryapi.models.PromoCodeBatteryPurchaseRequest
 import io.batteryapi.models.RechargeMethods
 import io.tonapi.infrastructure.ClientException
 import io.tonapi.infrastructure.Serializer
@@ -502,6 +503,21 @@ class API(
         } catch (e: Throwable) {
             return null
         }
+    }
+
+    fun batteryApplyPromoCode(token: String, testnet: Boolean, code: String): Boolean {
+        return withRetry {
+            battery(testnet).promoCodeBatteryPurchase(token, PromoCodeBatteryPurchaseRequest(
+                promoCode = code
+            )).success
+        } ?: false
+    }
+
+    fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean {
+        return withRetry {
+            battery(testnet).verifyPurchasePromo(code)
+            true
+        } ?: false
     }
 
     fun tonconnectProof(address: String, proof: String): String {

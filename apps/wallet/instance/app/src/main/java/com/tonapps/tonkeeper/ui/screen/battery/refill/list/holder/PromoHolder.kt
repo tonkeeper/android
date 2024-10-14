@@ -62,6 +62,8 @@ class PromoHolder(
     private fun applyPromoCode(item: Item.Promo) {
         if (inputView.text.isNotBlank() && inputView.text != item.appliedPromo && !item.isLoading) {
             onSubmitPromo(inputView.text)
+        } else if (inputView.text.isBlank()) {
+            onSubmitPromo("")
         }
     }
 }

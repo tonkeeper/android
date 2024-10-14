@@ -9,6 +9,12 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.google.android.play.core.appupdate.AppUpdateInfo
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
@@ -22,6 +28,7 @@ import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -72,6 +79,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
@@ -84,7 +92,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import uikit.extensions.activity
 
 class RootViewModel(
     app: Application,
@@ -99,10 +109,15 @@ class RootViewModel(
     private val browserRepository: BrowserRepository,
     private val pushManager: PushManager,
     private val tokenRepository: TokenRepository,
+    private val environment: Environment,
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
     private val savedState = RootModelState(savedStateHandle)
+
+    private val appUpdateManager: AppUpdateManager by lazy {
+        AppUpdateManagerFactory.create(context)
+    }
 
     private val selectedWalletFlow: Flow<WalletEntity> = accountRepository.selectedWalletFlow
 
@@ -165,6 +180,35 @@ class RootViewModel(
         }.filterNotNull().onEach {
             settingsRepository.country = it
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+
+
+        viewModelScope.launch(Dispatchers.IO) {
+            if (environment.isGooglePlayAvailable) {
+                delay(2000)
+                checkAppUpdate()
+            }
+        }
+    }
+
+    private suspend fun checkAppUpdate() = withContext(Dispatchers.IO) {
+        try {
+            val updateInfo = appUpdateManager.appUpdateInfo.await()
+            if (updateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
+                startUpdateFlow(updateInfo)
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
+    }
+
+    private suspend fun startUpdateFlow(appUpdateInfo: AppUpdateInfo) = withContext(Dispatchers.Main) {
+        val activity = context.activity ?: return@withContext
+        appUpdateManager.startUpdateFlowForResult(
+            appUpdateInfo,
+            activity,
+            AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE),
+            0
+        )
     }
 
     fun connectTonConnectBridge() {

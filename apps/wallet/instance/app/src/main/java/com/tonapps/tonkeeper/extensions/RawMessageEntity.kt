@@ -1,7 +1,10 @@
 package com.tonapps.tonkeeper.extensions
 
+import android.util.Log
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonTransferHelper
+import com.tonapps.blockchain.ton.extensions.loadAddress
+import com.tonapps.blockchain.ton.extensions.loadCoins
 import com.tonapps.blockchain.ton.extensions.loadMaybeRef
 import com.tonapps.blockchain.ton.extensions.loadOpCode
 import com.tonapps.blockchain.ton.extensions.storeAddress
@@ -29,20 +32,19 @@ private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
         TONOpCode.STONFI_SWAP -> {
             builder
                 .storeOpCode(TONOpCode.STONFI_SWAP)
-                .storeAddress(slice.loadTlb(MsgAddressInt.tlbCodec()))
-                .storeCoins(slice.loadTlb(Coins.tlbCodec()))
-                .storeAddress(slice.loadTlb(MsgAddressInt.tlbCodec()))
+                .storeAddress(slice.loadAddress())
+                .storeCoins(slice.loadCoins())
+                .storeAddress(slice.loadAddress())
 
             if (slice.loadBit()) {
-                slice.loadTlb(MsgAddressInt.tlbCodec())
+                slice.loadAddress()
             }
             slice.endParse()
 
             builder
                 .storeBit(true)
-                .storeTlb(MsgAddressInt, excessesAddress)
-
-            builder.endCell()
+                .storeAddress(excessesAddress)
+                .endCell()
         }
         TONOpCode.NFT_TRANSFER -> payload
         TONOpCode.JETTON_TRANSFER -> payload
@@ -60,15 +62,15 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
     }
 
     val queryId = slice.loadUInt(64)
-    val jettonAmount = slice.loadTlb(Coins.tlbCodec())
-    val receiverAddress = slice.loadTlb(MsgAddressInt.tlbCodec())
-    val excessesAddress = slice.loadTlb(MsgAddressInt.tlbCodec())
+    val jettonAmount = slice.loadCoins()
+    val receiverAddress = slice.loadAddress()
+    val excessesAddress = slice.loadAddress()
     val customPayload = slice.loadMaybeRef()
     if (customPayload != null) {
         return payload
     }
 
-    val forwardAmount = slice.loadTlb(Coins.tlbCodec()).amount.toLong()
+    val forwardAmount = slice.loadCoins().amount.toLong()
     val forwardBody = slice.loadMaybeRef()
 
     return TonTransferHelper.jetton(

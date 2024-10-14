@@ -17,7 +17,6 @@ class Environment(context: Context) {
     }
 
     val isGooglePlayAvailable: Boolean by lazy {
-        // installerSource == AppInstall.Source.GOOGLE_PLAY && isGooglePlayServicesAvailable
-        true
+        installerSource == AppInstall.Source.GOOGLE_PLAY && isGooglePlayServicesAvailable
     }
 }

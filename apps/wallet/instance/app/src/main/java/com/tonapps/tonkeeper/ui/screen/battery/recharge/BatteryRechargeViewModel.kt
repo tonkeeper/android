@@ -176,7 +176,7 @@ class BatteryRechargeViewModel(
 
         uiItems.addAll(uiItemsPacks(packs, selectedPackType, customAmount))
 
-        if (!api.config.batteryPromoDisable) {
+        if (true) { // !api.config.batteryPromoDisable
             uiItems.add(Item.Space)
             uiItems.add(Item.Promo(promoState))
         }
@@ -519,8 +519,10 @@ class BatteryRechargeViewModel(
             }
             promoStateFlow.tryEmit(PromoState.Loading())
             try {
-                api.battery(wallet.testnet).verifyPurchasePromo(promo)
+                api.batteryVerifyPurchasePromo(wallet.testnet, promo)
+                val token = accountRepository.requestTonProofToken(wallet) ?: throw IllegalStateException("proof token is null")
                 batteryRepository.setAppliedPromo(wallet.testnet, promo)
+                api.batteryApplyPromoCode(token, wallet.testnet, promo)
                 promoStateFlow.tryEmit(PromoState.Applied(promo))
             } catch (_: Exception) {
                 batteryRepository.setAppliedPromo(wallet.testnet, null)

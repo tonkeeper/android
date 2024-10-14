@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.usecase.emulation
 
 import android.util.Log
+import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
+import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.tonkeeper.extensions.toGrams
@@ -19,6 +21,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.JettonQuantity
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.Risk
+import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import java.math.BigDecimal
@@ -56,7 +59,7 @@ class EmulationUseCase(
         internalMessage: Boolean
     ): Cell {
         return message.createSignedBody(
-            privateKey = EmptyPrivateKeyEd25519,
+            privateKey = PrivateKeyEd25519(AndroidSecureRandom),
             internalMessage = internalMessage
         )
     }

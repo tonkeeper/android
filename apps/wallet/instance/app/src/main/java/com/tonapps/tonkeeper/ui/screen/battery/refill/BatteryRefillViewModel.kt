@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.app.Activity
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -80,7 +81,6 @@ class BatteryRefillViewModel(
         val uiItems = mutableListOf<Item>()
         uiItems.add(uiItemBattery(batteryBalance, api.config))
         uiItems.add(Item.Space)
-
 
         if (!api.config.batteryPromoDisabled) {
             uiItems.add(Item.Promo(promoState))

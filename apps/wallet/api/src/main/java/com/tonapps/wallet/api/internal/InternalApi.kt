@@ -3,6 +3,7 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
+import android.util.Log
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale

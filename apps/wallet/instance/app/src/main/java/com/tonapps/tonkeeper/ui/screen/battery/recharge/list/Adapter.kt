@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list
 
-import android.util.Log
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType

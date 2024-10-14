@@ -43,12 +43,18 @@ sealed class Item(type: Int) : BaseListItem(type) {
         val isInsufficientBalance: Boolean,
         val isLessThanMin: Boolean,
         val formattedCharges: CharSequence,
+        val value: Double,
     ) : Item(TYPE_AMOUNT)
 
     data class Address(
-        val loading: Boolean,
-        val error: Boolean
-    ) : Item(TYPE_ADDRESS)
+        val state: State,
+        val value: String,
+    ) : Item(TYPE_ADDRESS) {
+
+        enum class State {
+            Loading, Error, Default, Success
+        }
+    }
 
     data class Button(
         val isEnabled: Boolean,

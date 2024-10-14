@@ -148,10 +148,20 @@ class BatteryRechargeViewModel(
         val batteryReservedAmount = rechargeMethod.fromTon(api.config.batteryReservedAmount)
 
         if (args.isGift) {
+            val addressState = if (destinationLoading) {
+                Item.Address.State.Loading
+            } else if (destination is SendDestination.NotFound) {
+                Item.Address.State.Error
+            } else if (destination is SendDestination.Account) {
+                Item.Address.State.Success
+            } else {
+                Item.Address.State.Default
+            }
+
             uiItems.add(
                 Item.Address(
-                    loading = destinationLoading,
-                    error = destination is SendDestination.NotFound
+                    state = addressState,
+                    value = _addressFlow.value
                 )
             )
             uiItems.add(Item.Space)
@@ -209,6 +219,7 @@ class BatteryRechargeViewModel(
                     isInsufficientBalance = remainingBalance.isNegative,
                     isLessThanMin = isLessThanMin,
                     formattedCharges = charges.toString(),
+                    value = _amountFlow.value,
                 )
             )
         }
@@ -265,7 +276,7 @@ class BatteryRechargeViewModel(
     }
 
     fun updateAddress(address: String) {
-        _addressFlow.tryEmit(address)
+        _addressFlow.value = address
     }
 
     fun updateAmount(amount: Double) {

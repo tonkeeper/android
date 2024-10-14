@@ -62,7 +62,7 @@ data class RawMessageEntity(
             if (value is Long) {
                 return value
             }
-            return value.toString().toLong()
+            return value.toString().toLongOrNull() ?: 0
         }
     }
 

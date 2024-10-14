@@ -23,20 +23,27 @@ class AmountHolder(
         get() = amountView
 
     override fun onBind(item: Item.Amount) {
-        amountView.doOnValueChange = onValueChange
+        amountView.doOnValueChange = { it ->
+            if (it != item.value) {
+                onValueChange(it)
+            }
+        }
         amountView.suffix = item.symbol
 
         if (amountView.decimals != item.decimals) {
             amountView.setDecimals(item.decimals)
         }
+
         currencyView.text = item.formattedCharges
         applyAvailable(item.formattedRemaining, item.formattedMinAmount, item.isInsufficientBalance, item.isLessThanMin)
         amountView.requestFocus()
+        amountView.postOnAnimation { setValue(item.value) }
     }
 
-    override fun onUnbind() {
-        super.onUnbind()
-        amountView.setValue(0.0)
+    private fun setValue(value: Double) {
+        if (value > 0 && value != amountView.getValue()) {
+            amountView.setValue(value)
+        }
     }
 
     private fun applyAvailable(

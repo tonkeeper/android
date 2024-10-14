@@ -1,20 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewGroup.inflate
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.setPadding
-import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
@@ -43,16 +37,11 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
-import uikit.extensions.applyBottomInsets
-import uikit.extensions.bottomBarsOffset
 import uikit.extensions.collectFlow
-import uikit.extensions.doKeyboardAnimation
-import uikit.extensions.hideKeyboard
 import uikit.extensions.setPaddingBottom
 import uikit.widget.FrescoView
 import uikit.widget.InputView
 import java.util.UUID
-import kotlin.math.max
 
 class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 

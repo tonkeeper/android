@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
@@ -27,12 +28,14 @@ class AddressHolder(
 
     override fun onBind(item: Item.Address) {
         inputView.doOnTextChange = { text ->
-            onTextChange(text)
-            inputView.loading = text.isNotBlank()
-            addressActionsView.visibility = if (text.isBlank()) View.VISIBLE else View.GONE
+            if (text != item.value) {
+                onTextChange(text)
+                inputView.loading = text.isNotBlank()
+                addressActionsView.visibility = if (text.isBlank()) View.VISIBLE else View.GONE
+            } else {
+                applyState(item)
+            }
         }
-        inputView.loading = item.loading
-        inputView.error = item.error
 
         addressBookView.setOnClickListener {
             openAddressBook()
@@ -41,6 +44,22 @@ class AddressHolder(
         pasteView.setOnClickListener {
             inputView.text = context.clipboardText()
         }
+
+        inputView.postOnAnimation { setValue(item) }
+        applyState(item)
+    }
+
+    private fun setValue(item: Item.Address) {
+        if (item.value.isNotBlank() && item.value != inputView.text) {
+            inputView.text = item.value
+        }
+        applyState(item)
+    }
+
+    private fun applyState(item: Item.Address) {
+        inputView.loading = item.state == Item.Address.State.Loading
+        inputView.error = item.state == Item.Address.State.Error
+        addressActionsView.visibility = if (inputView.text.isBlank()) View.VISIBLE else View.GONE
     }
 
     override fun onUnbind() {

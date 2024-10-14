@@ -176,7 +176,7 @@ class BatteryRechargeViewModel(
 
         uiItems.addAll(uiItemsPacks(packs, selectedPackType, customAmount))
 
-        if (true) { // !api.config.batteryPromoDisable
+        if (!api.config.batteryPromoDisable) {
             uiItems.add(Item.Space)
             uiItems.add(Item.Promo(promoState))
         }

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.app.Activity
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -38,6 +39,7 @@ import io.batteryapi.models.AndroidBatteryPurchaseRequestPurchasesInner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
@@ -64,7 +66,8 @@ class BatteryRefillViewModel(
         .map { it.purchases }
         .filter { it.isNotEmpty() }
 
-    private val promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
+    private val _promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
+    private val promoStateFlow = _promoStateFlow.asStateFlow()
 
     private val purchaseInProgress = MutableStateFlow(false)
 
@@ -81,7 +84,7 @@ class BatteryRefillViewModel(
         uiItems.add(uiItemBattery(batteryBalance, api.config))
         uiItems.add(Item.Space)
 
-        if (true) { // !api.config.batteryPromoDisable
+        if (!api.config.batteryPromoDisable) {
             uiItems.add(Item.Promo(promoState))
             uiItems.add(Item.Space)
         }
@@ -134,16 +137,14 @@ class BatteryRefillViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            if (environment.isGooglePlayAvailable) {
-                billingManager.getProducts(api.config.iapPackages.map { it.productId })
-            }
+            billingManager.getProducts(api.config.iapPackages.map { it.productId })
 
             val appliedPromo = batteryRepository.getAppliedPromo(wallet.testnet)
 
             if (appliedPromo.isNullOrBlank()) {
-                promoStateFlow.tryEmit(PromoState.Default)
+                _promoStateFlow.value = PromoState.Default
             } else {
-                promoStateFlow.tryEmit(PromoState.Applied(appliedPromo))
+                _promoStateFlow.value = PromoState.Applied(appliedPromo)
             }
         }
 
@@ -286,11 +287,11 @@ class BatteryRefillViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             if (promo.isEmpty()) {
                 batteryRepository.setAppliedPromo(wallet.testnet, null)
-                promoStateFlow.tryEmit(PromoState.Default)
+                _promoStateFlow.value = PromoState.Default
                 return@launch
             }
             val initialPromo = if (isInitial) promo else null
-            promoStateFlow.tryEmit(PromoState.Loading(initialPromo = initialPromo))
+            _promoStateFlow.value = PromoState.Loading(initialPromo = initialPromo)
             try {
                 if (isInitial) {
                     delay(2000)
@@ -299,10 +300,10 @@ class BatteryRefillViewModel(
                 api.batteryVerifyPurchasePromo(wallet.testnet, promo)
                 api.batteryApplyPromoCode(token, wallet.testnet, promo)
                 batteryRepository.setAppliedPromo(wallet.testnet, promo)
-                promoStateFlow.tryEmit(PromoState.Applied(promo))
+                _promoStateFlow.value = PromoState.Applied(promo)
             } catch (_: Exception) {
                 batteryRepository.setAppliedPromo(wallet.testnet, null)
-                promoStateFlow.tryEmit(PromoState.Error)
+                _promoStateFlow.value = PromoState.Error
             }
         }
     }

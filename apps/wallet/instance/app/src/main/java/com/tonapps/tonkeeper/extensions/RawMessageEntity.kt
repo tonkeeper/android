@@ -1,28 +1,56 @@
 package com.tonapps.tonkeeper.extensions
 
-import android.util.Log
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.loadAddress
 import com.tonapps.blockchain.ton.extensions.loadCoins
+import com.tonapps.blockchain.ton.extensions.loadMaybeAddress
 import com.tonapps.blockchain.ton.extensions.loadMaybeRef
 import com.tonapps.blockchain.ton.extensions.loadOpCode
 import com.tonapps.blockchain.ton.extensions.storeAddress
 import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.ledger.ton.remainingRefs
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import org.ton.block.AddrStd
 import org.ton.block.Coins
-import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
+import org.ton.cell.CellSlice
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
-import org.ton.tlb.loadTlb
-import org.ton.tlb.storeTlb
 
-private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
+private fun rebuildJettonWithCustomExcessesAccount(
+    payload: Cell,
+    slice: CellSlice,
+    builder: CellBuilder,
+    excessesAddress: AddrStd
+): Cell {
+    try {
+        builder
+            .storeOpCode(TONOpCode.JETTON_TRANSFER)
+            .storeUInt(slice.loadUInt(64), 64)
+            .storeCoins(slice.loadCoins())
+            .storeAddress(slice.loadAddress())
+
+        slice.loadMaybeAddress()
+
+        while (slice.remainingRefs > 0) {
+            val forwardCell = slice.loadRef()
+            builder.storeRef(rebuildBodyWithCustomExcessesAccount(forwardCell, excessesAddress))
+        }
+        return builder
+            .storeAddress(excessesAddress)
+            .storeBits(slice.loadBits(slice.remainingBits))
+            .endCell()
+    } catch (e: Throwable) {
+        return payload
+    }
+}
+
+private fun rebuildBodyWithCustomExcessesAccount(
+    payload: Cell,
     excessesAddress: AddrStd
 ): Cell {
     val slice = payload.beginParse()
@@ -40,14 +68,13 @@ private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
                 slice.loadAddress()
             }
             slice.endParse()
-
             builder
                 .storeBit(true)
                 .storeAddress(excessesAddress)
                 .endCell()
         }
         TONOpCode.NFT_TRANSFER -> payload
-        TONOpCode.JETTON_TRANSFER -> payload
+        TONOpCode.JETTON_TRANSFER -> rebuildJettonWithCustomExcessesAccount(payload, slice, builder, excessesAddress)
         else -> payload
     }
 }
@@ -93,7 +120,7 @@ fun RawMessageEntity.getWalletTransfer(
     builder.stateInit = stateInit ?: newStateInit
     builder.destination = address
     builder.body = if (excessesAddress != null) {
-        rebuildBodyWithCustomExcessesAccount(excessesAddress)
+        rebuildBodyWithCustomExcessesAccount(payload, excessesAddress)
     } else if (newCustomPayload != null) {
         rebuildJettonTransferWithCustomPayload(newCustomPayload)
     } else {

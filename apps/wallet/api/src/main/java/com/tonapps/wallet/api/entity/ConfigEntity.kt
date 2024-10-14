@@ -100,7 +100,7 @@ data class ConfigEntity(
         iapPackages = json.optJSONArray("iap_packages")?.let { array ->
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
         } ?: emptyList(),
-        burnZeroDomain = json.optString("burnZeroDomain", "tonkeeper-zero.ton")
+        burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ") // tonkeeper-zero.ton
     )
 
     constructor() : this(

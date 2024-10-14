@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.billing
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClient.ProductType
 import com.android.billingclient.api.BillingFlowParams
@@ -65,7 +66,7 @@ class BillingManager(
     suspend fun getProducts(
         productIds: List<String>,
         productType: String = ProductType.INAPP
-    ) = billingClient.ready {
+    ) = billingClient.ready { client ->
         if (productIds.isEmpty()) {
             return@ready
         }
@@ -81,13 +82,17 @@ class BillingManager(
             .setProductList(productList)
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        client.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 _productsFlow.value = productDetailsList
             } else {
                 _productsFlow.value = emptyList()  // In case of an error
             }
         }
+    }
+
+    fun setEmptyProducts() {
+        _productsFlow.value = emptyList()
     }
 
     private suspend fun getPendingPurchases(client: BillingClient): List<Purchase> {

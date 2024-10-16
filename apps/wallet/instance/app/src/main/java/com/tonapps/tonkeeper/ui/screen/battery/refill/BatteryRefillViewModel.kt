@@ -94,7 +94,7 @@ class BatteryRefillViewModel(
             uiItems.add(Item.Space)
         }
 
-        if (environment.isGooglePlayAvailable && !api.config.disableBatteryIapModule) {
+        if (environment.isGooglePlayServicesAvailable && !api.config.disableBatteryIapModule) {
             val tonPriceInUsd =
                 ratesRepository.getTONRates(WalletCurrency.USD).getRate(TokenEntity.TON.address)
 
@@ -139,7 +139,7 @@ class BatteryRefillViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            if (environment.isGooglePlayAvailable) {
+            if (environment.isGooglePlayServicesAvailable) {
                 billingManager.loadProducts(api.config.iapPackages.map { it.productId })
             } else {
                 billingManager.setEmptyProducts()

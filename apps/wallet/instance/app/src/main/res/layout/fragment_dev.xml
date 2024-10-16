@@ -21,54 +21,30 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <uikit.widget.ColumnLayout
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/device"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="@dimen/offsetMedium">
+                android:padding="@dimen/offsetMedium"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:background="@drawable/bg_content"
+                android:textColor="?attr/textPrimaryColor"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/locale"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="Context locale"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/icons"
+                android:layout_width="match_parent"
+                android:layout_height="112dp"
+                android:paddingHorizontal="8dp"
+                android:clipToPadding="false"
+                android:layout_marginVertical="@dimen/offsetMedium"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/android_version"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="Android version"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_model"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="Device model"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/screen_size"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="Screen size"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_root"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="Rooted device"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_strongbox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="Strongbox supported"/>
-
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_adb"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:title="ADB enabled"/>
-
-            </uikit.widget.ColumnLayout>
+            <uikit.widget.item.ItemSwitchView
+                android:id="@+id/blur"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:text="Blur"/>
 
         </uikit.widget.ColumnLayout>
 

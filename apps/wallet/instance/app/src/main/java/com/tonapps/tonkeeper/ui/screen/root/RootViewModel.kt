@@ -185,7 +185,7 @@ class RootViewModel(
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            if (environment.isGooglePlayAvailable) {
+            if (environment.isGooglePlayServicesAvailable) {
                 delay(2000)
                 checkAppUpdate()
             }

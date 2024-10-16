@@ -174,7 +174,6 @@
         android:layout_gravity="bottom"
         android:layout_margin="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="?attr/textPrimaryColor"
         android:enabled="false"
         android:text="@string/continue_action"/>
 

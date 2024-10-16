@@ -56,6 +56,7 @@ android {
     experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -77,6 +78,7 @@ baselineProfile {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
     implementation(project(Dependence.Wallet.app))
 
     testImplementation("junit:junit:4.13.2")

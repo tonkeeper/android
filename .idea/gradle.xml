@@ -50,11 +50,9 @@
             <option value="$PROJECT_DIR$/apps/wallet/instance" />
             <option value="$PROJECT_DIR$/apps/wallet/instance/app" />
             <option value="$PROJECT_DIR$/apps/wallet/instance/main" />
-            <option value="$PROJECT_DIR$/apps/wallet/instance/x" />
             <option value="$PROJECT_DIR$/apps/wallet/localization" />
             <option value="$PROJECT_DIR$/baselineprofile" />
             <option value="$PROJECT_DIR$/baselineprofile/main" />
-            <option value="$PROJECT_DIR$/baselineprofile/x" />
             <option value="$PROJECT_DIR$/buildLogic" />
             <option value="$PROJECT_DIR$/buildLogic/plugin" />
             <option value="$PROJECT_DIR$/buildSrc" />

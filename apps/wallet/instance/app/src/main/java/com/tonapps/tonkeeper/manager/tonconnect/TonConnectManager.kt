@@ -92,7 +92,7 @@ class TonConnectManager(
         bridgeConnected.set(true)
 
         bridgeJob = scope.launch(Dispatchers.IO) {
-            val connections = dAppsRepository.getConnections().chunked(50)
+            val connections = dAppsRepository.getConnections().chunked(20)
             if (connections.isEmpty()) {
                 return@launch
             }

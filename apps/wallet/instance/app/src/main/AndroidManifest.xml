@@ -9,6 +9,14 @@
         </intent>
     </queries>
 
+    <supports-screens android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:resizeable="true"
+        android:smallScreens="true"
+        android:xlargeScreens="true"/>
+
+    <uses-feature android:glEsVersion="0x00020000" android:required="false"/>
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.ram.low" android:required="false" />
@@ -19,6 +27,11 @@
     <uses-feature android:name="android.hardware.faketouch" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.wifi" android:required="false"/>
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+    <uses-feature android:name="android.hardware.screen.PORTRAIT" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera2" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.proximity" android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -58,6 +71,103 @@
         tools:targetApi="31"
         tools:replace="android:allowBackup"
         android:localeConfig="@xml/locales_config">
+
+        <activity-alias
+            android:enabled="true"
+            android:name="com.tonapps.tonkeeper.DefaultLauncherIcon"
+            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:enabled="false"
+            android:name="com.tonapps.tonkeeper.GreenLauncherIcon"
+            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:icon="@mipmap/ic_green_launcher"
+            android:roundIcon="@mipmap/ic_green_launcher_round"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:enabled="false"
+            android:name="com.tonapps.tonkeeper.RedLauncherIcon"
+            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:icon="@mipmap/ic_red_launcher"
+            android:roundIcon="@mipmap/ic_red_launcher_round"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:enabled="false"
+            android:name="com.tonapps.tonkeeper.OrangeLauncherIcon"
+            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:icon="@mipmap/ic_orange_launcher"
+            android:roundIcon="@mipmap/ic_orange_launcher_round"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:enabled="false"
+            android:name="com.tonapps.tonkeeper.PurpleLauncherIcon"
+            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:icon="@mipmap/ic_purple_launcher"
+            android:roundIcon="@mipmap/ic_purple_launcher_round"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:enabled="false"
+            android:name="com.tonapps.tonkeeper.BlueLauncherIcon"
+            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:icon="@mipmap/ic_blue_launcher"
+            android:roundIcon="@mipmap/ic_blue_launcher_round"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:enabled="false"
+            android:name="com.tonapps.tonkeeper.BlackLauncherIcon"
+            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:icon="@mipmap/ic_black_launcher"
+            android:roundIcon="@mipmap/ic_black_launcher_round"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
         <activity
             android:name="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
             android:exported="true"
@@ -70,8 +180,6 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
             <intent-filter android:priority="1">
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />

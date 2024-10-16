@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper
 import android.app.ActivityManager
 import android.content.Context
 import android.os.BatteryManager
+import com.tonapps.tonkeeper.core.DevSettings
 
 val Context.batteryLevel: Int
     get() {
@@ -17,4 +18,4 @@ val Context.isLowDevice: Boolean
     }
 
 val Context.isBlurDisabled: Boolean
-    get() = isLowDevice && 20 >= batteryLevel
+    get() = !DevSettings.blurEnabled || (isLowDevice && 20 >= batteryLevel)

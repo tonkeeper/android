@@ -25,7 +25,6 @@ include(":apps:signer")
 
 
 include(":baselineprofile:main")
-include(":baselineprofile:x")
 
 
 include(":tonapi")
@@ -53,7 +52,6 @@ include(":lib:ur")
 
 include(":apps:wallet:instance:app")
 include(":apps:wallet:instance:main")
-include(":apps:wallet:instance:x")
 include(":apps:wallet:localization")
 include(":apps:wallet:api")
 

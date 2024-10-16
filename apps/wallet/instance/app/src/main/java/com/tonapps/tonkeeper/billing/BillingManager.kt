@@ -14,6 +14,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.consumePurchase
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -53,6 +54,10 @@ class BillingManager(
     val purchasesUpdatedFlow = _purchasesUpdatedFlow.shareIn(scope, SharingStarted.Lazily, 0).distinctUntilChanged()
 
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
+        if (!result.isSuccess) {
+            log("Purchases updated", BillingException(result))
+        }
+
         if (result.isSuccess && !purchases.isNullOrEmpty()) {
             _purchasesUpdatedFlow.tryEmit(PurchasesUpdated(result, purchases))
         }
@@ -95,7 +100,6 @@ class BillingManager(
         if (productIds.isEmpty()) {
             return@ready emptyList()
         }
-
         try {
             val productList = productIds.map { productId ->
                 QueryProductDetailsParams.Product.newBuilder()
@@ -110,15 +114,32 @@ class BillingManager(
 
             getProductDetails(client, params)
         } catch (e: Throwable) {
+            log("Failed to get products", e)
+            FirebaseCrashlytics.getInstance().recordException(e)
             emptyList()
         }
     }
 
-    private suspend fun getPendingPurchases(client: BillingClient): List<Purchase> {
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(ProductType.INAPP)
+    private fun log(msg: String, e: Throwable? = null) {
+        if (e == null) {
+            Log.d("BillingManager", msg)
+        } else {
+            Log.e("BillingManager", e.message ?: msg)
+            Log.e("BillingManager", msg, e)
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
+    }
 
-        return queryPurchases(client, params.build()).filter { !it.isAcknowledged }
+    private suspend fun getPendingPurchases(client: BillingClient): List<Purchase> {
+        try {
+            val params = QueryPurchasesParams.newBuilder()
+                .setProductType(ProductType.INAPP)
+
+            return queryPurchases(client, params.build()).filter { !it.isAcknowledged }
+        } catch (e: Throwable) {
+            log("Failed to get pending purchases", e)
+            return emptyList()
+        }
     }
 
     private suspend fun queryPurchases(client: BillingClient, params: QueryPurchasesParams): List<Purchase> = suspendCancellableCoroutine { continuation ->
@@ -141,12 +162,13 @@ class BillingManager(
             .build()
 
         val billingFlowParams = BillingFlowParams.newBuilder()
-            .setObfuscatedAccountId(wallet.accountId)
-            .setObfuscatedProfileId(wallet.accountId)
             .setProductDetailsParamsList(listOf(productDetailsParams))
             .build()
 
-        client.launchBillingFlow(activity, billingFlowParams)
+        val result = client.launchBillingFlow(activity, billingFlowParams)
+        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+            log("Failed to launch billing flow", BillingException(result))
+        }
         Unit
     }
 

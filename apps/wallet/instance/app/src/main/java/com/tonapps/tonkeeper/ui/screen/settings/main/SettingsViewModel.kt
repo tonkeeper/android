@@ -193,7 +193,7 @@ class SettingsViewModel(
         uiItems.add(Item.Support(ListCell.Position.MIDDLE, getSupportUrl()))
         uiItems.add(Item.News(ListCell.Position.MIDDLE, api.config.tonkeeperNewsUrl))
         uiItems.add(Item.Contact(ListCell.Position.MIDDLE, api.config.supportLink))
-        if (environment.isGooglePlayAvailable) {
+        if (environment.isGooglePlayServicesAvailable) {
             uiItems.add(Item.Rate(ListCell.Position.MIDDLE))
         }
         uiItems.add(Item.Legal(ListCell.Position.LAST))

@@ -366,7 +366,7 @@ class RootViewModel(
         val accountId = bundle.getString("account") ?: return
         val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
         val deeplink = DeepLink(uri, false, null)
-        processDeepLink(wallet, deeplink)
+        processDeepLink(wallet, deeplink, null)
     }
 
     fun processDeepLink(
@@ -374,6 +374,7 @@ class RootViewModel(
         fromQR: Boolean,
         refSource: Uri?,
         internal: Boolean,
+        fromPackageName: String?
     ): Boolean {
         savedState.returnUri = null
         val deeplink = DeepLink(uri, fromQR, refSource)
@@ -387,26 +388,27 @@ class RootViewModel(
             if (deeplink.route is DeepLinkRoute.Signer) {
                 processSignerDeepLink(deeplink.route, fromQR)
             } else if (state is AccountRepository.SelectedState.Wallet) {
-                processDeepLink(state.wallet, deeplink)
+                processDeepLink(state.wallet, deeplink, fromPackageName)
             }
         }.launch()
         return true
     }
 
-    fun processTonConnectDeepLink(deeplink: DeepLink) {
+    fun processTonConnectDeepLink(deeplink: DeepLink, fromPackageName: String?) {
         val route = deeplink.route as DeepLinkRoute.TonConnect
         savedState.returnUri = tonConnectManager.processDeeplink(
             context = context,
             uri = route.uri,
             fromQR = deeplink.fromQR,
-            refSource = deeplink.referrer
+            refSource = deeplink.referrer,
+            fromPackageName = fromPackageName
         )
     }
 
-    private suspend fun processDeepLink(wallet: WalletEntity, deeplink: DeepLink) {
+    private suspend fun processDeepLink(wallet: WalletEntity, deeplink: DeepLink, fromPackageName: String?) {
         val route = deeplink.route
         if (route is DeepLinkRoute.TonConnect && !wallet.isWatchOnly) {
-            processTonConnectDeepLink(deeplink)
+            processTonConnectDeepLink(deeplink, fromPackageName)
         } else if (route is DeepLinkRoute.Tabs) {
             _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri, wallet))
         } else if (route is DeepLinkRoute.Send && !wallet.isWatchOnly) {

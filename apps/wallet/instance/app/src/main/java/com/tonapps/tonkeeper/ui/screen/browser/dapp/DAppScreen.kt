@@ -88,7 +88,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             }
             val deeplink = DeepLink(url, false, refererUri)
             if (deeplink.route is DeepLinkRoute.TonConnect) {
-                rootViewModel.processTonConnectDeepLink(deeplink)
+                rootViewModel.processTonConnectDeepLink(deeplink, null)
             } else if (deeplink.route is DeepLinkRoute.Unknown) {
                 navigation?.openURL(url.toString())
             }

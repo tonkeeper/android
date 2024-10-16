@@ -859,7 +859,9 @@ class API(
     ) = withContext(Dispatchers.IO) {
         val url = config.scamEndpoint + "/v1/report/$nftAddress"
         val data = "{\"is_scam\":$scam}"
-        val response = tonAPIHttpClient.postJSON(url, data)
+        val response = withRetry {
+            tonAPIHttpClient.postJSON(url, data)
+        } ?: throw Exception("Empty response")
         if (!response.isSuccessful) {
             throw Exception("Failed creating proof: ${response.code}")
         }
@@ -875,9 +877,9 @@ class API(
         private fun baseOkHttpClientBuilder(): OkHttpClient.Builder {
             return OkHttpClient().newBuilder()
                 .retryOnConnectionFailure(false)
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .callTimeout(10, TimeUnit.SECONDS)
                 .pingInterval(5, TimeUnit.SECONDS)
                 .followSslRedirects(true)

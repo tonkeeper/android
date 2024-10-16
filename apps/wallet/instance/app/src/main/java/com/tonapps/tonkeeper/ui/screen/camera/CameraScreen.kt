@@ -53,7 +53,7 @@ class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.Botto
         }
 
         collectFlow(readerFlow.map(::createUri).filterNotNull()) { uri ->
-            rootViewModel.processDeepLink(uri, true, null, false)
+            rootViewModel.processDeepLink(uri, true, null, false, null)
             finish()
         }
     }

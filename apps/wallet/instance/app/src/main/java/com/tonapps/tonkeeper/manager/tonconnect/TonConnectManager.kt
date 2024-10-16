@@ -207,7 +207,8 @@ class TonConnectManager(
         context: Context,
         uri: Uri,
         fromQR: Boolean,
-        refSource: Uri?
+        refSource: Uri?,
+        fromPackageName: String?
     ): Uri? {
         val returnUri = TonConnect.parseReturn(uri.getQueryParameter("ret"), refSource)
         try {
@@ -217,7 +218,8 @@ class TonConnectManager(
                 uri = normalizedUri,
                 refSource = refSource,
                 fromQR = fromQR,
-                returnUri = returnUri
+                returnUri = returnUri,
+                fromPackageName = fromPackageName
             )
             scope.launch {
                 connectRemoteApp(activity, tonConnect)
@@ -257,6 +259,7 @@ class TonConnectManager(
                 proofPayload = tonConnect.proofPayload,
                 returnUri = tonConnect.returnUri,
                 wallet = wallet,
+                fromPackageName = tonConnect.fromPackageName
             )
             val bundle = activity.addForResult(screen)
             val response = screen.contract.parseResult(bundle)

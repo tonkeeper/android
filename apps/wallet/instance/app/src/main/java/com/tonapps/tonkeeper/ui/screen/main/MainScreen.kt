@@ -177,6 +177,10 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     }
 
     private fun setFragment(fragment: Fragment, forceScrollUp: Boolean) {
+        if (childFragmentManager.isStateSaved) {
+            return
+        }
+
         if (fragment.isAdded && !fragment.isHidden) {
             (fragment as? Child)?.scrollUp()
             return
@@ -210,10 +214,6 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             "tonkeeper://browser" to R.id.browser,
             "tonkeeper://collectibles" to R.id.collectibles
         )
-
-        fun isSupportedDeepLink(uri: String): Boolean {
-            return mainDeepLinks.containsKey(uri)
-        }
 
         fun newInstance() = MainScreen()
     }

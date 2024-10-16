@@ -229,7 +229,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     private fun mustOpenButtonDApp(url: String) {
         if (url.startsWith("ton:")) {
             val uri = url.toUriOrNull() ?: return
-            rootViewModel.processDeepLink(uri, false, null, false)
+            rootViewModel.processDeepLink(uri, false, null, false, null)
         } else {
             navigation?.add(DAppScreen.newInstance(wallet, url = url.toUri()))
         }
@@ -310,6 +310,8 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private fun reportSpam(spam: Boolean) {
         setTrust(if (spam) Trust.blacklist else Trust.whitelist)
+        spamView.visibility = View.GONE
+        headerView.setSubtitle(null)
         viewModel.reportSpam(spam) {
             finish()
         }

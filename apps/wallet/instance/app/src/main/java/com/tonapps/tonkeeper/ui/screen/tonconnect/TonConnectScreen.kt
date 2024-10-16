@@ -196,16 +196,16 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     private fun returnToApp() {
         val uri = args.returnUri ?: return
         if (uri.scheme == "tg" || uri.host == "t.me") {
-            returnToTg(uri)
+            returnToTg(uri, args.fromPackageName)
         } else {
             returnToDefault(uri)
         }
     }
 
-    private fun returnToTg(uri: Uri) {
+    private fun returnToTg(uri: Uri, fromPackageName: String?) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, uri)
-            intent.setPackage("org.telegram.messenger")
+            fromPackageName?.let { intent.`package` = it }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         } catch (e: Exception) {
@@ -298,10 +298,11 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             app: AppEntity,
             proofPayload: String?,
             returnUri: Uri?,
-            wallet: WalletEntity?
+            wallet: WalletEntity?,
+            fromPackageName: String?,
         ): TonConnectScreen {
             val fragment = TonConnectScreen()
-            fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri, wallet))
+            fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri, wallet, fromPackageName))
             return fragment
         }
     }

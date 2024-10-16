@@ -35,6 +35,8 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+
     implementation(Dependence.Koin.core)
     implementation(Dependence.Koin.workmanager)
     implementation(Dependence.KotlinX.datetime)

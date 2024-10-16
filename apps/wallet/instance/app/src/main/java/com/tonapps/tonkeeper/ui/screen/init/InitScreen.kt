@@ -88,6 +88,10 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
     }
 
     private fun onRoute(route: InitRoute) {
+        if (childFragmentManager.isStateSaved) {
+            return
+        }
+
         val fragment = when (route) {
             InitRoute.CreatePasscode -> PasscodeScreen.newInstance(false)
             InitRoute.ReEnterPasscode -> PasscodeScreen.newInstance(true)

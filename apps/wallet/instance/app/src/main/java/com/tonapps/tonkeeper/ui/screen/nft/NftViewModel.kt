@@ -26,6 +26,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.Account
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -52,12 +53,18 @@ class NftViewModel(
 
     fun reportSpam(spam: Boolean, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
+            loading(true)
             val state = if (spam) TokenPrefsEntity.State.SPAM else TokenPrefsEntity.State.TRUST
             settingsRepository.setTokenState(wallet.id, nft.address, state)
-            api.reportNtfSpam(nft.address, spam)
-            withContext(Dispatchers.Main) {
-                callback()
+            try {
+                api.reportNtfSpam(nft.address, spam)
+                withContext(Dispatchers.Main) {
+                    callback()
+                }
+            } catch (e: Throwable) {
+                toast(Localization.unknown_error)
             }
+            loading(false)
         }
     }
 

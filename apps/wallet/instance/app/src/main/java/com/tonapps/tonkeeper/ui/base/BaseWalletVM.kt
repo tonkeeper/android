@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.isUIThread
+import com.tonapps.tonkeeper.extensions.loading
 import com.tonapps.tonkeeper.extensions.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,6 +93,10 @@ abstract class BaseWalletVM(
 
     suspend fun toast(text: String) = withContext(Dispatchers.Main) {
         context.showToast(text)
+    }
+
+    suspend fun loading(loading: Boolean) = withContext(Dispatchers.Main) {
+        context.loading(loading)
     }
 
     suspend fun openScreen(screen: BaseFragment) = withContext(Dispatchers.Main) {

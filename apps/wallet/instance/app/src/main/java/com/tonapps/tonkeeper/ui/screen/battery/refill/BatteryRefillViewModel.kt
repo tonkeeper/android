@@ -98,16 +98,18 @@ class BatteryRefillViewModel(
             val tonPriceInUsd =
                 ratesRepository.getTONRates(WalletCurrency.USD).getRate(TokenEntity.TON.address)
 
-            uiItems.addAll(
-                uiItemsPackages(
-                    tonPriceInUsd = tonPriceInUsd,
-                    batteryBalance = batteryBalance,
-                    config = api.config,
-                    products = iapProducts,
-                    isProcessing = isProcessing,
+            if (tonPriceInUsd > Coins.ZERO) {
+                uiItems.addAll(
+                    uiItemsPackages(
+                        tonPriceInUsd = tonPriceInUsd,
+                        batteryBalance = batteryBalance,
+                        config = api.config,
+                        products = iapProducts,
+                        isProcessing = isProcessing,
+                    )
                 )
-            )
-            uiItems.add(Item.Space)
+                uiItems.add(Item.Space)
+            }
         }
 
         val rechargeMethodsItems = uiItemsRechargeMethods(wallet)

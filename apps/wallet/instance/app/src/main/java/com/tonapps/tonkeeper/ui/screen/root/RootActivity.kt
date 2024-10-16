@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.provider.Browser
 import android.util.Log
 import android.view.View
 import androidx.biometric.BiometricPrompt
@@ -323,7 +324,7 @@ class RootActivity: BaseWalletActivity() {
         val uri = intent.data
         val extras = intent.extras
         if (uri != null) {
-            processDeepLink(DeepLink.fixBadUri(uri), false)
+            processDeepLink(DeepLink.fixBadUri(uri), false, intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))
         } else if (extras != null && !extras.isEmpty) {
             viewModel.processIntentExtras(extras)
         }
@@ -345,7 +346,7 @@ class RootActivity: BaseWalletActivity() {
         }
         val uri = url.toUriOrNull() ?: return
         if (uri.scheme == "tonkeeper" || uri.scheme == "ton" || uri.scheme == "tc" || uri.host == "app.tonkeeper.com") {
-            processDeepLink(uri, true)
+            processDeepLink(uri, true, null)
         } else {
             runOnUiThread {
                 openExternalLink(uri)
@@ -384,7 +385,7 @@ class RootActivity: BaseWalletActivity() {
         }
     }
 
-    private fun processDeepLink(uri: Uri, internal: Boolean) {
-        viewModel.processDeepLink(uri, false, getReferrer(), internal)
+    private fun processDeepLink(uri: Uri, internal: Boolean, fromPackageName: String?) {
+        viewModel.processDeepLink(uri, false, getReferrer(), internal, fromPackageName)
     }
 }

@@ -96,18 +96,22 @@ class BillingManager(
             return@ready emptyList()
         }
 
-        val productList = productIds.map { productId ->
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(productId)
-                .setProductType(productType)
+        try {
+            val productList = productIds.map { productId ->
+                QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId(productId)
+                    .setProductType(productType)
+                    .build()
+            }
+
+            val params = QueryProductDetailsParams.newBuilder()
+                .setProductList(productList)
                 .build()
+
+            getProductDetails(client, params)
+        } catch (e: Throwable) {
+            emptyList()
         }
-
-        val params = QueryProductDetailsParams.newBuilder()
-            .setProductList(productList)
-            .build()
-
-        getProductDetails(client, params)
     }
 
     private suspend fun getPendingPurchases(client: BillingClient): List<Purchase> {

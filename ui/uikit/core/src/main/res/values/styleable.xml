@@ -63,6 +63,7 @@
 
     <declare-styleable name="ItemSwitchView">
         <attr name="android:text" format="string|reference"/>
+        <attr name="android:subtitle" format="string|reference"/>
         <attr name="android:checked" format="boolean"/>
         <attr name="position"/>
     </declare-styleable>

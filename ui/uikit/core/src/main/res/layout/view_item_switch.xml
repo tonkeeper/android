@@ -2,14 +2,30 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/text"
+    <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="16dp"
         android:gravity="center_vertical"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="?attr/textPrimaryColor"
-        android:layout_weight="1"/>
+        android:minHeight="30dp"
+        android:layout_weight="1">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:visibility="gone"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"/>
+    </uikit.widget.ColumnLayout>
 
     <uikit.widget.SwitchView
         android:id="@+id/check"

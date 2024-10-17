@@ -50,6 +50,8 @@ class SettingsRepository(
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
         private const val CHART_PERIOD_KEY = "chart_period"
+        private const val ONLY_VERIFY_NFTS_KEY = "only_verify_nfts"
+        private const val ONLY_VERIFY_TOKENS_KEY = "only_verify_tokens"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -75,6 +77,10 @@ class SettingsRepository(
 
     private val _walletPush = MutableEffectFlow<Unit>()
     val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
+
+    fun notifyWalletPush() {
+        _walletPush.tryEmit(Unit)
+    }
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context, scope)
@@ -212,6 +218,25 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putBoolean(BATTERY_VIEWED_KEY, value).apply()
                 field = value
+            }
+        }
+
+
+    var onlyVerifyNFTs: Boolean = prefs.getBoolean(ONLY_VERIFY_NFTS_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(ONLY_VERIFY_NFTS_KEY, value).apply()
+                field = value
+                walletPrefsFolder.notifyChanged()
+            }
+        }
+
+    var onlyVerifyTokens: Boolean = prefs.getBoolean(ONLY_VERIFY_TOKENS_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(ONLY_VERIFY_TOKENS_KEY, value).apply()
+                field = value
+                walletPrefsFolder.notifyChanged()
             }
         }
 

@@ -59,6 +59,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.purchase))
     implementation(project(Dependence.Wallet.Data.battery))
     implementation(project(Dependence.Wallet.Data.dapps))
+    implementation(project(Dependence.Wallet.Data.contacts))
 
     implementation(project(Dependence.UIKit.core))
 

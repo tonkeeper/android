@@ -75,8 +75,13 @@ class CollectiblesViewModel(
         hiddenBalances: Boolean,
         isOnline: Boolean,
     ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
+        val onlyVerifyNFTs = settingsRepository.onlyVerifyNFTs
         val uiItems = mutableListOf<Item>()
         for (nft in result.list) {
+            if (onlyVerifyNFTs && !nft.verified) {
+                continue
+            }
+
             val isHiddenCollection = nft.collection?.address?.let {
                 settingsRepository.getTokenPrefs(wallet.id, it).isHidden
             } ?: false

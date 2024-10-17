@@ -76,6 +76,8 @@
             android:enabled="true"
             android:name="com.tonapps.tonkeeper.DefaultLauncherIcon"
             android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
             android:exported="true">
 
             <intent-filter>

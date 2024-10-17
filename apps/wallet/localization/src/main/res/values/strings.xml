@@ -11,6 +11,7 @@
     <string name="w5" translatable="false">W5</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="transaction_expired">Transaction expired</string>
+    <string name="add_contact">Add Contact</string>
     <string name="multi_account_secret_wrong">Please use Tonkeeper Desktop for Multi-Wallet Account</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>
@@ -23,6 +24,15 @@
     <string name="expired_link">Expired link</string>
     <string name="payment_method_not_found">Payment method not available</string>
     <string name="app_not_found">App not found</string>
+    <string name="content_security">Wallet Connect and Content</string>
+    <string name="content_security_nft">Only Verified NFTs</string>
+    <string name="content_security_nft_subtitle">Wallet will display only verified collections and NFTs.</string>
+    <string name="content_security_token">Only Verified Tokens</string>
+    <string name="content_security_token_subtitle">Wallet will display only verified tokens.</string>
+    <string name="name">Name</string>
+    <string name="new_contact">New Contact</string>
+    <string name="contact_delete_dialog">Are you sure you want to delete «%1$s» from your Contacts?</string>
+    <string name="add_to_contact">Add to Contact</string>
 
     <string name="staking_unstake_cycle">Unstake request will be processed after the end of the validation cycle in %1$s</string>
 

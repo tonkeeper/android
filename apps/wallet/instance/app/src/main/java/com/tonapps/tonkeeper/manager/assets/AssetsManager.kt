@@ -54,8 +54,13 @@ class AssetsManager(
         currency: WalletCurrency = settingsRepository.currency,
         refresh: Boolean,
     ): List<AssetsEntity.Token> {
+        val onlyVerifyTokens = settingsRepository.onlyVerifyTokens
         val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh) ?: return emptyList()
-        return tokens.map { AssetsEntity.Token(it) }
+        return if (onlyVerifyTokens) {
+            tokens.filter { it.verified }.map { AssetsEntity.Token(it) }
+        } else {
+            tokens.map { AssetsEntity.Token(it) }
+        }
     }
 
     private suspend fun getStaked(

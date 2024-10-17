@@ -29,6 +29,7 @@ import com.tonapps.wallet.data.backup.backupModule
 import com.tonapps.wallet.data.battery.batteryModule
 import com.tonapps.wallet.data.browser.browserModule
 import com.tonapps.wallet.data.collectibles.collectiblesModule
+import com.tonapps.wallet.data.contacts.contactsModule
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.dataModule
 import com.tonapps.wallet.data.dapps.dAppsModule
@@ -78,7 +79,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         instance = this
         startKoin {
             androidContext(this@App)
-            modules(koinModel, workerModule, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, contactsModule, workerModule, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
             workManagerFactory()
         }
         setLocales(settingsRepository.localeList)

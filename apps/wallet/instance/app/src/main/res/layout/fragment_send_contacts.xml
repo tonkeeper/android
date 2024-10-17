@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"/>
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/barHeight"
+        android:clipToPadding="false"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:paddingBottom="@dimen/offsetMedium"/>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/add_contact"/>
+
+</FrameLayout>

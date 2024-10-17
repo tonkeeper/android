@@ -17,13 +17,14 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.camera.CameraMode
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
-import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
+import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
@@ -266,13 +267,13 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun openAddressBook() {
+        hideKeyboard()
         navigation?.add(SendContactsScreen.newInstance(wallet, contractsRequestKey))
-        getCurrentFocus()?.hideKeyboard()
     }
 
     private fun openCamera() {
+        hideKeyboard()
         navigation?.add(CameraScreen.newInstance(CameraMode.Address))
-        getCurrentFocus()?.hideKeyboard()
     }
 
     fun initializeArgs(

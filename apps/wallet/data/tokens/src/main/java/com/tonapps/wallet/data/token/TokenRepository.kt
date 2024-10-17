@@ -80,6 +80,15 @@ class TokenRepository(
         return getRemote(currency, accountId, testnet)
     }
 
+    suspend fun mustGet(
+        currency: WalletCurrency,
+        accountId: String,
+        testnet: Boolean,
+        refresh: Boolean = false,
+    ): List<AccountTokenEntity> {
+        return get(currency, accountId, testnet, refresh) ?: emptyList()
+    }
+
     private suspend fun getRemote(
         currency: WalletCurrency,
         accountId: String,

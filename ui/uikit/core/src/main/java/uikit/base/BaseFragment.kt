@@ -166,6 +166,12 @@ open class BaseFragment(
         })
     }
 
+    fun putLongArg(key: String, value: Long) {
+        setArgs(Bundle().apply {
+            putLong(key, value)
+        })
+    }
+
     fun setResultKey(key: String) {
         putStringArg(ARG_RESULT_KEY, key)
     }

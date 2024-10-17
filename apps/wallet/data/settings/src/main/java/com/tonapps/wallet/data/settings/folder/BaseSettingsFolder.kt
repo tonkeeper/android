@@ -31,7 +31,7 @@ internal abstract class BaseSettingsFolder(
         notifyChanged()
     }
 
-    private fun notifyChanged() {
+    fun notifyChanged() {
         _changedFlow.tryEmit(Unit)
     }
 

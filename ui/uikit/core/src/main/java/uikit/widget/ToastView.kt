@@ -75,18 +75,11 @@ class ToastView @JvmOverloads constructor(
     }
 
     private fun run(data: Data) {
-        /*val cancelCurrent = currentData != null && currentData?.text == data.text && currentData?.color == data.color
+        val cancelCurrent = currentData != null && currentData?.text == data.text && currentData?.color == data.color
         postOnAnimation {
             if (cancelCurrent) {
                 hide()
             } else if (currentData == null) {
-                currentData = data
-            } else {
-                dataQueue.add(data)
-            }
-        }*/
-        postOnAnimation {
-            if (currentData == null) {
                 currentData = data
             } else {
                 dataQueue.add(data)

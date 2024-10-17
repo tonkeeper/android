@@ -21,7 +21,7 @@ import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Adapter
-import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
+import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R

@@ -3,32 +3,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <uikit.widget.ColumnLayout
-        android:id="@+id/container"
+    <com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout
+        android:id="@+id/refresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/filters"
+        <com.tonapps.tonkeeper.ui.component.MainRecyclerView
+            android:id="@+id/list"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/itemHeight"
-            android:visibility="gone"/>
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:topOffset="112dp"
+            android:clipToPadding="false"/>
 
-        <com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout
-            android:id="@+id/refresh"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <com.tonapps.tonkeeper.ui.component.MainRecyclerView
-                android:id="@+id/list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingHorizontal="@dimen/offsetMedium"
-                android:clipToPadding="false"/>
-
-        </com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout>
-
-    </uikit.widget.ColumnLayout>
+    </com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout>
 
     <uikit.widget.EmptyLayout
         android:id="@+id/empty"
@@ -42,9 +30,22 @@
         android:positiveButtonText="@string/buy_toncoin"
         android:negativeButtonText="@string/receive"/>
 
-    <uikit.widget.HeaderView
-        android:id="@+id/header"
+    <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/filters"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="16dp"
+            android:paddingHorizontal="@dimen/offsetMedium"/>
+
+    </uikit.widget.ColumnLayout>
 
 </FrameLayout>

@@ -1,7 +1,7 @@
 package com.tonapps.blockchain.ton.extensions
 
-import android.util.Log
 import io.ktor.util.encodeBase64
+import org.json.JSONObject
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
@@ -9,11 +9,24 @@ import org.ton.cell.CellSlice
 import org.ton.crypto.hex
 
 fun String.toBoc(): BagOfCells {
-    return try {
-        BagOfCells(hex(this))
-    } catch (e: Throwable) {
-        BagOfCells(base64())
+    if (startsWith("{")) { // oh fuck....
+        return toBocFromJSBuffer()
     }
+    return try {
+        BagOfCells(base64())
+    } catch (e: Throwable) {
+        BagOfCells(hex(this))
+    }
+}
+
+private fun String.toBocFromJSBuffer(): BagOfCells {
+    val json = JSONObject(this)
+    val data = json.getJSONArray("data")
+    val byteArray = ByteArray(data.length())
+    for (i in 0 until data.length()) {
+        byteArray[i] = data.getInt(i).toByte()
+    }
+    return BagOfCells(byteArray)
 }
 
 fun String.parseCell(): Cell {

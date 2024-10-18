@@ -95,7 +95,7 @@ class HistoryHelper(
     private data class ActionDateSection(
         val date: Long,
         val dateFormat: String,
-        val events: MutableList<HistoryItem.Event>
+        val events: MutableList<HistoryItem>
     ) {
 
         fun get(): List<HistoryItem> {
@@ -116,9 +116,9 @@ class HistoryHelper(
         return "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ".equalsAddress(account.address)
     }
 
-    private fun sort(list: List<HistoryItem>): List<HistoryItem.Event> {
+    private fun sort(list: List<HistoryItem>): List<HistoryItem> {
         return list
-            .filterIsInstance<HistoryItem.Event>()
+            .filter { it is HistoryItem.Event || it is HistoryItem.App }
             .distinctBy { it.uniqueId }
             .sortedWith { a, b ->
                 (b.timestampForSort - a.timestampForSort).toInt()

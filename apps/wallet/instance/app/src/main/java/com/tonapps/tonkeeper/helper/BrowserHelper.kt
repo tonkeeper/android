@@ -8,12 +8,19 @@ import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import com.tonapps.extensions.activity
 import com.tonapps.extensions.locale
+import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.wallet.localization.Localization
 
 object BrowserHelper {
+
+    fun openPurchase(context: Context, method: WalletPurchaseMethodEntity) {
+        context.activity?.let {
+            open(it, method.uri)
+        }
+    }
 
     fun open(context: Context, url: String) {
         context.activity?.let {

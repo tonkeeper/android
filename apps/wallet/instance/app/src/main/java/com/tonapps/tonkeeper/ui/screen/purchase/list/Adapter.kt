@@ -1,10 +1,10 @@
-package com.tonapps.tonkeeper.ui.screen.purchase.main.list
+package com.tonapps.tonkeeper.ui.screen.purchase.list
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.ui.screen.purchase.main.list.holder.MethodHolder
-import com.tonapps.tonkeeper.ui.screen.purchase.main.list.holder.SpaceHolder
-import com.tonapps.tonkeeper.ui.screen.purchase.main.list.holder.TitleHolder
+import com.tonapps.tonkeeper.ui.screen.purchase.list.holder.MethodHolder
+import com.tonapps.tonkeeper.ui.screen.purchase.list.holder.SpaceHolder
+import com.tonapps.tonkeeper.ui.screen.purchase.list.holder.TitleHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem

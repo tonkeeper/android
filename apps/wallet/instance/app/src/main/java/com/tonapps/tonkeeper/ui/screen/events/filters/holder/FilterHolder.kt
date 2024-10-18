@@ -1,0 +1,32 @@
+package com.tonapps.tonkeeper.ui.screen.events.filters.holder
+
+import android.view.ViewGroup
+import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
+import com.tonapps.wallet.localization.Localization
+import uikit.extensions.dp
+import uikit.extensions.setPaddingHorizontal
+
+class FilterHolder(
+    parent: ViewGroup,
+    private val onClick: (item: FilterItem) -> Unit
+): Holder<FilterItem>(parent) {
+
+    init {
+        itemView.setPaddingHorizontal(14.dp)
+    }
+
+    override fun onBind(item: FilterItem) {
+        itemView.setOnClickListener { onClick(item) }
+        if (item.type == FilterItem.TYPE_SEND) {
+            titleView.setText(Localization.sent)
+        } else if (item.type == FilterItem.TYPE_RECEIVE) {
+            titleView.setText(Localization.received)
+        }
+        updateSelected(item)
+    }
+
+    fun updateSelected(item: FilterItem) {
+        setSelected(item.selected)
+    }
+
+}

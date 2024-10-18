@@ -1,30 +1,29 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
-import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.ui.screen.events.filters.FiltersAdapter
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
-import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
+import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.drawable.BarDrawable
+import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.dp
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
@@ -33,6 +32,10 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     override val viewModel: EventsViewModel by walletViewModel()
 
     private val legacyAdapter = HistoryAdapter()
+    private val filtersAdapter = FiltersAdapter {
+        viewModel.clickFilter(it)
+    }
+
     private val paginationListener = object : ListPaginationListener() {
         override fun onLoadMore() {
             viewModel.loadMore()
@@ -40,7 +43,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     private lateinit var headerView: HeaderView
-    private lateinit var containerView: View
+    private lateinit var headerDrawable: HeaderDrawable
     private lateinit var refreshView: SwipeRefreshLayout
     private lateinit var listView: RecyclerView
     private lateinit var filtersView: RecyclerView
@@ -53,13 +56,23 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         headerView.setSubtitle(Localization.updating)
         headerView.setColor(requireContext().backgroundTransparentColor)
 
-        containerView = view.findViewById(R.id.container)
         refreshView = view.findViewById(R.id.refresh)
         refreshView.setOnRefreshListener {
             viewModel.refresh()
         }
 
+        headerDrawable = HeaderDrawable(requireContext())
+        headerDrawable.setColor(requireContext().backgroundTransparentColor)
+
         filtersView = view.findViewById(R.id.filters)
+        filtersView.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        filtersView.adapter = filtersAdapter
+        filtersView.background = headerDrawable
+        filtersView.addItemDecoration(object : RecyclerView.ItemDecoration() {
+            override fun getItemOffsets(outRect: android.graphics.Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+                outRect.right = 8.dp
+            }
+        })
 
         listView = view.findViewById(R.id.list)
         listView.adapter = legacyAdapter
@@ -76,6 +89,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         }
 
         collectFlow(viewModel.uiStateFlow, ::applyState)
+        collectFlow(viewModel.uiFilterItemsFlow, filtersAdapter::submitList)
     }
 
     private suspend fun applyState(state: EventsUiState) = withContext(Dispatchers.Main) {
@@ -122,15 +136,15 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         }
         headerView.setSubtitle(null)
         emptyView.visibility = View.VISIBLE
-        containerView.visibility = View.GONE
+        refreshView.visibility = View.GONE
     }
 
     private fun setListState() {
-        if (containerView.visibility == View.VISIBLE) {
+        if (refreshView.visibility == View.VISIBLE) {
             return
         }
         emptyView.visibility = View.GONE
-        containerView.visibility = View.VISIBLE
+        refreshView.visibility = View.VISIBLE
     }
 
     override fun getRecyclerView(): RecyclerView? {
@@ -140,9 +154,9 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         return null
     }
 
-    override fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner? {
-        if (this::headerView.isInitialized) {
-            return headerView
+    override fun getTopBarDrawable(): BarDrawable? {
+        if (this::headerDrawable.isInitialized) {
+            return headerDrawable
         }
         return null
     }

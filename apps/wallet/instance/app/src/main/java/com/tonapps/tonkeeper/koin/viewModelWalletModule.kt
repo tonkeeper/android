@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.koin
 
-import androidx.lifecycle.viewmodel.viewModelFactory
 import org.koin.dsl.module
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
@@ -21,7 +20,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsViewModel
-import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
+import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.add.AddContactViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.edit.EditContactViewModel

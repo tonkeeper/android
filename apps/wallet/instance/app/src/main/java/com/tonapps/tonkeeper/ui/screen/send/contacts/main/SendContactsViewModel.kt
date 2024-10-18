@@ -4,11 +4,14 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.tonkeeper.api.isOutTransfer
+import com.tonapps.tonkeeper.api.isTransfer
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.core.history.recipient
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -16,6 +19,8 @@ import com.tonapps.wallet.data.contacts.ContactsRepository
 import com.tonapps.wallet.data.contacts.entities.ContactEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
+import io.tonapi.models.AccountAddress
+import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,13 +34,14 @@ class SendContactsViewModel(
     private val accountRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val settingsRepository: SettingsRepository,
-    private val contactsRepository: ContactsRepository
+    private val contactsRepository: ContactsRepository,
+    private val api: API
 ): BaseWalletVM(app) {
 
     private val _myWalletsFlow = MutableStateFlow<List<Item.MyWallet>>(emptyList())
     private val myWalletsFlow = _myWalletsFlow.asStateFlow()
 
-    private val _latestContactsFlow = MutableStateFlow<List<Item.LatestContact>>(emptyList())
+    private val _latestContactsFlow = MutableStateFlow<List<Item>>(listOf(Item.Loading))
     private val latestContactsFlow = _latestContactsFlow.asStateFlow()
 
     private val savedContactsFlow = contactsRepository.contactsFlow.map {
@@ -82,7 +88,10 @@ class SendContactsViewModel(
     fun hideContact(address: String) {
         viewModelScope.launch(Dispatchers.IO) {
             contactsRepository.hide(address.toRawAddress(), wallet.testnet)
-            val newLatestContactsFlow = _latestContactsFlow.value.filter { !it.account.address.equalsAddress(address) }
+            val newLatestContactsFlow = _latestContactsFlow.value.filter {
+                it is Item.LatestContact && !it.account.address.equalsAddress(address)
+            }.map { it as Item.LatestContact }
+
             _latestContactsFlow.value = newLatestContactsFlow.mapIndexed { index, latestContact ->
                 latestContact.copy(position = ListCell.getPosition(newLatestContactsFlow.size, index))
             }
@@ -108,18 +117,25 @@ class SendContactsViewModel(
         }
     }
 
-    private suspend fun getLatestContacts(): List<Item.LatestContact> {
-        val accountEvents = eventsRepository.get(wallet.accountId, wallet.testnet) ?: return emptyList()
-        val actions = accountEvents.events.map { it.actions }.flatten()
-        val accounts = actions.mapNotNull { it.recipient }
-            .filter { it.isWallet && !it.address.equalsAddress(wallet.address) && !contactsRepository.isHidden(it.address.toRawAddress(), wallet.testnet) }
-            .distinctBy { it.address }
-            .take(6)
-
-
+    private fun getLatestContacts(): List<Item.LatestContact> {
+        val accounts = loadLatestRecipients()
         return accounts.mapIndexed { index, account ->
             val position = ListCell.getPosition(accounts.size, index)
             Item.LatestContact(position, account, wallet.testnet)
         }
     }
+
+    private fun loadLatestRecipients(): List<AccountAddress> {
+        val actions = api.getEvents(
+            accountId = wallet.accountId,
+            testnet = wallet.testnet,
+            limit = 100
+        )?.events?.map { it.actions }?.flatten() ?: return emptyList()
+
+        val recipients = actions.filter { it.isOutTransfer(wallet) }.mapNotNull { it.recipient }
+        return recipients.filter {
+            !it.address.equalsAddress(wallet.address) && !it.isWallet && !contactsRepository.isHidden(it.address.toRawAddress(), wallet.testnet)
+        }.distinctBy { it.address }
+    }
+
 }

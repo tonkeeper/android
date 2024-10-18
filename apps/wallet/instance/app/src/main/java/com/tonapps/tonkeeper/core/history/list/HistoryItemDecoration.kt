@@ -19,15 +19,17 @@ class HistoryItemDecoration: RecyclerView.ItemDecoration() {
     ) {
         super.getItemOffsets(outRect, view, parent, state)
         val position = parent.getChildAdapterPosition(view)
+        if (position == 0) {
+            return
+        }
+
         if (parent.isLayoutRequested) {
             parent.doOnLayout {
                 getItemOffsets(outRect, view, parent, state)
             }
             return
         }
-        /*if (position == 0) {
-            return
-        }*/
+
         val holder = parent.findViewHolderForAdapterPosition(position) ?: return
         val item = (holder as? BaseListHolder<*>)?.item ?: return
 

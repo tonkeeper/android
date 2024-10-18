@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
-import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
+import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen

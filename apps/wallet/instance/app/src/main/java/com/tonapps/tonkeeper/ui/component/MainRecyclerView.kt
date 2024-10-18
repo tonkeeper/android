@@ -10,7 +10,9 @@ import androidx.core.view.updatePadding
 import blur.BlurCompat
 import com.tonapps.tonkeeper.isBlurDisabled
 import com.tonapps.tonkeeper.isLowDevice
+import com.tonapps.tonkeeperx.R
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.useAttributes
 import uikit.widget.SimpleRecyclerView
 
 class MainRecyclerView @JvmOverloads constructor(
@@ -19,17 +21,20 @@ class MainRecyclerView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : SimpleRecyclerView(context, attrs, defStyle) {
 
-    private val paddingVertical = context.getDimensionPixelSize(uikit.R.dimen.offsetMedium)
-    private val barSize = context.getDimensionPixelSize(uikit.R.dimen.barHeight)
+    private val initialPadding: Int by lazy { paddingTop }
+    private val initialPaddingBottom: Int by lazy { paddingBottom }
+    private val defaultBarSize = context.getDimensionPixelSize(uikit.R.dimen.barHeight)
+    private var topBarSize = defaultBarSize
+    private var bottomBarSize = defaultBarSize
 
     private var topOffset = 0
     private var bottomOffset = 0
 
     val topPadding: Int
-        get() = topOffset + barSize
+        get() = topOffset + topBarSize
 
     private val bottomPadding: Int
-        get() = bottomOffset + barSize
+        get() = bottomOffset + bottomBarSize
 
     private val blurDisabled = context.isBlurDisabled
     private val topBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
@@ -38,6 +43,11 @@ class MainRecyclerView @JvmOverloads constructor(
     init {
         if (bottomBlur?.hasBlur == true) {
             overScrollMode = OVER_SCROLL_NEVER
+        }
+
+        context.useAttributes(attrs, R.styleable.MainRecyclerView) {
+            topBarSize = it.getDimensionPixelSize(R.styleable.MainRecyclerView_android_topOffset, defaultBarSize)
+            bottomBarSize = it.getDimensionPixelSize(R.styleable.MainRecyclerView_android_bottomOffset, defaultBarSize)
         }
     }
 
@@ -48,8 +58,8 @@ class MainRecyclerView @JvmOverloads constructor(
         topOffset = statusInsets.top
         bottomOffset = navigationInsets.bottom
         updatePadding(
-            top = paddingVertical + topPadding,
-            bottom = paddingVertical + bottomPadding
+            top = initialPadding + topPadding,
+            bottom = initialPaddingBottom + bottomPadding
         )
         applyBlurBounds()
         return super.onApplyWindowInsets(insets)

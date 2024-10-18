@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -37,6 +36,7 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.safeExternalOpenUri
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -49,8 +49,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
-import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseScreen
-import com.tonapps.tonkeeper.ui.screen.purchase.web.PurchaseWebScreen
+import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
@@ -448,7 +447,7 @@ class RootViewModel(
             if (method == null) {
                 toast(Localization.payment_method_not_found)
             } else {
-                PurchaseWebScreen.open(context, WalletPurchaseMethodEntity(
+                BrowserHelper.openPurchase(context, WalletPurchaseMethodEntity(
                     method = method,
                     wallet = wallet,
                     currency = settingsRepository.currency.code,

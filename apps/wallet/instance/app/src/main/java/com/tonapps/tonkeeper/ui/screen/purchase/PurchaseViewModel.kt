@@ -1,11 +1,9 @@
-package com.tonapps.tonkeeper.ui.screen.purchase.main
+package com.tonapps.tonkeeper.ui.screen.purchase
 
 import android.app.Application
-import androidx.lifecycle.ViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Item
+import com.tonapps.tonkeeper.ui.screen.purchase.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
@@ -17,7 +15,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.take
 
 class PurchaseViewModel(
     app: Application,

@@ -1,8 +1,8 @@
-package com.tonapps.tonkeeper.ui.screen.purchase.main.list.holder
+package com.tonapps.tonkeeper.ui.screen.purchase.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.tonkeeper.ui.screen.purchase.main.list.Item
+import com.tonapps.tonkeeper.ui.screen.purchase.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import uikit.extensions.drawable

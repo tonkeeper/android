@@ -124,7 +124,7 @@ object Security {
     }
 
     fun isDeviceRooted(): Boolean {
-        return RootUtils.isDeviceRooted()
+        return false
     }
 
     fun isDebuggable(context: Context): Boolean {

@@ -70,9 +70,9 @@ class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wal
         return null
     }
 
-    override fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner? {
+    override fun getTopBarDrawable(): BarDrawable? {
         if (this::headerView.isInitialized) {
-            return headerView
+            return headerView.background as? BarDrawable
         }
         return null
     }

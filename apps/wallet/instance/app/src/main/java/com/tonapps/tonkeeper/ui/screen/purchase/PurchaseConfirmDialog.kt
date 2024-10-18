@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.purchase.main
+package com.tonapps.tonkeeper.ui.screen.purchase
 
 import android.content.Context
 import android.view.View

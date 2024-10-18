@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
 import com.tonapps.network.NetworkMonitor
@@ -21,6 +22,8 @@ import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.dapps.DAppsRepository
+import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -52,10 +55,14 @@ class WalletViewModel(
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
     private val assetsManager: AssetsManager,
+    private val dAppsRepository: DAppsRepository,
 ): BaseWalletVM(app) {
 
     private var autoRefreshJob: Job? = null
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
+
+    private val _dAppPushesFlow = MutableStateFlow<List<AppPushEntity>>(emptyList())
+    private val dAppPushesFlow = _dAppPushesFlow.asStateFlow()
 
     private val _uiLabelFlow = MutableStateFlow<Wallet.Label?>(null)
     val uiLabelFlow = _uiLabelFlow.asStateFlow()
@@ -187,10 +194,10 @@ class WalletViewModel(
         combine(
             stateMainFlow,
             alertNotificationsFlow,
-            // pushManager.dAppPushFlow,
+            dAppPushesFlow,
             _stateSettingsFlow,
             updateWalletSettings,
-        ) { state, alerts, settings, _ ->
+        ) { state, alerts, pushes, settings, _ ->
             val status = settings.status /* if (settings.status == Status.NoInternet) {
                 settings.status
             } else if (settings.status != Status.SendingTransaction && settings.status != Status.TransactionConfirmed) {
@@ -218,7 +225,7 @@ class WalletViewModel(
                 status = status,
                 config = settings.config,
                 alerts = alerts,
-                dAppNotifications = State.DAppNotifications(emptyList()),
+                dAppNotifications = State.DAppNotifications(pushes),
                 setup = uiSetup,
                 lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale())
             )
@@ -236,11 +243,28 @@ class WalletViewModel(
                 delay(2.minutes)
             }
         }
+
+        loadDAppPushes()
+    }
+
+    private fun loadDAppPushes() {
+        viewModelScope.launch(Dispatchers.IO) { requestDAppPushes() }
+    }
+
+    private suspend fun requestDAppPushes() {
+        if (!wallet.isTonConnectSupported) {
+            return
+        }
+        val tonProof = accountRepository.requestTonProofToken(wallet) ?: return
+        val p = dAppsRepository.getPushes(tonProof, wallet.accountId)
+        _dAppPushesFlow.value = p
     }
 
     fun refresh() {
         _statusFlow.value = Status.Updating
         _lastLtFlow.value += 1
+
+        loadDAppPushes()
     }
 
     private suspend fun checkAutoRefresh() {

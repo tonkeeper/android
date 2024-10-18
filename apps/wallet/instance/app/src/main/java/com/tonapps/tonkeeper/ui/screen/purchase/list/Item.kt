@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.purchase.main.list
+package com.tonapps.tonkeeper.ui.screen.purchase.list
 
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem

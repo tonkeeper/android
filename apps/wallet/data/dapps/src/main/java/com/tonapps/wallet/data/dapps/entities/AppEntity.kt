@@ -14,6 +14,9 @@ data class AppEntity(
     val empty: Boolean
 ): Parcelable {
 
+    val id: String
+        get() = url.toString()
+
     val host: String
         get() = url.host ?: "unknown"
 

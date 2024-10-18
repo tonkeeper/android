@@ -124,7 +124,7 @@ internal class DatabaseSource(
         val notFoundApps = urls.filter { url -> apps.none { it.url == url } }
         if (notFoundApps.isNotEmpty()) {
             for (url in notFoundApps) {
-                val domain = url.host ?: "test.ton"
+                val domain = url.host ?: "unknown"
                 apps.add(AppEntity(
                     url = url,
                     name = domain.split(".").firstOrNull() ?: domain,

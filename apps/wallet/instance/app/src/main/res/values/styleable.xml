@@ -27,4 +27,10 @@
         <enum name="accent" value="2"/>
         <enum name="accentGreen" value="3"/>
     </attr>
+
+
+    <declare-styleable name="MainRecyclerView">
+        <attr name="android:topOffset" format="dimension|reference"/>
+        <attr name="android:bottomOffset" format="dimension|reference"/>
+    </declare-styleable>
 </resources>

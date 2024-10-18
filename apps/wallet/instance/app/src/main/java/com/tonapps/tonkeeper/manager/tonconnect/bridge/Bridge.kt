@@ -1,8 +1,6 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge
 
-import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.extensions.base64
 import com.tonapps.extensions.optStringCompat
 import com.tonapps.security.CryptoBox
@@ -10,7 +8,6 @@ import com.tonapps.security.hex
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

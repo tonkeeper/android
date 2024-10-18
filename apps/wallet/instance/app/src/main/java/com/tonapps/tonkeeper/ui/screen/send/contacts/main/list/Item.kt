@@ -15,6 +15,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_SPACE = 2
         const val TYPE_LATEST_CONTACT = 3
         const val TYPE_SAVED_CONTACT = 4
+        const val TYPE_LOADING = 5
     }
 
     data object Space: Item(TYPE_SPACE)
@@ -56,5 +57,7 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         val userFriendlyAddress: String = contact.address.toUserFriendly(testnet = testnet)
     }
+
+    data object Loading: Item(TYPE_LOADING)
 
 }

@@ -21,10 +21,6 @@ data class WalletPurchaseMethodEntity(
 ): Parcelable {
 
     @IgnoredOnParcel
-    val useCustomTabs: Boolean
-        get() = true // method.useCustomTabs
-
-    @IgnoredOnParcel
     val successUrlPattern: SuccessUrlPattern?
         get() = method.successUrlPattern
 

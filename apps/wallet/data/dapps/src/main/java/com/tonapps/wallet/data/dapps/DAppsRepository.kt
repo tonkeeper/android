@@ -7,10 +7,12 @@ import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.map
 import com.tonapps.extensions.withoutQuery
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.dapps.source.DatabaseSource
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNTC
@@ -37,6 +39,7 @@ class DAppsRepository(
     context: Context,
     private val scope: CoroutineScope,
     private val rnLegacy: RNLegacy,
+    private val api: API,
 ) {
 
     private val _connectionsFlow = MutableStateFlow<List<AppConnectEntity>?>(null)
@@ -71,6 +74,22 @@ class DAppsRepository(
         connectionsFlow.drop(1).onEach {
             addToLegacy(it.toList())
         }.flowOn(Dispatchers.IO).launchIn(scope)
+    }
+
+    suspend fun getPushes(tonProof: String, accountId: String): List<AppPushEntity> {
+        val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
+        if (pushes.isEmpty()) {
+            return emptyList()
+        }
+        val apps = getApps(pushes.map { it.dappUrl })
+
+        val list = mutableListOf<AppPushEntity>()
+        for (push in pushes) {
+            val app = apps.firstOrNull { it.url == push.dappUrl } ?: continue
+            list.add(AppPushEntity(app, push))
+        }
+
+        return list.toList()
     }
 
     suspend fun getConnections(

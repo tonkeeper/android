@@ -50,14 +50,14 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
 
         private val scrollListener = object : RecyclerVerticalScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
-                getHeaderDividerOwner()?.setDivider(verticalScrollOffset > 0)
+                getTopBarDrawable()?.setDivider(verticalScrollOffset > 0)
                 mainViewModel.setBottomScrolled(!recyclerView.isMaxScrollReached)
             }
         }
 
         abstract fun getRecyclerView(): RecyclerView?
 
-        abstract fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner?
+        abstract fun getTopBarDrawable(): BarDrawable?
 
         open fun scrollUp() {
             getRecyclerView()?.scrollToPosition(0)

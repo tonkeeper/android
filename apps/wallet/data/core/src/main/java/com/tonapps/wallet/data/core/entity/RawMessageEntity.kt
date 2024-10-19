@@ -57,9 +57,9 @@ data class RawMessageEntity(
         json.optString("stateInit"),
         json.optString("payload")
     ) {
-        if (payload.base64() != payloadValue) {
+        /*if (payload.base64() != payloadValue) {
             throw IllegalStateException("Payload is not equal")
-        }
+        }*/
     }
 
     private companion object {

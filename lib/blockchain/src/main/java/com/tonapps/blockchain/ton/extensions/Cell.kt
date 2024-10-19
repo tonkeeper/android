@@ -1,18 +1,22 @@
 package com.tonapps.blockchain.ton.extensions
 
-import io.ktor.util.encodeBase64
 import org.json.JSONObject
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellSlice
 import org.ton.crypto.hex
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
+@OptIn(ExperimentalEncodingApi::class)
 fun String.toBoc(): BagOfCells {
     /*if (startsWith("{")) { // oh fuck....
         return toBocFromJSBuffer()
     }*/
     return try {
+        /*val bytes = Base64.Default.Mime.decode(this)
+        return BagOfCells(bytes)*/
         val fixedBoc = this.replace("-", "+")
             .replace("_", "/")
         BagOfCells(fixedBoc.base64())
@@ -50,8 +54,11 @@ fun Cell.toByteArray(): ByteArray {
     return BagOfCells(this).toByteArray()
 }
 
+@OptIn(ExperimentalEncodingApi::class)
 fun Cell.base64(): String {
-    return toByteArray().encodeBase64()
+    /*val bytes = toByteArray()
+    return Base64.Default.Mime.encode(bytes)*/
+    return org.ton.crypto.base64(toByteArray())
 }
 
 fun Cell.hex(): String {

@@ -182,7 +182,6 @@ class RootViewModel(
             settingsRepository.country = it
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
-
         viewModelScope.launch(Dispatchers.IO) {
             if (environment.isGooglePlayServicesAvailable) {
                 delay(2000)

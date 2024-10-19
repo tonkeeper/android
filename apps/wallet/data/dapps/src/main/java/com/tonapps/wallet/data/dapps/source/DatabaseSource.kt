@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.dapps.source
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.SharedPreferences
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
@@ -69,7 +70,7 @@ internal class DatabaseSource(
 
     private val coroutineContext: CoroutineContext = Dispatchers.IO.limitedParallelism(1)
 
-    private val encryptedPrefs = Security.pref(context, KEY_ALIAS, DATABASE_NAME)
+    private val encryptedPrefs: SharedPreferences by lazy { Security.pref(context, KEY_ALIAS, DATABASE_NAME) }
     private val prefs = context.prefs("tonconnect")
 
     private fun createAppTable(db: SQLiteDatabase) {

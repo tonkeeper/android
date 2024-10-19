@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.core.entity
 import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.loadOpCode
 import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.blockchain.ton.extensions.safeParseCell
@@ -55,7 +56,11 @@ data class RawMessageEntity(
         parseAmount(json.get("amount")),
         json.optString("stateInit"),
         json.optString("payload")
-    )
+    ) {
+        if (payload.base64() != payloadValue) {
+            throw IllegalStateException("Payload is not equal")
+        }
+    }
 
     private companion object {
 

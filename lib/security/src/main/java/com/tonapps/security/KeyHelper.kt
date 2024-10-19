@@ -41,7 +41,11 @@ object KeyHelper {
     private fun generateKey(parameter: KeyGenParameterSpec) {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         generator.init(parameter)
-        // generator.generateKey()
+        try {
+            generator.generateKey()
+        } catch (e: Throwable) {
+            // device unlocked
+        }
     }
 
     private fun keyExists(alias: String): Boolean {
@@ -51,7 +55,7 @@ object KeyHelper {
     private fun defaultParameterBuilder(alias: String): KeyGenParameterSpec.Builder {
         val builder = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
         builder.setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-        builder.setDigests(KeyProperties.DIGEST_SHA512)
+        builder.setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
         builder.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
         builder.setKeySize(KEY_SIZE)
         builder.setUserAuthenticationRequired(false)

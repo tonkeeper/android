@@ -17,9 +17,6 @@ import kotlin.math.floor
 val CellBuilder.availableBits: Int
     get() = 1023 - bits.size
 
-val CellBuilder.availableRefs: Int
-    get() = 1023 - refs.size
-
 fun CellBuilder.storeBuilder(builder: CellBuilder) = apply {
     storeRefs(builder.refs)
     storeBits(builder.bits)

@@ -9,11 +9,13 @@ import org.ton.cell.CellSlice
 import org.ton.crypto.hex
 
 fun String.toBoc(): BagOfCells {
-    if (startsWith("{")) { // oh fuck....
+    /*if (startsWith("{")) { // oh fuck....
         return toBocFromJSBuffer()
-    }
+    }*/
     return try {
-        BagOfCells(base64())
+        val fixedBoc = this.replace("-", "+")
+            .replace("_", "/")
+        BagOfCells(fixedBoc.base64())
     } catch (e: Throwable) {
         BagOfCells(hex(this))
     }

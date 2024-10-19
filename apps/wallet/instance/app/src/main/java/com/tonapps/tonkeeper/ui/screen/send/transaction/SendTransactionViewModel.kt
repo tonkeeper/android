@@ -114,6 +114,7 @@ class SendTransactionViewModel(
                     )
                 }
             } catch (e: Throwable) {
+                Log.d("SendTransactionViewModelLog", "Failed to emulate transaction", e)
                 val tonBalance = getTONBalance()
                 if (tonBalance == Coins.ZERO) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(

@@ -8,14 +8,18 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import kotlinx.coroutines.withTimeout
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.KeyGenerator
 import javax.crypto.Mac
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
+import kotlin.time.Duration.Companion.seconds
 
 object Security {
 

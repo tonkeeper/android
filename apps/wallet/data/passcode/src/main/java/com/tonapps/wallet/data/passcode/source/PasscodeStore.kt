@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode.source
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.tonapps.extensions.clear
 import com.tonapps.extensions.putString
 import com.tonapps.extensions.remove
@@ -18,7 +19,7 @@ class PasscodeStore(context: Context) {
         private const val KEY_ALIAS = "_com_tonapps_passcode_master_key_"
     }
 
-    private val keyValue = Security.pref(context, KEY_ALIAS, NAME)
+    private val keyValue: SharedPreferences by lazy { Security.pref(context, KEY_ALIAS, NAME) }
 
     val hasPinCode: Boolean
         get() = keyValue.contains(CODE_KEY) && !keyValue.getString(CODE_KEY, null).isNullOrBlank()

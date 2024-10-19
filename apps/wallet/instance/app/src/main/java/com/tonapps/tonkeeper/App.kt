@@ -13,6 +13,8 @@ import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
+import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.extensions.setLocales
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel

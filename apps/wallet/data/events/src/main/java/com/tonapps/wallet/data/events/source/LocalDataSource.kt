@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.events.source
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import com.tonapps.extensions.MutableEffectFlow
@@ -31,7 +32,7 @@ internal class LocalDataSource(
     private val _decryptedCommentFlow = MutableEffectFlow<Unit>()
     val decryptedCommentFlow = _decryptedCommentFlow.shareIn(scope, SharingStarted.WhileSubscribed(), 1)
 
-    private val encryptedPrefs = Security.pref(context, KEY_ALIAS, NAME)
+    private val encryptedPrefs: SharedPreferences by lazy { Security.pref(context, KEY_ALIAS, NAME) }
 
     private fun keyDecryptedComment(txId: String): String {
         return "tx_$txId"

@@ -51,7 +51,7 @@ class ScreenCacheSource(
         if (list.isEmpty()) {
             file.delete()
         } else {
-            val maxListSize = min(list.size, 50)
+            val maxListSize = min(list.size, 25)
             val bytes = list.subList(0, maxListSize).toByteArray()
             // val bytes = list.toByteArray()
             file.writeBytes(bytes)

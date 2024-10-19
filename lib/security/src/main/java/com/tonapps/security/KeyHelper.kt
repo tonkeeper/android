@@ -41,7 +41,7 @@ object KeyHelper {
     private fun generateKey(parameter: KeyGenParameterSpec) {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         generator.init(parameter)
-        generator.generateKey()
+        // generator.generateKey()
     }
 
     private fun keyExists(alias: String): Boolean {

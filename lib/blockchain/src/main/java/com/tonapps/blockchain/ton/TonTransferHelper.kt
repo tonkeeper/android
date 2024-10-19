@@ -3,6 +3,7 @@ package com.tonapps.blockchain.ton
 import com.tonapps.blockchain.ton.extensions.storeMaybeRef
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeQueryId
+import com.tonapps.blockchain.ton.extensions.storeStringTail
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
@@ -26,7 +27,7 @@ object TonTransferHelper {
 
         return buildCell {
             storeUInt(0, 32)
-            storeBytes(text.toByteArray())
+            storeStringTail(text)
         }
     }
 

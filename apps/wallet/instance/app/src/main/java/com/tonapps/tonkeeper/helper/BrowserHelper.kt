@@ -52,7 +52,7 @@ object BrowserHelper {
             .setShowTitle(true)
             .setTranslateLocale(activity.locale)
             .setBookmarksButtonEnabled(false)
-            .setShareState(CustomTabsIntent.SHARE_STATE_OFF)
+            .setShareState(CustomTabsIntent.SHARE_STATE_ON)
             .setShareIdentityEnabled(false)
             .setDownloadButtonEnabled(false)
             .setCloseButtonPosition(CustomTabsIntent.CLOSE_BUTTON_POSITION_END)

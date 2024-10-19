@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.account.source
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.prefs
@@ -19,7 +20,7 @@ internal class StorageSource(context: Context) {
     }
 
     private val prefs = context.prefs(NAME)
-    private val encryptedPrefs = Security.pref(context, KEY_ALIAS, NAME)
+    private val encryptedPrefs: SharedPreferences by lazy { Security.pref(context, KEY_ALIAS, NAME) }
 
     fun getTonProofToken(publicKey: PublicKeyEd25519): String? {
         val key = tonProofTokenKey(publicKey)

@@ -9,7 +9,8 @@
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:ignoreSystemOffset="true"/>
+        app:ignoreSystemOffset="true"
+        android:action="@drawable/ic_close_16"/>
 
     <uikit.widget.SimpleRecyclerView
         android:id="@+id/list"
@@ -18,7 +19,7 @@
         android:layout_marginTop="@dimen/barHeight"
         android:clipToPadding="false"
         android:paddingHorizontal="@dimen/offsetMedium"
-        android:paddingBottom="@dimen/offsetMedium"/>
+        android:paddingBottom="72dp"/>
 
     <Button
         style="@style/Widget.App.Button"
@@ -27,6 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_margin="16dp"
+        android:visibility="gone"
         android:textAppearance="@style/TextAppearance.Label1"
         android:text="@string/add_contact"/>
 

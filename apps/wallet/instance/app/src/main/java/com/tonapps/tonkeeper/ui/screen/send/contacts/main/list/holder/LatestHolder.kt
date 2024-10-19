@@ -16,7 +16,7 @@ class LatestHolder(
 
     init {
         emojiView.setEmoji("\uD83D\uDD57")
-        iconView.setImageResource(R.drawable.ic_ellipsis_16)
+        // iconView.setImageResource(R.drawable.ic_ellipsis_16)
     }
 
     override fun onBind(item: Item.LatestContact) {
@@ -24,7 +24,7 @@ class LatestHolder(
         itemView.background = item.position.drawable(context)
 
         nameView.text = item.name
-        iconView.setOnClickListener { showMenu(item) }
+        // iconView.setOnClickListener { showMenu(item) }
     }
 
     private fun showMenu(item: Item.LatestContact) {

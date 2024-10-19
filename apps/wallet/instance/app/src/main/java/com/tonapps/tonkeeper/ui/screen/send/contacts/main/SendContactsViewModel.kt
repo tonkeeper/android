@@ -62,10 +62,10 @@ class SendContactsViewModel(
             uiItems.add(Item.Space)
         }
 
-        if (savedContacts.isNotEmpty()) {
+        /*if (savedContacts.isNotEmpty()) {
             uiItems.addAll(savedContacts)
             uiItems.add(Item.Space)
-        }
+        }*/
 
         if (latestContacts.isNotEmpty()) {
             uiItems.addAll(latestContacts)
@@ -135,7 +135,7 @@ class SendContactsViewModel(
         val recipients = actions.filter { it.isOutTransfer(wallet) }.mapNotNull { it.recipient }
         return recipients.filter {
             !it.address.equalsAddress(wallet.address) && !it.isWallet && !contactsRepository.isHidden(it.address.toRawAddress(), wallet.testnet)
-        }.distinctBy { it.address }
+        }.distinctBy { it.address }.take(6)
     }
 
 }

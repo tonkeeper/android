@@ -10,6 +10,7 @@ import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.map
 import com.tonapps.extensions.withoutQuery
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.core.recordException
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
@@ -58,7 +59,6 @@ class DAppsRepository(
     init {
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
-                database.clearConnections()
                 migrationFromLegacy()
             }
 
@@ -77,6 +77,10 @@ class DAppsRepository(
     }
 
     suspend fun getPushes(tonProof: String, accountId: String): List<AppPushEntity> {
+        if (true) {
+            return emptyList()
+        }
+
         val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
         if (pushes.isEmpty()) {
             return emptyList()
@@ -239,7 +243,9 @@ class DAppsRepository(
             for (apps in tcApps.testnet) {
                 migrationFromLegacy(apps, true)
             }
-        } catch (ignored: Throwable) { }
+        } catch (e: Throwable) {
+            recordException(e)
+        }
     }
 
     private suspend fun migrationFromLegacy(connections: RNTCApps, testnet: Boolean) {

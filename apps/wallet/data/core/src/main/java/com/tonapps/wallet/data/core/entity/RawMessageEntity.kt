@@ -47,7 +47,7 @@ data class RawMessageEntity(
 
     @IgnoredOnParcel
     val payload: Cell by lazy {
-        payloadValue.safeParseCell() ?: Cell()
+        payloadValue.parseCell()
     }
 
     constructor(json: JSONObject) : this(

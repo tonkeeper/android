@@ -111,6 +111,7 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
     )
 }
 
+
 fun RawMessageEntity.getWalletTransfer(
     excessesAddress: AddrStd? = null,
     newStateInit: StateInit? = null,

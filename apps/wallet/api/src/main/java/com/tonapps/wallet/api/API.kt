@@ -108,10 +108,14 @@ class API(
 
     val config: ConfigEntity
         get() {
-            while (configRepository.configEntity == null) {
-                Thread.sleep(16)
-            }
-            return configRepository.configEntity!!
+            val timeout = System.currentTimeMillis() + 2000
+            do {
+                if (configRepository.configEntity != null) {
+                    return configRepository.configEntity!!
+                }
+                Thread.sleep(50)
+            } while (System.currentTimeMillis() < timeout)
+            return ConfigEntity.default
         }
 
     val configFlow: Flow<ConfigEntity>

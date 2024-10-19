@@ -111,7 +111,13 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 navigation?.add(PickerScreen.newInstance())
             }
         }
-        collectFlow(viewModel.childBottomScrolled, bottomTabsView::setDivider)
+        collectFlow(viewModel.childBottomScrolled) {
+            if (bottomTabsView.selectedItemId == R.id.browser) {
+                bottomTabsView.setDivider(false)
+            } else {
+                bottomTabsView.setDivider(it)
+            }
+        }
 
         rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().onEach {
             val itemId = mainDeepLinks[it.link] ?: return@onEach
@@ -198,7 +204,16 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         } else {
             transaction.add(R.id.child_fragment, fragment)
         }
+        transaction.runOnCommit {
+            checkBottomDivider(fragment)
+        }
         transaction.commitNow()
+    }
+
+    private fun checkBottomDivider(fragment: Fragment) {
+        if (fragment is BrowserMainScreen) {
+            bottomTabsView.setDivider(false)
+        }
     }
 
     override fun onResume() {

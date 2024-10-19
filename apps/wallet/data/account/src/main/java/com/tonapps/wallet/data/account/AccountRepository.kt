@@ -64,8 +64,8 @@ class AccountRepository(
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val database = DatabaseSource(context, scope)
-    private val storageSource = StorageSource(context)
-    private val vaultSource = VaultSource(context)
+    private val storageSource: StorageSource by lazy { StorageSource(context) }
+    private val vaultSource: VaultSource by lazy { VaultSource(context) }
     private val migrationHelper = RNMigrationHelper(rnLegacy)
 
     private val _selectedStateFlow = MutableStateFlow<SelectedState>(SelectedState.Initialization)
@@ -82,8 +82,8 @@ class AccountRepository(
     init {
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMainMigration()) {
-                database.clearAccounts()
-                storageSource.clear()
+                // database.clearAccounts()
+                // storageSource.clear()
                 migrationFromRN()
                 rnLegacy.setWalletMigrated()
             }

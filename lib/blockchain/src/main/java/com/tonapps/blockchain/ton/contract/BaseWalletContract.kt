@@ -111,11 +111,10 @@ abstract class BaseWalletContract(
             val init = Maybe.of(gift.stateInit?.let {
                 Either.of<StateInit, CellRef<StateInit>>(it, null)
             })
-            val body = if (gift.body == null) {
-                Either.of<Cell, CellRef<Cell>>(Cell.empty(), null)
-            } else {
-                Either.of<Cell, CellRef<Cell>>(null, CellRef(gift.body!!))
-            }
+
+            val body = gift.body?.let {
+                Either.of<Cell, CellRef<Cell>>(null, CellRef(it))
+            } ?: Either.of<Cell, CellRef<Cell>>(Cell.empty(), null)
 
             return MessageRelaxed(
                 info = info,

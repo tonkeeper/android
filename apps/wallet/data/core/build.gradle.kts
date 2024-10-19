@@ -23,6 +23,9 @@ android {
 }
 
 dependencies {
+    api(platform(Dependence.Firebase.bom))
+    api(Dependence.Firebase.crashlytics)
+
     implementation(Dependence.ton)
     implementation(Dependence.Koin.core)
     implementation(Dependence.AndroidX.biometric)

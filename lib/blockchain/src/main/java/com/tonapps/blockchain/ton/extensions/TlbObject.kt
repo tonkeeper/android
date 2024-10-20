@@ -1,10 +1,9 @@
 package com.tonapps.blockchain.ton.extensions
 
-import android.os.Parcelable
+import com.tonapps.base64.encodeBase64
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.crypto.base64
 import org.ton.tlb.TlbCodec
 import org.ton.tlb.TlbObject
 import org.ton.tlb.loadTlb
@@ -21,7 +20,7 @@ inline fun <reified T : TlbObject> T.toCell(): Cell {
 inline fun <reified T : TlbObject> T.bocBase64(): String {
     val cell = this.toCell()
     val array = BagOfCells(cell).toByteArray()
-    return base64(array)
+    return array.encodeBase64()
 }
 
 inline fun <reified T: TlbObject> String.toTlb(): T? {

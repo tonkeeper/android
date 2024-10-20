@@ -1,6 +1,6 @@
 object Dependence {
 
-    const val ton = "org.ton:ton-kotlin:0.2.15"
+    const val ton = "org.ton:ton-kotlin:0.3.1"
     const val fresco = "com.facebook.fresco:fresco:3.2.0"
     const val guava = "com.google.guava:guava:33.2.1-android"
     const val zxing = "com.google.zxing:core:3.5.3"
@@ -9,6 +9,15 @@ object Dependence {
 
     object Analytics {
         const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"
+    }
+
+    object TON {
+        const val tvm = "org.ton:ton-kotlin-tvm:0.3.1"
+        const val crypto = "org.ton:ton-kotlin-crypto:0.3.1"
+        const val tlb = "org.ton:ton-kotlin-tlb:0.3.1"
+        const val blockTlb = "org.ton:ton-kotlin-block-tlb:0.3.1"
+        const val tonapiTl = "org.ton:ton-kotlin-tonapi-tl:0.3.1"
+        const val contract = "org.ton:ton-kotlin-contract:0.3.1"
     }
 
     object KotlinX {

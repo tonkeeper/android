@@ -18,8 +18,10 @@ import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellSlice
+import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.CellRef
 
 private fun rebuildJettonWithCustomExcessesAccount(
     payload: Cell,
@@ -117,16 +119,21 @@ fun RawMessageEntity.getWalletTransfer(
     newStateInit: StateInit? = null,
     newCustomPayload: Cell? = null,
 ): WalletTransfer {
-    val builder = WalletTransferBuilder()
-    builder.stateInit = stateInit ?: newStateInit
-    builder.destination = address
-    builder.body = if (excessesAddress != null) {
+    val stateInitRef = (stateInit ?: newStateInit)?.let {
+        CellRef.valueOf(it)
+    }
+
+    val body = if (excessesAddress != null) {
         rebuildBodyWithCustomExcessesAccount(payload, excessesAddress)
     } else if (newCustomPayload != null) {
         rebuildJettonTransferWithCustomPayload(newCustomPayload)
     } else {
         payload
     }
+
+    val builder = WalletTransferBuilder()
+    builder.destination = address
+    builder.messageData = MessageData.Raw(body, stateInitRef)
     // builder.bounceable = address.isBounceable()
     if (newCustomPayload != null) {
         val defCoins = Coins.of(0.5)

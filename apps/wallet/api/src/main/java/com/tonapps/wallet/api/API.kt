@@ -11,6 +11,7 @@ import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.locale
@@ -398,7 +399,7 @@ class API(
         testnet: Boolean
     ): List<AccountDetailsEntity> {
         return try {
-            val query = pk.key.hex()
+            val query = pk.hex()
             val wallets = withRetry {
                 wallet(testnet).getWalletsByPublicKey(query).accounts
             } ?: return emptyList()

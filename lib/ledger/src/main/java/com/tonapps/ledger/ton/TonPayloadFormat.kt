@@ -181,7 +181,7 @@ sealed class TonPayloadFormat : Parcelable {
         fun fromCell(cell: Cell, options: ParseOptions? = null): TonPayloadFormat? {
             val params = options ?: ParseOptions()
 
-            if (cell.hash().contentEquals(Cell().hash())) {
+            if (cell.isEmpty()) {
                 return null
             }
 

@@ -12,8 +12,10 @@ import io.tonapi.models.MessageConsequences
 import org.ton.bitstring.BitString
 import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
+import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.CellRef
 import java.math.BigInteger
 
 object SendNftHelper {
@@ -94,20 +96,25 @@ object SendNftHelper {
         queryId: BigInteger,
         comment: Any?,
     ): WalletTransfer {
-        val builder = WalletTransferBuilder()
-        builder.bounceable = true
-        builder.sendMode = 3
-        builder.coins = ONE_TON
-        if (seqno == 0) {
-            builder.stateInit = contract.stateInit
+        val stateInitRef = if (seqno == 0) {
+            CellRef.Companion.valueOf(contract.stateInit)
+        } else {
+            null
         }
-        builder.destination = nftAddress
-        builder.body = TonTransferHelper.nft(
+
+        val body = TonTransferHelper.nft(
             newOwnerAddress = destination,
             excessesAddress = contract.address,
             queryId = queryId,
             body = comment,
         )
+        
+        val builder = WalletTransferBuilder()
+        builder.bounceable = true
+        builder.sendMode = 3
+        builder.coins = ONE_TON
+        builder.messageData = MessageData.raw(body, stateInitRef)
+        builder.destination = nftAddress
         return builder.build()
     }
 }

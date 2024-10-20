@@ -211,8 +211,8 @@ class AccountRepository(
     }
 
     suspend fun getPrivateKey(id: String): PrivateKeyEd25519 {
-        val wallet = database.getAccount(id) ?: return EmptyPrivateKeyEd25519
-        return vaultSource.getPrivateKey(wallet.publicKey) ?: EmptyPrivateKeyEd25519
+        val wallet = database.getAccount(id) ?: return EmptyPrivateKeyEd25519.invoke()
+        return vaultSource.getPrivateKey(wallet.publicKey) ?: EmptyPrivateKeyEd25519.invoke()
     }
 
     suspend fun pairLedger(

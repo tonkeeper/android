@@ -56,7 +56,9 @@ data class RawMessageEntity(
         parseAmount(json.get("amount")),
         json.optString("stateInit"),
         json.optString("payload")
-    )
+    ) {
+        Log.d("RawMessageEntity", "json: $json")
+    }
 
     private companion object {
 

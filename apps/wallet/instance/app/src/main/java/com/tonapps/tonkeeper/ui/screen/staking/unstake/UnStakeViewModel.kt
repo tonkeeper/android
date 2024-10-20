@@ -56,9 +56,12 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
+import org.ton.block.StateInit
 import org.ton.cell.buildCell
+import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.CellRef
 import uikit.extensions.collectFlow
 import uikit.widget.ProcessTaskView
 import kotlin.time.Duration.Companion.seconds
@@ -227,21 +230,24 @@ class UnStakeViewModel(
         staked: StakedEntity,
         sendParams: SendMetadataEntity,
     ): WalletTransfer {
+        val stateInitRef = if (0 >= sendParams.seqno) {
+            CellRef.valueOf(wallet.contract.stateInit)
+        } else {
+            null
+        }
+
         val isSendAll = amount == staked.balance
         val pool = staked.pool
         val builder = WalletTransferBuilder()
         builder.bounceable = true
         builder.sendMode = (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
-        if (0 >= sendParams.seqno) {
-            builder.stateInit = wallet.contract.stateInit
-        }
         when (staked.pool.implementation) {
             StakingPool.Implementation.LiquidTF -> {
                 val token = pool.liquidJettonMaster?.let { getTokenBalance(it) } ?: throw IllegalStateException("Liquid jetton master not found")
-                builder.applyLiquid(amount, wallet.contract.address, token)
+                builder.applyLiquid(amount, wallet.contract.address, token, stateInitRef)
             }
-            StakingPool.Implementation.Whales -> builder.applyWhales(pool, amount, isSendAll)
-            StakingPool.Implementation.TF -> builder.applyTF(pool)
+            StakingPool.Implementation.Whales -> builder.applyWhales(pool, amount, isSendAll, stateInitRef)
+            StakingPool.Implementation.TF -> builder.applyTF(pool, stateInitRef)
             else -> throw IllegalStateException("Unsupported pool implementation")
         }
         return builder.build()
@@ -258,7 +264,7 @@ class UnStakeViewModel(
         return tokens.find { it.address.equalsAddress(tokenAddress) }
     }
 
-    private suspend fun WalletTransferBuilder.applyLiquid(amount: Coins, responseAddress: AddrStd, tsTONToken: AccountTokenEntity) {
+    private suspend fun WalletTransferBuilder.applyLiquid(amount: Coins, responseAddress: AddrStd, tsTONToken: AccountTokenEntity, stateInitRef: CellRef<StateInit>?) {
         val address = tsTONToken.balance.walletAddress.toUserFriendly(
             wallet = false,
             bounceable = true,
@@ -274,21 +280,21 @@ class UnStakeViewModel(
             storeUInt(0, 1)
         }
 
-        this.coins = Coins.ONE.toGrams()
-        this.destination = AddrStd.parse(address)
-        this.body = buildCell {
+        val body = buildCell {
             storeOpCode(TONOpCode.LIQUID_TF_BURN)
             storeQueryId(TransferEntity.newWalletQueryId())
             storeCoins(convertedAmount.toGrams())
             storeAddress(responseAddress)
             storeMaybeRef(customPayload)
         }
+
+        this.coins = Coins.ONE.toGrams()
+        this.destination = AddrStd.parse(address)
+        this.messageData = MessageData.raw(body, stateInitRef)
     }
 
-    private fun WalletTransferBuilder.applyWhales(pool: PoolEntity, amount: Coins, isSendAll: Boolean) {
-        this.coins = Coins.of(0.2).toGrams()
-        this.destination = AddrStd.parse(pool.address)
-        this.body = buildCell {
+    private fun WalletTransferBuilder.applyWhales(pool: PoolEntity, amount: Coins, isSendAll: Boolean, stateInitRef: CellRef<StateInit>?) {
+        val body = buildCell {
             storeOpCode(TONOpCode.WHALES_WITHDRAW)
             storeQueryId(TransferEntity.newWalletQueryId())
             storeCoins(Coins.of(0.1).toGrams())
@@ -298,15 +304,21 @@ class UnStakeViewModel(
                 storeCoins(amount.toGrams())
             }
         }
+
+        this.coins = Coins.of(0.2).toGrams()
+        this.destination = AddrStd.parse(pool.address)
+        this.messageData = MessageData.raw(body, stateInitRef)
     }
 
-    private fun WalletTransferBuilder.applyTF(pool: PoolEntity) {
-        this.coins = Coins.ONE.toGrams()
-        this.destination = AddrStd.parse(pool.address)
-        this.body = buildCell {
+    private fun WalletTransferBuilder.applyTF(pool: PoolEntity, stateInitRef: CellRef<StateInit>?) {
+        val body = buildCell {
             storeUInt(0, 32)
             storeBytes("w".toByteArray())
         }
+
+        this.coins = Coins.ONE.toGrams()
+        this.destination = AddrStd.parse(pool.address)
+        this.messageData = MessageData.raw(body, stateInitRef)
     }
 
     private suspend fun getSendParams(

@@ -117,6 +117,7 @@ object Dependence {
         const val sqlite = ":lib:sqlite"
         const val ledger = ":lib:ledger"
         const val ur = ":lib:ur"
+        const val base64 = ":lib:base64"
     }
 
     object UIKit {

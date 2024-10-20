@@ -2,12 +2,12 @@ package com.tonapps.security.vault
 
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
+import com.tonapps.extensions.getByteArray
+import com.tonapps.extensions.putByteArray
 import com.tonapps.security.Security
 import com.tonapps.security.clear
 import com.tonapps.security.decrypt
 import com.tonapps.security.encrypt
-import com.tonapps.security.getByteArray
-import com.tonapps.security.putByteArray
 import com.tonapps.security.safeDestroy
 import com.tonapps.security.spec.SimpleSecretSpec
 import javax.crypto.SecretKey

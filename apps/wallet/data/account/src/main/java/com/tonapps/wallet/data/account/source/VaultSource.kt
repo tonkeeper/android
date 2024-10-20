@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.core.content.edit
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.getByteArray
+import com.tonapps.extensions.putByteArray
 import com.tonapps.security.Security
 import com.tonapps.security.clear
-import com.tonapps.security.putByteArray
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic

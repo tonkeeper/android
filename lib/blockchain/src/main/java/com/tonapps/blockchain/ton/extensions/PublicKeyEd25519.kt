@@ -1,14 +1,15 @@
 package com.tonapps.blockchain.ton.extensions
 
+import com.tonapps.base64.decodeBase64
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.crypto.base64
 import org.ton.crypto.hex
 
 fun String.publicKey(): PublicKeyEd25519 {
     return try {
-        PublicKeyEd25519(base64())
-    } catch (e: Throwable) {
         PublicKeyEd25519(hex(this))
+    } catch (e: Throwable) {
+        PublicKeyEd25519(decodeBase64())
     }
 }
 

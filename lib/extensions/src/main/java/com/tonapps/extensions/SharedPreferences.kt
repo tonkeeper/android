@@ -2,26 +2,70 @@ package com.tonapps.extensions
 
 import android.content.SharedPreferences
 import android.os.Parcelable
-import android.util.Log
 import androidx.core.content.edit
-import androidx.core.os.BundleCompat
+import com.tonapps.base64.decodeBase64
+import com.tonapps.base64.encodeBase64
 
 fun SharedPreferences.getByteArray(key: String): ByteArray? {
-    val bytes = getString(key, null)?.base64 ?: return null
+    val value = getString(key, null)?.trim() ?: return null
+    val bytes = value.decodeBase64()
     if (bytes.isEmpty()) {
         return null
     }
     return bytes
 }
 
+/*
+fun SharedPreferences.getByteArray(key: String): ByteArray? {
+    val value = run {
+        val value = getString(key, null)
+        if (value.isNullOrBlank()) {
+            return byteArrayOf(0)
+        }
+        base64(value) ?: byteArrayOf(0)
+    }
+
+    if (value.isZero()) {
+        value.clear()
+        return null
+    }
+    return value
+}
+
+fun SharedPreferences.Editor.putByteArray(key: String, value: ByteArray): SharedPreferences.Editor {
+    if (value.isZero()) {
+        remove(key)
+        return this
+    } else {
+        val string = base64(value)
+        if (string == null) {
+            remove(key)
+        } else {
+            putString(key, string)
+        }
+    }
+    return this
+}
+
+ */
+
 fun SharedPreferences.putByteArray(key: String, value: ByteArray?) {
     if (value == null) {
         remove(key)
     } else {
         edit {
-            putString(key, value.base64)
+            putByteArray(key, value)
         }
     }
+}
+
+fun SharedPreferences.Editor.putByteArray(key: String, value: ByteArray?): SharedPreferences.Editor {
+    if (value == null) {
+        remove(key)
+    } else {
+        putString(key, value.encodeBase64())
+    }
+    return this
 }
 
 fun SharedPreferences.getIntArray(key: String): IntArray? {

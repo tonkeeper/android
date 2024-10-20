@@ -103,6 +103,7 @@ dependencies {
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.ledger))
     implementation(project(Dependence.Lib.ur))
+    implementation(project(Dependence.Lib.base64))
 
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)

@@ -87,37 +87,6 @@ fun base64(input: ByteArray): String? {
     }
 }
 
-fun SharedPreferences.getByteArray(key: String): ByteArray? {
-    val value = run {
-        val value = getString(key, null)
-        if (value.isNullOrBlank()) {
-            return byteArrayOf(0)
-        }
-        base64(value) ?: byteArrayOf(0)
-    }
-
-    if (value.isZero()) {
-        value.clear()
-        return null
-    }
-    return value
-}
-
-fun SharedPreferences.Editor.putByteArray(key: String, value: ByteArray): SharedPreferences.Editor {
-    if (value.isZero()) {
-        remove(key)
-        return this
-    } else {
-        val string = base64(value)
-        if (string == null) {
-            remove(key)
-        } else {
-            putString(key, string)
-        }
-    }
-    return this
-}
-
 fun hex(bytes: ByteArray): String = buildString(bytes.size * 2) {
     bytes.forEach { byte ->
         val b = byte.toInt() and 0xFF

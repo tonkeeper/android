@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = Build.namespacePrefix("blockchain")
+    namespace = Build.namespacePrefix("base64")
     compileSdk = Build.compileSdkVersion
 
     defaultConfig {
@@ -20,11 +20,4 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-}
-
-dependencies {
-    api(Dependence.ton)
-    api(Dependence.KotlinX.io)
-    implementation(project(Dependence.Lib.extensions))
-    implementation(project(Dependence.Lib.base64))
 }

@@ -42,6 +42,7 @@ android {
 dependencies {
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.AndroidX.security)
+    implementation(project(Dependence.Lib.extensions))
     compileOnly(fileTree("libs") {
         include("*.aar")
     })

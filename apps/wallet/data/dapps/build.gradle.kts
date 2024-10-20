@@ -18,4 +18,5 @@ dependencies {
     implementation(project(Dependence.Lib.sqlite))
     implementation(project(Dependence.Lib.security))
     implementation(project(Dependence.Lib.network))
+    implementation(project(Dependence.Lib.base64))
 }

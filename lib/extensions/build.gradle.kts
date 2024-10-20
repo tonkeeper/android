@@ -29,5 +29,6 @@ dependencies {
     implementation(Dependence.AndroidX.security)
     implementation(project(Dependence.UIKit.core))
     implementation(project(Dependence.Lib.icu))
+    implementation(project(Dependence.Lib.base64))
     implementation("com.google.android.gms:play-services-base:18.5.0")
 }

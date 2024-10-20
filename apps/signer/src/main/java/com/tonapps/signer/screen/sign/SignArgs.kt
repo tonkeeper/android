@@ -1,9 +1,7 @@
 package com.tonapps.signer.screen.sign
 
 import android.os.Bundle
-import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.signer.Key

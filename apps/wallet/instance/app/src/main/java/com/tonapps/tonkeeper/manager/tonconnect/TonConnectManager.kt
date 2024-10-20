@@ -295,6 +295,7 @@ class TonConnectManager(
         } catch (e: ManifestException) {
             JsonBuilder.connectEventError(BridgeError.resolve(e))
         } catch (e: Throwable) {
+            Log.e("AppConnectEntityLog", "Error TONConnect", e)
             JsonBuilder.connectEventError(BridgeError.UNKNOWN)
         }
     }

@@ -1,6 +1,5 @@
 object Dependence {
 
-    const val ton = "org.ton:ton-kotlin:0.3.1"
     const val fresco = "com.facebook.fresco:fresco:3.2.0"
     const val guava = "com.google.guava:guava:33.2.1-android"
     const val zxing = "com.google.zxing:core:3.5.3"

@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton.extensions
 
+import android.util.Log
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
 import org.json.JSONObject
@@ -14,7 +15,8 @@ fun String.toBoc(): BagOfCells {
         return toBocFromJSBuffer()
     }
     return try {
-        BagOfCells(decodeBase64())
+        val bytes = decodeBase64()
+        BagOfCells(bytes)
     } catch (e: Throwable) {
         BagOfCells(hex(this))
     }

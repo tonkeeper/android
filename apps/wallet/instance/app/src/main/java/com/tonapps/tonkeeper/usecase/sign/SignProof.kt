@@ -1,19 +1,16 @@
 package com.tonapps.tonkeeper.usecase.sign
 
+import com.tonapps.base64.encodeBase64
 import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.blockchain.ton.proof.TONProof.Address
 import com.tonapps.blockchain.ton.proof.TONProof.Domain
 import com.tonapps.blockchain.ton.proof.TONProof.Request
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
-import com.tonapps.tonkeeper.ui.screen.external.qr.signer.sign.SignerSignScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.proof.LedgerProofScreen
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.localization.Localization
-import org.ton.bitstring.BitString
-import org.ton.cell.Cell
-import org.ton.crypto.base64
 import org.ton.crypto.hex
 import uikit.extensions.addForResult
 import uikit.navigation.NavigationActivity
@@ -47,7 +44,7 @@ class SignProof(
             timestamp = timestamp,
             domain = Domain(domain),
             payload = payload,
-            signature = base64(signature)
+            signature = signature.encodeBase64()
         )
     }
 
@@ -76,7 +73,7 @@ class SignProof(
             timestamp = request.timestamp,
             domain = request.domain,
             payload = request.payload,
-            signature = base64(signature.toByteArray())
+            signature = signature.toByteArray().encodeBase64()
         )
     }
 

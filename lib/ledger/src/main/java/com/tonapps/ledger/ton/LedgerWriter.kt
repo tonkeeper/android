@@ -1,7 +1,7 @@
 package com.tonapps.ledger.ton
 
-import io.ktor.util.reflect.instanceOf
 import org.ton.block.AddrStd
+import org.ton.block.MsgAddress
 import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
@@ -42,12 +42,15 @@ object LedgerWriter {
         return byteArrayOf(value.toByte())
     }
 
-    fun putAddress(value: MsgAddressInt): ByteArray {
+    fun putAddress(value: MsgAddress): ByteArray {
+        if (value !is MsgAddressInt) {
+            throw IllegalArgumentException("Only MsgAddressInt is supported")
+        }
         val address = AddrStd.parse(MsgAddressInt.toString(value))
         return putUint8(if (address.workchainId == -1) 0xff else address.workchainId) + address.address.toByteArray()
     }
 
     fun putCellRef(ref: Cell): ByteArray {
-        return putUint16(ref.depth()) + ref.hash()
+        return putUint16(ref.depth()) + ref.hash().toByteArray()
     }
 }

@@ -13,5 +13,10 @@ dependencies {
     implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Lib.extensions))
 
-    api(Dependence.ton)
+    api(Dependence.TON.tvm)
+    api(Dependence.TON.crypto)
+    api(Dependence.TON.tlb)
+    api(Dependence.TON.blockTlb)
+    api(Dependence.TON.tonapiTl)
+    api(Dependence.TON.contract)
 }

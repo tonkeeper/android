@@ -89,7 +89,7 @@ class WalletV5R1Contract(
             storeUInt(1, 1)
             storeUInt(0, 32)
             storeInt(context.serialized, 32)
-            storeBits(publicKey.key)
+            storeBytes(publicKey.key.toByteArray())
             storeBit(false)
         }
     }

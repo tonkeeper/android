@@ -5,13 +5,14 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
 import org.ton.block.AddrStd
 import org.ton.block.Coins
+import org.ton.block.MsgAddress
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.contract.wallet.WalletTransfer
 
 @Parcelize
 data class Transaction(
-    val destination: @RawValue MsgAddressInt,
+    val destination: @RawValue MsgAddress,
     val sendMode: Int,
     val seqno: Int,
     val timeout: Int,
@@ -26,7 +27,8 @@ data class Transaction(
             seqno: Int,
             timeout: Number
         ): Transaction {
-            val payload: TonPayloadFormat? = walletTransfer.body?.let {
+
+            val payload: TonPayloadFormat? = walletTransfer.messageData.body.let {
                 TonPayloadFormat.fromCell(it)
             }
             return Transaction(
@@ -36,7 +38,7 @@ data class Transaction(
                 timeout = timeout.toInt(),
                 bounceable = walletTransfer.bounceable,
                 coins = walletTransfer.coins.coins,
-                stateInit = walletTransfer.stateInit,
+                stateInit = walletTransfer.messageData.stateInit?.value,
                 payload = payload
             )
         }

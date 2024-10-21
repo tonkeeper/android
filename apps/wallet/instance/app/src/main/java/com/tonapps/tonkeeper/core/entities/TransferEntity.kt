@@ -8,7 +8,6 @@ import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeStringTail
 import com.tonapps.blockchain.ton.extensions.toAccountId
-import com.tonapps.blockchain.ton.tlb.MessageData
 import com.tonapps.extensions.toByteArray
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.TonPayloadFormat
@@ -28,10 +27,11 @@ import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.block.StateInit
 import org.ton.cell.Cell
-import org.ton.cell.CellBuilder
 import org.ton.cell.CellBuilder.Companion.beginCell
+import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.CellRef
 import java.math.BigInteger
 
 data class TransferEntity(
@@ -55,7 +55,7 @@ data class TransferEntity(
         get() = wallet.contract
 
     val fakePrivateKey: PrivateKeyEd25519 by lazy {
-        if (commentEncrypted) PrivateKeyEd25519() else EmptyPrivateKeyEd25519
+        if (commentEncrypted) PrivateKeyEd25519() else EmptyPrivateKeyEd25519.invoke()
     }
 
     val isTon: Boolean
@@ -122,9 +122,13 @@ data class TransferEntity(
         excessesAddress: AddrStd,
         jettonAmount: Coins?
     ): WalletTransfer {
+        val body = body(privateKey, excessesAddress, jettonAmount) ?: Cell.empty()
+        val stateInitRef = stateInit?.let {
+            CellRef.valueOf(it)
+        }
+
         val builder = WalletTransferBuilder()
         builder.bounceable = bounceable
-        builder.body = body(privateKey, excessesAddress, jettonAmount)
         builder.sendMode = sendMode
         if (isNft) {
             builder.coins = coins
@@ -136,7 +140,7 @@ data class TransferEntity(
             builder.coins = coins
             builder.destination = destination
         }
-        builder.stateInit = stateInit
+        builder.messageData = MessageData.Raw(body, stateInitRef)
         return builder.build()
     }
 
@@ -220,7 +224,8 @@ data class TransferEntity(
     }
 
     fun signedHash(privateKey: PrivateKeyEd25519): BitString {
-        return BitString(privateKey.sign(getUnsignedBody(privateKey).hash()))
+        val unsignedBodyHash = getUnsignedBody(privateKey).hash()
+        return BitString(privateKey.sign(unsignedBodyHash.toByteArray()))
     }
 
     private fun messageBodyWithSign(
@@ -303,9 +308,7 @@ data class TransferEntity(
             throw IllegalArgumentException("Gasless internal gift is not supported for TON and NFT transfers")
         }
 
-        val builder = WalletTransferBuilder()
-        builder.bounceable = true
-        builder.body = TonTransferHelper.jetton(
+        val body = TonTransferHelper.jetton(
             coins = jettonAmount.toGrams(),
             toAddress = batteryAddress,
             responseAddress = batteryAddress,
@@ -313,6 +316,14 @@ data class TransferEntity(
             forwardPayload = beginCell().storeOpCode(TONOpCode.GASLESS).endCell(),
             customPayload = tokenPayload?.customPayload,
         )
+
+        val stateInitRef = stateInit?.let {
+            CellRef.Companion.valueOf(it)
+        }
+
+        val builder = WalletTransferBuilder()
+        builder.bounceable = true
+        builder.messageData = MessageData.Raw(body, stateInitRef)
         builder.coins = TRANSFER_PRICE
         builder.destination = AddrStd.parse(token.walletAddress)
 

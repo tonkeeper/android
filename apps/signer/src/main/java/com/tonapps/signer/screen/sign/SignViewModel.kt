@@ -69,12 +69,12 @@ class SignViewModel(
 
     fun openEmulate() = keyEntity.map {
         val contract = BaseWalletContract.create(it.publicKey, v, network.value)
-        val cell = contract.createTransferMessageCell(contract.address, EmptyPrivateKeyEd25519, seqno, unsignedBody)
+        val cell = contract.createTransferMessageCell(contract.address, EmptyPrivateKeyEd25519.invoke(), seqno, unsignedBody)
         cell.hex()
     }.flowOn(Dispatchers.IO).take(1)
 
     private fun sign(privateKey: PrivateKeyEd25519): ByteArray {
-        return privateKey.sign(unsignedBody.hash())
+        return privateKey.sign(unsignedBody.hash().toByteArray())
     }
 
     private fun parseBoc(): List<SignItem> {

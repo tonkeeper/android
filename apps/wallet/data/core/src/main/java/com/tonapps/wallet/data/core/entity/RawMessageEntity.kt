@@ -20,6 +20,7 @@ import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tl.ByteString.Companion.decodeFromBase64
 import org.ton.tlb.loadTlb
 import org.ton.tlb.storeTlb
 

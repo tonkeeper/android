@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.safeParseCell
+import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import org.ton.cell.Cell
 import uikit.base.BaseArgs
@@ -42,7 +42,7 @@ data class SendArgs(
         amountNano = normalizeAmount(bundle.getLong(ARG_AMOUNT_NANO)),
         text = bundle.getString(ARG_TEXT),
         nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: "",
-        bin = bundle.getString(ARG_BIN)?.safeParseCell()
+        bin = bundle.getString(ARG_BIN)?.parseCell()
     )
 
     override fun toBundle(): Bundle {

@@ -64,10 +64,10 @@ data class TransferEntity(
     val isNft: Boolean
         get() = nftAddress != null
 
-    val stateInit: StateInit?
+    private val stateInitRef: CellRef<StateInit>?
         get() {
             return if (seqno == 0) {
-                tokenPayload?.stateInit ?: contract.stateInit
+                tokenPayload?.stateInit ?: contract.stateInitRef
             } else {
                 tokenPayload?.stateInit
             }
@@ -123,9 +123,6 @@ data class TransferEntity(
         jettonAmount: Coins?
     ): WalletTransfer {
         val body = body(privateKey, excessesAddress, jettonAmount) ?: Cell.empty()
-        val stateInitRef = stateInit?.let {
-            CellRef.valueOf(it)
-        }
 
         val builder = WalletTransferBuilder()
         builder.bounceable = bounceable
@@ -219,7 +216,7 @@ data class TransferEntity(
         builder.setSeqno(seqno)
         builder.setTimeout(validUntil.toInt())
         builder.setBounceable(bounceable)
-        builder.setStateInit(stateInit)
+        builder.setStateInit(stateInitRef)
         return builder.build()
     }
 
@@ -316,10 +313,6 @@ data class TransferEntity(
             forwardPayload = beginCell().storeOpCode(TONOpCode.GASLESS).endCell(),
             customPayload = tokenPayload?.customPayload,
         )
-
-        val stateInitRef = stateInit?.let {
-            CellRef.Companion.valueOf(it)
-        }
 
         val builder = WalletTransferBuilder()
         builder.bounceable = true

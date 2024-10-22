@@ -1,6 +1,5 @@
 package com.tonapps.blockchain.ton.extensions
 
-import android.util.Log
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
 import org.json.JSONObject
@@ -15,8 +14,7 @@ fun String.toBoc(): BagOfCells {
         return toBocFromJSBuffer()
     }
     return try {
-        val bytes = decodeBase64()
-        BagOfCells(bytes)
+        BagOfCells(decodeBase64())
     } catch (e: Throwable) {
         BagOfCells(hex(this))
     }
@@ -38,17 +36,6 @@ fun String.parseCell(): Cell {
         throw IllegalArgumentException("Deserialized more than one cell")
     }
     return parsed.first()
-}
-
-fun String.safeParseCell(): Cell? {
-    if (this.isBlank()) {
-        return null
-    }
-    return try {
-        parseCell()
-    } catch (e: Throwable) {
-        null
-    }
 }
 
 fun Cell.toByteArray(): ByteArray {

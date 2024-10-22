@@ -231,7 +231,7 @@ class UnStakeViewModel(
         sendParams: SendMetadataEntity,
     ): WalletTransfer {
         val stateInitRef = if (0 >= sendParams.seqno) {
-            CellRef.valueOf(wallet.contract.stateInit)
+            wallet.contract.stateInitRef
         } else {
             null
         }

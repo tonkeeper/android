@@ -116,13 +116,9 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
 
 fun RawMessageEntity.getWalletTransfer(
     excessesAddress: AddrStd? = null,
-    newStateInit: StateInit? = null,
+    newStateInit: CellRef<StateInit>? = null,
     newCustomPayload: Cell? = null,
 ): WalletTransfer {
-    val stateInitRef = (stateInit ?: newStateInit)?.let {
-        CellRef.valueOf(it)
-    }
-
     val body = if (excessesAddress != null) {
         rebuildBodyWithCustomExcessesAccount(payload, excessesAddress)
     } else if (newCustomPayload != null) {
@@ -133,7 +129,7 @@ fun RawMessageEntity.getWalletTransfer(
 
     val builder = WalletTransferBuilder()
     builder.destination = address
-    builder.messageData = MessageData.Raw(body, stateInitRef)
+    builder.messageData = MessageData.Raw(body, newStateInit ?: stateInit)
     // builder.bounceable = address.isBounceable()
     if (newCustomPayload != null) {
         val defCoins = Coins.of(0.5)

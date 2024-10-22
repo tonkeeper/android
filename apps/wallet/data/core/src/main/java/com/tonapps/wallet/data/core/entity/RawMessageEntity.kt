@@ -2,27 +2,18 @@ package com.tonapps.wallet.data.core.entity
 
 import android.os.Parcelable
 import android.util.Log
-import com.tonapps.blockchain.ton.TONOpCode
-import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.loadOpCode
 import com.tonapps.blockchain.ton.extensions.parseCell
-import com.tonapps.blockchain.ton.extensions.safeParseCell
-import com.tonapps.blockchain.ton.extensions.storeOpCode
-import com.tonapps.blockchain.ton.extensions.toTlb
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 import org.ton.block.AddrStd
 import org.ton.block.Coins
-import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.contract.wallet.WalletTransfer
-import org.ton.contract.wallet.WalletTransferBuilder
-import org.ton.tl.ByteString.Companion.decodeFromBase64
-import org.ton.tlb.loadTlb
-import org.ton.tlb.storeTlb
+import org.ton.cell.buildCell
+import org.ton.tlb.CellRef
+import org.ton.tlb.asRef
 
 @Parcelize
 data class RawMessageEntity(
@@ -43,8 +34,9 @@ data class RawMessageEntity(
     }
 
     @IgnoredOnParcel
-    val stateInit: StateInit? by lazy {
-        stateInitValue?.toTlb()
+    val stateInit: CellRef<StateInit>? by lazy {
+        val cell = stateInitValue?.parseCell() ?: return@lazy null
+        cell.asRef(StateInit)
     }
 
     @IgnoredOnParcel

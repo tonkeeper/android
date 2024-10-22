@@ -212,11 +212,10 @@ class StakingViewModel(
         sendParams: SendMetadataEntity,
     ): WalletTransfer {
         val stateInitRef = if (0 >= sendParams.seqno) {
-            CellRef.valueOf(wallet.contract.stateInit)
+            wallet.contract.stateInitRef
         } else {
             null
         }
-
         val builder = WalletTransferBuilder()
         builder.bounceable = true
         builder.sendMode = (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)

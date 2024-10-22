@@ -96,11 +96,6 @@ object SendNftHelper {
         queryId: BigInteger,
         comment: Any?,
     ): WalletTransfer {
-        val stateInitRef = if (seqno == 0) {
-            CellRef.Companion.valueOf(contract.stateInit)
-        } else {
-            null
-        }
 
         val body = TonTransferHelper.nft(
             newOwnerAddress = destination,
@@ -113,7 +108,7 @@ object SendNftHelper {
         builder.bounceable = true
         builder.sendMode = 3
         builder.coins = ONE_TON
-        builder.messageData = MessageData.raw(body, stateInitRef)
+        builder.messageData = MessageData.raw(body, contract.stateInitRef)
         builder.destination = nftAddress
         return builder.build()
     }

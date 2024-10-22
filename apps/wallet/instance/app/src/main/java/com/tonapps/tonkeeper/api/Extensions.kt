@@ -1,20 +1,11 @@
 package com.tonapps.tonkeeper.api
 
-import android.util.Log
-import com.squareup.moshi.adapter
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.extensions.ifPunycodeToUnicode
-import com.tonapps.extensions.max12
 import com.tonapps.extensions.max18
-import com.tonapps.extensions.max24
-import com.tonapps.extensions.short12
-import com.tonapps.extensions.short6
-import com.tonapps.extensions.short8
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.Action
@@ -23,12 +14,9 @@ import io.tonapi.models.JettonBalance
 import io.tonapi.models.JettonBurnAction
 import io.tonapi.models.JettonMintAction
 import io.tonapi.models.JettonPreview
-import io.tonapi.models.JettonSwapAction
-import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.PoolImplementationType
 import io.tonapi.models.TokenRates
-import kotlinx.coroutines.delay
 import kotlin.math.abs
 
 private val nftItemPreviewSizes = arrayOf(
@@ -118,24 +106,6 @@ val JettonPreview.isTon: Boolean
         return address == "TON"
     }
 
-val JettonSwapAction.jettonPreview: JettonPreview?
-    get() {
-        return jettonMasterIn ?: jettonMasterOut
-    }
-
-val JettonSwapAction.amount: String
-    get() {
-        if (amountIn.isEmpty()) {
-            return amountOut
-        }
-        return amountIn
-    }
-
-val JettonSwapAction.ton: Long
-    get() {
-        return tonIn ?: tonOut ?: 0
-    }
-
 fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): String {
     if (name.isNullOrBlank()) {
         val value = address.toUserFriendly(
@@ -144,7 +114,7 @@ fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): S
         )
         return if (short) value.shortAddress else value
     }
-    val value = name!!.ifPunycodeToUnicode()
+    val value = name!!
     return if (short) value.max18 else value
 }
 

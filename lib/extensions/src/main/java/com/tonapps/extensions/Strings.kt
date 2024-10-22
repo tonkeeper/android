@@ -3,7 +3,6 @@ package com.tonapps.extensions
 import android.graphics.Color
 import android.net.Uri
 import androidx.core.net.toUri
-import com.tonapps.icu.Punycode
 
 val String.short12: String
     get() {
@@ -46,22 +45,6 @@ val String.max24: String
         if (length < 24) return this
         return substring(0, 24) + "…"
     }
-
-fun String.ifPunycodeToUnicode(): String {
-    return if (startsWith(Punycode.PREFIX_STRING)) {
-        Punycode.decodeSafe(this)
-    } else {
-        this
-    }
-}
-
-fun String.unicodeToPunycode(): String {
-    return try {
-        Punycode.encode(this) ?: throw IllegalArgumentException("Invalid punycode")
-    } catch (e: Exception) {
-        this
-    }
-}
 
 val String.color: Int
     get() {

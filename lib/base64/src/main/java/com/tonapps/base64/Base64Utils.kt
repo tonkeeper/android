@@ -6,7 +6,11 @@ fun String.decodeBase64(): ByteArray {
         .replace('-', '+')
         .replace('_', '/')
         .replace("%3d", "=")
-    return replaced.base64DecodedBytes
+        .replace('~', '=')
+
+    val paddedLength = (4 - replaced.length % 4) % 4
+    val paddedString = replaced + "=".repeat(paddedLength)
+    return paddedString.base64DecodedBytes
 }
 
 fun ByteArray.encodeBase64(): String {

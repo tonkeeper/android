@@ -33,7 +33,11 @@ private fun String.toBocFromJSBuffer(): BagOfCells {
 }
 
 fun String.parseCell(): Cell {
-    return toBoc().first()
+    val parsed = toBoc()
+    if (parsed.roots.size != 1) {
+        throw IllegalArgumentException("Deserialized more than one cell")
+    }
+    return parsed.first()
 }
 
 fun String.safeParseCell(): Cell? {

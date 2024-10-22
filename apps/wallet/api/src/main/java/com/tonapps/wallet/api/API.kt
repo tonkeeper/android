@@ -13,10 +13,11 @@ import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.blockchain.ton.extensions.safeParseCell
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
 import com.tonapps.network.SSLSocketFactoryTcpNoDelay
@@ -667,7 +668,7 @@ class API(
             normalizedAccountId = "$normalizedAccountId.t.me"
         }
         if (!normalizedAccountId.isValidTonAddress()) {
-            normalizedAccountId = normalizedAccountId.lowercase().trim().unicodeToPunycode()
+            normalizedAccountId = normalizedAccountId.lowercase().trim()
         }
         return withRetry { accounts(testnet).getAccount(normalizedAccountId) }
     }

@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.core.entity
 import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.extensions.optStringCompat
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
@@ -20,7 +21,7 @@ data class RawMessageEntity(
     val addressValue: String,
     val amount: Long,
     val stateInitValue: String?,
-    val payloadValue: String
+    val payloadValue: String?
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -41,14 +42,14 @@ data class RawMessageEntity(
 
     @IgnoredOnParcel
     val payload: Cell by lazy {
-        payloadValue.parseCell()
+        payloadValue?.parseCell() ?: Cell.empty()
     }
 
     constructor(json: JSONObject) : this(
         json.getString("address"),
         parseAmount(json.get("amount")),
-        json.optString("stateInit"),
-        json.optString("payload")
+        json.optStringCompat("stateInit"),
+        json.optStringCompat("payload")
     )
 
     private companion object {

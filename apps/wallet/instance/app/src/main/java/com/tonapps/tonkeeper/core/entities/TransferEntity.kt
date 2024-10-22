@@ -23,6 +23,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.events.CommentEncryption
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.block.StateInit
 import org.ton.cell.Cell
@@ -229,34 +230,6 @@ data class TransferEntity(
         builder.setBounceable(bounceable)
         builder.setStateInit(stateInitRef)
         return builder.build()
-    }
-
-    private fun body(
-        privateKey: PrivateKeyEd25519?,
-        excessesAddress: AddrStd,
-        jettonAmount: Coins?
-    ): Cell? {
-    fun signedHash(privateKey: PrivateKeyEd25519): BitString {
-        val unsignedBodyHash = getUnsignedBody(privateKey).hash()
-        return BitString(privateKey.sign(unsignedBodyHash.toByteArray()))
-    }
-
-    private fun messageBodyWithSign(
-        signature: BitString
-    ): Cell {
-        val unsignedBody = getUnsignedBody()
-        return contract.signedBody(signature, unsignedBody)
-    }
-
-    fun transferMessage(
-        signature: BitString
-    ): Cell {
-        val signedBody = messageBodyWithSign(signature)
-        return contract.createTransferMessageCell(contract.address, seqno, signedBody)
-    }
-
-    fun transferMessage(signedBody: Cell): Cell {
-        return contract.createTransferMessageCell(contract.address, seqno, signedBody)
     }
 
     private fun body(privateKey: PrivateKeyEd25519?, excessesAddress: AddrStd, jettonAmount: Coins?): Cell? {

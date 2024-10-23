@@ -1,16 +1,16 @@
 package com.tonapps.base64
 
 fun String.decodeBase64(): ByteArray {
-    //force non-url safe and add padding so that it can be applied to all b64 formats
+    // force non-url safe base64
+    val replaced = replace('-', '+').replace('_', '/')
+    /*
     val replaced = trim()
         .replace('-', '+')
         .replace('_', '/')
-        .replace("%3d", "=")
-        .replace('~', '=')
-
     val paddedLength = (4 - replaced.length % 4) % 4
     val paddedString = replaced + "=".repeat(paddedLength)
-    return paddedString.base64DecodedBytes
+    return paddedString.base64DecodedBytes*/
+    return replaced.base64DecodedBytes
 }
 
 fun ByteArray.encodeBase64(): String {

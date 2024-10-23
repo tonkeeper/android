@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
@@ -161,7 +162,6 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
             for ((index, button) in nftEntity.metadata.buttons.take(5).withIndex()) {
                 val buttonView = newNftButton(buttonsContainer, index == 0)
                 buttonView.text = button.label
-                buttonView.isEnabled = isCanSend
                 buttonView.setOnClickListener { openButtonDApp(button.uri) }
             }
         }
@@ -239,12 +239,18 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     private fun newNftButton(parent: ColumnLayout, first: Boolean): Button {
         val layout = if (first) R.layout.view_nft_button_green else R.layout.view_nft_button
         val view = parent.context.inflate(layout)
+        val button = view.findViewById<Button>(R.id.nft_button)
+        button.isEnabled = isCanSend
+        val iconView = view.findViewById<AppCompatImageView>(R.id.nft_button_icon)
+        if (!isCanSend) {
+            iconView.alpha = 0.5f
+        }
         parent.addView(view, ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             topMargin = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
             leftMargin = topMargin
             rightMargin = topMargin
         })
-        return view.findViewById(R.id.nft_button)
+        return button
     }
 
     private fun showGrayState() {

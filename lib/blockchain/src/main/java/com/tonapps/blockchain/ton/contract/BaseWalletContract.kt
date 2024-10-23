@@ -139,13 +139,13 @@ abstract class BaseWalletContract(
     val walletId = DEFAULT_WALLET_ID + workchain
 
     private val stateInit: StateInit by lazy {
-        val data = getStateCell()
+        val dataCell = getStateCell()
         val code = getCode()
-        StateInit(code = code, data = data)
+        StateInit(code, dataCell)
     }
 
     val stateInitRef: CellRef<StateInit> by lazy {
-        CellRef(stateInit, StateInit)
+        CellRef.valueOf(stateInitCell(), StateInit)
     }
 
     val address: AddrStd by lazy {

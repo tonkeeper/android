@@ -66,7 +66,7 @@ data class TransferEntity(
 
     private val stateInitRef: CellRef<StateInit>?
         get() {
-            return if (seqno == 0) {
+            return if (0 >= seqno) {
                 tokenPayload?.stateInit ?: contract.stateInitRef
             } else {
                 tokenPayload?.stateInit
@@ -100,7 +100,6 @@ data class TransferEntity(
         if (comment.isNullOrBlank()) {
             return null
         } else if (!commentEncrypted) {
-            // return MessageData.text(comment).body
             return beginCell()
                 .storeUInt(0, 32)
                 .storeStringTail(comment)

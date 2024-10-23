@@ -13,8 +13,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingHorizontal="@dimen/offsetMedium"
-            android:clipToPadding="false"
-            android:topOffset="112dp"/>
+            android:clipToPadding="false" />
+
+        <!---android:topOffset="112dp" -->
 
     </com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout>
 
@@ -44,7 +45,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="16dp"
-            android:paddingHorizontal="@dimen/offsetMedium"/>
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:visibility="gone"/>
 
     </uikit.widget.ColumnLayout>
 

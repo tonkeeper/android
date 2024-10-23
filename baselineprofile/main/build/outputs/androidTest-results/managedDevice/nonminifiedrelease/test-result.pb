@@ -1,13 +1,38 @@
 
-®6
-U
-BaselineProfileGeneratorcom.baselineprofilegenerate2˝Ú≥∏Ä„–˛:ë¯≥∏¿Â√Ü"µ
-1
-&additionaltestoutput.benchmark.messageandroidˇ
-¸/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api33/additionaltestoutput.benchmark.message_com.baselineprofile.BaselineProfileGenerator.generate.txt"ô
-/
-$additionaltestoutput.benchmark.traceandroidÂ
-‚/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api33/BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt"È
+•
+S
+BaselineProfileGeneratorcom.baselineprofilegenerate2⁄‹„∏¿ñ∫|:ñ›„∏¿Ê÷N†
+Ωjava.lang.NullPointerException: Attempt to invoke virtual method 'void androidx.test.uiautomator.UiObject2.setText(java.lang.String)' on a null object reference
+	at com.baselineprofile.CommonKt.setText(Common.kt:77)
+	at com.baselineprofile.AddWatchWalletKt.addWatchWallet(AddWatchWallet.kt:17)
+	at com.baselineprofile.BaselineProfileGenerator.startWalletActions(BaselineProfileGenerator.kt:42)
+	at com.baselineprofile.BaselineProfileGenerator.generate$lambda$0(BaselineProfileGenerator.kt:34)
+	at com.baselineprofile.BaselineProfileGenerator.$r8$lambda$tZm3sI6MusAAOALnp3RngTgJ9AA(Unknown Source:0)
+	at com.baselineprofile.BaselineProfileGenerator$$ExternalSyntheticLambda0.invoke(D8$$SyntheticClass:0)
+	at androidx.benchmark.macro.BaselineProfilesKt$collect$1$1.invoke(BaselineProfiles.kt:77)
+	at androidx.benchmark.macro.BaselineProfilesKt$collect$1$1.invoke(BaselineProfiles.kt:72)
+	at androidx.benchmark.macro.CompilationMode$Partial.compileImpl$benchmark_macro_release(CompilationMode.kt:356)
+	at androidx.benchmark.macro.CompilationMode.resetAndCompile$benchmark_macro_release(CompilationMode.kt:133)
+	at androidx.benchmark.macro.BaselineProfilesKt.collect(BaselineProfiles.kt:72)
+	at androidx.benchmark.macro.junit4.BaselineProfileRule.collect(BaselineProfileRule.kt:137)
+	at androidx.benchmark.macro.junit4.BaselineProfileRule.collect$default(BaselineProfileRule.kt:127)
+	at com.baselineprofile.BaselineProfileGenerator.generate(BaselineProfileGenerator.kt:21)
+java.lang.NullPointerExceptionΩjava.lang.NullPointerException: Attempt to invoke virtual method 'void androidx.test.uiautomator.UiObject2.setText(java.lang.String)' on a null object reference
+	at com.baselineprofile.CommonKt.setText(Common.kt:77)
+	at com.baselineprofile.AddWatchWalletKt.addWatchWallet(AddWatchWallet.kt:17)
+	at com.baselineprofile.BaselineProfileGenerator.startWalletActions(BaselineProfileGenerator.kt:42)
+	at com.baselineprofile.BaselineProfileGenerator.generate$lambda$0(BaselineProfileGenerator.kt:34)
+	at com.baselineprofile.BaselineProfileGenerator.$r8$lambda$tZm3sI6MusAAOALnp3RngTgJ9AA(Unknown Source:0)
+	at com.baselineprofile.BaselineProfileGenerator$$ExternalSyntheticLambda0.invoke(D8$$SyntheticClass:0)
+	at androidx.benchmark.macro.BaselineProfilesKt$collect$1$1.invoke(BaselineProfiles.kt:77)
+	at androidx.benchmark.macro.BaselineProfilesKt$collect$1$1.invoke(BaselineProfiles.kt:72)
+	at androidx.benchmark.macro.CompilationMode$Partial.compileImpl$benchmark_macro_release(CompilationMode.kt:356)
+	at androidx.benchmark.macro.CompilationMode.resetAndCompile$benchmark_macro_release(CompilationMode.kt:133)
+	at androidx.benchmark.macro.BaselineProfilesKt.collect(BaselineProfiles.kt:72)
+	at androidx.benchmark.macro.junit4.BaselineProfileRule.collect(BaselineProfileRule.kt:137)
+	at androidx.benchmark.macro.junit4.BaselineProfileRule.collect$default(BaselineProfileRule.kt:127)
+	at com.baselineprofile.BaselineProfileGenerator.generate(BaselineProfileGenerator.kt:21)
+"È
 
 logcatandroid”
 –/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api33/logcat-com.baselineprofile.BaselineProfileGenerator-generate.txt"º
@@ -19,77 +44,9 @@ $additionaltestoutput.benchmark.traceandroidÂ
 ó/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api33/meminfo"Ω
 
 device-info.cpuinfoandroidö
-ó/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api33/cpuinfo*–
-KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt*˝
- android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*ˇ
-"android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*Å
-0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output*–
-KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt*˝
- android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*ˇ
-"android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*Å
-0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output*–
-KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt*˝
- android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*ˇ
-"android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*Å
-0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output*–
-KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt*˝
- android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*ˇ
-"android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 660010945814.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-14-11-10-07.txt)
-
-To copy the profile use:
-adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
-*Å
-0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output–,
+ó/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api33/cpuinfo–,
 J
-StartupBenchmarkcom.baselineprofilestartup2í¯≥∏¿»Á":í¯≥∏Ä÷û$›%
+StartupBenchmarkcom.baselineprofilestartup2ñ›„∏Äñ£a:ñ›„∏¿µŒd›%
 ÿorg.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 	at org.junit.Assume.assumeThat(Assume.java:106)
 	at org.junit.Assume.assumeTrue(Assume.java:50)

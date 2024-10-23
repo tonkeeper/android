@@ -35,11 +35,15 @@ class ScreenCacheSource(
         name: String,
         walletId: String,
     ): ByteArray {
-        val file = getFile(name, walletId)
-        if (!file.exists() || file.length() == 0L) {
-            return ByteArray(0)
+        try {
+            val file = getFile(name, walletId)
+            if (!file.exists() || file.length() == 0L) {
+                throw IllegalStateException("File not found: ${file.absolutePath}")
+            }
+            return file.readBytes()
+        } catch (e: Throwable) {
+            return byteArrayOf()
         }
-        return file.readBytes()
     }
 
     fun set(

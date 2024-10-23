@@ -13,6 +13,7 @@
         android:singleLine="true"/>
 
     <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/nft_button_icon"
         android:layout_width="28dp"
         android:layout_height="28dp"
         android:layout_gravity="end|center_vertical"

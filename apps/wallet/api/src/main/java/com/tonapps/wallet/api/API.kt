@@ -1,21 +1,18 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
-import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
-import androidx.core.graphics.drawable.toIcon
-import androidx.core.net.toUri
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
 import com.tonapps.network.SSLSocketFactoryTcpNoDelay
@@ -398,7 +395,7 @@ class API(
         testnet: Boolean
     ): List<AccountDetailsEntity> {
         return try {
-            val query = pk.key.hex()
+            val query = pk.hex()
             val wallets = withRetry {
                 wallet(testnet).getWalletsByPublicKey(query).accounts
             } ?: return emptyList()
@@ -666,7 +663,7 @@ class API(
             normalizedAccountId = "$normalizedAccountId.t.me"
         }
         if (!normalizedAccountId.isValidTonAddress()) {
-            normalizedAccountId = normalizedAccountId.lowercase().trim().unicodeToPunycode()
+            normalizedAccountId = normalizedAccountId.lowercase().trim()
         }
         return withRetry { accounts(testnet).getAccount(normalizedAccountId) }
     }

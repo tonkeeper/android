@@ -1,8 +1,8 @@
 package com.tonapps.blockchain.ton.extensions
 
 import com.tonapps.base64.decodeBase64
+import com.tonapps.base64.encodeBase64
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.crypto.base64
 import org.ton.crypto.hex
 
 fun String.publicKey(): PublicKeyEd25519 {
@@ -22,7 +22,7 @@ fun String.safePublicKey(): PublicKeyEd25519? {
 }
 
 fun PublicKeyEd25519.base64(): String {
-    return base64(key.toByteArray())
+    return key.toByteArray().encodeBase64()
 }
 
 fun PublicKeyEd25519.hex(): String {

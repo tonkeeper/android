@@ -6,7 +6,6 @@ import android.os.Parcel
 import android.os.Parcelable
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
@@ -195,7 +194,7 @@ sealed class HistoryItem(
                 wallet = account.isWallet,
                 testnet = testnet,
             ),
-            name = account.name?.ifPunycodeToUnicode(),
+            name = account.name,
             isWallet = account.isWallet,
             icon = account.icon,
             isScam = account.isScam

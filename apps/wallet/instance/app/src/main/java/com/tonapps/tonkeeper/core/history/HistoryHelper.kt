@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
+import android.util.Log
 import androidx.collection.arrayMapOf
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
@@ -9,11 +10,9 @@ import com.tonapps.extensions.short4
 import com.tonapps.extensions.withMinus
 import com.tonapps.extensions.withPlus
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.api.amount
 import com.tonapps.tonkeeper.api.fee
 import com.tonapps.tonkeeper.api.getNameOrAddress
 import com.tonapps.tonkeeper.api.iconURL
-import com.tonapps.tonkeeper.api.jettonPreview
 import com.tonapps.tonkeeper.api.parsedAmount
 import com.tonapps.tonkeeper.api.refund
 import com.tonapps.tonkeeper.api.shortAddress
@@ -410,27 +409,17 @@ class HistoryHelper(
 
         if (action.jettonSwap != null) {
             val jettonSwap = action.jettonSwap!!
-            val jettonPreview = jettonSwap.jettonPreview ?: return createUnknown(
-                index = index,
-                txId = txId,
-                action = action,
-                date = date,
-                timestamp = timestamp,
-                simplePreview = simplePreview,
-                dateDetails = dateDetails,
-                isScam = isScam,
-                wallet = wallet
-            )
-            val token = jettonSwap.jettonPreview!!.address
-            val amount = Coins.ofNano(jettonSwap.amount, jettonPreview.decimals)
             val tokenIn = jettonSwap.tokenIn
             val tokenOut = jettonSwap.tokenOut
 
-            val value = CurrencyFormatter.format(tokenOut.symbol, jettonSwap.amountCoinsOut, 2).withPlus
-            val value2 = CurrencyFormatter.format(tokenIn.symbol, jettonSwap.amountCoinsIn, 2).withMinus
+            val amountIn = jettonSwap.amountCoinsIn
+            val amountOut = jettonSwap.amountCoinsOut
 
-            val rates = ratesRepository.getRates(currency, token)
-            val inCurrency = rates.convert(token, amount)
+            val value = CurrencyFormatter.format(tokenOut.symbol, amountOut, 2).withPlus
+            val value2 = CurrencyFormatter.format(tokenIn.symbol, amountIn, 2).withMinus
+
+            val rates = ratesRepository.getRates(currency, tokenIn.address)
+            val inCurrency = rates.convert(tokenIn.address, amountIn)
 
             return HistoryItem.Event(
                 index = index,
@@ -451,7 +440,7 @@ class HistoryHelper(
                 recipient = HistoryItem.Account.ofRecipient(action, wallet.testnet),
                 currency = CurrencyFormatter.formatFiat(currency.code, inCurrency),
                 failed = action.status == Action.Status.failed,
-                unverifiedToken = jettonPreview.verification != JettonVerificationType.whitelist,
+                unverifiedToken = !tokenIn.verified || !tokenOut.verified,
                 isScam = isScam,
                 wallet = wallet,
             )

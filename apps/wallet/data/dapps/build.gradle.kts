@@ -9,7 +9,12 @@ android {
 
 
 dependencies {
-    implementation(Dependence.ton)
+    implementation(Dependence.TON.tvm)
+    implementation(Dependence.TON.crypto)
+    implementation(Dependence.TON.tlb)
+    implementation(Dependence.TON.blockTlb)
+    implementation(Dependence.TON.tonapiTl)
+    implementation(Dependence.TON.contract)
     implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Wallet.Data.core))
     implementation(project(Dependence.Wallet.Data.rn))

@@ -1,6 +1,8 @@
 package com.tonapps.ledger.ton
 
 import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.storeAddress
+import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.ledger.transport.Transport
 import kotlinx.coroutines.sync.Mutex
@@ -161,7 +163,7 @@ class TonTransport(private val transport: Transport) {
         var stateInit: Cell? = null
         if (transaction.stateInit != null) {
             stateInit = StateInit.tlbCodec().createCell(transaction.stateInit)
-            pkg += LedgerWriter.putUint8(1) + LedgerWriter.putUint16(stateInit.depth()) + stateInit.hash()
+            pkg += LedgerWriter.putUint8(1) + LedgerWriter.putUint16(stateInit.depth()) + stateInit.hash().toByteArray()
         } else {
             pkg += LedgerWriter.putUint8(0)
         }
@@ -518,7 +520,7 @@ class TonTransport(private val transport: Transport) {
         }
 
         pkg += if (!payload.isEmpty()) {
-            LedgerWriter.putUint8(1) + LedgerWriter.putUint16(payload.depth()) + payload.hash() + hints
+            LedgerWriter.putUint8(1) + LedgerWriter.putUint16(payload.depth()) + payload.hash().toByteArray() + hints
         } else {
             LedgerWriter.putUint8(0) + LedgerWriter.putUint8(0)
         }
@@ -537,8 +539,8 @@ class TonTransport(private val transport: Transport) {
             storeBit(transaction.bounceable)
             storeBit(false)
             storeUInt(0, 2)
-            storeTlb(MsgAddressInt, transaction.destination)
-            storeTlb(Coins, transaction.coins)
+            storeAddress(transaction.destination)
+            storeCoins(transaction.coins)
             storeBit(false)
             storeTlb(Coins, Coins.ofNano(0))
             storeTlb(Coins, Coins.ofNano(0))
@@ -576,8 +578,8 @@ class TonTransport(private val transport: Transport) {
         // Parse result
         val signature = res.slice(1 until 65).toByteArray()
         val hash = res.slice(66 until 98).toByteArray()
-        if (!hash.contentEquals(transfer.hash())) {
-            throw Error("Hash mismatch. Expected: ${hex(transfer.hash())}, got: ${hex(hash)}")
+        if (!hash.contentEquals(transfer.hash().toByteArray())) {
+            throw Error("Hash mismatch. Expected: ${hex(transfer.hash().toByteArray())}, got: ${hex(hash)}")
         }
         if (!publicKey.verify(hash, signature)) {
             throw Error("Received signature is invalid")

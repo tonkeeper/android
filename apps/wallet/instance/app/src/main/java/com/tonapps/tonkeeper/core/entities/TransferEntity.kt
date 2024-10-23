@@ -23,12 +23,15 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.events.CommentEncryption
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder.Companion.beginCell
+import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.CellRef
 import java.math.BigInteger
 
 data class TransferEntity(
@@ -52,7 +55,7 @@ data class TransferEntity(
         get() = wallet.contract
 
     val fakePrivateKey: PrivateKeyEd25519 by lazy {
-        if (commentEncrypted) PrivateKeyEd25519() else EmptyPrivateKeyEd25519
+        if (commentEncrypted) PrivateKeyEd25519() else EmptyPrivateKeyEd25519.invoke()
     }
 
     val isTon: Boolean
@@ -61,10 +64,10 @@ data class TransferEntity(
     val isNft: Boolean
         get() = nftAddress != null
 
-    val stateInit: StateInit?
+    private val stateInitRef: CellRef<StateInit>?
         get() {
-            return if (seqno == 0) {
-                tokenPayload?.stateInit ?: contract.stateInit
+            return if (0 >= seqno) {
+                tokenPayload?.stateInit ?: contract.stateInitRef
             } else {
                 tokenPayload?.stateInit
             }
@@ -97,7 +100,6 @@ data class TransferEntity(
         if (comment.isNullOrBlank()) {
             return null
         } else if (!commentEncrypted) {
-            // return MessageData.text(comment).body
             return beginCell()
                 .storeUInt(0, 32)
                 .storeStringTail(comment)
@@ -121,9 +123,10 @@ data class TransferEntity(
         jettonAmount: Coins?,
         jettonTransferAmount: Coins,
     ): WalletTransfer {
+        val body = body(privateKey, excessesAddress, jettonAmount) ?: Cell.empty()
+
         val builder = WalletTransferBuilder()
         builder.bounceable = bounceable
-        builder.body = body(privateKey, excessesAddress, jettonAmount)
         builder.sendMode = sendMode
         if (isNft) {
             builder.coins = jettonTransferAmount.toGrams()
@@ -135,7 +138,7 @@ data class TransferEntity(
             builder.coins = coins
             builder.destination = destination
         }
-        builder.stateInit = stateInit
+        builder.messageData = MessageData.Raw(body, stateInitRef)
         return builder.build()
     }
 
@@ -224,15 +227,11 @@ data class TransferEntity(
         builder.setSeqno(seqno)
         builder.setTimeout(validUntil.toInt())
         builder.setBounceable(bounceable)
-        builder.setStateInit(stateInit)
+        builder.setStateInit(stateInitRef)
         return builder.build()
     }
 
-    private fun body(
-        privateKey: PrivateKeyEd25519?,
-        excessesAddress: AddrStd,
-        jettonAmount: Coins?
-    ): Cell? {
+    private fun body(privateKey: PrivateKeyEd25519?, excessesAddress: AddrStd, jettonAmount: Coins?): Cell? {
         if (isNft) {
             return nftBody(privateKey, excessesAddress)
         } else if (!isTon) {
@@ -295,9 +294,7 @@ data class TransferEntity(
             throw IllegalArgumentException("Gasless internal gift is not supported for TON and NFT transfers")
         }
 
-        val builder = WalletTransferBuilder()
-        builder.bounceable = true
-        builder.body = TonTransferHelper.jetton(
+        val body = TonTransferHelper.jetton(
             coins = jettonAmount.toGrams(),
             toAddress = batteryAddress,
             responseAddress = batteryAddress,
@@ -305,6 +302,11 @@ data class TransferEntity(
             forwardPayload = beginCell().storeOpCode(TONOpCode.GASLESS).endCell(),
             customPayload = tokenPayload?.customPayload,
         )
+
+
+        val builder = WalletTransferBuilder()
+        builder.bounceable = true
+        builder.messageData = MessageData.Raw(body, stateInitRef)
         builder.coins = POINT_ONE_TON.toGrams()
         builder.destination = AddrStd.parse(token.walletAddress)
 

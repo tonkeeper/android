@@ -11,6 +11,8 @@ import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.withRetry
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import java.util.Locale
@@ -80,14 +82,17 @@ internal class InternalApi(
         }
     }
 
-    suspend fun resolveCountry(): String? {
-        return try {
-            val data = withRetry { okHttpClient.get("https://api.country.is/") } ?: return null
-            val country = JSONObject(data).getString("country")
+    suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
+        try {
+            val country = withRetry {
+                okHttpClient.get("https://boot.tonkeeper.com/my/ip")
+            }?.let {
+                JSONObject(it).getString("country")
+            }
             if (country.isNullOrBlank()) {
                 null
             } else {
-                country
+                country.uppercase()
             }
         } catch (e: Throwable) {
             null

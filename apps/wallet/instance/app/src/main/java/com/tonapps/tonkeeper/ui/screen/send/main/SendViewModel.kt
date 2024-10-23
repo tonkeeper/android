@@ -185,12 +185,8 @@ class SendViewModel(
     private val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
     val uiInputCommentErrorFlow = uiInputComment.map { comment ->
-        if (!comment.isNullOrEmpty()) {
-            if (wallet.isLedger && !comment.isPrintableAscii()) {
-                Localization.ledger_comment_error
-            } else {
-                null
-            }
+        if (wallet.isLedger && !comment.isNullOrEmpty() && !comment.isPrintableAscii()) {
+            Localization.ledger_comment_error
         } else {
             null
         }
@@ -265,7 +261,6 @@ class SendViewModel(
             false
         } else {
             false
-            // (isNft || (!balance.insufficientBalance && (amount.isPositive || amount.isZero)))
         }
     }
 
@@ -278,13 +273,6 @@ class SendViewModel(
         if (!amountCurrency) {
             amount
         } else {
-            /*val converted = rates.convertFromFiat(token.address, amount)
-            val diff = token.balance.value.diff(converted)
-            if (99.7f >= diff || 100.3f >= diff) {
-                token.balance.value
-            } else {
-                converted
-            }*/
             rates.convertFromFiat(token.address, amount)
         }
     }

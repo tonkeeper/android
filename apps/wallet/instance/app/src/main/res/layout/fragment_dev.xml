@@ -36,6 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="112dp"
                 android:paddingHorizontal="8dp"
+                android:visibility="gone"
                 android:clipToPadding="false"
                 android:layout_marginVertical="@dimen/offsetMedium"/>
 

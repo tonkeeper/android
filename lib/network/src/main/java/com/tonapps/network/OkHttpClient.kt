@@ -91,6 +91,9 @@ class OkHttpError(
 
     val statusCode: Int
         get() = response.code
+
+    val body: String
+        get() = response.body?.string() ?: ""
 }
 
 fun OkHttpClient.getBitmap(url: String): Bitmap {

@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.send.transaction
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
@@ -13,6 +15,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.APIException
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
@@ -56,12 +59,14 @@ class SendTransactionViewModel(
     private val _stateFlow = MutableStateFlow<SendTransactionState>(SendTransactionState.Loading)
     val stateFlow = _stateFlow.asStateFlow()
 
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            val tokens = getTokens()
+            val transfers = transfers(tokens.filter { it.isCompressed }, true)
+            val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
+            val internalMessage = forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
             try {
-                val tokens = getTokens()
-                val transfers = transfers(tokens.filter { it.isCompressed }, true)
-                val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
                 val emulated = emulationUseCase(
                     message = message,
                     useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType),
@@ -114,7 +119,11 @@ class SendTransactionViewModel(
                     )
                 }
             } catch (e: Throwable) {
-                Log.d("SendTransactionViewModelLog", "Failed to emulate transaction", e)
+                FirebaseCrashlytics.getInstance().recordException(APIException.Emulation(
+                    boc = message.createSignedBody(EmptyPrivateKeyEd25519.invoke(), internalMessage).base64(),
+                    cause = e
+                ))
+
                 val tonBalance = getTONBalance()
                 if (tonBalance == Coins.ZERO) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(

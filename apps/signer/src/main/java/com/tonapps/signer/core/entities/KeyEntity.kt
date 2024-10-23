@@ -12,7 +12,7 @@ data class KeyEntity(
 ) {
 
     val hex: String
-        get() = publicKey.key.hex().lowercase()
+        get() = hex(publicKey.key.toByteArray()).lowercase()
 
     constructor(json: JSONObject) : this(
         json.getLong(Key.ID),

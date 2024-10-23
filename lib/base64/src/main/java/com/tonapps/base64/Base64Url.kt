@@ -49,9 +49,9 @@ val String.base64UrlDecoded: String
  *
  * See [RFC 4648 §5](https://datatracker.ietf.org/doc/html/rfc4648#section-5)
  */
-/*val String.base64UrlDecodedBytes: ByteArray
+val String.base64UrlDecodedBytes: ByteArray
     get() = decodeInternal(Encoding.UrlSafe)
-        .map { it.toByte() }.toList().dropLast(count { it == '=' || it == '' }).toByteArray()*/
+        .map { it.toByte() }.toList().dropLast(count { it == '=' || it == Char.MIN_VALUE }).toByteArray()
 
 /**
  * Decode a Base64 URL-safe encoded [ByteArray] to [String].

@@ -3,6 +3,7 @@ package com.tonapps.ledger.ton
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.StateInit
+import org.ton.tlb.CellRef
 
 class TransactionBuilder {
     private lateinit var destination: AddrStd
@@ -20,7 +21,7 @@ class TransactionBuilder {
     fun setTimeout(timeout: Int) = apply { this.timeout = timeout }
     fun setBounceable(bounce: Boolean) = apply { this.bounceable = bounce }
     fun setCoins(amount: Coins) = apply { this.coins = amount }
-    fun setStateInit(stateInit: StateInit?) = apply { this.stateInit = stateInit }
+    fun setStateInit(stateInitRef: CellRef<StateInit>?) = apply { this.stateInit = stateInitRef?.value }
     fun setPayload(payload: TonPayloadFormat?) = apply { this.payload = payload }
 
     fun build(): Transaction {

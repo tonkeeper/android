@@ -41,7 +41,7 @@ class SendContactsViewModel(
     private val _myWalletsFlow = MutableStateFlow<List<Item.MyWallet>>(emptyList())
     private val myWalletsFlow = _myWalletsFlow.asStateFlow()
 
-    private val _latestContactsFlow = MutableStateFlow<List<Item>>(listOf(Item.Loading))
+    private val _latestContactsFlow = MutableStateFlow<List<Item>>(listOf()) // Item.Loading
     private val latestContactsFlow = _latestContactsFlow.asStateFlow()
 
     private val savedContactsFlow = contactsRepository.contactsFlow.map {
@@ -65,12 +65,12 @@ class SendContactsViewModel(
         /*if (savedContacts.isNotEmpty()) {
             uiItems.addAll(savedContacts)
             uiItems.add(Item.Space)
-        }*/
+        }
 
         if (latestContacts.isNotEmpty()) {
             uiItems.addAll(latestContacts)
             uiItems.add(Item.Space)
-        }
+        } */
 
         uiItems.toList()
     }
@@ -134,7 +134,7 @@ class SendContactsViewModel(
 
         val recipients = actions.filter { it.isOutTransfer(wallet) }.mapNotNull { it.recipient }
         return recipients.filter {
-            !it.address.equalsAddress(wallet.address) && !it.isWallet && !contactsRepository.isHidden(it.address.toRawAddress(), wallet.testnet)
+            !it.address.equalsAddress(wallet.address) && it.isWallet && !contactsRepository.isHidden(it.address.toRawAddress(), wallet.testnet)
         }.distinctBy { it.address }.take(6)
     }
 

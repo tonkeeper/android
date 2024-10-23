@@ -11,7 +11,7 @@ fun MacrobenchmarkScope.addWatchWallet(walletAddress: String) {
     click("add")
 
     // Click on add watch wallet
-    clickListItem("list", 4, 2000)
+    clickByText("Watch Account", 5000)
 
     // Enter wallet address
     setText("input_field", walletAddress, 3000)

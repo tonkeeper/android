@@ -49,8 +49,8 @@ private fun MacrobenchmarkScope.crossPinScreen() {
     device.wait(Until.hasObject(pinButtonSelector), 5_000)
     val pinButton = device.findObject(pinButtonSelector)
     repeat(4) {
+        sleep(300)
         pinButton.click()
-        sleep(100)
     }
-    sleep(300)
+    sleep(1000)
 }

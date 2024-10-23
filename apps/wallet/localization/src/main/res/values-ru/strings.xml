@@ -37,6 +37,7 @@
     <string name="staking_ready_withdraw">%1$s готовы к выводу.\nНажмите, чтобы вывести</string>
     <string name="staking_pending_deposit">%1$s будет\nзачислено через %2$s</string>
     <string name="staking_pending_withdraw">%1$s TON будет выведено\nчерез %2$s</string>
+    <string name="add_to_contact">Добавить в контакты</string>
     <string name="staking_unstake_cycle">Запрос на вывод будет исполнен после завершения цикла через %1$s</string>
     <string name="send_transaction_scroll">Проверьте все данные для подтверждения</string>
     <string name="send_transaction_detail">Общая стоимость токенов, которые будут отправлены с вашего кошелька. Возвраты не учитываются в общей стоимости.</string>
@@ -209,6 +210,7 @@
     <string name="open_anyway">Открыть всё равно</string>
     <string name="nft_warning_buttton_title">Вы уверены, что хотите открыть внешнюю ссылку?</string>
     <string name="fiat_open_description">Вы открываете внешнее приложение, которым не управляет Tonkeeper.</string>
+    <string name="add_contact">Добавить контакт</string>
     <string name="multi_account_secret_wrong">Пожалуйста, используйте Tonkeeper Desktop для акаунта мульти-кошелька</string>
     <string name="insufficient_balance_default">Необходимо: %1$s.\nВаш баланс: %2$s.</string>
     <string name="content_security">Подключение кошелька и контент</string>
@@ -227,7 +229,7 @@
     <string name="other">Другое</string>
     <string name="minimum_amount">Минимум %1$s</string>
     <string name="stake_tonstakers_description">Когда вы делаете ставку TON в пуле Tonstakers, вы получаете токен под названием tsTON, который представляет вашу долю в пуле. По мере того, как пул накапливает прибыль, ваш tsTON представляет большее количество TON.</string>
-    <string name="edit">Изменить</string>
+    <string name="edit">Ред.</string>
     <string name="view_details">Подробнее</string>
     <string name="nft_transfer">Отправка NFT</string>
     <string name="nft_disabled_transfer">NFT сейчас продается на маркетплейсе. Для передачи следует сначала снять его с продажи.</string>
@@ -534,4 +536,6 @@
     <string name="buy_ton">Купить TON</string>
     <string name="recharge_battery">Зарядить батарейку</string>
     <string name="nothing_to_restore">Нечего восстанавливать</string>
+    <string name="new_contact">Новый контакт</string>
+    <string name="contact_delete_dialog">Вы уверены, что хотите удалить «%1$s» из своих контактов?</string>
 </resources>

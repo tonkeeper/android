@@ -1,9 +1,12 @@
 <resources>
     <string name="transaction_expired">Transaksi telah berakhir</string>
+    <string name="add_contact">Tambahkan Kontak</string>
+    <string name="multi_account_secret_wrong">Silakan gunakan Tonkeeper Desktop untuk Akun Multi-Dompet</string>
     <string name="total">Jumlah: %1$s</string>
     <string name="staking_ready_withdraw">%1$s sudah siap. Ketuk kumpulkan bersama.</string>
     <string name="staking_pending_deposit">%1$s akan disimpan di %2$s</string>
     <string name="staking_pending_withdraw">%1$s akan ditarik dalam %2$s</string>
+    <string name="add_to_contact">Tambahkan ke Kontak</string>
     <string name="staking_unstake_cycle">Permintaan pembatalan taruhan akan diproses setelah akhir siklus validasi dalam %1$s</string>
     <string name="send_transaction_scroll">Periksa semua detail untuk konfirmasi</string>
     <string name="send_transaction_detail">Nilai total token yang akan dikirim dari dompet Anda. Pengembalian dana tidak termasuk dalam nilai total.</string>
@@ -372,6 +375,7 @@
     <string name="ledger_update_title">Perbarui aplikasi TON di Ledger ke versi %1$s</string>
     <string name="ledger_update_text">Jenis transaksi ini tidak didukung di versi aplikasi Anda saat ini.</string>
     <string name="ledger_update_button">OKE</string>
+    <string name="ledger_comment_error">Gunakan hanya karakter ASCII: angka, huruf alfabet latin, dan tanda baca.</string>
     <string name="bluetooth_permissions_alert_title">Izin Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Silakan aktifkan izin Bluetooth di pengaturan Anda untuk menggunakan fitur ini</string>
     <string name="bluetooth_permissions_alert_open_settings">Buka Pengaturan</string>
@@ -447,4 +451,9 @@
     <string name="insufficient_balance_default">Yang akan dibayar: %1$s.\\nSaldo Anda: %2$s.</string>
     <string name="buy_ton">Beli TON</string>
     <string name="recharge_battery">Isi Ulang Baterai</string>
+    <string name="name">Nama</string>
+    <string name="ledger_blind_signing_error">Penandatanganan Buta harus diaktifkan di Pengaturan Buku Besar</string>
+    <string name="nothing_to_restore">Tidak ada yang perlu dikembalikan</string>
+    <string name="new_contact">Kontak Baru</string>
+    <string name="contact_delete_dialog">Apakah Anda yakin ingin menghapus «%1$s» dari Kontak Anda?</string>
 </resources>

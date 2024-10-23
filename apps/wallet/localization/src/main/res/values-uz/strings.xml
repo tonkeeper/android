@@ -1,9 +1,11 @@
 <resources>
     <string name="transaction_expired">Tranzaksiya muddati tugadi</string>
+    <string name="multi_account_secret_wrong">Multi-Wallet hisobi uchun Tonkeeper Desktop-dan foydalaning</string>
     <string name="total">Jami: %1$s</string>
     <string name="staking_ready_withdraw">%1$s tayyor. Birgalikda yig\'ish-ga teging.</string>
     <string name="staking_pending_deposit">%1$s %2$s da saqlanadi</string>
     <string name="staking_pending_withdraw">%1$s %2$s ichida yechib olinadi</string>
+    <string name="add_to_contact">Kontaktga qo\'shish</string>
     <string name="staking_unstake_cycle">Toʻlovni bekor qilish soʻrovi %1$s da tekshirish davri tugaganidan keyin koʻrib chiqiladi</string>
     <string name="send_transaction_scroll">Tasdiqlash uchun barcha tafsilotlarni tekshiring</string>
     <string name="send_transaction_detail">Hamyoningizdan yuboriladigan tokenlarning umumiy qiymati. To\'lovlar umumiy qiymatga kiritilmagan.</string>
@@ -372,6 +374,7 @@
     <string name="ledger_update_title">Ledger’dagi TON ilovasini %1$s versiyasiga yangilang</string>
     <string name="ledger_update_text">Ilovangizning joriy versiyasida bu turdagi tranzaksiya qo‘llab-quvvatlanmaydi.</string>
     <string name="ledger_update_button">OK</string>
+    <string name="ledger_comment_error">Faqat ASCII belgilaridan foydalaning: raqamlar, lotin alifbosi harflari va tinish belgilari.</string>
     <string name="bluetooth_permissions_alert_title">Bluetooth ruxsatnomalari</string>
     <string name="bluetooth_permissions_alert_message">Iltimos, ushbu funksiyani ishlatish uchun sozlamalaringizda Bluetooth ruxsatlarini yoqing</string>
     <string name="bluetooth_permissions_alert_open_settings">Sozlamalarni oching</string>
@@ -452,4 +455,10 @@
     <string name="insufficient_balance_default">Toʻlanishi kerak: %1$s.\\nBalansingiz: %2$s.</string>
     <string name="buy_ton">TON sotib oling</string>
     <string name="recharge_battery">Batareyani qayta zaryadlash</string>
+    <string name="new_contact">Yangi kontakt</string>
+    <string name="contact_delete_dialog">Haqiqatan ham «%1$s»ni Kontaktlaringizdan oʻchirib tashlamoqchimisiz?</string>
+    <string name="nothing_to_restore">Qayta tiklash uchun hech narsa yo\'q</string>
+    <string name="name">Ism</string>
+    <string name="add_contact">Kontakt qo\'shish</string>
+    <string name="ledger_blind_signing_error">Ledger sozlamalarida koʻr-koʻrona imzo qoʻyish yoqilishi kerak</string>
 </resources>

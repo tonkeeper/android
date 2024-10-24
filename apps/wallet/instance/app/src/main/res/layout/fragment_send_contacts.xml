@@ -28,7 +28,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_margin="16dp"
-        android:visibility="gone"
         android:textAppearance="@style/TextAppearance.Label1"
         android:text="@string/add_contact"/>
 

@@ -1,16 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.api.AccountEventWrap
-import com.tonapps.tonkeeper.api.isOutTransfer
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
-import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -18,6 +15,7 @@ import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.data.events.isOutTransfer
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
@@ -30,9 +28,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -332,7 +327,7 @@ class EventsViewModel(
         do {
             val events = loadEvents(beforeLt = nextBeforeLt) ?: break
             list.addAll(events.filter { event ->
-                event.isOutTransfer(wallet) == onlySent
+                event.isOutTransfer(wallet.accountId) == onlySent
             })
             if (list.size >= max) break
             nextBeforeLt = events.last().lt

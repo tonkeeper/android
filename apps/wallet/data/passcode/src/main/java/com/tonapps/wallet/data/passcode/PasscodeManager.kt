@@ -31,9 +31,6 @@ class PasscodeManager(
 
     init {
         scope.launch(Dispatchers.IO) {
-            if (rnLegacy.isRequestMigration()) {
-                helper.reset()
-            }
             lockscreen.init()
         }
     }

@@ -20,6 +20,7 @@ import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect

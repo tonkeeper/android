@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.manager.tx
 
-import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.ton.cell.Cell
 
@@ -14,6 +14,6 @@ data class SendingTransaction(
 
     constructor(wallet: WalletEntity, boc: String) : this(
         wallet = wallet,
-        boc = boc.parseCell()
+        boc = boc.cellFromBase64()
     )
 }

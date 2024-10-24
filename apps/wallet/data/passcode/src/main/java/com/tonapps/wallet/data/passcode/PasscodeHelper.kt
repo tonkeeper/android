@@ -8,9 +8,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PasscodeHelper(
-    private val store: PasscodeStore,
-    private val accountRepository: AccountRepository,
+    private val context: Context,
+    private val accountRepository: AccountRepository
 ) {
+
+    
+    private val store: PasscodeStore by lazy { PasscodeStore(context) }
 
     val hasPinCode: Boolean
         get() = store.hasPinCode

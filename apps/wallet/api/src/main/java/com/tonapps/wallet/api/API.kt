@@ -595,7 +595,7 @@ class API(
         address: String? = null,
         balance: Long? = null
     ): MessageConsequences? {
-        return emulate(cell.base64(), testnet, address, balance)
+        return emulate(cell.hex(), testnet, address, balance)
     }
 
     suspend fun sendToBlockchainWithBattery(

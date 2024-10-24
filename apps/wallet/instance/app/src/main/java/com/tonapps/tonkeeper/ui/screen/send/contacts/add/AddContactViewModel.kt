@@ -8,6 +8,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.contacts.ContactsRepository
 import io.tonapi.models.Account
+import io.tonapi.models.AccountStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,7 +67,7 @@ class AddContactViewModel(
                 _accountFlow.value = AddressAccount.Loading
 
                 val account = api.resolveAccount(address, wallet.testnet)
-                if (account == null) {
+                if (account == null || !account.isWallet || account.status != AccountStatus.active) {
                     _accountFlow.value = AddressAccount.Error
                 } else {
                     _accountFlow.value = AddressAccount.Success(account)
@@ -80,7 +81,7 @@ class AddContactViewModel(
             loading(true)
             try {
                 val userInput = _userInputFlow.value
-                contactsRepository.add(userInput.name, userInput.address)
+                contactsRepository.add(userInput.name, userInput.address, wallet.testnet)
             } catch (e: Throwable) {
                 toast(e.bestMessage)
             } finally {

@@ -1,10 +1,9 @@
 package com.tonapps.blockchain.ton.contract
 
-import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
 import org.ton.block.MessageRelaxed
-import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletTransfer
@@ -63,7 +62,7 @@ open class WalletV3R1Contract(
 
     companion object {
         @JvmField
-        val CODE = "te6cckEBAQEAYgAAwP8AIN0gggFMl7qXMO1E0NcLH+Ck8mCDCNcYINMf0x/TH/gjE7vyY+1E0NMf0x/T/9FRMrryoVFEuvKiBPkBVBBV+RDyo/gAkyDXSpbTB9QC+wDo0QGkyMsfyx/L/8ntVD++buA=".parseCell()
+        val CODE = "te6cckEBAQEAYgAAwP8AIN0gggFMl7qXMO1E0NcLH+Ck8mCDCNcYINMf0x/TH/gjE7vyY+1E0NMf0x/T/9FRMrryoVFEuvKiBPkBVBBV+RDyo/gAkyDXSpbTB9QC+wDo0QGkyMsfyx/L/8ntVD++buA=".cellFromBase64()
 
     }
 }

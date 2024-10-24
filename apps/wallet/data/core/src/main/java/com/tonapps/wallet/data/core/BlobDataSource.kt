@@ -7,6 +7,8 @@ import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.file
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
+import com.tonapps.wallet.api.fromJSON
+import com.tonapps.wallet.api.toJSON
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -27,6 +29,27 @@ abstract class BlobDataSource<D>(
             return object : BlobDataSource<T>(context, path) {
                 override fun onMarshall(data: T) = data.toByteArray()
                 override fun onUnmarshall(bytes: ByteArray) = bytes.toParcel<T>()
+            }
+        }
+
+        inline fun <reified T> simpleJSON(
+            context: Context,
+            path: String
+        ): BlobDataSource<T> {
+            return object : BlobDataSource<T>(context, path) {
+                override fun onMarshall(data: T) = toJSON(data).toByteArray()
+
+                override fun onUnmarshall(bytes: ByteArray): T? {
+                    if (bytes.isEmpty()) {
+                        return null
+                    }
+                    return try {
+                        val string = String(bytes)
+                        fromJSON(string)
+                    } catch (e: Throwable) {
+                        null
+                    }
+                }
             }
         }
     }

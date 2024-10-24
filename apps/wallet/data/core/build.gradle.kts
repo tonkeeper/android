@@ -34,6 +34,7 @@ dependencies {
     implementation(Dependence.TON.contract)
     implementation(Dependence.Koin.core)
     implementation(Dependence.AndroidX.biometric)
+    implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.sqlite))

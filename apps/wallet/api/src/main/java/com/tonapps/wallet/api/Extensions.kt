@@ -37,7 +37,7 @@ fun <R> withRetry(
             throw e
         } catch (e: Throwable) {
             val statusCode = e.getHttpStatusCode()
-            val message = e.getDebugMessage()
+            val message = e.getDebugMessage() ?: "Unknown error"
             Log.e("TonkeeperLog", "Error in retry block(code=$statusCode): $message", e)
             if (statusCode == 429) { // Too many requests
                 SystemClock.sleep((3000..5000).random().toLong())
@@ -59,11 +59,11 @@ private fun Throwable.getHttpStatusCode(): Int {
     }
 }
 
-private fun Throwable.getDebugMessage(): String {
+fun Throwable.getDebugMessage(): String? {
     return when (this) {
         is ClientException -> getHttpBodyMessage()
         is OkHttpError -> body
-        else -> message ?: "Unknown error"
+        else -> message
     }
 }
 

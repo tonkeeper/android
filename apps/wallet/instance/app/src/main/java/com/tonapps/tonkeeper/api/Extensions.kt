@@ -1,11 +1,9 @@
 package com.tonapps.tonkeeper.api
 
-import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.max18
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.Action
@@ -28,22 +26,6 @@ fun TokenRates.to(toCurrency: String, value: Float): Float {
     return price.toFloat() * value
 }
 
-fun AccountEvent.isOutTransfer(wallet: WalletEntity): Boolean {
-    return actions.any { it.isOutTransfer(wallet) }
-}
-
-val Action.isTransfer: Boolean
-    get() {
-        return type == Action.Type.tonTransfer || type == Action.Type.jettonTransfer || type == Action.Type.nftItemTransfer
-    }
-
-fun Action.isOutTransfer(wallet: WalletEntity): Boolean {
-    if (!isTransfer) {
-        return false
-    }
-    val sender = tonTransfer?.sender ?: jettonTransfer?.sender ?: nftItemTransfer?.sender ?: return false
-    return sender.address.equalsAddress(wallet.accountId)
-}
 
 /*val MessageConsequences.totalFees: Long
     get() {

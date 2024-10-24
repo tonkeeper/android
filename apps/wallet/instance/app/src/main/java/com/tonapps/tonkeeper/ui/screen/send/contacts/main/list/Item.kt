@@ -20,42 +20,42 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data object Space: Item(TYPE_SPACE)
 
+    sealed class Address(
+        type: Int,
+        open val position: ListCell.Position,
+        val address: String
+    ): Item(type)
+
     data class MyWallet(
-        val position: ListCell.Position,
+        override val position: ListCell.Position,
         val wallet: WalletEntity
-    ): Item(TYPE_MY_WALLET) {
+    ): Address(TYPE_MY_WALLET, position, wallet.address) {
 
         val emoji: CharSequence
             get() = wallet.label.emoji
 
         val name: String
             get() = wallet.label.name
-
-        val userFriendlyAddress: String = wallet.address.toUserFriendly(testnet = wallet.testnet)
     }
 
     data class LatestContact(
-        val position: ListCell.Position,
+        override val position: ListCell.Position,
         val account: AccountAddress,
         val testnet: Boolean
-    ): Item(TYPE_LATEST_CONTACT) {
-
-        val userFriendlyAddress: String = account.address.toUserFriendly(testnet = testnet)
+    ): Address(TYPE_LATEST_CONTACT, position, account.address.toUserFriendly(testnet = testnet)) {
 
         val name: String
-            get() = account.name ?: userFriendlyAddress.short8
+            get() = account.name ?: address.short8
     }
 
     data class SavedContact(
-        val position: ListCell.Position,
+        override val position: ListCell.Position,
         val contact: ContactEntity,
         val testnet: Boolean
-    ): Item(TYPE_SAVED_CONTACT) {
+    ): Address(TYPE_SAVED_CONTACT, position, contact.address) {
 
         val name: String
             get() = contact.name
-
-        val userFriendlyAddress: String = contact.address.toUserFriendly(testnet = testnet)
     }
 
     data object Loading: Item(TYPE_LOADING)

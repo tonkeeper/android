@@ -5,6 +5,7 @@ import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.icu.Coins
+import com.tonapps.icu.Coins.Companion.ZERO
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
@@ -138,7 +139,11 @@ class EmulationUseCase(
             rates.convert(token.token.address, token.value)
         }.sumOf { it }
 
-        val diff = totalFiat.value / balanceFiat.value
+        val diff = if (balanceFiat > ZERO) {
+            totalFiat.value / balanceFiat.value
+        } else {
+            totalFiat.value
+        }
 
         return Emulated.Total(
             totalFiat = totalFiat,

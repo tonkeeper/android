@@ -71,15 +71,15 @@ class SendContactsScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fra
     }
 
     private fun selectContact(item: Item) {
-        val contact = when (item) {
-            is Item.LatestContact -> SendContact(SendContact.CONTACT_TYPE, item.userFriendlyAddress)
-            is Item.MyWallet -> SendContact(SendContact.MY_WALLET_TYPE, item.userFriendlyAddress)
-            is Item.SavedContact -> SendContact(SendContact.CONTACT_TYPE, item.userFriendlyAddress)
-            else -> return
+        val contactItem = item as? Item.Address ?: return
+        val contactType = when (contactItem) {
+            is Item.LatestContact -> SendContact.CONTACT_TYPE
+            is Item.MyWallet -> SendContact.MY_WALLET_TYPE
+            is Item.SavedContact -> SendContact.CONTACT_TYPE
         }
 
         val bundle = Bundle()
-        bundle.putParcelable("contact", contact)
+        bundle.putParcelable("contact", SendContact(contactType, contactItem.address))
         navigation?.setFragmentResult(requestKey, bundle)
         finish()
     }
@@ -104,9 +104,9 @@ class SendContactsScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fra
 
     private fun latestContactAction(item: Item.LatestContact, actionId: Long) {
         if (actionId == ContactHolder.ADD_TO_CONTACTS_ID) {
-            navigation?.add(AddContactScreen.newInstance(wallet, item.name, item.userFriendlyAddress))
+            navigation?.add(AddContactScreen.newInstance(wallet, item.name, item.address))
         } else if (actionId == ContactHolder.HIDE_ID) {
-            viewModel.hideContact(item.userFriendlyAddress)
+            viewModel.hideContact(item.address)
         }
     }
 

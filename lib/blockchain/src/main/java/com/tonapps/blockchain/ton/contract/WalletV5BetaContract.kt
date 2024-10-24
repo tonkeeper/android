@@ -1,7 +1,7 @@
 package com.tonapps.blockchain.ton.contract
 
 import com.tonapps.blockchain.ton.TONOpCode
-import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.storeBuilder
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeSeqAndValidUntil
@@ -9,7 +9,6 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
 import org.ton.bitstring.BitString
 import org.ton.block.MessageRelaxed
-import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellSlice
@@ -116,7 +115,7 @@ class WalletV5BetaContract(
     companion object {
 
         @JvmField
-        val CODE = "te6cckEBAQEAIwAIQgLkzzsvTG1qYeoPK1RH0mZ4WyavNjfbLe7mvNGqgm80Eg3NjhE=".parseCell()
+        val CODE = "te6cckEBAQEAIwAIQgLkzzsvTG1qYeoPK1RH0mZ4WyavNjfbLe7mvNGqgm80Eg3NjhE=".cellFromBase64()
     }
 
 }

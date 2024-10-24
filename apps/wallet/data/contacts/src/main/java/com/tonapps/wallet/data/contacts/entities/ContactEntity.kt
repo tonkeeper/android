@@ -8,5 +8,6 @@ data class ContactEntity(
     val id: Long,
     val name: String,
     val address: String,
-    val date: Long
+    val date: Long,
+    val testnet: Boolean
 ): Parcelable

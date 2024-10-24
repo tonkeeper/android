@@ -9,6 +9,7 @@ import com.tonapps.security.Security
 import com.tonapps.wallet.api.fromJSON
 import com.tonapps.wallet.api.toJSON
 import com.tonapps.wallet.data.core.BlobDataSource
+import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,15 +20,16 @@ import kotlinx.coroutines.flow.stateIn
 internal class LocalDataSource(
     scope: CoroutineScope,
     context: Context
-): BlobDataSource<AccountEvents>(
-    context = context,
-    path = "events"
 ) {
 
     companion object {
         private const val NAME = "events"
+        private const val LATEST_RECIPIENTS = "latest_recipients"
         private const val KEY_ALIAS = "_com_tonapps_events_master_key_"
     }
+
+    private val eventsCache = BlobDataSource.simpleJSON<AccountEvents>(context, "events")
+    private val latestRecipientsCache = BlobDataSource.simpleJSON<List<AccountAddress>>(context, LATEST_RECIPIENTS)
 
     private val _decryptedCommentFlow = MutableEffectFlow<Unit>()
     val decryptedCommentFlow = _decryptedCommentFlow.shareIn(scope, SharingStarted.WhileSubscribed(), 1)
@@ -49,20 +51,23 @@ internal class LocalDataSource(
         }
     }
 
-    override fun onMarshall(data: AccountEvents): ByteArray {
-        val json = toJSON(data)
-        return json.toByteArray()
+    fun getEvents(key: String): AccountEvents? {
+        return eventsCache.getCache(key)
     }
 
-    override fun onUnmarshall(bytes: ByteArray): AccountEvents? {
-        if (bytes.isEmpty()) {
+    fun setEvents(key: String, events: AccountEvents) {
+        eventsCache.setCache(key, events)
+    }
+
+    fun getLatestRecipients(key: String): List<AccountAddress>? {
+        val list = latestRecipientsCache.getCache(key)
+        if (list.isNullOrEmpty()) {
             return null
         }
-        return try {
-            val string = String(bytes)
-            fromJSON(string)
-        } catch (e: Throwable) {
-            null
-        }
+        return list
+    }
+
+    fun setLatestRecipients(key: String, recipients: List<AccountAddress>) {
+        latestRecipientsCache.setCache(key, recipients)
     }
 }

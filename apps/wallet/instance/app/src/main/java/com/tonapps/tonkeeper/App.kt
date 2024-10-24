@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.StrictMode
 import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import com.facebook.drawee.backends.pipeline.Fresco
@@ -13,8 +12,6 @@ import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
-import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.extensions.setLocales
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel
@@ -41,9 +38,6 @@ import com.tonapps.wallet.data.purchase.purchaseModule
 import com.tonapps.wallet.data.rn.rnLegacyModule
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.android.ext.android.inject
 import org.koin.androidx.workmanager.koin.workManagerFactory

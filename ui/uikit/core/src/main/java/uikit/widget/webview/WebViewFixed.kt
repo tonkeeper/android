@@ -7,9 +7,12 @@ import android.graphics.Color
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
+import android.os.Message
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
+import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -130,6 +133,15 @@ open class WebViewFixed @JvmOverloads constructor(
 
             override fun onPermissionRequest(request: PermissionRequest) {
                 request.deny()
+            }
+
+            override fun onCreateWindow(
+                view: WebView?,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: Message?
+            ): Boolean {
+                return true
             }
 
             override fun onShowFileChooser(

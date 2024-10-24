@@ -30,8 +30,8 @@ class ContactsRepository(context: Context, scope: CoroutineScope) {
 
     fun hide(accountId: String, testnet: Boolean) = database.setHidden(accountId, testnet, true)
 
-    suspend fun add(name: String, address: String): ContactEntity = withContext(Dispatchers.IO) {
-        val contact = database.addContact(name, address)
+    suspend fun add(name: String, address: String, testnet: Boolean): ContactEntity = withContext(Dispatchers.IO) {
+        val contact = database.addContact(name, address, testnet)
         _contactsFlow.value = _contactsFlow.value.orEmpty().toMutableList().apply {
             add(contact)
         }

@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.core.history
 
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.tonapps.icu.Coins
@@ -8,8 +7,6 @@ import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
-import io.tonapi.models.AccountAddress
-import io.tonapi.models.Action
 import io.tonapi.models.JettonSwapAction
 
 val JettonSwapAction.tokenIn: TokenEntity
@@ -75,9 +72,3 @@ val ActionType.nameRes: Int
         ActionType.Fee -> Localization.network_fee
         ActionType.Refund -> Localization.refund
     }
-
-val Action.recipient: AccountAddress?
-    get() = tonTransfer?.recipient ?: jettonTransfer?.recipient ?: nftItemTransfer?.recipient ?: jettonSwap?.userWallet ?: jettonMint?.recipient ?: depositStake?.staker ?: withdrawStake?.staker ?: withdrawStakeRequest?.staker
-
-val Action.sender: AccountAddress?
-    get() = tonTransfer?.sender ?: jettonTransfer?.sender ?: nftItemTransfer?.sender ?: jettonSwap?.userWallet ?: jettonBurn?.sender ?: depositStake?.staker ?: withdrawStake?.staker ?: withdrawStakeRequest?.staker

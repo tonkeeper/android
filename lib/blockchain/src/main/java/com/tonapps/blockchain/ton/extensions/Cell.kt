@@ -9,29 +9,30 @@ import org.ton.cell.Cell
 import org.ton.cell.CellSlice
 import org.ton.crypto.hex
 
-fun String.toBoc(): BagOfCells {
-    if (startsWith("{")) { // oh fuck....
-        return toBocFromJSBuffer()
+fun String.bocFromBase64(): BagOfCells {
+    if (startsWith("{")) {
+        throw IllegalArgumentException("js objects are not supported")
     }
-    return try {
-        BagOfCells(decodeBase64())
-    } catch (e: Throwable) {
-        BagOfCells(hex(this))
-    }
+    return BagOfCells(decodeBase64())
 }
 
-private fun String.toBocFromJSBuffer(): BagOfCells {
-    val json = JSONObject(this)
-    val data = json.getJSONArray("data")
-    val byteArray = ByteArray(data.length())
-    for (i in 0 until data.length()) {
-        byteArray[i] = data.getInt(i).toByte()
+fun String.bocFromHex(): BagOfCells {
+    if (startsWith("{")) {
+        throw IllegalArgumentException("js objects are not supported")
     }
-    return BagOfCells(byteArray)
+    return BagOfCells(hex(this))
 }
 
-fun String.parseCell(): Cell {
-    val parsed = toBoc()
+fun String.cellFromBase64(): Cell {
+    val parsed = bocFromBase64()
+    if (parsed.roots.size != 1) {
+        throw IllegalArgumentException("Deserialized more than one cell")
+    }
+    return parsed.first()
+}
+
+fun String.cellFromHex(): Cell {
+    val parsed = bocFromHex()
     if (parsed.roots.size != 1) {
         throw IllegalArgumentException("Deserialized more than one cell")
     }

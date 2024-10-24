@@ -2,7 +2,7 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
-import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.wallet.api.R
 import io.tonapi.models.JettonBalanceLock
@@ -66,8 +66,8 @@ data class TokenEntity(
 
         constructor(tokenAddress: String, model: JettonTransferPayload) : this(
             tokenAddress = tokenAddress,
-            customPayload = model.customPayload?.parseCell(),
-            stateInit = model.stateInit?.parseCell()?.asRef(StateInit),
+            customPayload = model.customPayload?.cellFromHex(),
+            stateInit = model.stateInit?.cellFromHex()?.asRef(StateInit),
         )
     }
 

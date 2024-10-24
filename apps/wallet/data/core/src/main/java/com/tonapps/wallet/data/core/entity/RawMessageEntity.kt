@@ -1,8 +1,7 @@
 package com.tonapps.wallet.data.core.entity
 
 import android.os.Parcelable
-import android.util.Log
-import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.extensions.optStringCompat
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -11,8 +10,6 @@ import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.StateInit
 import org.ton.cell.Cell
-import org.ton.cell.CellBuilder
-import org.ton.cell.buildCell
 import org.ton.tlb.CellRef
 import org.ton.tlb.asRef
 
@@ -36,13 +33,13 @@ data class RawMessageEntity(
 
     @IgnoredOnParcel
     val stateInit: CellRef<StateInit>? by lazy {
-        val cell = stateInitValue?.parseCell() ?: return@lazy null
+        val cell = stateInitValue?.cellFromBase64() ?: return@lazy null
         cell.asRef(StateInit)
     }
 
     @IgnoredOnParcel
     val payload: Cell by lazy {
-        payloadValue?.parseCell() ?: Cell.empty()
+        payloadValue?.cellFromBase64() ?: Cell.empty()
     }
 
     constructor(json: JSONObject) : this(

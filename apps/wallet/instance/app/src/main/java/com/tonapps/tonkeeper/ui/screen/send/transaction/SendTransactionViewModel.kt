@@ -17,6 +17,7 @@ import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.APIException
 import com.tonapps.wallet.api.SendBlockchainState
+import com.tonapps.wallet.api.getDebugMessage
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -58,7 +59,6 @@ class SendTransactionViewModel(
 
     private val _stateFlow = MutableStateFlow<SendTransactionState>(SendTransactionState.Loading)
     val stateFlow = _stateFlow.asStateFlow()
-
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -119,6 +119,7 @@ class SendTransactionViewModel(
                     )
                 }
             } catch (e: Throwable) {
+
                 FirebaseCrashlytics.getInstance().recordException(APIException.Emulation(
                     boc = message.createSignedBody(EmptyPrivateKeyEd25519.invoke(), internalMessage).base64(),
                     cause = e
@@ -134,7 +135,7 @@ class SendTransactionViewModel(
                         singleWallet = isSingleWallet()
                     )
                 } else {
-                    toast(Localization.unknown_error)
+                    toast(e.getDebugMessage() ?: getString(Localization.unknown_error))
                     _stateFlow.value = SendTransactionState.FailedEmulation
                 }
             }

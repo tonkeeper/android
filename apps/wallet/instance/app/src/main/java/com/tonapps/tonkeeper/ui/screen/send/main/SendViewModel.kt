@@ -448,11 +448,9 @@ class SendViewModel(
             val token = selectedTokenFlow.value
             val tokenBalance = token.balance.value
             val tokenAmount = getTokenAmount()
-            val isSendAll = tokenBalance == tokenAmount // || userInputFlow.value.max
-            val withRelayer =
-                sendTransferType is SendTransferType.Gasless || sendTransferType is SendTransferType.Battery
+            val withRelayer = sendTransferType is SendTransferType.Gasless || sendTransferType is SendTransferType.Battery
             if (token.isTon) {
-                if (isSendAll) {
+                if (tokenAmount == tonBalance || userInputFlow.value.max) {
                     onContinue()
                 } else {
                     val totalAmount = fee + tokenAmount

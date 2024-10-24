@@ -19,8 +19,8 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.currentTimeSeconds
@@ -512,7 +512,7 @@ class RootViewModel(
             null
         } else {
             try {
-                route.bin.parseCell()
+                route.bin.cellFromBase64()
             } catch (e: Throwable) {
                 toast(Localization.invalid_link)
                 return

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.edit
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import com.tonapps.extensions.getParcelableCompat
@@ -36,7 +37,6 @@ class EditContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
         nameView = view.findViewById(R.id.name)
         nameView.text = contact.name
-        nameView.focus()
 
         addressView = view.findViewById(R.id.address)
         addressView.text = contact.address
@@ -52,6 +52,16 @@ class EditContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         view.findViewById<Button>(R.id.delete).setOnClickListener { delete() }
 
         view.pinToBottomInsets()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        nameView.focus()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        hideKeyboard()
     }
 
     private fun delete() {

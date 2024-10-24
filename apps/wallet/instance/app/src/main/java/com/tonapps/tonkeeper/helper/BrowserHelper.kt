@@ -67,7 +67,7 @@ object BrowserHelper {
         }
     }
 
-    private fun external(activity: Activity, uri: Uri) {
+    fun external(activity: Activity, uri: Uri) {
         if (uri.scheme == "blob") {
             return
         }

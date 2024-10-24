@@ -50,6 +50,16 @@ class AddContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragm
         view.pinToBottomInsets()
     }
 
+    override fun onResume() {
+        super.onResume()
+        nameView.focus()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        hideKeyboard()
+    }
+    
     private fun applyAccountState(accountState: AddContactViewModel.AddressAccount) {
         addressView.loading = accountState is AddContactViewModel.AddressAccount.Loading
         addressView.error = accountState is AddContactViewModel.AddressAccount.Error

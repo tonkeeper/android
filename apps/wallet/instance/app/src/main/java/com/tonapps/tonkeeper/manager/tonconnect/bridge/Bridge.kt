@@ -98,7 +98,6 @@ internal class Bridge(private val api: API) {
                     connection = connection.copy(),
                 )
             }.catch {
-                Log.e("AppConnectEntityLog", "eventsFlow: ", it)
                 FirebaseCrashlytics.getInstance().recordException(it)
             }
     }

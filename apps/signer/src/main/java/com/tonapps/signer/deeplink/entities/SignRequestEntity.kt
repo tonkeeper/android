@@ -2,7 +2,7 @@ package com.tonapps.signer.deeplink.entities
 
 import android.net.Uri
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.extensions.parseCell
+import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.safePublicKey
 import com.tonapps.extensions.getMultipleQuery
 import com.tonapps.signer.Key
@@ -27,7 +27,7 @@ data class SignRequestEntity(
 
     private val tonNetwork: String = uri.getMultipleQuery("tn", "network") ?: "mainnet"
 
-    val body: Cell = uri.getQueryParameter(Key.BODY)?.parseCell() ?: throw IllegalArgumentException("body is required")
+    val body: Cell = uri.getQueryParameter(Key.BODY)?.cellFromHex() ?: throw IllegalArgumentException("body is required")
     val publicKey: PublicKeyEd25519 = uri.getQueryParameter(Key.PK)?.safePublicKey() ?: throw IllegalArgumentException("pk is required")
 
     val network: TonNetwork = if (tonNetwork == "mainnet" || tonNetwork == "-239") {

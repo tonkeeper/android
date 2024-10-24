@@ -93,7 +93,7 @@ data class ConfigEntity(
         batteryReservedAmount = json.optString("batteryReservedAmount", "0.3"),
         batteryMaxInputAmount = json.optString("batteryMaxInputAmount", "3"),
         batteryRefundEndpoint = json.optString("batteryRefundEndpoint", "https://battery-refund-app.vercel.app"),
-        batteryPromoDisable = json.optBoolean("disable_battery_promo_module", true),
+        batteryPromoDisable = false, // json.optBoolean("disable_battery_promo_module", true),
         stakingInfoUrl = json.getString("stakingInfoUrl"),
         tonapiSSEEndpoint = json.optString("tonapi_sse_endpoint", "https://rt.tonapi.io"),
         tonapiSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint", "https://rt-testnet.tonapi.io"),

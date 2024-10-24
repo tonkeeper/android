@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.TonTransferHelper
@@ -356,7 +357,7 @@ class BatteryRechargeViewModel(
                     payloadValue = payload.base64()
                 ))
                 .setNetwork(network)
-                .build()
+                .build(Uri.parse("https://battery.tonkeeper.com/"))
 
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
         } else {
@@ -386,7 +387,7 @@ class BatteryRechargeViewModel(
                     payloadValue = jettonPayload.base64()
                 ))
                 .setNetwork(network)
-                .build()
+                .build(Uri.parse("https://battery.tonkeeper.com/"))
 
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
         }

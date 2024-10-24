@@ -206,7 +206,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             if (message.method != BridgeMethod.SEND_TRANSACTION) {
                 return JsonBuilder.responseError(id, BridgeError.METHOD_NOT_SUPPORTED)
             }
-            val signRequests = message.params.map { SignRequestEntity(it) }
+            val signRequests = message.params.map { SignRequestEntity(it, args.url) }
             if (signRequests.size != 1) {
                 return JsonBuilder.responseError(id, BridgeError.BAD_REQUEST)
             }

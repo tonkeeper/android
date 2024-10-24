@@ -33,9 +33,6 @@ data class AppConnectEntity(
             localPrivateKey: ByteArray,
             body: ByteArray
         ): ByteArray {
-            Log.d("AppConnectEntityLog", "encryptMessage: remotePublicKey = ${remotePublicKey.joinToString()}")
-            Log.d("AppConnectEntityLog", "encryptMessage: localPrivateKey = ${localPrivateKey.joinToString()}")
-            Log.d("AppConnectEntityLog", "encryptMessage: body = ${body.toString(Charsets.UTF_8)}")
             val nonce = CryptoBox.nonce()
             val cipher = ByteArray(body.size + Sodium.cryptoBoxMacBytes())
             Sodium.cryptoBoxEasy(cipher, body, body.size, nonce, remotePublicKey, localPrivateKey)
@@ -48,11 +45,8 @@ data class AppConnectEntity(
             body: ByteArray
         ): ByteArray {
             val nonce = body.sliceArray(0 until Sodium.cryptoBoxNonceBytes())
-            Log.d("AppConnectEntityLog", "nonce = ${nonce.joinToString()}")
             val cipher = body.sliceArray(Sodium.cryptoBoxNonceBytes() until body.size)
-            Log.d("AppConnectEntityLog", "cipher = ${cipher.joinToString()}")
             val message = ByteArray(cipher.size - Sodium.cryptoBoxMacBytes())
-            Log.d("AppConnectEntityLog", "message = ${message.joinToString()}")
             Sodium.cryptoBoxOpenEasy(message, cipher, cipher.size, nonce, remotePublicKey, localPrivateKey)
             return message
         }
@@ -66,17 +60,9 @@ data class AppConnectEntity(
         return decryptMessage(clientId.hex(), keyPair.privateKey, body)
     }
 
-    fun decryptEventMessage(message: String): JSONObject? {
-        try {
-            Log.d("AppConnectEntityLog", "decryptEventMessage: message = \"$message\"")
-            val bytes = message.decodeBase64()
-            Log.d("AppConnectEntityLog", "decryptEventMessage: bytes = ${bytes.joinToString()}")
-            val decrypted = decryptMessage(bytes)
-            Log.d("AppConnectEntityLog", "decryptEventMessage: decrypted = ${decrypted.joinToString()}")
-            return JSONObject(decrypted.toString(Charsets.UTF_8))
-        } catch (e: Throwable) {
-            Log.e("AppConnectEntityLog", "decryptEventMessage: ", e)
-            return null
-        }
+    fun decryptEventMessage(message: String): JSONObject {
+        val bytes = message.decodeBase64()
+        val decrypted = decryptMessage(bytes)
+        return JSONObject(decrypted.toString(Charsets.UTF_8))
     }
 }

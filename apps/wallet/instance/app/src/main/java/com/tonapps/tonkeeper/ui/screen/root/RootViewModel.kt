@@ -222,7 +222,7 @@ class RootViewModel(
     private suspend fun signTransaction(tx: RootSignTransaction) {
         val eventId = tx.id
         try {
-            val signRequests = tx.params.map { SignRequestEntity(it) }
+            val signRequests = tx.params.map { SignRequestEntity(it, tx.connection.appUrl) }
             if (signRequests.isEmpty()) {
                 throw IllegalArgumentException("Empty sign requests")
             }

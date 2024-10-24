@@ -119,9 +119,9 @@ class SendTransactionViewModel(
                     )
                 }
             } catch (e: Throwable) {
-
                 FirebaseCrashlytics.getInstance().recordException(APIException.Emulation(
                     boc = message.createSignedBody(EmptyPrivateKeyEd25519.invoke(), internalMessage).base64(),
+                    sourceUri = request.appUri,
                     cause = e
                 ))
 

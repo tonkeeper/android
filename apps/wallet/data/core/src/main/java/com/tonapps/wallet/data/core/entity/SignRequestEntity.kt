@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.core.entity
 
+import android.net.Uri
 import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
@@ -15,6 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Parcelize
 data class SignRequestEntity(
+    val appUri: Uri,
     private val fromValue: String?,
     private val sourceValue: String?,
     val validUntil: Long,
@@ -33,7 +35,8 @@ data class SignRequestEntity(
             }
         }
 
-    constructor(json: JSONObject) : this(
+    constructor(json: JSONObject, appUri: Uri) : this(
+        appUri = appUri,
         fromValue = json.optString("from"),
         sourceValue = json.optString("source"),
         validUntil = parseValidUnit(json),
@@ -41,9 +44,9 @@ data class SignRequestEntity(
         network = parseNetwork(json.opt("network"))
     )
 
-    constructor(value: String) : this(JSONObject(value))
+    constructor(value: String, appUri: Uri) : this(JSONObject(value), appUri)
 
-    constructor(value: Any) : this(value.toString())
+    constructor(value: Any, appUri: Uri) : this(value.toString(), appUri)
 
     class Builder {
         private var from: AddrStd? = null
@@ -61,23 +64,24 @@ data class SignRequestEntity(
 
         fun addMessage(message: RawMessageEntity) = apply { messages.add(message) }
 
-        fun build(): SignRequestEntity {
+        fun build(appUri: Uri): SignRequestEntity {
             return SignRequestEntity(
                 fromValue = from?.toAccountId(),
                 sourceValue = null,
                 validUntil = validUntil ?: 0,
                 messages = messages.toList(),
-                network = network
+                network = network,
+                appUri = appUri
             )
         }
     }
 
     companion object {
 
-        fun parse(array: JSONArray): List<SignRequestEntity> {
+        fun parse(array: JSONArray, appUri: Uri): List<SignRequestEntity> {
             val requests = mutableListOf<SignRequestEntity>()
             for (i in 0 until array.length()) {
-                requests.add(SignRequestEntity(array.get(i)))
+                requests.add(SignRequestEntity(array.get(i), appUri))
             }
             return requests.toList()
         }

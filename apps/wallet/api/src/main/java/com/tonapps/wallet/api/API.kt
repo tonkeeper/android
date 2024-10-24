@@ -221,10 +221,10 @@ class API(
         }
     }
 
-    fun realtime(accountId: String, testnet: Boolean): Flow<SSEvent> {
+    fun realtime(accountId: String, testnet: Boolean, onFailure: ((Throwable) -> Unit)?): Flow<SSEvent> {
         val endpoint = if (testnet) config.tonapiSSETestnetEndpoint else config.tonapiSSEEndpoint
         val url = "$endpoint/sse/traces?account=$accountId"
-        return tonAPIHttpClient.sse(url)
+        return tonAPIHttpClient.sse(url, onFailure = onFailure)
     }
 
     fun get(url: String): String {
@@ -456,34 +456,17 @@ class API(
         testnet: Boolean
     ) = getPublicKey(accountId, testnet) ?: EmptyPrivateKeyEd25519.publicKey()
 
-    fun accountEvents(accountId: String, testnet: Boolean): Flow<SSEvent> {
-        val endpoint = if (testnet) {
-            config.tonapiTestnetHost
-        } else {
-            config.tonapiMainnetHost
-        }
-        // val mempool = okHttpClient.sse("$endpoint/v2/sse/mempool?accounts=${accountId}")
-        val tx = tonAPIHttpClient.sse("$endpoint/v2/sse/accounts/transactions?accounts=${accountId}")
-        // return merge(mempool, tx)
-        return tx
-    }
-
-    fun newRealtime(accountId: String, testnet: Boolean): Flow<SSEvent> {
-        val host = if (testnet) "rt-testnet.tonapi.io" else "rt.tonapi.io"
-        val url = "https://${host}/sse/transactions?account=$accountId"
-        return tonAPIHttpClient.sse(url)
-    }
-
     fun tonconnectEvents(
         publicKeys: List<String>,
-        lastEventId: Long? = null
+        lastEventId: Long? = null,
+        onFailure: ((Throwable) -> Unit)?
     ): Flow<SSEvent> {
         if (publicKeys.isEmpty()) {
             return emptyFlow()
         }
         val value = publicKeys.joinToString(",")
         val url = "${BRIDGE_URL}/events?client_id=$value"
-        return tonAPIHttpClient.sse(url, lastEventId).filter { it.type == "message" }
+        return tonAPIHttpClient.sse(url, lastEventId, onFailure).filter { it.type == "message" }
     }
 
     fun tonconnectPayload(): String? {

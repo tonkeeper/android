@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge
 
-import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.base64.encodeBase64
 import com.tonapps.extensions.optStringCompat
@@ -84,13 +83,13 @@ internal class Bridge(private val api: API) {
         lastEventId: Long,
     ): Flow<BridgeEvent> {
         val publicKeys = connections.map { it.publicKeyHex }
-        return api.tonconnectEvents(publicKeys, lastEventId)
+        return api.tonconnectEvents(publicKeys, lastEventId, onFailure = { FirebaseCrashlytics.getInstance().recordException(it) })
             .mapNotNull { event ->
-                val id = event.id?.toLongOrNull() ?: return@mapNotNull null
-                val from = event.json.optStringCompat("from") ?: return@mapNotNull null
-                val message = event.json.optStringCompat("message") ?: return@mapNotNull null
-                val connection = connections.find { it.clientId == from } ?: return@mapNotNull null
-                val json = connection.decryptEventMessage(message) ?: return@mapNotNull null
+                val id = event.id?.toLongOrNull() ?: throw IllegalArgumentException("Event \"id\" is missing")
+                val from = event.json.optStringCompat("from") ?: throw IllegalArgumentException("Event \"from\" is missing")
+                val message = event.json.optStringCompat("message") ?: throw IllegalArgumentException("Event \"message\" is missing")
+                val connection = connections.find { it.clientId == from } ?: throw IllegalArgumentException("Connection not found")
+                val json = connection.decryptEventMessage(message)
                 val decryptedMessage = BridgeEvent.Message(json)
                 BridgeEvent(
                     eventId = id,

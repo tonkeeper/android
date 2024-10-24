@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.manager.tx
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.join
@@ -70,7 +71,8 @@ class TransactionManager(
 
     private fun realtime(wallet: WalletEntity) = api.realtime(
         accountId = wallet.accountId,
-        testnet = wallet.testnet
+        testnet = wallet.testnet,
+        onFailure = { FirebaseCrashlytics.getInstance().recordException(it) }
     ).map { it.data }.map { getTransaction(wallet, it) }
 
     private suspend fun getTransaction(

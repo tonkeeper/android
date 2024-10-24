@@ -237,7 +237,7 @@ class RootActivity: BaseWalletActivity() {
                 payloadValue = bin.base64()
             ))
             .setTestnet(wallet.testnet)
-            .build()
+            .build(Uri.parse("https://tonkeeper.com/"))
 
         val screen = SendTransactionScreen.newInstance(wallet, request)
         add(screen)

@@ -1,9 +1,18 @@
 package com.tonapps.wallet.api
 
+import android.net.Uri
+
 sealed class APIException(message: String?, cause: Throwable?): Throwable(message, cause) {
 
-    class Emulation(boc: String, cause: Throwable? = null): APIException(
-        message = "Boc: $boc",
+    private companion object {
+
+        private fun buildMessage(vararg lines: String?): String {
+            return lines.filterNotNull().joinToString(separator = ";\n")
+        }
+    }
+
+    class Emulation(boc: String, sourceUri: Uri? = null, cause: Throwable? = null): APIException(
+        message = buildMessage("Source URI: $sourceUri", "Boc: $boc"),
         cause = cause
     )
 }

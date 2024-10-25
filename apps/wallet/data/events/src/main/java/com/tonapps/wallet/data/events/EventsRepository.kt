@@ -46,8 +46,9 @@ class EventsRepository(
     }
 
     fun latestRecipientsFlow(accountId: String, testnet: Boolean) = flow {
-        val local = localDataSource.getLatestRecipients(cacheLatestRecipientsKey(accountId, testnet))
-        emit(local ?: emptyList())
+        localDataSource.getLatestRecipients(cacheLatestRecipientsKey(accountId, testnet))?.let {
+            emit(it)
+        }
 
         val remote = loadLatestRecipients(accountId, testnet)
         emit(remote)

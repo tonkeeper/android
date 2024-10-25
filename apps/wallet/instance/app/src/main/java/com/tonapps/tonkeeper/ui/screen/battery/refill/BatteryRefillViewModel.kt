@@ -62,6 +62,9 @@ class BatteryRefillViewModel(
     private val environment: Environment,
 ) : BaseWalletVM(app) {
 
+    private val _promoFlow = MutableStateFlow<String?>(null)
+    private val promoFlow = _promoFlow.asStateFlow()
+
     private val purchasesFlow = billingManager.purchasesUpdatedFlow
         .map { it.purchases }
         .filter { it.isNotEmpty() }
@@ -71,13 +74,18 @@ class BatteryRefillViewModel(
 
     private val purchaseInProgress = MutableStateFlow(false)
 
+    private val settingsUpdateFlow = combine(
+        settingsRepository.walletPrefsChangedFlow,
+        batteryRepository.balanceUpdatedFlow,
+    ) { _, _ -> }
+
     val uiItemsFlow = combine(
         promoStateFlow,
         billingManager.productsFlow,
         purchaseInProgress,
-        settingsRepository.walletPrefsChangedFlow,
-        batteryRepository.balanceUpdatedFlow,
-    ) { promoState, iapProducts, isProcessing, _, _ ->
+        settingsUpdateFlow,
+        promoFlow,
+    ) { promoState, iapProducts, isProcessing, _, promoCode ->
         val batteryBalance = getBatteryBalance(wallet)
 
         val uiItems = mutableListOf<Item>()
@@ -85,7 +93,7 @@ class BatteryRefillViewModel(
         uiItems.add(Item.Space)
 
         if (BuildConfig.DEBUG || !api.config.batteryPromoDisable) {
-            uiItems.add(Item.Promo(promoState))
+            uiItems.add(Item.Promo(promoState, promoCode))
             uiItems.add(Item.Space)
         }
 
@@ -155,6 +163,10 @@ class BatteryRefillViewModel(
         }
 
         purchasesFlow.collectFlow(::handlePurchases)
+    }
+
+    fun setPromo(promo: String) {
+
     }
 
     private fun uiItemsPackages(
@@ -289,28 +301,28 @@ class BatteryRefillViewModel(
         })
     }
 
-    fun applyPromo(promo: String, isInitial: Boolean = false) {
+    fun applyPromo(promo: String) {
+        _promoFlow.value = promo
+    }
+
+    fun submitPromo(promo: String) {
         viewModelScope.launch(Dispatchers.IO) {
             if (promo.isEmpty()) {
                 batteryRepository.setAppliedPromo(wallet.testnet, null)
                 _promoStateFlow.value = PromoState.Default
-                return@launch
-            }
-            val initialPromo = if (isInitial) promo else null
-            _promoStateFlow.value = PromoState.Loading(initialPromo = initialPromo)
-            try {
-                if (isInitial) {
-                    delay(2000)
+            } else {
+                _promoStateFlow.value = PromoState.Loading
+                try {
+                    if (api.batteryVerifyPurchasePromo(wallet.testnet, promo)) {
+                        batteryRepository.setAppliedPromo(wallet.testnet, promo)
+                        _promoStateFlow.value = PromoState.Applied(promo)
+                    } else {
+                        throw IllegalStateException("promo code is invalid")
+                    }
+                } catch (_: Exception) {
+                    batteryRepository.setAppliedPromo(wallet.testnet, null)
+                    _promoStateFlow.value = PromoState.Error
                 }
-                if (api.batteryVerifyPurchasePromo(wallet.testnet, promo)) {
-                    batteryRepository.setAppliedPromo(wallet.testnet, promo)
-                    _promoStateFlow.value = PromoState.Applied(promo)
-                } else {
-                    throw IllegalStateException("promo code is invalid")
-                }
-            } catch (_: Exception) {
-                batteryRepository.setAppliedPromo(wallet.testnet, null)
-                _promoStateFlow.value = PromoState.Error
             }
         }
     }

@@ -519,7 +519,7 @@ class BatteryRechargeViewModel(
                 promoStateFlow.tryEmit(PromoState.Default)
                 return@launch
             }
-            promoStateFlow.tryEmit(PromoState.Loading())
+            promoStateFlow.tryEmit(PromoState.Loading)
             try {
                 if (api.batteryVerifyPurchasePromo(wallet.testnet, promo)) {
                     batteryRepository.setAppliedPromo(wallet.testnet, promo)

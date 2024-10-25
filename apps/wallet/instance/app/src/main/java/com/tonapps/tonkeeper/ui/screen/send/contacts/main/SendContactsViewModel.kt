@@ -22,10 +22,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import okhttp3.internal.filterList
 
 class SendContactsViewModel(
     app: Application,
@@ -39,14 +42,10 @@ class SendContactsViewModel(
     private val _myWalletsFlow = MutableStateFlow<List<Item.MyWallet>>(emptyList())
     private val myWalletsFlow = _myWalletsFlow.asStateFlow()
 
-    private val latestContactsFlow = eventsRepository.latestRecipientsFlow(wallet.accountId, wallet.testnet).filterList {
-        !contactsRepository.isHidden(it.address.toRawAddress(), wallet.testnet)
-    }.map { it.take(6) }.map {
-        it.mapIndexed { index, account ->
-            val position = ListCell.getPosition(it.size, index)
-            Item.LatestContact(position, account, wallet.testnet)
-        }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private val latestContactsFlow = flow {
+        emit(listOf(Item.Loading))
+        emitAll(getLatestContactsFlow())
+    }
 
     private val savedContactsFlow = contactsRepository.contactsFlow.filterList { it.testnet == wallet.testnet }.map {
         it.mapIndexed { index, contact ->
@@ -86,16 +85,7 @@ class SendContactsViewModel(
     }
 
     fun hideContact(address: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            contactsRepository.hide(address.toRawAddress(), wallet.testnet)
-            val newLatestContactsFlow = latestContactsFlow.value.filter {
-                !it.account.address.equalsAddress(address)
-            }
-
-            /*latestContactsFlow.value = newLatestContactsFlow.mapIndexed { index, latestContact ->
-                latestContact.copy(position = ListCell.getPosition(newLatestContactsFlow.size, index))
-            }*/
-        }
+        contactsRepository.hide(address.toRawAddress(), wallet.testnet)
     }
 
     fun deleteContact(contact: ContactEntity) {
@@ -114,6 +104,21 @@ class SendContactsViewModel(
         return wallets.mapIndexed { index, wallet ->
             val position = ListCell.getPosition(wallets.size, index)
             Item.MyWallet(position, wallet)
+        }
+    }
+
+    private fun getLatestContactsFlow() = combine(
+        contactsRepository.hiddenFlow,
+        eventsRepository.latestRecipientsFlow(
+            accountId = wallet.accountId,
+            testnet = wallet.testnet
+        )
+    ) { _, accounts ->
+        accounts.filter {
+            !contactsRepository.isHidden(it.address.toRawAddress(), wallet.testnet)
+        }.mapIndexed { index, account ->
+            val position = ListCell.getPosition(accounts.size, index)
+            Item.LatestContact(position, account, wallet.testnet)
         }
     }
 }

@@ -32,7 +32,7 @@ internal class RemoteDataSource(
         val recipients = actions.filter { it.isOutTransfer(accountId) }.mapNotNull { it.recipient }
 
         return recipients.filter {
-            it.isWallet && !it.address.equalsAddress(accountId)
-        }
+            it.isWallet && !it.address.equalsAddress(accountId) && !it.name.isNullOrEmpty()
+        }.take(6)
     }
 }

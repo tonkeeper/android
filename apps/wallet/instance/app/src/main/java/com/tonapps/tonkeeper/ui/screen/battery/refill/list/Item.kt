@@ -55,10 +55,16 @@ sealed class Item(type: Int) : BaseListItem(type) {
 
     data class Promo(
         val promoState: PromoState,
+        val code: String?
     ) : Item(TYPE_PROMO) {
 
-        val appliedPromo: String
-            get() = (promoState as? PromoState.Applied)?.appliedPromo ?: ""
+        val isSuccess: Boolean
+            get() = promoState is PromoState.Applied
+
+        val appliedPromo: String?
+            get() = (promoState as? PromoState.Applied)?.appliedPromo?.ifBlank {
+                null
+            }
 
         val isLoading: Boolean
             get() = promoState is PromoState.Loading
@@ -66,8 +72,8 @@ sealed class Item(type: Int) : BaseListItem(type) {
         val isError: Boolean
             get() = promoState is PromoState.Error
 
-        val initialPromo: String?
-            get() = (promoState as? PromoState.Loading)?.initialPromo
+        val promoCode: String?
+            get() = appliedPromo ?: code
     }
 
     data class Settings(

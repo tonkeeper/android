@@ -1,9 +1,8 @@
 package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
-import android.util.Log
 import androidx.core.net.toUri
-import com.tonapps.blockchain.ton.extensions.safePublicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
 import com.tonapps.extensions.query
@@ -128,7 +127,7 @@ sealed class DeepLinkRoute {
     ): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
-            publicKey = uri.query("pk")?.safePublicKey() ?: throw IllegalArgumentException("Public key is required"),
+            publicKey = uri.query("pk")?.publicKeyFromHex() ?: throw IllegalArgumentException("Public key is required"),
             name = uri.query("name"),
             local = uri.queryBoolean("local")
         )

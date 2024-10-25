@@ -2,14 +2,13 @@ package com.tonapps.wallet.data.account.entities
 
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.publicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
@@ -108,7 +107,7 @@ data class WalletEntity(
 
     constructor(parcel: Parcel) : this(
         id = parcel.readString()!!,
-        publicKey = parcel.readString()!!.publicKey(),
+        publicKey = parcel.readString()!!.publicKeyFromHex(),
         type = parcel.readEnum(Wallet.Type::class.java)!!,
         version = parcel.readEnum(WalletVersion::class.java)!!,
         label = parcel.readParcelableCompat()!!,

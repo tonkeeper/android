@@ -2,70 +2,27 @@ package com.tonapps.extensions
 
 import android.content.SharedPreferences
 import android.os.Parcelable
+import android.util.Base64
 import androidx.core.content.edit
-import com.tonapps.base64.decodeBase64
-import com.tonapps.base64.encodeBase64
 
-fun SharedPreferences.getByteArray(key: String): ByteArray? {
-    val value = getString(key, null)?.trim() ?: return null
-    val bytes = value.decodeBase64()
-    if (bytes.isEmpty()) {
-        return null
-    }
-    return bytes
-}
-
-/*
 fun SharedPreferences.getByteArray(key: String): ByteArray? {
     val value = run {
         val value = getString(key, null)
         if (value.isNullOrBlank()) {
-            return byteArrayOf(0)
+            return null
         }
-        base64(value) ?: byteArrayOf(0)
-    }
-
-    if (value.isZero()) {
-        value.clear()
-        return null
+        Base64.decode(value, Base64.DEFAULT)
     }
     return value
 }
 
-fun SharedPreferences.Editor.putByteArray(key: String, value: ByteArray): SharedPreferences.Editor {
-    if (value.isZero()) {
-        remove(key)
-        return this
-    } else {
-        val string = base64(value)
-        if (string == null) {
-            remove(key)
-        } else {
-            putString(key, string)
-        }
-    }
-    return this
-}
-
- */
-
-fun SharedPreferences.putByteArray(key: String, value: ByteArray?) {
-    if (value == null) {
+fun SharedPreferences.Editor.putByteArray(key: String, value: ByteArray?) = apply {
+    val string = Base64.encodeToString(value, Base64.DEFAULT)
+    if (string == null) {
         remove(key)
     } else {
-        edit {
-            putByteArray(key, value)
-        }
+        putString(key, string)
     }
-}
-
-fun SharedPreferences.Editor.putByteArray(key: String, value: ByteArray?): SharedPreferences.Editor {
-    if (value == null) {
-        remove(key)
-    } else {
-        putString(key, value.encodeBase64())
-    }
-    return this
 }
 
 fun SharedPreferences.getIntArray(key: String): IntArray? {
@@ -135,7 +92,6 @@ fun SharedPreferences.getStringArray(key: String): Array<String> {
     val string = getString(key, null) ?: return emptyArray()
     return string.split(",").toTypedArray()
 }
-
 
 fun SharedPreferences.putStringArray(key: String, value: Array<String>) {
     putString(key, value.joinToString(","))

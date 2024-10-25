@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.external.qr.signer.sign
 import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.publicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import uikit.base.BaseArgs
@@ -21,7 +21,7 @@ data class SignerSignArgs(
     }
 
     constructor(bundle: Bundle) : this(
-        publicKey = bundle.getString(ARG_PK)!!.publicKey(),
+        publicKey = bundle.getString(ARG_PK)!!.publicKeyFromHex(),
         unsignedBody = bundle.getString(ARG_BODY)!!.cellFromHex(),
         label = bundle.getString(ARG_LABEL)!!
     )

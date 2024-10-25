@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.extensions.safePublicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.core.signer.SignerApp
 import com.tonapps.tonkeeper.extensions.toast
@@ -71,7 +71,7 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
         readerFlow.map { Uri.parse(it) }.filter { it.host == "signer" }.catch {
             navigation?.toast(Localization.unknown_error)
         }.onEach { uri ->
-            val pk = uri.getQueryParameter("pk")?.safePublicKey() ?: return@onEach
+            val pk = uri.getQueryParameter("pk")?.publicKeyFromHex() ?: return@onEach
             val name = uri.getQueryParameter("name") ?: ""
             addAccount(pk, name)
         }.launchIn(lifecycleScope)

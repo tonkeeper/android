@@ -2,8 +2,6 @@ package com.tonapps.wallet.data.dapps.entities
 
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
-import com.tonapps.base64.decodeBase64
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.Sodium
 import com.tonapps.security.hex
@@ -61,8 +59,14 @@ data class AppConnectEntity(
     }
 
     fun decryptEventMessage(message: String): JSONObject {
-        val bytes = message.decodeBase64()
-        val decrypted = decryptMessage(bytes)
-        return JSONObject(decrypted.toString(Charsets.UTF_8))
+        var string = "..."
+        try {
+            val bytes = Base64.decode(message, Base64.NO_WRAP)
+            val decrypted = decryptMessage(bytes)
+            string = decrypted.toString(Charsets.UTF_8)
+            return JSONObject(string)
+        } catch (e: Throwable) {
+            throw IllegalArgumentException("Failed to decrypt message: $message;\nstring = $string", e)
+        }
     }
 }

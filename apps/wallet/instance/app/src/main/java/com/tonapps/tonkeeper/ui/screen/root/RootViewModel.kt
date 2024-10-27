@@ -29,6 +29,7 @@ import com.tonapps.extensions.setLocales
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.Environment
+import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -449,7 +450,7 @@ class RootViewModel(
                 BrowserHelper.openPurchase(context, WalletPurchaseMethodEntity(
                     method = method,
                     wallet = wallet,
-                    currency = settingsRepository.currency.code,
+                    currency = api.getCurrencyCodeByCountry(settingsRepository),
                     config = api.config
                 ))
             }

@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -17,6 +19,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
@@ -82,23 +85,28 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     }
 
     private fun open(method: PurchaseMethodEntity) {
-        val activity = requireActivity() as NavigationActivity
-        val methodWrapped = WalletPurchaseMethodEntity(
-            method = method,
-            wallet = screenContext.wallet,
-            currency = settingsRepository.currency.code,
-            config = api.config
-        )
-        if (viewModel.isPurchaseOpenConfirm(method)) {
-            confirmDialog.show(method) { showAgain ->
-                if (!showAgain) {
-                    viewModel.disableConfirmDialog(screenContext.wallet, method)
+        lifecycleScope.launch {
+            val currency = api.getCurrencyCodeByCountry(settingsRepository)
+            val activity = requireActivity() as NavigationActivity
+            val methodWrapped = WalletPurchaseMethodEntity(
+                method = method,
+                wallet = screenContext.wallet,
+                currency = currency,
+                config = api.config
+            )
+            if (viewModel.isPurchaseOpenConfirm(method)) {
+                confirmDialog.show(method) { showAgain ->
+                    if (!showAgain) {
+                        viewModel.disableConfirmDialog(screenContext.wallet, method)
+                    }
+                    BrowserHelper.openPurchase(activity, methodWrapped)
                 }
+            } else {
                 BrowserHelper.openPurchase(activity, methodWrapped)
             }
-        } else {
-            BrowserHelper.openPurchase(activity, methodWrapped)
         }
+
+
     }
 
     companion object {

@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
+import android.icu.util.Currency
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear

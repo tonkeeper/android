@@ -32,6 +32,7 @@ data class WalletPurchaseMethodEntity(
     }
 
     private companion object {
+
         fun replaceUrl(
             url: String,
             address: String,

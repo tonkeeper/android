@@ -1,9 +1,12 @@
 package com.tonapps.tonkeeper.api
 
+import android.icu.util.Currency
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.max18
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.Action
@@ -15,6 +18,7 @@ import io.tonapi.models.JettonPreview
 import io.tonapi.models.NftItem
 import io.tonapi.models.PoolImplementationType
 import io.tonapi.models.TokenRates
+import java.util.Locale
 import kotlin.math.abs
 
 private val nftItemPreviewSizes = arrayOf(
@@ -25,6 +29,30 @@ fun TokenRates.to(toCurrency: String, value: Float): Float {
     val price = prices?.get(toCurrency) ?: return 0f
     return price.toFloat() * value
 }
+
+suspend fun API.getCurrencyCodeByCountry(settingsRepository: SettingsRepository): String {
+    val fromSettingsCountry = getCurrencyByCountry(settingsRepository.country)
+    val fromSettingsCurrency = settingsRepository.currency.code
+    val fromIPCountry = resolveCountry()?.let { getCurrencyByCountry(it) }
+    val currency = fromSettingsCountry ?: fromIPCountry ?: fromSettingsCurrency
+    if (currency.equals("TON", true)) {
+        return "USD"
+    }
+    return currency
+}
+
+private fun getCurrencyByCountry(country: String): String? {
+    try {
+        val currency = Currency.getInstance(Locale("", country)).currencyCode
+        if (currency.isNullOrEmpty()) {
+            return null
+        }
+        return currency
+    } catch (e: Throwable) {
+        return null
+    }
+}
+
 
 
 /*val MessageConsequences.totalFees: Long

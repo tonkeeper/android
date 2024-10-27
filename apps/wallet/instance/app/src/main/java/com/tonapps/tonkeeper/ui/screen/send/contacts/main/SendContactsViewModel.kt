@@ -43,7 +43,7 @@ class SendContactsViewModel(
     private val myWalletsFlow = _myWalletsFlow.asStateFlow()
 
     private val latestContactsFlow = flow {
-        emit(listOf(Item.Loading))
+        // emit(listOf(Item.Loading))
         emitAll(getLatestContactsFlow())
     }
 
@@ -65,10 +65,10 @@ class SendContactsViewModel(
             uiItems.add(Item.Space)
         }
 
-        if (savedContacts.isNotEmpty()) {
+        /*if (savedContacts.isNotEmpty()) {
             uiItems.addAll(savedContacts)
             uiItems.add(Item.Space)
-        }
+        }*/
 
         if (latestContacts.isNotEmpty()) {
             uiItems.addAll(latestContacts)

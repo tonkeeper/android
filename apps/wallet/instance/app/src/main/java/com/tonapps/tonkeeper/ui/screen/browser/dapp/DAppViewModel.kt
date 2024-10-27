@@ -42,7 +42,7 @@ class DAppViewModel(
     suspend fun restoreConnection(): JSONObject {
         val connection = connectionFlow.firstOrNull()
         return if (connection == null) {
-            JsonBuilder.connectEventError(BridgeError.UNKNOWN_APP)
+            JsonBuilder.connectEventError(BridgeError.unknownApp())
         } else {
             JsonBuilder.connectEventSuccess(wallet, null, null, context.appVersionName)
         }

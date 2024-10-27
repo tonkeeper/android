@@ -14,7 +14,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
+import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
@@ -25,6 +27,7 @@ import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
@@ -204,25 +207,26 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             val message = messages.first()
             val id = message.id
             if (message.method != BridgeMethod.SEND_TRANSACTION) {
-                return JsonBuilder.responseError(id, BridgeError.METHOD_NOT_SUPPORTED)
+                return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
             }
             val signRequests = message.params.map { SignRequestEntity(it, args.url) }
             if (signRequests.size != 1) {
-                return JsonBuilder.responseError(id, BridgeError.BAD_REQUEST)
+                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${signRequests.size}"))
             }
             val signRequest = signRequests.first()
             return try {
                 val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
                 JsonBuilder.responseSendTransaction(id, boc)
             } catch (e: CancellationException) {
-                JsonBuilder.responseError(id, BridgeError.USER_DECLINED_TRANSACTION)
-            } catch (e: BridgeError.Exception) {
-                JsonBuilder.responseError(id, e.error)
+                JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
+            } catch (e: BridgeException) {
+                JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))
             } catch (e: Throwable) {
-                JsonBuilder.responseError(id, BridgeError.UNKNOWN)
+                FirebaseCrashlytics.getInstance().recordException(e)
+                JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
             }
         } else {
-            return JsonBuilder.responseError(0, BridgeError.BAD_REQUEST)
+            return JsonBuilder.responseError(0, BridgeError.badRequest("Request contains excess messages. Required: 1, Provided: ${messages.size}"))
         }
     }
 
@@ -279,9 +283,9 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         request: ConnectRequest
     ): JSONObject {
         if (version != 2) {
-            return JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
+            return JsonBuilder.connectEventError(BridgeError.badRequest("Version $version is not supported"))
         }
-        val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
+        val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
         return tonConnectManager.launchConnectFlow(
             activity = activity,
             tonConnect = TonConnect.fromJsInject(request, webView.url?.toUri()),

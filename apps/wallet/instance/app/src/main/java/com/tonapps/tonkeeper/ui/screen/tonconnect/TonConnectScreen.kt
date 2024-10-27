@@ -124,7 +124,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     private fun connect(wallet: WalletEntity) {
         val proofPayload = args.proofPayload
         if (wallet.signer && proofPayload != null) {
-            setResponse(wallet, proofError = BridgeError.METHOD_NOT_SUPPORTED)
+            setResponse(wallet, proofError = BridgeError.methodNotSupported("SignerApp version incompatible. Installed version lacks tonProof signing capability."))
         } else if (proofPayload == null) {
             setResponse(wallet)
         } else {

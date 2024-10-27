@@ -30,7 +30,6 @@ object Dependence {
 
     object GooglePlay {
         const val cronet = "com.google.android.gms:play-services-cronet:18.1.0"
-        const val cronetOkhttp = "com.google.net.cronet:cronet-okhttp:0.1.0"
         const val review = "com.google.android.play:review-ktx:2.0.1"
         const val billing = "com.android.billingclient:billing-ktx:7.1.1"
         const val update = "com.google.android.play:app-update-ktx:2.1.0"
@@ -138,6 +137,7 @@ object Dependence {
     object Wallet {
         const val localization = ":apps:wallet:localization"
         const val api = ":apps:wallet:api"
+        const val http = ":apps:wallet:http"
         const val app = ":apps:wallet:instance:app"
 
         object Data {

@@ -1,12 +1,15 @@
 package com.tonapps.wallet.data.dapps.entities
 
 import android.net.Uri
+import android.os.Parcelable
 import android.util.Base64
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.Sodium
 import com.tonapps.security.hex
+import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
+@Parcelize
 data class AppConnectEntity(
     val accountId: String,
     val testnet: Boolean,
@@ -18,7 +21,7 @@ data class AppConnectEntity(
     val proofPayload: String?,
     val timestamp: Long = (System.currentTimeMillis() / 1000L),
     val pushEnabled: Boolean,
-) {
+): Parcelable {
 
     enum class Type(val value: Int) {
         Internal(1), External(2)
@@ -59,14 +62,9 @@ data class AppConnectEntity(
     }
 
     fun decryptEventMessage(message: String): JSONObject {
-        var string = "..."
-        try {
-            val bytes = Base64.decode(message, Base64.NO_WRAP)
-            val decrypted = decryptMessage(bytes)
-            string = decrypted.toString(Charsets.UTF_8)
-            return JSONObject(string)
-        } catch (e: Throwable) {
-            throw IllegalArgumentException("Failed to decrypt message: $message;\nstring = $string", e)
-        }
+        val bytes = Base64.decode(message, Base64.NO_WRAP)
+        val decrypted = decryptMessage(bytes)
+        val string = decrypted.toString(Charsets.UTF_8)
+        return JSONObject(string)
     }
 }

@@ -23,6 +23,7 @@ import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
@@ -31,6 +32,7 @@ import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -97,6 +99,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import uikit.extensions.activity
+import java.util.concurrent.CancellationException
 
 class RootViewModel(
     app: Application,
@@ -232,7 +235,7 @@ class RootViewModel(
             }
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
-            tonConnectManager.sendBridgeError(tx.connection, BridgeError.BAD_REQUEST, eventId)
+            tonConnectManager.sendBridgeError(tx.connection, BridgeError.unknown(e.bestMessage), eventId)
         }
 
         tx.returnUri?.let {
@@ -246,17 +249,24 @@ class RootViewModel(
         signRequest: SignRequestEntity
     ) {
         if (signRequest.network == TonNetwork.TESTNET) {
-            tonConnectManager.sendBridgeError(connection, BridgeError.METHOD_NOT_SUPPORTED, eventId)
+            DevSettings.tonConnectLog("Unsupported network detected. System only accepts mainnet (-239) operations.", error = true)
+            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Unsupported network detected. System only accepts mainnet (-239) operations."), eventId)
             return
         }
 
         if (signRequest.from != null && !signRequest.from!!.toAccountId().equalsAddress(connection.accountId)) {
-            tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
+            DevSettings.tonConnectLog("Invalid \"from\" address.\nReceived: ${signRequest.from?.toAccountId()}\nExpected: ${connection.accountId}", error = true)
+            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Invalid \"from\" address. Specified wallet address not connected to this app."), eventId)
             return
         }
 
-        if (currentTimeSeconds() >= signRequest.validUntil) {
-            tonConnectManager.sendBridgeError(connection, BridgeError.BAD_REQUEST, eventId)
+        val now = currentTimeSeconds()
+        val max = now + 86400
+        if (signRequest.validUntil != 0L && now >= signRequest.validUntil) {
+            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Transaction has expired"), eventId)
+            return
+        } else if (signRequest.validUntil != 0L && signRequest.validUntil > max) {
+            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Invalid validUntil field. Transaction validity duration exceeds maximum limit of 24 hours. Max: $max Received: ${signRequest.validUntil}"), eventId)
             return
         }
 
@@ -267,7 +277,7 @@ class RootViewModel(
             it.isTonConnectSupported
         }
         if (wallets.isEmpty()) {
-            tonConnectManager.sendBridgeError(connection, BridgeError.UNKNOWN_APP, eventId)
+            tonConnectManager.sendBridgeError(connection, BridgeError.unknown(""), eventId)
             return
         }
         val wallet = wallets.find { it.hasPrivateKey } ?: wallets.first()
@@ -275,10 +285,11 @@ class RootViewModel(
             val boc = SendTransactionScreen.run(context, wallet, signRequest)
             tonConnectManager.sendTransactionResponseSuccess(connection, boc, eventId)
         } catch (e: Throwable) {
-            if (e is BridgeError.Exception) {
-                tonConnectManager.sendBridgeError(connection, e.error, eventId)
+            DevSettings.tonConnectLog("Error while signing transaction: ${e.bestMessage}", error = true)
+            if (e is CancellationException) {
+                tonConnectManager.sendBridgeError(connection, BridgeError.userDeclinedTransaction(), eventId)
             } else {
-                tonConnectManager.sendBridgeError(connection, BridgeError.USER_DECLINED_TRANSACTION, eventId)
+                tonConnectManager.sendBridgeError(connection, BridgeError.unknown(e.bestMessage), eventId)
             }
         }
     }

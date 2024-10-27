@@ -26,6 +26,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
 
     private lateinit var iconsView: RecyclerView
     private lateinit var blurView: ItemSwitchView
+    private lateinit var tonConnectLogsView: ItemSwitchView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,6 +45,15 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         blurView.doOnCheckedChanged = { isChecked, byUser ->
             if (byUser) {
                 DevSettings.blurEnabled = isChecked
+                requireContext().showToast("Restart app to apply changes")
+            }
+        }
+
+        tonConnectLogsView = view.findViewById(R.id.tc_logs)
+        tonConnectLogsView.setChecked(DevSettings.tonConnectLogs, false)
+        tonConnectLogsView.doOnCheckedChanged = { isChecked, byUser ->
+            if (byUser) {
+                DevSettings.tonConnectLogs = isChecked
                 requireContext().showToast("Restart app to apply changes")
             }
         }

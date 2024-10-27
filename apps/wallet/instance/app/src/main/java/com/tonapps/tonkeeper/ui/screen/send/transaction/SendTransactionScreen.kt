@@ -3,17 +3,16 @@ package com.tonapps.tonkeeper.ui.screen.send.transaction
 import android.content.Context
 import android.os.Bundle
 import android.text.SpannableStringBuilder
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnNextLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.extensions.getEnum
-import com.tonapps.extensions.putEnum
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
@@ -122,7 +121,7 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
             if (it is CancellationException) {
                 setDefaultTask()
             } else {
-                setErrorTask(BridgeError.BAD_REQUEST)
+                setErrorTask(BridgeException(cause = it))
             }
         }.onEach { boc ->
             setSuccessTask(boc)
@@ -146,15 +145,15 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
         taskView.state = ProcessTaskView.State.LOADING
     }
 
-    private fun setErrorTask(error: BridgeError) {
+    private fun setErrorTask(error: BridgeException) {
         setActiveTask()
         taskView.state = ProcessTaskView.State.FAILED
         postDelayed(2000) { setErrorResult(error) }
     }
 
-    private fun setErrorResult(error: BridgeError) {
+    private fun setErrorResult(error: BridgeException) {
         setResult(Bundle().apply {
-            putEnum(ERROR, error)
+            putParcelable(ERROR, error)
         })
     }
 
@@ -173,7 +172,7 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
     private fun applyState(state: SendTransactionState) {
         when (state) {
             is SendTransactionState.Details -> applyDetails(state)
-            is SendTransactionState.Failed -> setErrorTask(BridgeError.UNKNOWN)
+            is SendTransactionState.Failed -> setErrorTask(BridgeException(message = "Failed to send transaction in client"))
             is SendTransactionState.FailedEmulation -> finish()
             is SendTransactionState.InsufficientBalance -> {
                 insufficientFundsDialog.show(state.wallet, state.balance, state.required, state.withRechargeBattery, state.singleWallet)
@@ -271,14 +270,14 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
             val fragment = newInstance(wallet, request, batteryTxType, forceRelayer)
             val result = activity.addForResult(fragment)
             if (result.containsKey(ERROR)) {
-                val error = result.getEnum(ERROR, BridgeError.UNKNOWN)
-                throw BridgeError.Exception(error)
+                val error = result.getParcelableCompat<BridgeError>(ERROR)!!
+                throw BridgeException(message = error.message)
             }
             val boc = result.getString(BOC)
             if (!boc.isNullOrBlank()) {
                 return boc
             }
-            throw BridgeError.Exception(BridgeError.USER_DECLINED_TRANSACTION)
+            throw CancellationException()
         }
     }
 }

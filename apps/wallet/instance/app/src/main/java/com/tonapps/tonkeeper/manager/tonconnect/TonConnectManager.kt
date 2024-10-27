@@ -5,9 +5,11 @@ import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
 import androidx.core.net.toUri
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.extensions.appVersionName
+import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.flat
 import com.tonapps.extensions.flatter
@@ -16,6 +18,7 @@ import com.tonapps.extensions.isEmptyQuery
 import com.tonapps.extensions.mapList
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.Bridge
@@ -66,6 +69,7 @@ class TonConnectManager(
     private val eventsFlow = _eventsFlow.asSharedFlow().mapNotNull { event ->
         val lastAppRequestId = dAppsRepository.getLastAppRequestId(event.connection.clientId)
         if (lastAppRequestId >= event.message.id) {
+            DevSettings.tonConnectLog("Last app event id: $lastAppRequestId\nIgnore event: $event", error = true)
             return@mapNotNull null
         }
         event
@@ -78,7 +82,7 @@ class TonConnectManager(
             if (event.method == BridgeMethod.DISCONNECT) {
                 deleteConnection(event.connection, event.message.id)
             } else {
-                sendBridgeError(event.connection, BridgeError.METHOD_NOT_SUPPORTED, event.message.id)
+                sendBridgeError(event.connection, BridgeError.methodNotSupported("Method \"${event.method}\" not supported"), event.message.id)
             }
             null
         }
@@ -96,7 +100,9 @@ class TonConnectManager(
             if (connections.isEmpty()) {
                 return@launch
             }
-            val flow = connections.map { bridge.eventsFlow(it, dAppsRepository.lastEventId) }.flatter()
+            val flow = connections.map {
+                bridge.eventsFlow(it, dAppsRepository.lastEventId)
+            }.flatter()
             flow.collect {
                 if (bridgeConnected.get()) {
                     _eventsFlow.emit(it)
@@ -137,7 +143,7 @@ class TonConnectManager(
     private suspend fun deleteConnection(connection: AppConnectEntity, messageId: Long) {
         val deleted = dAppsRepository.deleteConnect(connection)
         if (!deleted) {
-            sendBridgeError(connection, BridgeError.UNKNOWN_APP, messageId)
+            sendBridgeError(connection, BridgeError.unknownApp("App not found. Request user to reconnect wallet for access restoration."), messageId)
         } else {
             bridge.sendDisconnectResponseSuccess(connection, messageId)
         }
@@ -248,7 +254,7 @@ class TonConnectManager(
         wallet: WalletEntity?
     ): JSONObject = withContext(Dispatchers.IO) {
         if (tonConnect.request.items.isEmpty()) {
-            return@withContext JsonBuilder.connectEventError(BridgeError.BAD_REQUEST)
+            return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("Empty value provided in required field \"items\""))
         }
 
         val clientId = tonConnect.clientId
@@ -291,12 +297,16 @@ class TonConnectManager(
                 activity.appVersionName
             )
         } catch (e: CancellationException) {
-            JsonBuilder.connectEventError(BridgeError.USER_DECLINED_TRANSACTION)
+            JsonBuilder.connectEventError(BridgeError.userDeclinedTransaction())
         } catch (e: ManifestException) {
-            JsonBuilder.connectEventError(BridgeError.resolve(e))
+            if (e is ManifestException.NotFound) {
+                JsonBuilder.connectEventError(BridgeError.appManifestNotFound())
+            } else {
+                JsonBuilder.connectEventError(BridgeError.appManifestContentError())
+            }
         } catch (e: Throwable) {
-            Log.e("AppConnectEntityLog", "Error TONConnect", e)
-            JsonBuilder.connectEventError(BridgeError.UNKNOWN)
+            FirebaseCrashlytics.getInstance().recordException(e)
+            JsonBuilder.connectEventError(BridgeError.unknown(e.bestMessage))
         }
     }
 

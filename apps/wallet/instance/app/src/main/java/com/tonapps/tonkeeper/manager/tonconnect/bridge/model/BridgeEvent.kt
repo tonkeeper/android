@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.manager.tonconnect.bridge.model
 
 import com.tonapps.extensions.getLongCompat
 import com.tonapps.extensions.toStringList
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import org.json.JSONArray
 import org.json.JSONObject

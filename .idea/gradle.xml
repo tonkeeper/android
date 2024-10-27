@@ -48,6 +48,7 @@
             <option value="$PROJECT_DIR$/apps/wallet/data/settings" />
             <option value="$PROJECT_DIR$/apps/wallet/data/staking" />
             <option value="$PROJECT_DIR$/apps/wallet/data/tokens" />
+            <option value="$PROJECT_DIR$/apps/wallet/http" />
             <option value="$PROJECT_DIR$/apps/wallet/instance" />
             <option value="$PROJECT_DIR$/apps/wallet/instance/app" />
             <option value="$PROJECT_DIR$/apps/wallet/instance/main" />

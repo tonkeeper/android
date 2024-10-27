@@ -6,6 +6,7 @@ import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.extensions.currentTimeSeconds
 import kotlinx.datetime.Clock
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -28,11 +29,7 @@ data class SignRequestEntity(
     val from: AddrStd?
         get() {
             val value = fromValue ?: return null
-            return try {
-                AddrStd.parse(value)
-            } catch (e: Throwable) {
-                null
-            }
+            return AddrStd.parse(value)
         }
 
     constructor(json: JSONObject, appUri: Uri) : this(
@@ -87,12 +84,21 @@ data class SignRequestEntity(
         }
 
         private fun parseValidUnit(json: JSONObject): Long {
-            val value = json.optLong("valid_until", json.optLong("validUntil", 0))
-            if (value > 1000000000000) {
-                return value / 1000
+            val value = json.opt("valid_until") ?: json.opt("validUntil")
+            if (value == null) {
+                return 0
             }
-            if (value > 1000000000) {
-                return value
+            val validUnit = when (value) {
+                is Long -> value
+                is Int -> value.toLong()
+                is String -> value.toLongOrNull() ?: throw IllegalArgumentException("Invalid validUntil parameter. Expected: int64 (Like ${currentTimeSeconds()}), Received: $value")
+                else -> throw IllegalArgumentException("Invalid validUntil parameter. Expected: int64 (Like ${currentTimeSeconds()}), Received: $value")
+            }
+            if (validUnit > 1000000000000) {
+                return validUnit / 1000
+            }
+            if (validUnit > 1000000000) {
+                return validUnit
             }
             return 0
         }

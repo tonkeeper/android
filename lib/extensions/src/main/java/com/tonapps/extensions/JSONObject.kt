@@ -5,7 +5,7 @@ import org.json.JSONObject
 fun JSONObject.optStringCompat(vararg keys: String): String? {
     for (key in keys) {
         val value = optString(key)
-        if (!value.isNullOrBlank()) {
+        if (!value.isNullOrBlank() && value != "null") {
             return value
         }
     }

@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.add
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.extensions.isTestnetAddress
 import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
@@ -63,11 +65,15 @@ class AddContactViewModel(
         userInputAddressFlow.collectFlow { address ->
             if (address.isBlank()) {
                 _accountFlow.value = AddressAccount.Empty
+            } else if (address.contains(":")) {
+                _accountFlow.value = AddressAccount.Error
+            } else if (address.isTestnetAddress() && !wallet.testnet) {
+                _accountFlow.value = AddressAccount.Error
             } else {
                 _accountFlow.value = AddressAccount.Loading
 
                 val account = api.resolveAccount(address, wallet.testnet)
-                if (account == null || !account.isWallet || account.status != AccountStatus.active) {
+                if (account == null || !account.isWallet || account.status == AccountStatus.nonexist) {
                     _accountFlow.value = AddressAccount.Error
                 } else {
                     _accountFlow.value = AddressAccount.Success(account)

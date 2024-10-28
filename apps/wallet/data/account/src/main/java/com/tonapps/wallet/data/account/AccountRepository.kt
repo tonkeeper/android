@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.account
 
+import android.app.KeyguardManager
 import android.content.Context
 import android.util.Log
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
@@ -45,7 +46,7 @@ import org.ton.contract.wallet.WalletTransfer
 import java.util.UUID
 
 class AccountRepository(
-    context: Context,
+    private val context: Context,
     private val api: API,
     private val rnLegacy: RNLegacy,
 ) {
@@ -60,6 +61,10 @@ class AccountRepository(
         data object Initialization : SelectedState()
         data object Empty : SelectedState()
         data class Wallet(val wallet: WalletEntity) : SelectedState()
+    }
+
+    private val keyguardManager by lazy {
+        context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -182,6 +187,10 @@ class AccountRepository(
     }
 
     suspend fun requestTonProofToken(wallet: WalletEntity): String? = withContext(scope.coroutineContext) {
+        if (keyguardManager.isDeviceLocked) {
+            return@withContext null
+        }
+
         if (!wallet.hasPrivateKey) {
             return@withContext null
         }
@@ -193,6 +202,7 @@ class AccountRepository(
         saveTonProof(wallet, tonProofToken)
         tonProofToken
     }
+
 
     private suspend fun saveTonProof(wallet: WalletEntity, token: String) = withContext(Dispatchers.IO) {
         storageSource.setTonProofToken(wallet.publicKey, token)

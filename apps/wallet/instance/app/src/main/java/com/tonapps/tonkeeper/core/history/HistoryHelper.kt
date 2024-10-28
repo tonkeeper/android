@@ -464,7 +464,7 @@ class HistoryHelper(
                 itemAction = ActionType.JettonBurn
                 accountAddress = jettonTransfer.recipient
                 value = value.withMinus
-            } else if (isOut) {
+            } else if (isOut || wallet.isMyAddress(jettonTransfer.sender?.address ?: "")) {
                 itemAction = ActionType.Send
                 accountAddress = jettonTransfer.recipient
                 value = value.withMinus
@@ -521,7 +521,7 @@ class HistoryHelper(
             val amount = Coins.of(tonTransfer.amount)
             var value = CurrencyFormatter.format("TON", amount, 2)
 
-            if (isOut) {
+            if (isOut || wallet.isMyAddress(tonTransfer.sender.address)) {
                 itemAction = ActionType.Send
                 accountAddress = tonTransfer.recipient
                 value = value.withMinus
@@ -605,7 +605,7 @@ class HistoryHelper(
                 itemAction = ActionType.JettonBurn
                 iconURL = nftItemTransfer.recipient?.iconURL
                 subtitle = api.getBurnAddress()
-            } else if (isOut) {
+            } else if (isOut || wallet.isMyAddress(nftItemTransfer.sender?.address ?: "")) {
                 itemAction = ActionType.NftSend
                 iconURL = nftItemTransfer.recipient?.iconURL
                 subtitle = sender?.getNameOrAddress(wallet.testnet, true) ?: ""

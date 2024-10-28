@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.manager.tonconnect.bridge
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.base64.encodeBase64
 import com.tonapps.extensions.bestMessage
-import com.tonapps.extensions.optStringCompat
+import com.tonapps.extensions.optStringCompatJS
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.hex
 import com.tonapps.tonkeeper.core.DevSettings
@@ -95,14 +95,14 @@ internal class Bridge(private val api: API) {
         return api.tonconnectEvents(publicKeys, lastEventId, onFailure = { FirebaseCrashlytics.getInstance().recordException(it) })
             .mapNotNull { event ->
                 DevSettings.tonConnectLog("Received event:\n$event")
-                val from = event.json.optStringCompat("from") ?: throw BridgeException(
+                val from = event.json.optStringCompatJS("from") ?: throw BridgeException(
                     message = "Event \"from\" is missing"
                 )
                 val connection = connections.find { it.clientId == from } ?: throw BridgeException(
                     message = "Connection not found"
                 )
                 val id = event.id?.toLongOrNull() ?: throw BridgeException(message = "Event \"id\" is missing")
-                val message = event.json.optStringCompat("message") ?: throw BridgeException(
+                val message = event.json.optStringCompatJS("message") ?: throw BridgeException(
                     connect = connection,
                     message = "Field \"message\" is required"
                 )
@@ -112,7 +112,7 @@ internal class Bridge(private val api: API) {
                     throw BridgeException(
                         connect = connection,
                         cause = e,
-                        message = "Failed to decrypt event from \"message\" field"
+                        message = "Failed to decrypt event from \"message\" field; Received: $message"
                     )
                 }
                 DevSettings.tonConnectLog("Decrypted message:\n$json")

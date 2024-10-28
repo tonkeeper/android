@@ -68,12 +68,12 @@ class SendContactsViewModel(
         /*if (savedContacts.isNotEmpty()) {
             uiItems.addAll(savedContacts)
             uiItems.add(Item.Space)
-        }*/
+        }
 
         if (latestContacts.isNotEmpty()) {
             uiItems.addAll(latestContacts)
             uiItems.add(Item.Space)
-        }
+        }*/
 
         uiItems.toList()
     }

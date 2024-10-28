@@ -5,11 +5,19 @@ import org.json.JSONObject
 fun JSONObject.optStringCompat(vararg keys: String): String? {
     for (key in keys) {
         val value = optString(key)
-        if (!value.isNullOrBlank() && value != "null") {
+        if (!value.isNullOrBlank()) {
             return value
         }
     }
     return null
+}
+
+fun JSONObject.optStringCompatJS(vararg keys: String): String? {
+    val value = optStringCompat(*keys)
+    if (value == "null" || value == "undefined") { // Oh man... JavaScript compatibility
+        return null
+    }
+    return value
 }
 
 fun JSONObject.getLongCompat(key: String): Long {

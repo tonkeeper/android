@@ -4,6 +4,7 @@ import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.extensions.optStringCompat
+import com.tonapps.extensions.optStringCompatJS
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
@@ -35,13 +36,13 @@ data class RawMessageEntity(
     constructor(json: JSONObject) : this(
         json.getString("address"),
         parseAmount(json.get("amount")),
-        json.optStringCompat("stateInit"),
-        json.optStringCompat("payload")
+        json.optStringCompatJS("stateInit"),
+        json.optStringCompatJS("payload")
     ) {
-        if (stateInitValue?.startsWith("{") == true) {
+        if (stateInitValue?.startsWith("{") == true) { // for dudes how try to send JS Buffer
             throw IllegalArgumentException("Invalid data format. Base64 encoding required for data transfer, JavaScript objects not supported. Received: stateInit =  $stateInitValue")
         }
-        if (payloadValue?.startsWith("{") == true) {
+        if (payloadValue?.startsWith("{") == true) { // for dudes how try to send JS Buffer
             throw IllegalArgumentException("Invalid data format. Base64 encoding required for data transfer, JavaScript objects not supported. Received: payload = $payloadValue")
         }
     }

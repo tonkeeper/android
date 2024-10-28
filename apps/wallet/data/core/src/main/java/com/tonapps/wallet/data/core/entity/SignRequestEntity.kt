@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.currentTimeSeconds
+import com.tonapps.extensions.optStringCompatJS
 import kotlinx.datetime.Clock
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -34,8 +35,8 @@ data class SignRequestEntity(
 
     constructor(json: JSONObject, appUri: Uri) : this(
         appUri = appUri,
-        fromValue = json.optString("from"),
-        sourceValue = json.optString("source"),
+        fromValue = json.optStringCompatJS("from"),
+        sourceValue = json.optStringCompatJS("source"),
         validUntil = parseValidUnit(json),
         messages = parseMessages(json.getJSONArray("messages")),
         network = parseNetwork(json.opt("network"))

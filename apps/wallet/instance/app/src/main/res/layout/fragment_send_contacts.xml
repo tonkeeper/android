@@ -10,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:ignoreSystemOffset="true"
+        android:title="@string/contacts"
         android:action="@drawable/ic_close_16"/>
 
     <uikit.widget.SimpleRecyclerView
@@ -26,7 +27,6 @@
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         android:layout_gravity="bottom"
         android:layout_margin="16dp"
         android:textAppearance="@style/TextAppearance.Label1"

@@ -11,4 +11,5 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.core))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.sqlite))
+    implementation(project(Dependence.Wallet.Data.rn))
 }

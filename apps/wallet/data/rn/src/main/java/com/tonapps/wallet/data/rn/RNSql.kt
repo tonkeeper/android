@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.os.SystemClock
 import com.tonapps.sqlite.SQLiteHelper
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 
@@ -74,6 +75,15 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
         val string = getValue(key) ?: return null
         return try {
             JSONObject(string)
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
+    fun getJSONArray(key: String): JSONArray? {
+        val string = getValue(key) ?: return null
+        return try {
+            JSONArray(string)
         } catch (e: Throwable) {
             null
         }

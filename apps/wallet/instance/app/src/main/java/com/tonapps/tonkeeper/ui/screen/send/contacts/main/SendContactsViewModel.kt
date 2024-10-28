@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
@@ -21,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -43,7 +45,7 @@ class SendContactsViewModel(
     private val myWalletsFlow = _myWalletsFlow.asStateFlow()
 
     private val latestContactsFlow = flow {
-        // emit(listOf(Item.Loading))
+        emit(listOf(Item.Loading))
         emitAll(getLatestContactsFlow())
     }
 
@@ -65,7 +67,7 @@ class SendContactsViewModel(
             uiItems.add(Item.Space)
         }
 
-        /*if (savedContacts.isNotEmpty()) {
+        if (savedContacts.isNotEmpty()) {
             uiItems.addAll(savedContacts)
             uiItems.add(Item.Space)
         }
@@ -73,7 +75,7 @@ class SendContactsViewModel(
         if (latestContacts.isNotEmpty()) {
             uiItems.addAll(latestContacts)
             uiItems.add(Item.Space)
-        }*/
+        }
 
         uiItems.toList()
     }

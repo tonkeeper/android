@@ -3,7 +3,9 @@ package com.tonapps.wallet.data.rn
 import android.content.Context
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.tonapps.extensions.map
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
+import com.tonapps.wallet.data.rn.data.RNFavorites
 import com.tonapps.wallet.data.rn.data.RNSpamTransactions
 import com.tonapps.wallet.data.rn.data.RNTC
 import com.tonapps.wallet.data.rn.data.RNVaultState
@@ -13,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 
 class RNLegacy(
@@ -161,6 +164,10 @@ class RNLegacy(
         return sql.getJSONObject(key)
     }
 
+    fun getJSONArray(key: String): JSONArray? {
+        return sql.getJSONArray(key)
+    }
+
     fun setJSONValue(key: String, value: JSONObject, v: Int = -1) {
         if (v >= 0) {
             value.put("__version", v)
@@ -185,6 +192,22 @@ class RNLegacy(
     fun getTCApps(): RNTC {
         val tcApps = getJSONState("TCApps")?.getJSONObject("connectedApps") ?: JSONObject()
         return RNTC(tcApps)
+    }
+
+    fun getFavorites(): List<RNFavorites> {
+        val array = getJSONArray("favorites") ?: return emptyList()
+        return array.map {
+            RNFavorites(it)
+        }
+    }
+
+    fun getHiddenAddresses(): List<String> {
+        val array = getJSONArray("hidden_addresses") ?: return emptyList()
+        val list = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            list.add(array.getString(i))
+        }
+        return list.toList()
     }
 
     fun setTCApps(data: RNTC) {

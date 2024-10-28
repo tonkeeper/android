@@ -48,7 +48,6 @@ class SendContactsScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fra
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
-        headerView.title = getString(Localization.contacts)
         headerView.doOnActionClick = { finish() }
 
         listView = view.findViewById(R.id.list)

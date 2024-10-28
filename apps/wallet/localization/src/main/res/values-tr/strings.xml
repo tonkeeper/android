@@ -1,12 +1,12 @@
 <resources>
     <string name="transaction_expired">İşlem süresi doldu</string>
-    <string name="add_contact">Kişi Ekle</string>
+    <string name="add_contact">Adres Defterine Ekle</string>
     <string name="multi_account_secret_wrong">Lütfen Çoklu Cüzdan Hesabı için Tonkeeper Masaüstünü kullanın</string>
     <string name="total">Toplam: %1$s</string>
     <string name="staking_ready_withdraw">%1$s hazır. Toplamak için dokunun.</string>
     <string name="staking_pending_deposit">%1$s %2$s\'ye yatırılacak</string>
     <string name="staking_pending_withdraw">%1$s %2$s içinde çekilecek</string>
-    <string name="add_to_contact">İletişime Ekle</string>
+    <string name="edit_full">Düzenlemek</string>
     <string name="staking_unstake_cycle">Paydan çıkarma isteği, %1$s\'deki doğrulama döngüsünün bitiminden sonra işlenecektir.</string>
     <string name="send_transaction_scroll">Onaylamak için tüm ayrıntıları kontrol edin</string>
     <string name="send_transaction_detail">Cüzdanınızdan gönderilecek tokenların toplam değeri. İadeler toplam değere dahil değildir.</string>
@@ -459,6 +459,9 @@
     <string name="name">İsim</string>
     <string name="ledger_blind_signing_error">Kör İmzalama, Defter Ayarlarında etkinleştirilmelidir</string>
     <string name="nothing_to_restore">Geri yüklenecek bir şey yok</string>
-    <string name="new_contact">Yeni İletişim</string>
-    <string name="contact_delete_dialog">«%1$s» adlı kişiyi Kişilerinizden silmek istediğinizden emin misiniz?</string>
+    <string name="new_contact">Yeni Adres</string>
+    <string name="contact_delete_dialog">“%1$s” adresini Adres Defterinizden silmek istediğinizden emin misiniz?</string>
+    <string name="add_to_contact">Adres Defterine Ekle</string>
+    <string name="wallet_address">Cüzdan Adresi</string>
+    <string name="contacts_save_latest">Adresi Kaydet</string>
 </resources>

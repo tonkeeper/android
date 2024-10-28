@@ -1,12 +1,12 @@
 <resources>
     <string name="transaction_expired">Transacción expirada</string>
-    <string name="add_contact">Agregar contacto</string>
+    <string name="add_contact">Agregar a la libreta de direcciones</string>
     <string name="multi_account_secret_wrong">Utilice Tonkeeper Desktop para cuentas con múltiples billeteras</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s listo. Toca para recoger.</string>
     <string name="staking_pending_deposit">%1$s se depositará en %2$s</string>
     <string name="staking_pending_withdraw">%1$s se retirarán en %2$s</string>
-    <string name="add_to_contact">Añadir a contacto</string>
+    <string name="edit_full">Editar</string>
     <string name="staking_unstake_cycle">La solicitud de cancelación de participación se procesará después del final del ciclo de validación en %1$s</string>
     <string name="send_transaction_scroll">Verifique todos los detalles para confirmar</string>
     <string name="send_transaction_detail">El valor total de los tokens que se enviarán desde su billetera. Los reembolsos no están incluidos en el valor total.</string>
@@ -459,6 +459,9 @@
     <string name="name">Nombre</string>
     <string name="ledger_blind_signing_error">La firma ciega debe estar habilitada en la configuración de Ledger</string>
     <string name="nothing_to_restore">Nada que restaurar</string>
-    <string name="new_contact">Nuevo contacto</string>
-    <string name="contact_delete_dialog">¿Estás seguro de que deseas eliminar «%1$s» de tus Contactos?</string>
+    <string name="new_contact">Nueva dirección</string>
+    <string name="contact_delete_dialog">¿Está seguro de que desea eliminar “%1$s” de su libreta de direcciones?</string>
+    <string name="add_to_contact">Agregar a la libreta de direcciones</string>
+    <string name="wallet_address">Dirección de la billetera</string>
+    <string name="contacts_save_latest">Guardar dirección</string>
 </resources>

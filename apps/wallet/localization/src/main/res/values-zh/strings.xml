@@ -1,11 +1,12 @@
 <resources>
     <string name="transaction_expired">交易已过期</string>
+    <string name="add_contact">添加到地址簿</string>
     <string name="multi_account_secret_wrong">请使用 Tonkeeper Desktop 管理多钱包账户</string>
     <string name="total">总计：%1$s</string>
     <string name="staking_ready_withdraw">%1$s 已准备就绪。点击共同收集。</string>
     <string name="staking_pending_deposit">%1$s 将存入 %2$s</string>
     <string name="staking_pending_withdraw">%1$s 将在 %2$s 内被提取</string>
-    <string name="add_to_contact">添加联系方式</string>
+    <string name="edit_full">编辑</string>
     <string name="staking_unstake_cycle">取消质押请求将在 %1$s 的验证周期结束后处理</string>
     <string name="send_transaction_scroll">检查所有详细信息以确认</string>
     <string name="send_transaction_detail">将从您的钱包发送的代币总价值。退款不包含在总价值中。</string>
@@ -453,7 +454,9 @@
     <string name="name">姓名</string>
     <string name="ledger_blind_signing_error">必须在 Ledger 设置中启用盲签名</string>
     <string name="nothing_to_restore">没什么可恢复的</string>
-    <string name="add_contact">添加联系人</string>
-    <string name="new_contact">新联系方式</string>
-    <string name="contact_delete_dialog">您确定要从您的联系人中删除“%1$s”吗？</string>
+    <string name="new_contact">新地址</string>
+    <string name="contact_delete_dialog">您确实要从地址簿中删除“%1$s”吗？</string>
+    <string name="add_to_contact">添加到地址簿</string>
+    <string name="wallet_address">钱包地址</string>
+    <string name="contacts_save_latest">保存地址</string>
 </resources>

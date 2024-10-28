@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetMedium"
-            android:hint="@string/address"/>
+            android:hint="@string/wallet_address"/>
 
         <uikit.widget.RowLayout
             android:layout_width="match_parent"

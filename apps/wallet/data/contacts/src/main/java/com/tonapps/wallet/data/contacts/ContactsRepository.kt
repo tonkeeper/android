@@ -4,6 +4,7 @@ import android.content.Context
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.wallet.data.contacts.entities.ContactEntity
 import com.tonapps.wallet.data.contacts.source.DatabaseSource
+import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class ContactsRepository(context: Context, scope: CoroutineScope) {
+class ContactsRepository(
+    context: Context,
+    scope: CoroutineScope,
+    rnLegacy: RNLegacy,
+) {
 
     private val database = DatabaseSource(context)
 
@@ -27,7 +32,21 @@ class ContactsRepository(context: Context, scope: CoroutineScope) {
 
     init {
         scope.launch {
-            _contactsFlow.value = database.getContacts()
+            val contacts = database.getContacts()
+            if (contacts.isEmpty()) {
+                val legacyContacts = rnLegacy.getFavorites()
+                for (legacyContact in legacyContacts) {
+                    database.addContact(legacyContact.name, legacyContact.address, false)
+                }
+                val legacyHiddenAddresses = rnLegacy.getHiddenAddresses()
+                for (legacyHiddenAddress in legacyHiddenAddresses) {
+                    database.setHidden(legacyHiddenAddress, testnet = false, hidden = true)
+                }
+                _contactsFlow.value = database.getContacts()
+            } else {
+                _contactsFlow.value = contacts
+            }
+
             _hiddenFlow.tryEmit(Unit)
         }
     }

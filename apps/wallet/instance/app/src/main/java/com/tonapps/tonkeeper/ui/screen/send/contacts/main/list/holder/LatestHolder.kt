@@ -37,7 +37,7 @@ class LatestHolder(
 
     private fun showMenu(item: Item.LatestContact) {
         if (actionSheet.isEmpty) {
-            actionSheet.addItem(ADD_TO_CONTACTS_ID, Localization.add_to_contact, UIKitIcon.ic_plus_alternate_16)
+            actionSheet.addItem(ADD_TO_CONTACTS_ID, Localization.contacts_save_latest, UIKitIcon.ic_plus_alternate_16)
             actionSheet.addItem(HIDE_ID, Localization.hide, UIKitIcon.ic_block_16)
         }
         actionSheet.doOnItemClick = { i ->

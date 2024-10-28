@@ -71,7 +71,6 @@
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
-                android:text="@string/content_security"
                 android:textAppearance="@style/TextAppearance.Label1"
                 android:textColor="?attr/textPrimaryColor"
                 android:gravity="center_vertical"/>
@@ -81,18 +80,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                app:position="first"
-                android:text="@string/content_security_nft"
-                android:subtitle="@string/content_security_nft_subtitle"/>
+                app:position="first"/>
 
             <uikit.widget.item.ItemSwitchView
                 android:id="@+id/verified_token"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                app:position="last"
-                android:text="@string/content_security_token"
-                android:subtitle="@string/content_security_token_subtitle"/>
+                app:position="last"/>
 
         </uikit.widget.ColumnLayout>
 

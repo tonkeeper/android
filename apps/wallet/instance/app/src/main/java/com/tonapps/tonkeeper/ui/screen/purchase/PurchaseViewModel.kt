@@ -1,9 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.purchase
 
 import android.app.Application
+import com.tonapps.tonkeeper.extensions.getNormalizeCountryFlow
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.purchase.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
@@ -21,13 +23,14 @@ class PurchaseViewModel(
     private val wallet: WalletEntity,
     private val settingsRepository: SettingsRepository,
     private val purchaseRepository: PurchaseRepository,
+    private val api: API,
 ): BaseWalletVM(app) {
 
     enum class Tab {
         BUY, SELL
     }
 
-    val countryFlow = settingsRepository.countryFlow
+    val countryFlow = settingsRepository.getNormalizeCountryFlow(api)
 
     private val _tabFlow = MutableStateFlow(Tab.BUY)
     val tabFlow = _tabFlow.asStateFlow()

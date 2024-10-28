@@ -72,7 +72,7 @@ class CountryPickerViewModel(
         }
     }
 
-    private fun searchCountries(countries: List<Country>, selectedCountry: String, query: String): List<Item> {
+    private suspend fun searchCountries(countries: List<Country>, selectedCountry: String, query: String): List<Item> {
         val filteredList = countries.filter { it.contains(query) }
         val uiItems = mutableListOf<Item>()
         for ((index, data) in filteredList.withIndex()) {
@@ -82,7 +82,7 @@ class CountryPickerViewModel(
         return uiItems
     }
 
-    private fun defaultCountries(countries: List<Country>, suggest: List<Country>, selectedCountry: String): List<Item> {
+    private suspend fun defaultCountries(countries: List<Country>, suggest: List<Country>, selectedCountry: String): List<Item> {
         val uiItems = mutableListOf<Item>()
         for ((index, data) in suggest.withIndex()) {
             val position = ListCell.getPosition(suggest.size, index)
@@ -105,18 +105,32 @@ class CountryPickerViewModel(
         settingsRepository.country = country
     }
 
-    private fun createItem(
+    private suspend fun createItem(
         position: ListCell.Position,
         data: Country,
         selectedCountry: String
     ): Item.Country {
-        val selected = data.code.equals(selectedCountry, ignoreCase = true)
+        val selected: Boolean
+        val emoji: String
+        val code: String
+
+        if (data.code.equals("auto", true)) {
+            val apiCountry = api.resolveCountry() ?: settingsRepository.getLocale().country
+            selected = selectedCountry.equals("auto", true)
+            code = apiCountry
+            emoji = apiCountry.countryEmoji
+        } else {
+            selected = data.code.equals(selectedCountry, ignoreCase = true)
+            code = data.code
+            emoji = data.emoji
+        }
+
         return Item.Country(
-            position,
-            data.code,
-            data.name,
-            data.emoji,
-            selected
+            position = position,
+            code = code,
+            name = data.name,
+            emoji = emoji,
+            selected = selected
         )
     }
 

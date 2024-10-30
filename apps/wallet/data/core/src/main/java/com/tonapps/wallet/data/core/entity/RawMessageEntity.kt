@@ -70,7 +70,7 @@ data class RawMessageEntity(
             if (value is Long) {
                 return value
             }
-            return value.toString().toLongOrNull() ?: 0
+            return value.toString().toLong()
         }
     }
 

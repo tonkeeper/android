@@ -303,6 +303,7 @@ class BatteryRefillViewModel(
 
     fun applyPromo(promo: String) {
         _promoFlow.value = promo
+        submitPromo(promo)
     }
 
     fun submitPromo(promo: String) {

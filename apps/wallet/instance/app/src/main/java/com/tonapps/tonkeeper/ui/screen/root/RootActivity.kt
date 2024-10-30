@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
@@ -110,6 +111,13 @@ class RootActivity: BaseWalletActivity() {
         collectFlow(passcodeManager.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        val newConfig = Configuration(newBase.resources.configuration)
+        newConfig.fontScale = 1.0f
+        applyOverrideConfiguration(newConfig)
+        super.attachBaseContext(newBase)
     }
 
     override fun onResume() {
@@ -276,13 +284,15 @@ class RootActivity: BaseWalletActivity() {
                 )
             )
         } else {
-            fragment.initializeArgs(
-                targetAddress = targetAddress,
-                tokenAddress = tokenAddress,
-                amountNano = amountNano,
-                text = text,
-                bin = bin
-            )
+            runOnUiThread {
+                fragment.initializeArgs(
+                    targetAddress = targetAddress,
+                    tokenAddress = tokenAddress,
+                    amountNano = amountNano,
+                    text = text,
+                    bin = bin
+                )
+            }
         }
     }
 

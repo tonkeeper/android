@@ -10,12 +10,12 @@ class WalletFragmentFactory: FragmentFactory() {
         val fragmentClass = loadFragmentClass(classLoader, className)
         val constructors = fragmentClass.constructors
         if (constructors.size > 1) {
-            throw IllegalStateException("Fragment class should have only one constructor")
+            throw IllegalStateException("${fragmentClass.javaClass} class should have only one constructor")
         }
         val constructor = constructors.first()
         val parameters = constructor.parameterTypes
         if (parameters.size > 1) {
-            throw IllegalStateException("Fragment class should have only one constructor with one parameter")
+            throw IllegalStateException("${fragmentClass.javaClass} class should have only one constructor with one parameter")
         } else if (parameters.isEmpty()) {
             return fragmentClass.getConstructor().newInstance()
         }

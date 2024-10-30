@@ -38,7 +38,7 @@ fun MacrobenchmarkScope.createWalletAction() {
     clickListItem("label_color_picker", 2, 500)
 
     // Set wallet icon
-    clickListItem("label_emoji_picker", 2)
+    clickListItem("label_emoji_picker", 2, 500)
 
     // Save wallet label
     click("label_button")

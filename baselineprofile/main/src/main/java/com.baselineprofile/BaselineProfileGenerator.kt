@@ -6,9 +6,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
+import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -56,6 +58,8 @@ class BaselineProfileGenerator {
         val confirmDeleteWalletSelector = By.text("Delete")
         waitVisible(confirmDeleteWalletSelector)
         device.findObject(confirmDeleteWalletSelector).click()
+
+        sleep(5000)
     }
 
     private fun MacrobenchmarkScope.clickTabs() {

@@ -1,13 +1,13 @@
 
-®6
-U
-BaselineProfileGeneratorcom.baselineprofilegenerate2‚‚„∏¿≤ﬂØ:¶Á„∏ÄòˇÕ"µ
+ß6
+T
+BaselineProfileGeneratorcom.baselineprofilegenerate2“ãâπ¿áæ):∫èâπ¿Æπ "µ
 1
 &additionaltestoutput.benchmark.messageandroidˇ
 ¸/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api33/additionaltestoutput.benchmark.message_com.baselineprofile.BaselineProfileGenerator.generate.txt"ô
 /
 $additionaltestoutput.benchmark.traceandroidÂ
-‚/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api33/BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt"È
+‚/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/managed_device_android_test_additional_output/nonminifiedrelease/pixel6Api33/BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt"È
 
 logcatandroid”
 –/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api33/logcat-com.baselineprofile.BaselineProfileGenerator-generate.txt"º
@@ -21,75 +21,75 @@ $additionaltestoutput.benchmark.traceandroidÂ
 device-info.cpuinfoandroidö
 ó/Users/polstianka/StudioProjects/TonkeeperX/baselineprofile/main/build/outputs/androidTest-results/managedDevice/nonminifiedrelease/pixel6Api33/cpuinfo*–
 KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt*˝
+_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt*˝
  android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *ˇ
 "android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *Å
 0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output*–
 KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt*˝
+_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt*˝
  android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *ˇ
 "android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *Å
 0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output*–
 KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt*˝
+_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt*˝
  android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *ˇ
 "android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *Å
 0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output*–
 KadditionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof.txtÄ/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt*¯
-_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt*˝
+_additionalTestOutputFile_BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txtî/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt*˝
  android.studio.display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *ˇ
 "android.studio.v2display.benchmarkÿBaselineProfileGenerator_generate
-Total run time Ns: 579490597609.
-Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-23-13-01-23.txt)
+Total run time Ns: 488233386483.
+Baseline profile [results](file://BaselineProfileGenerator_generate-startup-prof-2024-10-30-14-50-32.txt)
 
 To copy the profile use:
 adb -e pull "/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output/BaselineProfileGenerator_generate-startup-prof.txt" .
 *Å
 0android.studio.v2display.benchmark.outputDirPathM/sdcard/Android/media/com.tonapps.main.baselineprofile/additional_test_output“,
 L
-StartupBenchmarkcom.baselineprofilestartup2¶Á„∏¿±±˘:¶Á„∏¿∫´˙›%
+StartupBenchmarkcom.baselineprofilestartup2∫èâπ¿€§…:∫èâπ¿‰û ›%
 ÿorg.junit.AssumptionViolatedException: got: <false>, expected: is <true>
 	at org.junit.Assume.assumeThat(Assume.java:106)
 	at org.junit.Assume.assumeTrue(Assume.java:50)

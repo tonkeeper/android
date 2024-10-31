@@ -469,4 +469,6 @@
     <string name="disconnect_all_apps">Desconectar todas las aplicaciones</string>
     <string name="disconnect_all_apps_confirm">¿Desconectar todas las aplicaciones?</string>
     <string name="connected_apps_empty">No hay aplicaciones conectadas</string>
+    <string name="send_all_balance">¿Estás segura de que quieres enviar todo tu saldo?</string>
+    <string name="wrong_promocode">El código ingresado no es válido</string>
 </resources>

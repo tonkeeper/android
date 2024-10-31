@@ -469,4 +469,6 @@
     <string name="disconnect_all_apps">Tüm Uygulamaların Bağlantısını Kes</string>
     <string name="disconnect_all_apps_confirm">Tüm Uygulamalar Bağlantısını Kes?</string>
     <string name="connected_apps_empty">Bağlı uygulama yok</string>
+    <string name="send_all_balance">Bakiyenizin tamamını göndermek istediğinizden emin misiniz?</string>
+    <string name="wrong_promocode">Girilen kod geçerli değil</string>
 </resources>

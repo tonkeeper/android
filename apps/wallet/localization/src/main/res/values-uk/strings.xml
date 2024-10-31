@@ -479,4 +479,6 @@
     <string name="disconnect_all_apps">Відключити всі програми</string>
     <string name="disconnect_all_apps_confirm">Відключити всі програми?</string>
     <string name="connected_apps_empty">Немає підключених програм</string>
+    <string name="send_all_balance">Ви впевнені, що бажаєте надіслати весь свій баланс?</string>
+    <string name="wrong_promocode">Введений код недійсний</string>
 </resources>

@@ -464,4 +464,6 @@
     <string name="disconnect_all_apps">断开所有应用程序</string>
     <string name="disconnect_all_apps_confirm">断开所有应用程序？</string>
     <string name="connected_apps_empty">没有连接的应用程序</string>
+    <string name="send_all_balance">您确定要发送所有余额吗？</string>
+    <string name="wrong_promocode">输入的代码无效</string>
 </resources>

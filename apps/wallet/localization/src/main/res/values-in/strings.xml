@@ -464,4 +464,6 @@
     <string name="disconnect_all_apps">Putuskan Sambungan Semua Aplikasi</string>
     <string name="disconnect_all_apps_confirm">Putuskan Sambungan Semua Aplikasi?</string>
     <string name="connected_apps_empty">Tidak ada aplikasi yang terhubung</string>
+    <string name="send_all_balance">Apakah Anda yakin ingin mengirimkan semua saldo Anda?</string>
+    <string name="wrong_promocode">Kode yang dimasukkan tidak valid</string>
 </resources>

@@ -9,14 +9,17 @@ class WalletFragmentFactory: FragmentFactory() {
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment {
         val fragmentClass = loadFragmentClass(classLoader, className)
         val constructors = fragmentClass.constructors
-        if (constructors.size > 1) {
-            throw IllegalStateException("$fragmentClass class should have only one constructor")
-        }
+        /*if (constructors.size > 1) {
+            throw IllegalStateException("$className class should have only one constructor")
+        }*/
         val constructor = constructors.first()
         val parameters = constructor.parameterTypes
-        if (parameters.size > 1) {
-            throw IllegalStateException("$fragmentClass class should have only one constructor with one parameter")
+        /*if (parameters.size > 1) {
+            throw IllegalStateException("$className class should have only one constructor with one parameter")
         } else if (parameters.isEmpty()) {
+            return fragmentClass.getConstructor().newInstance()
+        }*/
+        if (parameters.isEmpty()) {
             return fragmentClass.getConstructor().newInstance()
         }
         val parameter = parameters.first()

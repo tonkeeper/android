@@ -10,6 +10,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.whileTimeoutOrNull
 import com.tonapps.tonkeeper.App
@@ -100,11 +101,22 @@ object WidgetManager {
             putExtra(ARG_TYPE, type)
         }
 
+        val flags = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                if (intent.component != null || intent.hasCategory(Intent.CATEGORY_BROWSABLE)) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                }
+            }
+            else -> PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
         val successCallback = PendingIntent.getBroadcast(
             activity,
             0,
             intent,
-            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            flags,
         )
 
         val provider = ComponentName(activity, cls)
@@ -141,6 +153,7 @@ object WidgetManager {
                 else -> null
             }
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             return null
         }
     }

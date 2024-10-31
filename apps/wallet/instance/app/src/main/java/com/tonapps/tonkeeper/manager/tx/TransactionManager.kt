@@ -72,7 +72,7 @@ class TransactionManager(
     private fun realtime(wallet: WalletEntity) = api.realtime(
         accountId = wallet.accountId,
         testnet = wallet.testnet,
-        onFailure = { FirebaseCrashlytics.getInstance().recordException(it) }
+        onFailure = null
     ).map { it.data }.map { getTransaction(wallet, it) }
 
     private suspend fun getTransaction(

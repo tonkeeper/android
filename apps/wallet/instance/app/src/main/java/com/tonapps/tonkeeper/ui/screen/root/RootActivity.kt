@@ -114,9 +114,9 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        val newConfig = Configuration(newBase.resources.configuration)
+        /*val newConfig = Configuration(newBase.resources.configuration)
         newConfig.fontScale = 1.0f
-        applyOverrideConfiguration(newConfig)
+        applyOverrideConfiguration(newConfig)*/
         super.attachBaseContext(newBase)
     }
 

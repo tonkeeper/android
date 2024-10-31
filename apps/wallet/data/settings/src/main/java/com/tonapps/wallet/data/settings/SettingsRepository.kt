@@ -255,7 +255,7 @@ class SettingsRepository(
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
-    fun setPushWallet(walletId: String, value: Boolean) {
+    suspend fun setPushWallet(walletId: String, value: Boolean) {
         walletPrefsFolder.setPushEnabled(walletId, value)
         rnLegacy.setNotificationsEnabled(walletId, value)
         _walletPush.tryEmit(Unit)
@@ -265,18 +265,24 @@ class SettingsRepository(
 
     fun setupHide(walletId: String) {
         walletPrefsFolder.setupHide(walletId)
-        rnLegacy.setSetupDismissed(walletId)
+        scope.launch {
+            rnLegacy.setSetupDismissed(walletId)
+        }
     }
 
     fun setTelegramChannel(walletId: String) {
         walletPrefsFolder.setTelegramChannel(walletId)
-        rnLegacy.setHasOpenedTelegramChannel(walletId)
+        scope.launch {
+            rnLegacy.setHasOpenedTelegramChannel(walletId)
+        }
     }
 
     fun isTelegramChannel(walletId: String) = walletPrefsFolder.isTelegramChannel(walletId)
 
     fun setLastBackupAt(walletId: String, date: Long) {
-        rnLegacy.setSetupLastBackupAt(walletId, date)
+        scope.launch {
+            rnLegacy.setSetupLastBackupAt(walletId, date)
+        }
     }
 
     fun getBatteryTxEnabled(accountId: String) = walletPrefsFolder.getBatteryTxEnabled(accountId)

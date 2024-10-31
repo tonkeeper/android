@@ -125,7 +125,7 @@ class WidgetUpdaterWorker(
     ) = withContext(Dispatchers.Main) {
         val removeView = RemoteViews(context.packageName, R.layout.widget_rate)
         removeView.setTextViewText(R.id.symbol, symbol)
-        removeView.setOnClickIntent(context, R.id.content, Uri.parse("tonkeeper://token/$jettonAddress"))
+        removeView.setOnClickIntent(context, android.R.id.background, Uri.parse("tonkeeper://token/$jettonAddress"))
         removeView.setTextViewText(R.id.update_date, context.getString(Localization.widget_updated, updatedDate))
         removeView.setTextViewText(R.id.price, price.withCustomSymbol(context))
         removeView.setTextViewText(R.id.diff, diff)
@@ -168,7 +168,7 @@ class WidgetUpdaterWorker(
         icon: Bitmap,
     ) = withContext(Dispatchers.Main) {
         val removeView = RemoteViews(context.packageName, R.layout.widget_balance)
-        removeView.setOnClickIntent(context, R.id.content, Uri.parse("tonkeeper://pick/$walletId"))
+        removeView.setOnClickIntent(context, android.R.id.background, Uri.parse("tonkeeper://pick/$walletId"))
         removeView.setTextViewText(R.id.fiat, balance)
         removeView.setTextViewText(R.id.address, label)
         removeView.setImageViewBitmap(R.id.icon, icon)

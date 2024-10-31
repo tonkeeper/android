@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri

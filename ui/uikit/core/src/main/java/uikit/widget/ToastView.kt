@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowInsetsCompat
@@ -51,7 +52,7 @@ class ToastView @JvmOverloads constructor(
         val endY = statusBarHeight + 24f.dp
 
         val valueAnimator = ValueAnimator.ofFloat(startY, endY)
-        valueAnimator.duration = 200L
+        valueAnimator.duration = 160L
         valueAnimator.addListener(this@ToastView)
         valueAnimator.addUpdateListener(this@ToastView)
         valueAnimator
@@ -129,7 +130,7 @@ class ToastView @JvmOverloads constructor(
     private fun showDefault() {
         loaderView.visibility = View.GONE
         show()
-        postDelayed(::hide, 2600)
+        postDelayed(::hide, 2000)
     }
 
     private fun show() {

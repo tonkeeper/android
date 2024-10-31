@@ -39,7 +39,6 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
             val cursor = db.query(KV_TABLE_NAME, arrayOf(KV_TABLE_VALUE_COLUMN), "$KV_TABLE_KEY_COLUMN = ?", arrayOf(key), null, null, null)
             val value = if (cursor.moveToFirst()) cursor.getString(0) else null
             cursor.close()
-            db.close()
             return value
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
@@ -63,7 +62,6 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
             }
             val db = writableDatabase
             db.insertWithOnConflict(KV_TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
-            db.close()
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             if (attempt > 3) {

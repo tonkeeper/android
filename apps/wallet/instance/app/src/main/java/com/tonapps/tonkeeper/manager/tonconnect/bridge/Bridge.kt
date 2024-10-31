@@ -92,7 +92,7 @@ internal class Bridge(private val api: API) {
     ): Flow<BridgeEvent> {
         DevSettings.tonConnectLog("Start listening events[lastEventId=$lastEventId; connections=${connections.map { it.clientId }}]")
         val publicKeys = connections.map { it.publicKeyHex }
-        return api.tonconnectEvents(publicKeys, lastEventId, onFailure = { FirebaseCrashlytics.getInstance().recordException(it) })
+        return api.tonconnectEvents(publicKeys, lastEventId, onFailure = null)
             .mapNotNull { event ->
                 DevSettings.tonConnectLog("Received event:\n$event")
                 val from = event.json.optStringCompatJS("from") ?: throw BridgeException(

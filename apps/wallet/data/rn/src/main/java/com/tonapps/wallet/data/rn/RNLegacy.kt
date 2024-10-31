@@ -36,6 +36,7 @@ class RNLegacy(
         RNSeedStorage(context)
     }
 
+    @Volatile
     private var cacheWallets: RNWallets? = null
 
     @Volatile
@@ -251,19 +252,19 @@ class RNLegacy(
         return Pair(setupDismissed, hasOpenedTelegramChannel)
     }
 
-    fun setSetupLastBackupAt(walletId: String, date: Long) {
+    suspend fun setSetupLastBackupAt(walletId: String, date: Long) {
         val json = getSetupJSON(walletId)
         json.put("lastBackupAt", date)
         setSetupJSON(walletId, json)
     }
 
-    fun setSetupDismissed(walletId: String) {
+    suspend fun setSetupDismissed(walletId: String) {
         val json = getSetupJSON(walletId)
         json.put("setupDismissed", true)
         setSetupJSON(walletId, json)
     }
 
-    fun setHasOpenedTelegramChannel(walletId: String) {
+    suspend fun setHasOpenedTelegramChannel(walletId: String) {
         val json = getSetupJSON(walletId)
         json.put("hasOpenedTelegramChannel", true)
         setSetupJSON(walletId, json)

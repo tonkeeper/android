@@ -482,10 +482,12 @@ class API(
     }
 
     suspend fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean = withContext(Dispatchers.IO) {
-        withRetry {
+        try {
             battery(testnet).verifyPurchasePromo(code)
             true
-        } ?: false
+        } catch (e: Throwable) {
+            false
+        }
     }
 
     fun tonconnectProof(address: String, proof: String): String {

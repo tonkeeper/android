@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.rn
 import android.content.Context
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.map
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
 import com.tonapps.wallet.data.rn.data.RNFavorites
@@ -27,8 +28,14 @@ class RNLegacy(
         const val DEFAULT_KEYSTORE_ALIAS = "key_v1"
     }
 
-    private val sql = RNSql(context)
-    private val seedStorage = RNSeedStorage(context)
+    private val sql: RNSql by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        RNSql(context)
+    }
+
+    private val seedStorage: RNSeedStorage by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        RNSeedStorage(context)
+    }
+
     private var cacheWallets: RNWallets? = null
 
     @Volatile
@@ -121,6 +128,7 @@ class RNLegacy(
         try {
             seedStorage.get(passcode)
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             RNVaultState()
         }
     }

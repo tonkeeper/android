@@ -34,7 +34,7 @@ internal class LocalDataSource(
     private val _decryptedCommentFlow = MutableEffectFlow<Unit>()
     val decryptedCommentFlow = _decryptedCommentFlow.shareIn(scope, SharingStarted.WhileSubscribed(), 1)
 
-    private val encryptedPrefs: SharedPreferences by lazy { Security.pref(context, KEY_ALIAS, NAME) }
+    private val encryptedPrefs: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, NAME) }
 
     private fun keyDecryptedComment(txId: String): String {
         return "tx_$txId"

@@ -301,6 +301,7 @@ class SendViewModel(
         )
     }
 
+    // Using only for UI
     private val uiTransferAmountFlow = combine(
         amountTokenFlow,
         selectedTokenFlow,
@@ -309,6 +310,8 @@ class SendViewModel(
     ) { amount, token, rates, fee ->
         val value =
             if (sendTransferType is SendTransferType.Gasless && amount >= token.balance.value) {
+                amount - fee
+            } else if (token.isTon && amount >= token.balance.value) {
                 amount - fee
             } else {
                 amount
@@ -397,6 +400,13 @@ class SendViewModel(
         }
         builder.build()
     }.flowOn(Dispatchers.IO).shareIn(viewModelScope, SharingStarted.Eagerly, 1)
+
+    val userInputMaxFlow = combine(
+        userInputFlow,
+        selectedTokenFlow
+    ) { input, selected ->
+        input.amount >= selected.balance.value
+    }
 
     init {
         viewModelScope.launch(Dispatchers.IO) {

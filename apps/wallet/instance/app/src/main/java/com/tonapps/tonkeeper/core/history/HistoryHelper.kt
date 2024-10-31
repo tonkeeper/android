@@ -591,11 +591,10 @@ class HistoryHelper(
         } else if (action.nftItemTransfer != null) {
             val nftItemTransfer = action.nftItemTransfer!!
 
-            val isOut = !wallet.isMyAddress(nftItemTransfer.recipient?.address ?: "-")
-            val sender = nftItemTransfer.sender ?: action.simplePreview.accounts.firstOrNull()
-            val isBurn = nftItemTransfer.recipient?.let {
-                isBurnAccount(it)
-            } ?: false
+            val sender = nftItemTransfer.sender
+            val recipient = nftItemTransfer.recipient
+            val isOut = !wallet.isMyAddress(recipient?.address ?: "-")
+            val isBurn = recipient?.let { isBurnAccount(it) } ?: false
 
             val itemAction: ActionType
             val iconURL: String?
@@ -603,15 +602,15 @@ class HistoryHelper(
 
             if (isBurn) {
                 itemAction = ActionType.JettonBurn
-                iconURL = nftItemTransfer.recipient?.iconURL
+                iconURL = recipient?.iconURL
                 subtitle = api.getBurnAddress()
-            } else if (isOut || wallet.isMyAddress(nftItemTransfer.sender?.address ?: "")) {
+            } else if (isOut || wallet.isMyAddress(sender?.address ?: "")) {
                 itemAction = ActionType.NftSend
-                iconURL = nftItemTransfer.recipient?.iconURL
-                subtitle = sender?.getNameOrAddress(wallet.testnet, true) ?: ""
+                iconURL = recipient?.iconURL
+                subtitle = recipient?.getNameOrAddress(wallet.testnet, true) ?: ""
             } else {
                 itemAction = ActionType.NftReceived
-                iconURL = nftItemTransfer.sender?.iconURL
+                iconURL = sender?.iconURL
                 subtitle = sender?.getNameOrAddress(wallet.testnet, true) ?: ""
             }
 
@@ -644,6 +643,7 @@ class HistoryHelper(
                 timestamp = timestamp,
                 date = date,
                 dateDetails = dateDetails,
+                unverifiedToken = nftItem?.verified == false,
                 isOut = isOut,
                 sender = HistoryItem.Account.ofSender(action, wallet.testnet),
                 recipient = HistoryItem.Account.ofRecipient(action, wallet.testnet),

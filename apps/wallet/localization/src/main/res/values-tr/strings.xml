@@ -464,4 +464,9 @@
     <string name="add_to_contact">Adres Defterine Ekle</string>
     <string name="wallet_address">Cüzdan Adresi</string>
     <string name="contacts_save_latest">Adresi Kaydet</string>
+    <string name="connected_apps">Bağlantılı Uygulamalar</string>
+    <string name="disconnect_dapp_confirm">“%1$s” bağlantısı kesilsin mi?</string>
+    <string name="disconnect_all_apps">Tüm Uygulamaların Bağlantısını Kes</string>
+    <string name="disconnect_all_apps_confirm">Tüm Uygulamalar Bağlantısını Kes?</string>
+    <string name="connected_apps_empty">Bağlı uygulama yok</string>
 </resources>

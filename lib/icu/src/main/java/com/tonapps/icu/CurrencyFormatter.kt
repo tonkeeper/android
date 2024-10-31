@@ -27,10 +27,14 @@ object CurrencyFormatter {
     )
 
     private fun getFixedLocale(locale: Locale): Locale {
-        return if (customDigitLocales.any { it.language.equals(locale.language) } || locale.isO3Country.equals("IRN", ignoreCase = true)) {
+        return try {
+            if (customDigitLocales.any { it.language.equals(locale.language) } || locale.isO3Country.equals("IRN", ignoreCase = true)) {
+                Locale.US
+            } else {
+                locale
+            }
+        } catch (e: Throwable) {
             Locale.US
-        } else {
-            locale
         }
     }
 

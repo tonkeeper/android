@@ -163,16 +163,6 @@ class SettingsViewModel(
 
         uiItems.add(Item.Space)
         uiItems.add(Item.Notifications(ListCell.Position.FIRST))
-        if (!wallet.testnet) {
-            uiItems.add(Item.Currency(currency.code, ListCell.Position.MIDDLE))
-            uiItems.add(Item.SearchEngine(searchEngine, ListCell.Position.MIDDLE))
-        }
-        uiItems.add(Item.Language(language.nameLocalized.ifEmpty {
-            getString(Localization.system)
-        }.capitalized, ListCell.Position.MIDDLE))
-        if (WidgetManager.isRequestPinAppWidgetSupported) {
-            uiItems.add(Item.Widget(ListCell.Position.MIDDLE))
-        }
 
         if (wallet.hasPrivateKey) {
             if (!hasW5) {
@@ -182,9 +172,24 @@ class SettingsViewModel(
                 uiItems.add(Item.V4R2(ListCell.Position.MIDDLE))
             }
         }
+        if (!wallet.testnet) {
+            uiItems.add(Item.Currency(currency.code, ListCell.Position.MIDDLE))
+        }
+
+        if (wallet.isTonConnectSupported) {
+            uiItems.add(Item.SearchEngine(searchEngine, ListCell.Position.MIDDLE))
+            uiItems.add(Item.ConnectedApps(ListCell.Position.MIDDLE))
+        }
+
+        uiItems.add(Item.Language(language.nameLocalized.ifEmpty {
+            getString(Localization.system)
+        }.capitalized, ListCell.Position.MIDDLE))
 
         if (wallet.hasPrivateKey && !api.config.batteryDisabled) {
             uiItems.add(Item.Battery(ListCell.Position.MIDDLE))
+        }
+        if (WidgetManager.isRequestPinAppWidgetSupported) {
+            uiItems.add(Item.Widget(ListCell.Position.MIDDLE))
         }
         uiItems.add(Item.Theme(ListCell.Position.LAST))
 

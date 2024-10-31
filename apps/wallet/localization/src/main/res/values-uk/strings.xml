@@ -474,4 +474,9 @@
     <string name="add_to_contact">Додати до адресної книги</string>
     <string name="wallet_address">Адреса гаманця</string>
     <string name="contacts_save_latest">Зберегти адресу</string>
+    <string name="connected_apps">Підключені програми</string>
+    <string name="disconnect_dapp_confirm">Від’єднати “%1$s”?</string>
+    <string name="disconnect_all_apps">Відключити всі програми</string>
+    <string name="disconnect_all_apps_confirm">Відключити всі програми?</string>
+    <string name="connected_apps_empty">Немає підключених програм</string>
 </resources>

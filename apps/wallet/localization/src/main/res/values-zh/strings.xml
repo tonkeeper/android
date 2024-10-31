@@ -459,4 +459,9 @@
     <string name="add_to_contact">添加到地址簿</string>
     <string name="wallet_address">钱包地址</string>
     <string name="contacts_save_latest">保存地址</string>
+    <string name="connected_apps">连接的应用程序</string>
+    <string name="disconnect_dapp_confirm">断开“%1$s”？</string>
+    <string name="disconnect_all_apps">断开所有应用程序</string>
+    <string name="disconnect_all_apps_confirm">断开所有应用程序？</string>
+    <string name="connected_apps_empty">没有连接的应用程序</string>
 </resources>

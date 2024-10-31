@@ -31,8 +31,10 @@ class DAppViewModel(
 ): BaseWalletVM(app) {
 
     val connectionFlow = tonConnectManager.walletConnectionsFlow(wallet).filterList { connection ->
-        connection.type == AppConnectEntity.Type.Internal && connection.appUrl == url
-    }.map { it.firstOrNull() }
+        connection.type == AppConnectEntity.Type.Internal && connection.appUrl.host == url.host
+    }.map {
+        it.firstOrNull()
+    }
 
     fun mute() {
         DAppPushToggleWorker.run(
@@ -56,14 +58,7 @@ class DAppViewModel(
         }
     }
 
-    private suspend fun loadConnection(): AppConnectEntity? = withTimeoutOrNull(2.seconds) {
-        while (isActive) {
-            val connection = connectionFlow.first()
-            if (connection != null) {
-                return@withTimeoutOrNull connection
-            }
-            delay(100)
-        }
-        return@withTimeoutOrNull null
+    private suspend fun loadConnection(): AppConnectEntity? {
+        return connectionFlow.firstOrNull()
     }
 }

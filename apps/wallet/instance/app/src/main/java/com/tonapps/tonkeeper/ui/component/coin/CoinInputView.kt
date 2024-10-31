@@ -79,7 +79,6 @@ class CoinInputView @JvmOverloads constructor(
             updateClearViewVisible()
         }
         editText.setRightDrawable(suffixDrawable)
-        editText.compoundDrawablePadding = 36.dp
 
         clearView = findViewById(R.id.coin_input_clear)
         clearView.setOnClickListener { clear() }
@@ -97,8 +96,10 @@ class CoinInputView @JvmOverloads constructor(
     private fun updateSuffix() {
         if (suffix.isNullOrBlank() || expanded) {
             suffixDrawable.text = null
+            editText.compoundDrawablePadding = 0
         } else {
             suffixDrawable.text = suffix
+            editText.compoundDrawablePadding = 36.dp
         }
         invalidate()
     }

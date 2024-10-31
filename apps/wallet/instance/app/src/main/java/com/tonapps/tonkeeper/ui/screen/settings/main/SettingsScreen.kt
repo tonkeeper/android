@@ -2,8 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.settings.main
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.net.toUri
+import com.google.android.play.core.review.ReviewInfo
+import com.google.android.play.core.review.ReviewManager
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
@@ -16,6 +20,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsManageScreen
+import com.tonapps.tonkeeper.ui.screen.settings.apps.AppsScreen
 import com.tonapps.tonkeeper.ui.screen.settings.legal.LegalScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
@@ -36,6 +41,10 @@ class SettingsScreen(
 ): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
     override val viewModel: SettingsViewModel by walletViewModel()
+
+    private val reviewManager: ReviewManager by lazy {
+        ReviewManagerFactory.create(requireContext())
+    }
 
     private val searchEngineMenu: ActionSheet by lazy {
         ActionSheet(requireContext())
@@ -68,6 +77,7 @@ class SettingsScreen(
             is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance(!screenContext.wallet.isW5))
             is Item.Battery -> navigation?.add(BatteryScreen.newInstance(screenContext.wallet))
             is Item.Logout -> if (item.delete) deleteAccount() else showSignOutDialog()
+            is Item.ConnectedApps -> navigation?.add(AppsScreen.newInstance(screenContext.wallet))
             is Item.SearchEngine -> searchPicker(item)
             is Item.DeleteWatchAccount -> deleteAccount()
             is Item.Rate -> openRate()
@@ -79,6 +89,25 @@ class SettingsScreen(
     }
 
     private fun openRate() {
+        reviewManager.requestReviewFlow().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                startReviewFlow(task.result)
+            } else {
+                openGooglePlay()
+            }
+        }
+    }
+
+    private fun startReviewFlow(reviewInfo: ReviewInfo) {
+        val flow = reviewManager.launchReviewFlow(requireActivity(), reviewInfo)
+        flow.addOnCompleteListener {
+            if (!it.isSuccessful) {
+                openGooglePlay()
+            }
+        }
+    }
+
+    private fun openGooglePlay() {
         val context = requireContext()
         val packageName = context.packageName.replace(".debug", "")
         val uri = "market://details?id=$packageName"

@@ -509,4 +509,9 @@
     <string name="add_to_contact">Добавяне към адресната книга</string>
     <string name="wallet_address">Адрес на портфейла</string>
     <string name="contacts_save_latest">Запазване на адреса</string>
+    <string name="connected_apps">Свързани приложения</string>
+    <string name="disconnect_dapp_confirm">Прекъсване на връзката с „%1$s“?</string>
+    <string name="disconnect_all_apps">Прекъснете връзката с всички приложения</string>
+    <string name="disconnect_all_apps_confirm">Прекъсване на връзката с всички приложения?</string>
+    <string name="connected_apps_empty">Няма свързани приложения</string>
 </resources>

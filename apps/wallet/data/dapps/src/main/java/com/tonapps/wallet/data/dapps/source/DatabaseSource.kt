@@ -70,7 +70,7 @@ internal class DatabaseSource(
 
     private val coroutineContext: CoroutineContext = Dispatchers.IO.limitedParallelism(1)
 
-    private val encryptedPrefs: SharedPreferences by lazy { Security.pref(context, KEY_ALIAS, DATABASE_NAME) }
+    private val encryptedPrefs: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, DATABASE_NAME) }
     private val prefs = context.prefs("tonconnect")
 
     private fun createAppTable(db: SQLiteDatabase) {

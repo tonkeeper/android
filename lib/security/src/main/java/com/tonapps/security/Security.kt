@@ -39,6 +39,7 @@ object Security {
         return sha256(input.toByteArray())
     }
 
+    @Synchronized
     fun pref(context: Context, keyAlias: String, name: String): SharedPreferences {
         KeyHelper.createIfNotExists(keyAlias)
 

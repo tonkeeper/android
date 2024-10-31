@@ -221,7 +221,12 @@
     <string name="edit">Ред.</string>
     <string name="edit_full">Изменить</string>
     <string name="contact_delete_dialog">Вы уверены, что хотите удалить «%1$s» из вашей адресной книги?</string>
-
+    <string name="connected_apps">Подключённые приложения</string>
+    <string name="disconnect_dapp_confirm">Отключить «%1$s»?</string>
+    <string name="disconnect_all_apps">Отключить все приложения</string>
+    <string name="disconnect_all_apps_confirm">Отключить все приложения?</string>
+    <string name="connected_apps_empty">Нет подключённых приложений</string>
+    <string name="send_all_balance">Вы уверены, что хотите отправить весь свой баланс?</string>
 
 
 

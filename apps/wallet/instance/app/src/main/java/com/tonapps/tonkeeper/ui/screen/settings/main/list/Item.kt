@@ -59,6 +59,15 @@ sealed class Item(type: Int): BaseListItem(type) {
         position = position
     )
 
+    data class ConnectedApps(
+        override val position: ListCell.Position
+    ): Icon(
+        titleRes = Localization.connected_apps,
+        iconRes = UIKitIcon.ic_apps_28,
+        position = position,
+        secondaryIcon = false
+    )
+
     sealed class Icon(
         val titleRes: Int,
         val iconRes: Int,
@@ -80,7 +89,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.widget,
-        iconRes = R.drawable.ic_widget_28,
+        iconRes = com.tonapps.uikit.icon.R.drawable.ic_link_square_28,
         position = position,
         secondaryIcon = false
     )

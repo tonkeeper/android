@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.account
 import android.app.KeyguardManager
 import android.content.Context
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
@@ -19,6 +20,7 @@ import com.tonapps.wallet.data.account.entities.WalletEvent
 import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
+import com.tonapps.wallet.data.core.recordException
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNKeystone
 import com.tonapps.wallet.data.rn.data.RNLedger
@@ -69,8 +71,8 @@ class AccountRepository(
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val database = DatabaseSource(context, scope)
-    private val storageSource: StorageSource by lazy { StorageSource(context) }
-    private val vaultSource: VaultSource by lazy { VaultSource(context) }
+    private val storageSource: StorageSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { StorageSource(context) }
+    private val vaultSource: VaultSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { VaultSource(context) }
     private val migrationHelper = RNMigrationHelper(rnLegacy)
 
     private val _selectedStateFlow = MutableStateFlow<SelectedState>(SelectedState.Initialization)
@@ -376,6 +378,7 @@ class AccountRepository(
             )
             api.tonconnectProof(address.toAccountId(), proof.string(false))
         } catch (e: Throwable) {
+            recordException(e)
             null
         }
     }

@@ -51,6 +51,11 @@
         <item name="minHeight">0dp</item>
     </style>
 
+    <style name="Widget.App.Button.Small.Tertiary" parent="Widget.App.Button.Small">
+        <item name="android:background">@drawable/bg_small_tertiary_button_primary</item>
+        <item name="android:textColor">@color/button_small_tertiary_foreground_selector</item>
+    </style>
+
     <style name="Widget.App.Button.Small.Secondary" parent="Widget.App.Button.Small">
         <item name="android:background">@drawable/bg_small_button_secondary</item>
         <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>

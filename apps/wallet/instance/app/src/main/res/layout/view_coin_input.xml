@@ -28,8 +28,9 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/coin_input_clear"
-        android:layout_width="@dimen/barHeight"
+        android:layout_width="38dp"
         android:layout_height="@dimen/barHeight"
+        android:layout_marginRight="12dp"
         android:scaleType="centerInside"
         android:visibility="gone"
         android:tint="?attr/iconSecondaryColor"

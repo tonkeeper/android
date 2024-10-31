@@ -24,6 +24,7 @@ import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.camera.CameraMode
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
+import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
@@ -44,9 +45,12 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import org.koin.core.parameter.parametersOf
 import org.ton.cell.Cell
 import uikit.base.BaseFragment
+import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
@@ -263,8 +267,22 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress, args.bin)
     }
 
+    private fun confirmSendAll() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setMessage(Localization.send_all_balance)
+        builder.setNegativeButton(Localization.continue_action) { viewModel.sign() }
+        builder.setPositiveButton(Localization.cancel)
+        builder.show()
+    }
+
     private fun signAndSend() {
-        viewModel.sign()
+        collectFlow(viewModel.userInputMaxFlow.take(1)) { isMax ->
+            if (isMax) {
+                confirmSendAll()
+            } else {
+                viewModel.sign()
+            }
+        }
     }
 
     private fun openAddressBook() {
@@ -392,7 +410,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         navigation?.openURL("tonkeeper://activity")
         navigation?.removeByClass({
             postDelayed(2000, ::finish)
-        }, TokenScreen::class.java)
+        }, NftScreen::class.java, TokenScreen::class.java)
     }
 
     private fun setDefault() {

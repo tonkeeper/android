@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.map
@@ -158,6 +159,7 @@ class DAppsRepository(
             }
             return true
         } catch (e: Throwable) {
+            recordException(e)
             return false
         }
     }

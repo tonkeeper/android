@@ -20,7 +20,7 @@ internal class StorageSource(context: Context) {
     }
 
     private val prefs = context.prefs(NAME)
-    private val encryptedPrefs: SharedPreferences by lazy { Security.pref(context, KEY_ALIAS, NAME) }
+    private val encryptedPrefs: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, NAME) }
 
     fun getTonProofToken(publicKey: PublicKeyEd25519): String? {
         val key = tonProofTokenKey(publicKey)

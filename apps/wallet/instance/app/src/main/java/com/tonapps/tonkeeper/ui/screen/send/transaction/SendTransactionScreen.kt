@@ -8,6 +8,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnNextLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.extensions.getTitle
@@ -152,9 +153,13 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
     }
 
     private fun setErrorResult(error: BridgeException) {
-        setResult(Bundle().apply {
-            putParcelable(ERROR, error)
-        })
+        try {
+            setResult(Bundle().apply {
+                putParcelable(ERROR, error)
+            })
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(Throwable("Error: $error\nAppUrl: ${args.request.appUri}", e))
+        }
     }
 
     private fun setSuccessTask(boc: String) {

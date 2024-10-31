@@ -227,6 +227,7 @@
     <string name="disconnect_all_apps_confirm">Отключить все приложения?</string>
     <string name="connected_apps_empty">Нет подключённых приложений</string>
     <string name="send_all_balance">Вы уверены, что хотите отправить весь свой баланс?</string>
+    <string name="wrong_promocode">Введённый промокод недействителен</string>
 
 
 

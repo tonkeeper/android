@@ -481,8 +481,8 @@ class API(
         }
     }
 
-    fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean {
-        return withRetry {
+    suspend fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean = withContext(Dispatchers.IO) {
+        withRetry {
             battery(testnet).verifyPurchasePromo(code)
             true
         } ?: false

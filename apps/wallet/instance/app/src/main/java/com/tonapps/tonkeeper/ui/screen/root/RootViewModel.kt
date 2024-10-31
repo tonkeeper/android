@@ -507,7 +507,19 @@ class RootViewModel(
     }
 
     private suspend fun openBattery(wallet: WalletEntity, route: DeepLinkRoute.Battery) {
-        openScreen(BatteryScreen.newInstance(wallet, route.promocode))
+        val promoCode = route.promocode
+        if (promoCode.isNullOrEmpty()) {
+            openScreen(BatteryScreen.newInstance(wallet))
+        } else {
+            loading(true)
+            val validCode = api.batteryVerifyPurchasePromo(wallet.testnet, promoCode)
+            loading(false)
+            if (validCode) {
+                openScreen(BatteryScreen.newInstance(wallet, promoCode))
+            } else {
+                toast(Localization.wrong_promocode)
+            }
+        }
     }
 
     private suspend fun openTokenViewer(wallet: WalletEntity, route: DeepLinkRoute.Jetton) {

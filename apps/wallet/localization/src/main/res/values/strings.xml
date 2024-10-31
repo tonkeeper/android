@@ -543,4 +543,5 @@
     <string name="disconnect_all_apps_confirm">Disconnect All Apps?</string>
     <string name="connected_apps_empty">No connected apps</string>
     <string name="send_all_balance">Are you sure you want to send all your balance?</string>
+    <string name="wrong_promocode">The entered code is not valid</string>
 </resources>

@@ -73,7 +73,7 @@ sealed class Item(type: Int) : BaseListItem(type) {
             get() = promoState is PromoState.Error
 
         val promoCode: String?
-            get() = appliedPromo ?: code
+            get() = code ?: appliedPromo
     }
 
     data class Settings(

@@ -110,7 +110,6 @@ class API(
     val configFlow: Flow<ConfigEntity>
         get() = configRepository.stream
 
-
     suspend fun tonapiFetch(
         url: String,
         options: String

@@ -36,5 +36,9 @@
 
 -keep class com.tonapps.tonkeeper.manager.** { *; }
 
+-keep class android.graphics.ColorSpace { *; }
+-keep class org.koin.** { *; }
+-keep class com.tonapps.tonkeeper.App { *; }
+
 
 

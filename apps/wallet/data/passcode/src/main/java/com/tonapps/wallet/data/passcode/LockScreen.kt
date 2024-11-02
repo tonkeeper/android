@@ -51,7 +51,7 @@ class LockScreen(
         }
     }
 
-    fun biometric(result: BiometricPrompt.AuthenticationResult) {
+    fun biometric() {
         hide()
     }
 

@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.core
 import android.content.Context
 import android.os.Parcelable
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.file
 import com.tonapps.extensions.toByteArray
@@ -47,6 +48,7 @@ abstract class BlobDataSource<D>(
                         val string = String(bytes)
                         fromJSON(string)
                     } catch (e: Throwable) {
+                        FirebaseCrashlytics.getInstance().recordException(e)
                         null
                     }
                 }
@@ -73,9 +75,13 @@ abstract class BlobDataSource<D>(
     }
 
     private fun setDiskCache(key: String, value: D) {
-        val file = diskFile(key)
-        val bytes = onMarshall(value)
-        file.writeBytes(bytes)
+        try {
+            val file = diskFile(key)
+            val bytes = onMarshall(value)
+            file.writeBytes(bytes)
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
     }
 
     private fun diskFile(key: String): File {
@@ -98,6 +104,7 @@ abstract class BlobDataSource<D>(
             val bytes = file.readBytes()
             if (bytes.isEmpty()) null else bytes
         } catch (e: IOException) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             null
         }
     }

@@ -5,6 +5,7 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.activity
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -28,6 +29,7 @@ object PasscodeBiometric {
             }
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                // Yes. Biometric right now is only UI feature.
                 continuation.resume(true)
             }
         })
@@ -54,6 +56,7 @@ object PasscodeBiometric {
 
             biometricPrompt.authenticate(builder.build())
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             callback.onAuthenticationError(BiometricPrompt.ERROR_HW_NOT_PRESENT, "Unknown error")
         }
     }

@@ -78,6 +78,8 @@ import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
+import com.tonapps.wallet.data.passcode.LockScreen
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
@@ -116,6 +118,7 @@ class RootViewModel(
     private val pushManager: PushManager,
     private val tokenRepository: TokenRepository,
     private val environment: Environment,
+    private val passcodeManager: PasscodeManager,
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
@@ -134,6 +137,18 @@ class RootViewModel(
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
     private val ignoreTonConnectTransaction = mutableListOf<String>()
+
+    val lockscreenFlow = combine(
+        passcodeManager.lockscreenFlow,
+        accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }.take(1)
+    ) { lockscreen, state ->
+        if ((lockscreen is LockScreen.State.Input || lockscreen is LockScreen.State.Biometric) && state !is AccountRepository.SelectedState.Wallet) {
+            passcodeManager.reset()
+            LockScreen.State.None
+        } else {
+            lockscreen
+        }
+    }
 
     init {
         pushManager.clearNotifications()

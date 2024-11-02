@@ -14,12 +14,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import com.google.android.play.core.appupdate.AppUpdateManager
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
@@ -37,6 +34,7 @@ import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.Theme
@@ -56,6 +54,8 @@ import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
+import uikit.extensions.runAnimation
+import uikit.extensions.withAlpha
 
 class RootActivity: BaseWalletActivity() {
 
@@ -73,6 +73,8 @@ class RootActivity: BaseWalletActivity() {
     private lateinit var lockView: View
     private lateinit var lockPasscodeView: PasscodeView
     private lateinit var lockSignOut: View
+    private lateinit var migrationLoaderContainer: View
+    private lateinit var migrationLoaderIcon: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val theme = settingsRepository.theme
@@ -99,6 +101,10 @@ class RootActivity: BaseWalletActivity() {
         lockSignOut = findViewById(R.id.lock_sign_out)
         lockSignOut.setOnClickListener { signOutAll() }
 
+        migrationLoaderContainer = findViewById(R.id.migration_loader_container)
+        migrationLoaderContainer.setOnClickListener {  }
+        migrationLoaderIcon = findViewById(R.id.migration_loader_icon)
+
         ViewCompat.setOnApplyWindowInsetsListener(lockView) { _, insets ->
             val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
             val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
@@ -108,7 +114,7 @@ class RootActivity: BaseWalletActivity() {
 
         collectFlow(viewModel.hasWalletFlow) { init(it) }
         collectFlow(viewModel.eventFlow) { event(it) }
-        collectFlow(passcodeManager.lockscreenFlow, ::pinState)
+        collectFlow(viewModel.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
     }
@@ -130,7 +136,7 @@ class RootActivity: BaseWalletActivity() {
         viewModel.disconnectTonConnectBridge()
     }
 
-    private fun pinState(state: LockScreen.State) {
+    private suspend fun pinState(state: LockScreen.State) {
         if (state == LockScreen.State.None) {
             lockView.visibility = View.GONE
             lockPasscodeView.setSuccess()
@@ -138,19 +144,10 @@ class RootActivity: BaseWalletActivity() {
             lockPasscodeView.setError()
         } else {
             lockView.visibility = View.VISIBLE
-            if (state is LockScreen.State.Biometric) {
-                PasscodeBiometric.showPrompt(this, getString(Localization.app_name), object : BiometricPrompt.AuthenticationCallback() {
-
-                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                        super.onAuthenticationSucceeded(result)
-                        passcodeManager.lockscreenBiometric(result)
-                    }
-
-                    override fun onAuthenticationFailed() {
-                        super.onAuthenticationFailed()
-                        toast(Localization.authorization_required)
-                    }
-                })
+            if (passcodeManager.confirmationByBiometric(this, getString(Localization.app_name))) {
+                passcodeManager.lockscreenBiometric()
+            } else {
+                toast(Localization.authorization_required)
             }
         }
     }
@@ -162,6 +159,18 @@ class RootActivity: BaseWalletActivity() {
     private fun createViewModel(): RootViewModel {
         return viewModel<RootViewModel>().value.also {
             cachedRootViewModel = it
+        }
+    }
+
+    override fun migrationLoader(show: Boolean) {
+        super.migrationLoader(show)
+        if (show) {
+            migrationLoaderContainer.visibility = View.VISIBLE
+            migrationLoaderContainer.setBackgroundColor(backgroundPageColor.withAlpha(.64f))
+            migrationLoaderIcon.runAnimation(R.anim.gear_loading)
+        } else {
+            migrationLoaderContainer.visibility = View.GONE
+            migrationLoaderIcon.clearAnimation()
         }
     }
 
@@ -301,8 +310,8 @@ class RootActivity: BaseWalletActivity() {
         builder.setTitle(Localization.sign_out_all_title)
         builder.setMessage(Localization.sign_out_all_description)
         builder.setNegativeButton(Localization.sign_out) {
-            viewModel.signOut()
             passcodeManager.deleteAll()
+            viewModel.signOut()
             setIntroFragment()
         }
         builder.setPositiveButton(Localization.cancel)
@@ -318,7 +327,9 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun setIntroFragment() {
-        setPrimaryFragment(StartScreen.newInstance())
+        setPrimaryFragment(StartScreen.newInstance(), runnable = {
+            lockView.visibility = View.GONE
+        })
     }
 
     private fun setMainFragment() {

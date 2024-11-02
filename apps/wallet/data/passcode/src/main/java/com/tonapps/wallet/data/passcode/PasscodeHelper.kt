@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
@@ -47,6 +48,7 @@ class PasscodeHelper(
             store.setPinCode(code)
             true
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             context.logError(e)
             false
         }

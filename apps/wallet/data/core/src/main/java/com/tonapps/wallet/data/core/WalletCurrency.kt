@@ -22,6 +22,7 @@ data class WalletCurrency(
             "GBP", // Great Britain Pound
             "CHF", // Swiss Franc
             "CNY", // China Yuan
+            "GEL", // Georgian Lari
             "KRW", // South Korean Won
             "IDR", // Indonesian Rupiah
             "INR", // Indian Rupee

@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -78,6 +79,9 @@ class SettingsRepository(
 
     private val _walletPush = MutableEffectFlow<Unit>()
     val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
+
+    private val _isMigratedFlow = MutableStateFlow<Boolean?>(null)
+    val isMigratedFlow = _isMigratedFlow.asStateFlow().filterNotNull()
 
     fun notifyWalletPush() {
         _walletPush.tryEmit(Unit)
@@ -387,6 +391,7 @@ class SettingsRepository(
                 searchEngine = legacyValues.searchEngine
             }
 
+            _isMigratedFlow.value = true
             _currencyFlow.tryEmit(currency)
             _languageFlow.tryEmit(language)
             _hiddenBalancesFlow.tryEmit(hiddenBalances)

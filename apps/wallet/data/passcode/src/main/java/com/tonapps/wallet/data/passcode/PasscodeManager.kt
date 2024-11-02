@@ -1,7 +1,9 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import android.util.Log
 import androidx.biometric.BiometricPrompt
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
@@ -10,11 +12,13 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.navigation.Navigation
-import java.util.concurrent.atomic.AtomicBoolean
 
 class PasscodeManager(
     private val accountRepository: AccountRepository,
@@ -30,16 +34,17 @@ class PasscodeManager(
         get() = lockscreen.stateFlow
 
     init {
-        scope.launch(Dispatchers.IO) {
+        settingsRepository.isMigratedFlow.onEach {
             lockscreen.init()
-        }
+        }.launchIn(scope)
     }
 
-    fun lockscreenBiometric(result: BiometricPrompt.AuthenticationResult) {
-        lockscreen.biometric(result)
+    fun lockscreenBiometric() {
+        lockscreen.biometric()
     }
 
     fun deleteAll() {
+        settingsRepository.biometric = false
         scope.launch {
             reset()
         }
@@ -77,6 +82,7 @@ class PasscodeManager(
                 migration(context, code)
                 true
             } catch (e: Throwable) {
+                FirebaseCrashlytics.getInstance().recordException(e)
                 context.logError(e)
                 false
             }
@@ -97,6 +103,7 @@ class PasscodeManager(
                 }
                 true
             } catch (e: Throwable) {
+                FirebaseCrashlytics.getInstance().recordException(e)
                 context.logError(e)
                 false
             }
@@ -108,8 +115,31 @@ class PasscodeManager(
     }
 
     suspend fun reset() = withContext(Dispatchers.IO) {
+        settingsRepository.lockScreen = false
+        settingsRepository.biometric = false
         helper.reset()
         rnLegacy.clearMnemonic()
+    }
+
+    suspend fun confirmationByBiometric(
+        context: Context,
+        title: String
+    ): Boolean = withContext(Dispatchers.Main) {
+        try {
+            if (isRequestMigration()) {
+                val passcode = rnLegacy.exportPasscodeWithBiometry()
+                if (passcode.isBlank()) {
+                    throw Exception("failed to request passcode")
+                }
+                migration(context, passcode)
+                true
+            } else {
+                PasscodeBiometric.showPrompt(context, title)
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            false
+        }
     }
 
     suspend fun confirmation(
@@ -146,6 +176,7 @@ class PasscodeManager(
             }
             throw Exception("biometry is disabled")
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             return null
         }
     }
@@ -165,6 +196,7 @@ class PasscodeManager(
             migration(context, passcode)
             true
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             context.logError(e)
             false
         }
@@ -175,10 +207,10 @@ class PasscodeManager(
         code: String
     ) = withContext(Dispatchers.Main) {
         val navigation = Navigation.from(context)
-        navigation?.toast("...", true, 0)
+        navigation?.migrationLoader(true)
         accountRepository.importPrivateKeysFromRNLegacy(code)
         save(code)
-        navigation?.toast("...", false, 0)
+        navigation?.migrationLoader(false)
     }
 
     fun confirmationFlow(context: Context, title: String) = flow {

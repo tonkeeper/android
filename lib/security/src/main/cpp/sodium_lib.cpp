@@ -25,12 +25,12 @@ extern "C" JNIEXPORT jint JNICALL Java_com_tonapps_security_Sodium_cryptoBoxEasy
         jbyteArray remote_public_key,
         jbyteArray local_private_key
 ) {
-    jbyte *native_src_plain = env->GetByteArrayElements(src_plain, NULL);
-    jbyte *native_nonce = env->GetByteArrayElements(nonce, NULL);
-    jbyte *native_remote_public_key = env->GetByteArrayElements(remote_public_key, NULL);
-    jbyte *native_local_private_key = env->GetByteArrayElements(local_private_key, NULL);
+    jbyte *native_src_plain = env->GetByteArrayElements(src_plain, nullptr);
+    jbyte *native_nonce = env->GetByteArrayElements(nonce, nullptr);
+    jbyte *native_remote_public_key = env->GetByteArrayElements(remote_public_key, nullptr);
+    jbyte *native_local_private_key = env->GetByteArrayElements(local_private_key, nullptr);
 
-    jbyte *native_dst_cipher = env->GetByteArrayElements(dst_cipher, NULL);
+    jbyte *native_dst_cipher = env->GetByteArrayElements(dst_cipher, nullptr);
 
     int result = crypto_box_easy(
             reinterpret_cast<unsigned char *const>(native_dst_cipher),
@@ -60,12 +60,12 @@ extern "C" JNIEXPORT jint JNICALL Java_com_tonapps_security_Sodium_cryptoBoxOpen
         jbyteArray remote_public_key,
         jbyteArray local_private_key
 ) {
-    jbyte *native_src_cipher = env->GetByteArrayElements(src_cipher, NULL);
-    jbyte *native_nonce = env->GetByteArrayElements(nonce, NULL);
-    jbyte *native_remote_public_key = env->GetByteArrayElements(remote_public_key, NULL);
-    jbyte *native_local_private_key = env->GetByteArrayElements(local_private_key, NULL);
+    jbyte *native_src_cipher = env->GetByteArrayElements(src_cipher, nullptr);
+    jbyte *native_nonce = env->GetByteArrayElements(nonce, nullptr);
+    jbyte *native_remote_public_key = env->GetByteArrayElements(remote_public_key, nullptr);
+    jbyte *native_local_private_key = env->GetByteArrayElements(local_private_key, nullptr);
 
-    jbyte *native_dst_plain = env->GetByteArrayElements(dst_plain, NULL);
+    jbyte *native_dst_plain = env->GetByteArrayElements(dst_plain, nullptr);
 
     int result = crypto_box_open_easy(
             reinterpret_cast<unsigned char *const>(native_dst_plain),
@@ -91,8 +91,8 @@ extern "C" JNIEXPORT jint JNICALL Java_com_tonapps_security_Sodium_cryptoBoxKeyP
         jbyteArray remote_public_key,
         jbyteArray local_private_key
 ) {
-    jbyte *native_remote_public_key = env->GetByteArrayElements(remote_public_key, NULL);
-    jbyte *native_local_private_key = env->GetByteArrayElements(local_private_key, NULL);
+    jbyte *native_remote_public_key = env->GetByteArrayElements(remote_public_key, nullptr);
+    jbyte *native_local_private_key = env->GetByteArrayElements(local_private_key, nullptr);
 
     int result = crypto_box_keypair(
             reinterpret_cast<unsigned char *const>(native_remote_public_key),
@@ -113,24 +113,24 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_argon2I
         jbyteArray salt,
         jint outlen
 ) {
-    jchar *native_passwd = env->GetCharArrayElements(passwd, NULL);
+    jchar *native_passwd = env->GetCharArrayElements(passwd, nullptr);
     jsize passwdlen = env->GetArrayLength(passwd) * 2;
 
     if (sodium_mlock(native_passwd, passwdlen) != 0) {
         env->ReleaseCharArrayElements(passwd, native_passwd, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
-    jbyte *native_salt = env->GetByteArrayElements(salt, NULL);
+    jbyte *native_salt = env->GetByteArrayElements(salt, nullptr);
 
     char *out = (char *) malloc(outlen);
 
-    if (out == NULL || sodium_mlock(out, outlen) != 0) {
+    if (out == nullptr || sodium_mlock(out, outlen) != 0) {
         sodium_memzero(native_passwd, passwdlen);
         sodium_munlock(native_passwd, passwdlen);
         env->ReleaseCharArrayElements(passwd, native_passwd, JNI_ABORT);
-        if (out != NULL) free(out);
-        return NULL;
+        if (out != nullptr) free(out);
+        return nullptr;
     }
 
     int result = crypto_pwhash_argon2id(
@@ -151,7 +151,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_argon2I
 
         env->ReleaseCharArrayElements(passwd, native_passwd, JNI_ABORT);
         env->ReleaseByteArrayElements(salt, native_salt, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
     jbyteArray jhash = env->NewByteArray(outlen);
@@ -179,35 +179,35 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_scryptH
         jint p,
         jint dkLen
 ) {
-    jbyte *native_password = env->GetByteArrayElements(password, NULL);
+    jbyte *native_password = env->GetByteArrayElements(password, nullptr);
     jsize passwordlen = env->GetArrayLength(password);
 
     if (sodium_mlock(native_password, passwordlen) != 0) {
         env->ReleaseByteArrayElements(password, native_password, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
-    jbyte *native_salt = env->GetByteArrayElements(salt, NULL);
+    jbyte *native_salt = env->GetByteArrayElements(salt, nullptr);
     jsize saltlen = env->GetArrayLength(salt);
 
     if (sodium_mlock(native_salt, saltlen) != 0) {
         sodium_munlock(native_password, passwordlen);
         env->ReleaseByteArrayElements(password, native_password, JNI_ABORT);
         env->ReleaseByteArrayElements(salt, native_salt, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
     char *out = (char *) malloc(dkLen);
 
-    if (out == NULL || sodium_mlock(out, dkLen) != 0) {
+    if (out == nullptr || sodium_mlock(out, dkLen) != 0) {
         sodium_memzero(native_password, passwordlen);
         sodium_munlock(native_password, passwordlen);
         env->ReleaseByteArrayElements(password, native_password, JNI_ABORT);
         sodium_memzero(native_salt, saltlen);
         sodium_munlock(native_salt, saltlen);
         env->ReleaseByteArrayElements(salt, native_salt, JNI_ABORT);
-        if (out != NULL) free(out);
-        return NULL;
+        if (out != nullptr) free(out);
+        return nullptr;
     }
 
     int result = crypto_pwhash_scryptsalsa208sha256_ll(
@@ -227,7 +227,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_scryptH
         sodium_memzero(native_salt, saltlen);
         sodium_munlock(native_salt, saltlen);
         env->ReleaseByteArrayElements(salt, native_salt, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
     jbyteArray jhash = env->NewByteArray(dkLen);
@@ -253,25 +253,25 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoS
         jbyteArray none,
         jbyteArray key
 ) {
-    jbyte *native_box = env->GetByteArrayElements(box, NULL);
+    jbyte *native_box = env->GetByteArrayElements(box, nullptr);
     jsize boxlen = env->GetArrayLength(box);
 
     if (sodium_mlock(native_box, boxlen) != 0) {
         env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
-    jbyte *native_none = env->GetByteArrayElements(none, NULL);
+    jbyte *native_none = env->GetByteArrayElements(none, nullptr);
     jsize nonelen = env->GetArrayLength(none);
 
     if (sodium_mlock(native_none, nonelen) != 0) {
         sodium_munlock(native_box, boxlen);
         env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
         env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
-    jbyte *native_key = env->GetByteArrayElements(key, NULL);
+    jbyte *native_key = env->GetByteArrayElements(key, nullptr);
     jsize keylen = env->GetArrayLength(key);
 
     if (sodium_mlock(native_key, keylen) != 0) {
@@ -280,12 +280,12 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoS
         sodium_munlock(native_none, nonelen);
         env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
         env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
     char *out = (char *) malloc(boxlen);
 
-    if (out == NULL || sodium_mlock(out, boxlen) != 0) {
+    if (out == nullptr || sodium_mlock(out, boxlen) != 0) {
         sodium_memzero(native_box, boxlen);
         sodium_munlock(native_box, boxlen);
         env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
@@ -295,8 +295,8 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoS
         sodium_memzero(native_key, keylen);
         sodium_munlock(native_key, keylen);
         env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        if (out != NULL) free(out);
-        return NULL;
+        if (out != nullptr) free(out);
+        return nullptr;
     }
 
     int result = crypto_secretbox_open_easy(
@@ -320,7 +320,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoS
         sodium_memzero(native_key, keylen);
         sodium_munlock(native_key, keylen);
         env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
     jbyteArray jplain = env->NewByteArray(boxlen);
@@ -345,58 +345,88 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoS
 
 extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoSecretbox(
         JNIEnv *env,
-        jobject,
+        jobject /* this */,
         jbyteArray message,
         jbyteArray nonce,
         jbyteArray key
 ) {
-    jbyte *native_message = env->GetByteArrayElements(message, NULL);
-    jsize messagelen = env->GetArrayLength(message);
+    if (!message || !nonce || !key) {
+        return nullptr;
+    }
 
-    jbyte *native_nonce = env->GetByteArrayElements(nonce, NULL);
-    jsize noncelen = env->GetArrayLength(nonce);
-
-    jbyte *native_key = env->GetByteArrayElements(key, NULL);
-    jsize keylen = env->GetArrayLength(key);
+    const jsize messagelen = env->GetArrayLength(message);
+    const jsize noncelen = env->GetArrayLength(nonce);
+    const jsize keylen = env->GetArrayLength(key);
 
     if (noncelen != crypto_secretbox_NONCEBYTES || keylen != crypto_secretbox_KEYBYTES) {
-        env->ReleaseByteArrayElements(message, native_message, JNI_ABORT);
-        env->ReleaseByteArrayElements(nonce, native_nonce, JNI_ABORT);
-        env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        return NULL;
+        return nullptr;
     }
 
-    jsize cipherlen = crypto_secretbox_MACBYTES + messagelen;
-    unsigned char *cipher = (unsigned char *) sodium_malloc(cipherlen);
+    class ByteArrayGuard {
+    public:
+        ByteArrayGuard(JNIEnv* env, jbyteArray array)
+                : env_(env), array_(array), data_(nullptr) {
+            if (array) {
+                data_ = env->GetByteArrayElements(array, nullptr);
+            }
+        }
+        ~ByteArrayGuard() {
+            if (data_) {
+                env_->ReleaseByteArrayElements(array_, data_, JNI_ABORT);
+            }
+        }
+        jbyte* get() { return data_; }
+    private:
+        JNIEnv* env_;
+        jbyteArray array_;
+        jbyte* data_;
+    };
 
-    if (cipher == NULL) {
-        env->ReleaseByteArrayElements(message, native_message, JNI_ABORT);
-        env->ReleaseByteArrayElements(nonce, native_nonce, JNI_ABORT);
-        env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        return NULL;
+    ByteArrayGuard messageGuard(env, message);
+    ByteArrayGuard nonceGuard(env, nonce);
+    ByteArrayGuard keyGuard(env, key);
+
+    if (!messageGuard.get() || !nonceGuard.get() || !keyGuard.get()) {
+        return nullptr;
     }
 
-    int result = crypto_secretbox_easy(
+    const jsize cipherlen = crypto_secretbox_MACBYTES + messagelen;
+    auto* cipher = static_cast<unsigned char*>(sodium_malloc(cipherlen));
+
+    if (!cipher) {
+        return nullptr;
+    }
+
+    struct CipherGuard {
+        explicit CipherGuard(unsigned char* ptr) : ptr_(ptr) {}
+        ~CipherGuard() {
+            if (ptr_) {
+                sodium_free(ptr_);
+            }
+        }
+        unsigned char* get() { return ptr_; }
+    private:
+        unsigned char* ptr_;
+    } cipherGuard(cipher);
+
+    const int result = crypto_secretbox_easy(
             cipher,
-            reinterpret_cast<const unsigned char *>(native_message),
+            reinterpret_cast<const unsigned char*>(messageGuard.get()),
             messagelen,
-            reinterpret_cast<const unsigned char *>(native_nonce),
-            reinterpret_cast<const unsigned char *>(native_key)
+            reinterpret_cast<const unsigned char*>(nonceGuard.get()),
+            reinterpret_cast<const unsigned char*>(keyGuard.get())
     );
 
-    env->ReleaseByteArrayElements(message, native_message, JNI_ABORT);
-    env->ReleaseByteArrayElements(nonce, native_nonce, JNI_ABORT);
-    env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-
     if (result != 0) {
-        sodium_free(cipher);
-        return NULL;
+        return nullptr;
     }
 
     jbyteArray jcipher = env->NewByteArray(cipherlen);
-    env->SetByteArrayRegion(jcipher, 0, cipherlen, reinterpret_cast<jbyte *>(cipher));
+    if (!jcipher) {
+        return nullptr;
+    }
 
-    sodium_free(cipher);
+    env->SetByteArrayRegion(jcipher, 0, cipherlen, reinterpret_cast<jbyte*>(cipher));
 
     return jcipher;
 }

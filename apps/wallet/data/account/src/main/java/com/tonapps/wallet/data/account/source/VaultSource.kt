@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.account.source
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.tonapps.blockchain.ton.extensions.getPrivateKey
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.getByteArray
 import com.tonapps.extensions.putByteArray
@@ -47,10 +48,7 @@ internal class VaultSource(context: Context) {
     }
 
     fun getPrivateKey(publicKey: PublicKeyEd25519): PrivateKeyEd25519? {
-        val seed = prefs.getByteArray(privateKey(publicKey)) ?: return null
-        val privateKey = PrivateKeyEd25519(seed)
-        seed.clear()
-        return privateKey
+        return prefs.getPrivateKey(privateKey(publicKey))
     }
 
     private fun privateKey(publicKey: PublicKeyEd25519) = key(PRIVATE_KEY_PREFIX, publicKey)

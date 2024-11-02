@@ -30,7 +30,7 @@ class BackupRepository(
     init {
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMigration()) {
-                localDataSource.clear()
+                // localDataSource.clear()
                 migrationFromRN()
             }
             _stream.value = localDataSource.getAllBackups()

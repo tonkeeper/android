@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.rn
 
 import android.content.Context
 import androidx.fragment.app.FragmentActivity
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.expo.SecureStoreModule
 import com.tonapps.wallet.data.rn.expo.SecureStoreOptions
@@ -66,7 +67,12 @@ internal class RNSeedStorage(context: Context) {
     }
 
     suspend fun hasPinCode(): Boolean {
-        return readState() != null
+        return try {
+            readState() != null
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            false
+        }
     }
 
     suspend fun removeAll() {
@@ -79,7 +85,7 @@ internal class RNSeedStorage(context: Context) {
     }
 
     suspend fun get(passcode: String): RNVaultState = withContext(Dispatchers.IO) {
-        val state = readState() ?: throw Exception("Seed state is null")
+        val state = readState() ?: return@withContext RNVaultState()
         val json = JSONObject(ScryptBox.decrypt(passcode, state))
         RNVaultState.of(json)
     }

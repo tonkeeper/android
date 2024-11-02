@@ -3,12 +3,13 @@ package com.tonapps.wallet.data.rn
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.os.Build
 import android.os.SystemClock
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.sqlite.SQLiteHelper
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.ConcurrentHashMap
+import android.database.CursorWindow
 
 internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DATABASE_VERSION) {
 
@@ -27,6 +28,10 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
     override fun onConfigure(db: SQLiteDatabase) {
         super.onConfigure(db)
         db.execSQL("PRAGMA foreign_keys=OFF;")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            db.setMaxSqlCacheSize(SQLiteDatabase.MAX_SQL_CACHE_SIZE)
+        }
+        initCursorWindowSize()
     }
 
     fun getValue(key: String): String? {
@@ -94,6 +99,16 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
 
     fun setJSONObject(key: String, value: JSONObject) {
         setValue(key, value.toString())
+    }
+
+    private fun initCursorWindowSize() {
+        try {
+            val field = CursorWindow::class.java.getDeclaredField("sCursorWindowSize")
+            field.isAccessible = true
+            field.set(null, 100 * 1024 * 1024) //the 100MB is the new size
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
     }
 
 }

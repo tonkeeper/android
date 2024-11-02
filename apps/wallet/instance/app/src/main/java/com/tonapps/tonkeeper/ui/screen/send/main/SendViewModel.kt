@@ -881,6 +881,7 @@ class SendViewModel(
     }
 
     fun sign() = transferFlow.take(1).map { transfer ->
+        _uiEventFlow.tryEmit(SendEvent.Loading)
         lastTransferEntity = transfer
         val excessesAddress = if (sendTransferType is SendTransferType.WithExcessesAddress) {
             (sendTransferType as SendTransferType.WithExcessesAddress).excessesAddress

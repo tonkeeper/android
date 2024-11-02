@@ -76,7 +76,9 @@ class AccountRepository(
     private val migrationHelper = RNMigrationHelper(rnLegacy)
 
     private val _selectedStateFlow = MutableStateFlow<SelectedState>(SelectedState.Initialization)
-    val selectedStateFlow = _selectedStateFlow.stateIn(scope, SharingStarted.Eagerly,
+    val selectedStateFlow = _selectedStateFlow.stateIn(
+        scope,
+        SharingStarted.Eagerly,
         SelectedState.Initialization
     )
     val selectedWalletFlow = selectedStateFlow.filterNotNull().filterIsInstance<SelectedState.Wallet>().map {
@@ -112,15 +114,13 @@ class AccountRepository(
 
     private suspend fun migrationFromRN() = withContext(Dispatchers.IO) {
         val (selectedId, wallets) = migrationHelper.loadLegacy()
-        if (wallets.isEmpty()) {
-            _selectedStateFlow.value = SelectedState.Empty
-        } else {
+        if (wallets.isNotEmpty()) {
             database.insertAccounts(wallets)
             for (wallet in wallets) {
                 val token = rnLegacy.getTonProof(wallet.id) ?: continue
                 storageSource.setTonProofToken(wallet.publicKey, token)
             }
-            setSelectedWallet(selectedId)
+            storageSource.setSelectedId(selectedId)
         }
     }
 

@@ -10,6 +10,7 @@ import android.os.Build
 import android.provider.Settings
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import kotlinx.coroutines.withTimeout
@@ -41,6 +42,7 @@ object Security {
 
     @Synchronized
     fun pref(context: Context, keyAlias: String, name: String): SharedPreferences {
+        Log.d("SecurityPrefLog", "pref: $keyAlias")
         KeyHelper.createIfNotExists(keyAlias)
 
         return EncryptedSharedPreferences.create(
@@ -50,6 +52,8 @@ object Security {
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
+
+        // UserNotAuthenticatedException
     }
 
     fun generatePrivateKey(keySize: Int): SecretKey {

@@ -66,4 +66,8 @@ interface Navigation {
     fun run(fragment: BaseFragment) {
 
     }
+
+    fun migrationLoader(show: Boolean) {
+
+    }
 }

@@ -43,7 +43,7 @@ internal class RNSeedStorage(context: Context) {
         return "proof-$id"
     }
 
-    suspend fun exportPasscodeWithBiometry(): String = withContext(Dispatchers.IO) {
+    suspend fun exportPasscodeWithBiometry(): String = withContext(Dispatchers.Main) {
         val passcode = kv.getItemImpl(biometryKey, SecureStoreOptions(
             keychainService = keychainService
         ))

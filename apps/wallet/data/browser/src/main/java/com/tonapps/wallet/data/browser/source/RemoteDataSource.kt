@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.browser.source
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,7 @@ internal class RemoteDataSource(
         try {
             BrowserDataEntity(api.getBrowserApps(testnet, locale))
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             null
         }
     }

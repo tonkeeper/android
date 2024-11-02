@@ -5,6 +5,7 @@ import io.tonapi.infrastructure.Serializer
 import com.squareup.moshi.adapter
 import io.tonapi.infrastructure.ClientException
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.network.OkHttpError
 import io.tonapi.infrastructure.ClientError
 import io.tonapi.infrastructure.Response
@@ -45,6 +46,7 @@ fun <R> withRetry(
             } else if (statusCode >= 500 || statusCode == 404) {
                 return null
             }
+            FirebaseCrashlytics.getInstance().recordException(e)
         }
         SystemClock.sleep(delay)
     }

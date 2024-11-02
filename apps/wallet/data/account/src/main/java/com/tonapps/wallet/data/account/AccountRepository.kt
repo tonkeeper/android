@@ -189,20 +189,25 @@ class AccountRepository(
     }
 
     suspend fun requestTonProofToken(wallet: WalletEntity): String? = withContext(scope.coroutineContext) {
-        if (keyguardManager.isDeviceLocked) {
-            return@withContext null
-        }
+        try {
+            if (keyguardManager.isDeviceLocked) {
+                return@withContext null
+            }
 
-        if (!wallet.hasPrivateKey) {
-            return@withContext null
+            if (!wallet.hasPrivateKey) {
+                return@withContext null
+            }
+            val token = storageSource.getTonProofToken(wallet.publicKey)
+            if (token != null) {
+                return@withContext token
+            }
+            val tonProofToken = createTonProofToken(wallet) ?: return@withContext null
+            saveTonProof(wallet, tonProofToken)
+            tonProofToken
+        } catch (e: Throwable) {
+            recordException(e)
+            null
         }
-        val token = storageSource.getTonProofToken(wallet.publicKey)
-        if (token != null) {
-            return@withContext token
-        }
-        val tonProofToken = createTonProofToken(wallet) ?: return@withContext null
-        saveTonProof(wallet, tonProofToken)
-        tonProofToken
     }
 
 

@@ -26,11 +26,15 @@ object KeyHelper {
     }
 
     private fun generateKey(alias: String) {
+        /*
+        // StrongBox is required authentication
         try {
             generateKeyWithStrongBoxBacked(alias)
         } catch (e: Throwable) {
             generateKey(getParameterKey(alias))
         }
+        */
+        generateKey(getParameterKey(alias))
     }
 
     private fun generateKeyWithStrongBoxBacked(alias: String) {
@@ -44,7 +48,7 @@ object KeyHelper {
         try {
             generator.generateKey()
         } catch (e: Throwable) {
-            // device unlocked
+            // device locked
         }
     }
 
@@ -60,9 +64,12 @@ object KeyHelper {
         builder.setKeySize(KEY_SIZE)
         builder.setUserAuthenticationRequired(false)
         builder.setRandomizedEncryptionRequired(true)
+        /*
+        // Bad working for samsung
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             builder.setUnlockedDeviceRequired(true)
         }
+         */
         return builder
     }
 

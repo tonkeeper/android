@@ -171,10 +171,7 @@ class PasscodeManager(
 
     private suspend fun legacyGetPasscodeByBiometry(): String? {
         try {
-            if (settingsRepository.biometric) {
-                return rnLegacy.exportPasscodeWithBiometry()
-            }
-            throw Exception("biometry is disabled")
+            return rnLegacy.exportPasscodeWithBiometry()
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             return null

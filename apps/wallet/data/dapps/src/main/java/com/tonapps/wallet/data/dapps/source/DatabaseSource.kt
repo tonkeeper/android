@@ -9,6 +9,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putLong
@@ -21,6 +22,7 @@ import com.tonapps.security.Security
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.ConnectionEncryptedEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
@@ -218,7 +220,7 @@ internal class DatabaseSource(
             val clientId = cursor.getString(clientIdIndex)
             val appUrl = Uri.parse(cursor.getString(appUrlIndex)).withoutQuery
             val prefix = prefixAccount(accountId, testnet)
-            val keyPair = encryptedPrefs.getParcelable<CryptoBox.KeyPair>(prefixKeyPair(prefix, clientId)) ?: continue
+            val connectionEncrypted = getConnectionEncrypted(prefix, clientId, appUrl) ?: continue
 
             connections.add(AppConnectEntity(
                 appUrl = appUrl,
@@ -226,14 +228,32 @@ internal class DatabaseSource(
                 testnet = testnet,
                 clientId = cursor.getString(clientIdIndex),
                 type = AppConnectEntity.Type.entries.first { it.value == cursor.getInt(typeIndex) },
-                keyPair = keyPair,
-                proofSignature = encryptedPrefs.getString(prefixProofSignature(prefix, appUrl), null),
-                proofPayload = encryptedPrefs.getString(prefixProofPayload(prefix, appUrl), null),
+                keyPair = connectionEncrypted.keyPair,
+                proofSignature = connectionEncrypted.proofSignature,
+                proofPayload = connectionEncrypted.proofPayload,
                 timestamp = cursor.getLong(timestampIndex),
                 pushEnabled = isPushEnabled(accountId, testnet, appUrl)
             ))
         }
         return connections
+    }
+
+    private fun getConnectionEncrypted(
+        prefix: String,
+        clientId: String,
+        appUrl: Uri
+    ): ConnectionEncryptedEntity? {
+        try {
+            val keyPair = encryptedPrefs.getParcelable<CryptoBox.KeyPair>(prefixKeyPair(prefix, clientId)) ?: return null
+            return ConnectionEncryptedEntity(
+                keyPair = keyPair,
+                proofSignature = encryptedPrefs.getString(prefixProofSignature(prefix, appUrl), null),
+                proofPayload = encryptedPrefs.getString(prefixProofPayload(prefix, appUrl), null),
+            )
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            return null
+        }
     }
 
     private fun prefixKeyPair(

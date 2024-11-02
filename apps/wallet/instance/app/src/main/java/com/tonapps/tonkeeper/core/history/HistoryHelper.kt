@@ -476,11 +476,12 @@ class HistoryHelper(
 
             val rates = ratesRepository.getRates(currency, token)
             val inCurrency = rates.convert(token, amount)
+            val isEncryptedComment = jettonTransfer.encryptedComment != null
 
             val comment = HistoryItem.Event.Comment.create(
                 jettonTransfer.comment,
                 jettonTransfer.encryptedComment,
-                eventsRepository.getDecryptedComment(txId)
+                if (isEncryptedComment) eventsRepository.getDecryptedComment(txId) else null
             )
 
             return HistoryItem.Event(
@@ -533,11 +534,12 @@ class HistoryHelper(
 
             val rates = ratesRepository.getRates(currency, TokenEntity.TON.symbol)
             val inCurrency = rates.convert(TokenEntity.TON.symbol, amount)
+            val isEncryptedComment = tonTransfer.encryptedComment != null
 
             val comment = HistoryItem.Event.Comment.create(
                 tonTransfer.comment,
                 tonTransfer.encryptedComment,
-                eventsRepository.getDecryptedComment(txId)
+                if (isEncryptedComment) eventsRepository.getDecryptedComment(txId) else null
             )
 
             return HistoryItem.Event(
@@ -623,10 +625,12 @@ class HistoryHelper(
                 it.with(pref)
             }
 
+            val isEncryptedComment = nftItemTransfer.encryptedComment != null
+
             val comment = HistoryItem.Event.Comment.create(
                 nftItemTransfer.comment,
                 nftItemTransfer.encryptedComment,
-                eventsRepository.getDecryptedComment(txId)
+                if (isEncryptedComment) eventsRepository.getDecryptedComment(txId) else null
             )
 
             return HistoryItem.Event(

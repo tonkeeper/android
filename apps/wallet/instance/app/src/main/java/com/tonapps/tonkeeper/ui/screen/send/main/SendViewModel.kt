@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
@@ -938,6 +939,7 @@ class SendViewModel(
         _uiEventFlow.tryEmit(SendEvent.Loading)
         Triple(boc, transfer.wallet, internalMessage)
     }.catch {
+        FirebaseCrashlytics.getInstance().recordException(it)
         if (it !is CancellationException) {
             _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }
@@ -963,6 +965,7 @@ class SendViewModel(
             send(boc, wallet, withBattery)
             AnalyticsHelper.trackEvent("send_success")
         }.catch {
+            FirebaseCrashlytics.getInstance().recordException(it)
             _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }.flowOn(Dispatchers.IO).onEach {
             _uiEventFlow.tryEmit(SendEvent.Success)

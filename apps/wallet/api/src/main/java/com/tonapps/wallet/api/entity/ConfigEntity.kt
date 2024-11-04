@@ -3,6 +3,7 @@ package com.tonapps.wallet.api.entity
 import android.net.Uri
 import android.os.Parcelable
 import android.util.Log
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
@@ -49,11 +50,18 @@ data class ConfigEntity(
     val burnZeroDomain: String,
 ): Parcelable {
 
+    @IgnoredOnParcel
     val swapUri: Uri
         get() = Uri.parse(stonfiUrl)
 
+    @IgnoredOnParcel
     val isBatteryDisabled: Boolean
         get() = batteryDisabled || batterySendDisabled
+
+    @IgnoredOnParcel
+    val domains: List<String> by lazy {
+        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
+    }
 
     constructor(json: JSONObject, debug: Boolean) : this(
         supportLink = json.getString("supportLink"),
@@ -142,7 +150,7 @@ data class ConfigEntity(
         tonapiSSEEndpoint = "https://rt.tonapi.io",
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
         iapPackages = emptyList(),
-        burnZeroDomain = "tonkeeper-zero.ton"
+        burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"
     )
 
     companion object {

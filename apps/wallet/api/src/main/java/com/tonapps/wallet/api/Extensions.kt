@@ -12,6 +12,9 @@ import io.tonapi.infrastructure.Response
 import io.tonapi.infrastructure.ServerError
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
+import kotlinx.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> toJSON(obj: T?): String {
@@ -27,29 +30,34 @@ inline fun <reified T> fromJSON(json: String): T {
 }
 
 fun <R> withRetry(
-    times: Int = 5,
+    times: Int = 3,
     delay: Long = 300,
     retryBlock: () -> R
 ): R? {
-    repeat(times) {
+    var index = -1
+    do {
+        index++
         try {
             return retryBlock()
         } catch (e: CancellationException) {
             throw e
+        } catch (e: SocketTimeoutException) {
+            return null
+        } catch (e: IOException) {
+            return null
         } catch (e: Throwable) {
             val statusCode = e.getHttpStatusCode()
-            val message = e.getDebugMessage() ?: "Unknown error"
-            Log.e("TonkeeperLog", "Error in retry block(code=$statusCode): $message", e)
-            if (statusCode == 429) { // Too many requests
-                SystemClock.sleep((3000..5000).random().toLong())
-                return withRetry(times, delay, retryBlock)
-            } else if (statusCode >= 500 || statusCode == 404) {
+            if (statusCode == 429) {
+                SystemClock.sleep(delay)
+                continue
+            }
+            if (statusCode >= 500 || statusCode == 404) {
                 return null
             }
             FirebaseCrashlytics.getInstance().recordException(e)
         }
-        SystemClock.sleep(delay)
-    }
+
+    } while (index < times)
     return null
 }
 

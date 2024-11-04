@@ -59,10 +59,10 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
     override fun onCreate() {
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder()
-                .detectLeakedSqlLiteObjects()
                 .penaltyLog()
+                .detectAll()
                 .penaltyListener(Executors.newSingleThreadExecutor()) {
-                    Log.e("Tonkeeper", "StrictMode.VmPolicy: $it", it.cause)
+                    Log.e("TonkeeperStrictModeLog", "StrictMode.VmPolicy: $it", it.cause)
                 }.build())
         }
 
@@ -73,6 +73,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         Theme.add("light", uikit.R.style.Theme_App_Light, true)
 
         instance = this
+
         startKoin {
             androidContext(this@App)
             modules(koinModel, contactsModule, workerModule, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)

@@ -110,8 +110,6 @@ class RootViewModel(
     private val accountRepository: AccountRepository,
     private val api: API,
     private val historyHelper: HistoryHelper,
-    private val screenCacheSource: ScreenCacheSource,
-    private val walletAdapter: WalletAdapter,
     private val purchaseRepository: PurchaseRepository,
     private val tonConnectManager: TonConnectManager,
     private val browserRepository: BrowserRepository,
@@ -169,16 +167,14 @@ class RootViewModel(
             context.setLocales(settingsRepository.localeList)
         }
 
-        combine(
-            accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization },
-            api.configFlow,
-        ) { state, _ ->
+        accountRepository.selectedStateFlow.filter {
+            it !is AccountRepository.SelectedState.Initialization
+        }.onEach { state ->
             if (state is AccountRepository.SelectedState.Empty) {
                 _hasWalletFlow.tryEmit(false)
                 ShortcutManagerCompat.removeAllDynamicShortcuts(context)
             } else if (state is AccountRepository.SelectedState.Wallet) {
-                val items = screenCacheSource.getWalletScreen(state.wallet) ?: listOf(Item.Skeleton(true))
-                submitWalletList(items)
+                _hasWalletFlow.tryEmit(true)
             }
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
@@ -264,12 +260,6 @@ class RootViewModel(
         connection: AppConnectEntity,
         signRequest: SignRequestEntity
     ) {
-        if (signRequest.network == TonNetwork.TESTNET) {
-            DevSettings.tonConnectLog("Unsupported network detected. System only accepts mainnet (-239) operations.", error = true)
-            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Unsupported network detected. System only accepts mainnet (-239) operations."), eventId)
-            return
-        }
-
         if (signRequest.from != null && !signRequest.from!!.toAccountId().equalsAddress(connection.accountId)) {
             DevSettings.tonConnectLog("Invalid \"from\" address.\nReceived: ${signRequest.from?.toAccountId()}\nExpected: ${connection.accountId}", error = true)
             tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Invalid \"from\" address. Specified wallet address not connected to this app."), eventId)
@@ -345,12 +335,6 @@ class RootViewModel(
         crashlytics.setCustomKeys {
             key("testnet", wallet.testnet)
             key("walletType", wallet.type.name)
-        }
-    }
-
-    private suspend fun submitWalletList(items: List<Item>) = withContext(Dispatchers.Main) {
-        walletAdapter.submitList(items) {
-            _hasWalletFlow.tryEmit(true)
         }
     }
 

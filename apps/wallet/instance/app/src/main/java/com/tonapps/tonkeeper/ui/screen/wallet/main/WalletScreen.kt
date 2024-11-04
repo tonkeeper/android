@@ -15,7 +15,6 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.flow.filterNotNull
-import org.koin.android.ext.android.inject
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
 
@@ -23,7 +22,7 @@ class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wal
 
     override val viewModel: WalletViewModel by walletViewModel()
 
-    private val adapter: WalletAdapter by inject()
+    private val adapter = WalletAdapter()
 
     private lateinit var headerView: WalletHeaderView
     private lateinit var refreshLayout: SwipeRefreshLayout

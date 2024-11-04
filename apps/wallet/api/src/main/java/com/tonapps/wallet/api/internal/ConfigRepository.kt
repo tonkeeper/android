@@ -21,25 +21,29 @@ internal class ConfigRepository(
 ) {
 
     private val configFile = context.cacheDir.file("config")
-    private val _stream = MutableStateFlow<ConfigEntity?>(null)
+    private val _stream = MutableStateFlow(ConfigEntity.default)
 
-    val stream = _stream.asStateFlow().filterNotNull()
+    val stream = _stream.asStateFlow()
 
-    var configEntity: ConfigEntity? = null
+    var configEntity: ConfigEntity = ConfigEntity.default
         private set (value) {
             field = value
             _stream.value = value
         }
 
     init {
-        readCache()?.let {
-            configEntity = it
-        }
-        scope.launch(Dispatchers.Main) {
+        scope.launch(Dispatchers.IO) {
+            readCache()?.let {
+                setConfig(it)
+            }
             remote(false)?.let {
-                configEntity = it
+                setConfig(it)
             }
         }
+    }
+
+    private suspend fun setConfig(config: ConfigEntity) = withContext(Dispatchers.Main) {
+        configEntity = config
     }
 
     private fun readCache(): ConfigEntity? {

@@ -30,7 +30,7 @@ data class PurchaseCategoryEntity(
         type = json.getString("type"),
         title = json.getString("title"),
         subtitle = json.getString("subtitle"),
-        assets = json.getJSONArray("assets").toStringList(),
+        assets = json.optJSONArray("assets")?.toStringList() ?: emptyList(),
         items = json.optJSONArray("items")?.let { PurchaseMethodEntity.parse(it) } ?: emptyList()
     )
 }

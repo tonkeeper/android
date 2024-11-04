@@ -77,11 +77,20 @@ class API(
 
     val defaultHttpClient = baseOkHttpClientBuilder().build()
 
+    private val internalApi = InternalApi(context, defaultHttpClient)
+    private val configRepository = ConfigRepository(context, scope, internalApi)
+
+    val config: ConfigEntity
+        get() = configRepository.configEntity
+
+    val configFlow: Flow<ConfigEntity>
+        get() = configRepository.stream
+
     private val tonAPIHttpClient: OkHttpClient by lazy {
         createTonAPIHttpClient(
             context = context,
-            tonApiV2Key = config.tonApiV2Key,
-            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost, config.tonapiSSEEndpoint, config.tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
+            tonApiV2Key = { config.tonApiV2Key },
+            allowDomains = { config.domains  }
         )
     }
 
@@ -89,26 +98,8 @@ class API(
         createBatteryAPIHttpClient(context)
     }
 
-    private val internalApi = InternalApi(context, defaultHttpClient)
-    private val configRepository = ConfigRepository(context, scope, internalApi)
-
     @Volatile
     private var cachedCountry: String? = null
-
-    val config: ConfigEntity
-        get() {
-            val timeout = System.currentTimeMillis() + 2000
-            do {
-                if (configRepository.configEntity != null) {
-                    return configRepository.configEntity!!
-                }
-                Thread.sleep(50)
-            } while (System.currentTimeMillis() < timeout)
-            return ConfigEntity.default
-        }
-
-    val configFlow: Flow<ConfigEntity>
-        get() = configRepository.stream
 
     suspend fun tonapiFetch(
         url: String,
@@ -272,11 +263,11 @@ class API(
         }
     }
 
-    fun getSingleEvent(
+    suspend fun getSingleEvent(
         eventId: String,
         testnet: Boolean
-    ): List<AccountEvent>? {
-        val event = withRetry { events(testnet).getEvent(eventId) } ?: return null
+    ): List<AccountEvent>? = withContext(Dispatchers.IO) {
+        val event = withRetry { events(testnet).getEvent(eventId) } ?: return@withContext null
         val accountEvent = AccountEvent(
             eventId = eventId,
             account = AccountAddress(
@@ -291,7 +282,7 @@ class API(
             inProgress = event.inProgress,
             extra = 0L,
         )
-        return listOf(accountEvent)
+        listOf(accountEvent)
     }
 
     fun getTokenEvents(
@@ -853,11 +844,11 @@ class API(
 
         private fun baseOkHttpClientBuilder(): OkHttpClient.Builder {
             return OkHttpClient().newBuilder()
-                .retryOnConnectionFailure(false)
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .callTimeout(10, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .writeTimeout(5, TimeUnit.SECONDS)
+                .callTimeout(5, TimeUnit.SECONDS)
                 .pingInterval(5, TimeUnit.SECONDS)
                 .followSslRedirects(true)
                 .followRedirects(true)
@@ -867,8 +858,8 @@ class API(
 
         private fun createTonAPIHttpClient(
             context: Context,
-            tonApiV2Key: String,
-            allowDomains: List<String>
+            tonApiV2Key: () -> String,
+            allowDomains: () -> List<String>
         ): OkHttpClient {
             return baseOkHttpClientBuilder()
                 .addInterceptor(AcceptLanguageInterceptor(context.locale))

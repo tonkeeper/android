@@ -55,11 +55,8 @@ val koinModel = module {
     singleOf(::TonConnectManager)
     singleOf(::PushManager)
 
-
     factoryOf(::SignUseCase)
     factoryOf(::EmulationUseCase)
-
-    uiAdapter { WalletAdapter(get()) }
 
     viewModelOf(::DevViewModel)
     viewModelOf(::ChangePasscodeViewModel)

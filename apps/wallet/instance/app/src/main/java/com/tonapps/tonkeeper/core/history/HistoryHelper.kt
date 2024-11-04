@@ -77,16 +77,20 @@ class HistoryHelper(
         private val dayMonthFormatter = SimpleDateFormat("d MMMM", Locale.US)
 
         private fun getGroupKey(timestamp: Long): String {
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = timestamp * 1000
-            val now = Calendar.getInstance()
-            val yearDiff = now.get(Calendar.YEAR) - calendar.get(Calendar.YEAR)
-            val monthDiff = yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
+            try {
+                val calendar = Calendar.getInstance()
+                calendar.timeInMillis = timestamp * 1000
+                val now = Calendar.getInstance()
+                val yearDiff = now.get(Calendar.YEAR) - calendar.get(Calendar.YEAR)
+                val monthDiff = yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
 
-            return if (monthDiff < 1) {
-                dayMonthFormatter.format(calendar.time)
-            } else {
-                monthYearFormatter.format(calendar.time)
+                return if (monthDiff < 1) {
+                    dayMonthFormatter.format(calendar.time)
+                } else {
+                    monthYearFormatter.format(calendar.time)
+                }
+            } catch (e: Throwable) {
+                return "zero"
             }
         }
     }

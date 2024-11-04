@@ -299,7 +299,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             proofPayload: String?,
             returnUri: Uri?,
             wallet: WalletEntity?,
-            fromPackageName: String?,
+            fromPackageName: String?
         ): TonConnectScreen {
             val fragment = TonConnectScreen()
             fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri, wallet, fromPackageName))

@@ -20,6 +20,7 @@ object KeyHelper {
     }
 
     fun createIfNotExists(alias: String) {
+        Log.d("KeyHelperLog", "createIfNotExists: $alias")
         if (!keyExists(alias)) {
             generateKey(alias)
         }

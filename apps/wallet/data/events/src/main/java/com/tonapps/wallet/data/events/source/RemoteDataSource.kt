@@ -20,7 +20,7 @@ internal class RemoteDataSource(
         limit: Int = 12
     ): AccountEvents? = api.getEvents(accountId, testnet, beforeLt, limit)
 
-    fun getSingle(eventId: String, testnet: Boolean) = api.getSingleEvent(eventId, testnet)
+    suspend fun getSingle(eventId: String, testnet: Boolean) = api.getSingleEvent(eventId, testnet)
 
     fun getLatestRecipients(accountId: String, testnet: Boolean): List<AccountAddress> {
         val actions = api.getEvents(

@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.extensions.badgeGreen
 import com.tonapps.tonkeeper.extensions.badgeOrange
 import com.tonapps.tonkeeper.extensions.badgePurple
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
@@ -50,9 +51,12 @@ import uikit.navigation.Navigation
 import uikit.widget.LoaderView
 
 class BalanceHolder(
-    parent: ViewGroup,
-    private val settingsRepository: SettingsRepository
+    parent: ViewGroup
 ) : Holder<Item.Balance>(parent, R.layout.view_wallet_data) {
+
+    private val settingsRepository: SettingsRepository? by lazy {
+        context.settingsRepository
+    }
 
     private val balanceView = itemView.findViewById<AppCompatTextView>(R.id.wallet_balance)
     private val batteryView = itemView.findViewById<BatteryView>(R.id.wallet_battery)
@@ -63,7 +67,9 @@ class BalanceHolder(
 
     init {
         balanceView.setOnClickListener {
-            settingsRepository.hiddenBalances = !settingsRepository.hiddenBalances
+            settingsRepository?.let {
+                it.hiddenBalances = !it.hiddenBalances
+            }
             HapticHelper.impactLight(context)
         }
         walletLoaderView.setColor(context.iconSecondaryColor)

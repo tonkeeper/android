@@ -86,7 +86,6 @@ class RootActivity: BaseWalletActivity() {
         } else {
             setAppearanceLight(theme.light)
         }
-
         legacyRN.setActivity(this)
         uiHandler = Handler(mainLooper)
 
@@ -182,8 +181,8 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun onDestroy() {
-        viewModelStore.clear()
         cachedRootViewModel = null
+        viewModelStore.clear()
         super.onDestroy()
     }
 

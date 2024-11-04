@@ -55,10 +55,14 @@ class PasscodeManager(
     }
 
     suspend fun hasPinCode(): Boolean = withContext(Dispatchers.IO) {
-        if (helper.hasPinCode) {
-            true
-        } else {
-            rnLegacy.hasPinCode()
+        try {
+            if (helper.hasPinCode) {
+                true
+            } else {
+                rnLegacy.hasPinCode()
+            }
+        } catch (e: Throwable) {
+            false
         }
     }
 
@@ -67,7 +71,7 @@ class PasscodeManager(
     }
 
     suspend fun requestValidPasscode(context: Context): String = withContext(Dispatchers.Main) {
-        val code = PasscodeDialog.request(context) ?: throw Exception("failed to request passcode")
+        val code = PasscodeDialog.request(context) ?: throw Exception("invalid passcode")
         if (!isValid(context, code)) {
             throw Exception("invalid passcode")
         }

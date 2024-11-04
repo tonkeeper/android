@@ -103,7 +103,7 @@ data class WalletEntity(
         get() = signer || isLedger || isKeystone
 
     val isTonConnectSupported: Boolean
-        get() = !testnet && type != Wallet.Type.Watch
+        get() = type != Wallet.Type.Watch // !testnet &&
 
     constructor(parcel: Parcel) : this(
         id = parcel.readString()!!,

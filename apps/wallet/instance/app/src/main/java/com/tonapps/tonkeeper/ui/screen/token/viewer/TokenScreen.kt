@@ -116,7 +116,7 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
             Uri.parse("https://tonviewer.com/${screenContext.wallet.address}/jetton/${token.address}")
         }
 
-        val actionSheet = ActionSheet(requireContext())
+        val actionSheet = ActionSheet(view.context)
         actionSheet.addItem(VIEWER_ID, Localization.view_details, R.drawable.ic_globe_16)
         if (!token.verified && !screenContext.wallet.isWatchOnly) {
             actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)

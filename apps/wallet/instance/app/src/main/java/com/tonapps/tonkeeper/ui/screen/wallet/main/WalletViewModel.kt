@@ -102,7 +102,7 @@ class WalletViewModel(
 
     init {
         viewModelScope.launch {
-            val cached = screenCacheSource.getWalletScreen(wallet) ?: return@launch
+            val cached = screenCacheSource.getWalletScreen(wallet) ?: listOf(Item.Skeleton(true))
             _uiItemsFlow.value = cached
         }
 

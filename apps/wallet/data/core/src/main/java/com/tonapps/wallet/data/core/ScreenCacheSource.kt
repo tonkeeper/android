@@ -38,8 +38,8 @@ class ScreenCacheSource(
     ): ByteArray {
         try {
             val file = getFile(name, walletId)
-            if (!file.exists() || file.length() == 0L) {
-                throw IllegalStateException("File not found: ${file.absolutePath}")
+            if (!file.exists() || file.length() == 0L || !file.canRead()) {
+                return byteArrayOf()
             }
             return file.readBytes()
         } catch (e: Throwable) {

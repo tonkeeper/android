@@ -1,5 +1,6 @@
 package com.tonapps.security
 
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -10,6 +11,7 @@ import android.os.Build
 import android.provider.Settings
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.security.keystore.UserNotAuthenticatedException
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
@@ -42,18 +44,31 @@ object Security {
 
     @Synchronized
     fun pref(context: Context, keyAlias: String, name: String): SharedPreferences {
-        Log.d("SecurityPrefLog", "pref: $keyAlias")
-        KeyHelper.createIfNotExists(keyAlias)
+        try {
+            KeyHelper.createIfNotExists(keyAlias)
 
-        return EncryptedSharedPreferences.create(
-            name,
-            keyAlias,
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+            return EncryptedSharedPreferences.create(
+                name,
+                keyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: UserNotAuthenticatedException) {
+            openUserAuthentication(context)
+            throw e
+        } catch (e: Throwable) {
+            throw e
+        }
+    }
 
-        // UserNotAuthenticatedException
+    private fun openUserAuthentication(context: Context) {
+        try {
+            val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            val intent = keyguardManager.createConfirmDeviceCredentialIntent("Tonkeeper", "Auth") ?: return
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (ignored: Throwable) { }
     }
 
     fun generatePrivateKey(keySize: Int): SecretKey {

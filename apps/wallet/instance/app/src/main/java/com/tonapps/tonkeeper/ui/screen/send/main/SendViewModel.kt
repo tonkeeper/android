@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.contract.WalletFeature
@@ -939,7 +940,7 @@ class SendViewModel(
         _uiEventFlow.tryEmit(SendEvent.Loading)
         Triple(boc, transfer.wallet, internalMessage)
     }.catch {
-        FirebaseCrashlytics.getInstance().recordException(it)
+        FirebaseCrashlytics.getInstance().recordException(Throwable("SendViewModel sign failed", it))
         if (it !is CancellationException) {
             _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }

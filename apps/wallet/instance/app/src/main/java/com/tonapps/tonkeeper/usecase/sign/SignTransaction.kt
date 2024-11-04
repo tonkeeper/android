@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.usecase.sign
 
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.ledger.ton.Transaction
@@ -111,7 +112,7 @@ class SignTransaction(
         if (!isValidPasscode) {
             throw SendException.WrongPasscode()
         }
-        val privateKey = accountRepository.getPrivateKey(wallet.id)
+        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw SendException.UnableSendTransaction()
         val hash = privateKey.sign(unsignedBody.hash())
         BitString(hash)
     }

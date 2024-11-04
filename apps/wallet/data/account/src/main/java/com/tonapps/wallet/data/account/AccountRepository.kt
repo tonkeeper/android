@@ -226,9 +226,9 @@ class AccountRepository(
         return vaultSource.getMnemonic(wallet.publicKey)
     }
 
-    suspend fun getPrivateKey(id: String): PrivateKeyEd25519 {
-        val wallet = database.getAccount(id) ?: return EmptyPrivateKeyEd25519.invoke()
-        return vaultSource.getPrivateKey(wallet.publicKey) ?: EmptyPrivateKeyEd25519.invoke()
+    suspend fun getPrivateKey(id: String): PrivateKeyEd25519? {
+        val wallet = database.getAccount(id) ?: return null
+        return vaultSource.getPrivateKey(wallet.publicKey)
     }
 
     suspend fun pairLedger(
@@ -367,7 +367,7 @@ class AccountRepository(
         }
     }
 
-    private fun createTonProofToken(wallet: WalletEntity): String? {
+    private suspend fun createTonProofToken(wallet: WalletEntity): String? {
         val payload = api.tonconnectPayload() ?: return null
         return try {
             val publicKey = wallet.publicKey

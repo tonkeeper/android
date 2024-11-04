@@ -62,6 +62,7 @@ class PasscodeManager(
                 rnLegacy.hasPinCode()
             }
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             false
         }
     }
@@ -185,12 +186,29 @@ class PasscodeManager(
     private suspend fun confirmationMigration(
         context: Context,
     ): Boolean = withContext(Dispatchers.Main) {
-        try {
-            val passcode = if (settingsRepository.biometric) {
+        val passcodeByBiometric: String? = try {
+            if (settingsRepository.biometric) {
                 rnLegacy.exportPasscodeWithBiometry()
             } else {
-                PasscodeDialog.request(context)
+                null
             }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            null
+        }
+
+        val passcodeByDialog: String? = try {
+            if (passcodeByBiometric.isNullOrEmpty()) {
+                PasscodeDialog.request(context)
+            } else {
+                null
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            null
+        }
+        try {
+            val passcode = passcodeByBiometric ?: passcodeByDialog
             if (passcode.isNullOrBlank()) {
                 throw Exception("failed to request passcode")
             }

@@ -168,7 +168,7 @@ class HistoryHelper(
         }
         it
     }.map { wallet ->
-        val privateKey = accountRepository.getPrivateKey(wallet.id)
+        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw Exception("Private key not found")
         val decrypted = CommentEncryption.decryptComment(
             wallet.publicKey,
             privateKey,

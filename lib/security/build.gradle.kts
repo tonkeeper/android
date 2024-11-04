@@ -40,6 +40,9 @@ android {
 }
 
 dependencies {
+    api(platform(Dependence.Firebase.bom))
+    api(Dependence.Firebase.crashlytics)
+
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.AndroidX.security)
     implementation(project(Dependence.Lib.extensions))

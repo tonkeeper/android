@@ -23,6 +23,9 @@ android {
 }
 
 dependencies {
+    api(platform(Dependence.Firebase.bom))
+    api(Dependence.Firebase.crashlytics)
+
     api(Dependence.TON.tvm)
     api(Dependence.TON.crypto)
     api(Dependence.TON.tlb)

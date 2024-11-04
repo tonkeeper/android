@@ -66,7 +66,7 @@ class MainRecyclerView @JvmOverloads constructor(
     }
 
     override fun dispatchDraw(canvas: Canvas) {
-        if (topBlur == null) {
+        if (topBlur == null || !topBlur.hasBlur) {
             super.dispatchDraw(canvas)
         } else {
             topBlur.draw(canvas) {
@@ -76,7 +76,7 @@ class MainRecyclerView @JvmOverloads constructor(
     }
 
     override fun draw(canvas: Canvas) {
-        if (bottomBlur == null) {
+        if (bottomBlur == null || !bottomBlur.hasBlur) {
             super.draw(canvas)
         } else {
             bottomBlur.draw(canvas) {

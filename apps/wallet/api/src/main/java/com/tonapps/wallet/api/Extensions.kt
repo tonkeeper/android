@@ -47,11 +47,11 @@ fun <R> withRetry(
             return null
         } catch (e: Throwable) {
             val statusCode = e.getHttpStatusCode()
-            if (statusCode == 429) {
+            if (statusCode == 429 || statusCode == 401 || statusCode == 502) {
                 SystemClock.sleep(delay)
                 continue
             }
-            if (statusCode >= 500 || statusCode == 404) {
+            if (statusCode >= 500 || statusCode == 404 || statusCode == 400) {
                 return null
             }
             FirebaseCrashlytics.getInstance().recordException(e)

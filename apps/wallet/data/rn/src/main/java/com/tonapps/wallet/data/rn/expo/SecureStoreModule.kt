@@ -249,7 +249,7 @@ internal class SecureStoreModule(
         return keyStoreEntryClass.cast(entry)
     }
 
-    private fun <E : KeyStore.Entry> getKeyEntry(
+    private suspend fun <E : KeyStore.Entry> getKeyEntry(
         keyStoreEntryClass: Class<E>,
         encryptor: KeyBasedEncryptor<E>,
         options: SecureStoreOptions,
@@ -273,7 +273,7 @@ internal class SecureStoreModule(
         return keyStoreEntry
     }
 
-    private fun <E : KeyStore.Entry> getPreferredKeyEntry(
+    private suspend fun <E : KeyStore.Entry> getPreferredKeyEntry(
         keyStoreEntryClass: Class<E>,
         encryptor: KeyBasedEncryptor<E>,
         options: SecureStoreOptions,

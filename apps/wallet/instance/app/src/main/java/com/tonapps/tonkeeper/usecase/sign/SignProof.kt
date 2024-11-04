@@ -91,9 +91,11 @@ class SignProof(
             throw CancellationException("Passcode cancelled")
         }
 
+        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw Throwable("Private key not found")
+
         return TONProof.sign(
             address = wallet.contract.address,
-            secretKey = accountRepository.getPrivateKey(wallet.id),
+            secretKey = privateKey,
             payload = payload,
             domain = domain
         )

@@ -3,9 +3,7 @@ package com.tonapps.blockchain.ton.extensions
 import android.content.SharedPreferences
 import android.util.Base64
 import android.util.Log
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.base64.decodeBase64
-import io.ktor.util.decodeBase64Bytes
+import com.tonapps.base64.fixBase64
 import org.ton.api.pk.PrivateKeyEd25519
 
 fun SharedPreferences.getPrivateKey(key: String): PrivateKeyEd25519? {
@@ -13,34 +11,22 @@ fun SharedPreferences.getPrivateKey(key: String): PrivateKeyEd25519? {
     if (base64.isNullOrEmpty()) {
         return null
     }
-    return decodePrivateKey2(key) ?: decodePrivateKey1(key) ?: decodePrivateKey3(key)
+    return decodePrivateKey(base64)
 }
 
-// Bad hack to decode private key....
+fun decodePrivateKey(base64: String): PrivateKeyEd25519? {
+    return decodePrivateKey1(base64) ?: decodePrivateKey2(base64)
+}
 
 private fun decodePrivateKey1(base64: String): PrivateKeyEd25519? {
-    try {
-        return PrivateKeyEd25519(base64.decodeBase64())
+    return try {
+        PrivateKeyEd25519(Base64.decode(base64, Base64.DEFAULT))
     } catch (e: Throwable) {
-        FirebaseCrashlytics.getInstance().recordException(e)
-        return null
+        null
     }
 }
 
+// Sometime we need to decode base64 string with fix padding
 private fun decodePrivateKey2(base64: String): PrivateKeyEd25519? {
-    try {
-        return PrivateKeyEd25519(Base64.decode(base64, Base64.DEFAULT))
-    } catch (e: Throwable) {
-        FirebaseCrashlytics.getInstance().recordException(e)
-        return null
-    }
-}
-
-private fun decodePrivateKey3(base64: String): PrivateKeyEd25519? {
-    try {
-        return PrivateKeyEd25519(base64.decodeBase64Bytes())
-    } catch (e: Throwable) {
-        FirebaseCrashlytics.getInstance().recordException(e)
-        return null
-    }
+    return decodePrivateKey1(base64.fixBase64())
 }

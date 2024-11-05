@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
@@ -68,6 +70,15 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
         searchInput = view.findViewById(R.id.search_input)
         searchInput.doAfterTextChanged { viewModel.query(it.toString()) }
+        searchInput.onEditorAction(EditorInfo.IME_ACTION_DONE)
+        searchInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                inputDone()
+                true
+            } else {
+                false
+            }
+        }
         contentView = view.findViewById(R.id.content)
 
         view.findViewById<View>(R.id.search_icon).setOnClickListener { searchInput.hideKeyboard() }
@@ -81,6 +92,13 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
             submitList(it)
             placeholderView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
         }
+    }
+
+    private fun inputDone() {
+        BrowserSearchViewModel.parseIfUrl(searchInput.text.toString())?.let {
+            navigation?.add(DAppScreen.newInstance(wallet, url = it))
+        }
+        searchInput.hideKeyboard()
     }
 
     private fun finishAfterHideKeyboard() {

@@ -20,6 +20,7 @@ import com.tonapps.tonkeeper.ui.screen.dev.DevViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
+import com.tonapps.tonkeeper.ui.screen.migration.MigrationViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
 import com.tonapps.tonkeeper.ui.screen.name.base.NameViewModel
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
@@ -67,6 +68,7 @@ val koinModel = module {
     viewModelOf(::SecurityViewModel)
     viewModelOf(::BrowserMainViewModel)
     viewModelOf(::BrowserSearchViewModel)
+    viewModelOf(::MigrationViewModel)
 
     viewModelOf(::NameViewModel)
     viewModelOf(::InitViewModel)

@@ -115,11 +115,25 @@ internal class RNSeedStorage(context: Context) {
     private suspend fun readState(): SeedState? {
         val chunks = kv.getItemImpl("${walletsKey}_chunks")?.toIntOrNull() ?: 0
         if (0 >= chunks) {
-            return null
+            return readStateLegacy()
         }
         var encryptedString = ""
         for (i in 0 until chunks) {
             val chunk = kv.getItemImpl("${walletsKey}_chunk_$i") ?: throw Exception("Chunk $i is null")
+            encryptedString += chunk
+        }
+        val json = JSONObject(encryptedString)
+        return SeedState(json)
+    }
+
+    private suspend fun readStateLegacy(): SeedState? {
+        val chunks = kv.getItemImpl("key_v1-${walletsKey}_chunks")?.toIntOrNull() ?: 0
+        if (0 >= chunks) {
+            return null
+        }
+        var encryptedString = ""
+        for (i in 0 until chunks) {
+            val chunk = kv.getItemImpl("key_v1-${walletsKey}_chunk_$i") ?: throw Exception("Chunk $i is null")
             encryptedString += chunk
         }
         val json = JSONObject(encryptedString)
@@ -136,11 +150,25 @@ internal class RNSeedStorage(context: Context) {
     private suspend fun readStateWithThrow(): SeedState {
         val chunks = kv.getItemImpl("${walletsKey}_chunks")?.toIntOrNull() ?: 0
         if (0 >= chunks) {
-            throw RNException.EmptyChunks
+            return readStateLegacyWithThrow()
         }
         val builder = StringBuilder()
         for (i in 0 until chunks) {
             val chunk = kv.getItemImpl("${walletsKey}_chunk_$i") ?: throw RNException.NotFoundChunk(i)
+            builder.append(chunk)
+        }
+        val json = JSONObject(builder.toString())
+        return SeedState(json)
+    }
+
+    private suspend fun readStateLegacyWithThrow(): SeedState {
+        val chunks = kv.getItemImpl("key_v1-${walletsKey}_chunks")?.toIntOrNull() ?: 0
+        if (0 >= chunks) {
+            throw RNException.EmptyChunks
+        }
+        val builder = StringBuilder()
+        for (i in 0 until chunks) {
+            val chunk = kv.getItemImpl("key_v1-${walletsKey}_chunk_$i") ?: throw RNException.NotFoundChunk(i)
             builder.append(chunk)
         }
         val json = JSONObject(builder.toString())

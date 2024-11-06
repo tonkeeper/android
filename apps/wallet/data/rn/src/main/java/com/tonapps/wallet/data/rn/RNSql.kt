@@ -10,6 +10,7 @@ import com.tonapps.sqlite.SQLiteHelper
 import org.json.JSONArray
 import org.json.JSONObject
 import android.database.CursorWindow
+import com.tonapps.extensions.asJSON
 
 internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DATABASE_VERSION) {
 
@@ -80,7 +81,7 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
     fun getJSONObject(key: String): JSONObject? {
         val string = getValue(key) ?: return null
         return try {
-            JSONObject(string)
+            string.asJSON()
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             null

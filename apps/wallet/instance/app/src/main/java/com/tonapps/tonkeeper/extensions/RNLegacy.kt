@@ -17,7 +17,7 @@ suspend fun RNLegacy.requestVault(
         throw IllegalStateException("No wallets found")
     }
     val passcode = requestPasscode(activity, wallets)
-    getVaultStateWithThrow(passcode)
+    getVaultState(passcode)
 }
 
 private suspend fun RNLegacy.requestPasscode(

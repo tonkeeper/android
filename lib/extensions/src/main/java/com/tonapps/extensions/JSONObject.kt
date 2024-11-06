@@ -2,6 +2,14 @@ package com.tonapps.extensions
 
 import org.json.JSONObject
 
+fun String.asJSON(): JSONObject {
+    return try {
+        JSONObject(this)
+    } catch (e: Exception) {
+        JSONObject(fixJson())
+    }
+}
+
 fun JSONObject.optStringCompat(vararg keys: String): String? {
     for (key in keys) {
         val value = optString(key)

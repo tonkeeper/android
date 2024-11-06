@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.dapps.entities
 import android.net.Uri
 import android.os.Parcelable
 import android.util.Base64
+import com.tonapps.extensions.asJSON
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.Sodium
 import com.tonapps.security.hex
@@ -65,6 +66,6 @@ data class AppConnectEntity(
         val bytes = Base64.decode(message, Base64.NO_WRAP)
         val decrypted = decryptMessage(bytes)
         val string = decrypted.toString(Charsets.UTF_8)
-        return JSONObject(string)
+        return string.asJSON()
     }
 }

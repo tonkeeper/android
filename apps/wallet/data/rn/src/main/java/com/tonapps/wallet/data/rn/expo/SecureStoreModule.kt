@@ -6,6 +6,7 @@ import android.preference.PreferenceManager
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.tonapps.extensions.asJSON
 import com.tonapps.wallet.data.rn.expo.encryptors.AESEncryptor
 import com.tonapps.wallet.data.rn.expo.encryptors.HybridAESEncryptor
 import com.tonapps.wallet.data.rn.expo.encryptors.KeyBasedEncryptor
@@ -71,7 +72,7 @@ internal class SecureStoreModule(
         encryptedItemString ?: return null
 
         val encryptedItem: JSONObject = try {
-            JSONObject(encryptedItemString)
+            encryptedItemString.asJSON()
         } catch (e: JSONException) {
             throw DecryptException("Could not parse the encrypted JSON item in SecureStore: ${e.message}", key, options.keychainService, e)
         }
@@ -210,7 +211,7 @@ internal class SecureStoreModule(
         for ((key: String, value) in allEntries) {
             val valueString = value as? String ?: continue
             val jsonEntry = try {
-                JSONObject(valueString)
+                valueString.asJSON()
             } catch (e: JSONException) {
                 continue
             }

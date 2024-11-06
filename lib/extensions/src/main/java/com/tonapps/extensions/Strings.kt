@@ -87,4 +87,54 @@ fun String.toUriOrNull(): Uri? {
     }
 }
 
+fun String.fixJson(): String {
+    val result = StringBuilder()
+    var inValue = false
+    var i = 0
+
+    while (i < length) {
+        when (val c = this[i]) {
+            '"' -> {
+                if (i > 0 && this[i - 1] == '\\') {
+                    result.append(c)
+                } else if (!inValue && i + 1 < length && this[i + 1] == '{') {
+                    inValue = true
+                    result.append(c)
+                } else if (inValue && i + 1 < length && this[i + 1] == '}') {
+                    inValue = false
+                    result.append(c)
+                } else if (inValue) {
+                    result.append("\\\"")
+                } else {
+                    result.append(c)
+                }
+            }
+            '\\' -> {
+                if (inValue && i + 1 < length && this[i + 1] != '"') {
+                    result.append("\\\\")
+                } else {
+                    result.append(c)
+                }
+            }
+            '{' -> {
+                if (i > 0 && this[i - 1] == '"') {
+                    result.append(c)
+                    inValue = true
+                } else {
+                    result.append(c)
+                }
+            }
+            '}' -> {
+                result.append(c)
+                if (i + 1 < length && this[i + 1] == '"') {
+                    inValue = false
+                }
+            }
+            else -> result.append(c)
+        }
+        i++
+    }
+
+    return result.toString()
+}
 

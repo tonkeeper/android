@@ -16,14 +16,16 @@ sealed class AssetsEntity(
         suspend fun List<AssetsEntity>.sort(
             wallet: WalletEntity,
             settingsRepository: SettingsRepository
-        ) = map { asset ->
-            val pref = if (asset is Token) {
-                settingsRepository.getTokenPrefs(wallet.id, asset.token.address, asset.token.blacklist)
-            } else {
-                TokenPrefsEntity()
-            }
-            AssetsExtendedEntity(asset, pref, wallet.accountId)
-        }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator).map { it.raw }
+        ): List<AssetsEntity> {
+            return map { asset ->
+                val pref = if (asset is Token) {
+                    settingsRepository.getTokenPrefs(wallet.id, asset.token.address, asset.token.blacklist)
+                } else {
+                    TokenPrefsEntity()
+                }
+                AssetsExtendedEntity(asset, pref, wallet.accountId)
+            }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator).map { it.raw }
+        }
     }
 
     data class Staked(val staked: StakedEntity): AssetsEntity(staked.fiatBalance) {

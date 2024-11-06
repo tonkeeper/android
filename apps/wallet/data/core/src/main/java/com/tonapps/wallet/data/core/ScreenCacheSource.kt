@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.file
 import com.tonapps.extensions.folder
@@ -35,11 +36,16 @@ class ScreenCacheSource(
         name: String,
         walletId: String,
     ): ByteArray {
-        val file = getFile(name, walletId)
-        if (!file.exists() || file.length() == 0L) {
-            return ByteArray(0)
+        try {
+            val file = getFile(name, walletId)
+            if (!file.exists() || file.length() == 0L || !file.canRead()) {
+                return byteArrayOf()
+            }
+            return file.readBytes()
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            return byteArrayOf()
         }
-        return file.readBytes()
     }
 
     fun set(
@@ -51,7 +57,7 @@ class ScreenCacheSource(
         if (list.isEmpty()) {
             file.delete()
         } else {
-            val maxListSize = min(list.size, 50)
+            val maxListSize = min(list.size, 25)
             val bytes = list.subList(0, maxListSize).toByteArray()
             // val bytes = list.toByteArray()
             file.writeBytes(bytes)

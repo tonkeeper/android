@@ -1,11 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +24,7 @@ import uikit.drawable.FooterDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.focusWithKeyboard
+import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.hideKeyboard
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
@@ -58,12 +62,23 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
                 bottomMargin = offset
             }
             if (!isShowing) {
-                finish()
+                view.postDelayed({
+                    finishAfterHideKeyboard()
+                }, 300)
             }
         }
 
         searchInput = view.findViewById(R.id.search_input)
         searchInput.doAfterTextChanged { viewModel.query(it.toString()) }
+        searchInput.onEditorAction(EditorInfo.IME_ACTION_DONE)
+        searchInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                inputDone()
+                true
+            } else {
+                false
+            }
+        }
         contentView = view.findViewById(R.id.content)
 
         view.findViewById<View>(R.id.search_icon).setOnClickListener { searchInput.hideKeyboard() }
@@ -76,6 +91,23 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         collectFlow(viewModel.uiItemsFlow) {
             submitList(it)
             placeholderView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
+        }
+    }
+
+    private fun inputDone() {
+        BrowserSearchViewModel.parseIfUrl(searchInput.text.toString())?.let {
+            navigation?.add(DAppScreen.newInstance(wallet, url = it))
+        }
+        searchInput.hideKeyboard()
+    }
+
+    private fun finishAfterHideKeyboard() {
+        if (adapter.itemCount > 0) {
+            return
+        }
+        val windowInsets = searchInput.getRootWindowInsetsCompat() ?: return
+        if (!windowInsets.isVisible(WindowInsetsCompat.Type.ime())) {
+            finish()
         }
     }
 

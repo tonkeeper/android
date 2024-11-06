@@ -24,6 +24,7 @@ import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
@@ -77,7 +78,7 @@ class HistoryActionHolder(
     override fun onBind(item: HistoryItem.Event) {
         commentView.clearDrawables()
 
-        unverifiedTokenView.visibility = if (item.unverifiedToken) {
+        unverifiedTokenView.visibility = if (item.nft == null && item.unverifiedToken) {
             View.VISIBLE
         } else {
             View.GONE
@@ -210,14 +211,20 @@ class HistoryActionHolder(
             Navigation.from(context)?.add(NftScreen.newInstance(item.wallet, nft))
         }
         loadNftImage(nft.mediumUri, item.hiddenBalance)
-        if (item.hiddenBalance) {
+        if (item.unverifiedToken) {
+            nftNameView.text = if (item.hiddenBalance) HIDDEN_BALANCE else nft.name
+            nftCollectionView.text = getString(Localization.nft_unverified)
+            nftCollectionView.setTextColor(context.accentOrangeColor)
+        } else if (item.hiddenBalance) {
             nftNameView.text = HIDDEN_BALANCE
             nftCollectionView.text = HIDDEN_BALANCE
+            nftCollectionView.setTextColor(context.textSecondaryColor)
         } else {
             nftNameView.text = nft.name
             nftCollectionView.text = nft.collectionName.ifEmpty {
                 getString(Localization.unnamed_collection)
             }
+            nftCollectionView.setTextColor(context.textSecondaryColor)
         }
     }
 

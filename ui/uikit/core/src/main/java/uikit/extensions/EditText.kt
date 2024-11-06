@@ -32,11 +32,6 @@ fun EditText.focusWithKeyboard() {
     }
 }
 
-fun EditText.hideKeyboard() {
-    clearFocus()
-    getInsetsControllerCompat()?.hide(WindowInsetsCompat.Type.ime())
-}
-
 fun EditText.setCursorColor(color: Int) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         textCursorDrawable?.setTint(color)

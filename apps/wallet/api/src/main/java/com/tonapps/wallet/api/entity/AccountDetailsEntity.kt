@@ -24,9 +24,6 @@ data class AccountDetailsEntity(
     val name: String?
         get() = preview.name
 
-    val isWallet: Boolean
-        get() = preview.isWallet
-
     constructor(contract: BaseWalletContract, testnet: Boolean, new: Boolean = false) : this(
         query = "",
         preview = AccountEntity(contract.address, testnet),

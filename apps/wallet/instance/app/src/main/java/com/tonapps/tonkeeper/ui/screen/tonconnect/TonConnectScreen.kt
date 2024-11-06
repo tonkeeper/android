@@ -12,7 +12,7 @@ import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
-import com.tonapps.tonkeeper.dialog.tc.TonConnectCryptoView
+import com.tonapps.tonkeeper.ui.component.TonConnectCryptoView
 import com.tonapps.tonkeeper.extensions.debugToast
 import com.tonapps.tonkeeper.extensions.getWalletBadges
 import com.tonapps.tonkeeper.extensions.toast
@@ -124,7 +124,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     private fun connect(wallet: WalletEntity) {
         val proofPayload = args.proofPayload
         if (wallet.signer && proofPayload != null) {
-            setResponse(wallet, proofError = BridgeError.METHOD_NOT_SUPPORTED)
+            setResponse(wallet, proofError = BridgeError.methodNotSupported("SignerApp version incompatible. Installed version lacks tonProof signing capability."))
         } else if (proofPayload == null) {
             setResponse(wallet)
         } else {
@@ -160,8 +160,10 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     private fun setResponse(response: TonConnectResponse) {
         setSuccessState()
         setResult(contract.createResult(response), false)
-        returnToApp()
-        finish()
+        postDelayed(2000) {
+            returnToApp()
+            finish()
+        }
     }
 
     private fun setTaskState() {
@@ -194,16 +196,16 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     private fun returnToApp() {
         val uri = args.returnUri ?: return
         if (uri.scheme == "tg" || uri.host == "t.me") {
-            returnToTg(uri)
+            returnToTg(uri, args.fromPackageName)
         } else {
             returnToDefault(uri)
         }
     }
 
-    private fun returnToTg(uri: Uri) {
+    private fun returnToTg(uri: Uri, fromPackageName: String?) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, uri)
-            intent.setPackage("org.telegram.messenger")
+            fromPackageName?.let { intent.`package` = it }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         } catch (e: Exception) {
@@ -296,10 +298,11 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             app: AppEntity,
             proofPayload: String?,
             returnUri: Uri?,
-            wallet: WalletEntity?
+            wallet: WalletEntity?,
+            fromPackageName: String?
         ): TonConnectScreen {
             val fragment = TonConnectScreen()
-            fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri, wallet))
+            fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri, wallet, fromPackageName))
             return fragment
         }
     }

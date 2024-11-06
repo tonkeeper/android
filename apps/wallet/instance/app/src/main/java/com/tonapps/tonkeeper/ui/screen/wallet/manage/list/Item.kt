@@ -31,6 +31,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val pinned: Boolean,
         val hidden: Boolean,
         val hiddenBalance: Boolean,
+        val verified: Boolean,
+        val blacklist: Boolean,
     ): Item(TYPE_TOKEN) {
 
         constructor(
@@ -46,7 +48,9 @@ sealed class Item(type: Int): BaseListItem(type) {
             balanceFormat = CurrencyFormatter.format(token.symbol, token.balance.value),
             pinned = token.pinned,
             hidden = token.hidden,
-            hiddenBalance = hiddenBalance
+            hiddenBalance = hiddenBalance,
+            verified = token.verified,
+            blacklist = token.blacklist,
         )
     }
 

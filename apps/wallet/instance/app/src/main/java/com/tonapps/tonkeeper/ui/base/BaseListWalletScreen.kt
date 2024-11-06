@@ -24,6 +24,8 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
     screenContext = screenContext
 ) {
 
+    open val hasApplyWindowInsets = true
+
     protected lateinit var headerContainer: FrameLayout
     protected lateinit var headerView: HeaderView
     protected lateinit var listView: SimpleRecyclerView
@@ -49,7 +51,9 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
             headerView.ignoreSystemOffset = false
         }
 
-        listView.applyNavBottomPadding(listView.paddingBottom)
+        if (hasApplyWindowInsets) {
+            listView.applyNavBottomPadding(listView.paddingBottom)
+        }
         collectFlow(listView.topScrolled, headerView::setDivider)
     }
 

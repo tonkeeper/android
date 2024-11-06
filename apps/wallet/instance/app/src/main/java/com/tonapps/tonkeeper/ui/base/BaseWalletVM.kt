@@ -10,8 +10,10 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.isUIThread
+import com.tonapps.tonkeeper.extensions.loading
 import com.tonapps.tonkeeper.extensions.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -81,12 +83,8 @@ abstract class BaseWalletVM(
     }
 
     @UiThread
-    fun finish() {
-        if (isUIThread) {
-            holder?.finish()
-        } else {
-            throw IllegalStateException("finish() must be called from UI thread")
-        }
+    suspend fun finish() = withContext(Dispatchers.Main) {
+        holder?.finish()
     }
 
     suspend fun toast(@StringRes resId: Int) = withContext(Dispatchers.Main) {
@@ -97,7 +95,15 @@ abstract class BaseWalletVM(
         context.showToast(text)
     }
 
+    suspend fun loading(loading: Boolean) = withContext(Dispatchers.Main) {
+        context.loading(loading)
+    }
+
     suspend fun openScreen(screen: BaseFragment) = withContext(Dispatchers.Main) {
-        navigation?.add(screen)
+        try {
+            navigation?.add(screen)
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
     }
 }

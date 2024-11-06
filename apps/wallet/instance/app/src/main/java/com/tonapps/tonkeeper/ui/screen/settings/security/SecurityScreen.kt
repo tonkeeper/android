@@ -25,6 +25,8 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
     private lateinit var biometricView: ItemSwitchView
     private lateinit var lockScreenView: ItemSwitchView
     private lateinit var changePasscodeView: ItemIconView
+    private lateinit var verifiedNFTsView: ItemSwitchView
+    private lateinit var verifiedTokenView: ItemSwitchView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -58,6 +60,22 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
 
         changePasscodeView = view.findViewById(R.id.change_passcode)
         changePasscodeView.setOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }
+
+        verifiedNFTsView = view.findViewById(R.id.verified_nfts)
+        verifiedNFTsView.setChecked(viewModel.onlyVerifyNFTs, false)
+        verifiedNFTsView.doOnCheckedChanged = { checked, byUser ->
+            if (byUser) {
+                viewModel.onlyVerifyNFTs = checked
+            }
+        }
+
+        verifiedTokenView = view.findViewById(R.id.verified_token)
+        verifiedTokenView.setChecked(viewModel.onlyVerifyTokens, false)
+        verifiedTokenView.doOnCheckedChanged = { checked, byUser ->
+            if (byUser) {
+                viewModel.onlyVerifyTokens = checked
+            }
+        }
     }
 
     private fun enableBiometric(value: Boolean) {

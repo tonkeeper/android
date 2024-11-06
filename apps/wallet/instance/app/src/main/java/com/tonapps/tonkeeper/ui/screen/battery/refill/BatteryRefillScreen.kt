@@ -18,15 +18,11 @@ import uikit.extensions.getDimensionPixelSize
 
 class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, BatteryScreen, BatteryViewModel>(ScreenContext.Wallet(wallet)) {
 
-    private val initialPromo: String? by lazy { requireArguments().getString(ARG_PROMO) }
-
-    override val viewModel: BatteryRefillViewModel by walletViewModel {
-        parametersOf(initialPromo)
-    }
+    override val viewModel: BatteryRefillViewModel by walletViewModel()
 
     private val adapter = Adapter(
         openSettings = { primaryViewModel.routeToSettings() },
-        onSubmitPromo = { viewModel.applyPromo(it) },
+        onSubmitPromo = { viewModel.submitPromo(it) },
         onPackSelect = { viewModel.makePurchase(it, requireActivity()) },
         onRestorePurchases = { viewModel.restorePurchases() }
     )
@@ -41,8 +37,8 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
         setHeaderBackground(R.drawable.bg_page_gradient)
         setActionIcon(UIKitIcon.ic_close_16) { finish() }
         setAdapter(adapter)
-        if (initialPromo != null) {
-            viewModel.applyPromo(initialPromo!!, true)
+        arguments?.getString(ARG_PROMO)?.let {
+            viewModel.applyPromo(it)
         }
     }
 

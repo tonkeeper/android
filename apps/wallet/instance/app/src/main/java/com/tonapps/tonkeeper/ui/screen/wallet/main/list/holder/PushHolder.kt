@@ -25,7 +25,7 @@ class PushHolder(parent: ViewGroup): Holder<Item.Push>(parent, R.layout.view_wal
     }
 
     override fun onBind(item: Item.Push) {
-        textView.text = item.text
+        textView.text = item.textLine
         setIcons(item.iconUris)
     }
 

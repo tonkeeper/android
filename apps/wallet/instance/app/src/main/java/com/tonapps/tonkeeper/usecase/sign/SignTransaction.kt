@@ -1,5 +1,7 @@
 package com.tonapps.tonkeeper.usecase.sign
 
+import android.util.Log
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.signer.SignerHelper
@@ -11,6 +13,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,7 +27,8 @@ import java.util.concurrent.CancellationException
 
 class SignTransaction(
     private val accountRepository: AccountRepository,
-    private val passcodeManager: PasscodeManager
+    private val passcodeManager: PasscodeManager,
+    private val rnLegacy: RNLegacy,
 ) {
 
     suspend fun ledger(
@@ -110,8 +114,8 @@ class SignTransaction(
         if (!isValidPasscode) {
             throw SendException.WrongPasscode()
         }
-        val privateKey = accountRepository.getPrivateKey(wallet.id)
-        val hash = hex(privateKey.sign(unsignedBody.hash()))
+        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw SendException.UnableSendTransaction()
+        val hash = privateKey.sign(unsignedBody.hash())
         BitString(hash)
     }
 }

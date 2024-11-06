@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.screen.collectibles.list.Adapter
@@ -30,6 +31,7 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
     private val adapter = Adapter()
 
     private lateinit var headerView: HeaderView
+    private lateinit var refreshView: SwipeRefreshLayout
     private lateinit var listView: RecyclerView
     private lateinit var emptyView: EmptyLayout
 
@@ -38,6 +40,9 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.collectibles)
         headerView.setColor(requireContext().backgroundTransparentColor)
+
+        refreshView = view.findViewById(R.id.refresh)
+        refreshView.setOnRefreshListener { viewModel.refresh() }
 
         listView = view.findViewById(R.id.list)
         listView.updatePadding(top = 0)
@@ -54,13 +59,16 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
                 adapter.applySkeleton()
                 headerView.setSubtitle(Localization.updating)
             } else if (state is UiListState.Empty) {
+                refreshView.isRefreshing = false
                 setEmptyState()
                 headerView.setSubtitle(null)
             } else if (state is UiListState.Items) {
                 setListState()
-                adapter.submitList(state.items)
-                if (!state.cache) {
-                    headerView.setSubtitle(null)
+                adapter.submitList(state.items) {
+                    if (!state.cache) {
+                        headerView.setSubtitle(null)
+                        refreshView.isRefreshing = false
+                    }
                 }
             }
         }
@@ -93,9 +101,9 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
         return null
     }
 
-    override fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner? {
+    override fun getTopBarDrawable(): BarDrawable? {
         if (this::headerView.isInitialized) {
-            return headerView
+            return headerView.background as? BarDrawable
         }
         return null
     }

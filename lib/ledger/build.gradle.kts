@@ -23,7 +23,12 @@ android {
 }
 
 dependencies {
-    api(Dependence.ton)
+    api(Dependence.TON.tvm)
+    api(Dependence.TON.crypto)
+    api(Dependence.TON.tlb)
+    api(Dependence.TON.blockTlb)
+    api(Dependence.TON.tonapiTl)
+    api(Dependence.TON.contract)
     implementation(Dependence.AndroidX.core)
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.LedgerHQ.bleManager)

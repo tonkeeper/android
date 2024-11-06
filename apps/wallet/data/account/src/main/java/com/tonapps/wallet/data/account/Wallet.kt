@@ -39,4 +39,17 @@ sealed class Wallet {
             }
     }
 
+
+    data class NewLabel(
+        val names: List<String>,
+        val emoji: CharSequence,
+        val color: Int
+    ) {
+
+        fun create(index: Int): Label {
+            val name = names.getOrNull(index) ?: "Wallet"
+            return Label(name, emoji, color)
+        }
+    }
+
 }

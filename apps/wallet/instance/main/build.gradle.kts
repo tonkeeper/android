@@ -24,7 +24,7 @@ android {
         targetSdk = 34
         versionCode = 600
 
-        versionName = "5.0.0"
+        versionName = "5.0.12" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,6 +56,7 @@ android {
     experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -77,6 +78,7 @@ baselineProfile {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
     implementation(project(Dependence.Wallet.app))
 
     testImplementation("junit:junit:4.13.2")
@@ -87,4 +89,6 @@ dependencies {
 
     implementation(Dependence.AndroidX.profileinstaller)
     baselineProfile(project(":baselineprofile:main"))
+
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 }

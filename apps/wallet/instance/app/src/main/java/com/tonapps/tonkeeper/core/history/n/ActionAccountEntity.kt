@@ -2,9 +2,8 @@ package com.tonapps.tonkeeper.core.history.n
 
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.extensions.ifPunycodeToUnicode
-import com.tonapps.tonkeeper.core.history.recipient
-import com.tonapps.tonkeeper.core.history.sender
+import com.tonapps.wallet.data.events.recipient
+import com.tonapps.wallet.data.events.sender
 import io.tonapi.models.AccountAddress
 import kotlinx.parcelize.Parcelize
 
@@ -22,7 +21,7 @@ data class ActionAccountEntity(
             wallet = account.isWallet,
             testnet = testnet,
         ),
-        name = account.name?.ifPunycodeToUnicode(),
+        name = account.name,
         isWallet = account.isWallet,
         icon = account.icon,
         isScam = account.isScam

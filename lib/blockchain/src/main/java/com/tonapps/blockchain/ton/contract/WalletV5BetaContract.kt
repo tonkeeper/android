@@ -1,6 +1,7 @@
 package com.tonapps.blockchain.ton.contract
 
 import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.storeBuilder
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeSeqAndValidUntil
@@ -8,13 +9,11 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
 import org.ton.bitstring.BitString
 import org.ton.block.MessageRelaxed
-import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellSlice
 import org.ton.cell.buildCell
 import org.ton.contract.wallet.WalletTransfer
-import org.ton.crypto.base64
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
@@ -36,7 +35,7 @@ class WalletV5BetaContract(
         return CellBuilder.createCell {
             storeUInt(0, 33)
             storeSlice(storeWalletId())
-            storeBits(publicKey.key)
+            storeBytes(publicKey.key.toByteArray())
             storeBit(false)
         }
     }
@@ -116,8 +115,7 @@ class WalletV5BetaContract(
     companion object {
 
         @JvmField
-        val CODE =
-            BagOfCells(base64("te6cckEBAQEAIwAIQgLkzzsvTG1qYeoPK1RH0mZ4WyavNjfbLe7mvNGqgm80Eg3NjhE=")).first()
+        val CODE = "te6cckEBAQEAIwAIQgLkzzsvTG1qYeoPK1RH0mZ4WyavNjfbLe7mvNGqgm80Eg3NjhE=".cellFromBase64()
     }
 
 }

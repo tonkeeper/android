@@ -7,7 +7,7 @@ import androidx.test.uiautomator.Until
 fun MacrobenchmarkScope.createWalletAction() {
     click("import_wallet")
 
-    clickListItem("list", 0)
+    clickListItem("list", 1, 1000)
 
     // Enter seed phrase
     setText("word_1", "donkey caught shift recipe husband wide number enough oil number head addict color speak canal rent dry believe shine category prevent math avocado dumb")
@@ -17,14 +17,16 @@ fun MacrobenchmarkScope.createWalletAction() {
         setText("word_24", "")
         sleep(100)
         setText("word_24", "dumb")
-        click("button", 1000)
+        click("button", 2000)
     }
 
     // Click button on select wallets screen
-    click("button", 2000)
+    click("button", 5000)
 
     // Set pin code
     crossPinScreen()
+
+    sleep(5000)
 
     // Repeat pin code
     crossPinScreen()
@@ -36,7 +38,7 @@ fun MacrobenchmarkScope.createWalletAction() {
     clickListItem("label_color_picker", 2, 500)
 
     // Set wallet icon
-    clickListItem("label_emoji_picker", 2)
+    clickListItem("label_emoji_picker", 2, 500)
 
     // Save wallet label
     click("label_button")
@@ -47,8 +49,8 @@ private fun MacrobenchmarkScope.crossPinScreen() {
     device.wait(Until.hasObject(pinButtonSelector), 5_000)
     val pinButton = device.findObject(pinButtonSelector)
     repeat(4) {
+        sleep(300)
         pinButton.click()
-        sleep(100)
     }
-    sleep(300)
+    sleep(1000)
 }

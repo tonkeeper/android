@@ -50,14 +50,18 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
 
         private val scrollListener = object : RecyclerVerticalScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, verticalScrollOffset: Int) {
-                getHeaderDividerOwner()?.setDivider(verticalScrollOffset > 0)
-                mainViewModel.setBottomScrolled(!recyclerView.isMaxScrollReached)
+                recyclerView.postOnAnimation {
+                    if (recyclerView.isAttachedToWindow) {
+                        getTopBarDrawable()?.setDivider(verticalScrollOffset > 0)
+                        mainViewModel.setBottomScrolled(!recyclerView.isMaxScrollReached)
+                    }
+                }
             }
         }
 
         abstract fun getRecyclerView(): RecyclerView?
 
-        abstract fun getHeaderDividerOwner(): BarDrawable.BarDrawableOwner?
+        abstract fun getTopBarDrawable(): BarDrawable?
 
         open fun scrollUp() {
             getRecyclerView()?.scrollToPosition(0)
@@ -111,7 +115,13 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 navigation?.add(PickerScreen.newInstance())
             }
         }
-        collectFlow(viewModel.childBottomScrolled, bottomTabsView::setDivider)
+        collectFlow(viewModel.childBottomScrolled) {
+            if (bottomTabsView.selectedItemId == R.id.browser) {
+                bottomTabsView.setDivider(false)
+            } else {
+                bottomTabsView.setDivider(it)
+            }
+        }
 
         rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().onEach {
             val itemId = mainDeepLinks[it.link] ?: return@onEach
@@ -177,6 +187,10 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     }
 
     private fun setFragment(fragment: Fragment, forceScrollUp: Boolean) {
+        if (childFragmentManager.isStateSaved) {
+            return
+        }
+
         if (fragment.isAdded && !fragment.isHidden) {
             (fragment as? Child)?.scrollUp()
             return
@@ -194,7 +208,16 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         } else {
             transaction.add(R.id.child_fragment, fragment)
         }
+        transaction.runOnCommit {
+            checkBottomDivider(fragment)
+        }
         transaction.commitNow()
+    }
+
+    private fun checkBottomDivider(fragment: Fragment) {
+        if (fragment is BrowserMainScreen) {
+            bottomTabsView.setDivider(false)
+        }
     }
 
     override fun onResume() {
@@ -210,10 +233,6 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             "tonkeeper://browser" to R.id.browser,
             "tonkeeper://collectibles" to R.id.collectibles
         )
-
-        fun isSupportedDeepLink(uri: String): Boolean {
-            return mainDeepLinks.containsKey(uri)
-        }
 
         fun newInstance() = MainScreen()
     }

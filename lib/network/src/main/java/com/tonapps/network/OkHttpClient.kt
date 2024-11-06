@@ -91,6 +91,9 @@ class OkHttpError(
 
     val statusCode: Int
         get() = response.code
+
+    val body: String
+        get() = response.body?.string() ?: ""
 }
 
 fun OkHttpClient.getBitmap(url: String): Bitmap {
@@ -105,7 +108,8 @@ fun OkHttpClient.sseFactory() = EventSources.createFactory(this)
 
 fun OkHttpClient.sse(
     url: String,
-    lastEventId: Long? = null
+    lastEventId: Long? = null,
+    onFailure: ((Throwable) -> Unit)?
 ): Flow<SSEvent> = callbackFlow {
     val listener = object : EventSourceListener() {
         override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
@@ -117,11 +121,7 @@ fun OkHttpClient.sse(
         }
 
         override fun onClosed(eventSource: EventSource) {
-            this@callbackFlow.close()
-        }
-
-        override fun onOpen(eventSource: EventSource, response: Response) {
-            super.onOpen(eventSource, response)
+            this@callbackFlow.close(Throwable("EventSource closed"))
         }
     }
     val builder = requestBuilder(url)
@@ -135,7 +135,8 @@ fun OkHttpClient.sse(
     val request = builder.build()
     val events = sseFactory().newEventSource(request, listener)
     awaitClose { events.cancel() }
-}.cancellable().retry { _ ->
-    delay(1000)
+}.retry { cause ->
+    onFailure?.invoke(cause)
+    delay(3000)
     true
 }.cancellable()

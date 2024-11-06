@@ -2,13 +2,13 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.publicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromBase64
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.getEnum
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.putEnum
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
-import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.ton.api.pub.PublicKeyEd25519
 import uikit.base.BaseArgs
@@ -36,13 +36,22 @@ data class InitArgs(
         private const val ARG_KEYSTONE = "keystone"
     }
 
+    private val ledgerAccountName: String?
+        get() = accounts?.firstOrNull {
+            !it.name.isNullOrBlank()
+        }?.name
+
+    private val ledgerName: String?
+        get() = ledgerConnectData?.model?.productName ?: ledgerAccountName
+
     val labelName: String?
-        get() = name ?: ledgerConnectData?.model?.productName
+        get() = name ?: ledgerName
+
 
     constructor(bundle: Bundle) : this(
         type = bundle.getEnum(ARG_TYPE, Type.New),
         name = bundle.getString(ARG_NAME),
-        publicKey = bundle.getString(ARG_PUBLIC_KEY)?.publicKey(),
+        publicKey = bundle.getString(ARG_PUBLIC_KEY)?.publicKeyFromBase64(),
         accounts = bundle.getParcelableArrayList<AccountItem>(ARG_ACCOUNTS),
         ledgerConnectData = bundle.getParcelableCompat<LedgerConnectData>(ARG_LEDGER_CONNECT_DATA),
         keystone = bundle.getParcelableCompat(ARG_KEYSTONE)

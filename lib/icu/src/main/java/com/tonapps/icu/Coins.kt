@@ -40,6 +40,13 @@ data class Coins(
             return Coins(bigDecimal, decimals)
         }
 
+        fun of(
+            value: Float,
+            decimals: Int = DEFAULT_DECIMALS
+        ): Coins {
+            return of(value.toDouble(), decimals)
+        }
+
         fun ofNano(
             value: String,
             decimals: Int = DEFAULT_DECIMALS
@@ -227,6 +234,10 @@ data class Coins(
         val multiplier = BigDecimal.TEN.pow(decimals)
         val multipliedValue = value.multiply(multiplier)
         return multipliedValue.toLong()
+    }
+
+    fun toFloat(): Float {
+        return value.toFloat()
     }
 
     fun diff(coins: Coins): Float {

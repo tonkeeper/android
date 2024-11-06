@@ -11,6 +11,12 @@ android {
     defaultConfig {
         minSdk = Build.minSdkVersion
         consumerProguardFiles("consumer-rules.pro")
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86")
+            abiFilters.add("x86_64")
+        }
     }
 
     compileOptions {
@@ -34,8 +40,12 @@ android {
 }
 
 dependencies {
+    api(platform(Dependence.Firebase.bom))
+    api(Dependence.Firebase.crashlytics)
+
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.AndroidX.security)
+    implementation(project(Dependence.Lib.extensions))
     compileOnly(fileTree("libs") {
         include("*.aar")
     })

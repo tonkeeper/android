@@ -14,7 +14,9 @@ class CollectiblesRepository(
     private val api: API
 ) {
 
-    private val localDataSource = LocalDataSource(context)
+    private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        LocalDataSource(context)
+    }
 
     fun getNft(accountId: String, testnet: Boolean, address: String): NftEntity? {
         val nft = localDataSource.getSingle(accountId, testnet, address)

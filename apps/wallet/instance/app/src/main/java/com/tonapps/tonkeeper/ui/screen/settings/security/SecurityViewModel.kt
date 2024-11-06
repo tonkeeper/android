@@ -26,6 +26,18 @@ class SecurityViewModel(
     val biometric: Boolean
         get() = settingsRepository.biometric
 
+    var onlyVerifyNFTs: Boolean
+        get() = settingsRepository.onlyVerifyNFTs
+        set(value) {
+            settingsRepository.onlyVerifyNFTs = value
+        }
+
+    var onlyVerifyTokens: Boolean
+        get() = settingsRepository.onlyVerifyTokens
+        set(value) {
+            settingsRepository.onlyVerifyTokens = value
+        }
+
     fun enableBiometric(context: Context, value: Boolean) = flow {
         if (value) {
             val code = passcodeManager.requestValidPasscode(context)

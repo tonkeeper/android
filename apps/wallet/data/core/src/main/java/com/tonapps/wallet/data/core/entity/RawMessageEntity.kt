@@ -2,31 +2,25 @@ package com.tonapps.wallet.data.core.entity
 
 import android.os.Parcelable
 import android.util.Log
-import com.tonapps.blockchain.ton.TONOpCode
-import com.tonapps.blockchain.ton.extensions.loadOpCode
-import com.tonapps.blockchain.ton.extensions.safeParseCell
-import com.tonapps.blockchain.ton.extensions.storeOpCode
-import com.tonapps.blockchain.ton.extensions.toTlb
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
+import com.tonapps.extensions.optStringCompat
+import com.tonapps.extensions.optStringCompatJS
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 import org.ton.block.AddrStd
 import org.ton.block.Coins
-import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
-import org.ton.cell.CellBuilder
-import org.ton.contract.wallet.WalletTransfer
-import org.ton.contract.wallet.WalletTransferBuilder
-import org.ton.tlb.loadTlb
-import org.ton.tlb.storeTlb
+import org.ton.tlb.CellRef
+import org.ton.tlb.asRef
 
 @Parcelize
 data class RawMessageEntity(
     val addressValue: String,
     val amount: Long,
     val stateInitValue: String?,
-    val payloadValue: String
+    val payloadValue: String?
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -39,22 +33,36 @@ data class RawMessageEntity(
         Coins.ofNano(amount)
     }
 
-    @IgnoredOnParcel
-    val stateInit: StateInit? by lazy {
-        stateInitValue?.toTlb()
-    }
-
-    @IgnoredOnParcel
-    val payload: Cell by lazy {
-        payloadValue.safeParseCell() ?: Cell()
-    }
-
     constructor(json: JSONObject) : this(
         json.getString("address"),
         parseAmount(json.get("amount")),
-        json.optString("stateInit"),
-        json.optString("payload")
-    )
+        json.optStringCompatJS("stateInit"),
+        json.optStringCompatJS("payload")
+    ) {
+        if (stateInitValue?.startsWith("{") == true) { // for dudes how try to send JS Buffer
+            throw IllegalArgumentException("Invalid data format. Base64 encoding required for data transfer, JavaScript objects not supported. Received: stateInit =  $stateInitValue")
+        }
+        if (payloadValue?.startsWith("{") == true) { // for dudes how try to send JS Buffer
+            throw IllegalArgumentException("Invalid data format. Base64 encoding required for data transfer, JavaScript objects not supported. Received: payload = $payloadValue")
+        }
+    }
+
+    fun getStateInitRef(): CellRef<StateInit>? {
+        try {
+            val cell = stateInitValue?.cellFromBase64() ?: return null
+            return cell.asRef(StateInit)
+        } catch (e: Throwable) {
+            throw IllegalArgumentException("Invalid data format. Received: stateInit = $stateInitValue", e)
+        }
+    }
+
+    fun getPayload(): Cell {
+        try {
+            return payloadValue?.cellFromBase64() ?: Cell.empty()
+        } catch (e: Throwable) {
+            throw IllegalArgumentException("Invalid data format. Received: payload = $payloadValue", e)
+        }
+    }
 
     private companion object {
 

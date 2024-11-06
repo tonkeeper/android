@@ -74,6 +74,9 @@ class BrowserSearchViewModel(
         }
         return try {
             val uri = Uri.parse(query)
+            if (uri.scheme != "https") {
+                return null
+            }
             if (uri.host != null) {
                 uri
             } else {
@@ -154,11 +157,29 @@ class BrowserSearchViewModel(
         return builder.build()
     }
 
-    private companion object {
+    companion object {
         private val domainRegex = Regex("^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}\$")
 
         private fun isDomain(query: String): Boolean {
             return domainRegex.matches(query)
+        }
+
+        fun parseIfUrl(query: String): Uri? {
+            try {
+                val uri = if (query.startsWith("https://")) {
+                    Uri.parse(query)
+                } else if (isDomain(query)) {
+                    Uri.parse("https://$query")
+                } else {
+                    null
+                } ?: return null
+                if (uri.host.isNullOrEmpty()) {
+                    return null
+                }
+                return uri
+            } catch (e: Throwable) {
+                return null
+            }
         }
     }
 }

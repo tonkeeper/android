@@ -2,10 +2,10 @@ package com.tonapps.blockchain.ton.proof
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonapps.base64.encodeBase64
 import com.tonapps.extensions.toByteArray
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.block.AddrStd
-import org.ton.crypto.base64
 import org.ton.crypto.digest.sha256
 import org.ton.crypto.hex
 
@@ -35,7 +35,7 @@ object TONProof {
             timestamp = request.timestamp,
             domain = request.domain,
             payload = request.payload,
-            signature = base64(signature)
+            signature = signature.encodeBase64()
         )
     }
 

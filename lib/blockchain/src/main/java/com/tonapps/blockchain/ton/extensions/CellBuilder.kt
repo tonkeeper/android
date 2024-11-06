@@ -2,13 +2,13 @@ package com.tonapps.blockchain.ton.extensions
 
 import com.tonapps.blockchain.ton.TONOpCode
 import org.ton.block.Coins
+import org.ton.block.MsgAddress
 import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellBuilder.Companion.beginCell
 import org.ton.tlb.CellRef
 import org.ton.tlb.TlbCodec
-import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
 import org.ton.tlb.storeTlb
 import java.math.BigInteger
@@ -16,9 +16,6 @@ import kotlin.math.floor
 
 val CellBuilder.availableBits: Int
     get() = 1023 - bits.size
-
-val CellBuilder.availableRefs: Int
-    get() = 1023 - refs.size
 
 fun CellBuilder.storeBuilder(builder: CellBuilder) = apply {
     storeRefs(builder.refs)
@@ -42,6 +39,15 @@ fun CellBuilder.storeSeqAndValidUntil(seqNo: Int, validUntil: Long) = apply {
 
 fun CellBuilder.storeStringTail(src: String) = apply {
     writeBytes(src.toByteArray(), this)
+}
+
+fun CellBuilder.storeMaybeStringTail(src: String?) = apply {
+    if (src.isNullOrEmpty()) {
+        storeBit(false)
+    } else {
+        storeBit(true)
+        storeStringTail(src)
+    }
 }
 
 private fun writeBytes(src: ByteArray, builder: CellBuilder) {
@@ -78,6 +84,15 @@ fun CellBuilder.storeMaybeRef(value: Cell?) = apply {
     }
 }
 
+fun CellBuilder.storeMaybeAddress(value: MsgAddressInt?) = apply {
+    if (value == null) {
+        storeBit(false)
+    } else {
+        storeBit(true)
+        storeAddress(value)
+    }
+}
+
 fun CellBuilder.storeCoins(value: Coins) = apply {
     storeTlb(Coins, value)
 }
@@ -88,6 +103,14 @@ fun CellBuilder.storeCoins(value: Long) = apply {
 
 fun CellBuilder.storeAddress(value: MsgAddressInt) = apply {
     storeTlb(MsgAddressInt, value)
+}
+
+fun CellBuilder.storeAddress(value: MsgAddress) = apply {
+    if (value is MsgAddressInt) {
+        storeAddress(value)
+    } else {
+        throw IllegalArgumentException("Unsupported address type")
+    }
 }
 
 fun CellBuilder.storeQueryId(value: BigInteger) = apply {

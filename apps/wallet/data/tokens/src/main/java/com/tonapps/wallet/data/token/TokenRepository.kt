@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.token
 import android.content.Context
 import android.util.Log
 import androidx.collection.ArrayMap
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
@@ -31,7 +32,27 @@ class TokenRepository(
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
 
-    fun getToken(accountId: String, testnet: Boolean) = remoteDataSource.getJetton(accountId, testnet)
+    fun getToken(accountId: String, testnet: Boolean): TokenEntity? {
+        if (accountId.equals("TON", ignoreCase = true)) {
+            return TokenEntity.TON
+        }
+        return remoteDataSource.getJetton(accountId, testnet)
+    }
+
+    fun getToken(accountId: String): TokenEntity? {
+        return getToken(accountId, false) ?: getToken(accountId, true)
+    }
+
+    suspend fun getToken(accountId: String, testnet: Boolean, tokenAddress: String): TokenEntity? {
+        if (accountId.equals("TON", ignoreCase = true)) {
+            return TokenEntity.TON
+        }
+        val token = get(WalletCurrency.USD, accountId, testnet)?.firstOrNull { token ->
+            token.balance.token.address.equalsAddress(tokenAddress)
+        }?.balance?.token
+
+        return token ?: getToken(tokenAddress, testnet)
+    }
 
     suspend fun getTON(
         currency: WalletCurrency,
@@ -57,6 +78,15 @@ class TokenRepository(
             return tokens
         }
         return getRemote(currency, accountId, testnet)
+    }
+
+    suspend fun mustGet(
+        currency: WalletCurrency,
+        accountId: String,
+        testnet: Boolean,
+        refresh: Boolean = false,
+    ): List<AccountTokenEntity> {
+        return get(currency, accountId, testnet, refresh) ?: emptyList()
     }
 
     private suspend fun getRemote(

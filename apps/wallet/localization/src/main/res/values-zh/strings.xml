@@ -1,9 +1,12 @@
 <resources>
     <string name="transaction_expired">交易已过期</string>
+    <string name="add_contact">添加到地址簿</string>
+    <string name="multi_account_secret_wrong">请使用 Tonkeeper Desktop 管理多钱包账户</string>
     <string name="total">总计：%1$s</string>
     <string name="staking_ready_withdraw">%1$s 已准备就绪。点击共同收集。</string>
     <string name="staking_pending_deposit">%1$s 将存入 %2$s</string>
     <string name="staking_pending_withdraw">%1$s 将在 %2$s 内被提取</string>
+    <string name="edit_full">编辑</string>
     <string name="staking_unstake_cycle">取消质押请求将在 %1$s 的验证周期结束后处理</string>
     <string name="send_transaction_scroll">检查所有详细信息以确认</string>
     <string name="send_transaction_detail">将从您的钱包发送的代币总价值。退款不包含在总价值中。</string>
@@ -372,6 +375,7 @@
     <string name="ledger_update_title">在Ledger中将TON应用更新至%1$s版本</string>
     <string name="ledger_update_text">此类型交易在您当前的应用程序版本中不受支持。</string>
     <string name="ledger_update_button">确定</string>
+    <string name="ledger_comment_error">仅使用 ASCII 字符：数字、拉丁字母和标点符号。</string>
     <string name="bluetooth_permissions_alert_title">蓝牙权限</string>
     <string name="bluetooth_permissions_alert_message">请在设置中启用蓝牙权限以使用此功能</string>
     <string name="bluetooth_permissions_alert_open_settings">打开设置</string>
@@ -447,4 +451,19 @@
     <string name="insufficient_balance_default">待付款：%1$s。\\n您的余额：%2$s。</string>
     <string name="buy_ton">购买 TON</string>
     <string name="recharge_battery">给电池充电</string>
+    <string name="name">姓名</string>
+    <string name="ledger_blind_signing_error">必须在 Ledger 设置中启用盲签名</string>
+    <string name="nothing_to_restore">没什么可恢复的</string>
+    <string name="new_contact">新地址</string>
+    <string name="contact_delete_dialog">您确实要从地址簿中删除“%1$s”吗？</string>
+    <string name="add_to_contact">添加到地址簿</string>
+    <string name="wallet_address">钱包地址</string>
+    <string name="contacts_save_latest">保存地址</string>
+    <string name="connected_apps">连接的应用程序</string>
+    <string name="disconnect_dapp_confirm">断开“%1$s”？</string>
+    <string name="disconnect_all_apps">断开所有应用程序</string>
+    <string name="disconnect_all_apps_confirm">断开所有应用程序？</string>
+    <string name="connected_apps_empty">没有连接的应用程序</string>
+    <string name="send_all_balance">您确定要发送所有余额吗？</string>
+    <string name="wrong_promocode">输入的代码无效</string>
 </resources>

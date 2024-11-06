@@ -64,6 +64,9 @@ data class AssetsExtendedEntity(
     val verified: Boolean
         get() = token.verified
 
+    val blacklist: Boolean
+        get() = token.blacklist
+
     val pinned: Boolean
         get() = prefs.pinned
 

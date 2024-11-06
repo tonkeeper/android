@@ -1,18 +1,12 @@
 package com.tonapps.tonkeeper.api
 
-import android.util.Log
-import com.squareup.moshi.adapter
+import android.icu.util.Currency
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.extensions.ifPunycodeToUnicode
-import com.tonapps.extensions.max12
 import com.tonapps.extensions.max18
-import com.tonapps.extensions.max24
-import com.tonapps.extensions.short12
-import com.tonapps.extensions.short6
-import com.tonapps.extensions.short8
 import com.tonapps.tonkeeperx.R
-import io.tonapi.infrastructure.Serializer
+import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.Action
@@ -21,12 +15,10 @@ import io.tonapi.models.JettonBalance
 import io.tonapi.models.JettonBurnAction
 import io.tonapi.models.JettonMintAction
 import io.tonapi.models.JettonPreview
-import io.tonapi.models.JettonSwapAction
-import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.PoolImplementationType
 import io.tonapi.models.TokenRates
-import kotlinx.coroutines.delay
+import java.util.Locale
 import kotlin.math.abs
 
 private val nftItemPreviewSizes = arrayOf(
@@ -38,8 +30,40 @@ fun TokenRates.to(toCurrency: String, value: Float): Float {
     return price.toFloat() * value
 }
 
-val MessageConsequences.totalFees: Long
-    get() = trace.transaction.totalFees
+suspend fun API.getCurrencyCodeByCountry(settingsRepository: SettingsRepository): String {
+    val fromSettingsCountry = getCurrencyByCountry(settingsRepository.country)
+    val fromSettingsCurrency = settingsRepository.currency.code
+    val fromIPCountry = resolveCountry()?.let { getCurrencyByCountry(it) }
+    val currency = fromSettingsCountry ?: fromIPCountry ?: fromSettingsCurrency
+    if (currency.equals("TON", true)) {
+        return "USD"
+    }
+    return currency
+}
+
+private fun getCurrencyByCountry(country: String): String? {
+    try {
+        val currency = Currency.getInstance(Locale("", country)).currencyCode
+        if (currency.isNullOrEmpty()) {
+            return null
+        }
+        return currency
+    } catch (e: Throwable) {
+        return null
+    }
+}
+
+
+
+/*val MessageConsequences.totalFees: Long
+    get() {
+        // = event.extra // trace.transaction.totalFees
+        val extra = event.extra
+        if (0 > extra) {
+            return abs(extra)
+        }
+        return 0
+    }*/
 
 val AccountEvent.withTON: Boolean
     get() {
@@ -92,24 +116,6 @@ val JettonPreview.isTon: Boolean
         return address == "TON"
     }
 
-val JettonSwapAction.jettonPreview: JettonPreview?
-    get() {
-        return jettonMasterIn ?: jettonMasterOut
-    }
-
-val JettonSwapAction.amount: String
-    get() {
-        if (amountIn.isEmpty()) {
-            return amountOut
-        }
-        return amountIn
-    }
-
-val JettonSwapAction.ton: Long
-    get() {
-        return tonIn ?: tonOut ?: 0
-    }
-
 fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): String {
     if (name.isNullOrBlank()) {
         val value = address.toUserFriendly(
@@ -118,7 +124,7 @@ fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): S
         )
         return if (short) value.shortAddress else value
     }
-    val value = name!!.ifPunycodeToUnicode()
+    val value = name!!
     return if (short) value.max18 else value
 }
 

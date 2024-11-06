@@ -6,10 +6,13 @@ import android.view.View
 import android.view.ViewGroup.inflate
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
@@ -18,7 +21,7 @@ import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Adapter
-import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
+import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R
@@ -35,13 +38,14 @@ import kotlinx.coroutines.flow.take
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
-import uikit.extensions.doKeyboardAnimation
-import uikit.extensions.hideKeyboard
+import uikit.extensions.setPaddingBottom
 import uikit.widget.FrescoView
 import uikit.widget.InputView
 import java.util.UUID
 
 class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+
+    override val hasApplyWindowInsets: Boolean = false
 
     private val args: RechargeArgs by lazy { RechargeArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
@@ -55,12 +59,19 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         onAddressChange = { viewModel.updateAddress(it) },
         openAddressBook = ::openAddressBook,
         onAmountChange = { viewModel.updateAmount(it) },
-        onPackSelect = { viewModel.setSelectedPack(it) },
+        onPackSelect = {
+            hideKeyboard()
+            viewModel.setSelectedPack(it)
+        },
         onCustomAmountSelect = { viewModel.onCustomAmountSelect() },
         onContinue = ::onContinue,
-        onSubmitPromo = { viewModel.applyPromo(it) }
+        onSubmitPromo = {
+            hideKeyboard()
+            viewModel.applyPromo(it)
+        }
     )
 
+    private lateinit var listContainer: View
     private lateinit var tokenIconView: FrescoView
     private lateinit var tokenTitleView: AppCompatTextView
 
@@ -86,6 +97,7 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        listContainer = view.findViewById(uikit.R.id.list_container)
 
         setAdapter(adapter)
 
@@ -103,8 +115,11 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
             false -> getString(Localization.battery_recharge_title)
         }
 
-        view.doKeyboardAnimation(true) { offset, _, _ ->
-            view.translationY = -offset.toFloat()
+
+        ViewCompat.setOnApplyWindowInsetsListener(listContainer) { _, insets ->
+            val offset = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            updateContainerOffset(offset)
+            insets
         }
 
         collectFlow(viewModel.tokenFlow) { token ->
@@ -114,19 +129,29 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         collectFlow(viewModel.eventFlow, ::onEvent)
     }
 
+    // Dirty hack because of bad design
+    private fun updateContainerOffset(offset: Int) {
+        listContainer.setPaddingBottom(offset)
+    }
+
+    override fun finish() {
+        hideKeyboard()
+        super.finish()
+    }
+
     override fun onDragging() {
         super.onDragging()
-        activity?.hideKeyboard()
+        hideKeyboard()
     }
 
     private fun onContinue() {
-        requireContext().hideKeyboard()
+        hideKeyboard()
         viewModel.onContinue()
     }
 
     private fun openAddressBook() {
         navigation?.add(SendContactsScreen.newInstance(screenContext.wallet, contractsRequestKey))
-        getCurrentFocus()?.hideKeyboard()
+        hideKeyboard()
     }
 
     private fun openTokenSelector() {
@@ -150,8 +175,9 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
     private fun onSuccess() {
         requireContext().showToast(Localization.battery_please_wait)
         navigation?.openURL("tonkeeper://activity")
-        navigation?.removeByClass(BatteryScreen::class.java)
-        finish()
+        navigation?.removeByClass({
+            finish()
+        }, BatteryScreen::class.java)
     }
 
     private fun sign(request: SignRequestEntity, forceRelayer: Boolean) {

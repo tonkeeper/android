@@ -118,6 +118,5 @@
         android:layout_gravity="bottom"
         android:layout_margin="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="?attr/textPrimaryColor"
         android:text="@string/staking_choose"/>
 </FrameLayout>

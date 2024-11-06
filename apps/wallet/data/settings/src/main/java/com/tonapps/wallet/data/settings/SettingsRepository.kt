@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
+import android.icu.util.Currency
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
@@ -19,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -50,6 +52,8 @@ class SettingsRepository(
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
         private const val CHART_PERIOD_KEY = "chart_period"
+        private const val ONLY_VERIFY_NFTS_KEY = "only_verify_nfts"
+        private const val ONLY_VERIFY_TOKENS_KEY = "only_verify_tokens"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -75,6 +79,13 @@ class SettingsRepository(
 
     private val _walletPush = MutableEffectFlow<Unit>()
     val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
+
+    private val _isMigratedFlow = MutableStateFlow<Boolean?>(null)
+    val isMigratedFlow = _isMigratedFlow.asStateFlow().filterNotNull()
+
+    fun notifyWalletPush() {
+        _walletPush.tryEmit(Unit)
+    }
 
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context, scope)
@@ -215,6 +226,25 @@ class SettingsRepository(
             }
         }
 
+
+    var onlyVerifyNFTs: Boolean = prefs.getBoolean(ONLY_VERIFY_NFTS_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(ONLY_VERIFY_NFTS_KEY, value).apply()
+                field = value
+                walletPrefsFolder.notifyChanged()
+            }
+        }
+
+    var onlyVerifyTokens: Boolean = prefs.getBoolean(ONLY_VERIFY_TOKENS_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(ONLY_VERIFY_TOKENS_KEY, value).apply()
+                field = value
+                walletPrefsFolder.notifyChanged()
+            }
+        }
+
     fun isUSDTW5(walletId: String) = walletPrefsFolder.isUSDTW5(walletId)
 
     fun disableUSDTW5(walletId: String) = walletPrefsFolder.disableUSDTW5(walletId)
@@ -229,7 +259,7 @@ class SettingsRepository(
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
-    fun setPushWallet(walletId: String, value: Boolean) {
+    suspend fun setPushWallet(walletId: String, value: Boolean) {
         walletPrefsFolder.setPushEnabled(walletId, value)
         rnLegacy.setNotificationsEnabled(walletId, value)
         _walletPush.tryEmit(Unit)
@@ -239,18 +269,24 @@ class SettingsRepository(
 
     fun setupHide(walletId: String) {
         walletPrefsFolder.setupHide(walletId)
-        rnLegacy.setSetupDismissed(walletId)
+        scope.launch {
+            rnLegacy.setSetupDismissed(walletId)
+        }
     }
 
     fun setTelegramChannel(walletId: String) {
         walletPrefsFolder.setTelegramChannel(walletId)
-        rnLegacy.setHasOpenedTelegramChannel(walletId)
+        scope.launch {
+            rnLegacy.setHasOpenedTelegramChannel(walletId)
+        }
     }
 
     fun isTelegramChannel(walletId: String) = walletPrefsFolder.isTelegramChannel(walletId)
 
     fun setLastBackupAt(walletId: String, date: Long) {
-        rnLegacy.setSetupLastBackupAt(walletId, date)
+        scope.launch {
+            rnLegacy.setSetupLastBackupAt(walletId, date)
+        }
     }
 
     fun getBatteryTxEnabled(accountId: String) = walletPrefsFolder.getBatteryTxEnabled(accountId)
@@ -355,6 +391,7 @@ class SettingsRepository(
                 searchEngine = legacyValues.searchEngine
             }
 
+            _isMigratedFlow.value = true
             _currencyFlow.tryEmit(currency)
             _languageFlow.tryEmit(language)
             _hiddenBalancesFlow.tryEmit(hiddenBalances)

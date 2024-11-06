@@ -1,21 +1,18 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
-import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
-import androidx.core.graphics.drawable.toIcon
-import androidx.core.net.toUri
 import com.squareup.moshi.JsonAdapter
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
-import com.tonapps.blockchain.ton.extensions.toAccountId
-import com.tonapps.extensions.bestMessage
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.extensions.unicodeToPunycode
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
 import com.tonapps.network.SSLSocketFactoryTcpNoDelay
@@ -24,7 +21,6 @@ import com.tonapps.network.interceptor.AcceptLanguageInterceptor
 import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.network.post
 import com.tonapps.network.postJSON
-import com.tonapps.network.simple
 import com.tonapps.network.sse
 import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
@@ -53,7 +49,6 @@ import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
 import io.tonapi.models.TokenRates
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +57,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -71,7 +65,6 @@ import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.block.AddrStd
 import org.ton.cell.Cell
 import org.ton.crypto.hex
 import java.util.Locale
@@ -84,11 +77,20 @@ class API(
 
     val defaultHttpClient = baseOkHttpClientBuilder().build()
 
+    private val internalApi = InternalApi(context, defaultHttpClient)
+    private val configRepository = ConfigRepository(context, scope, internalApi)
+
+    val config: ConfigEntity
+        get() = configRepository.configEntity
+
+    val configFlow: Flow<ConfigEntity>
+        get() = configRepository.stream
+
     private val tonAPIHttpClient: OkHttpClient by lazy {
         createTonAPIHttpClient(
             context = context,
-            tonApiV2Key = config.tonApiV2Key,
-            allowDomains = listOf(config.tonapiMainnetHost, config.tonapiTestnetHost, config.tonapiSSEEndpoint, config.tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
+            tonApiV2Key = { config.tonApiV2Key },
+            allowDomains = { config.domains  }
         )
     }
 
@@ -96,23 +98,8 @@ class API(
         createBatteryAPIHttpClient(context)
     }
 
-    private val internalApi = InternalApi(context, defaultHttpClient)
-    private val configRepository = ConfigRepository(context, scope, internalApi)
-
     @Volatile
     private var cachedCountry: String? = null
-
-    val config: ConfigEntity
-        get() {
-            while (configRepository.configEntity == null) {
-                Thread.sleep(16)
-            }
-            return configRepository.configEntity!!
-        }
-
-    val configFlow: Flow<ConfigEntity>
-        get() = configRepository.stream
-
 
     suspend fun tonapiFetch(
         url: String,
@@ -224,10 +211,10 @@ class API(
         }
     }
 
-    fun realtime(accountId: String, testnet: Boolean): Flow<SSEvent> {
+    fun realtime(accountId: String, testnet: Boolean, onFailure: ((Throwable) -> Unit)?): Flow<SSEvent> {
         val endpoint = if (testnet) config.tonapiSSETestnetEndpoint else config.tonapiSSEEndpoint
         val url = "$endpoint/sse/traces?account=$accountId"
-        return tonAPIHttpClient.sse(url)
+        return tonAPIHttpClient.sse(url, onFailure = onFailure)
     }
 
     fun get(url: String): String {
@@ -276,11 +263,11 @@ class API(
         }
     }
 
-    fun getSingleEvent(
+    suspend fun getSingleEvent(
         eventId: String,
         testnet: Boolean
-    ): List<AccountEvent>? {
-        val event = withRetry { events(testnet).getEvent(eventId) } ?: return null
+    ): List<AccountEvent>? = withContext(Dispatchers.IO) {
+        val event = withRetry { events(testnet).getEvent(eventId) } ?: return@withContext null
         val accountEvent = AccountEvent(
             eventId = eventId,
             account = AccountAddress(
@@ -295,7 +282,7 @@ class API(
             inProgress = event.inProgress,
             extra = 0L,
         )
-        return listOf(accountEvent)
+        listOf(accountEvent)
     }
 
     fun getTokenEvents(
@@ -375,10 +362,22 @@ class API(
     ): AccountDetailsEntity? {
         return try {
             val account = getAccount(query, testnet) ?: return null
-            AccountDetailsEntity(query, account, testnet)
+            val details = AccountDetailsEntity(query, account, testnet)
+            if (details.walletVersion != WalletVersion.UNKNOWN) {
+                details
+            } else {
+                details.copy(
+                    walletVersion = getWalletVersionByAddress(account.address, testnet)
+                )
+            }
         } catch (e: Throwable) {
             null
         }
+    }
+
+    private fun getWalletVersionByAddress(address: String, testnet: Boolean): WalletVersion {
+        val pk = getPublicKey(address, testnet) ?: return WalletVersion.UNKNOWN
+        return BaseWalletContract.resolveVersion(pk, address.toRawAddress(), testnet)
     }
 
     fun resolvePublicKey(
@@ -386,11 +385,19 @@ class API(
         testnet: Boolean
     ): List<AccountDetailsEntity> {
         return try {
-            val query = pk.key.hex()
+            val query = pk.hex()
             val wallets = withRetry {
                 wallet(testnet).getWalletsByPublicKey(query).accounts
             } ?: return emptyList()
-            wallets.map { AccountDetailsEntity(query, it, testnet) }
+            wallets.map { AccountDetailsEntity(query, it, testnet) }.map {
+                if (it.walletVersion == WalletVersion.UNKNOWN) {
+                    it.copy(
+                        walletVersion = BaseWalletContract.resolveVersion(pk, it.address.toRawAddress(), testnet)
+                    )
+                } else {
+                    it
+                }
+            }
         } catch (e: Throwable) {
             emptyList()
         }
@@ -439,34 +446,17 @@ class API(
         testnet: Boolean
     ) = getPublicKey(accountId, testnet) ?: EmptyPrivateKeyEd25519.publicKey()
 
-    fun accountEvents(accountId: String, testnet: Boolean): Flow<SSEvent> {
-        val endpoint = if (testnet) {
-            config.tonapiTestnetHost
-        } else {
-            config.tonapiMainnetHost
-        }
-        // val mempool = okHttpClient.sse("$endpoint/v2/sse/mempool?accounts=${accountId}")
-        val tx = tonAPIHttpClient.sse("$endpoint/v2/sse/accounts/transactions?accounts=${accountId}")
-        // return merge(mempool, tx)
-        return tx
-    }
-
-    fun newRealtime(accountId: String, testnet: Boolean): Flow<SSEvent> {
-        val host = if (testnet) "rt-testnet.tonapi.io" else "rt.tonapi.io"
-        val url = "https://${host}/sse/transactions?account=$accountId"
-        return tonAPIHttpClient.sse(url)
-    }
-
     fun tonconnectEvents(
         publicKeys: List<String>,
-        lastEventId: Long? = null
+        lastEventId: Long? = null,
+        onFailure: ((Throwable) -> Unit)?
     ): Flow<SSEvent> {
         if (publicKeys.isEmpty()) {
             return emptyFlow()
         }
         val value = publicKeys.joinToString(",")
         val url = "${BRIDGE_URL}/events?client_id=$value"
-        return tonAPIHttpClient.sse(url, lastEventId).filter { it.type == "message" }
+        return tonAPIHttpClient.sse(url, lastEventId, onFailure).filter { it.type == "message" }
     }
 
     fun tonconnectPayload(): String? {
@@ -478,6 +468,15 @@ class API(
             return json.getString("payload")
         } catch (e: Throwable) {
             return null
+        }
+    }
+
+    suspend fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            battery(testnet).verifyPurchasePromo(code)
+            true
+        } catch (e: Throwable) {
+            false
         }
     }
 
@@ -501,11 +500,8 @@ class API(
     ) {
         val mimeType = "text/plain".toMediaType()
         val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
-        val response = withRetry {
+        withRetry {
             tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
-        } ?: throw Exception("Null response")
-        if (!response.isSuccessful) {
-            throw Exception("Failed sending event[code=${response.code};body=${response.body?.string()}]")
         }
     }
 
@@ -574,7 +570,7 @@ class API(
         address: String? = null,
         balance: Long? = null
     ): MessageConsequences? {
-        return emulate(cell.base64(), testnet, address, balance)
+        return emulate(cell.hex(), testnet, address, balance)
     }
 
     suspend fun sendToBlockchainWithBattery(
@@ -633,10 +629,16 @@ class API(
         accountId: String,
         testnet: Boolean
     ): Account? {
-        val normalizedAccountId = if (accountId.endsWith(".ton")) {
-            accountId.lowercase().trim().unicodeToPunycode()
-        } else {
-            accountId
+        var normalizedAccountId = accountId
+        if (normalizedAccountId.startsWith("https://")) {
+            normalizedAccountId = normalizedAccountId.replace("https://", "")
+        }
+        if (normalizedAccountId.startsWith("t.me/")) {
+            normalizedAccountId = normalizedAccountId.replace("t.me/", "")
+            normalizedAccountId = "$normalizedAccountId.t.me"
+        }
+        if (!normalizedAccountId.isValidTonAddress()) {
+            normalizedAccountId = normalizedAccountId.lowercase().trim()
         }
         return withRetry { accounts(testnet).getAccount(normalizedAccountId) }
     }
@@ -692,8 +694,11 @@ class API(
         json.put("device", deviceId)
         json.put("accounts", accountsArray)
 
+        Log.d("PushManagerLog", "Unsubscribing from $accounts")
+
         return withRetry {
             val response = tonAPIHttpClient.postJSON(url, json.toString())
+            Log.d("PushManagerLog", "Unsubscribed from $accounts: ${response}")
             response.isSuccessful
         } ?: false
     }
@@ -822,7 +827,9 @@ class API(
     ) = withContext(Dispatchers.IO) {
         val url = config.scamEndpoint + "/v1/report/$nftAddress"
         val data = "{\"is_scam\":$scam}"
-        val response = tonAPIHttpClient.postJSON(url, data)
+        val response = withRetry {
+            tonAPIHttpClient.postJSON(url, data)
+        } ?: throw Exception("Empty response")
         if (!response.isSuccessful) {
             throw Exception("Failed creating proof: ${response.code}")
         }
@@ -837,11 +844,11 @@ class API(
 
         private fun baseOkHttpClientBuilder(): OkHttpClient.Builder {
             return OkHttpClient().newBuilder()
-                .retryOnConnectionFailure(false)
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
-                .callTimeout(10, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .writeTimeout(5, TimeUnit.SECONDS)
+                .callTimeout(5, TimeUnit.SECONDS)
                 .pingInterval(5, TimeUnit.SECONDS)
                 .followSslRedirects(true)
                 .followRedirects(true)
@@ -851,8 +858,8 @@ class API(
 
         private fun createTonAPIHttpClient(
             context: Context,
-            tonApiV2Key: String,
-            allowDomains: List<String>
+            tonApiV2Key: () -> String,
+            allowDomains: () -> List<String>
         ): OkHttpClient {
             return baseOkHttpClientBuilder()
                 .addInterceptor(AcceptLanguageInterceptor(context.locale))

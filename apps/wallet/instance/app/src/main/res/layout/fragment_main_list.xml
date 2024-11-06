@@ -3,12 +3,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.tonapps.tonkeeper.ui.component.MainRecyclerView
-        android:id="@+id/list"
+    <com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout
+        android:id="@+id/refresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingHorizontal="@dimen/offsetMedium"
-        android:clipToPadding="false"/>
+        android:layout_height="match_parent">
+
+        <com.tonapps.tonkeeper.ui.component.MainRecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/offsetMedium"
+            android:clipToPadding="false"/>
+
+    </com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout>
 
     <uikit.widget.EmptyLayout
         android:id="@+id/empty"

@@ -1,6 +1,5 @@
 object Dependence {
 
-    const val ton = "org.ton:ton-kotlin:0.2.15"
     const val fresco = "com.facebook.fresco:fresco:3.2.0"
     const val guava = "com.google.guava:guava:33.2.1-android"
     const val zxing = "com.google.zxing:core:3.5.3"
@@ -9,6 +8,15 @@ object Dependence {
 
     object Analytics {
         const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"
+    }
+
+    object TON {
+        const val tvm = "org.ton:ton-kotlin-tvm:0.3.1"
+        const val crypto = "org.ton:ton-kotlin-crypto:0.3.1"
+        const val tlb = "org.ton:ton-kotlin-tlb:0.3.1"
+        const val blockTlb = "org.ton:ton-kotlin-block-tlb:0.3.1"
+        const val tonapiTl = "org.ton:ton-kotlin-tonapi-tl:0.3.1"
+        const val contract = "org.ton:ton-kotlin-contract:0.3.1"
     }
 
     object KotlinX {
@@ -22,9 +30,9 @@ object Dependence {
 
     object GooglePlay {
         const val cronet = "com.google.android.gms:play-services-cronet:18.1.0"
-        const val cronetOkhttp = "com.google.net.cronet:cronet-okhttp:0.1.0"
         const val review = "com.google.android.play:review-ktx:2.0.1"
         const val billing = "com.android.billingclient:billing-ktx:7.1.1"
+        const val update = "com.google.android.play:app-update-ktx:2.1.0"
     }
 
     object UI {
@@ -116,6 +124,7 @@ object Dependence {
         const val sqlite = ":lib:sqlite"
         const val ledger = ":lib:ledger"
         const val ur = ":lib:ur"
+        const val base64 = ":lib:base64"
     }
 
     object UIKit {
@@ -128,6 +137,7 @@ object Dependence {
     object Wallet {
         const val localization = ":apps:wallet:localization"
         const val api = ":apps:wallet:api"
+        const val http = ":apps:wallet:http"
         const val app = ":apps:wallet:instance:app"
 
         object Data {
@@ -146,6 +156,7 @@ object Dependence {
             const val purchase = ":apps:wallet:data:purchase"
             const val battery = ":apps:wallet:data:battery"
             const val dapps = ":apps:wallet:data:dapps"
+            const val contacts = ":apps:wallet:data:contacts"
         }
 
     }

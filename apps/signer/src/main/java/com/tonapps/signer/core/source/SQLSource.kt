@@ -6,7 +6,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.publicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.signer.core.entities.KeyEntity
 import com.tonapps.signer.extensions.emptyRawQuery
 import com.tonapps.signer.extensions.withTransaction
@@ -100,7 +100,7 @@ class SQLSource(
                 val id = cursor.getLong(idIndex)
                 val name = cursor.getString(nameIndex)
                 val pk = cursor.getString(pkIndex)
-                result.add(KeyEntity(id, name, pk.publicKey()))
+                result.add(KeyEntity(id, name, pk.publicKeyFromHex()))
             } while (cursor.moveToNext())
         }
         cursor.close()

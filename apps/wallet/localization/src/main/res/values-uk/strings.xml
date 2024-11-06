@@ -1,9 +1,12 @@
 <resources>
     <string name="transaction_expired">Термін дії транзакції минув</string>
+    <string name="add_contact">Додати до адресної книги</string>
+    <string name="multi_account_secret_wrong">Будь ласка, використовуйте Tonkeeper Desktop для кількох гаманців</string>
     <string name="total">Усього: %1$s</string>
     <string name="staking_ready_withdraw">%1$s готовий. Торкніться спільного збору.</string>
     <string name="staking_pending_deposit">%1$s буде внесено в %2$s</string>
     <string name="staking_pending_withdraw">%1$s буде знято через %2$s</string>
+    <string name="edit_full">Редагувати</string>
     <string name="staking_unstake_cycle">Запит на скасування ставки буде оброблено після завершення циклу перевірки в %1$s</string>
     <string name="send_transaction_scroll">Перевірте всі деталі для підтвердження</string>
     <string name="send_transaction_detail">Загальна вартість токенів, які будуть надіслані з вашого гаманця. Відшкодування не входять до загальної вартості.</string>
@@ -372,6 +375,7 @@
     <string name="ledger_update_title">Оновіть додаток TON у Ledger до версії %1$s</string>
     <string name="ledger_update_text">Цей тип транзакцій не підтримується поточною версією програми.</string>
     <string name="ledger_update_button">OK</string>
+    <string name="ledger_comment_error">Використовуйте лише символи ASCII: цифри, літери латинського алфавіту та знаки пунктуації.</string>
     <string name="bluetooth_permissions_alert_title">Дозволи Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Будь ласка, увімкніть дозволи на використання Bluetooth у налаштуваннях, щоб скористатися цією функцією</string>
     <string name="bluetooth_permissions_alert_open_settings">Відкрити Налаштування</string>
@@ -462,4 +466,19 @@
     <string name="insufficient_balance_default">До оплати: %1$s.\\nВаш баланс: %2$s.</string>
     <string name="buy_ton">Купити TON</string>
     <string name="recharge_battery">Перезарядіть батарею</string>
+    <string name="nothing_to_restore">Відновлювати нічого</string>
+    <string name="name">Ім\'я</string>
+    <string name="ledger_blind_signing_error">Сліпий підпис має бути ввімкнено в налаштуваннях Ledger</string>
+    <string name="new_contact">Нова адреса</string>
+    <string name="contact_delete_dialog">Ви впевнені, що бажаєте видалити «%1$s» зі своєї адресної книги?</string>
+    <string name="add_to_contact">Додати до адресної книги</string>
+    <string name="wallet_address">Адреса гаманця</string>
+    <string name="contacts_save_latest">Зберегти адресу</string>
+    <string name="connected_apps">Підключені програми</string>
+    <string name="disconnect_dapp_confirm">Від’єднати “%1$s”?</string>
+    <string name="disconnect_all_apps">Відключити всі програми</string>
+    <string name="disconnect_all_apps_confirm">Відключити всі програми?</string>
+    <string name="connected_apps_empty">Немає підключених програм</string>
+    <string name="send_all_balance">Ви впевнені, що бажаєте надіслати весь свій баланс?</string>
+    <string name="wrong_promocode">Введений код недійсний</string>
 </resources>

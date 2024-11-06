@@ -2,11 +2,14 @@ package com.tonapps.tonkeeper.extensions
 
 import android.Manifest
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
+import android.os.PersistableBundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
@@ -32,6 +35,12 @@ import uikit.navigation.Navigation.Companion.navigation
 val Context.workManager: WorkManager
     get() = WorkManager.getInstance(this)
 
+val Context.uiMode: Int
+    get() = resources.configuration.uiMode
+
+val Context.isDarkMode: Boolean
+    get() = uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+
 fun Context.safeExternalOpenUri(uri: Uri) {
     if (TonConnectManager.isTonConnectDeepLink(uri)) {
         return
@@ -40,7 +49,7 @@ fun Context.safeExternalOpenUri(uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         debugToast(e)
     }
 }
@@ -51,6 +60,10 @@ fun Context.showToast(@StringRes resId: Int) {
 
 fun Context.showToast(test: String) {
     navigation?.toast(test)
+}
+
+fun Context.loading(loading: Boolean = true) {
+    navigation?.toastLoading(loading)
 }
 
 fun Context.copyWithToast(text: String, color: Int = backgroundContentTintColor) {
@@ -69,9 +82,18 @@ fun Context.copyToClipboard(uri: Uri) {
     copyToClipboard(uri.toString())
 }
 
-fun Context.copyToClipboard(text: String) {
+fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     val clip = ClipData.newPlainText("", text)
+    if (sensitive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        val extras = PersistableBundle()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+        } else {
+            extras.putBoolean("android.content.extra.IS_SENSITIVE", true)
+        }
+        clip.description.extras = extras
+    }
     clipboard.setPrimaryClip(clip)
 }
 

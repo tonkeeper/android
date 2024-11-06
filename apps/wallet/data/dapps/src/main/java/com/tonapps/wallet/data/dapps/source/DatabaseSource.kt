@@ -2,12 +2,14 @@ package com.tonapps.wallet.data.dapps.source
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.SharedPreferences
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putLong
@@ -20,6 +22,7 @@ import com.tonapps.security.Security
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.ConnectionEncryptedEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
@@ -69,7 +72,7 @@ internal class DatabaseSource(
 
     private val coroutineContext: CoroutineContext = Dispatchers.IO.limitedParallelism(1)
 
-    private val encryptedPrefs = Security.pref(context, KEY_ALIAS, DATABASE_NAME)
+    private val encryptedPrefs: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, DATABASE_NAME) }
     private val prefs = context.prefs("tonconnect")
 
     private fun createAppTable(db: SQLiteDatabase) {
@@ -124,7 +127,7 @@ internal class DatabaseSource(
         val notFoundApps = urls.filter { url -> apps.none { it.url == url } }
         if (notFoundApps.isNotEmpty()) {
             for (url in notFoundApps) {
-                val domain = url.host ?: "test.ton"
+                val domain = url.host ?: "unknown"
                 apps.add(AppEntity(
                     url = url,
                     name = domain.split(".").firstOrNull() ?: domain,
@@ -150,27 +153,41 @@ internal class DatabaseSource(
             prefs.remove(LAST_EVENT_ID_KEY)
             true
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             false
         }
     }
 
     suspend fun insertConnection(connection: AppConnectEntity) = withContext(coroutineContext) {
-        val values = ContentValues()
-        values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.withoutQuery.toString().removeSuffix("/"))
-        values.put(CONNECT_TABLE_ACCOUNT_ID_COLUMN, connection.accountId)
-        values.put(CONNECT_TABLE_TESTNET_COLUMN, if (connection.testnet) 1 else 0)
-        values.put(CONNECT_TABLE_CLIENT_ID_COLUMN, connection.clientId)
-        values.put(CONNECT_TABLE_TYPE_COLUMN, connection.type.value)
-        values.put(CONNECT_TABLE_TIMESTAMP_COLUMN, connection.timestamp)
-        writableDatabase.insertOrThrow(CONNECT_TABLE_NAME, null, values)
+        try {
+            val prefix = prefixAccount(connection.accountId, connection.testnet)
 
-        val prefix = prefixAccount(connection.accountId, connection.testnet)
-        encryptedPrefs.putParcelable(prefixKeyPair(prefix, connection.clientId), connection.keyPair)
-        if (connection.proofSignature != null) {
-            encryptedPrefs.putString(prefixProofSignature(prefix, connection.appUrl), connection.proofSignature)
-        }
-        if (connection.proofPayload != null) {
-            encryptedPrefs.putString(prefixProofPayload(prefix, connection.appUrl), connection.proofPayload)
+            writableDatabase.delete(CONNECT_TABLE_NAME, "$CONNECT_TABLE_CLIENT_ID_COLUMN = ?", arrayOf(connection.clientId))
+            encryptedPrefs.edit {
+                remove(prefixKeyPair(prefix, connection.clientId))
+                remove(prefixProofSignature(prefix, connection.appUrl))
+                remove(prefixProofPayload(prefix, connection.appUrl))
+            }
+
+            val values = ContentValues()
+            values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.withoutQuery.toString().removeSuffix("/"))
+            values.put(CONNECT_TABLE_ACCOUNT_ID_COLUMN, connection.accountId)
+            values.put(CONNECT_TABLE_TESTNET_COLUMN, if (connection.testnet) 1 else 0)
+            values.put(CONNECT_TABLE_CLIENT_ID_COLUMN, connection.clientId)
+            values.put(CONNECT_TABLE_TYPE_COLUMN, connection.type.value)
+            values.put(CONNECT_TABLE_TIMESTAMP_COLUMN, connection.timestamp)
+            writableDatabase.insertOrThrow(CONNECT_TABLE_NAME, null, values)
+
+
+            encryptedPrefs.putParcelable(prefixKeyPair(prefix, connection.clientId), connection.keyPair)
+            if (connection.proofSignature != null) {
+                encryptedPrefs.putString(prefixProofSignature(prefix, connection.appUrl), connection.proofSignature)
+            }
+            if (connection.proofPayload != null) {
+                encryptedPrefs.putString(prefixProofPayload(prefix, connection.appUrl), connection.proofPayload)
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
         }
     }
 
@@ -208,7 +225,7 @@ internal class DatabaseSource(
             val clientId = cursor.getString(clientIdIndex)
             val appUrl = Uri.parse(cursor.getString(appUrlIndex)).withoutQuery
             val prefix = prefixAccount(accountId, testnet)
-            val keyPair = encryptedPrefs.getParcelable<CryptoBox.KeyPair>(prefixKeyPair(prefix, clientId)) ?: continue
+            val connectionEncrypted = getConnectionEncrypted(prefix, clientId, appUrl) ?: continue
 
             connections.add(AppConnectEntity(
                 appUrl = appUrl,
@@ -216,14 +233,32 @@ internal class DatabaseSource(
                 testnet = testnet,
                 clientId = cursor.getString(clientIdIndex),
                 type = AppConnectEntity.Type.entries.first { it.value == cursor.getInt(typeIndex) },
-                keyPair = keyPair,
-                proofSignature = encryptedPrefs.getString(prefixProofSignature(prefix, appUrl), null),
-                proofPayload = encryptedPrefs.getString(prefixProofPayload(prefix, appUrl), null),
+                keyPair = connectionEncrypted.keyPair,
+                proofSignature = connectionEncrypted.proofSignature,
+                proofPayload = connectionEncrypted.proofPayload,
                 timestamp = cursor.getLong(timestampIndex),
                 pushEnabled = isPushEnabled(accountId, testnet, appUrl)
             ))
         }
         return connections
+    }
+
+    private fun getConnectionEncrypted(
+        prefix: String,
+        clientId: String,
+        appUrl: Uri
+    ): ConnectionEncryptedEntity? {
+        try {
+            val keyPair = encryptedPrefs.getParcelable<CryptoBox.KeyPair>(prefixKeyPair(prefix, clientId)) ?: return null
+            return ConnectionEncryptedEntity(
+                keyPair = keyPair,
+                proofSignature = encryptedPrefs.getString(prefixProofSignature(prefix, appUrl), null),
+                proofPayload = encryptedPrefs.getString(prefixProofPayload(prefix, appUrl), null),
+            )
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            return null
+        }
     }
 
     private fun prefixKeyPair(

@@ -1,77 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
-<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <uikit.widget.HeaderView
-        android:id="@+id/header"
+    <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:title="Dev"
-        app:ignoreSystemOffset="true"
-        android:icon="@drawable/ic_chevron_left_16"/>
+        android:layout_height="match_parent">
 
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1">
-
-        <uikit.widget.ColumnLayout
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:title="Dev"
+            app:ignoreSystemOffset="true"
+            android:icon="@drawable/ic_chevron_left_16"/>
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
 
             <uikit.widget.ColumnLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="@dimen/offsetMedium">
+                android:layout_height="match_parent">
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/locale"
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/device"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="Context locale"/>
+                    android:padding="@dimen/offsetMedium"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:layout_marginBottom="@dimen/offsetMedium"
+                    android:background="@drawable/bg_content"
+                    android:textColor="?attr/textPrimaryColor"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/android_version"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/icons"
+                    android:layout_width="match_parent"
+                    android:layout_height="112dp"
+                    android:paddingHorizontal="8dp"
+                    android:visibility="gone"
+                    android:clipToPadding="false"
+                    android:layout_marginVertical="@dimen/offsetMedium"/>
+
+                <uikit.widget.item.ItemSwitchView
+                    android:id="@+id/blur"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="Android version"/>
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    app:position="first"
+                    android:text="Blur"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_model"
+                <uikit.widget.item.ItemSwitchView
+                    android:id="@+id/tc_logs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="Device model"/>
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="TonConnect logs"
+                    app:position="middle"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/screen_size"
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/import_dapps"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="Screen size"/>
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Import DApps from RN"
+                    app:position="middle"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_root"
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/import_passcode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="Rooted device"/>
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Import PIN from RN biometry"
+                    app:position="middle"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_strongbox"
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/import_legacy"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="Strongbox supported"/>
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:visibility="gone"
+                    android:text="Values from legacy"
+                    app:position="middle"/>
 
-                <com.tonapps.tonkeeper.view.TransactionDetailView
-                    android:id="@+id/device_adb"
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/import_mnemonic_again"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="ADB enabled"/>
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Import mnemonic again from RN"
+                    app:position="last"/>
 
             </uikit.widget.ColumnLayout>
 
-        </uikit.widget.ColumnLayout>
+        </androidx.core.widget.NestedScrollView>
 
-    </androidx.core.widget.NestedScrollView>
+    </uikit.widget.ColumnLayout>
 
-</uikit.widget.ColumnLayout>
+    <uikit.widget.ColumnLayout
+        android:id="@+id/log"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/constantWhite"
+        android:layout_marginVertical="72dp"
+        android:visibility="gone">
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/log_close"
+            android:text="Close"/>
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/log_data"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:editable="false"
+            android:textColor="@color/constantBlack"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/log_copy"
+            android:text="Copy"/>
+
+    </uikit.widget.ColumnLayout>
+
+</FrameLayout>

@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.send.main
 
-import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
@@ -8,23 +7,26 @@ import android.text.method.LinkMovementMethod
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.doOnLayout
+import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.short4
-import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.camera.CameraMode
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
+import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
-import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsScreen
+import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
@@ -43,9 +45,12 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import org.koin.core.parameter.parametersOf
+import org.ton.cell.Cell
 import uikit.base.BaseFragment
-import uikit.dialog.modal.ModalDialog
+import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
@@ -105,10 +110,11 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     private lateinit var commentEncryptView: AppCompatTextView
     private lateinit var commentDecryptView: AppCompatTextView
     private lateinit var commentRequiredView: AppCompatTextView
+    private lateinit var commentErrorView: AppCompatTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEvent("send_open")
+        AnalyticsHelper.trackEvent("send_open", viewModel.installId)
 
         navigation?.setFragmentResultListener(contractsRequestKey) { bundle ->
             val contact = bundle.getParcelableCompat<SendContact>("contact")
@@ -173,6 +179,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         applyCommentDecryptView()
 
         commentRequiredView = view.findViewById(R.id.comment_required)
+        commentErrorView = view.findViewById(R.id.comment_error)
 
         commentInput.doOnTextChange = { text ->
             if (text.isEmpty()) {
@@ -228,6 +235,16 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             addressInput.loading = false
         }
 
+        collectFlow(viewModel.uiInputCommentErrorFlow) { errorResId ->
+            commentInput.error = errorResId != null
+            if (errorResId != null) {
+                commentErrorView.setText(errorResId)
+                commentErrorView.visibility = View.VISIBLE
+            } else {
+                commentErrorView.visibility = View.GONE
+            }
+        }
+
         collectFlow(viewModel.uiEventFlow, ::onEvent)
         collectFlow(viewModel.uiInputAmountFlow.map { it.value }, amountView::setValue)
         collectFlow(viewModel.uiBalanceFlow, ::setAmountState)
@@ -247,25 +264,43 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             }
         }
 
-        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress)
+        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress, args.bin)
+    }
+
+    private fun confirmSendAll() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setMessage(Localization.send_all_balance)
+        builder.setNegativeButton(Localization.continue_action) { viewModel.sign() }
+        builder.setPositiveButton(Localization.cancel)
+        builder.show()
     }
 
     private fun signAndSend() {
-        viewModel.sign()
+        collectFlow(viewModel.userInputMaxFlow.take(1)) { isMax ->
+            if (isMax) {
+                confirmSendAll()
+            } else {
+                viewModel.sign()
+            }
+        }
     }
 
     private fun openAddressBook() {
+        hideKeyboard()
         navigation?.add(SendContactsScreen.newInstance(wallet, contractsRequestKey))
-        getCurrentFocus()?.hideKeyboard()
     }
 
     private fun openCamera() {
+        hideKeyboard()
         navigation?.add(CameraScreen.newInstance(CameraMode.Address))
-        getCurrentFocus()?.hideKeyboard()
     }
 
     fun initializeArgs(
-        targetAddress: String?, amountNano: Long, text: String?, tokenAddress: String
+        targetAddress: String?,
+        amountNano: Long,
+        text: String?,
+        tokenAddress: String,
+        bin: Cell?
     ) {
         viewModel.initializeTokenAndAmount(
             tokenAddress = tokenAddress,
@@ -274,6 +309,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
         text?.let { commentInput.text = it }
         targetAddress?.let { addressInput.text = it }
+        bin?.let { viewModel.userInputBin(it) }
     }
 
     private fun applyCommentEncryptState(enabled: Boolean) {
@@ -372,8 +408,9 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     private fun setSuccess() {
         processTaskView.state = ProcessTaskView.State.SUCCESS
         navigation?.openURL("tonkeeper://activity")
-        navigation?.removeByClass(TokenScreen::class.java)
-        postDelayed(2000, ::finish)
+        navigation?.removeByClass({
+            postDelayed(2000, ::finish)
+        }, NftScreen::class.java, TokenScreen::class.java)
     }
 
     private fun setDefault() {
@@ -387,8 +424,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransaction(transaction: SendTransaction) {
-        reviewWalletView.value =
-            transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView, 16)
+        reviewWalletView.value = transaction.fromWallet.label.getTitle(requireContext(), reviewWalletView.valueView, 16)
         applyTransactionAccount(transaction.destination)
         applyTransactionAmount(transaction.amount)
         applyTransactionComment(transaction.comment, transaction.encryptedComment)
@@ -420,9 +456,22 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransactionAccount(destination: SendDestination.Account) {
-        val shortAddress = destination.query.shortAddress
+        var name = destination.name
+        val shortAddress = if (destination.query.isValidTonAddress()) {
+            destination.query.shortAddress
+        } else {
+            destination.query.lowercase().also {
+                if (name.isNullOrEmpty()) {
+                    name = it
+                }
+            }
+        }
 
-        if (destination.name.isNullOrEmpty()) {
+        reviewRecipientView.setOnClickListener {
+            requireContext().copyToClipboard(shortAddress)
+        }
+
+        if (name.isNullOrEmpty()) {
             reviewRecipientView.value = shortAddress
             reviewRecipientAddressView.visibility = View.GONE
         } else {
@@ -435,6 +484,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 )
             }
         }
+
     }
 
     private fun setFee(event: SendEvent.Fee?) {
@@ -521,12 +571,13 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             tokenAddress: String = TokenEntity.TON.address,
             amountNano: Long = 0,
             text: String? = null,
-            nftAddress: String? = null
+            nftAddress: String? = null,
+            bin: Cell? = null
         ): SendScreen {
             val screen = SendScreen(wallet)
             screen.setArgs(
                 SendArgs(
-                    targetAddress, tokenAddress, amountNano, text, nftAddress ?: ""
+                    targetAddress, tokenAddress, amountNano, text, nftAddress ?: "", bin
                 )
             )
             return screen

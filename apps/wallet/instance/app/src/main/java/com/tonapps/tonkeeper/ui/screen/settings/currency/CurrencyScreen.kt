@@ -5,6 +5,7 @@ import android.view.View
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.settings.currency.list.Adapter
+import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -27,6 +28,7 @@ class CurrencyScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.Non
 
     private fun selectCurrency(currency: String) {
         viewModel.selectCurrency(currency)
+        WidgetUpdaterWorker.update(requireContext())
         finish()
     }
 

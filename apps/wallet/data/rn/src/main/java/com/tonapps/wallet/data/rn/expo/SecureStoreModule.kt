@@ -6,6 +6,7 @@ import android.preference.PreferenceManager
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.tonapps.extensions.asJSON
 import com.tonapps.wallet.data.rn.expo.encryptors.AESEncryptor
 import com.tonapps.wallet.data.rn.expo.encryptors.HybridAESEncryptor
 import com.tonapps.wallet.data.rn.expo.encryptors.KeyBasedEncryptor
@@ -71,7 +72,7 @@ internal class SecureStoreModule(
         encryptedItemString ?: return null
 
         val encryptedItem: JSONObject = try {
-            JSONObject(encryptedItemString)
+            encryptedItemString.asJSON()
         } catch (e: JSONException) {
             throw DecryptException("Could not parse the encrypted JSON item in SecureStore: ${e.message}", key, options.keychainService, e)
         }
@@ -210,7 +211,7 @@ internal class SecureStoreModule(
         for ((key: String, value) in allEntries) {
             val valueString = value as? String ?: continue
             val jsonEntry = try {
-                JSONObject(valueString)
+                valueString.asJSON()
             } catch (e: JSONException) {
                 continue
             }
@@ -249,7 +250,7 @@ internal class SecureStoreModule(
         return keyStoreEntryClass.cast(entry)
     }
 
-    private fun <E : KeyStore.Entry> getKeyEntry(
+    private suspend fun <E : KeyStore.Entry> getKeyEntry(
         keyStoreEntryClass: Class<E>,
         encryptor: KeyBasedEncryptor<E>,
         options: SecureStoreOptions,
@@ -273,7 +274,7 @@ internal class SecureStoreModule(
         return keyStoreEntry
     }
 
-    private fun <E : KeyStore.Entry> getPreferredKeyEntry(
+    private suspend fun <E : KeyStore.Entry> getPreferredKeyEntry(
         keyStoreEntryClass: Class<E>,
         encryptor: KeyBasedEncryptor<E>,
         options: SecureStoreOptions,
@@ -289,6 +290,15 @@ internal class SecureStoreModule(
 
     fun getSharedPreferences(): SharedPreferences {
         return context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+    }
+
+    fun getAllKeyValuesForDebug(): JSONObject {
+        val prefs = getSharedPreferences()
+        val result = JSONObject()
+        for ((key, value) in prefs.all) {
+            result.put(key, value.toString())
+        }
+        return result
     }
 
     /**

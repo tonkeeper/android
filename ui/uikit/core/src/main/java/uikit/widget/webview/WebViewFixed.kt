@@ -7,9 +7,14 @@ import android.graphics.Color
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
+import android.os.Message
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
+import android.webkit.JsResult
+import android.webkit.PermissionRequest
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -66,6 +71,12 @@ open class WebViewFixed @JvmOverloads constructor(
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         settings.allowFileAccess = false
         settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        settings.allowFileAccess = false
+        settings.allowContentAccess = false
+        settings.allowFileAccessFromFileURLs = false
+        settings.allowUniversalAccessFromFileURLs = false
+        settings.javaScriptCanOpenWindowsAutomatically = false
+        settings.setGeolocationEnabled(false)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
@@ -118,6 +129,29 @@ open class WebViewFixed @JvmOverloads constructor(
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
                 callbacks.forEach { it.onProgressChanged(newProgress) }
+            }
+
+            override fun onPermissionRequest(request: PermissionRequest) {
+                request.deny()
+            }
+
+            override fun onCreateWindow(
+                view: WebView?,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: Message?
+            ): Boolean {
+                return true
+            }
+
+            override fun onShowFileChooser(
+                webView: WebView,
+                filePathCallback: ValueCallback<Array<Uri>>,
+                fileChooserParams: FileChooserParams
+            ): Boolean {
+                // Deny file chooser
+                filePathCallback.onReceiveValue(null)
+                return true
             }
         }
 

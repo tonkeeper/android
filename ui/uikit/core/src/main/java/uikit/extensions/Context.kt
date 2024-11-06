@@ -30,6 +30,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleableRes
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentActivity
 import com.tonapps.uikit.color.backgroundHighlightedColor
 import com.tonapps.uikit.color.stateList
@@ -131,5 +132,6 @@ fun Context.getCurrentFocusEditText(): EditText? {
 }
 
 fun Context.hideKeyboard() {
-    (activity?.currentFocus as? EditText)?.hideKeyboard()
+    getCurrentFocus()?.hideKeyboard()
 }
+

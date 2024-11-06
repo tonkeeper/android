@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/itemHeight"
-    android:paddingHorizontal="@dimen/offsetMedium">
+    android:layout_height="@dimen/itemHeight">
     
     <com.tonapps.emoji.ui.EmojiView
         android:id="@+id/emoji"
         android:layout_width="28dp"
         android:layout_height="28dp"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        android:layout_marginLeft="@dimen/offsetMedium"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/name"
@@ -23,8 +23,8 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/icon"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:layout_gravity="center"
         android:scaleType="centerInside"
         android:tint="?attr/iconTertiaryColor"/>

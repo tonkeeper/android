@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="Migration"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <TextView
+                android:id="@+id/legacy_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textPrimaryColor"
+                android:text="@string/loading"/>
+
+
+        </uikit.widget.ColumnLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</uikit.widget.ColumnLayout>

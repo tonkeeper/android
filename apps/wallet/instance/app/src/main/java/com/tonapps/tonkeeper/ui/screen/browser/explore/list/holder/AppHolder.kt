@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.explore.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
@@ -17,7 +18,7 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_brows
         itemView.setOnClickListener {
             Navigation.from(context)?.add(DAppScreen.newInstance(item.wallet, item.name, item.url))
         }
-        iconView.setImageURI(item.icon)
+        iconView.setImageURI(item.icon, ResizeOptions.forSquareSize(64))
         nameView.text = item.name
     }
 }

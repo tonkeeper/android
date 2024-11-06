@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.StrictMode
 import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import com.facebook.drawee.backends.pipeline.Fresco
@@ -13,6 +12,8 @@ import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
+import com.tonapps.extensions.asJSON
+import com.tonapps.extensions.fixJson
 import com.tonapps.extensions.setLocales
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel
@@ -29,6 +30,7 @@ import com.tonapps.wallet.data.backup.backupModule
 import com.tonapps.wallet.data.battery.batteryModule
 import com.tonapps.wallet.data.browser.browserModule
 import com.tonapps.wallet.data.collectibles.collectiblesModule
+import com.tonapps.wallet.data.contacts.contactsModule
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.dataModule
 import com.tonapps.wallet.data.dapps.dAppsModule
@@ -38,10 +40,12 @@ import com.tonapps.wallet.data.purchase.purchaseModule
 import com.tonapps.wallet.data.rn.rnLegacyModule
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
+import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.android.ext.android.inject
 import org.koin.androidx.workmanager.koin.workManagerFactory
 import java.util.concurrent.Executors
+import java.util.regex.Pattern
 
 class App: Application(), CameraXConfig.Provider, KoinComponent {
 
@@ -59,26 +63,27 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
     override fun onCreate() {
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder()
-                .detectLeakedSqlLiteObjects()
                 .penaltyLog()
+                .detectAll()
                 .penaltyListener(Executors.newSingleThreadExecutor()) {
-                    Log.e("Tonkeeper", "StrictMode.VmPolicy: $it", it.cause)
+                    Log.e("TonkeeperStrictModeLog", "StrictMode.VmPolicy: $it", it.cause)
                 }.build())
         }
 
         super.onCreate()
+        Theme.add("system", 0)
         Theme.add("blue", uikit.R.style.Theme_App_Blue)
         Theme.add("dark", uikit.R.style.Theme_App_Dark)
         Theme.add("light", uikit.R.style.Theme_App_Light, true)
 
         instance = this
+
         startKoin {
             androidContext(this@App)
-            modules(koinModel, workerModule, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
+            modules(koinModel, contactsModule, workerModule, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule)
             workManagerFactory()
         }
         setLocales(settingsRepository.localeList)
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         initFresco()
     }
 

@@ -1,9 +1,12 @@
 <resources>
     <string name="transaction_expired">Transacción expirada</string>
+    <string name="add_contact">Agregar a la libreta de direcciones</string>
+    <string name="multi_account_secret_wrong">Utilice Tonkeeper Desktop para cuentas con múltiples billeteras</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s listo. Toca para recoger.</string>
     <string name="staking_pending_deposit">%1$s se depositará en %2$s</string>
     <string name="staking_pending_withdraw">%1$s se retirarán en %2$s</string>
+    <string name="edit_full">Editar</string>
     <string name="staking_unstake_cycle">La solicitud de cancelación de participación se procesará después del final del ciclo de validación en %1$s</string>
     <string name="send_transaction_scroll">Verifique todos los detalles para confirmar</string>
     <string name="send_transaction_detail">El valor total de los tokens que se enviarán desde su billetera. Los reembolsos no están incluidos en el valor total.</string>
@@ -372,6 +375,7 @@
     <string name="ledger_update_title">Actualice la aplicación TON en Ledger a la versión %1$s</string>
     <string name="ledger_update_text">Este tipo de transacción no es compatible con la versión actual de su aplicación.</string>
     <string name="ledger_update_button">OK</string>
+    <string name="ledger_comment_error">Utilice únicamente caracteres ASCII: dígitos, letras del alfabeto latino y signos de puntuación.</string>
     <string name="bluetooth_permissions_alert_title">Permisos de Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Por favor, habilite los permisos de Bluetooth en su configuración para usar esta función</string>
     <string name="bluetooth_permissions_alert_open_settings">Abrir Configuración</string>
@@ -452,4 +456,19 @@
     <string name="insufficient_balance_default">A pagar: %1$s.\\nSu saldo: %2$s.</string>
     <string name="buy_ton">Comprar TON</string>
     <string name="recharge_battery">Recargar la batería</string>
+    <string name="name">Nombre</string>
+    <string name="ledger_blind_signing_error">La firma ciega debe estar habilitada en la configuración de Ledger</string>
+    <string name="nothing_to_restore">Nada que restaurar</string>
+    <string name="new_contact">Nueva dirección</string>
+    <string name="contact_delete_dialog">¿Está seguro de que desea eliminar “%1$s” de su libreta de direcciones?</string>
+    <string name="add_to_contact">Agregar a la libreta de direcciones</string>
+    <string name="wallet_address">Dirección de la billetera</string>
+    <string name="contacts_save_latest">Guardar dirección</string>
+    <string name="connected_apps">Aplicaciones conectadas</string>
+    <string name="disconnect_dapp_confirm">¿Desconectar “%1$s”?</string>
+    <string name="disconnect_all_apps">Desconectar todas las aplicaciones</string>
+    <string name="disconnect_all_apps_confirm">¿Desconectar todas las aplicaciones?</string>
+    <string name="connected_apps_empty">No hay aplicaciones conectadas</string>
+    <string name="send_all_balance">¿Estás segura de que quieres enviar todo tu saldo?</string>
+    <string name="wrong_promocode">El código ingresado no es válido</string>
 </resources>

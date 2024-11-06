@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton.contract
 
+import android.util.Log
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.WalletV5R1Contract.W5Context.Client
@@ -89,7 +90,7 @@ class WalletV5R1Contract(
             storeUInt(1, 1)
             storeUInt(0, 32)
             storeInt(context.serialized, 32)
-            storeBits(publicKey.key)
+            storeBytes(publicKey.key.toByteArray())
             storeBit(false)
         }
     }

@@ -12,6 +12,7 @@ data class TonConnectArgs(
     val proofPayload: String?,
     val returnUri: Uri?,
     val wallet: WalletEntity?,
+    val fromPackageName: String?
 ): BaseArgs() {
 
     private companion object {
@@ -19,13 +20,15 @@ data class TonConnectArgs(
         private const val ARG_PROOF_PAYLOAD = "proofPayload"
         private const val ARG_RETURN_URI = "returnUri"
         private const val ARG_WALLET = "wallet"
+        private const val ARG_FROM_PACKAGE_NAME = "fromPackageName"
     }
 
     constructor(bundle: Bundle) : this(
         app = bundle.getParcelableCompat(ARG_APP)!!,
         proofPayload = bundle.getString(ARG_PROOF_PAYLOAD),
         returnUri = bundle.getParcelableCompat(ARG_RETURN_URI),
-        wallet = bundle.getParcelableCompat(ARG_WALLET)
+        wallet = bundle.getParcelableCompat(ARG_WALLET),
+        fromPackageName = bundle.getString(ARG_FROM_PACKAGE_NAME)
     )
 
     override fun toBundle(): Bundle {
@@ -34,6 +37,7 @@ data class TonConnectArgs(
         bundle.putString(ARG_PROOF_PAYLOAD, proofPayload)
         bundle.putParcelable(ARG_RETURN_URI, returnUri)
         bundle.putParcelable(ARG_WALLET, wallet)
+        bundle.putString(ARG_FROM_PACKAGE_NAME, fromPackageName)
         return bundle
     }
 }

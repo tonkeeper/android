@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.koin
 
-import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.dsl.module
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
@@ -20,14 +19,19 @@ import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
-import com.tonapps.tonkeeper.ui.screen.send.contacts.SendContactsViewModel
-import com.tonapps.tonkeeper.ui.screen.purchase.main.PurchaseViewModel
+import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsViewModel
+import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
+import com.tonapps.tonkeeper.ui.screen.send.contacts.add.AddContactViewModel
+import com.tonapps.tonkeeper.ui.screen.send.contacts.edit.EditContactViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionViewModel
+import com.tonapps.tonkeeper.ui.screen.settings.apps.AppsViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawViewModel
+import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 
 val viewModelWalletModule = module {
     viewModelOf(::WalletViewModel)
@@ -56,4 +60,7 @@ val viewModelWalletModule = module {
     viewModelOf(::StakingViewModel)
     viewModelOf(::SendTransactionViewModel)
     viewModelOf(::StakeWithdrawViewModel)
+    viewModelOf(::AddContactViewModel)
+    viewModelOf(::EditContactViewModel)
+    viewModelOf(::AppsViewModel)
 }

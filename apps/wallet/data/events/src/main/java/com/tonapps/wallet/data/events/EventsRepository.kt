@@ -13,6 +13,7 @@ import com.tonapps.wallet.data.events.entities.EventEntity
 import com.tonapps.wallet.data.events.source.LocalDataSource
 import com.tonapps.wallet.data.events.source.RemoteDataSource
 import com.tonapps.wallet.data.rates.entity.RatesEntity
+import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
@@ -29,7 +31,10 @@ class EventsRepository(
     private val api: API
 ) {
 
-    private val localDataSource = LocalDataSource(scope, context)
+    private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        LocalDataSource(scope, context)
+    }
+
     private val remoteDataSource = RemoteDataSource(api)
 
     val decryptedCommentFlow = localDataSource.decryptedCommentFlow
@@ -38,6 +43,21 @@ class EventsRepository(
 
     fun saveDecryptedComment(txId: String, comment: String) {
         localDataSource.saveDecryptedComment(txId, comment)
+    }
+
+    fun latestRecipientsFlow(accountId: String, testnet: Boolean) = flow {
+        localDataSource.getLatestRecipients(cacheLatestRecipientsKey(accountId, testnet))?.let {
+            emit(it)
+        }
+
+        val remote = loadLatestRecipients(accountId, testnet)
+        emit(remote)
+    }.flowOn(Dispatchers.IO)
+
+    private fun loadLatestRecipients(accountId: String, testnet: Boolean): List<AccountAddress> {
+        val list = remoteDataSource.getLatestRecipients(accountId, testnet)
+        localDataSource.setLatestRecipients(cacheLatestRecipientsKey(accountId, testnet), list)
+        return list
     }
 
     suspend fun getSingle(eventId: String, testnet: Boolean) = remoteDataSource.getSingle(eventId, testnet)
@@ -94,13 +114,14 @@ class EventsRepository(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
+        limit: Int = 12
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             if (beforeLt != null) {
-                remoteDataSource.get(accountId, testnet, beforeLt)
+                remoteDataSource.get(accountId, testnet, beforeLt, limit)
             } else {
                 val events = remoteDataSource.get(accountId, testnet)?.also {
-                    localDataSource.setCache(cacheKey(accountId, testnet), it)
+                    localDataSource.setEvents(cacheEventsKey(accountId, testnet), it)
                 }
                 events
             }
@@ -113,13 +134,21 @@ class EventsRepository(
         accountId: String,
         testnet: Boolean
     ): AccountEvents? = withContext(Dispatchers.IO) {
-        localDataSource.getCache(cacheKey(accountId, testnet))
+        localDataSource.getEvents(cacheEventsKey(accountId, testnet))
     }
 
-    private fun cacheKey(accountId: String, testnet: Boolean): String {
+    private fun cacheEventsKey(accountId: String, testnet: Boolean): String {
         if (!testnet) {
             return accountId
         }
         return "${accountId}_testnet"
     }
+
+    private fun cacheLatestRecipientsKey(accountId: String, testnet: Boolean): String {
+        if (!testnet) {
+            return accountId
+        }
+        return "${accountId}_testnet"
+    }
+
 }

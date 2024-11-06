@@ -23,9 +23,18 @@ android {
 }
 
 dependencies {
-    implementation(Dependence.ton)
+    api(platform(Dependence.Firebase.bom))
+    api(Dependence.Firebase.crashlytics)
+
+    implementation(Dependence.TON.tvm)
+    implementation(Dependence.TON.crypto)
+    implementation(Dependence.TON.tlb)
+    implementation(Dependence.TON.blockTlb)
+    implementation(Dependence.TON.tonapiTl)
+    implementation(Dependence.TON.contract)
     implementation(Dependence.Koin.core)
     implementation(Dependence.AndroidX.biometric)
+    implementation(project(Dependence.Wallet.api))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.sqlite))

@@ -43,7 +43,6 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        args.labelName?.let { viewModel.setLabelName(it) }
         args.accounts?.let { viewModel.setAccounts(it.toList()) }
     }
 
@@ -89,6 +88,10 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
     }
 
     private fun onRoute(route: InitRoute) {
+        if (childFragmentManager.isStateSaved) {
+            return
+        }
+
         val fragment = when (route) {
             InitRoute.CreatePasscode -> PasscodeScreen.newInstance(false)
             InitRoute.ReEnterPasscode -> PasscodeScreen.newInstance(true)

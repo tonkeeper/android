@@ -3,12 +3,8 @@ package com.tonapps.tonkeeper.view
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
-import android.view.View
-import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import androidx.fragment.app.Fragment
-import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal

@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
 import androidx.core.net.toUri
-import com.tonapps.blockchain.ton.extensions.safePublicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
 import com.tonapps.extensions.query
@@ -21,20 +21,22 @@ sealed class DeepLinkRoute {
         data object Collectibles: Tabs("tonkeeper://collectibles")
     }
 
-    data object Backups: DeepLinkRoute()
+    sealed class Internal: DeepLinkRoute()
+
+    data object Backups: Internal()
     data object Staking: DeepLinkRoute()
     data object Purchase: DeepLinkRoute()
     data object Send: DeepLinkRoute()
-    data object Settings: DeepLinkRoute()
-    data object SettingsSecurity: DeepLinkRoute()
-    data object SettingsCurrency: DeepLinkRoute()
-    data object SettingsLanguage: DeepLinkRoute()
-    data object SettingsNotifications: DeepLinkRoute()
-    data object EditWalletLabel: DeepLinkRoute()
+    data object Settings: Internal()
+    data object SettingsSecurity: Internal()
+    data object SettingsCurrency: Internal()
+    data object SettingsLanguage: Internal()
+    data object SettingsNotifications: Internal()
+    data object EditWalletLabel: Internal()
     data object Camera: DeepLinkRoute()
     data object Receive: DeepLinkRoute()
-    data object ManageAssets: DeepLinkRoute()
-    data object WalletPicker: DeepLinkRoute()
+    data object ManageAssets: Internal()
+    data object WalletPicker: Internal()
 
     data class StakingPool(val poolAddress: String): DeepLinkRoute() {
 
@@ -71,7 +73,7 @@ sealed class DeepLinkRoute {
             address = uri.pathOrNull ?: throw IllegalArgumentException("Address is required"),
             amount = uri.queryPositiveLong("amount"),
             text = uri.query("text"),
-            jettonAddress = uri.query("jettonAddress"),
+            jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
             bin = uri.query("bin")
         )
     }
@@ -125,13 +127,20 @@ sealed class DeepLinkRoute {
     ): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
-            publicKey = uri.query("pk")?.safePublicKey() ?: throw IllegalArgumentException("Public key is required"),
+            publicKey = uri.query("pk")?.publicKeyFromHex() ?: throw IllegalArgumentException("Public key is required"),
             name = uri.query("name"),
             local = uri.queryBoolean("local")
         )
     }
 
     data class TonConnect(val uri: Uri): DeepLinkRoute()
+
+    data class Jetton(val address: String): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            address = uri.pathOrNull ?: uri.query("jetton") ?: "TON"
+        )
+    }
 
     companion object {
 
@@ -174,6 +183,7 @@ sealed class DeepLinkRoute {
                     "qr", "receive" -> Receive
                     "manage" -> ManageAssets
                     "picker", "wallets" -> WalletPicker
+                    "jetton", "token" -> Jetton(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {

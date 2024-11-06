@@ -23,7 +23,16 @@ android {
 }
 
 dependencies {
-    api(Dependence.ton)
+    api(platform(Dependence.Firebase.bom))
+    api(Dependence.Firebase.crashlytics)
+
+    api(Dependence.TON.tvm)
+    api(Dependence.TON.crypto)
+    api(Dependence.TON.tlb)
+    api(Dependence.TON.blockTlb)
+    api(Dependence.TON.tonapiTl)
+    api(Dependence.TON.contract)
     api(Dependence.KotlinX.io)
     implementation(project(Dependence.Lib.extensions))
+    implementation(project(Dependence.Lib.base64))
 }

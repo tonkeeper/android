@@ -10,6 +10,7 @@ import androidx.annotation.ColorInt
 import androidx.fragment.app.Fragment
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.backgroundContentTintColor
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import uikit.base.BaseFragment
 import kotlin.coroutines.resume
@@ -56,13 +57,17 @@ interface Navigation {
 
     fun remove(fragment: Fragment)
 
-    fun removeByClass(clazz: Class<out Fragment>)
+    fun removeByClass(runnable: Runnable, vararg clazz: Class<out Fragment>)
 
     fun openURL(url: String)
 
     fun toast(message: String, loading: Boolean, color: Int)
 
     fun run(fragment: BaseFragment) {
+
+    }
+
+    fun migrationLoader(show: Boolean) {
 
     }
 }

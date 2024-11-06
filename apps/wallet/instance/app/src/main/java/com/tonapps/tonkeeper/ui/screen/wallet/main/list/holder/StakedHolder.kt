@@ -43,7 +43,6 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
     override fun onBind(item: Item.Stake) {
         stopTicker()
 
-        item.poolAddress
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, null)
         nameView.text = item.poolName
@@ -64,11 +63,15 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
             Navigation.from(context)?.add(StakeViewerScreen.newInstance(item.wallet, item.poolAddress, item.poolName))
         }
 
+        messageView.setOnClickListener(null)
+
         if (item.readyWithdraw > Coins.ZERO) {
             messageView.visibility = View.VISIBLE
             messageView.text = context.getString(Localization.staking_ready_withdraw, item.readyWithdrawFormat)
             messageView.setOnClickListener {
-                navigation?.add(StakeWithdrawScreen.newInstance(item.wallet, item.poolAddress))
+                if (item.poolImplementation != StakingPool.Implementation.LiquidTF) {
+                    navigation?.add(StakeWithdrawScreen.newInstance(item.wallet, item.poolAddress))
+                }
             }
         } else if (item.pendingDeposit > Coins.ZERO) {
             startTicker(Localization.staking_pending_deposit, item.pendingDepositFormat, item.cycleEnd)

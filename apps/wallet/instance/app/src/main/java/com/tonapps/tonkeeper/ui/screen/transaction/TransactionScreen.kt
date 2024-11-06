@@ -4,19 +4,15 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.getParcelableCompat
-import com.tonapps.extensions.ifPunycodeToUnicode
 import com.tonapps.extensions.logError
-import com.tonapps.extensions.max12
 import com.tonapps.extensions.max24
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
-import com.tonapps.tonkeeper.api.shortHash
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -31,11 +27,9 @@ import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
@@ -51,19 +45,17 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     companion object {
 
-        private const val ARG_ACTION = "action"
+        private const val ARG_ACTION = "action_event"
 
         fun newInstance(action: HistoryItem.Event): TransactionScreen {
             val screen = TransactionScreen()
-            screen.arguments = Bundle().apply {
-                putParcelable(ARG_ACTION, action)
-            }
+            screen.putParcelableArg(ARG_ACTION, action)
             return screen
         }
     }
 
-    private val action: HistoryItem.Event by lazy {
-        requireArguments().getParcelableCompat(ARG_ACTION)!!
+    private val actionArgs: HistoryItem.Event? by lazy {
+        requireArguments().getParcelableCompat(ARG_ACTION)
     }
 
     private val historyHelper: HistoryHelper by inject()
@@ -93,6 +85,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val action = actionArgs
+        if (action == null) {
+            finish()
+            return
+        }
 
         view.findViewById<View>(R.id.close).setOnClickListener {
             finish()
@@ -142,16 +140,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         } else {
             amountView.text = action.value.withCustomSymbol(requireContext())
             if (action.refund != null) {
-                feeView.setData(action.refund!!.withCustomSymbol(requireContext()), action.refundInCurrency!!.withCustomSymbol(requireContext()))
+                feeView.setData(action.refund.withCustomSymbol(requireContext()), action.refundInCurrency!!.withCustomSymbol(requireContext()))
             } else if (action.fee != null) {
-                feeView.setData(action.fee!!.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
+                feeView.setData(action.fee.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
             } else {
                 feeView.visibility = View.GONE
             }
         }
 
         if (action.comment != null && !action.isScam) {
-            applyComment(action.comment!!)
+            applyComment(action, action.comment)
         } else {
             commentView.visibility = View.GONE
             feeView.position = ListCell.Position.LAST
@@ -228,7 +226,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
     }
 
-    private fun applyComment(comment: HistoryItem.Event.Comment) {
+    private fun applyComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment) {
         commentView.visibility = View.VISIBLE
         if (!comment.isEncrypted) {
             val text = comment.body
@@ -236,16 +234,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             commentView.setOnClickListener { context?.copyWithToast(text) }
         } else {
             commentView.setData(getString(Localization.encrypted_comment), "", lockDrawable)
-            commentView.setOnClickListener { decryptComment(comment) }
+            commentView.setOnClickListener { decryptComment(action, comment) }
         }
     }
 
-    private fun decryptComment(comment: HistoryItem.Event.Comment) {
+    private fun decryptComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment) {
         historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.sender?.address ?: "").catch {
             context?.logError(it)
             commentView.reject()
         }.onEach {
-            applyComment(it)
+            applyComment(action, it)
         }.launchIn(lifecycleScope)
     }
 
@@ -306,8 +304,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
 
         for (i in 0 until visibleViews.size) {
-            visibleViews[i].position =
-                com.tonapps.uikit.list.ListCell.getPosition(visibleViews.size, i)
+            visibleViews[i].position = ListCell.getPosition(visibleViews.size, i)
         }
     }
 }

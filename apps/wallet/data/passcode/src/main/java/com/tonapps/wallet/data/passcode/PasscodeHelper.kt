@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
@@ -8,9 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PasscodeHelper(
-    private val store: PasscodeStore,
-    private val accountRepository: AccountRepository,
+    private val context: Context,
+    private val accountRepository: AccountRepository
 ) {
+
+    
+    private val store: PasscodeStore by lazy { PasscodeStore(context) }
 
     val hasPinCode: Boolean
         get() = store.hasPinCode
@@ -44,6 +48,7 @@ class PasscodeHelper(
             store.setPinCode(code)
             true
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             context.logError(e)
             false
         }

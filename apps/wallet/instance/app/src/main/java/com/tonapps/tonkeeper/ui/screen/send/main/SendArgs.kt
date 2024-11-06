@@ -1,7 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.os.Bundle
+import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.toRawAddress
+import org.ton.cell.Cell
 import uikit.base.BaseArgs
 
 data class SendArgs(
@@ -9,7 +12,8 @@ data class SendArgs(
     val tokenAddress: String,
     val amountNano: Long,
     val text: String?,
-    val nftAddress: String
+    val nftAddress: String,
+    val bin: Cell?
 ): BaseArgs() {
 
     private companion object {
@@ -18,6 +22,7 @@ data class SendArgs(
         private const val ARG_AMOUNT_NANO = "amount_nano"
         private const val ARG_TEXT = "text"
         private const val ARG_NFT_ADDRESS = "nft_address"
+        private const val ARG_BIN = "bin"
 
         private fun normalizeTokenAddress(address: String?): String {
             return if (address.isNullOrBlank()) "TON" else address.toRawAddress()
@@ -36,7 +41,8 @@ data class SendArgs(
         tokenAddress = normalizeTokenAddress(bundle.getString(ARG_TOKEN_ADDRESS)),
         amountNano = normalizeAmount(bundle.getLong(ARG_AMOUNT_NANO)),
         text = bundle.getString(ARG_TEXT),
-        nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: ""
+        nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: "",
+        bin = bundle.getString(ARG_BIN)?.cellFromBase64()
     )
 
     override fun toBundle(): Bundle {
@@ -48,6 +54,7 @@ data class SendArgs(
         }
         text?.let { bundle.putString(ARG_TEXT, it) }
         bundle.putString(ARG_NFT_ADDRESS, nftAddress)
+        bin?.let { bundle.putString(ARG_BIN, it.base64()) }
         return bundle
     }
 }

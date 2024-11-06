@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.collectibles.entities
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.entity.AccountEntity
 import com.tonapps.wallet.data.core.Trust
@@ -69,6 +70,12 @@ data class NftEntity(
 
     val suspicious: Boolean
         get() =  trust == Trust.none || trust == Trust.blacklist
+
+    val isTelegramUsername: Boolean
+        get() {
+            val address = collection?.address ?: return false
+            return address.equalsAddress("0:80d78a35f955a14b679faa887ff4cd5bfc0f43b4a4eea2a7e6927f3701b273c2")
+        }
 
     private fun getImage(minSize: Int, maxSize: Int): NftPreviewEntity? {
         return previews.find {

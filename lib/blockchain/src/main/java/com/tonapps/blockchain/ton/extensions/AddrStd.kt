@@ -16,6 +16,18 @@ fun AddrStd.toAccountId(): String {
     ).lowercase()
 }
 
+fun AddrStd.isBounceable(): Boolean {
+    return toString(userFriendly = true).isBounceable()
+}
+
+fun String.isTestnetAddress(): Boolean {
+    return startsWith("0Q") || startsWith("kQ")
+}
+
+fun String.isBounceable(): Boolean {
+    return !startsWith("UQ")
+}
+
 fun String.toUserFriendly(
     wallet: Boolean = true,
     testnet: Boolean,

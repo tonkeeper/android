@@ -6,15 +6,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.view.MotionEventCompat
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.iconSecondaryColor
+import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.stateList
+import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.widget.FrescoView
 
@@ -46,10 +49,19 @@ class TokenHolder(
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
         titleView.text = item.symbol
-        balanceView.text = if (item.hiddenBalance) {
-            HIDDEN_BALANCE
+        if (item.verified) {
+            balanceView.setTextColor(context.textSecondaryColor)
+            balanceView.text = if (item.hiddenBalance) {
+                HIDDEN_BALANCE
+            } else {
+                item.balanceFormat.withCustomSymbol(context)
+            }
+        } else if (item.blacklist) {
+            balanceView.text = getString(Localization.fake)
+            balanceView.setTextColor(context.textSecondaryColor)
         } else {
-            item.balanceFormat.withCustomSymbol(context)
+            balanceView.text = getString(Localization.unverified_token)
+            balanceView.setTextColor(context.accentOrangeColor)
         }
 
         pinnedView.setOnClickListener {

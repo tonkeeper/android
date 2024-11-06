@@ -2,22 +2,60 @@ package com.tonapps.tonkeeper.extensions
 
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonTransferHelper
+import com.tonapps.blockchain.ton.extensions.isBounceable
+import com.tonapps.blockchain.ton.extensions.loadAddress
+import com.tonapps.blockchain.ton.extensions.loadCoins
+import com.tonapps.blockchain.ton.extensions.loadMaybeAddress
 import com.tonapps.blockchain.ton.extensions.loadMaybeRef
 import com.tonapps.blockchain.ton.extensions.loadOpCode
+import com.tonapps.blockchain.ton.extensions.storeAddress
+import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.ledger.ton.remainingRefs
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import org.ton.block.AddrStd
 import org.ton.block.Coins
-import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
+import org.ton.cell.CellSlice
+import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
-import org.ton.tlb.loadTlb
-import org.ton.tlb.storeTlb
+import org.ton.tlb.CellRef
 
-private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
+private fun rebuildJettonWithCustomExcessesAccount(
+    payload: Cell,
+    slice: CellSlice,
+    builder: CellBuilder,
+    excessesAddress: AddrStd
+): Cell {
+
+    try {
+        builder
+            .storeOpCode(TONOpCode.JETTON_TRANSFER)
+            .storeUInt(slice.loadUInt(64), 64)
+            .storeCoins(slice.loadCoins())
+            .storeAddress(slice.loadAddress())
+
+        slice.loadMaybeAddress()
+
+        while (slice.remainingRefs > 0) {
+            val forwardCell = slice.loadRef()
+            builder.storeRef(rebuildBodyWithCustomExcessesAccount(forwardCell, excessesAddress))
+        }
+        return builder
+            .storeAddress(excessesAddress)
+            .storeBits(slice.loadBits(slice.remainingBits))
+            .endCell()
+    } catch (e: Throwable) {
+        return payload
+    }
+}
+
+private fun rebuildBodyWithCustomExcessesAccount(
+    payload: Cell,
     excessesAddress: AddrStd
 ): Cell {
     val slice = payload.beginParse()
@@ -27,28 +65,27 @@ private fun RawMessageEntity.rebuildBodyWithCustomExcessesAccount(
         TONOpCode.STONFI_SWAP -> {
             builder
                 .storeOpCode(TONOpCode.STONFI_SWAP)
-                .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
-                .storeTlb(Coins, slice.loadTlb(Coins.tlbCodec()))
-                .storeTlb(MsgAddressInt, slice.loadTlb(AddrStd.tlbCodec()))
+                .storeAddress(slice.loadAddress())
+                .storeCoins(slice.loadCoins())
+                .storeAddress(slice.loadAddress())
 
             if (slice.loadBit()) {
-                slice.loadTlb(AddrStd.tlbCodec())
+                slice.loadAddress()
             }
             slice.endParse()
-
             builder
                 .storeBit(true)
-                .storeTlb(MsgAddressInt, excessesAddress)
-
-            builder.endCell()
+                .storeAddress(excessesAddress)
+                .endCell()
         }
         TONOpCode.NFT_TRANSFER -> payload
-        TONOpCode.JETTON_TRANSFER -> payload
+        TONOpCode.JETTON_TRANSFER -> rebuildJettonWithCustomExcessesAccount(payload, slice, builder, excessesAddress)
         else -> payload
     }
 }
 
-private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
+private fun rebuildJettonTransferWithCustomPayload(
+    payload: Cell,
     newCustomPayload: Cell,
 ): Cell {
     val slice = payload.beginParse()
@@ -58,15 +95,15 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
     }
 
     val queryId = slice.loadUInt(64)
-    val jettonAmount = slice.loadTlb(Coins.tlbCodec())
-    val receiverAddress = slice.loadTlb(AddrStd.tlbCodec())
-    val excessesAddress = slice.loadTlb(AddrStd.tlbCodec())
+    val jettonAmount = slice.loadCoins()
+    val receiverAddress = slice.loadAddress()
+    val excessesAddress = slice.loadAddress()
     val customPayload = slice.loadMaybeRef()
     if (customPayload != null) {
         return payload
     }
 
-    val forwardAmount = slice.loadTlb(Coins.tlbCodec()).amount.toLong()
+    val forwardAmount = slice.loadCoins().amount.toLong()
     val forwardBody = slice.loadMaybeRef()
 
     return TonTransferHelper.jetton(
@@ -80,22 +117,42 @@ private fun RawMessageEntity.rebuildJettonTransferWithCustomPayload(
     )
 }
 
+
 fun RawMessageEntity.getWalletTransfer(
     excessesAddress: AddrStd? = null,
-    newStateInit: StateInit? = null,
+    newStateInit: CellRef<StateInit>? = null,
     newCustomPayload: Cell? = null,
 ): WalletTransfer {
-    val builder = WalletTransferBuilder()
-    builder.stateInit = stateInit ?: newStateInit
-    builder.destination = address
-    builder.body = if (excessesAddress != null) {
-        rebuildBodyWithCustomExcessesAccount(excessesAddress)
+    val payload = getPayload()
+    val body = if (excessesAddress != null) {
+        rebuildBodyWithCustomExcessesAccount(payload, excessesAddress)
     } else if (newCustomPayload != null) {
-        rebuildJettonTransferWithCustomPayload(newCustomPayload)
+        rebuildJettonTransferWithCustomPayload(payload, newCustomPayload)
     } else {
         payload
     }
-    // builder.bounceable = address.isBounceable()
-    builder.coins = coins
+
+    getStateInitRef()?.let {
+        DevSettings.tonConnectLog("parsedStateInit: $it")
+    }
+
+    if (!payload.isEmpty()) {
+        DevSettings.tonConnectLog("parsedPayload: $body")
+    }
+
+    val builder = WalletTransferBuilder()
+    builder.destination = address
+    builder.messageData = MessageData.Raw(body, newStateInit ?: getStateInitRef())
+    builder.bounceable = address.isBounceable()
+    if (newCustomPayload != null) {
+        val defCoins = Coins.of(0.5)
+        if (defCoins.amount.value > coins.amount.value) {
+            builder.coins = defCoins
+        } else {
+            builder.coins = coins
+        }
+    } else {
+        builder.coins = coins
+    }
     return builder.build()
 }

@@ -1,7 +1,11 @@
 package com.tonapps.blockchain.ton.contract
 
-import com.tonapps.blockchain.ton.tlb.CellStringTlbConstructor
-import kotlinx.io.bytestring.ByteString
+import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.storeMaybeAddress
+import com.tonapps.blockchain.ton.extensions.storeMaybeStringTail
+import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
@@ -14,6 +18,7 @@ import org.ton.block.ExtInMsgInfo
 import org.ton.block.Maybe
 import org.ton.block.Message
 import org.ton.block.MessageRelaxed
+import org.ton.block.MsgAddressExt
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
@@ -47,30 +52,80 @@ abstract class BaseWalletContract(
             }
         }
 
+        fun resolveVersion(publicKey: PublicKeyEd25519, accountId: String, testnet: Boolean): WalletVersion {
+            return resolveVersion(publicKey, accountId, if (testnet) -3 else -239)
+        }
+
+        fun resolveVersion(publicKey: PublicKeyEd25519, accountId: String, networkGlobalId: Int): WalletVersion {
+            val v4r2 = WalletV4R2Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v4r2)) {
+                return WalletVersion.V4R2
+            }
+            val v5r1 = WalletV5R1Contract(publicKey = publicKey, networkGlobalId = networkGlobalId).address.toAccountId()
+            if (accountId.equalsAddress(v5r1)) {
+                return WalletVersion.V5R1
+            }
+            val v5beta = WalletV5BetaContract(publicKey = publicKey, networkGlobalId = networkGlobalId).address.toAccountId()
+            if (accountId.equalsAddress(v5beta)) {
+                return WalletVersion.V5BETA
+            }
+            val v4r1 = WalletV4R1Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v4r1)) {
+                return WalletVersion.V4R1
+            }
+
+            val v3r2 = WalletV3R2Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v3r2)) {
+                return WalletVersion.V3R2
+            }
+
+            val v3r1 = WalletV3R1Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v3r1)) {
+                return WalletVersion.V3R1
+            }
+
+            return WalletVersion.UNKNOWN
+        }
+
         fun create(publicKey: PublicKeyEd25519, v: String, testnet: Boolean): BaseWalletContract {
             return create(publicKey, v, if (testnet) -3 else -239)
         }
 
         fun createIntMsg(gift: WalletTransfer): MessageRelaxed<Cell> {
-            val info = CommonMsgInfoRelaxed.IntMsgInfoRelaxed(
-                ihrDisabled = true,
-                bounce = gift.bounceable,
-                bounced = false,
-                src = AddrNone,
-                dest = gift.destination,
-                value = gift.coins,
-                ihrFee = Coins(),
-                fwdFee = Coins(),
-                createdLt = 0u,
-                createdAt = 0u
-            )
-            val init = Maybe.of(gift.stateInit?.let {
-                Either.of<StateInit, CellRef<StateInit>>(it, null)
+            val info = when (val dest = gift.destination) {
+                is MsgAddressInt -> {
+                    CommonMsgInfoRelaxed.IntMsgInfoRelaxed(
+                        ihrDisabled = true,
+                        bounce = gift.bounceable,
+                        bounced = false,
+                        src = AddrNone,
+                        dest = dest,
+                        value = gift.coins,
+                        ihrFee = Coins(),
+                        fwdFee = Coins(),
+                        createdLt = 0u,
+                        createdAt = 0u
+                    )
+                }
+                is MsgAddressExt -> {
+                    CommonMsgInfoRelaxed.ExtOutMsgInfoRelaxed(
+                        src = AddrNone,
+                        dest = dest,
+                        createdLt = 0u,
+                        createdAt = 0u
+                    )
+                }
+            }
+
+            val init = Maybe.of(gift.messageData.stateInit?.let {
+                Either.of<StateInit, CellRef<StateInit>>(null, it)
             })
-            val body = if (gift.body == null) {
+
+            val bodyCell = gift.messageData.body
+            val body = if (bodyCell.isEmpty()) {
                 Either.of<Cell, CellRef<Cell>>(Cell.empty(), null)
             } else {
-                Either.of<Cell, CellRef<Cell>>(null, CellRef(gift.body!!))
+                Either.of<Cell, CellRef<Cell>>(null, CellRef(bodyCell))
             }
 
             return MessageRelaxed(
@@ -83,14 +138,20 @@ abstract class BaseWalletContract(
 
     val walletId = DEFAULT_WALLET_ID + workchain
 
-    val stateInit: StateInit by lazy {
-        val cell = getStateCell()
+    private val stateInit: StateInit by lazy {
+        val dataCell = getStateCell()
         val code = getCode()
-        StateInit(code, cell)
+        StateInit(code, dataCell)
+    }
+
+    val stateInitRef: CellRef<StateInit> by lazy {
+        CellRef.valueOf(stateInitCell(), StateInit)
     }
 
     val address: AddrStd by lazy {
-        SmartContract.address(workchain, stateInit)
+        val stateInitRef = CellRef(stateInit, StateInit)
+        val hash = stateInitRef.hash()
+        AddrStd(workchain, hash)
     }
 
     fun stateInitCell(): Cell {
@@ -125,7 +186,8 @@ abstract class BaseWalletContract(
         privateKey: PrivateKeyEd25519,
         unsignedBody: Cell,
     ): Cell {
-        val signature = BitString(privateKey.sign(unsignedBody.hash()))
+        val unsignedBodyHash = unsignedBody.hash().toByteArray()
+        val signature = BitString(privateKey.sign(unsignedBodyHash))
         return signedBody(signature, unsignedBody)
     }
 
@@ -218,18 +280,14 @@ abstract class BaseWalletContract(
         return cell
     }
 
-    fun createBatteryBody(address: MsgAddressInt? = null, appliedPromo: String? = null): Cell {
-        val cell = buildCell {
-            storeUInt(0xb7b2515f, 32)
-            storeBit(address != null)
-            if (address != null) {
-                storeTlb(MsgAddressInt, address)
-            }
-            storeBit(appliedPromo.isNullOrEmpty())
-            if (!appliedPromo.isNullOrEmpty()) {
-                storeTlb(CellStringTlbConstructor, ByteString(*appliedPromo.encodeToByteArray()))
-            }
+    fun createBatteryBody(
+        address: MsgAddressInt? = null,
+        appliedPromo: String? = null
+    ): Cell {
+        return buildCell {
+            storeOpCode(TONOpCode.BATTERY_PAYLOAD)
+            storeMaybeAddress(address)
+            storeMaybeStringTail(appliedPromo)
         }
-        return cell
     }
 }

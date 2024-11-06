@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.TonTransferHelper
@@ -22,6 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -148,10 +150,20 @@ class BatteryRechargeViewModel(
         val batteryReservedAmount = rechargeMethod.fromTon(api.config.batteryReservedAmount)
 
         if (args.isGift) {
+            val addressState = if (destinationLoading) {
+                Item.Address.State.Loading
+            } else if (destination is SendDestination.NotFound) {
+                Item.Address.State.Error
+            } else if (destination is SendDestination.Account) {
+                Item.Address.State.Success
+            } else {
+                Item.Address.State.Default
+            }
+
             uiItems.add(
                 Item.Address(
-                    loading = destinationLoading,
-                    error = destination is SendDestination.NotFound
+                    state = addressState,
+                    value = _addressFlow.value
                 )
             )
             uiItems.add(Item.Space)
@@ -166,7 +178,7 @@ class BatteryRechargeViewModel(
 
         uiItems.addAll(uiItemsPacks(packs, selectedPackType, customAmount))
 
-        if (!api.config.batteryPromoDisabled) {
+        if (BuildConfig.DEBUG || !api.config.batteryPromoDisable) {
             uiItems.add(Item.Space)
             uiItems.add(Item.Promo(promoState))
         }
@@ -209,6 +221,7 @@ class BatteryRechargeViewModel(
                     isInsufficientBalance = remainingBalance.isNegative,
                     isLessThanMin = isLessThanMin,
                     formattedCharges = charges.toString(),
+                    value = _amountFlow.value,
                 )
             )
         }
@@ -265,7 +278,7 @@ class BatteryRechargeViewModel(
     }
 
     fun updateAddress(address: String) {
-        _addressFlow.tryEmit(address)
+        _addressFlow.value = address
     }
 
     fun updateAmount(amount: Double) {
@@ -328,25 +341,24 @@ class BatteryRechargeViewModel(
             token.isTon -> false
             batteryBalance.balance.value > BigDecimal.ZERO -> true
             rechargeMethod.minBootstrapValue != null -> {
-                amount.value > rechargeMethod.minBootstrapValue!!.toBigDecimal()
+                amount.value >= rechargeMethod.minBootstrapValue!!.toBigDecimal()
             }
             else -> false
         }
 
         if (token.isTon) {
-            val request = SignRequestEntity(
-                fromValue = wallet.contract.address.toAccountId(),
-                validUntil = validUntil,
-                messages = listOf(
-                    RawMessageEntity(
-                        addressValue = fundReceiver,
-                        amount = amount.toLong(),
-                        stateInitValue = null,
-                        payloadValue = payload.base64()
-                    )
-                ),
-                network = network,
-            )
+            val request = SignRequestEntity.Builder()
+                .setFrom(wallet.contract.address)
+                .setValidUntil(validUntil)
+                .addMessage(RawMessageEntity(
+                    addressValue = fundReceiver,
+                    amount = amount.toLong(),
+                    stateInitValue = null,
+                    payloadValue = payload.base64()
+                ))
+                .setNetwork(network)
+                .build(Uri.parse("https://battery.tonkeeper.com/"))
+
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
         } else {
             val queryId = TransferEntity.newWalletQueryId()
@@ -364,19 +376,19 @@ class BatteryRechargeViewModel(
                 forwardPayload = payload,
                 customPayload = customPayload?.customPayload
             )
-            val request = SignRequestEntity(
-                fromValue = wallet.contract.address.toAccountId(),
-                validUntil = validUntil,
-                messages = listOf(
-                    RawMessageEntity(
-                        addressValue = token.balance.walletAddress,
-                        amount = Coins.of(0.1).toLong(),
-                        stateInitValue = null,
-                        payloadValue = jettonPayload.base64()
-                    )
-                ),
-                network = network,
-            )
+
+            val request = SignRequestEntity.Builder()
+                .setFrom(wallet.contract.address)
+                .setValidUntil(validUntil)
+                .addMessage(RawMessageEntity(
+                    addressValue = token.balance.walletAddress,
+                    amount = Coins.of(0.1).toLong(),
+                    stateInitValue = null,
+                    payloadValue = jettonPayload.base64()
+                ))
+                .setNetwork(network)
+                .build(Uri.parse("https://battery.tonkeeper.com/"))
+
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
         }
     }.catch {
@@ -503,15 +515,21 @@ class BatteryRechargeViewModel(
     fun applyPromo(promo: String) {
         viewModelScope.launch(Dispatchers.IO) {
             if (promo.isEmpty()) {
+                batteryRepository.setAppliedPromo(wallet.testnet, null)
                 promoStateFlow.tryEmit(PromoState.Default)
                 return@launch
             }
-            promoStateFlow.tryEmit(PromoState.Loading())
+            promoStateFlow.tryEmit(PromoState.Loading)
             try {
-                api.battery(wallet.testnet).verifyPurchasePromo(promo)
-                batteryRepository.setAppliedPromo(wallet.testnet, promo)
-                promoStateFlow.tryEmit(PromoState.Applied(promo))
+                if (api.batteryVerifyPurchasePromo(wallet.testnet, promo)) {
+                    batteryRepository.setAppliedPromo(wallet.testnet, promo)
+                    promoStateFlow.tryEmit(PromoState.Applied(promo))
+                } else {
+                    throw IllegalStateException("promo code is invalid")
+                }
+
             } catch (_: Exception) {
+                batteryRepository.setAppliedPromo(wallet.testnet, null)
                 promoStateFlow.tryEmit(PromoState.Error)
             }
         }

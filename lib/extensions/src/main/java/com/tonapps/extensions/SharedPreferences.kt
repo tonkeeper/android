@@ -2,25 +2,26 @@ package com.tonapps.extensions
 
 import android.content.SharedPreferences
 import android.os.Parcelable
-import android.util.Log
+import android.util.Base64
 import androidx.core.content.edit
-import androidx.core.os.BundleCompat
 
 fun SharedPreferences.getByteArray(key: String): ByteArray? {
-    val bytes = getString(key, null)?.base64 ?: return null
-    if (bytes.isEmpty()) {
-        return null
+    val value = run {
+        val value = getString(key, null)
+        if (value.isNullOrBlank()) {
+            return null
+        }
+        Base64.decode(value, Base64.DEFAULT)
     }
-    return bytes
+    return value
 }
 
-fun SharedPreferences.putByteArray(key: String, value: ByteArray?) {
-    if (value == null) {
+fun SharedPreferences.Editor.putByteArray(key: String, value: ByteArray?) = apply {
+    val string = Base64.encodeToString(value, Base64.DEFAULT)
+    if (string == null) {
         remove(key)
     } else {
-        edit {
-            putString(key, value.base64)
-        }
+        putString(key, string)
     }
 }
 
@@ -92,7 +93,6 @@ fun SharedPreferences.getStringArray(key: String): Array<String> {
     return string.split(",").toTypedArray()
 }
 
-
 fun SharedPreferences.putStringArray(key: String, value: Array<String>) {
     putString(key, value.joinToString(","))
 }
@@ -117,7 +117,17 @@ fun <T : Enum<T>> SharedPreferences.Editor.putEnum(key: String, value: T?) = app
 }
 
 fun SharedPreferences.string(key: String): String? {
-    return this.getString(key, null)
+    val value = this.getString(key, null)
+    if (value.isNullOrEmpty()) {
+        return null
+    }
+    return value
+}
+
+fun SharedPreferences.putStringIfNotExists(key: String, value: String) {
+    if (!contains(key)) {
+        putString(key, value)
+    }
 }
 
 fun SharedPreferences.string(key: String, value: String?) {

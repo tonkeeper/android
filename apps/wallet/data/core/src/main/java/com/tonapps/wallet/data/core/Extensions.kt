@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.core
 
 import android.content.Context
 import androidx.biometric.BiometricManager
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 fun accountId(accountId: String, testnet: Boolean): String {
     if (testnet) {
@@ -16,4 +17,8 @@ fun isAvailableBiometric(
 ): Boolean {
     val authStatus = BiometricManager.from(context).canAuthenticate(authenticators)
     return authStatus == BiometricManager.BIOMETRIC_SUCCESS
+}
+
+fun recordException(e: Throwable) {
+    FirebaseCrashlytics.getInstance().recordException(e)
 }

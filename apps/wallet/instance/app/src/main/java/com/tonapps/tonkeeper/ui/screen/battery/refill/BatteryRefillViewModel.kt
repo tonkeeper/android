@@ -6,14 +6,15 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
-import com.tonapps.extensions.hasGMS
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
-import com.tonapps.tonkeeper.extensions.showToast
+import com.tonapps.tonkeeper.billing.priceFormatted
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
@@ -38,13 +39,13 @@ import io.batteryapi.models.AndroidBatteryPurchaseRequestPurchasesInner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import uikit.extensions.collectFlow
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.net.URLEncoder
 
@@ -58,27 +59,41 @@ class BatteryRefillViewModel(
     private val ratesRepository: RatesRepository,
     private val settingsRepository: SettingsRepository,
     private val billingManager: BillingManager,
+    private val environment: Environment,
 ) : BaseWalletVM(app) {
 
-    private val promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
+    private val _promoFlow = MutableStateFlow<String?>(null)
+    private val promoFlow = _promoFlow.asStateFlow()
+
+    private val purchasesFlow = billingManager.purchasesUpdatedFlow
+        .map { it.purchases }
+        .filter { it.isNotEmpty() }
+
+    private val _promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
+    private val promoStateFlow = _promoStateFlow.asStateFlow()
 
     private val purchaseInProgress = MutableStateFlow(false)
+
+    private val settingsUpdateFlow = combine(
+        settingsRepository.walletPrefsChangedFlow,
+        batteryRepository.balanceUpdatedFlow,
+    ) { _, _ -> }
 
     val uiItemsFlow = combine(
         promoStateFlow,
         billingManager.productsFlow,
         purchaseInProgress,
-        settingsRepository.walletPrefsChangedFlow,
-        batteryRepository.balanceUpdatedFlow,
-    ) { promoState, iapProducts, isProcessing, _, _ ->
+        settingsUpdateFlow,
+        promoFlow,
+    ) { promoState, iapProducts, isProcessing, _, promoCode ->
         val batteryBalance = getBatteryBalance(wallet)
 
         val uiItems = mutableListOf<Item>()
         uiItems.add(uiItemBattery(batteryBalance, api.config))
         uiItems.add(Item.Space)
 
-        if (!api.config.batteryPromoDisabled) {
-            uiItems.add(Item.Promo(promoState))
+        if (BuildConfig.DEBUG || !api.config.batteryPromoDisable) {
+            uiItems.add(Item.Promo(promoState, promoCode))
             uiItems.add(Item.Space)
         }
 
@@ -87,20 +102,22 @@ class BatteryRefillViewModel(
             uiItems.add(Item.Space)
         }
 
-        if (context.hasGMS && !api.config.disableBatteryIapModule) {
+        if (environment.isGooglePlayServicesAvailable && !api.config.disableBatteryIapModule) {
             val tonPriceInUsd =
                 ratesRepository.getTONRates(WalletCurrency.USD).getRate(TokenEntity.TON.address)
 
-            uiItems.addAll(
-                uiItemsPackages(
-                    tonPriceInUsd = tonPriceInUsd,
-                    batteryBalance = batteryBalance,
-                    config = api.config,
-                    products = iapProducts ?: emptyList(),
-                    isProcessing = isProcessing,
+            if (tonPriceInUsd > Coins.ZERO) {
+                uiItems.addAll(
+                    uiItemsPackages(
+                        tonPriceInUsd = tonPriceInUsd,
+                        batteryBalance = batteryBalance,
+                        config = api.config,
+                        products = iapProducts,
+                        isProcessing = isProcessing,
+                    )
                 )
-            )
-            uiItems.add(Item.Space)
+                uiItems.add(Item.Space)
+            }
         }
 
         val rechargeMethodsItems = uiItemsRechargeMethods(wallet)
@@ -114,11 +131,9 @@ class BatteryRefillViewModel(
 
         uiItems.add(
             Item.Refund(
-                wallet = wallet,
-                refundUrl = "${api.config.batteryRefundEndpoint}?token=${
+                wallet = wallet, refundUrl = "${api.config.batteryRefundEndpoint}?token=${
                     URLEncoder.encode(
-                        tonProofToken,
-                        "UTF-8"
+                        tonProofToken, "UTF-8"
                     )
                 }&testnet=${wallet.testnet}"
             )
@@ -132,18 +147,26 @@ class BatteryRefillViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            if (context.hasGMS) {
-                billingManager.getProducts(api.config.iapPackages.map { it.productId })
+            if (environment.isGooglePlayServicesAvailable) {
+                billingManager.loadProducts(api.config.iapPackages.map { it.productId })
+            } else {
+                billingManager.setEmptyProducts()
             }
 
             val appliedPromo = batteryRepository.getAppliedPromo(wallet.testnet)
 
             if (appliedPromo.isNullOrBlank()) {
-                promoStateFlow.tryEmit(PromoState.Default)
+                _promoStateFlow.value = PromoState.Default
             } else {
-                promoStateFlow.tryEmit(PromoState.Applied(appliedPromo))
+                _promoStateFlow.value = PromoState.Applied(appliedPromo)
             }
         }
+
+        purchasesFlow.collectFlow(::handlePurchases)
+    }
+
+    fun setPromo(promo: String) {
+
     }
 
     private fun uiItemsPackages(
@@ -171,23 +194,15 @@ class BatteryRefillViewModel(
 
             val transactions = mapOf(
                 BatteryTransaction.SWAP to charges / BatteryMapper.calculateChargesAmount(
-                    config.batteryMeanPriceSwap,
-                    config.batteryMeanFees
-                ),
-                BatteryTransaction.NFT to charges / BatteryMapper.calculateChargesAmount(
-                    config.batteryMeanPriceNft,
-                    config.batteryMeanFees
-                ),
-                BatteryTransaction.JETTON to charges / BatteryMapper.calculateChargesAmount(
-                    config.batteryMeanPriceJetton,
-                    config.batteryMeanFees
+                    config.batteryMeanPriceSwap, config.batteryMeanFees
+                ), BatteryTransaction.NFT to charges / BatteryMapper.calculateChargesAmount(
+                    config.batteryMeanPriceNft, config.batteryMeanFees
+                ), BatteryTransaction.JETTON to charges / BatteryMapper.calculateChargesAmount(
+                    config.batteryMeanPriceJetton, config.batteryMeanFees
                 )
             )
 
-            val formattedPrice =
-                product?.oneTimePurchaseOfferDetails?.formattedPrice ?: context.getString(
-                    Localization.loading
-                )
+            val formattedPrice = product?.priceFormatted ?: context.getString(Localization.loading)
             uiItems.add(
                 Item.IAPPack(
                     position = position,
@@ -230,9 +245,7 @@ class BatteryRefillViewModel(
             val position = ListCell.getPosition(supportedTokens.size + 1, index)
             uiItems.add(
                 Item.RechargeMethod(
-                    wallet = wallet,
-                    position = position,
-                    token = supportToken
+                    wallet = wallet, position = position, token = supportToken
                 )
             )
         }
@@ -254,9 +267,7 @@ class BatteryRefillViewModel(
         val tonProofToken =
             accountRepository.requestTonProofToken(wallet) ?: return BatteryBalanceEntity.Empty
         return batteryRepository.getBalance(
-            tonProofToken = tonProofToken,
-            publicKey = wallet.publicKey,
-            testnet = wallet.testnet
+            tonProofToken = tonProofToken, publicKey = wallet.publicKey, testnet = wallet.testnet
         )
     }
 
@@ -269,8 +280,7 @@ class BatteryRefillViewModel(
     }
 
     private suspend fun getSupportedTokens(
-        wallet: WalletEntity,
-        rechargeMethods: List<RechargeMethodEntity>
+        wallet: WalletEntity, rechargeMethods: List<RechargeMethodEntity>
     ): List<AccountTokenEntity> {
         val tokens = getTokens(wallet)
         val supportTokenAddress = rechargeMethods.filter { it.supportRecharge }.mapNotNull {
@@ -291,33 +301,39 @@ class BatteryRefillViewModel(
         })
     }
 
-    fun applyPromo(promo: String, isInitial: Boolean = false) {
+    fun applyPromo(promo: String) {
+        _promoFlow.value = promo
+        submitPromo(promo)
+    }
+
+    fun submitPromo(promo: String) {
         viewModelScope.launch(Dispatchers.IO) {
             if (promo.isEmpty()) {
-                promoStateFlow.tryEmit(PromoState.Default)
-                return@launch
-            }
-            val initialPromo = if (isInitial) promo else null
-            promoStateFlow.tryEmit(PromoState.Loading(initialPromo = initialPromo))
-            try {
-                if (isInitial) {
-                    delay(2000)
+                batteryRepository.setAppliedPromo(wallet.testnet, null)
+                _promoStateFlow.value = PromoState.Default
+            } else {
+                _promoStateFlow.value = PromoState.Loading
+                try {
+                    if (api.batteryVerifyPurchasePromo(wallet.testnet, promo)) {
+                        batteryRepository.setAppliedPromo(wallet.testnet, promo)
+                        _promoStateFlow.value = PromoState.Applied(promo)
+                    } else {
+                        throw IllegalStateException("promo code is invalid")
+                    }
+                } catch (_: Exception) {
+                    batteryRepository.setAppliedPromo(wallet.testnet, null)
+                    _promoStateFlow.value = PromoState.Error
                 }
-                api.battery(wallet.testnet).verifyPurchasePromo(promo)
-                batteryRepository.setAppliedPromo(wallet.testnet, promo)
-                promoStateFlow.tryEmit(PromoState.Applied(promo))
-            } catch (_: Exception) {
-                promoStateFlow.tryEmit(PromoState.Error)
             }
         }
     }
 
-    private fun handlePurchase() {
-        billingManager.purchasesFlow.take(1).onEach { purchases ->
-            val purchase = purchases?.first()
+    private suspend fun handlePurchases(purchases: List<Purchase>) = withContext(Dispatchers.IO) {
+        try {
+            purchaseInProgress.tryEmit(true)
             val tonProofToken = accountRepository.requestTonProofToken(wallet)
                 ?: throw IllegalStateException("proof token is null")
-            if (purchase != null) {
+            for (purchase in purchases) {
                 val request = AndroidBatteryPurchaseRequest(
                     purchases = listOf(
                         AndroidBatteryPurchaseRequestPurchasesInner(
@@ -327,33 +343,37 @@ class BatteryRefillViewModel(
                         )
                     )
                 )
-                try {
-                    api.battery(wallet.testnet).androidBatteryPurchase(tonProofToken, request)
-                    billingManager.consumeProduct(purchase)
-                    batteryRepository.getBalance(tonProofToken, wallet.publicKey, wallet.testnet, ignoreCache = true)
-                    context.showToast(Localization.battery_refilled)
-                } catch (e: Exception) {
-                    purchaseInProgress.tryEmit(false)
-                    context.showToast(Localization.error)
-                }
+                api.battery(wallet.testnet).androidBatteryPurchase(tonProofToken, request)
+                batteryRepository.getBalance(
+                    tonProofToken, wallet.publicKey, wallet.testnet, ignoreCache = true
+                )
+                billingManager.consumeProduct(purchase.purchaseToken)
             }
+            toast(Localization.battery_refilled)
+        } catch (e: Exception) {
+            toast(Localization.error)
+        } finally {
             purchaseInProgress.tryEmit(false)
-        }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
+        }
     }
 
     fun makePurchase(productId: String, activity: Activity) {
-        purchaseInProgress.tryEmit(true)
-        val product = billingManager.productsFlow.value!!.find { it.productId == productId }!!
-        billingManager.requestPurchase(activity, product)
-        handlePurchase()
+        billingManager.productFlow(productId).collectFlow { product ->
+            billingManager.requestPurchase(activity, wallet, product)
+        }
     }
 
     fun restorePurchases() {
         viewModelScope.launch {
             try {
-                billingManager.restorePurchases()
-                handlePurchase()
+                val pendingPurchases = billingManager.restorePurchases()
+                if (pendingPurchases.isNotEmpty()) {
+                    handlePurchases(pendingPurchases)
+                } else {
+                    toast(Localization.nothing_to_restore)
+                }
             } catch (_: Exception) {
+                toast(Localization.error)
             }
         }
     }

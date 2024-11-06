@@ -2,6 +2,14 @@ package com.tonapps.extensions
 
 import org.json.JSONObject
 
+fun String.asJSON(): JSONObject {
+    return try {
+        JSONObject(this)
+    } catch (e: Exception) {
+        JSONObject(fixJson())
+    }
+}
+
 fun JSONObject.optStringCompat(vararg keys: String): String? {
     for (key in keys) {
         val value = optString(key)
@@ -10,6 +18,14 @@ fun JSONObject.optStringCompat(vararg keys: String): String? {
         }
     }
     return null
+}
+
+fun JSONObject.optStringCompatJS(vararg keys: String): String? {
+    val value = optStringCompat(*keys)
+    if (value == "null" || value == "undefined") { // Oh man... JavaScript compatibility
+        return null
+    }
+    return value
 }
 
 fun JSONObject.getLongCompat(key: String): Long {

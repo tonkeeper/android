@@ -25,7 +25,6 @@ include(":apps:signer")
 
 
 include(":baselineprofile:main")
-include(":baselineprofile:x")
 
 
 include(":tonapi")
@@ -49,12 +48,13 @@ include(":lib:blockchain")
 include(":lib:sqlite")
 include(":lib:ledger")
 include(":lib:ur")
+include(":lib:base64")
 
 
 include(":apps:wallet:instance:app")
 include(":apps:wallet:instance:main")
-include(":apps:wallet:instance:x")
 include(":apps:wallet:localization")
+include(":apps:wallet:http")
 include(":apps:wallet:api")
 
 include(":apps:wallet:data:core")
@@ -72,3 +72,4 @@ include(":apps:wallet:data:staking")
 include(":apps:wallet:data:purchase")
 include(":apps:wallet:data:battery")
 include(":apps:wallet:data:dapps")
+include(":apps:wallet:data:contacts")

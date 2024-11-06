@@ -3,8 +3,11 @@ package com.tonapps.tonkeeper.popup
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.PopupWindow
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
@@ -12,20 +15,23 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundContentTintColor
+import com.tonapps.uikit.list.ListCell
 import uikit.extensions.dp
+import uikit.extensions.drawable
+import uikit.extensions.findViewByClass
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getDrawable
+import uikit.extensions.getViews
 import uikit.extensions.inflate
 import uikit.extensions.round
-import com.tonapps.uikit.list.ListCell
-import uikit.extensions.drawable
+import uikit.extensions.window
 import uikit.widget.FrescoView
 
 open class ActionSheet(
     val context: Context
 ): PopupWindow() {
 
-    private companion object {
+    companion object {
         private val singleLineItemHeight = 48.dp
         private val subtitleLineItemHeight = 68.dp
     }
@@ -42,6 +48,9 @@ open class ActionSheet(
     private val items = mutableListOf<Item>()
 
     var doOnItemClick: ((Item) -> Unit)? = null
+
+    val isEmpty: Boolean
+        get() = items.isEmpty()
 
     open val maxHeight = 220.dp
 
@@ -73,15 +82,17 @@ open class ActionSheet(
         }
     }
 
-    fun show(target: View) {
+    fun show(
+        target: View,
+        offsetX: Int = 0,
+        gravity: Int = Gravity.TOP or Gravity.START
+    ) {
         if (isShowing) {
             dismiss()
-            return
+        } else {
+            buildView()
+            showAsDropDown(target, offsetX, 8.dp, gravity)
         }
-
-        buildView()
-        val xoff = (target.width - width) / 2
-        showAsDropDown(target, xoff, 8.dp)
     }
 
     fun getDrawable(@DrawableRes resId: Int): Drawable {

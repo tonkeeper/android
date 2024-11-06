@@ -1,7 +1,10 @@
 package com.tonapps.wallet.data.rn
 
 import android.content.Context
+import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.extensions.asJSON
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.expo.SecureStoreModule
 import com.tonapps.wallet.data.rn.expo.SecureStoreOptions
@@ -24,9 +27,13 @@ internal class RNSeedStorage(context: Context) {
         kv.setActivity(activity)
     }
 
+    fun getAllKeyValuesForDebug(): JSONObject {
+        return kv.getAllKeyValuesForDebug()
+    }
+
     suspend fun setTonProof(id: String, token: String) = withContext(Dispatchers.IO) {
         val key = keyTonProof(id)
-        kv.setItemImpl(key, token)
+        // kv.setItemImpl(key, token)
     }
 
     suspend fun getTonProof(id: String): String? = withContext(Dispatchers.IO) {
@@ -42,7 +49,7 @@ internal class RNSeedStorage(context: Context) {
         return "proof-$id"
     }
 
-    suspend fun exportPasscodeWithBiometry(): String = withContext(Dispatchers.IO) {
+    suspend fun exportPasscodeWithBiometry(): String = withContext(Dispatchers.Main) {
         val passcode = kv.getItemImpl(biometryKey, SecureStoreOptions(
             keychainService = keychainService
         ))
@@ -53,24 +60,29 @@ internal class RNSeedStorage(context: Context) {
     }
 
     suspend fun setupBiometry(passcode: String) = withContext(Dispatchers.IO) {
-        kv.setItemImpl(biometryKey, passcode, SecureStoreOptions(
+        /*kv.setItemImpl(biometryKey, passcode, SecureStoreOptions(
             keychainService = keychainService,
             requireAuthentication = true,
-        ))
+        ))*/
     }
 
     suspend fun removeBiometry() = withContext(Dispatchers.IO) {
-        kv.deleteItemImpl(biometryKey, SecureStoreOptions(
+        /*kv.deleteItemImpl(biometryKey, SecureStoreOptions(
             keychainService = keychainService
-        ))
+        ))*/
     }
 
     suspend fun hasPinCode(): Boolean {
-        return readState() != null
+        return try {
+            readState() != null
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            false
+        }
     }
 
     suspend fun removeAll() {
-        kv.getSharedPreferences().edit().clear().apply()
+        // kv.getSharedPreferences().edit().clear().apply()
     }
 
     suspend fun save(passcode: String, state: RNVaultState) = withContext(Dispatchers.IO) {
@@ -79,13 +91,13 @@ internal class RNSeedStorage(context: Context) {
     }
 
     suspend fun get(passcode: String): RNVaultState = withContext(Dispatchers.IO) {
-        val state = readState() ?: throw Exception("Seed state is null")
-        val json = JSONObject(ScryptBox.decrypt(passcode, state))
+        val state = readState()
+        val json = ScryptBox.decrypt(passcode, state).asJSON()
         RNVaultState.of(json)
     }
 
     private suspend fun saveState(state: SeedState) {
-        val encryptedString = state.string
+        /*val encryptedString = state.string
 
         val chunkSize = 2048
         var index = 0
@@ -99,20 +111,20 @@ internal class RNSeedStorage(context: Context) {
 
         val key = "${walletsKey}_chunks"
         val count = ceil(encryptedString.length.toDouble() / chunkSize).toInt()
-        kv.setItemImpl(key, "$count")
+        kv.setItemImpl(key, "$count")*/
     }
 
-    private suspend fun readState(): SeedState? {
+    private suspend fun readState(): SeedState {
         val chunks = kv.getItemImpl("${walletsKey}_chunks")?.toIntOrNull() ?: 0
         if (0 >= chunks) {
-            return null
+            throw RNException.EmptyChunks
         }
         var encryptedString = ""
         for (i in 0 until chunks) {
-            val chunk = kv.getItemImpl("${walletsKey}_chunk_$i") ?: throw Exception("Chunk $i is null")
+            val chunk = kv.getItemImpl("${walletsKey}_chunk_$i") ?: throw RNException.NotFoundChunk(i)
             encryptedString += chunk
         }
-        val json = JSONObject(encryptedString)
+        val json = encryptedString.asJSON()
         return SeedState(json)
     }
 }

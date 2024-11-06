@@ -1,34 +1,42 @@
 package com.tonapps.blockchain.ton.extensions
 
-import android.util.Log
-import io.ktor.util.encodeBase64
+import com.tonapps.base64.decodeBase64
+import com.tonapps.base64.encodeBase64
+import org.json.JSONObject
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellSlice
 import org.ton.crypto.hex
 
-fun String.toBoc(): BagOfCells {
-    return try {
-        BagOfCells(hex(this))
-    } catch (e: Throwable) {
-        BagOfCells(base64())
+fun String.bocFromBase64(): BagOfCells {
+    if (startsWith("{")) {
+        throw IllegalArgumentException("js objects are not supported")
     }
+    return BagOfCells(decodeBase64())
 }
 
-fun String.parseCell(): Cell {
-    return toBoc().first()
+fun String.bocFromHex(): BagOfCells {
+    if (startsWith("{")) {
+        throw IllegalArgumentException("js objects are not supported")
+    }
+    return BagOfCells(hex(this))
 }
 
-fun String.safeParseCell(): Cell? {
-    if (this.isBlank()) {
-        return null
+fun String.cellFromBase64(): Cell {
+    val parsed = bocFromBase64()
+    if (parsed.roots.size != 1) {
+        throw IllegalArgumentException("Deserialized more than one cell")
     }
-    return try {
-        parseCell()
-    } catch (e: Throwable) {
-        null
+    return parsed.first()
+}
+
+fun String.cellFromHex(): Cell {
+    val parsed = bocFromHex()
+    if (parsed.roots.size != 1) {
+        throw IllegalArgumentException("Deserialized more than one cell")
     }
+    return parsed.first()
 }
 
 fun Cell.toByteArray(): ByteArray {

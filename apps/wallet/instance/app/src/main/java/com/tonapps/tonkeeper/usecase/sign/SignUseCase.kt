@@ -7,6 +7,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
@@ -14,11 +15,12 @@ import uikit.extensions.activity
 
 class SignUseCase(
     private val accountRepository: AccountRepository,
-    private val passcodeManager: PasscodeManager
+    private val passcodeManager: PasscodeManager,
+    private val rnLegacy: RNLegacy,
 ) {
 
-    private val signTransaction = SignTransaction(accountRepository, passcodeManager)
-    private val signProof = SignProof(accountRepository, passcodeManager)
+    private val signTransaction = SignTransaction(accountRepository, passcodeManager, rnLegacy)
+    private val signProof = SignProof(accountRepository, passcodeManager, rnLegacy)
 
     suspend operator fun invoke(
         context: Context,

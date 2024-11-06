@@ -24,6 +24,7 @@ android {
 
 dependencies {
     implementation(Dependence.Koin.core)
+    implementation(project(Dependence.Wallet.http))
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Lib.network))
     implementation(project(Dependence.Lib.blockchain))

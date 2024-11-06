@@ -3,7 +3,11 @@ package com.tonapps.wallet.data.rn
 import android.content.Context
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.extensions.bestMessage
+import com.tonapps.extensions.map
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
+import com.tonapps.wallet.data.rn.data.RNFavorites
 import com.tonapps.wallet.data.rn.data.RNSpamTransactions
 import com.tonapps.wallet.data.rn.data.RNTC
 import com.tonapps.wallet.data.rn.data.RNVaultState
@@ -13,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 
 class RNLegacy(
@@ -24,8 +29,15 @@ class RNLegacy(
         const val DEFAULT_KEYSTORE_ALIAS = "key_v1"
     }
 
-    private val sql = RNSql(context)
-    private val seedStorage = RNSeedStorage(context)
+    private val sql: RNSql by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        RNSql(context)
+    }
+
+    private val seedStorage: RNSeedStorage by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        RNSeedStorage(context)
+    }
+
+    @Volatile
     private var cacheWallets: RNWallets? = null
 
     @Volatile
@@ -43,6 +55,10 @@ class RNLegacy(
                 walletMigrated = true
             }
         }
+    }
+
+    fun getAllKeyValuesForDebug(): JSONObject {
+        return seedStorage.getAllKeyValuesForDebug()
     }
 
     fun isRequestMainMigration(): Boolean {
@@ -101,12 +117,12 @@ class RNLegacy(
     }
 
     suspend fun addMnemonics(passcode: String, walletIds: List<String>, mnemonic: List<String>) {
-        val vaultState = getVaultState(passcode)
+        /*val vaultState = getVaultState(passcode)
 
         for (walletId in walletIds) {
             vaultState.keys[walletId] = RNDecryptedData(walletId, mnemonic.joinToString(" "))
         }
-        seedStorage.save(passcode, vaultState)
+        seedStorage.save(passcode, vaultState)*/
     }
 
     suspend fun changePasscode(oldPasscode: String, newPasscode: String) {
@@ -118,7 +134,8 @@ class RNLegacy(
         try {
             seedStorage.get(passcode)
         } catch (e: Throwable) {
-            RNVaultState()
+            FirebaseCrashlytics.getInstance().recordException(e)
+            RNVaultState(original = e.bestMessage)
         }
     }
 
@@ -161,6 +178,10 @@ class RNLegacy(
         return sql.getJSONObject(key)
     }
 
+    fun getJSONArray(key: String): JSONArray? {
+        return sql.getJSONArray(key)
+    }
+
     fun setJSONValue(key: String, value: JSONObject, v: Int = -1) {
         if (v >= 0) {
             value.put("__version", v)
@@ -185,6 +206,22 @@ class RNLegacy(
     fun getTCApps(): RNTC {
         val tcApps = getJSONState("TCApps")?.getJSONObject("connectedApps") ?: JSONObject()
         return RNTC(tcApps)
+    }
+
+    fun getFavorites(): List<RNFavorites> {
+        val array = getJSONArray("favorites") ?: return emptyList()
+        return array.map {
+            RNFavorites(it)
+        }
+    }
+
+    fun getHiddenAddresses(): List<String> {
+        val array = getJSONArray("hidden_addresses") ?: return emptyList()
+        val list = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            list.add(array.getString(i))
+        }
+        return list.toList()
     }
 
     fun setTCApps(data: RNTC) {
@@ -220,19 +257,19 @@ class RNLegacy(
         return Pair(setupDismissed, hasOpenedTelegramChannel)
     }
 
-    fun setSetupLastBackupAt(walletId: String, date: Long) {
+    suspend fun setSetupLastBackupAt(walletId: String, date: Long) {
         val json = getSetupJSON(walletId)
         json.put("lastBackupAt", date)
         setSetupJSON(walletId, json)
     }
 
-    fun setSetupDismissed(walletId: String) {
+    suspend fun setSetupDismissed(walletId: String) {
         val json = getSetupJSON(walletId)
         json.put("setupDismissed", true)
         setSetupJSON(walletId, json)
     }
 
-    fun setHasOpenedTelegramChannel(walletId: String) {
+    suspend fun setHasOpenedTelegramChannel(walletId: String) {
         val json = getSetupJSON(walletId)
         json.put("hasOpenedTelegramChannel", true)
         setSetupJSON(walletId, json)

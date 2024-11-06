@@ -1,8 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.send.transaction
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
@@ -11,7 +15,9 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.APIException
 import com.tonapps.wallet.api.SendBlockchainState
+import com.tonapps.wallet.api.getDebugMessage
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -28,6 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import org.ton.contract.wallet.WalletTransfer
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SendTransactionViewModel(
@@ -55,12 +62,16 @@ class SendTransactionViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            val tokens = getTokens()
+            val transfers = transfers(tokens.filter { it.isCompressed }, true)
+            val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
+            val internalMessage = forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
             try {
-                val message = messageBody(true)
                 val emulated = emulationUseCase(
                     message = message,
                     useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType),
-                    forceRelayer = forceRelayer
+                    forceRelayer = forceRelayer,
+                    params = true
                 )
                 isBattery.set(emulated.withBattery)
 
@@ -71,16 +82,73 @@ class SendTransactionViewModel(
                     totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
                 }
 
-                _stateFlow.value = SendTransactionState.Details(
-                    emulated = details,
-                    totalFormat = totalFormatBuilder.toString(),
-                    isDangerous = emulated.total.isDangerous,
-                    nftCount = emulated.nftCount
-                )
+                val jettonsAddress = emulated.consequences.risk.jettons.map { it.jetton.address }
+                val sendTokens = tokens.filter { it.balance.token.address in jettonsAddress }
+                val hasCompressedJetton = sendTokens.any { it.isCompressed }
+
+                val tonBalance = getTONBalance()
+                val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
+                var transferFee = (if (!emulated.extra.isRefund) {
+                    Coins.ZERO
+                } else {
+                    emulated.extra.value
+                }) + Coins.of(0.05)
+
+                if (hasCompressedJetton) {
+                    transferFee += Coins.of(0.1)
+                } else if (sendTokens.size > 1) {
+                    transferFee += Coins.of(0.05)
+                }
+
+                val transferTotal = transferAmount + transferFee
+
+                if (!emulated.withBattery && transferTotal > tonBalance) {
+                    _stateFlow.value = SendTransactionState.InsufficientBalance(
+                        wallet = wallet,
+                        balance = tonBalance,
+                        required = transferTotal,
+                        withRechargeBattery = false,
+                        singleWallet = isSingleWallet()
+                    )
+                } else {
+                    _stateFlow.value = SendTransactionState.Details(
+                        emulated = details,
+                        totalFormat = totalFormatBuilder.toString(),
+                        isDangerous = emulated.total.isDangerous,
+                        nftCount = emulated.nftCount
+                    )
+                }
             } catch (e: Throwable) {
-                _stateFlow.value = SendTransactionState.Failed
+                FirebaseCrashlytics.getInstance().recordException(APIException.Emulation(
+                    boc = message.createSignedBody(EmptyPrivateKeyEd25519.invoke(), internalMessage).base64(),
+                    sourceUri = request.appUri,
+                    cause = e
+                ))
+
+                val tonBalance = getTONBalance()
+                if (tonBalance == Coins.ZERO) {
+                    _stateFlow.value = SendTransactionState.InsufficientBalance(
+                        wallet = wallet,
+                        balance = tonBalance,
+                        required = Coins.of(0.1),
+                        withRechargeBattery = false,
+                        singleWallet = isSingleWallet()
+                    )
+                } else {
+                    toast(e.getDebugMessage() ?: getString(Localization.unknown_error))
+                    _stateFlow.value = SendTransactionState.FailedEmulation
+                }
             }
         }
+    }
+
+    private suspend fun isSingleWallet(): Boolean {
+        return 1 >= accountRepository.getWallets().size
+    }
+
+    private suspend fun getTONBalance(): Coins {
+        val balance = tokenRepository.getTON(settingsRepository.currency, wallet.accountId, wallet.testnet)?.balance?.value
+        return balance ?: Coins.ZERO
     }
 
     private fun getLedgerTransaction(
@@ -103,7 +171,9 @@ class SendTransactionViewModel(
 
     fun send() = flow {
         val isBattery = isBattery.get()
-        val message = messageBody(false)
+        val compressedTokens = getTokens().filter { it.isCompressed }
+        val transfers = transfers(compressedTokens, false)
+        val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
         val unsignedBody = message.createUnsignedBody(isBattery)
         val ledgerTransaction = getLedgerTransaction(message)
 
@@ -114,6 +184,7 @@ class SendTransactionViewModel(
             seqNo = message.seqNo,
             ledgerTransaction = ledgerTransaction
         ).base64()
+
         val status = transactionManager.send(wallet, boc, isBattery)
         if (status == SendBlockchainState.SUCCESS) {
             emit(boc)
@@ -122,23 +193,21 @@ class SendTransactionViewModel(
         }
     }.flowOn(Dispatchers.IO)
 
-    private suspend fun messageBody(forEmulation: Boolean): MessageBodyEntity {
-        val compressedTokens = getCompressedTokens()
+    private suspend fun transfers(compressedTokens: List<AccountTokenEntity>, forEmulation: Boolean): List<WalletTransfer> {
         val excessesAddress = if (!forEmulation && isBattery.get()) {
             batteryRepository.getConfig(wallet.testnet).excessesAddress
         } else null
 
-        val transfers = request.getTransfers(
+        return request.getTransfers(
             wallet = wallet,
             compressedTokens = compressedTokens,
             excessesAddress = excessesAddress,
             api = api
         )
-        return accountRepository.messageBody(wallet, request.validUntil, transfers)
     }
 
-    private suspend fun getCompressedTokens(): List<AccountTokenEntity> {
-        return tokenRepository.get(currency, wallet.accountId, wallet.testnet)?.filter { it.isCompressed } ?: emptyList()
+    private suspend fun getTokens(): List<AccountTokenEntity> {
+        return tokenRepository.get(currency, wallet.accountId, wallet.testnet, true) ?: emptyList()
     }
 
 }

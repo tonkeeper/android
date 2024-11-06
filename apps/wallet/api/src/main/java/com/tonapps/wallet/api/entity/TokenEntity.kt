@@ -2,8 +2,7 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
-import com.tonapps.blockchain.ton.extensions.safeParseCell
+import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.wallet.api.R
 import io.tonapi.models.JettonBalanceLock
@@ -14,6 +13,8 @@ import io.tonapi.models.JettonVerificationType
 import kotlinx.parcelize.Parcelize
 import org.ton.block.StateInit
 import org.ton.cell.Cell
+import org.ton.tlb.CellRef
+import org.ton.tlb.asRef
 
 @Parcelize
 data class TokenEntity(
@@ -50,7 +51,7 @@ data class TokenEntity(
     data class TransferPayload(
         val tokenAddress: String,
         val customPayload: Cell? = null,
-        val stateInit: StateInit? = null
+        val stateInit: CellRef<StateInit>? = null
     ) {
 
         companion object {
@@ -65,10 +66,8 @@ data class TokenEntity(
 
         constructor(tokenAddress: String, model: JettonTransferPayload) : this(
             tokenAddress = tokenAddress,
-            customPayload = model.customPayload?.safeParseCell(),
-            stateInit = model.stateInit?.safeParseCell()?.let {
-                StateInit.Companion.loadTlb(it)
-            },
+            customPayload = model.customPayload?.cellFromHex(),
+            stateInit = model.stateInit?.cellFromHex()?.asRef(StateInit),
         )
     }
 

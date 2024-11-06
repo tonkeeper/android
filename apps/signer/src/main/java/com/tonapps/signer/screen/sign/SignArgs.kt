@@ -1,11 +1,9 @@
 package com.tonapps.signer.screen.sign
 
 import android.os.Bundle
-import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.parseCell
 import com.tonapps.signer.Key
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
 import com.tonapps.signer.extensions.getEnum
@@ -35,7 +33,7 @@ data class SignArgs(private val args: Bundle) {
     }
 
     val id = args.getLong(Key.ID)
-    val body: Cell = args.getString(Key.BODY)!!.parseCell()
+    val body: Cell = args.getString(Key.BODY)!!.cellFromHex()
     val v: String = args.getString(Key.V)!!
     val returnResult = args.getObject<ReturnResultEntity>(Key.RETURN)
     val seqno = args.getInt(Key.SEQNO)

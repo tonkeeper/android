@@ -1,9 +1,12 @@
 <resources>
     <string name="transaction_expired">İşlem süresi doldu</string>
+    <string name="add_contact">Adres Defterine Ekle</string>
+    <string name="multi_account_secret_wrong">Lütfen Çoklu Cüzdan Hesabı için Tonkeeper Masaüstünü kullanın</string>
     <string name="total">Toplam: %1$s</string>
     <string name="staking_ready_withdraw">%1$s hazır. Toplamak için dokunun.</string>
     <string name="staking_pending_deposit">%1$s %2$s\'ye yatırılacak</string>
     <string name="staking_pending_withdraw">%1$s %2$s içinde çekilecek</string>
+    <string name="edit_full">Düzenlemek</string>
     <string name="staking_unstake_cycle">Paydan çıkarma isteği, %1$s\'deki doğrulama döngüsünün bitiminden sonra işlenecektir.</string>
     <string name="send_transaction_scroll">Onaylamak için tüm ayrıntıları kontrol edin</string>
     <string name="send_transaction_detail">Cüzdanınızdan gönderilecek tokenların toplam değeri. İadeler toplam değere dahil değildir.</string>
@@ -372,6 +375,7 @@
     <string name="ledger_update_title">Ledger\'daki TON uygulamasını %1$s sürümüne güncelleyin</string>
     <string name="ledger_update_text">Bu tür işlem mevcut uygulama sürümünüzde desteklenmiyor.</string>
     <string name="ledger_update_button">Tamam</string>
+    <string name="ledger_comment_error">Yalnızca ASCII karakterleri kullanın: rakamlar, Latin alfabesi harfleri ve noktalama işaretleri.</string>
     <string name="bluetooth_permissions_alert_title">Bluetooth İzinleri</string>
     <string name="bluetooth_permissions_alert_message">Lütfen bu özelliği kullanmak için ayarlardan Bluetooth izinlerini etkinleştirin</string>
     <string name="bluetooth_permissions_alert_open_settings">Ayarları Aç</string>
@@ -452,4 +456,19 @@
     <string name="insufficient_balance_default">Ödenecek tutar: %1$s.\\nBakiyeniz: %2$s.</string>
     <string name="buy_ton">TON satın al</string>
     <string name="recharge_battery">Aküyü şarj edin</string>
+    <string name="name">İsim</string>
+    <string name="ledger_blind_signing_error">Kör İmzalama, Defter Ayarlarında etkinleştirilmelidir</string>
+    <string name="nothing_to_restore">Geri yüklenecek bir şey yok</string>
+    <string name="new_contact">Yeni Adres</string>
+    <string name="contact_delete_dialog">“%1$s” adresini Adres Defterinizden silmek istediğinizden emin misiniz?</string>
+    <string name="add_to_contact">Adres Defterine Ekle</string>
+    <string name="wallet_address">Cüzdan Adresi</string>
+    <string name="contacts_save_latest">Adresi Kaydet</string>
+    <string name="connected_apps">Bağlantılı Uygulamalar</string>
+    <string name="disconnect_dapp_confirm">“%1$s” bağlantısı kesilsin mi?</string>
+    <string name="disconnect_all_apps">Tüm Uygulamaların Bağlantısını Kes</string>
+    <string name="disconnect_all_apps_confirm">Tüm Uygulamalar Bağlantısını Kes?</string>
+    <string name="connected_apps_empty">Bağlı uygulama yok</string>
+    <string name="send_all_balance">Bakiyenizin tamamını göndermek istediğinizden emin misiniz?</string>
+    <string name="wrong_promocode">Girilen kod geçerli değil</string>
 </resources>

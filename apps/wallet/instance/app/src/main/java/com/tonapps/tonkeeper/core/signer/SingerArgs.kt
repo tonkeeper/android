@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.core.signer
 
 import android.net.Uri
-import com.tonapps.blockchain.ton.extensions.publicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import org.ton.api.pub.PublicKeyEd25519
 
 data class SingerArgs(
@@ -10,7 +10,7 @@ data class SingerArgs(
 ) {
 
     constructor(uri: Uri): this(
-        publicKeyEd25519 = uri.getQueryParameter("pk")?.publicKey() ?: throw IllegalArgumentException("Public key is required"),
+        publicKeyEd25519 = uri.getQueryParameter("pk")?.publicKeyFromHex() ?: throw IllegalArgumentException("Public key is required"),
         name = uri.getQueryParameter("name"),
     )
 }

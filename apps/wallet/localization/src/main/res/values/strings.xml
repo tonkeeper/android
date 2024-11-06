@@ -11,6 +11,8 @@
     <string name="w5" translatable="false">W5</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="transaction_expired">Transaction expired</string>
+    <string name="add_contact">Add to Address Book</string>
+    <string name="multi_account_secret_wrong">Please use Tonkeeper Desktop for Multi-Wallet Account</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>
     <string name="staking_pending_deposit">%1$s will be deposited in %2$s</string>
@@ -22,6 +24,13 @@
     <string name="expired_link">Expired link</string>
     <string name="payment_method_not_found">Payment method not available</string>
     <string name="app_not_found">App not found</string>
+    <string name="name">Name</string>
+    <string name="new_contact">New Address</string>
+    <string name="contact_delete_dialog">Are you sure you want to delete “%1$s” from your Address Book?</string>
+    <string name="add_to_contact">Add to Address Book</string>
+    <string name="wallet_address">Wallet Address</string>
+    <string name="contacts_save_latest">Save Address</string>
+    <string name="edit_full">Edit</string>
 
     <string name="staking_unstake_cycle">Unstake request will be processed after the end of the validation cycle in %1$s</string>
 
@@ -46,7 +55,7 @@
     <string name="setup_finish_biometry">Use biometry to approve transactions</string>
     <string name="setup_finish_backup">Back up the wallet recovery phrase</string>
     <string name="setup_finish_telegram">Join Tonkeeper channel</string>
-    <string name="contacts">Contacts</string>
+    <string name="contacts">Address Book</string>
     <string name="step_1">Step 1</string>
     <string name="step_2">Step 2</string>
     <string name="step_3">Step 3</string>
@@ -421,7 +430,7 @@
     <string name="signer_about">About Signer</string>
     <string name="signer_open">Open Signer on this device</string>
     <string name="signer" translatable="false">Signer</string>
-    <string name="choose_wallet_title">Choose wallet</string>
+    <string name="choose_wallet_title">Choose wallets</string>
     <string name="choose_wallet_subtitle">Choose wallets you want to add.</string>
     <string name="choose_wallet_already_added">Already added</string>
     <string name="hide">Hide</string>
@@ -453,6 +462,8 @@
     <string name="ledger_update_title">Update TON app in Ledger to the %1$s version</string>
     <string name="ledger_update_text">This type of transaction is not supported in your current application version.</string>
     <string name="ledger_update_button">OK</string>
+    <string name="ledger_blind_signing_error">Blind Signing must be enabled in Ledger Settings</string>
+    <string name="ledger_comment_error">Use only ASCII characters: digits, latin alphabet letters and punctuation marks.</string>
 
     <string name="bluetooth_permissions_alert_title">Bluetooth Permissions</string>
     <string name="bluetooth_permissions_alert_message">Please enable Bluetooth permissions in your settings to use this feature</string>
@@ -525,4 +536,12 @@
     <string name="battery_disclaimer">One charge covers the average transaction fee. Some transactions may cost more.</string>
     <string name="restore_purchases">Restore Purchases</string>
     <string name="battery_refilled">Battery refilled</string>
+    <string name="nothing_to_restore">Nothing to restore</string>
+    <string name="connected_apps">Connected Apps</string>
+    <string name="disconnect_dapp_confirm">Disconnect “%1$s”?</string>
+    <string name="disconnect_all_apps">Disconnect All Apps</string>
+    <string name="disconnect_all_apps_confirm">Disconnect All Apps?</string>
+    <string name="connected_apps_empty">No connected apps</string>
+    <string name="send_all_balance">Are you sure you want to send all your balance?</string>
+    <string name="wrong_promocode">The entered code is not valid</string>
 </resources>

@@ -5,12 +5,16 @@ import android.net.Uri
 import android.util.Log
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.extensions.map
 import com.tonapps.extensions.withoutQuery
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.core.recordException
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.dapps.source.DatabaseSource
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNTC
@@ -37,12 +41,15 @@ class DAppsRepository(
     context: Context,
     private val scope: CoroutineScope,
     private val rnLegacy: RNLegacy,
+    private val api: API,
 ) {
 
     private val _connectionsFlow = MutableStateFlow<List<AppConnectEntity>?>(null)
     val connectionsFlow = _connectionsFlow.shareIn(scope, SharingStarted.Eagerly, 1).filterNotNull()
 
-    private val database = DatabaseSource(context)
+    private val database: DatabaseSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        DatabaseSource(context)
+    }
 
     var lastEventId: Long
         get() = database.getLastEventId()
@@ -52,23 +59,47 @@ class DAppsRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
-            if (rnLegacy.isRequestMigration()) {
-                database.clearConnections()
-                migrationFromLegacy()
-            }
+            try {
+                if (rnLegacy.isRequestMigration()) {
+                    migrationFromLegacy()
+                }
 
-            val connections = database.getConnections()
-            if (connections.isEmpty()) {
-                migrationFromLegacy()
-                _connectionsFlow.value = database.getConnections()
-            } else {
-                _connectionsFlow.value = connections
+                val connections = database.getConnections()
+                if (connections.isEmpty()) {
+                    migrationFromLegacy()
+                    _connectionsFlow.value = database.getConnections()
+                } else {
+                    _connectionsFlow.value = connections
+                }
+            } catch (e: Throwable) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+                _connectionsFlow.value = emptyList()
             }
         }
 
         connectionsFlow.drop(1).onEach {
             addToLegacy(it.toList())
         }.flowOn(Dispatchers.IO).launchIn(scope)
+    }
+
+    suspend fun getPushes(tonProof: String, accountId: String): List<AppPushEntity> {
+        if (true) {
+            return emptyList()
+        }
+
+        val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
+        if (pushes.isEmpty()) {
+            return emptyList()
+        }
+        val apps = getApps(pushes.map { it.dappUrl })
+
+        val list = mutableListOf<AppPushEntity>()
+        for (push in pushes) {
+            val app = apps.firstOrNull { it.url == push.dappUrl } ?: continue
+            list.add(AppPushEntity(app, push))
+        }
+
+        return list.toList()
     }
 
     suspend fun getConnections(
@@ -85,6 +116,10 @@ class DAppsRepository(
             result[app] = map[app.url] ?: emptyList()
         }
         return result
+    }
+
+    suspend fun getConnections(): List<AppConnectEntity> {
+        return database.getConnections()
     }
 
     fun getLastAppRequestId(clientId: String): Long {
@@ -129,6 +164,7 @@ class DAppsRepository(
             }
             return true
         } catch (e: Throwable) {
+            recordException(e)
             return false
         }
     }
@@ -214,10 +250,12 @@ class DAppsRepository(
             for (apps in tcApps.testnet) {
                 migrationFromLegacy(apps, true)
             }
-        } catch (ignored: Throwable) { }
+        } catch (e: Throwable) {
+            recordException(e)
+        }
     }
 
-    private suspend fun migrationFromLegacy(connections: RNTCApps, testnet: Boolean) {
+    suspend fun migrationFromLegacy(connections: RNTCApps, testnet: Boolean) {
         val accountId = connections.address.toRawAddress()
         for (legacyApp in connections.apps) {
             val newApp = AppEntity(

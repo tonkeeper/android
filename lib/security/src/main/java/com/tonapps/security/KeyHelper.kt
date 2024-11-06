@@ -20,17 +20,22 @@ object KeyHelper {
     }
 
     fun createIfNotExists(alias: String) {
+        Log.d("KeyHelperLog", "createIfNotExists: $alias")
         if (!keyExists(alias)) {
             generateKey(alias)
         }
     }
 
     private fun generateKey(alias: String) {
+        /*
+        // StrongBox is required authentication
         try {
             generateKeyWithStrongBoxBacked(alias)
         } catch (e: Throwable) {
             generateKey(getParameterKey(alias))
         }
+        */
+        generateKey(getParameterKey(alias))
     }
 
     private fun generateKeyWithStrongBoxBacked(alias: String) {
@@ -41,6 +46,11 @@ object KeyHelper {
     private fun generateKey(parameter: KeyGenParameterSpec) {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         generator.init(parameter)
+        try {
+            generator.generateKey()
+        } catch (e: Throwable) {
+            // device locked
+        }
     }
 
     private fun keyExists(alias: String): Boolean {
@@ -50,14 +60,17 @@ object KeyHelper {
     private fun defaultParameterBuilder(alias: String): KeyGenParameterSpec.Builder {
         val builder = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
         builder.setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-        builder.setDigests(KeyProperties.DIGEST_SHA512)
+        builder.setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
         builder.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
         builder.setKeySize(KEY_SIZE)
         builder.setUserAuthenticationRequired(false)
         builder.setRandomizedEncryptionRequired(true)
+        /*
+        // Bad working for samsung
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             builder.setUnlockedDeviceRequired(true)
         }
+         */
         return builder
     }
 

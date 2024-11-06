@@ -30,7 +30,7 @@ class RatesRepository(
         load(currency, mutableListOf(token))
     }
 
-    private fun load(currency: WalletCurrency, tokens: MutableList<String>) {
+    fun load(currency: WalletCurrency, tokens: MutableList<String>) {
         if (!tokens.contains(TokenEntity.TON.address)) {
             tokens.add(TokenEntity.TON.address)
         }

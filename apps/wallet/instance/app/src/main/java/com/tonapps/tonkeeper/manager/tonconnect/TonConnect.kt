@@ -17,7 +17,8 @@ data class TonConnect(
     val returnUri: Uri?,
     val fromQR: Boolean,
     val jsInject: Boolean,
-    val origin: Uri?
+    val origin: Uri?,
+    val fromPackageName: String?
 ): Parcelable {
 
     val proofPayload: String?
@@ -38,7 +39,8 @@ data class TonConnect(
                 returnUri = null,
                 fromQR = false,
                 jsInject = true,
-                origin = webViewUri
+                origin = webViewUri,
+                fromPackageName = null
             )
         }
 
@@ -67,7 +69,8 @@ data class TonConnect(
             uri: Uri,
             refSource: Uri?,
             fromQR: Boolean,
-            returnUri: Uri?
+            returnUri: Uri?,
+            fromPackageName: String?
         ): TonConnect {
             val version = uri.getQueryParameter("v")?.toIntOrNull() ?: 0
             if (version != 2) {
@@ -87,7 +90,8 @@ data class TonConnect(
                 returnUri = returnUri,
                 fromQR = fromQR,
                 jsInject = false,
-                origin = refSource
+                origin = refSource,
+                fromPackageName = fromPackageName
             )
         }
     }

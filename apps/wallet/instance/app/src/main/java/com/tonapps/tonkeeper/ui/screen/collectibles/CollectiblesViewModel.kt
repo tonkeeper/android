@@ -16,7 +16,9 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
@@ -37,7 +39,8 @@ class CollectiblesViewModel(
     private val transactionManager: TransactionManager,
 ): BaseWalletVM(app) {
 
-    private val ltFlow = transactionManager.eventsFlow(wallet).stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+    private val _ltFlow = MutableStateFlow(0L)
+    private val ltFlow = _ltFlow.asStateFlow()
 
     val uiListStateFlow = combine(
         networkMonitor.isOnlineFlow,
@@ -51,6 +54,12 @@ class CollectiblesViewModel(
             isOnline = isOnline
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null).filterNotNull().flattenFirst()
+
+    init {
+        transactionManager.eventsFlow(wallet).collectFlow {
+            _ltFlow.value = it.lt
+        }
+    }
 
     private fun stateFlow(
         wallet: WalletEntity,
@@ -66,8 +75,13 @@ class CollectiblesViewModel(
         hiddenBalances: Boolean,
         isOnline: Boolean,
     ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
+        val onlyVerifyNFTs = settingsRepository.onlyVerifyNFTs
         val uiItems = mutableListOf<Item>()
         for (nft in result.list) {
+            if (onlyVerifyNFTs && !nft.verified) {
+                continue
+            }
+
             val isHiddenCollection = nft.collection?.address?.let {
                 settingsRepository.getTokenPrefs(wallet.id, it).isHidden
             } ?: false
@@ -91,5 +105,9 @@ class CollectiblesViewModel(
             UiListState.Items(result.cache, uiItems.toList())
         }
     }.flowOn(Dispatchers.IO)
+
+    fun refresh() {
+        _ltFlow.value += 1
+    }
 
 }

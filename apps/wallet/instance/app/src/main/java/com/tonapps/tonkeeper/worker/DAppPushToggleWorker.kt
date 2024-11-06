@@ -2,16 +2,20 @@ package com.tonapps.tonkeeper.worker
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.Operation
 import androidx.work.WorkerParameters
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class DAppPushToggleWorker(
     context: Context,
@@ -21,16 +25,21 @@ class DAppPushToggleWorker(
     private val pushManager: PushManager
 ): CoroutineWorker(context, workParam) {
 
-    override suspend fun doWork(): Result {
-        val wallet = getWallet() ?: return Result.failure()
-        val appUrl = getAppUrl() ?: return Result.failure()
-        val enabled = inputData.getBoolean(ARG_ENABLE, false)
-        val connections = dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, enabled)
-        if (!pushManager.dAppPush(wallet, connections, enabled)) {
-            dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, !enabled)
-            return Result.failure()
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        try {
+            val wallet = getWallet() ?: throw IllegalArgumentException("Wallet not found")
+            val appUrl = getAppUrl() ?: throw IllegalArgumentException("App URL not found")
+            val enabled = inputData.getBoolean(ARG_ENABLE, false)
+            val connections = dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, enabled)
+            if (!pushManager.dAppPush(wallet, connections, enabled)) {
+                dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, !enabled)
+                throw IllegalStateException("Failed to toggle push")
+            }
+            Result.success()
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            Result.failure()
         }
-        return Result.success()
     }
 
     private suspend fun getWallet(): WalletEntity? {

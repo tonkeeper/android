@@ -3,7 +3,6 @@ package com.tonapps.extensions
 import android.graphics.Color
 import android.net.Uri
 import androidx.core.net.toUri
-import com.tonapps.icu.Punycode
 
 val String.short12: String
     get() {
@@ -47,22 +46,6 @@ val String.max24: String
         return substring(0, 24) + "…"
     }
 
-fun String.ifPunycodeToUnicode(): String {
-    return if (startsWith(Punycode.PREFIX_STRING)) {
-        Punycode.decodeSafe(this)
-    } else {
-        this
-    }
-}
-
-fun String.unicodeToPunycode(): String {
-    return try {
-        Punycode.encode(this) ?: throw IllegalArgumentException("Invalid punycode")
-    } catch (e: Exception) {
-        this
-    }
-}
-
 val String.color: Int
     get() {
         return try {
@@ -92,14 +75,66 @@ fun String.fromHex(): ByteArray {
 }
 
 fun String.toUriOrNull(): Uri? {
-    if (!contains("://")) {
-        return null
-    }
     return try {
-        toUri()
+        val uri = toUri()
+        if (uri.scheme.isNullOrBlank()) {
+            null
+        } else {
+            uri
+        }
     } catch (e: Throwable) {
         null
     }
 }
 
+fun String.fixJson(): String {
+    val result = StringBuilder()
+    var inValue = false
+    var i = 0
+
+    while (i < length) {
+        when (val c = this[i]) {
+            '"' -> {
+                if (i > 0 && this[i - 1] == '\\') {
+                    result.append(c)
+                } else if (!inValue && i + 1 < length && this[i + 1] == '{') {
+                    inValue = true
+                    result.append(c)
+                } else if (inValue && i + 1 < length && this[i + 1] == '}') {
+                    inValue = false
+                    result.append(c)
+                } else if (inValue) {
+                    result.append("\\\"")
+                } else {
+                    result.append(c)
+                }
+            }
+            '\\' -> {
+                if (inValue && i + 1 < length && this[i + 1] != '"') {
+                    result.append("\\\\")
+                } else {
+                    result.append(c)
+                }
+            }
+            '{' -> {
+                if (i > 0 && this[i - 1] == '"') {
+                    result.append(c)
+                    inValue = true
+                } else {
+                    result.append(c)
+                }
+            }
+            '}' -> {
+                result.append(c)
+                if (i + 1 < length && this[i + 1] == '"') {
+                    inValue = false
+                }
+            }
+            else -> result.append(c)
+        }
+        i++
+    }
+
+    return result.toString()
+}
 

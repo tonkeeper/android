@@ -8,6 +8,9 @@ android {
 }
 
 dependencies {
+    api(platform(Dependence.Firebase.bom))
+    api(Dependence.Firebase.crashlytics)
+
     implementation(Dependence.AndroidX.biometric)
     implementation(project(Dependence.Lib.sqlite))
     implementation(project(Dependence.Lib.security))

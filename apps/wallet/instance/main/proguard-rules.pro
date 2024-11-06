@@ -29,3 +29,16 @@
 -keepclassmembers class * implements android.os.Parcelable {
     public static final android.os.Parcelable$Creator CREATOR;
 }
+
+-keep class java.time.** { *; }
+
+-keep class com.tonapps.tonkeeper.worker.** { *; }
+
+-keep class com.tonapps.tonkeeper.manager.** { *; }
+
+-keep class android.graphics.ColorSpace { *; }
+-keep class org.koin.** { *; }
+-keep class com.tonapps.tonkeeper.App { *; }
+
+
+

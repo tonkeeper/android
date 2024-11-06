@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder
 
+import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
@@ -12,27 +13,37 @@ import com.tonapps.wallet.localization.Localization
 class AmountHolder(
     parent: ViewGroup,
     private val onValueChange: (Double) -> Unit
-) : Holder<Item.Amount>(parent, R.layout.fragment_recharge_amount) {
+) : InputHolder<Item.Amount>(parent, R.layout.fragment_recharge_amount) {
 
     private val amountView = itemView.findViewById<CoinEditText>(R.id.amount)
     private val currencyView = itemView.findViewById<AppCompatTextView>(R.id.currency)
     private val availableView = itemView.findViewById<AppCompatTextView>(R.id.available)
 
+    override val inputFieldView: View
+        get() = amountView
+
     override fun onBind(item: Item.Amount) {
-        amountView.doOnValueChange = onValueChange
+        amountView.doOnValueChange = { it ->
+            if (it != item.value) {
+                onValueChange(it)
+            }
+        }
         amountView.suffix = item.symbol
+
         if (amountView.decimals != item.decimals) {
             amountView.setDecimals(item.decimals)
         }
+
         currencyView.text = item.formattedCharges
         applyAvailable(item.formattedRemaining, item.formattedMinAmount, item.isInsufficientBalance, item.isLessThanMin)
-        amountView.focus()
+        amountView.requestFocus()
+        amountView.postOnAnimation { setValue(item.value) }
     }
 
-    override fun onUnbind() {
-        super.onUnbind()
-
-        amountView.setValue(0.0)
+    private fun setValue(value: Double) {
+        if (value > 0 && value != amountView.getValue()) {
+            amountView.setValue(value)
+        }
     }
 
     private fun applyAvailable(
@@ -53,4 +64,5 @@ class AmountHolder(
             availableView.setTextColor(context.textSecondaryColor)
         }
     }
+
 }

@@ -4,14 +4,11 @@ import android.graphics.Color
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.lifecycle.SavedStateHandle
-import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.publicKey
-import com.tonapps.blockchain.ton.extensions.safePublicKey
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.ledger.ton.LedgerConnectData
-import com.tonapps.security.hex
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.data.account.Wallet
@@ -27,7 +24,7 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
 
         constructor(parcel: Parcel) : this(
             parcel.readBooleanCompat(),
-            parcel.readString()!!.publicKey()
+            parcel.readString()!!.publicKeyFromHex()
         )
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -67,8 +64,8 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         get() = savedStateHandle[LABEL_KEY]
         set(value) = savedStateHandle.set(LABEL_KEY, value)
 
-    val isEmptyLabel: Boolean
-        get() = label == null || label?.isEmpty == true
+    val isEmptyName: Boolean
+        get() = label == null || label?.name.isNullOrBlank()
 
     var watchAccount: AccountDetailsEntity?
         get() = savedStateHandle[WATCH_ACCOUNT_KEY]

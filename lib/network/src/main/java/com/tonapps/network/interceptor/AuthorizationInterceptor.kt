@@ -7,14 +7,14 @@ import okhttp3.Response
 
 class AuthorizationInterceptor(
     private val type: Type = Type.NONE,
-    private val token: String,
-    private val allowDomains: List<String>
+    private val token: () -> String,
+    private val allowDomains: () -> List<String>
 ): Interceptor {
 
     companion object {
         fun bearer(
-            token: String,
-            allowDomains: List<String>
+            token: () -> String,
+            allowDomains: () -> List<String>
         ) = AuthorizationInterceptor(Type.BEARER, token, allowDomains)
     }
 
@@ -24,15 +24,18 @@ class AuthorizationInterceptor(
         BEARER
     }
 
-    private val domains = allowDomains.mapNotNull { Uri.parse(it).host }
+    private val domains: List<String>
+        get() = allowDomains().mapNotNull { Uri.parse(it).host }
 
-    private val headerValue: String by lazy {
-        when(type) {
-            Type.BEARER -> "Bearer $token"
-            Type.BASIC -> "Basic $token"
-            else -> token
+    private val headerValue: String
+        get() {
+            val token = token()
+            return when(type) {
+                Type.BEARER -> "Bearer $token"
+                Type.BASIC -> "Basic $token"
+                else -> token
+            }
         }
-    }
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()

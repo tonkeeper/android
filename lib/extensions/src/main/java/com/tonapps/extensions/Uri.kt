@@ -18,6 +18,9 @@ fun Uri.hasQuery(key: String): Boolean {
     return getQueryParameter(key) != null
 }
 
+val Uri.isEmptyQuery: Boolean
+    get() = queryParameterNames.isEmpty()
+
 fun Uri.getBitmap(): Bitmap? {
     return try {
         val connection: URLConnection = URL(toString()).openConnection()
@@ -50,7 +53,7 @@ val Uri.hostOrNull: String?
     get() = host?.ifBlank { null }
 
 fun Uri.query(key: String): String? {
-    return getQueryParameter(key)?.ifBlank { null }
+    return getQueryParameter(key)?.trim()?.ifBlank { null }
 }
 
 fun Uri.queryLong(key: String): Long? {

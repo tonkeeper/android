@@ -2,13 +2,19 @@ package com.tonapps.tonkeeper.ui.screen.init.step
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.getDimensionPixelSize
 import uikit.widget.NumPadView
 import uikit.widget.PinInputView
 
@@ -38,6 +44,15 @@ class PasscodeScreen: BaseFragment(R.layout.fragment_init_passcode)  {
             if (pinInputView.count == 4) {
                 setPasscode(pinInputView.code)
             }
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val insetsNav = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+            val bottom = insetsNav + requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+            numPadView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                bottomMargin = bottom
+            }
+            insets
         }
     }
 

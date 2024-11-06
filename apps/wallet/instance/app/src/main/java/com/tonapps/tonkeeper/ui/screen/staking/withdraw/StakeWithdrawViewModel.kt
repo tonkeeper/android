@@ -46,9 +46,12 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.block.AddrStd
+import org.ton.block.StateInit
 import org.ton.cell.buildCell
+import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
+import org.ton.tlb.CellRef
 import uikit.widget.ProcessTaskView
 
 class StakeWithdrawViewModel(
@@ -100,17 +103,26 @@ class StakeWithdrawViewModel(
         }
     }
 
-    fun requestFee() = unsignedBodyFlow().map { message ->
+    private fun requestExtra() = unsignedBodyFlow().map { message ->
         try {
             emulationUseCase(message, wallet.testnet).extra
         } catch (e: Throwable) {
             Emulated.defaultExtra
         }
-    }.take(1).flowOn(Dispatchers.IO).map { extra ->
-        val amount = CurrencyFormatter.format(TokenEntity.TON.symbol, extra.value, TokenEntity.TON.decimals)
-        val fiat = CurrencyFormatter.format(currency.code, extra.fiat, currency.decimals, replaceSymbol = false)
-        Pair(amount, fiat)
     }
+
+    fun requestFee() = combine(
+        requestExtra(),
+        stakeFlow
+    ) { extra, stake ->
+        val currency = settingsRepository.currency
+        val rates = ratesRepository.getTONRates(currency)
+        val fee = StakingPool.getTotalFee(extra.value, stake.pool.implementation)
+
+        val amount = CurrencyFormatter.format(TokenEntity.TON.symbol, fee, TokenEntity.TON.decimals)
+        val fiat = CurrencyFormatter.format(currency.code, rates.convertTON(fee), currency.decimals, replaceSymbol = false)
+        Pair(amount, fiat)
+    }.flowOn(Dispatchers.IO)
 
     private fun unsignedBodyFlow() = combine(
         amountFlow.take(1),
@@ -148,32 +160,33 @@ class StakeWithdrawViewModel(
         )
     }
 
-    private suspend fun buildTransfer(
+    private fun buildTransfer(
         wallet: WalletEntity,
         amount: Coins,
         staked: StakedEntity,
         sendParams: SendMetadataEntity,
     ): WalletTransfer {
+        val stateInitRef = if (0 >= sendParams.seqno) {
+            wallet.contract.stateInitRef
+        } else {
+            null
+        }
+
         val isSendAll = amount == staked.balance
         val pool = staked.pool
         val builder = WalletTransferBuilder()
         builder.bounceable = true
         builder.sendMode = (TonSendMode.PAY_GAS_SEPARATELY.value + TonSendMode.IGNORE_ERRORS.value)
-        if (0 >= sendParams.seqno) {
-            builder.stateInit = wallet.contract.stateInit
-        }
         when (staked.pool.implementation) {
-            StakingPool.Implementation.Whales -> builder.applyWhales(pool, amount, isSendAll)
-            StakingPool.Implementation.TF -> builder.applyTF(pool)
+            StakingPool.Implementation.Whales -> builder.applyWhales(pool, amount, isSendAll, stateInitRef)
+            StakingPool.Implementation.TF -> builder.applyTF(pool, stateInitRef)
             else -> throw IllegalStateException("Unsupported pool implementation")
         }
         return builder.build()
     }
 
-    private fun WalletTransferBuilder.applyWhales(pool: PoolEntity, amount: Coins, isSendAll: Boolean) {
-        this.coins = Coins.of(0.2).toGrams()
-        this.destination = AddrStd.parse(pool.address)
-        this.body = buildCell {
+    private fun WalletTransferBuilder.applyWhales(pool: PoolEntity, amount: Coins, isSendAll: Boolean, stateInitRef: CellRef<StateInit>?) {
+        val body = buildCell {
             storeOpCode(TONOpCode.WHALES_WITHDRAW)
             storeQueryId(TransferEntity.newWalletQueryId())
             storeCoins(Coins.of(0.1).toGrams())
@@ -183,15 +196,21 @@ class StakeWithdrawViewModel(
                 storeCoins(amount.toGrams())
             }
         }
+
+        this.coins = Coins.of(0.2).toGrams()
+        this.destination = AddrStd.parse(pool.address)
+        this.messageData = MessageData.raw(body, stateInitRef)
     }
 
-    private fun WalletTransferBuilder.applyTF(pool: PoolEntity) {
-        this.coins = Coins.ONE.toGrams()
-        this.destination = AddrStd.parse(pool.address)
-        this.body = buildCell {
+    private fun WalletTransferBuilder.applyTF(pool: PoolEntity, stateInitRef: CellRef<StateInit>?) {
+        val body = buildCell {
             storeUInt(0, 32)
             storeBytes("w".toByteArray())
         }
+
+        this.coins = Coins.ONE.toGrams()
+        this.destination = AddrStd.parse(pool.address)
+        this.messageData = MessageData.raw(body, stateInitRef)
     }
 
     fun send(context: Context) = (if (wallet.isLedger) {

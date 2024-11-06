@@ -1,8 +1,11 @@
 package com.tonapps.tonkeeper.manager.tx
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.join
+import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.AccountEventEntity
@@ -55,6 +58,11 @@ class TransactionManager(
         }.filterNotNull().onEach { transaction ->
             _transactionFlow.tryEmit(transaction)
         }.launchIn(scope)
+
+        sendingTransactionFlow.onEach {
+            delay(5000)
+            WidgetUpdaterWorker.update(App.instance)
+        }.launchIn(scope)
     }
 
     fun eventsFlow(wallet: WalletEntity) = transactionFlow.filter {
@@ -63,7 +71,8 @@ class TransactionManager(
 
     private fun realtime(wallet: WalletEntity) = api.realtime(
         accountId = wallet.accountId,
-        testnet = wallet.testnet
+        testnet = wallet.testnet,
+        onFailure = null
     ).map { it.data }.map { getTransaction(wallet, it) }
 
     private suspend fun getTransaction(

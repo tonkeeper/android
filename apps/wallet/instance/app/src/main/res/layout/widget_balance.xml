@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/content"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_widget"
     android:padding="@dimen/offsetMedium">
 
     <ImageView
+        android:id="@+id/icon"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_gravity="end|top"
@@ -20,20 +21,10 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/token"
-            android:singleLine="true"
-            android:textSize="13sp"
-            android:text="0 TON"
-            android:textColor="#45AEF5"
-            android:fontFamily="@font/montserrat_medium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:id="@+id/currency"
+            android:id="@+id/fiat"
             android:singleLine="true"
             android:textSize="32sp"
-            android:text="$ 0"
+            android:text="@string/loading"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/montserrat_medium"
             android:layout_width="match_parent"

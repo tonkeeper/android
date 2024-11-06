@@ -17,6 +17,7 @@
         <item name="android:stateListAnimator">@null</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:layout_height">@dimen/itemHeight</item>
+        <item name="android:minHeight">@dimen/itemHeight</item>
     </style>
 
     <style name="Widget.App.Button" parent="Base.Widget.App.Button">
@@ -31,7 +32,7 @@
 
     <style name="Widget.App.Button.Green" parent="Base.Widget.App.Button">
         <item name="android:background">@drawable/bg_button_green</item>
-        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+        <item name="android:textColor">@color/button_green_foreground_selector</item>
     </style>
 
     <style name="Widget.App.Button.Orange" parent="Base.Widget.App.Button">
@@ -42,11 +43,17 @@
     <style name="Widget.App.Button.Small" parent="Base.Widget.App.Button">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">@dimen/tertiaryHeight</item>
+        <item name="android:minHeight">@dimen/tertiaryHeight</item>
         <item name="android:background">@drawable/bg_small_button_primary</item>
         <item name="android:textColor">@color/button_primary_foreground_selector</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textAppearance">@style/TextAppearance.Label2</item>
         <item name="minHeight">0dp</item>
+    </style>
+
+    <style name="Widget.App.Button.Small.Tertiary" parent="Widget.App.Button.Small">
+        <item name="android:background">@drawable/bg_small_tertiary_button_primary</item>
+        <item name="android:textColor">@color/button_small_tertiary_foreground_selector</item>
     </style>
 
     <style name="Widget.App.Button.Small.Secondary" parent="Widget.App.Button.Small">

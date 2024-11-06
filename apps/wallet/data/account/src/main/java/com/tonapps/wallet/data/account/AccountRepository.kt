@@ -1,7 +1,9 @@
 package com.tonapps.wallet.data.account
 
+import android.app.KeyguardManager
 import android.content.Context
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
@@ -18,6 +20,7 @@ import com.tonapps.wallet.data.account.entities.WalletEvent
 import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
+import com.tonapps.wallet.data.core.recordException
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNKeystone
 import com.tonapps.wallet.data.rn.data.RNLedger
@@ -45,7 +48,7 @@ import org.ton.contract.wallet.WalletTransfer
 import java.util.UUID
 
 class AccountRepository(
-    context: Context,
+    private val context: Context,
     private val api: API,
     private val rnLegacy: RNLegacy,
 ) {
@@ -53,17 +56,6 @@ class AccountRepository(
     companion object {
         fun newWalletId(): String {
             return UUID.randomUUID().toString()
-        }
-
-        private fun createLabelName(
-            name: String,
-            suffix: String,
-            size: Int
-        ): String {
-            if (size == 1) {
-                return name
-            }
-            return "$name $suffix"
         }
     }
 
@@ -73,28 +65,34 @@ class AccountRepository(
         data class Wallet(val wallet: WalletEntity) : SelectedState()
     }
 
+    private val keyguardManager by lazy {
+        context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val database = DatabaseSource(context, scope)
-    private val storageSource = StorageSource(context)
-    private val vaultSource = VaultSource(context)
+    private val storageSource: StorageSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { StorageSource(context) }
+    private val vaultSource: VaultSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { VaultSource(context) }
     private val migrationHelper = RNMigrationHelper(rnLegacy)
 
     private val _selectedStateFlow = MutableStateFlow<SelectedState>(SelectedState.Initialization)
-    val selectedStateFlow = _selectedStateFlow.stateIn(scope, SharingStarted.Eagerly,
+    val selectedStateFlow = _selectedStateFlow.stateIn(
+        scope,
+        SharingStarted.Eagerly,
         SelectedState.Initialization
     )
     val selectedWalletFlow = selectedStateFlow.filterNotNull().filterIsInstance<SelectedState.Wallet>().map {
         it.wallet
     }.shareIn(scope, SharingStarted.Eagerly, 1).distinctUntilChanged()
 
-    val selectedId: String?
+    private val selectedId: String?
         get() = (selectedStateFlow.value as? SelectedState.Wallet)?.wallet?.id
 
     init {
         scope.launch(Dispatchers.IO) {
             if (rnLegacy.isRequestMainMigration()) {
-                database.clearAccounts()
-                storageSource.clear()
+                // database.clearAccounts()
+                // storageSource.clear()
                 migrationFromRN()
                 rnLegacy.setWalletMigrated()
             }
@@ -106,25 +104,26 @@ class AccountRepository(
 
     suspend fun importPrivateKeysFromRNLegacy(passcode: String) = withContext(Dispatchers.IO) {
         val list = migrationHelper.loadSecureStore(passcode)
-        if (list.isEmpty()) {
-            throw Exception("Empty list")
+        if (list.isNotEmpty()) {
+            for (mnemonic in list) {
+                vaultSource.addMnemonic(mnemonic.mnemonic.split(" "))
+            }
         }
-        for (mnemonic in list) {
-            vaultSource.addMnemonic(mnemonic.mnemonic.split(" "))
-        }
+    }
+
+    fun addMnemonic(words: List<String>) {
+        vaultSource.addMnemonic(words)
     }
 
     private suspend fun migrationFromRN() = withContext(Dispatchers.IO) {
         val (selectedId, wallets) = migrationHelper.loadLegacy()
-        if (wallets.isEmpty()) {
-            _selectedStateFlow.value = SelectedState.Empty
-        } else {
+        if (wallets.isNotEmpty()) {
             database.insertAccounts(wallets)
             for (wallet in wallets) {
                 val token = rnLegacy.getTonProof(wallet.id) ?: continue
                 storageSource.setTonProofToken(wallet.publicKey, token)
             }
-            setSelectedWallet(selectedId)
+            storageSource.setSelectedId(selectedId)
         }
     }
 
@@ -193,17 +192,27 @@ class AccountRepository(
     }
 
     suspend fun requestTonProofToken(wallet: WalletEntity): String? = withContext(scope.coroutineContext) {
-        if (!wallet.hasPrivateKey) {
-            return@withContext null
+        try {
+            if (keyguardManager.isDeviceLocked) {
+                return@withContext null
+            }
+
+            if (!wallet.hasPrivateKey) {
+                return@withContext null
+            }
+            val token = storageSource.getTonProofToken(wallet.publicKey)
+            if (token != null) {
+                return@withContext token
+            }
+            val tonProofToken = createTonProofToken(wallet) ?: return@withContext null
+            saveTonProof(wallet, tonProofToken)
+            tonProofToken
+        } catch (e: Throwable) {
+            recordException(e)
+            null
         }
-        val token = storageSource.getTonProofToken(wallet.publicKey)
-        if (token != null) {
-            return@withContext token
-        }
-        val tonProofToken = createTonProofToken(wallet) ?: return@withContext null
-        saveTonProof(wallet, tonProofToken)
-        tonProofToken
     }
+
 
     private suspend fun saveTonProof(wallet: WalletEntity, token: String) = withContext(Dispatchers.IO) {
         storageSource.setTonProofToken(wallet.publicKey, token)
@@ -221,15 +230,15 @@ class AccountRepository(
         return vaultSource.getMnemonic(wallet.publicKey)
     }
 
-    suspend fun getPrivateKey(id: String): PrivateKeyEd25519 {
-        val wallet = database.getAccount(id) ?: return EmptyPrivateKeyEd25519
-        return vaultSource.getPrivateKey(wallet.publicKey) ?: EmptyPrivateKeyEd25519
+    suspend fun getPrivateKey(id: String): PrivateKeyEd25519? {
+        val wallet = database.getAccount(id) ?: return null
+        return vaultSource.getPrivateKey(wallet.publicKey)
     }
 
     suspend fun pairLedger(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         ledgerAccounts: List<LedgerAccount>,
-        deviceId: String,
+        deviceId: String
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
         for ((index, account) in ledgerAccounts.withIndex()) {
@@ -238,9 +247,7 @@ class AccountRepository(
                 publicKey = account.publicKey,
                 type = Wallet.Type.Ledger,
                 version = WalletVersion.V4R2,
-                label = label.copy(
-                    accountName = createLabelName(label.accountName, index.toString(), ledgerAccounts.size),
-                ),
+                label = label.create(index),
                 ledger = WalletEntity.Ledger(
                     deviceId = deviceId,
                     accountIndex = account.path.index
@@ -254,7 +261,7 @@ class AccountRepository(
     }
 
     suspend fun pairSigner(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
         qr: Boolean
@@ -264,7 +271,7 @@ class AccountRepository(
     }
 
     suspend fun pairKeystone(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         keystone: WalletEntity.Keystone,
     ): List<WalletEntity> {
@@ -273,7 +280,7 @@ class AccountRepository(
             publicKey = publicKey,
             type = Wallet.Type.Keystone,
             version = WalletVersion.V4R2,
-            label = label,
+            label = label.create(0),
             keystone = keystone
         )
 
@@ -284,7 +291,7 @@ class AccountRepository(
 
     suspend fun importWallet(
         ids: List<String>,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         mnemonic: List<String>,
         versions: List<WalletVersion>,
         testnet: Boolean
@@ -296,7 +303,7 @@ class AccountRepository(
 
     suspend fun addWallet(
         ids: List<String>,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
         type: Wallet.Type
@@ -308,11 +315,7 @@ class AccountRepository(
                 publicKey = publicKey,
                 type = type,
                 version = version,
-                label = label.copy(
-                    accountName = createLabelName(
-                        label.accountName, version.title, versions.size,
-                    )
-                )
+                label = label.create(index)
             )
             list.add(entity)
         }
@@ -322,7 +325,7 @@ class AccountRepository(
     }
 
     suspend fun addWatchWallet(
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         version: WalletVersion,
     ): WalletEntity {
@@ -331,7 +334,7 @@ class AccountRepository(
 
     suspend fun addNewWallet(
         id: String,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         mnemonic: List<String>
     ): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
@@ -340,7 +343,7 @@ class AccountRepository(
 
     private suspend fun addWallet(
         id: String,
-        label: Wallet.Label,
+        label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         type: Wallet.Type,
         version: WalletVersion,
@@ -351,7 +354,7 @@ class AccountRepository(
             publicKey = publicKey,
             type = type,
             version = version,
-            label = label
+            label = label.create(0)
         )
 
         insertWallets(listOf(entity), new)
@@ -368,13 +371,13 @@ class AccountRepository(
         }
     }
 
-    private fun createTonProofToken(wallet: WalletEntity): String? {
+    private suspend fun createTonProofToken(wallet: WalletEntity): String? {
+        val payload = api.tonconnectPayload() ?: return null
         return try {
             val publicKey = wallet.publicKey
             val contract = BaseWalletContract.create(publicKey, WalletVersion.V4R2.title, wallet.testnet)
             val secretKey = vaultSource.getPrivateKey(publicKey) ?: throw Exception("private key not found")
             val address = contract.address
-            val payload = api.tonconnectPayload() ?: throw Exception("payload not found")
             val proof = WalletProof.signTonkeeper(
                 address = address,
                 secretKey = secretKey,
@@ -383,6 +386,7 @@ class AccountRepository(
             )
             api.tonconnectProof(address.toAccountId(), proof.string(false))
         } catch (e: Throwable) {
+            recordException(e)
             null
         }
     }
@@ -407,8 +411,8 @@ class AccountRepository(
         }
     }
 
-    suspend fun delete(id: String) = withContext(scope.coroutineContext) {
-        database.deleteAccount(id)
+    suspend fun delete(wallet: WalletEntity) = withContext(scope.coroutineContext) {
+        database.deleteAccount(wallet.id)
         setSelectedWallet(database.getFirstAccountId())
     }
 

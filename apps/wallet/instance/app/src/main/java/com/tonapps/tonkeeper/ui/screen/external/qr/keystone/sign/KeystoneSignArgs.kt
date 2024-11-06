@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign
 
 import android.os.Bundle
+import android.util.Log
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.ur.UR
 import com.tonapps.ur.registry.CryptoKeypath
@@ -30,10 +31,18 @@ data class KeystoneSignArgs(
             if (path.isBlank()) {
                 return emptyList()
             }
+
             val components = mutableListOf<PathComponent>()
             for (component in path.split("/").drop(1)) {
                 val hardened = component.endsWith("'")
-                val value = (if (hardened) component.dropLast(1) else component)
+                val value = if (hardened) {
+                    component.dropLast(1)
+                } else {
+                    component
+                }
+                if (value.isBlank()) {
+                    continue
+                }
                 val index = value.toIntOrNull() ?: continue
                 components.add(IndexPathComponent(index, hardened))
             }
@@ -42,10 +51,13 @@ data class KeystoneSignArgs(
     }
 
     val ur: UR by lazy {
-        val path: CryptoKeypath? = if (keystone.isEmpty) {
+        val pathList = buildPathList(keystone.path)
+        val sourceFingerprint = hex(keystone.xfp)
+        val isEmpty = 4 > sourceFingerprint.size
+        val path = if (isEmpty) {
             null
         } else {
-            CryptoKeypath(buildPathList(keystone.path), hex(keystone.xfp))
+            CryptoKeypath(pathList, sourceFingerprint)
         }
         val request = TonSignRequest(requestId.toByteArray(), hex(unsignedBody), if (isTransaction) 1 else 2, path, address, "Tonkeeper")
         request.toUR()

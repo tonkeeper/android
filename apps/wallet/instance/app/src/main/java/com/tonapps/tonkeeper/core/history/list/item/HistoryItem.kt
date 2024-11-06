@@ -1,10 +1,12 @@
 package com.tonapps.tonkeeper.core.history.list.item
 
+import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
-import com.tonapps.extensions.ifPunycodeToUnicode
+import com.tonapps.extensions.locale
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
@@ -13,12 +15,14 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.tonkeeper.core.history.ActionType
-import com.tonapps.tonkeeper.core.history.recipient
-import com.tonapps.tonkeeper.core.history.sender
+import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.dapps.entities.AppPushEntity
+import com.tonapps.wallet.data.events.recipient
+import com.tonapps.wallet.data.events.sender
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.EncryptedComment
 import kotlinx.parcelize.IgnoredOnParcel
@@ -127,18 +131,30 @@ sealed class HistoryItem(
         val title: String,
         val body: String,
         val date: String,
-        val host: String,
+        val url: Uri,
         val timestamp: Long,
         val deepLink: String,
         val wallet: WalletEntity,
     ): HistoryItem(TYPE_APP) {
+
+
+        constructor(context: Context, wallet: WalletEntity, push: AppPushEntity) : this(
+            iconUri = push.iconUrl.toUri(),
+            title = push.title,
+            body = push.message,
+            date = DateHelper.formattedDate(push.timestamp, context.locale),
+            url = push.url,
+            timestamp = push.timestamp,
+            deepLink = push.deeplink,
+            wallet = wallet
+        )
 
         constructor(parcel: Parcel) : this(
             iconUri = parcel.readParcelableCompat()!!,
             title = parcel.readString()!!,
             body = parcel.readString()!!,
             date = parcel.readString()!!,
-            host = parcel.readString()!!,
+            url = parcel.readParcelableCompat()!!,
             timestamp = parcel.readLong(),
             deepLink = parcel.readString()!!,
             wallet = parcel.readParcelableCompat()!!
@@ -149,7 +165,7 @@ sealed class HistoryItem(
             dest.writeString(title)
             dest.writeString(body)
             dest.writeString(date)
-            dest.writeString(host)
+            dest.writeParcelable(url, flags)
             dest.writeLong(timestamp)
             dest.writeString(deepLink)
             dest.writeParcelable(wallet, flags)
@@ -178,7 +194,7 @@ sealed class HistoryItem(
                 wallet = account.isWallet,
                 testnet = testnet,
             ),
-            name = account.name?.ifPunycodeToUnicode(),
+            name = account.name,
             isWallet = account.isWallet,
             icon = account.icon,
             isScam = account.isScam

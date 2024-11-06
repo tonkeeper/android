@@ -10,7 +10,9 @@ import androidx.core.view.updatePadding
 import blur.BlurCompat
 import com.tonapps.tonkeeper.isBlurDisabled
 import com.tonapps.tonkeeper.isLowDevice
+import com.tonapps.tonkeeperx.R
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.useAttributes
 import uikit.widget.SimpleRecyclerView
 
 class MainRecyclerView @JvmOverloads constructor(
@@ -19,17 +21,20 @@ class MainRecyclerView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : SimpleRecyclerView(context, attrs, defStyle) {
 
-    private val paddingVertical = context.getDimensionPixelSize(uikit.R.dimen.offsetMedium)
-    private val barSize = context.getDimensionPixelSize(uikit.R.dimen.barHeight)
+    private val initialPadding: Int by lazy { paddingTop }
+    private val initialPaddingBottom: Int by lazy { paddingBottom }
+    private val defaultBarSize = context.getDimensionPixelSize(uikit.R.dimen.barHeight)
+    private var topBarSize = defaultBarSize
+    private var bottomBarSize = defaultBarSize
 
     private var topOffset = 0
     private var bottomOffset = 0
 
-    private val topPadding: Int
-        get() = topOffset + barSize
+    val topPadding: Int
+        get() = topOffset + topBarSize
 
     private val bottomPadding: Int
-        get() = bottomOffset + barSize
+        get() = bottomOffset + bottomBarSize
 
     private val blurDisabled = context.isBlurDisabled
     private val topBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
@@ -39,7 +44,11 @@ class MainRecyclerView @JvmOverloads constructor(
         if (bottomBlur?.hasBlur == true) {
             overScrollMode = OVER_SCROLL_NEVER
         }
-        context.isLowDevice
+
+        context.useAttributes(attrs, R.styleable.MainRecyclerView) {
+            topBarSize = it.getDimensionPixelSize(R.styleable.MainRecyclerView_android_topOffset, defaultBarSize)
+            bottomBarSize = it.getDimensionPixelSize(R.styleable.MainRecyclerView_android_bottomOffset, defaultBarSize)
+        }
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
@@ -49,15 +58,15 @@ class MainRecyclerView @JvmOverloads constructor(
         topOffset = statusInsets.top
         bottomOffset = navigationInsets.bottom
         updatePadding(
-            top = paddingVertical + topPadding,
-            bottom = paddingVertical + bottomPadding
+            top = initialPadding + topPadding,
+            bottom = initialPaddingBottom + bottomPadding
         )
         applyBlurBounds()
         return super.onApplyWindowInsets(insets)
     }
 
     override fun dispatchDraw(canvas: Canvas) {
-        if (topBlur == null) {
+        if (topBlur == null || !topBlur.hasBlur) {
             super.dispatchDraw(canvas)
         } else {
             topBlur.draw(canvas) {
@@ -67,7 +76,7 @@ class MainRecyclerView @JvmOverloads constructor(
     }
 
     override fun draw(canvas: Canvas) {
-        if (bottomBlur == null) {
+        if (bottomBlur == null || !bottomBlur.hasBlur) {
             super.draw(canvas)
         } else {
             bottomBlur.draw(canvas) {

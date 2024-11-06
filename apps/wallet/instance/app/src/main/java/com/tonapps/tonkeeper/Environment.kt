@@ -15,8 +15,4 @@ class Environment(context: Context) {
         val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
         resultCode == ConnectionResult.SUCCESS
     }
-
-    val isGooglePlayAvailable: Boolean by lazy {
-        installerSource == AppInstall.Source.GOOGLE_PLAY && isGooglePlayServicesAvailable
-    }
 }

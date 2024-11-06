@@ -49,6 +49,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
         android:visibility="gone"/>
+
+    <FrameLayout
+        android:id="@+id/migration_loader_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/migration_loader_icon"
+            android:layout_width="@dimen/itemHeight"
+            android:layout_height="@dimen/itemHeight"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_gear_128"
+            android:tint="?attr/accentBlueColor"/>
+
+    </FrameLayout>
 
 </FrameLayout>

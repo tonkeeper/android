@@ -3,7 +3,6 @@ package com.tonapps.wallet.data.core
 import android.os.Parcel
 import android.os.Parcelable
 
-
 @JvmInline
 value class Trust(val type: String): Parcelable {
 

@@ -25,6 +25,7 @@ import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
@@ -411,21 +412,23 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
     }
 
     data class Push(
-        val apps: List<AppEntity>
+        val textLine: String,
+        val iconUris: List<Uri>,
     ): Item(TYPE_PUSH) {
 
-        constructor(parcel: Parcel) : this(
-            parcel.readArrayCompat(AppEntity::class.java)?.toList()!!
+        constructor(pushes: List<AppPushEntity>) : this(
+            pushes.map { it.body.message }.first(),
+            pushes.map { Uri.parse(it.iconUrl) }
         )
 
-        val text = "line"
-
-        val iconUris: List<Uri> by lazy {
-            apps.map { Uri.parse(it.iconUrl) }
-        }
+        constructor(parcel: Parcel) : this(
+            parcel.readString()!!,
+            parcel.readArrayCompat(Uri::class.java)?.toList() ?: emptyList()
+        )
 
         override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeArrayCompat(apps.toTypedArray())
+            dest.writeString(textLine)
+            dest.writeArrayCompat(iconUris.toTypedArray())
         }
 
         companion object CREATOR : Parcelable.Creator<Push> {

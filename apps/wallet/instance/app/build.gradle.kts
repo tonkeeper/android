@@ -12,6 +12,12 @@ android {
 
     defaultConfig {
         minSdk = Build.minSdkVersion
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86")
+            abiFilters.add("x86_64")
+        }
     }
 
     buildFeatures {
@@ -53,6 +59,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.purchase))
     implementation(project(Dependence.Wallet.Data.battery))
     implementation(project(Dependence.Wallet.Data.dapps))
+    implementation(project(Dependence.Wallet.Data.contacts))
 
     implementation(project(Dependence.UIKit.core))
 
@@ -96,6 +103,7 @@ dependencies {
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.ledger))
     implementation(project(Dependence.Lib.ur))
+    implementation(project(Dependence.Lib.base64))
 
     implementation(Dependence.AndroidX.Camera.base)
     implementation(Dependence.AndroidX.Camera.core)
@@ -104,6 +112,7 @@ dependencies {
 
     implementation(Dependence.GooglePlay.review)
     implementation(Dependence.GooglePlay.billing)
+    implementation(Dependence.GooglePlay.update)
 
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)

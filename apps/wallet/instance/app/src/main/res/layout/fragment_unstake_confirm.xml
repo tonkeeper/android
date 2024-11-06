@@ -102,7 +102,6 @@
         android:layout_marginBottom="@dimen/offsetMedium"
         android:enabled="false"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="?attr/textPrimaryColor"
         android:text="@string/unstake_confirm"/>
 
 

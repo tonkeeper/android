@@ -1,12 +1,16 @@
 package com.tonapps.wallet.data.account.source
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.tonapps.blockchain.ton.extensions.getPrivateKey
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.getByteArray
+import com.tonapps.extensions.putByteArray
 import com.tonapps.security.Security
 import com.tonapps.security.clear
-import com.tonapps.security.putByteArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic
@@ -45,8 +49,22 @@ internal class VaultSource(context: Context) {
         return publicKey
     }
 
-    fun getPrivateKey(publicKey: PublicKeyEd25519): PrivateKeyEd25519? {
-        val seed = prefs.getByteArray(privateKey(publicKey)) ?: return null
+    suspend fun getPrivateKey(publicKey: PublicKeyEd25519): PrivateKeyEd25519? = withContext(Dispatchers.IO) {
+        val privateKey = prefs.getPrivateKey(privateKey(publicKey))
+        if (privateKey == null) {
+            val fromMnemonic = getPrivateKeyFromMnemonic(publicKey) ?: return@withContext null
+            prefs.edit {
+                putByteArray(privateKey(publicKey), fromMnemonic.key.toByteArray())
+            }
+            fromMnemonic
+        } else {
+            privateKey
+        }
+    }
+
+    private fun getPrivateKeyFromMnemonic(publicKey: PublicKeyEd25519): PrivateKeyEd25519? {
+        val mnemonic = getMnemonic(publicKey) ?: return null
+        val seed = Mnemonic.toSeed(mnemonic.toList())
         val privateKey = PrivateKeyEd25519(seed)
         seed.clear()
         return privateKey

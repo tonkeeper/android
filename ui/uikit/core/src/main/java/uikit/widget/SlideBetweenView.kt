@@ -5,9 +5,11 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.widget.FrameLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.view.animation.PathInterpolatorCompat
+import androidx.core.view.doOnLayout
 
 class SlideBetweenView @JvmOverloads constructor(
     context: Context,
@@ -17,40 +19,46 @@ class SlideBetweenView @JvmOverloads constructor(
 
     private var currentIndex: Int = 0
 
+    private fun getFromToView(
+        fromIndex: Int,
+        toIndex: Int,
+        callback: (fromView: View, toView: View) -> Unit
+    ) {
+        doOnLayout {
+            val fromView = getChildAt(fromIndex) ?: return@doOnLayout
+            val toView = getChildAt(toIndex) ?: return@doOnLayout
+            callback(fromView, toView)
+        }
+    }
+
     fun next() {
-        val fromView = getChildAt(currentIndex)
-        val toView = getChildAt(currentIndex + 1)
+        getFromToView(currentIndex, currentIndex + 1) { fromView, toView ->
+            toView.visibility = VISIBLE
+            toView.translationX = measuredWidth.toFloat()
 
-        toView.visibility = VISIBLE
-        toView.translationX = measuredWidth.toFloat()
-
-        playAnimators(
-            ObjectAnimator.ofFloat(fromView, "translationX", -measuredWidth.toFloat()),
-            ObjectAnimator.ofFloat(toView, "translationX", 0f)
-        ) {
-            currentIndex++
-            fromView.visibility = GONE
+            playAnimators(
+                ObjectAnimator.ofFloat(fromView, "translationX", -measuredWidth.toFloat()),
+                ObjectAnimator.ofFloat(toView, "translationX", 0f)
+            ) {
+                currentIndex++
+                fromView.visibility = GONE
+            }
         }
     }
 
     fun prev() {
-        val fromView = getChildAt(currentIndex) ?: return
-        val toView = getChildAt(currentIndex - 1) ?: return
+        getFromToView(currentIndex, currentIndex - 1) { fromView, toView ->
+            toView.visibility = VISIBLE
+            toView.translationX = -measuredWidth.toFloat()
 
-        toView.visibility = VISIBLE
-        toView.translationX = -measuredWidth.toFloat()
-
-        playAnimators(
-            ObjectAnimator.ofFloat(fromView, "translationX", measuredWidth.toFloat()),
-            ObjectAnimator.ofFloat(toView, "translationX", 0f)
-        ) {
-            currentIndex--
-            fromView.visibility = GONE
+            playAnimators(
+                ObjectAnimator.ofFloat(fromView, "translationX", measuredWidth.toFloat()),
+                ObjectAnimator.ofFloat(toView, "translationX", 0f)
+            ) {
+                currentIndex--
+                fromView.visibility = GONE
+            }
         }
-    }
-
-    fun getCurrentIndex(): Int {
-        return currentIndex
     }
 
     private companion object {

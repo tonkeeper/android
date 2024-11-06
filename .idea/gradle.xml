@@ -21,6 +21,7 @@
             </builds>
           </compositeBuild>
         </compositeConfiguration>
+        <option name="testRunner" value="CHOOSE_PER_TEST" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
         <option name="modules">
@@ -36,6 +37,7 @@
             <option value="$PROJECT_DIR$/apps/wallet/data/battery" />
             <option value="$PROJECT_DIR$/apps/wallet/data/browser" />
             <option value="$PROJECT_DIR$/apps/wallet/data/collectibles" />
+            <option value="$PROJECT_DIR$/apps/wallet/data/contacts" />
             <option value="$PROJECT_DIR$/apps/wallet/data/core" />
             <option value="$PROJECT_DIR$/apps/wallet/data/dapps" />
             <option value="$PROJECT_DIR$/apps/wallet/data/events" />
@@ -46,18 +48,18 @@
             <option value="$PROJECT_DIR$/apps/wallet/data/settings" />
             <option value="$PROJECT_DIR$/apps/wallet/data/staking" />
             <option value="$PROJECT_DIR$/apps/wallet/data/tokens" />
+            <option value="$PROJECT_DIR$/apps/wallet/http" />
             <option value="$PROJECT_DIR$/apps/wallet/instance" />
             <option value="$PROJECT_DIR$/apps/wallet/instance/app" />
             <option value="$PROJECT_DIR$/apps/wallet/instance/main" />
-            <option value="$PROJECT_DIR$/apps/wallet/instance/x" />
             <option value="$PROJECT_DIR$/apps/wallet/localization" />
             <option value="$PROJECT_DIR$/baselineprofile" />
             <option value="$PROJECT_DIR$/baselineprofile/main" />
-            <option value="$PROJECT_DIR$/baselineprofile/x" />
             <option value="$PROJECT_DIR$/buildLogic" />
             <option value="$PROJECT_DIR$/buildLogic/plugin" />
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/lib" />
+            <option value="$PROJECT_DIR$/lib/base64" />
             <option value="$PROJECT_DIR$/lib/blockchain" />
             <option value="$PROJECT_DIR$/lib/emoji" />
             <option value="$PROJECT_DIR$/lib/extensions" />

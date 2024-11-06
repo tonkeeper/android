@@ -3,10 +3,46 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <com.tonapps.tonkeeper.view.ChartView
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:layout_marginHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:fontFamily="@font/roboto_mono"
+            android:textFontWeight="700"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/diff"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:fontFamily="@font/roboto_mono"
+            android:textFontWeight="400"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:fontFamily="@font/roboto_mono"
+            android:textFontWeight="400"
+            android:text="@string/price"
+            android:textColor="?attr/textSecondaryColor"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <com.tonapps.tonkeeper.ui.component.chart.ChartView
         android:id="@+id/chart"
         android:layout_width="match_parent"
-        android:layout_height="176dp"/>
+        android:layout_height="176dp"
+        android:layout_marginTop="8dp"/>
 
     <FrameLayout
         android:layout_width="match_parent"

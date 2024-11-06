@@ -3,8 +3,10 @@ package uikit.extensions
 import android.animation.ValueAnimator
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
@@ -19,6 +21,7 @@ import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.Window
 import android.view.animation.Animation
+import android.widget.EditText
 import android.widget.TextView
 import androidx.annotation.AnimRes
 import androidx.annotation.DrawableRes
@@ -163,7 +166,11 @@ fun View.round(radius: Float) {
 }
 
 fun View.getDrawable(@DrawableRes resId: Int): Drawable {
-    return AppCompatResources.getDrawable(context, resId)!!
+    return try {
+        AppCompatResources.getDrawable(context, resId) ?: throw IllegalArgumentException()
+    } catch (e: Throwable) {
+        ColorDrawable(Color.TRANSPARENT)
+    }
 }
 
 fun View.withAnimation(duration: Long = 120, block: () -> Unit) {
@@ -364,4 +371,38 @@ fun View.setBackgroundColor(@IdRes id: Int, color: Int) {
 
 fun View.setBackground(@IdRes id: Int, drawable: Drawable) {
     findViewById<View>(id).background = drawable
+}
+
+inline fun <reified R: View> View.findViewByClass(): R? {
+    val clazz = R::class.java
+    return findViewByClass(clazz) as R?
+}
+
+fun View.findViewByClass(clazz: Class<out View>): View? {
+    if (clazz.isInstance(this)) {
+        return this
+    }
+    if (this is ViewGroup) {
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            if (clazz.isInstance(child)) {
+                return child
+            } else if (child is ViewGroup) {
+                val view = child.findViewByClass(clazz)
+                if (view != null) {
+                    return view
+                }
+            }
+        }
+    }
+    return null
+}
+
+fun View.hideKeyboard(ignoreFocus: Boolean = true) {
+    val editText = if (this is EditText) this else findViewByClass<EditText>() ?: return
+    val controller = editText.getInsetsControllerCompat() ?: return
+    if (ignoreFocus || editText.hasFocus()) {
+        editText.clearFocus()
+        controller.hide(WindowInsetsCompat.Type.ime())
+    }
 }

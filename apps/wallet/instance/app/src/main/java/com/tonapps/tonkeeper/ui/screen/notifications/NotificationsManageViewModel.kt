@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
+import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -52,9 +53,12 @@ class NotificationsManageViewModel(
     }.flowOn(Dispatchers.IO)
 
     fun toggleWalletPush(wallet: WalletEntity, enabled: Boolean) {
-        viewModelScope.launch {
-            pushManager.wallet(wallet, if (enabled) PushManager.State.Enable else PushManager.State.Disable)
+        val newState = if (enabled) {
+            PushManager.State.Enable
+        } else {
+            PushManager.State.Disable
         }
+        PushToggleWorker.run(context, wallet, newState)
     }
 
     fun toggleDAppPush(url: Uri, enabled: Boolean) {

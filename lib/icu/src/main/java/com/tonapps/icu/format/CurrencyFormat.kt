@@ -1,10 +1,12 @@
 package com.tonapps.icu.format
 
+import android.icu.text.DecimalFormat
+import android.icu.text.DecimalFormatSymbols
+import android.icu.text.NumberFormat
 import android.util.ArrayMap
+import android.util.Log
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.DecimalFormat
-import java.text.NumberFormat
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
@@ -65,8 +67,9 @@ internal class CurrencyFormat(val locale: Locale) {
             return fiatSymbols.containsKey(currency)
         }
 
-        private fun createFormat(decimals: Int, pattern: String): DecimalFormat {
-            val decimalFormat = DecimalFormat(pattern)
+        private fun createFormat(decimals: Int, pattern: String, locale: Locale): DecimalFormat {
+            val symbols = DecimalFormatSymbols.getInstance(locale)
+            val decimalFormat = DecimalFormat(pattern, symbols)
             decimalFormat.maximumFractionDigits = decimals
             decimalFormat.minimumFractionDigits = decimals
             decimalFormat.groupingSize = 3
@@ -144,7 +147,7 @@ internal class CurrencyFormat(val locale: Locale) {
         val key = cacheKey(decimals)
         var format = cache[key]
         if (format == null) {
-            format = createFormat(decimals, pattern)
+            format = createFormat(decimals, pattern, locale)
             cache[key] = format
         }
         return format

@@ -2,6 +2,8 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
+import android.util.Log
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
@@ -40,7 +42,7 @@ data class ConfigEntity(
     val batteryReservedAmount: String,
     val batteryMaxInputAmount: String,
     val batteryRefundEndpoint: String,
-    val batteryPromoDisabled: Boolean,
+    val batteryPromoDisable: Boolean,
     val stakingInfoUrl: String,
     val tonapiSSEEndpoint: String,
     val tonapiSSETestnetEndpoint: String,
@@ -48,11 +50,18 @@ data class ConfigEntity(
     val burnZeroDomain: String,
 ): Parcelable {
 
+    @IgnoredOnParcel
     val swapUri: Uri
         get() = Uri.parse(stonfiUrl)
 
+    @IgnoredOnParcel
     val isBatteryDisabled: Boolean
         get() = batteryDisabled || batterySendDisabled
+
+    @IgnoredOnParcel
+    val domains: List<String> by lazy {
+        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
+    }
 
     constructor(json: JSONObject, debug: Boolean) : this(
         supportLink = json.getString("supportLink"),
@@ -92,14 +101,14 @@ data class ConfigEntity(
         batteryReservedAmount = json.optString("batteryReservedAmount", "0.3"),
         batteryMaxInputAmount = json.optString("batteryMaxInputAmount", "3"),
         batteryRefundEndpoint = json.optString("batteryRefundEndpoint", "https://battery-refund-app.vercel.app"),
-        batteryPromoDisabled = json.optBoolean("disable_battery_promo_module", true),
+        batteryPromoDisable = json.optBoolean("disable_battery_promo_module", true),
         stakingInfoUrl = json.getString("stakingInfoUrl"),
         tonapiSSEEndpoint = json.optString("tonapi_sse_endpoint", "https://rt.tonapi.io"),
         tonapiSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint", "https://rt-testnet.tonapi.io"),
         iapPackages = json.optJSONArray("iap_packages")?.let { array ->
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
         } ?: emptyList(),
-        burnZeroDomain = json.optString("burnZeroDomain", "tonkeeper-zero.ton")
+        burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ") // tonkeeper-zero.ton
     )
 
     constructor() : this(
@@ -136,12 +145,12 @@ data class ConfigEntity(
         batteryReservedAmount = "0.3",
         batteryMaxInputAmount = "3",
         batteryRefundEndpoint = "https://battery-refund-app.vercel.app",
-        batteryPromoDisabled = false,
+        batteryPromoDisable = true,
         stakingInfoUrl = "https://ton.org/stake",
         tonapiSSEEndpoint = "https://rt.tonapi.io",
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
         iapPackages = emptyList(),
-        burnZeroDomain = "tonkeeper-zero.ton"
+        burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"
     )
 
     companion object {

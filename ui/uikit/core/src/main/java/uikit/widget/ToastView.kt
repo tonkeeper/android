@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowInsetsCompat
@@ -47,8 +48,11 @@ class ToastView @JvmOverloads constructor(
     private val textView: AppCompatTextView
 
     private val animator: ValueAnimator by lazy {
-        val valueAnimator = ValueAnimator.ofFloat(-measuredHeight.toFloat(), statusBarHeight + 24f.dp)
-        valueAnimator.duration = 200L
+        val startY = -height.toFloat()
+        val endY = statusBarHeight + 24f.dp
+
+        val valueAnimator = ValueAnimator.ofFloat(startY, endY)
+        valueAnimator.duration = 160L
         valueAnimator.addListener(this@ToastView)
         valueAnimator.addUpdateListener(this@ToastView)
         valueAnimator
@@ -64,10 +68,6 @@ class ToastView @JvmOverloads constructor(
         visibility = View.GONE
         loaderView = findViewById(R.id.toast_loader)
         textView = findViewById(R.id.toast_text)
-    }
-
-    fun setText(text: CharSequence) {
-        textView.text = text
     }
 
     fun show(text: CharSequence, loading: Boolean, color: Int = context.backgroundContentTintColor) {
@@ -101,13 +101,13 @@ class ToastView @JvmOverloads constructor(
     }
 
     private fun nextQueue() {
-        currentData = dataQueue.removeLastOrNull()
+        currentData = dataQueue.removeFirstOrNull()
     }
 
     private fun runData() {
         val data = currentData ?: return
         hapticConfirm()
-        setText(data.text)
+        textView.text = data.text
         background.setTint(data.color)
         visibility = View.VISIBLE
 
@@ -130,7 +130,7 @@ class ToastView @JvmOverloads constructor(
     private fun showDefault() {
         loaderView.visibility = View.GONE
         show()
-        postDelayed(::hide, 2600)
+        postDelayed(::hide, 2000)
     }
 
     private fun show() {
@@ -156,7 +156,7 @@ class ToastView @JvmOverloads constructor(
     }
 
     override fun onAnimationEnd(animation: Animator) {
-        if (0 > translationY) {
+        if (translationY <= -height.toFloat() + 1) {
             loaderView.visibility = View.GONE
             visibility = View.GONE
             nextQueue()

@@ -31,7 +31,7 @@ internal class RNSeedStorage(context: Context) {
 
     suspend fun setTonProof(id: String, token: String) = withContext(Dispatchers.IO) {
         val key = keyTonProof(id)
-        kv.setItemImpl(key, token)
+        // kv.setItemImpl(key, token)
     }
 
     suspend fun getTonProof(id: String): String? = withContext(Dispatchers.IO) {
@@ -58,16 +58,16 @@ internal class RNSeedStorage(context: Context) {
     }
 
     suspend fun setupBiometry(passcode: String) = withContext(Dispatchers.IO) {
-        kv.setItemImpl(biometryKey, passcode, SecureStoreOptions(
+        /*kv.setItemImpl(biometryKey, passcode, SecureStoreOptions(
             keychainService = keychainService,
             requireAuthentication = true,
-        ))
+        ))*/
     }
 
     suspend fun removeBiometry() = withContext(Dispatchers.IO) {
-        kv.deleteItemImpl(biometryKey, SecureStoreOptions(
+        /*kv.deleteItemImpl(biometryKey, SecureStoreOptions(
             keychainService = keychainService
-        ))
+        ))*/
     }
 
     suspend fun hasPinCode(): Boolean {
@@ -80,7 +80,7 @@ internal class RNSeedStorage(context: Context) {
     }
 
     suspend fun removeAll() {
-        kv.getSharedPreferences().edit().clear().apply()
+        // kv.getSharedPreferences().edit().clear().apply()
     }
 
     suspend fun save(passcode: String, state: RNVaultState) = withContext(Dispatchers.IO) {
@@ -95,7 +95,7 @@ internal class RNSeedStorage(context: Context) {
     }
 
     private suspend fun saveState(state: SeedState) {
-        val encryptedString = state.string
+        /*val encryptedString = state.string
 
         val chunkSize = 2048
         var index = 0
@@ -109,7 +109,7 @@ internal class RNSeedStorage(context: Context) {
 
         val key = "${walletsKey}_chunks"
         val count = ceil(encryptedString.length.toDouble() / chunkSize).toInt()
-        kv.setItemImpl(key, "$count")
+        kv.setItemImpl(key, "$count")*/
     }
 
     private suspend fun readState(): SeedState? {

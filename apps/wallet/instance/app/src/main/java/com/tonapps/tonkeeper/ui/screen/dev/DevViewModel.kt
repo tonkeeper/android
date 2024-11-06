@@ -24,12 +24,12 @@ class DevViewModel(
 ): BaseWalletVM(app) {
 
     fun getLegacyStorage(callback: (result: String) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
+        /*viewModelScope.launch(Dispatchers.IO) {
             val json = rnLegacy.getAllKeyValuesForDebug().toString()
             withContext(Dispatchers.Main) {
                 callback(json)
             }
-        }
+        }*/
     }
 
     fun importApps(callback: (result: String) -> Unit) {

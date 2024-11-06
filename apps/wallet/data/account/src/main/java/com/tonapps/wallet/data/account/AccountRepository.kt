@@ -111,6 +111,10 @@ class AccountRepository(
         }
     }
 
+    fun addMnemonic(words: List<String>) {
+        vaultSource.addMnemonic(words)
+    }
+
     private suspend fun migrationFromRN() = withContext(Dispatchers.IO) {
         val (selectedId, wallets) = migrationHelper.loadLegacy()
         if (wallets.isNotEmpty()) {

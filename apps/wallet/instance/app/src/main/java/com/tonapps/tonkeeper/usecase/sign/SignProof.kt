@@ -5,11 +5,13 @@ import com.tonapps.blockchain.ton.proof.TONProof
 import com.tonapps.blockchain.ton.proof.TONProof.Address
 import com.tonapps.blockchain.ton.proof.TONProof.Domain
 import com.tonapps.blockchain.ton.proof.TONProof.Request
+import com.tonapps.tonkeeper.extensions.requestPrivateKey
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.proof.LedgerProofScreen
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.localization.Localization
 import org.ton.crypto.hex
 import uikit.extensions.addForResult
@@ -18,7 +20,8 @@ import java.util.concurrent.CancellationException
 
 class SignProof(
     private val accountRepository: AccountRepository,
-    private val passcodeManager: PasscodeManager
+    private val passcodeManager: PasscodeManager,
+    private val rnLegacy: RNLegacy,
 ) {
 
     suspend fun ledger(
@@ -86,12 +89,13 @@ class SignProof(
         if (!wallet.hasPrivateKey) {
             throw SignException.UnsupportedWalletType(wallet.type)
         }
+
         val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
         if (!isValidPasscode) {
             throw CancellationException("Passcode cancelled")
         }
 
-        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw Throwable("Private key not found")
+        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id)
 
         return TONProof.sign(
             address = wallet.contract.address,

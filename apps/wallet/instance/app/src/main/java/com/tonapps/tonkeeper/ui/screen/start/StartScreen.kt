@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import com.tonapps.tonkeeper.ui.screen.add.AddWalletScreen
+import com.tonapps.tonkeeper.ui.screen.dev.DevScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeperx.R
@@ -16,6 +17,11 @@ class StartScreen: BaseFragment(R.layout.fragment_intro) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.applyNavBottomPadding()
+        
+        view.findViewById<View>(R.id.logo).setOnLongClickListener {
+            navigation?.add(DevScreen.newInstance())
+            true
+        }
 
         val newWalletButton = view.findViewById<Button>(R.id.new_wallet)
         newWalletButton.setOnClickListener {

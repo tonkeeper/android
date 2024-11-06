@@ -20,7 +20,7 @@ class StakingScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEvent("staking_open")
+        AnalyticsHelper.trackEvent("staking_open", viewModel.installId)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

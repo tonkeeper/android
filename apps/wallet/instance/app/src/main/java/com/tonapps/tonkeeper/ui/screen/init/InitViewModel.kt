@@ -74,6 +74,7 @@ class InitViewModel(
     private val api: API,
     private val backupRepository: BackupRepository,
     private val rnLegacy: RNLegacy,
+    private val settingsRepository: SettingsRepository,
     savedStateHandle: SavedStateHandle
 ): BaseWalletVM(app) {
 
@@ -520,8 +521,8 @@ class InitViewModel(
 
         val wallet = accountRepository.addNewWallet(walletId, label, mnemonic)
 
-        AnalyticsHelper.trackEvent("generate_wallet")
-        AnalyticsHelper.trackEvent("create_wallet")
+        AnalyticsHelper.trackEvent("generate_wallet", settingsRepository.installId)
+        AnalyticsHelper.trackEvent("create_wallet", settingsRepository.installId)
         return wallet
     }
 
@@ -546,7 +547,7 @@ class InitViewModel(
         })
 
         val wallets = accountRepository.importWallet(ids, label, mnemonic, accounts.map { it.walletVersion }, testnet)
-        AnalyticsHelper.trackEvent("import_wallet")
+        AnalyticsHelper.trackEvent("import_wallet", settingsRepository.installId)
         wallets
     }
 

@@ -14,13 +14,18 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun trackEvent(name: String) {
-        Aptabase.instance.trackEvent(name)
+    fun trackEvent(name: String, installId: String) {
+        Aptabase.instance.trackEvent(name, hashMapOf(
+            "firebase_user_id" to installId
+        ))
     }
 
     @UiThread
-    fun trackEventClickDApp(url: String) {
-        Aptabase.instance.trackEvent("click_dapp", hashMapOf(url to "url"))
+    fun trackEventClickDApp(url: String, installId: String) {
+        Aptabase.instance.trackEvent("click_dapp", hashMapOf(
+            url to "url",
+            "firebase_user_id" to installId
+        ))
     }
 
     private fun initAptabase(

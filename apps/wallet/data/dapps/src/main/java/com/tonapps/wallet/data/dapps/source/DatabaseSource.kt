@@ -153,36 +153,41 @@ internal class DatabaseSource(
             prefs.remove(LAST_EVENT_ID_KEY)
             true
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             false
         }
     }
 
     suspend fun insertConnection(connection: AppConnectEntity) = withContext(coroutineContext) {
-        val prefix = prefixAccount(connection.accountId, connection.testnet)
+        try {
+            val prefix = prefixAccount(connection.accountId, connection.testnet)
 
-        writableDatabase.delete(CONNECT_TABLE_NAME, "$CONNECT_TABLE_CLIENT_ID_COLUMN = ?", arrayOf(connection.clientId))
-        encryptedPrefs.edit {
-            remove(prefixKeyPair(prefix, connection.clientId))
-            remove(prefixProofSignature(prefix, connection.appUrl))
-            remove(prefixProofPayload(prefix, connection.appUrl))
-        }
+            writableDatabase.delete(CONNECT_TABLE_NAME, "$CONNECT_TABLE_CLIENT_ID_COLUMN = ?", arrayOf(connection.clientId))
+            encryptedPrefs.edit {
+                remove(prefixKeyPair(prefix, connection.clientId))
+                remove(prefixProofSignature(prefix, connection.appUrl))
+                remove(prefixProofPayload(prefix, connection.appUrl))
+            }
 
-        val values = ContentValues()
-        values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.withoutQuery.toString().removeSuffix("/"))
-        values.put(CONNECT_TABLE_ACCOUNT_ID_COLUMN, connection.accountId)
-        values.put(CONNECT_TABLE_TESTNET_COLUMN, if (connection.testnet) 1 else 0)
-        values.put(CONNECT_TABLE_CLIENT_ID_COLUMN, connection.clientId)
-        values.put(CONNECT_TABLE_TYPE_COLUMN, connection.type.value)
-        values.put(CONNECT_TABLE_TIMESTAMP_COLUMN, connection.timestamp)
-        writableDatabase.insertOrThrow(CONNECT_TABLE_NAME, null, values)
+            val values = ContentValues()
+            values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.withoutQuery.toString().removeSuffix("/"))
+            values.put(CONNECT_TABLE_ACCOUNT_ID_COLUMN, connection.accountId)
+            values.put(CONNECT_TABLE_TESTNET_COLUMN, if (connection.testnet) 1 else 0)
+            values.put(CONNECT_TABLE_CLIENT_ID_COLUMN, connection.clientId)
+            values.put(CONNECT_TABLE_TYPE_COLUMN, connection.type.value)
+            values.put(CONNECT_TABLE_TIMESTAMP_COLUMN, connection.timestamp)
+            writableDatabase.insertOrThrow(CONNECT_TABLE_NAME, null, values)
 
 
-        encryptedPrefs.putParcelable(prefixKeyPair(prefix, connection.clientId), connection.keyPair)
-        if (connection.proofSignature != null) {
-            encryptedPrefs.putString(prefixProofSignature(prefix, connection.appUrl), connection.proofSignature)
-        }
-        if (connection.proofPayload != null) {
-            encryptedPrefs.putString(prefixProofPayload(prefix, connection.appUrl), connection.proofPayload)
+            encryptedPrefs.putParcelable(prefixKeyPair(prefix, connection.clientId), connection.keyPair)
+            if (connection.proofSignature != null) {
+                encryptedPrefs.putString(prefixProofSignature(prefix, connection.appUrl), connection.proofSignature)
+            }
+            if (connection.proofPayload != null) {
+                encryptedPrefs.putString(prefixProofPayload(prefix, connection.appUrl), connection.proofPayload)
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
         }
     }
 

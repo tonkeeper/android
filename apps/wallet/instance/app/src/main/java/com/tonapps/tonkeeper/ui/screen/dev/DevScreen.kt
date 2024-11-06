@@ -2,11 +2,14 @@ package com.tonapps.tonkeeper.ui.screen.dev
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.locale
 import com.tonapps.security.Security
 import com.tonapps.tonkeeper.core.DevSettings
+import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -17,6 +20,7 @@ import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.uikit.list.ListCell
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.dialog.alert.AlertDialog
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemSwitchView
 
@@ -27,6 +31,12 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
     private lateinit var iconsView: RecyclerView
     private lateinit var blurView: ItemSwitchView
     private lateinit var tonConnectLogsView: ItemSwitchView
+    private lateinit var importMnemonicAgainView: View
+    private lateinit var logView: View
+    private lateinit var logDataView: AppCompatEditText
+    private lateinit var logCopy: Button
+    private lateinit var importPasscodeView: View
+    private lateinit var importDAppsView: View
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -56,6 +66,58 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
                 DevSettings.tonConnectLogs = isChecked
                 requireContext().showToast("Restart app to apply changes")
             }
+        }
+
+        importMnemonicAgainView = view.findViewById(R.id.import_mnemonic_again)
+        importMnemonicAgainView.setOnClickListener { importMnemonicAgain(false) }
+        importMnemonicAgainView.setOnLongClickListener { importMnemonicAgain(true); true }
+
+        importPasscodeView = view.findViewById(R.id.import_passcode)
+        importPasscodeView.setOnClickListener { importPasscode() }
+
+        importDAppsView = view.findViewById(R.id.import_dapps)
+        importDAppsView.setOnClickListener { importDApps() }
+
+        logView = view.findViewById(R.id.log)
+        logDataView = view.findViewById(R.id.log_data)
+
+        view.findViewById<Button>(R.id.log_close).setOnClickListener {
+            logView.visibility = View.GONE
+        }
+
+        logCopy = view.findViewById(R.id.log_copy)
+
+    }
+
+    private fun importDApps() {
+        navigation?.migrationLoader(true)
+        viewModel.importApps {
+            showLog(it)
+            navigation?.migrationLoader(false)
+        }
+    }
+
+    private fun importPasscode() {
+        navigation?.migrationLoader(true)
+        viewModel.importPasscode {
+            navigation?.migrationLoader(false)
+        }
+    }
+
+    private fun importMnemonicAgain(withDisplayMnemonic: Boolean) {
+        navigation?.migrationLoader(true)
+        viewModel.importMnemonicAgain(withDisplayMnemonic) {
+            showLog(it)
+            navigation?.migrationLoader(false)
+        }
+    }
+
+    private fun showLog(message: String) {
+        logView.visibility = View.VISIBLE
+        logDataView.setText(message)
+
+        logCopy.setOnClickListener {
+            requireContext().copyToClipboard(message, true)
         }
     }
 

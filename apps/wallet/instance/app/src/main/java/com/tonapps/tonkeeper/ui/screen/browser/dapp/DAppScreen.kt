@@ -125,7 +125,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEventClickDApp(args.url.toString())
+        AnalyticsHelper.trackEventClickDApp(args.url.toString(), rootViewModel.installId)
     }
 
     private fun applyHost(url: String) {

@@ -17,6 +17,8 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
+import com.tonapps.wallet.data.settings.SettingsRepository
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
@@ -30,6 +32,8 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
 
     override val viewModel: BaseWalletVM.EmptyViewViewModel by viewModel()
 
+    private val settingsRepository: SettingsRepository by inject()
+
     private lateinit var closeView: View
     private lateinit var webView: BridgeWebView
 
@@ -42,7 +46,7 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEvent("swap_open")
+        AnalyticsHelper.trackEvent("swap_open", settingsRepository.installId)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

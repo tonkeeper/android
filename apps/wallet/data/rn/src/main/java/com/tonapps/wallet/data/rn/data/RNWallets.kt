@@ -9,6 +9,9 @@ data class RNWallets(
     val lockScreenEnabled: Boolean
 ): RNData() {
 
+    val count: Int
+        get() = wallets.size
+
     companion object {
         val empty = RNWallets(
             wallets = emptyList(),

@@ -68,6 +68,9 @@ class StakingViewModel(
     private val emulationUseCase: EmulationUseCase,
 ) : BaseWalletVM(app) {
 
+    val installId: String
+        get() = settingsRepository.installId
+
     data class AvailableUiState(
         val balanceFormat: CharSequence,
         val remainingFormat: CharSequence,

@@ -253,92 +253,103 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_cryptoS
         jbyteArray none,
         jbyteArray key
 ) {
-    jbyte *native_box = env->GetByteArrayElements(box, nullptr);
-    jsize boxlen = env->GetArrayLength(box);
+    jbyte *native_box = nullptr;
+    jbyte *native_none = nullptr;
+    jbyte *native_key = nullptr;
+    char *out = nullptr;
+    jbyteArray jplain = nullptr;
+    jsize boxlen = 0;
+    jsize nonelen = 0;
+    jsize keylen = 0;
+    int result = -1;
 
-    if (sodium_mlock(native_box, boxlen) != 0) {
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
+    if (!box || !none || !key) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Null input parameters");
         return nullptr;
     }
 
-    jbyte *native_none = env->GetByteArrayElements(none, nullptr);
-    jsize nonelen = env->GetArrayLength(none);
+    boxlen = env->GetArrayLength(box);
+    nonelen = env->GetArrayLength(none);
+    keylen = env->GetArrayLength(key);
 
-    if (sodium_mlock(native_none, nonelen) != 0) {
-        sodium_munlock(native_box, boxlen);
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
+    if (nonelen != crypto_secretbox_NONCEBYTES || keylen != crypto_secretbox_KEYBYTES || boxlen < crypto_secretbox_MACBYTES) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Invalid input lengths");
         return nullptr;
     }
 
-    jbyte *native_key = env->GetByteArrayElements(key, nullptr);
-    jsize keylen = env->GetArrayLength(key);
-
-    if (sodium_mlock(native_key, keylen) != 0) {
-        sodium_munlock(native_box, boxlen);
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        sodium_munlock(native_none, nonelen);
-        env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-        env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        return nullptr;
+    native_box = env->GetByteArrayElements(box, nullptr);
+    if (!native_box) {
+        env->ThrowNew(env->FindClass("java/lang/OutOfMemoryError"), "Failed to get box array");
+        goto cleanup;
     }
 
-    char *out = (char *) malloc(boxlen);
-
-    if (out == nullptr || sodium_mlock(out, boxlen) != 0) {
-        sodium_memzero(native_box, boxlen);
-        sodium_munlock(native_box, boxlen);
-        env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-        sodium_memzero(native_none, nonelen);
-        sodium_munlock(native_none, nonelen);
-        env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-        sodium_memzero(native_key, keylen);
-        sodium_munlock(native_key, keylen);
-        env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        if (out != nullptr) free(out);
-        return nullptr;
+    native_none = env->GetByteArrayElements(none, nullptr);
+    if (!native_none) {
+        env->ThrowNew(env->FindClass("java/lang/OutOfMemoryError"), "Failed to get nonce array");
+        goto cleanup;
     }
 
-    int result = crypto_secretbox_open_easy(
-            reinterpret_cast<unsigned char *const>(out),
-            reinterpret_cast<const unsigned char *const>(native_box),
+    native_key = env->GetByteArrayElements(key, nullptr);
+    if (!native_key) {
+        env->ThrowNew(env->FindClass("java/lang/OutOfMemoryError"), "Failed to get key array");
+        goto cleanup;
+    }
+
+    if (sodium_mlock(native_box, boxlen) != 0 ||
+        sodium_mlock(native_none, nonelen) != 0 ||
+        sodium_mlock(native_key, keylen) != 0) {
+        env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to lock memory");
+        goto cleanup;
+    }
+
+    out = (char *)malloc(boxlen);
+    if (!out || sodium_mlock(out, boxlen) != 0) {
+        env->ThrowNew(env->FindClass("java/lang/OutOfMemoryError"), "Failed to allocate output buffer");
+        goto cleanup;
+    }
+
+    result = crypto_secretbox_open_easy(
+            reinterpret_cast<unsigned char *>(out),
+            reinterpret_cast<const unsigned char *>(native_box),
             boxlen,
-            reinterpret_cast<const unsigned char *const>(native_none),
-            reinterpret_cast<const unsigned char *const>(native_key)
+            reinterpret_cast<const unsigned char *>(native_none),
+            reinterpret_cast<const unsigned char *>(native_key)
     );
 
     if (result != 0) {
+        env->ThrowNew(env->FindClass("java/lang/SecurityException"), "Decryption failed");
+        goto cleanup;
+    }
+
+    jplain = env->NewByteArray(boxlen);
+    if (!jplain) {
+        env->ThrowNew(env->FindClass("java/lang/OutOfMemoryError"), "Failed to create output array");
+        goto cleanup;
+    }
+
+    env->SetByteArrayRegion(jplain, 0, boxlen, (jbyte *)out);
+
+    cleanup:
+    if (out) {
         sodium_memzero(out, boxlen);
         sodium_munlock(out, boxlen);
         free(out);
+    }
+    if (native_box) {
         sodium_memzero(native_box, boxlen);
         sodium_munlock(native_box, boxlen);
         env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
+    }
+    if (native_none) {
         sodium_memzero(native_none, nonelen);
         sodium_munlock(native_none, nonelen);
         env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
+    }
+    if (native_key) {
         sodium_memzero(native_key, keylen);
         sodium_munlock(native_key, keylen);
         env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
-        return nullptr;
     }
-
-    jbyteArray jplain = env->NewByteArray(boxlen);
-    env->SetByteArrayRegion(jplain, 0, boxlen, (jbyte *) out);
-
-    sodium_memzero(out, boxlen);
-    sodium_munlock(out, boxlen);
-    free(out);
-    sodium_memzero(native_box, boxlen);
-    sodium_munlock(native_box, boxlen);
-    env->ReleaseByteArrayElements(box, native_box, JNI_ABORT);
-    sodium_memzero(native_none, nonelen);
-    sodium_munlock(native_none, nonelen);
-
-    env->ReleaseByteArrayElements(none, native_none, JNI_ABORT);
-    sodium_memzero(native_key, keylen);
-    sodium_munlock(native_key, keylen);
-    env->ReleaseByteArrayElements(key, native_key, JNI_ABORT);
 
     return jplain;
 }

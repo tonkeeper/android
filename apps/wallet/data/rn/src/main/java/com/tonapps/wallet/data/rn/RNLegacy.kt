@@ -134,6 +134,10 @@ class RNLegacy(
         }
     }
 
+    suspend fun getVaultStateWithThrow(passcode: String): RNVaultState = withContext(Dispatchers.IO) {
+        seedStorage.getWithThrow(passcode)
+    }
+
     fun getSpamTransactions(walletId: String): RNSpamTransactions {
         val key = keySpamTransactions(walletId)
         val json = sql.getJSONObject(key) ?: return RNSpamTransactions(walletId)

@@ -22,6 +22,9 @@ class BrowserMainViewModel(
 
     val countryFlow = settings.getLocaleCountryFlow(api)
 
+    val installId: String
+        get() = settings.installId
+
     fun setBottomScrolled(value: Boolean) {
         _childBottomScrolled.tryEmit(value)
     }

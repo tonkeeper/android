@@ -59,16 +59,21 @@ class DAppsRepository(
 
     init {
         scope.launch(Dispatchers.IO) {
-            if (rnLegacy.isRequestMigration()) {
-                migrationFromLegacy()
-            }
+            try {
+                if (rnLegacy.isRequestMigration()) {
+                    migrationFromLegacy()
+                }
 
-            val connections = database.getConnections()
-            if (connections.isEmpty()) {
-                migrationFromLegacy()
-                _connectionsFlow.value = database.getConnections()
-            } else {
-                _connectionsFlow.value = connections
+                val connections = database.getConnections()
+                if (connections.isEmpty()) {
+                    migrationFromLegacy()
+                    _connectionsFlow.value = database.getConnections()
+                } else {
+                    _connectionsFlow.value = connections
+                }
+            } catch (e: Throwable) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+                _connectionsFlow.value = emptyList()
             }
         }
 
@@ -250,7 +255,7 @@ class DAppsRepository(
         }
     }
 
-    private suspend fun migrationFromLegacy(connections: RNTCApps, testnet: Boolean) {
+    suspend fun migrationFromLegacy(connections: RNTCApps, testnet: Boolean) {
         val accountId = connections.address.toRawAddress()
         for (legacyApp in connections.apps) {
             val newApp = AppEntity(

@@ -121,4 +121,25 @@ internal class RNSeedStorage(context: Context) {
         val json = JSONObject(encryptedString)
         return SeedState(json)
     }
+
+    suspend fun getWithThrow(passcode: String): RNVaultState = withContext(Dispatchers.IO) {
+        val state = readStateWithThrow()
+        val decrypted = ScryptBox.decrypt(passcode, state)
+        val json = JSONObject(decrypted)
+        RNVaultState.of(json)
+    }
+
+    private suspend fun readStateWithThrow(): SeedState {
+        val chunks = kv.getItemImpl("${walletsKey}_chunks")?.toIntOrNull() ?: 0
+        if (0 >= chunks) {
+            throw RNException.EmptyChunks
+        }
+        val builder = StringBuilder()
+        for (i in 0 until chunks) {
+            val chunk = kv.getItemImpl("${walletsKey}_chunk_$i") ?: throw RNException.NotFoundChunk(i)
+            builder.append(chunk)
+        }
+        val json = JSONObject(builder.toString())
+        return SeedState(json)
+    }
 }

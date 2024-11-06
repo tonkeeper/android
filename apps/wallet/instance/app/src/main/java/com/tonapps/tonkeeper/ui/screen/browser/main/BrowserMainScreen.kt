@@ -62,7 +62,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEvent("browser_open")
+        AnalyticsHelper.trackEvent("browser_open", viewModel.installId)
         navigation?.setFragmentResultListener(COUNTRY_REQUEST_KEY) { bundle ->
 
         }

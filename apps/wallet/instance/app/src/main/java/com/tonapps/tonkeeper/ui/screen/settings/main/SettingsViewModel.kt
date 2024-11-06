@@ -79,7 +79,7 @@ class SettingsViewModel(
     }
 
     fun signOut(callback: () -> Unit) {
-        AnalyticsHelper.trackEvent("delete_wallet")
+        AnalyticsHelper.trackEvent("delete_wallet", settingsRepository.installId)
         viewModelScope.launch(Dispatchers.IO) {
             tonConnectManager.clear(wallet)
             PushToggleWorker.run(context, wallet, PushManager.State.Delete)

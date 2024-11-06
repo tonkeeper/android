@@ -29,6 +29,11 @@ data class RNVaultState(
     val string: String
         get() = toJSON().toString()
 
+
+    fun getDecryptedData(walletId: String): RNDecryptedData? {
+        return keys[walletId]
+    }
+
     fun list(): List<RNDecryptedData> {
         val list = mutableListOf<RNDecryptedData>()
         for (m in keys) {

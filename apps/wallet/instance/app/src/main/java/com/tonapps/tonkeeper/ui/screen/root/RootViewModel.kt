@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -19,7 +18,6 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
-import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -64,9 +62,6 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
-import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel.Companion.getWalletScreen
-import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
-import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeperx.R
@@ -75,7 +70,6 @@ import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.browser.BrowserRepository
-import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.passcode.LockScreen
@@ -136,6 +130,9 @@ class RootViewModel(
 
     private val ignoreTonConnectTransaction = mutableListOf<String>()
 
+    val installId: String
+        get() = settingsRepository.installId
+
     val lockscreenFlow = combine(
         passcodeManager.lockscreenFlow,
         accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }.take(1)
@@ -189,7 +186,7 @@ class RootViewModel(
 
         api.configFlow.take(1).collectFlow { config ->
             AnalyticsHelper.setConfig(context, config)
-            AnalyticsHelper.trackEvent("launch_app")
+            AnalyticsHelper.trackEvent("launch_app", settingsRepository.installId)
         }
 
         settingsRepository.countryFlow.take(1).filter { it.isBlank() }.map {
@@ -331,10 +328,11 @@ class RootViewModel(
 
     private fun applyAnalyticsKeys(wallet: WalletEntity) {
         val crashlytics = Firebase.crashlytics
-        // crashlytics.setUserId(wallet.accountId)
+        crashlytics.setUserId(wallet.accountId)
         crashlytics.setCustomKeys {
             key("testnet", wallet.testnet)
             key("walletType", wallet.type.name)
+            key("wallet", wallet.address)
         }
     }
 

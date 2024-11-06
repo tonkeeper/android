@@ -95,6 +95,9 @@ class SendViewModel(
     private val isNft: Boolean
         get() = nftAddress.isNotBlank()
 
+    val installId: String
+        get() = settingsRepository.installId
+
     data class UserInput(
         val address: String = "",
         val amount: Coins = Coins.ZERO,
@@ -940,8 +943,8 @@ class SendViewModel(
         _uiEventFlow.tryEmit(SendEvent.Loading)
         Triple(boc, transfer.wallet, internalMessage)
     }.catch {
-        FirebaseCrashlytics.getInstance().recordException(Throwable("SendViewModel sign failed", it))
         if (it !is CancellationException) {
+            FirebaseCrashlytics.getInstance().recordException(Throwable("SendViewModel sign failed", it))
             _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }
     }.sendTransfer()
@@ -964,7 +967,7 @@ class SendViewModel(
     private fun Flow<Triple<Cell, WalletEntity, Boolean>>.sendTransfer() {
         this.map { (boc, wallet, withBattery) ->
             send(boc, wallet, withBattery)
-            AnalyticsHelper.trackEvent("send_success")
+            AnalyticsHelper.trackEvent("send_success", settingsRepository.installId)
         }.catch {
             FirebaseCrashlytics.getInstance().recordException(it)
             _uiEventFlow.tryEmit(SendEvent.Failed(it))

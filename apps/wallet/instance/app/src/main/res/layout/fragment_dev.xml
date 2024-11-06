@@ -78,6 +78,14 @@
                     app:position="middle"/>
 
                 <uikit.widget.item.ItemTextView
+                    android:id="@+id/import_legacy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Values from legacy"
+                    app:position="middle"/>
+
+                <uikit.widget.item.ItemTextView
                     android:id="@+id/import_mnemonic_again"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.map
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
 import com.tonapps.wallet.data.rn.data.RNFavorites
@@ -54,6 +55,10 @@ class RNLegacy(
                 walletMigrated = true
             }
         }
+    }
+
+    fun getAllKeyValuesForDebug(): JSONObject {
+        return seedStorage.getAllKeyValuesForDebug()
     }
 
     fun isRequestMainMigration(): Boolean {
@@ -112,12 +117,12 @@ class RNLegacy(
     }
 
     suspend fun addMnemonics(passcode: String, walletIds: List<String>, mnemonic: List<String>) {
-        val vaultState = getVaultState(passcode)
+        /*val vaultState = getVaultState(passcode)
 
         for (walletId in walletIds) {
             vaultState.keys[walletId] = RNDecryptedData(walletId, mnemonic.joinToString(" "))
         }
-        seedStorage.save(passcode, vaultState)
+        seedStorage.save(passcode, vaultState)*/
     }
 
     suspend fun changePasscode(oldPasscode: String, newPasscode: String) {
@@ -130,7 +135,7 @@ class RNLegacy(
             seedStorage.get(passcode)
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
-            RNVaultState()
+            RNVaultState(original = e.bestMessage)
         }
     }
 

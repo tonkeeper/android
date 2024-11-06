@@ -291,6 +291,15 @@ internal class SecureStoreModule(
         return context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
     }
 
+    fun getAllKeyValuesForDebug(): JSONObject {
+        val prefs = getSharedPreferences()
+        val result = JSONObject()
+        for ((key, value) in prefs.all) {
+            result.put(key, value.toString())
+        }
+        return result
+    }
+
     /**
      * Adds the keychain service as a prefix to the key in order to avoid conflicts in shared preferences
      * when there are two identical keys but saved with different keychains.

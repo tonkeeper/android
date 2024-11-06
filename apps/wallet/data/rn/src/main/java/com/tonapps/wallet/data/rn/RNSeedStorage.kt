@@ -25,6 +25,10 @@ internal class RNSeedStorage(context: Context) {
         kv.setActivity(activity)
     }
 
+    fun getAllKeyValuesForDebug(): JSONObject {
+        return kv.getAllKeyValuesForDebug()
+    }
+
     suspend fun setTonProof(id: String, token: String) = withContext(Dispatchers.IO) {
         val key = keyTonProof(id)
         kv.setItemImpl(key, token)
@@ -85,7 +89,7 @@ internal class RNSeedStorage(context: Context) {
     }
 
     suspend fun get(passcode: String): RNVaultState = withContext(Dispatchers.IO) {
-        val state = readState() ?: return@withContext RNVaultState()
+        val state = readState() ?: return@withContext RNVaultState(original = "Count chunks: ${kv.getItemImpl("${walletsKey}_chunks")}")
         val json = JSONObject(ScryptBox.decrypt(passcode, state))
         RNVaultState.of(json)
     }

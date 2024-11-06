@@ -85,8 +85,20 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             logView.visibility = View.GONE
         }
 
+        view.findViewById<View>(R.id.import_legacy).setOnClickListener {
+            valuesFromLegacy()
+        }
+
         logCopy = view.findViewById(R.id.log_copy)
 
+    }
+
+    private fun valuesFromLegacy() {
+        navigation?.migrationLoader(true)
+        viewModel.getLegacyStorage {
+            showLog(it)
+            navigation?.migrationLoader(false)
+        }
     }
 
     private fun importDApps() {

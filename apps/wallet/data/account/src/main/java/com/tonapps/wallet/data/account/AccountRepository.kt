@@ -102,12 +102,18 @@ class AccountRepository(
         }
     }
 
-    suspend fun importPrivateKeysFromRNLegacy(passcode: String) = withContext(Dispatchers.IO) {
-        val list = migrationHelper.loadSecureStore(passcode)
-        if (list.isNotEmpty()) {
-            for (mnemonic in list) {
-                vaultSource.addMnemonic(mnemonic.mnemonic.split(" "))
+    suspend fun importPrivateKeysFromRNLegacy(passcode: String): Boolean = withContext(Dispatchers.IO) {
+        val vaultState = migrationHelper.loadSecureStore(passcode)
+        if (vaultState.hasError) {
+            false
+        } else {
+            val list = vaultState.list()
+            if (list.isNotEmpty()) {
+                for (mnemonic in list) {
+                    vaultSource.addMnemonic(mnemonic.mnemonic.split(" "))
+                }
             }
+            true
         }
     }
 

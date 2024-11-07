@@ -144,10 +144,12 @@ class RootActivity: BaseWalletActivity() {
             lockPasscodeView.setError()
         } else {
             lockView.visibility = View.VISIBLE
-            if (passcodeManager.confirmationByBiometric(this, getString(Localization.app_name))) {
-                passcodeManager.lockscreenBiometric()
-            } else {
-                toast(Localization.authorization_required)
+            if (passcodeManager.isBiometricRequest(this)) {
+                if (passcodeManager.confirmationByBiometric(this, getString(Localization.app_name))) {
+                    passcodeManager.lockscreenBiometric()
+                } else {
+                    toast(Localization.authorization_required)
+                }
             }
         }
     }

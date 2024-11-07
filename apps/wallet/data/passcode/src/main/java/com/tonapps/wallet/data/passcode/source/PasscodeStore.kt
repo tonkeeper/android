@@ -43,7 +43,11 @@ class PasscodeStore(context: Context) {
 
     suspend fun compare(code: String): Boolean = withContext(Dispatchers.IO) {
         val savedCode = keyValue.getString(CODE_KEY, null)
-        savedCode == code
+        if (savedCode.isNullOrBlank()) {
+            false
+        } else {
+            savedCode == code
+        }
     }
 
 }

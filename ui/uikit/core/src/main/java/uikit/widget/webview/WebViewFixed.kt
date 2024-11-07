@@ -135,7 +135,7 @@ open class WebViewFixed @JvmOverloads constructor(
                 request.deny()
             }
 
-            override fun onCreateWindow(
+            /*override fun onCreateWindow(
                 view: WebView?,
                 isDialog: Boolean,
                 isUserGesture: Boolean,
@@ -152,7 +152,7 @@ open class WebViewFixed @JvmOverloads constructor(
                 // Deny file chooser
                 filePathCallback.onReceiveValue(null)
                 return true
-            }
+            }*/
         }
 
         applyAndroidWebViewBridge()

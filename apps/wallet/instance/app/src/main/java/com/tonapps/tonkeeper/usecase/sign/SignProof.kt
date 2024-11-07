@@ -8,6 +8,7 @@ import com.tonapps.blockchain.ton.proof.TONProof.Request
 import com.tonapps.tonkeeper.extensions.requestPrivateKey
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.proof.LedgerProofScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -95,7 +96,7 @@ class SignProof(
             throw CancellationException("Passcode cancelled")
         }
 
-        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id)
+        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id) ?: throw SendException.UnableSendTransaction()
 
         return TONProof.sign(
             address = wallet.contract.address,

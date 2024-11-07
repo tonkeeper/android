@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.logError
 import com.tonapps.wallet.data.account.AccountRepository
@@ -35,11 +36,12 @@ class PasscodeHelper(
     }
 
     suspend fun isValid(context: Context, code: String): Boolean {
-        return if (store.hasPinCode && store.compare(code)) {
+        return store.hasPinCode && store.compare(code)
+        /*return if (store.hasPinCode && store.compare(code)) {
             true
         } else {
             isValidLegacy(context, code)
-        }
+        }*/
     }
 
     private suspend fun isValidLegacy(context: Context, code: String): Boolean = withContext(Dispatchers.IO) {

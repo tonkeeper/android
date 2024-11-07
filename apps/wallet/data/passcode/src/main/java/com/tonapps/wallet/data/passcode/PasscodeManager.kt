@@ -155,16 +155,15 @@ class PasscodeManager(
             return@withContext confirmationMigration(context)
         }
 
-        val showDialog = if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context)) {
-            !PasscodeBiometric.showPrompt(context, title)
-        } else {
+        if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context) && PasscodeBiometric.showPrompt(context, title)) {
             true
-        }
-
-        if (showDialog) {
-            PasscodeDialog.confirmation(context)
         } else {
-            true
+            val passcode = PasscodeDialog.request(context)
+            if (passcode.isNullOrBlank()) {
+                false
+            } else {
+                helper.isValid(context, passcode)
+            }
         }
     }
 

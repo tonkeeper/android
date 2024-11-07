@@ -40,12 +40,32 @@ internal object ScryptBox {
         if (state.kind != "encrypted-scrypt-tweetnacl") {
             throw Exception("Invalid state kind")
         }
+        val bytes = decrypt1(passcode, state) ?: decrypt2(passcode, state) ?: throw Exception("cryptoSecretboxOpen failed")
+        return bytes.decodeToString()
+    }
+
+    private fun decrypt1(passcode: String, state: SeedState): ByteArray? {
         val salt = state.salt.hex()
         val passcodeHash = passcodeHash(passcode, salt)
         val nonce = salt.copyOfRange(0, 24)
         val clearText = state.ciphertext.hex()
-        val pt = Sodium.cryptoSecretboxOpen(clearText, nonce, passcodeHash) ?: throw Exception("cryptoSecretboxOpen failed")
-        return pt.decodeToString()
+        return cryptoSecretBoxOpen(clearText, nonce, passcodeHash)
+    }
+
+    private fun decrypt2(passcode: String, state: SeedState): ByteArray? {
+        val salt = org.ton.crypto.hex(state.salt)
+        val passcodeHash = passcodeHash(passcode, salt)
+        val nonce = salt.copyOfRange(0, 24)
+        val clearText = org.ton.crypto.hex(state.ciphertext)
+        return cryptoSecretBoxOpen(clearText, nonce, passcodeHash)
+    }
+
+    private fun cryptoSecretBoxOpen(
+        box: ByteArray,
+        nonce: ByteArray,
+        key: ByteArray
+    ): ByteArray? {
+        return Sodium.cryptoSecretboxOpen(box, nonce, key)
     }
 
 }

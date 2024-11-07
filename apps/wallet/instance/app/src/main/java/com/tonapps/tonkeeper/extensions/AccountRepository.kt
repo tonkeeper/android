@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.extensions
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.rn.RNException
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -13,15 +14,20 @@ suspend fun AccountRepository.requestPrivateKey(
     activity: NavigationActivity,
     rnLegacy: RNLegacy,
     walletId: String,
-): PrivateKeyEd25519 = withContext(Dispatchers.IO) {
-    val privateKeyEd25519 = getPrivateKey(walletId)
-    if (privateKeyEd25519 != null) {
-        privateKeyEd25519
-    } else {
-        val vaultState = rnLegacy.requestVault(activity)
-        val mnemonic = vaultState.getDecryptedData(walletId)?.mnemonic ?: throw RNException.NotFoundMnemonic(walletId)
-        val seed = Mnemonic.toSeed(splitMnemonic(mnemonic))
-        PrivateKeyEd25519(seed)
+): PrivateKeyEd25519? = withContext(Dispatchers.IO) {
+    try {
+        val privateKeyEd25519 = getPrivateKey(walletId)
+        if (privateKeyEd25519 != null) {
+            privateKeyEd25519
+        } else {
+            val vaultState = rnLegacy.requestVault(activity)
+            val mnemonic = vaultState.getDecryptedData(walletId)?.mnemonic ?: throw RNException.NotFoundMnemonic(walletId)
+            val seed = Mnemonic.toSeed(splitMnemonic(mnemonic))
+            PrivateKeyEd25519(seed)
+        }
+    } catch (e: Throwable) {
+        FirebaseCrashlytics.getInstance().recordException(e)
+        null
     }
 }
 

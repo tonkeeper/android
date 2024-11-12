@@ -7,6 +7,7 @@ import android.util.Log
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
@@ -61,6 +62,24 @@ internal class InternalApi(
             list.add(NotificationEntity(array.getJSONObject(i)))
         }
         return list.toList()
+    }
+
+    fun getScamDomains(): Array<String> {
+        val array = withRetry {
+            okHttpClient.get("https://scam.tonkeeper.com/v1/scam/domains")
+        }?.let { JSONObject(it).getJSONArray("items") } ?: return emptyArray()
+
+        val domains = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            var url = array.getJSONObject(i).getString("url")
+            if (url.startsWith("www.")) {
+                url = url.substring(5)
+            } else if (url.startsWith("@")) {
+                continue
+            }
+            domains.add(url)
+        }
+        return domains.toTypedArray()
     }
 
     fun getBrowserApps(testnet: Boolean, locale: Locale): JSONObject {

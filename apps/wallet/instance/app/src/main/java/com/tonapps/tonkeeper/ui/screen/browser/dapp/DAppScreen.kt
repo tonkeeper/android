@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
@@ -22,7 +21,6 @@ import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
-import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
@@ -36,7 +34,6 @@ import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
-import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
@@ -286,6 +283,10 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             return JsonBuilder.connectEventError(BridgeError.badRequest("Version $version is not supported"))
         }
         val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
+        if (tonConnectManager.isScam(requireContext(), request.manifestUrl.toUri(), webView.url!!.toUri(), args.url)) {
+            return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
+        }
+
         return tonConnectManager.launchConnectFlow(
             activity = activity,
             tonConnect = TonConnect.fromJsInject(request, webView.url?.toUri()),

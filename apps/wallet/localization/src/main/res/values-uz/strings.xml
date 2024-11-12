@@ -7,6 +7,7 @@
     <string name="staking_pending_deposit">%1$s %2$s da saqlanadi</string>
     <string name="staking_pending_withdraw">%1$s %2$s ichida yechib olinadi</string>
     <string name="edit_full">Tahrirlash</string>
+    <string name="safe_mode_tonconnect_description">Buni hamyoningiz Xavfsizlik sozlamalarida oʻzgartirishingiz mumkin.</string>
     <string name="staking_unstake_cycle">Toʻlovni bekor qilish soʻrovi %1$s da tekshirish davri tugaganidan keyin koʻrib chiqiladi</string>
     <string name="send_transaction_scroll">Tasdiqlash uchun barcha tafsilotlarni tekshiring</string>
     <string name="send_transaction_detail">Hamyoningizdan yuboriladigan tokenlarning umumiy qiymati. To\'lovlar umumiy qiymatga kiritilmagan.</string>
@@ -471,4 +472,13 @@
     <string name="connected_apps_empty">Ulangan ilovalar yo‘q</string>
     <string name="send_all_balance">Haqiqatan ham barcha balansingizni yubormoqchimisiz?</string>
     <string name="wrong_promocode">Kiritilgan kod yaroqsiz</string>
+    <string name="visible">Ko\'rinadigan</string>
+    <string name="hidden">Yashirin</string>
+    <string name="show_all">Hammasini ko\'rsatish</string>
+    <string name="token_details">Token tafsilotlari</string>
+    <string name="token_id">Token ID</string>
+    <string name="safe_mode">Xavfsiz rejim</string>
+    <string name="open_settings">Sozlamalarni oching</string>
+    <string name="safe_mode_tonconnect_title">Ulanishlar faqat tasdiqlangan ilovalar uchun mavjud</string>
+    <string name="safe_mode_description">Bu rejimda faqat tasdiqlangan ilovalar, NFTlar va tokenlar mavjud. Batafsil ma\'lumot</string>
 </resources>

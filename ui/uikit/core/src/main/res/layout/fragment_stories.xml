@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/stories_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <uikit.widget.FrescoView
+            android:id="@+id/stories_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <uikit.widget.RowLayout
+            android:id="@+id/stories_lines"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/tertiaryHeight"
+            android:layout_marginHorizontal="14dp"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/stories_close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:layout_gravity="right"
+            android:layout_marginTop="@dimen/tertiaryHeight"
+            android:layout_marginHorizontal="18dp"
+            android:background="@drawable/bg_oval"
+            android:src="@drawable/ic_close_16"
+            android:tint="@color/constantBlack"
+            android:scaleType="centerInside"/>
+
+    </FrameLayout>
+
+</FrameLayout>

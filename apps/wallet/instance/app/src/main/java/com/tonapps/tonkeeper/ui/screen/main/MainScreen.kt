@@ -13,7 +13,7 @@ import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesScreen
+import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesScreen
 import com.tonapps.tonkeeper.ui.screen.events.EventsScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootEvent

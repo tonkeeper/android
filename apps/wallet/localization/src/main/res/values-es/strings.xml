@@ -7,6 +7,7 @@
     <string name="staking_pending_deposit">%1$s se depositará en %2$s</string>
     <string name="staking_pending_withdraw">%1$s se retirarán en %2$s</string>
     <string name="edit_full">Editar</string>
+    <string name="safe_mode_tonconnect_description">Puedes cambiar esto en la configuración de seguridad de tu billetera.</string>
     <string name="staking_unstake_cycle">La solicitud de cancelación de participación se procesará después del final del ciclo de validación en %1$s</string>
     <string name="send_transaction_scroll">Verifique todos los detalles para confirmar</string>
     <string name="send_transaction_detail">El valor total de los tokens que se enviarán desde su billetera. Los reembolsos no están incluidos en el valor total.</string>
@@ -471,4 +472,14 @@
     <string name="connected_apps_empty">No hay aplicaciones conectadas</string>
     <string name="send_all_balance">¿Estás segura de que quieres enviar todo tu saldo?</string>
     <string name="wrong_promocode">El código ingresado no es válido</string>
+    <string name="visible">Visible</string>
+    <string name="hidden">Oculto</string>
+    <string name="show_all">Mostrar todo</string>
+    <string name="token_details">Detalles del token</string>
+    <string name="token_id">Identificación del token</string>
+    <string name="safe_mode">Modo seguro</string>
+    <string name="open_settings">Abrir configuración</string>
+    <string name="safe_mode_tonconnect_title">Las conexiones solo están disponibles para aplicaciones verificadas</string>
+    <string name="safe_mode_description">En este modo, solo están disponibles las aplicaciones, los NFT y los tokens verificados. Más información</string>
+
 </resources>

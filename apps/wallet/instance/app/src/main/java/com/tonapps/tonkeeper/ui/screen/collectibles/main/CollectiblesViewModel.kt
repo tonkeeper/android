@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.collectibles
+package com.tonapps.tonkeeper.ui.screen.collectibles.main
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
@@ -8,27 +8,22 @@ import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
+import com.tonapps.tonkeeper.ui.screen.collectibles.main.list.Item
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
 
 class CollectiblesViewModel(
     app: Application,
@@ -75,10 +70,10 @@ class CollectiblesViewModel(
         hiddenBalances: Boolean,
         isOnline: Boolean,
     ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
-        val onlyVerifyNFTs = settingsRepository.onlyVerifyNFTs
+        val safeMode = settingsRepository.safeMode
         val uiItems = mutableListOf<Item>()
         for (nft in result.list) {
-            if (onlyVerifyNFTs && !nft.verified) {
+            if (safeMode && !nft.verified) {
                 continue
             }
 

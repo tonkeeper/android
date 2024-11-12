@@ -16,8 +16,10 @@ import com.tonapps.extensions.flatter
 import com.tonapps.extensions.hasQuery
 import com.tonapps.extensions.isEmptyQuery
 import com.tonapps.extensions.mapList
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
+import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -27,6 +29,7 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.manager.tonconnect.exceptions.ManifestException
+import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.wallet.api.API
@@ -34,6 +37,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +64,8 @@ class TonConnectManager(
     private val api: API,
     private val dAppsRepository: DAppsRepository,
     private val pushManager: PushManager,
+    private val safeModeClient: SafeModeClient,
+    private val settingsRepository: SettingsRepository,
 ) {
 
     private val bridge: Bridge = Bridge(api)
@@ -228,6 +234,11 @@ class TonConnectManager(
                 returnUri = returnUri,
                 fromPackageName = fromPackageName
             )
+
+            if (isScam(context, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
+                return null
+            }
+
             scope.launch {
                 connectRemoteApp(activity, tonConnect)
             }
@@ -309,6 +320,14 @@ class TonConnectManager(
             FirebaseCrashlytics.getInstance().recordException(e)
             JsonBuilder.connectEventError(BridgeError.unknown(e.bestMessage))
         }
+    }
+
+    fun isScam(context: Context, vararg uris: Uri): Boolean {
+        if (settingsRepository.safeMode && safeModeClient.isHasScamUris(*uris)) {
+            TonConnectSafeModeDialog(context).show()
+            return true
+        }
+        return false
     }
 
     private suspend fun readManifest(url: String): AppEntity {

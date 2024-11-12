@@ -26,16 +26,10 @@ class SecurityViewModel(
     val biometric: Boolean
         get() = settingsRepository.biometric
 
-    var onlyVerifyNFTs: Boolean
-        get() = settingsRepository.onlyVerifyNFTs
+    var safeMode: Boolean
+        get() = settingsRepository.safeMode
         set(value) {
-            settingsRepository.onlyVerifyNFTs = value
-        }
-
-    var onlyVerifyTokens: Boolean
-        get() = settingsRepository.onlyVerifyTokens
-        set(value) {
-            settingsRepository.onlyVerifyTokens = value
+            settingsRepository.safeMode = value
         }
 
     fun enableBiometric(context: Context, value: Boolean) = flow {

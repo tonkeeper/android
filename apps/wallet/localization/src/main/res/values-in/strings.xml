@@ -7,6 +7,7 @@
     <string name="staking_pending_deposit">%1$s akan disimpan di %2$s</string>
     <string name="staking_pending_withdraw">%1$s akan ditarik dalam %2$s</string>
     <string name="edit_full">Sunting</string>
+    <string name="safe_mode_tonconnect_description">Anda dapat mengubahnya di Pengaturan Keamanan dompet Anda.</string>
     <string name="staking_unstake_cycle">Permintaan pembatalan taruhan akan diproses setelah akhir siklus validasi dalam %1$s</string>
     <string name="send_transaction_scroll">Periksa semua detail untuk konfirmasi</string>
     <string name="send_transaction_detail">Nilai total token yang akan dikirim dari dompet Anda. Pengembalian dana tidak termasuk dalam nilai total.</string>
@@ -466,4 +467,14 @@
     <string name="connected_apps_empty">Tidak ada aplikasi yang terhubung</string>
     <string name="send_all_balance">Apakah Anda yakin ingin mengirimkan semua saldo Anda?</string>
     <string name="wrong_promocode">Kode yang dimasukkan tidak valid</string>
+    <string name="visible">Bisa dilihat</string>
+    <string name="hidden">Tersembunyi</string>
+    <string name="show_all">Tampilkan semua</string>
+    <string name="token_details">Rincian token</string>
+    <string name="token_id">ID Token</string>
+    <string name="safe_mode">Mode aman</string>
+    <string name="open_settings">Buka Pengaturan</string>
+    <string name="safe_mode_tonconnect_title">Koneksi hanya tersedia untuk aplikasi yang terverifikasi</string>
+    <string name="safe_mode_description">Dalam mode ini, hanya aplikasi, NFT, dan token terverifikasi yang tersedia. Pelajari lebih lanjut</string>
+
 </resources>

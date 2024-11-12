@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.collectibles.list.holder
+package com.tonapps.tonkeeper.ui.screen.collectibles.main.list.holder
 
 import android.graphics.drawable.RippleDrawable
 import android.net.Uri
@@ -9,16 +9,14 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.drawee.generic.RoundingParams
 import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.postprocessors.BlurPostProcessor
-import com.facebook.imagepipeline.request.ImageRequest
 import com.facebook.imagepipeline.request.ImageRequestBuilder
-import com.tonapps.tonkeeper.ui.screen.collectibles.list.Item
+import com.tonapps.tonkeeper.ui.screen.collectibles.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.backgroundHighlightedColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization

@@ -33,11 +33,11 @@ class TokensManageViewModel(
     private val tokenRepository: TokenRepository
 ): BaseWalletVM(app) {
 
-    private val onlyVerifyToken: Boolean = settingsRepository.onlyVerifyTokens
+    private val safeMode: Boolean = settingsRepository.safeMode
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
         tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet).mapNotNull { token ->
-            if (onlyVerifyToken && !token.verified) {
+            if (safeMode && !token.verified) {
                 return@mapNotNull null
             }
             AssetsExtendedEntity(

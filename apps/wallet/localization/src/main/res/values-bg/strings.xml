@@ -7,6 +7,7 @@
     <string name="staking_pending_deposit">%1$s ще бъдат депозирани в %2$s</string>
     <string name="staking_pending_withdraw">%1$s ще бъде изтеглен след %2$s</string>
     <string name="edit_full">Редактиране</string>
+    <string name="safe_mode_tonconnect_description">Можете да промените това в настройките за сигурност на портфейла си.</string>
     <string name="staking_unstake_cycle">Заявката за премахване на залагане ще бъде обработена след края на цикъла на валидиране в %1$s</string>
     <string name="send_transaction_scroll">Проверете всички подробности, за да потвърдите</string>
     <string name="send_transaction_detail">Общата стойност на токените, които ще бъдат изпратени от вашия портфейл. Възстановяванията не са включени в общата стойност.</string>
@@ -28,6 +29,8 @@
     <string name="setup_finish_biometry">Използвайте биометрия за потвърждаване на транзакции</string>
     <string name="setup_finish_backup">Резервирайте възстановителната фраза на портфейла</string>
     <string name="setup_finish_telegram">Присъединете се към канала на Tonkeeper</string>
+    <string name="safe_mode_description">В този режим са налични само проверени приложения, NFT и токени. Научете повече</string>
+
 
     <string name="contacts">Контакти</string>
     <string name="step_1">Етап 1</string>
@@ -516,4 +519,12 @@
     <string name="connected_apps_empty">Няма свързани приложения</string>
     <string name="send_all_balance">Сигурни ли сте, че искате да изпратите цялото си салдо?</string>
     <string name="wrong_promocode">Въведеният код не е валиден</string>
+    <string name="visible">Видими</string>
+    <string name="hidden">Скрити</string>
+    <string name="show_all">Покажи всички</string>
+    <string name="token_details">Подробности за токена</string>
+    <string name="token_id">ID на токена</string>
+    <string name="safe_mode">Безопасен режим</string>
+    <string name="open_settings">Отворете Настройки</string>
+    <string name="safe_mode_tonconnect_title">Връзките са достъпни само за проверени приложения</string>
 </resources>

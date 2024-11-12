@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.settings
 
 import android.content.Context
 import android.icu.util.Currency
+import android.util.Log
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
@@ -52,8 +53,7 @@ class SettingsRepository(
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
         private const val CHART_PERIOD_KEY = "chart_period"
-        private const val ONLY_VERIFY_NFTS_KEY = "only_verify_nfts"
-        private const val ONLY_VERIFY_TOKENS_KEY = "only_verify_tokens"
+        private const val SAFE_MODE_KEY = "safe_mode"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -227,21 +227,11 @@ class SettingsRepository(
         }
 
 
-    var onlyVerifyNFTs: Boolean = prefs.getBoolean(ONLY_VERIFY_NFTS_KEY, false)
+    var safeMode: Boolean = prefs.getBoolean(SAFE_MODE_KEY, true)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(ONLY_VERIFY_NFTS_KEY, value).apply()
+                prefs.edit().putBoolean(SAFE_MODE_KEY, value).apply()
                 field = value
-                walletPrefsFolder.notifyChanged()
-            }
-        }
-
-    var onlyVerifyTokens: Boolean = prefs.getBoolean(ONLY_VERIFY_TOKENS_KEY, false)
-        set(value) {
-            if (value != field) {
-                prefs.edit().putBoolean(ONLY_VERIFY_TOKENS_KEY, value).apply()
-                field = value
-                walletPrefsFolder.notifyChanged()
             }
         }
 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="76dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingHorizontal="@dimen/offsetMedium">
+    
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/action"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:layout_marginRight="@dimen/offsetMedium"
+        android:scaleType="centerInside"
+        android:background="@drawable/bg_oval"
+        android:backgroundTint="?attr/backgroundContentTintColor"/>
+    
+    <uikit.widget.FrescoView
+        android:id="@+id/icon"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="center"
+        app:roundedCornerRadius="8dp"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:layout_marginLeft="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/textPrimaryColor"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:singleLine="true"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="?attr/textSecondaryColor"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:singleLine="true"/>
+        
+    </uikit.widget.ColumnLayout>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/chevron"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_chevron_right_16"
+        android:tint="?attr/iconTertiaryColor"/>
+
+</uikit.widget.RowLayout>

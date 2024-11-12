@@ -7,6 +7,7 @@
     <string name="staking_pending_deposit">%1$s 将存入 %2$s</string>
     <string name="staking_pending_withdraw">%1$s 将在 %2$s 内被提取</string>
     <string name="edit_full">编辑</string>
+    <string name="safe_mode_tonconnect_description">您可以在钱包的安全设置中更改此设置。</string>
     <string name="staking_unstake_cycle">取消质押请求将在 %1$s 的验证周期结束后处理</string>
     <string name="send_transaction_scroll">检查所有详细信息以确认</string>
     <string name="send_transaction_detail">将从您的钱包发送的代币总价值。退款不包含在总价值中。</string>
@@ -466,4 +467,13 @@
     <string name="connected_apps_empty">没有连接的应用程序</string>
     <string name="send_all_balance">您确定要发送所有余额吗？</string>
     <string name="wrong_promocode">输入的代码无效</string>
+    <string name="visible">可见的</string>
+    <string name="hidden">隐</string>
+    <string name="show_all">显示全部</string>
+    <string name="token_details">代币详细信息</string>
+    <string name="token_id">代币 ID</string>
+    <string name="safe_mode">安全模式</string>
+    <string name="open_settings">打开“设置”</string>
+    <string name="safe_mode_tonconnect_title">仅向经过验证的应用提供连接</string>
+    <string name="safe_mode_description">在此模式下，仅经过验证的应用、NFT 和代币可用。了解详情</string>
 </resources>

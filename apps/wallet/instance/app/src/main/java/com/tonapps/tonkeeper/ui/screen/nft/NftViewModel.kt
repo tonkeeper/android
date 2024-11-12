@@ -29,7 +29,8 @@ class NftViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             loading(true)
             val state = if (spam) TokenPrefsEntity.State.SPAM else TokenPrefsEntity.State.TRUST
-            settingsRepository.setTokenState(wallet.id, nft.address, state)
+            val address = nft.collection?.address ?: nft.address
+            settingsRepository.setTokenState(wallet.id, address, state)
             try {
                 api.reportNtfSpam(nft.address, spam)
                 withContext(Dispatchers.Main) {

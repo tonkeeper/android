@@ -793,6 +793,10 @@ class API(
         }
     }
 
+    suspend fun getScamDomains(): Array<String> = withContext(Dispatchers.IO) {
+        internalApi.getScamDomains()
+    }
+
     fun loadChart(
         token: String,
         currency: String,

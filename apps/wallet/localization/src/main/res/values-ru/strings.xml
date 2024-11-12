@@ -228,6 +228,12 @@
     <string name="connected_apps_empty">Нет подключённых приложений</string>
     <string name="send_all_balance">Вы уверены, что хотите отправить весь свой баланс?</string>
     <string name="wrong_promocode">Введённый промокод недействителен</string>
+    <string name="token_id">Идентификатор токена</string>
+    <string name="safe_mode">Безопасный режим</string>
+    <string name="open_settings">Открыть настройки</string>
+    <string name="safe_mode_description">В этом режиме доступны только проверенные сервисы, NFT и токены. Подробнее</string>
+    <string name="safe_mode_tonconnect_title">Подключение доступно только к проверенным приложениям</string>
+    <string name="safe_mode_tonconnect_description">Вы можете изменить это в настройках безопасности вашего кошелька.</string>
 
 
 
@@ -544,6 +550,10 @@
     <string name="buy_ton">Купить TON</string>
     <string name="recharge_battery">Зарядить батарейку</string>
     <string name="nothing_to_restore">Нечего восстанавливать</string>
+    <string name="visible">Видимые</string>
+    <string name="hidden">Скрытые</string>
+    <string name="show_all">Показать все</string>
+    <string name="token_details">Подробности токена</string>
 
 
 </resources>

@@ -58,6 +58,26 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/offsetMedium"/>
 
+            <uikit.widget.item.ItemSwitchView
+                android:id="@+id/safe_mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/safe_mode"
+                app:position="single"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/safe_mode_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textTertiaryColor"
+                android:text="@string/safe_mode_description"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/offsetMedium"/>
+
             <uikit.widget.item.ItemIconView
                 android:id="@+id/change_passcode"
                 android:layout_width="match_parent"
@@ -66,28 +86,6 @@
                 android:text="@string/change_passcode"
                 android:icon="@drawable/ic_lock_28"/>
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
-                android:visibility="gone"
-                android:textAppearance="@style/TextAppearance.Label1"
-                android:textColor="?attr/textPrimaryColor"
-                android:gravity="center_vertical"/>
-
-            <uikit.widget.item.ItemSwitchView
-                android:id="@+id/verified_nfts"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                app:position="first"/>
-
-            <uikit.widget.item.ItemSwitchView
-                android:id="@+id/verified_token"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                app:position="last"/>
 
         </uikit.widget.ColumnLayout>
 

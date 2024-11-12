@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.collectibles.list
+package com.tonapps.tonkeeper.ui.screen.collectibles.main.list
 
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem

@@ -7,6 +7,7 @@
     <string name="staking_pending_deposit">%1$s %2$s\'ye yatırılacak</string>
     <string name="staking_pending_withdraw">%1$s %2$s içinde çekilecek</string>
     <string name="edit_full">Düzenlemek</string>
+    <string name="safe_mode_tonconnect_description">Bunu cüzdanınızın Güvenlik Ayarları\'ndan değiştirebilirsiniz.</string>
     <string name="staking_unstake_cycle">Paydan çıkarma isteği, %1$s\'deki doğrulama döngüsünün bitiminden sonra işlenecektir.</string>
     <string name="send_transaction_scroll">Onaylamak için tüm ayrıntıları kontrol edin</string>
     <string name="send_transaction_detail">Cüzdanınızdan gönderilecek tokenların toplam değeri. İadeler toplam değere dahil değildir.</string>
@@ -471,4 +472,13 @@
     <string name="connected_apps_empty">Bağlı uygulama yok</string>
     <string name="send_all_balance">Bakiyenizin tamamını göndermek istediğinizden emin misiniz?</string>
     <string name="wrong_promocode">Girilen kod geçerli değil</string>
+    <string name="visible">Görünür</string>
+    <string name="hidden">Gizlenmiş</string>
+    <string name="show_all">Tümünü göster</string>
+    <string name="token_details">Jeton detayları</string>
+    <string name="token_id">Jeton ID</string>
+    <string name="safe_mode">Güvenli mod</string>
+    <string name="open_settings">Ayarları Aç</string>
+    <string name="safe_mode_tonconnect_title">Bağlantılar yalnızca doğrulanmış uygulamalar için kullanılabilir</string>
+    <string name="safe_mode_description">Bu modda yalnızca doğrulanmış uygulamalar, NFT\'ler ve token\'lar kullanılabilir. Daha fazla bilgi edinin</string>
 </resources>

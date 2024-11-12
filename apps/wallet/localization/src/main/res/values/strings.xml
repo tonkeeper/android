@@ -31,6 +31,22 @@
     <string name="wallet_address">Wallet Address</string>
     <string name="contacts_save_latest">Save Address</string>
     <string name="edit_full">Edit</string>
+    <string name="visible">Visible</string>
+    <string name="hidden">Hidden</string>
+    <string name="show_all">Show all</string>
+    <string name="token_details">Token details</string>
+    <string name="token_id">Token ID</string>
+    <string name="safe_mode">Safe mode</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="safe_mode_description">In this mode, only verified apps, NFTs, and tokens are available. Learn more</string>
+    <plurals name="nft_count">
+        <item quantity="one">%1$d NFT</item>
+        <item quantity="few">%1$d NFTs</item>
+        <item quantity="many">%1$d NFTs</item>
+        <item quantity="other">%1$d NFTs</item>
+    </plurals>
+    <string name="safe_mode_tonconnect_title">Connections are available only to verified apps</string>
+    <string name="safe_mode_tonconnect_description">You can change this in your wallet’s Security Settings.</string>
 
     <string name="staking_unstake_cycle">Unstake request will be processed after the end of the validation cycle in %1$s</string>
 

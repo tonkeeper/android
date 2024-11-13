@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/constantBlack">
 
     <FrameLayout
         android:id="@+id/stories_content"
@@ -9,7 +10,7 @@
         android:layout_height="match_parent">
 
         <uikit.widget.FrescoView
-            android:id="@+id/stories_image"
+            android:id="@+id/story_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
@@ -30,6 +31,43 @@
             android:src="@drawable/ic_close_16"
             android:tint="@color/constantBlack"
             android:scaleType="centerInside"/>
+
+        <uikit.widget.ColumnLayout
+            android:id="@+id/story_texts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="32dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/story_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.H1"
+                android:textColor="@color/constantWhite"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/story_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="@color/constantWhite"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/story_button"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:background="@drawable/bg_content_tint_24"
+                android:backgroundTint="@color/constantWhite"
+                android:textColor="@color/constantBlack"/>
+
+        </uikit.widget.ColumnLayout>
 
     </FrameLayout>
 

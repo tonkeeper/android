@@ -13,11 +13,14 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.postDelayed
 import androidx.core.view.updatePadding
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.currentTimeSeconds
+import com.tonapps.extensions.print
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
@@ -25,6 +28,7 @@ import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
+import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
@@ -57,6 +61,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
+import uikit.navigation.Navigation.Companion.navigation
 
 class RootActivity: BaseWalletActivity() {
 
@@ -120,9 +125,11 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        /*val newConfig = Configuration(newBase.resources.configuration)
-        newConfig.fontScale = 1.0f
-        applyOverrideConfiguration(newConfig)*/
+        if (DevSettings.ignoreSystemFontSize) {
+            val newConfig = Configuration(newBase.resources.configuration)
+            newConfig.fontScale = 1.0f
+            applyOverrideConfiguration(newConfig)
+        }
         super.attachBaseContext(newBase)
     }
 

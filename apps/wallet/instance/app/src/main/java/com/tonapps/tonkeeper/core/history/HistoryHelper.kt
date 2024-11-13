@@ -336,7 +336,7 @@ class HistoryHelper(
         positionExtra: Int = 0,
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val items = mutableListOf<HistoryItem>()
-
+        val safeMode = settingsRepository.safeMode
         for (event in events) {
             val pending = event.inProgress
 
@@ -352,9 +352,11 @@ class HistoryHelper(
 
             val chunkItems = mutableListOf<HistoryItem>()
             for ((actionIndex, action) in actions.withIndex()) {
+                if (safeMode && event.isScam) {
+                    continue
+                }
                 val timestamp = if (removeDate) 0 else event.timestamp
-                val isScam =
-                    event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
+                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
 
                 val item = action(
                     index = actionIndex,
@@ -363,7 +365,8 @@ class HistoryHelper(
                     action = action,
                     timestamp = timestamp,
                     isScam = isScam
-                )
+                ) ?: continue
+
                 chunkItems.add(
                     item.copy(
                         pending = pending,
@@ -404,17 +407,20 @@ class HistoryHelper(
         action: Action,
         timestamp: Long,
         isScam: Boolean,
-    ): HistoryItem.Event {
-
+    ): HistoryItem.Event? {
+        val safeMode = settingsRepository.safeMode
         val simplePreview = action.simplePreview
         val date = DateHelper.formatTransactionTime(timestamp, settingsRepository.getLocale())
-        val dateDetails =
-            DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
+        val dateDetails = DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
 
         if (action.jettonSwap != null) {
             val jettonSwap = action.jettonSwap!!
             val tokenIn = jettonSwap.tokenIn
             val tokenOut = jettonSwap.tokenOut
+
+            if ((!tokenIn.verified || !tokenOut.verified) && safeMode) {
+                return null
+            }
 
             val amountIn = jettonSwap.amountCoinsIn
             val amountOut = jettonSwap.amountCoinsOut
@@ -451,6 +457,11 @@ class HistoryHelper(
         } else if (action.jettonTransfer != null) {
             val jettonTransfer = action.jettonTransfer!!
             val token = jettonTransfer.jetton.address
+
+            if (safeMode && jettonTransfer.jetton.verification != JettonVerificationType.whitelist) {
+                return null
+            }
+
             val symbol = jettonTransfer.jetton.symbol
             val isOut = !wallet.isMyAddress(jettonTransfer.recipient?.address ?: "")
 
@@ -629,6 +640,10 @@ class HistoryHelper(
                 it.with(pref)
             }
 
+            if (safeMode && nftItem?.verified != true) {
+                return null
+            }
+
             val isEncryptedComment = nftItemTransfer.encryptedComment != null
 
             val comment = HistoryItem.Event.Comment.create(
@@ -707,6 +722,10 @@ class HistoryHelper(
             )
         } else if (action.jettonMint != null) {
             val jettonMint = action.jettonMint!!
+
+            if (safeMode && jettonMint.jetton.verification != JettonVerificationType.whitelist) {
+                return null
+            }
 
             val amount = jettonMint.parsedAmount
 
@@ -850,6 +869,10 @@ class HistoryHelper(
         } else if (action.nftPurchase != null) {
             val nftPurchase = action.nftPurchase!!
 
+            if (safeMode && !nftPurchase.nft.verified) {
+                return null
+            }
+
             val amount = Coins.of(nftPurchase.amount.value.toLong())
             val value = CurrencyFormatter.format(nftPurchase.amount.tokenName, amount, 2)
 
@@ -883,6 +906,10 @@ class HistoryHelper(
             )
         } else if (action.jettonBurn != null) {
             val jettonBurn = action.jettonBurn!!
+
+            if (safeMode && jettonBurn.jetton.verification != JettonVerificationType.whitelist) {
+                return null
+            }
 
             val amount = jettonBurn.parsedAmount
             val value = CurrencyFormatter.format(jettonBurn.jetton.symbol, amount, 2)

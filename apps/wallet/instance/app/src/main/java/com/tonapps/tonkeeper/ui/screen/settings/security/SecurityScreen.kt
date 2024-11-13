@@ -2,16 +2,20 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
 import android.view.View
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeScreen
+import com.tonapps.tonkeeper.ui.screen.stories.safemode.SafeModeStoriesScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
@@ -66,6 +70,12 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
             if (byUser) {
                 viewModel.safeMode = checked
             }
+        }
+
+        val safeModeDescriptionView = view.findViewById<AppCompatTextView>(R.id.safe_mode_description)
+        safeModeDescriptionView.text = requireContext().getSpannable(Localization.safe_mode_description)
+        safeModeDescriptionView.setOnClickListener {
+            navigation?.add(SafeModeStoriesScreen.newInstance())
         }
     }
 

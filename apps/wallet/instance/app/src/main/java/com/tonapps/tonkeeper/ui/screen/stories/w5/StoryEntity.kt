@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.w5.stories
+package com.tonapps.tonkeeper.ui.screen.stories.w5
 
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco

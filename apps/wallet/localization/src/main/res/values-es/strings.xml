@@ -192,6 +192,7 @@
     <string name="intro_line_2_description">Tonkeeper almacena tus claves criptográficas en tu dispositivo sin requerir documentos, información personal, datos de contacto o KYC.</string>
     <string name="intro_line_3_title">Suscripciones integradas</string>
     <string name="intro_line_3_description">Las suscripciones de TON son peer-to-peer y sin fronteras para que nadie pueda restringir a los proveedores o clientes. Tarifas casi nulas y control total para ti.</string>
+    <string name="stories_safemode_3_subtitle">Para prevenir riesgos inesperados.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">Sin conexión a internet</string>
     <string name="start_description">Crea una nueva billetera o añade una existente</string>
@@ -380,7 +381,7 @@
     <string name="bluetooth_permissions_alert_title">Permisos de Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Por favor, habilite los permisos de Bluetooth en su configuración para usar esta función</string>
     <string name="bluetooth_permissions_alert_open_settings">Abrir Configuración</string>
-    <string name="intro_title">Bienvenido a <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title">Bienvenido a <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="required_comment">Comentario requerido</string>
     <string name="biometric_enabled">Biométrico habilitado</string>
     <string name="sending_error">Error de envío, inténtalo de nuevo más tarde</string>
@@ -480,6 +481,11 @@
     <string name="safe_mode">Modo seguro</string>
     <string name="open_settings">Abrir configuración</string>
     <string name="safe_mode_tonconnect_title">Las conexiones solo están disponibles para aplicaciones verificadas</string>
-    <string name="safe_mode_description">En este modo, solo están disponibles las aplicaciones, los NFT y los tokens verificados. Más información</string>
+    <string name="safe_mode_description">En este modo, solo están disponibles las aplicaciones, los NFT y los tokens verificados. <annotation colorAttr="textAccentColor">Más información</annotation></string>
+    <string name="stories_safemode_1_title">Solo aplicaciones y servicios verificados</string>
+    <string name="stories_safemode_1_subtitle">Para evitar el phishing y el fraude.</string>
+    <string name="stories_safemode_2_title">Solo NFT verificadas</string>
+    <string name="stories_safemode_2_subtitle">Para evitar spam y artículos falsos.</string>
+    <string name="stories_safemode_3_title">Solo tokens verificados</string>
 
 </resources>

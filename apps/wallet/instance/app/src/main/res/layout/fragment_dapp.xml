@@ -89,7 +89,7 @@
         android:id="@+id/refresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <uikit.widget.webview.bridge.BridgeWebView
+        <com.tonapps.tonkeeper.ui.component.TonConnectWebView
             android:id="@+id/web_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

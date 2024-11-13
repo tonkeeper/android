@@ -38,7 +38,7 @@
     <string name="token_id">Token ID</string>
     <string name="safe_mode">Safe mode</string>
     <string name="open_settings">Open Settings</string>
-    <string name="safe_mode_description">In this mode, only verified apps, NFTs, and tokens are available. Learn more</string>
+    <string name="safe_mode_description">In this mode, only verified apps, NFTs, and tokens are available. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
     <plurals name="nft_count">
         <item quantity="one">%1$d NFT</item>
         <item quantity="few">%1$d NFTs</item>
@@ -258,7 +258,7 @@
     <string name="wallets">Wallets</string>
     <string name="country_title">Choose your country</string>
     <string name="intro_description">Create a new wallet or add an existing one</string>
-    <string name="intro_title" formatted="true">Welcome to <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title" formatted="true">Welcome to <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="intro_line_1_title">World-class speed</string>
     <string name="intro_line_1_description">TON is a network designed for speed and throughput. Fees are significantly lower than on other blockchains, and transactions are confirmed in a matter of seconds.</string>
 
@@ -267,6 +267,16 @@
 
     <string name="intro_line_3_title">Built-in subscriptions</string>
     <string name="intro_line_3_description">TON subscriptions are peer-to-peer and borderless so that no one can restrict providers or customers. Near-zero fees and full control for you.</string>
+
+    <string name="stories_safemode_1_title">Only Verified Apps and Services</string>
+    <string name="stories_safemode_1_subtitle">To avoid phishing and fraud.</string>
+
+    <string name="stories_safemode_2_title">Only Verified NFTs</string>
+    <string name="stories_safemode_2_subtitle">To avoid spam and fake items.</string>
+
+    <string name="stories_safemode_3_title">Only Verified Tokens</string>
+    <string name="stories_safemode_3_subtitle">To prevent unexpected risks.</string>
+
 
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">No internet connection</string>

@@ -192,6 +192,7 @@
     <string name="intro_line_2_description">Tonkeeper sizning kriptografik kalitlaringizni qurilmangizda hujjatlar, shaxsiy ma\'lumotlar, aloqa ma\'lumotlari yoki KYC talab qilmasdan saqlaydi.</string>
     <string name="intro_line_3_title">Ichki obunalar</string>
     <string name="intro_line_3_description">TON obunalar peer-to-peer va chegarasiz bo\'lib, hech kim provayderlar yoki mijozlarni cheklay olmaydi. Deyarli nol to\'lovlar va to\'liq nazorat siz uchun.</string>
+    <string name="stories_safemode_3_subtitle">Kutilmagan xavflarni oldini olish uchun.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">Internet aloqasi yo\'q</string>
     <string name="start_description">Yangi hamyon yarating yoki mavjudini qo\'shing</string>
@@ -380,7 +381,7 @@
     <string name="bluetooth_permissions_alert_title">Bluetooth ruxsatnomalari</string>
     <string name="bluetooth_permissions_alert_message">Iltimos, ushbu funksiyani ishlatish uchun sozlamalaringizda Bluetooth ruxsatlarini yoqing</string>
     <string name="bluetooth_permissions_alert_open_settings">Sozlamalarni oching</string>
-    <string name="intro_title"><annotation colorRes="textAccent">Tonkeeper</annotation>ga xush kelibsiz</string>
+    <string name="intro_title"><annotation colorAttr="textAccentColor">Tonkeeper</annotation>ga xush kelibsiz</string>
     <string name="required_comment">Sharh kerak</string>
     <string name="biometric_enabled">Biometrik yoqilgan</string>
     <string name="sending_error">Yuborishda xatolik, keyinroq qayta urinib ko‘ring</string>
@@ -480,5 +481,10 @@
     <string name="safe_mode">Xavfsiz rejim</string>
     <string name="open_settings">Sozlamalarni oching</string>
     <string name="safe_mode_tonconnect_title">Ulanishlar faqat tasdiqlangan ilovalar uchun mavjud</string>
-    <string name="safe_mode_description">Bu rejimda faqat tasdiqlangan ilovalar, NFTlar va tokenlar mavjud. Batafsil ma\'lumot</string>
+    <string name="safe_mode_description">Bu rejimda faqat tasdiqlangan ilovalar, NFTlar va tokenlar mavjud. <annotation colorAttr="textAccentColor">Batafsil ma\'lumot</annotation></string>
+    <string name="stories_safemode_1_title">Faqat tasdiqlangan ilovalar va xizmatlar</string>
+    <string name="stories_safemode_1_subtitle">Firibgarlik va firibgarlikning oldini olish uchun.</string>
+    <string name="stories_safemode_2_title">Faqat tasdiqlangan NFTlar</string>
+    <string name="stories_safemode_2_subtitle">Spam va soxta narsalarni oldini olish uchun.</string>
+    <string name="stories_safemode_3_title">Faqat tasdiqlangan tokenlar</string>
 </resources>

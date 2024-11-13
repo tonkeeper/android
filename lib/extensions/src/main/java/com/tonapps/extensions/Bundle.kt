@@ -28,3 +28,13 @@ inline fun <reified R> Bundle.getParcelableCompat(key: String): R? {
         null
     }
 }
+
+fun Bundle.print(): String {
+    val sb = StringBuilder()
+    sb.append("Bundle {")
+    keySet().forEach { key ->
+        sb.append("\n  $key: ${get(key)}")
+    }
+    sb.append("\n}")
+    return sb.toString()
+}

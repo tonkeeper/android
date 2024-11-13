@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
+import android.os.Build
 import android.util.ArrayMap
 import android.util.Log
 import com.squareup.moshi.JsonAdapter
@@ -11,6 +12,7 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
@@ -75,7 +77,9 @@ class API(
     private val scope: CoroutineScope
 ) {
 
-    val defaultHttpClient = baseOkHttpClientBuilder().build()
+    private val userAgent = "Tonkeeper/${context.appVersionName} (Linux; Android ${Build.VERSION.RELEASE}; ${Build.MODEL})"
+
+    val defaultHttpClient = baseOkHttpClientBuilder(userAgent).build()
 
     private val internalApi = InternalApi(context, defaultHttpClient)
     private val configRepository = ConfigRepository(context, scope, internalApi)
@@ -89,13 +93,10 @@ class API(
     private val tonAPIHttpClient: OkHttpClient by lazy {
         createTonAPIHttpClient(
             context = context,
+            userAgent = userAgent,
             tonApiV2Key = { config.tonApiV2Key },
-            allowDomains = { config.domains  }
+            allowDomains = { config.domains }
         )
-    }
-
-    private val batteryHttpClient: OkHttpClient by lazy {
-        createBatteryAPIHttpClient(context)
     }
 
     @Volatile
@@ -145,7 +146,7 @@ class API(
     }
 
     private val batteryApi by lazy {
-        SourceAPI(BatteryApi(config.batteryHost, batteryHttpClient), BatteryApi(config.batteryTestnetHost, batteryHttpClient))
+        SourceAPI(BatteryApi(config.batteryHost, tonAPIHttpClient), BatteryApi(config.batteryTestnetHost, tonAPIHttpClient))
     }
 
     private val emulationJSONAdapter: JsonAdapter<MessageConsequences> by lazy {
@@ -846,7 +847,7 @@ class API(
 
         private val socketFactoryTcpNoDelay = SSLSocketFactoryTcpNoDelay()
 
-        private fun baseOkHttpClientBuilder(): OkHttpClient.Builder {
+        private fun baseOkHttpClientBuilder(userAgent: String): OkHttpClient.Builder {
             return OkHttpClient().newBuilder()
                 .retryOnConnectionFailure(true)
                 .connectTimeout(5, TimeUnit.SECONDS)
@@ -855,6 +856,12 @@ class API(
                 .callTimeout(5, TimeUnit.SECONDS)
                 .pingInterval(5, TimeUnit.SECONDS)
                 .followSslRedirects(true)
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .addHeader("User-Agent", "TonWallet")
+                        .build()
+                    chain.proceed(request)
+                }
                 .followRedirects(true)
                 // .sslSocketFactory(socketFactoryTcpNoDelay.sslSocketFactory, socketFactoryTcpNoDelay.trustManager)
                 // .socketFactory(SocketFactoryTcpNoDelay())
@@ -862,23 +869,16 @@ class API(
 
         private fun createTonAPIHttpClient(
             context: Context,
+            userAgent: String,
             tonApiV2Key: () -> String,
             allowDomains: () -> List<String>
         ): OkHttpClient {
-            return baseOkHttpClientBuilder()
+            return baseOkHttpClientBuilder(userAgent)
                 .addInterceptor(AcceptLanguageInterceptor(context.locale))
                 .addInterceptor(AuthorizationInterceptor.bearer(
                     token = tonApiV2Key,
                     allowDomains = allowDomains
                 )).build()
-        }
-
-        private fun createBatteryAPIHttpClient(
-            context: Context,
-        ): OkHttpClient {
-            return baseOkHttpClientBuilder()
-                 .addInterceptor(AcceptLanguageInterceptor(context.locale))
-                .build()
         }
     }
 }

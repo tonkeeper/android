@@ -28,9 +28,8 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
-import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesViewModel
+import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesViewModel
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectViewModel
-import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.data.settings.SettingsRepository

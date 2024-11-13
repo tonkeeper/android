@@ -68,6 +68,13 @@ fun Context.getColorByIdentifier(name: String): Int {
     }
 }
 
+fun Context.getColorByAttr(name: String): Int {
+    val a = theme.obtainStyledAttributes(intArrayOf(resources.getIdentifier(name, "attr", packageName)))
+    val color = a.getColor(0, 0)
+    a.recycle()
+    return color
+}
+
 val Context.activity: NavigationActivity?
     get() {
         var context = this

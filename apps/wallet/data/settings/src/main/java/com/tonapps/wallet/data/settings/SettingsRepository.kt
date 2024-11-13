@@ -232,6 +232,7 @@ class SettingsRepository(
             if (value != field) {
                 prefs.edit().putBoolean(SAFE_MODE_KEY, value).apply()
                 field = value
+                tokenPrefsFolder.notifyChanged()
             }
         }
 

@@ -87,6 +87,15 @@ class BrowserSearchViewModel(
         }
     }
 
+    fun createSearchUrl(query: String): Uri {
+        val searchEngine = settingsRepository.searchEngine
+        return if (searchEngine == SearchEngine.GOOGLE) {
+            Uri.parse("https://www.google.com/search?q=$query")
+        } else {
+            Uri.parse("https://duckduckgo.com/?q=$query")
+        }
+    }
+
     private fun searchBy(query: String): List<Item> {
         val searchEngine = settingsRepository.searchEngine
         val result = if (searchEngine == SearchEngine.GOOGLE) {

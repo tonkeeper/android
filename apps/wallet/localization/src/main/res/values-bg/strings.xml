@@ -29,7 +29,7 @@
     <string name="setup_finish_biometry">Използвайте биометрия за потвърждаване на транзакции</string>
     <string name="setup_finish_backup">Резервирайте възстановителната фраза на портфейла</string>
     <string name="setup_finish_telegram">Присъединете се към канала на Tonkeeper</string>
-    <string name="safe_mode_description">В този режим са налични само проверени приложения, NFT и токени. Научете повече</string>
+    <string name="safe_mode_description">В този режим са налични само проверени приложения, NFT и токени. <annotation colorAttr="textAccentColor">Научете повече</annotation></string>
 
 
     <string name="contacts">Контакти</string>
@@ -228,7 +228,7 @@
     <string name="wallets">Портфейли</string>
     <string name="country_title">Изберете вашата страна</string>
     <string name="intro_description">Създайте нов портфейл или добавете съществуващ</string>
-    <string name="intro_title" formatted="true">Добре дошли в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title" formatted="true">Добре дошли в <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="intro_line_1_title">Световно ниво на скорост</string>
     <string name="intro_line_1_description">TON е мрежа, проектирана за скорост и производителност. Таксите са значително по-ниски, отколкото на други блокчейн платформи, а транзакциите се потвърждават в рамките на секунди.</string>
 
@@ -238,6 +238,7 @@
     <string name="intro_line_3_title">Вградени абонаменти</string>
     <string name="intro_line_3_description">TON абонаментите са между потребителите и не познават граници, така че никой не може да ограничи доставчиците или клиентите. Почти нулеви такси и пълен контрол за вас.</string>
 
+    <string name="stories_safemode_3_subtitle">За предотвратяване на неочаквани рискове.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">Няма интернет връзка</string>
     <string name="start_description">Създайте нов портфейл или добавете съществуващ</string>
@@ -527,4 +528,9 @@
     <string name="safe_mode">Безопасен режим</string>
     <string name="open_settings">Отворете Настройки</string>
     <string name="safe_mode_tonconnect_title">Връзките са достъпни само за проверени приложения</string>
+    <string name="stories_safemode_1_title">Само проверени приложения и услуги</string>
+    <string name="stories_safemode_1_subtitle">За да избегнете фишинг и измами.</string>
+    <string name="stories_safemode_2_title">Само проверени NFT</string>
+    <string name="stories_safemode_2_subtitle">За да избегнете спам и фалшиви артикули.</string>
+    <string name="stories_safemode_3_title">Само проверени токени</string>
 </resources>

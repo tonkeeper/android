@@ -19,6 +19,7 @@ import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
+import com.tonapps.tonkeeper.ui.screen.card.CardViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageScreen
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsViewModel
@@ -67,4 +68,5 @@ val viewModelWalletModule = module {
     viewModelOf(::EditContactViewModel)
     viewModelOf(::AppsViewModel)
     viewModelOf(::CollectiblesManageViewModel)
+    viewModelOf(::CardViewModel)
 }

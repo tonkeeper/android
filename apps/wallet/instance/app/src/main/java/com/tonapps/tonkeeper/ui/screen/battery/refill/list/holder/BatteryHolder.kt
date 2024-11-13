@@ -3,14 +3,12 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
 import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textAccentColor

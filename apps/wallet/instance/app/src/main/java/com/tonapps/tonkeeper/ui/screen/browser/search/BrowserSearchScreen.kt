@@ -95,8 +95,12 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
     }
 
     private fun inputDone() {
-        BrowserSearchViewModel.parseIfUrl(searchInput.text.toString())?.let {
-            navigation?.add(DAppScreen.newInstance(wallet, url = it))
+        val query = searchInput.text.toString()
+        val url = BrowserSearchViewModel.parseIfUrl(query)
+        if (url != null) {
+            navigation?.add(DAppScreen.newInstance(wallet, url = url))
+        } else {
+            navigation?.add(DAppScreen.newInstance(wallet, url = viewModel.createSearchUrl(query)))
         }
         searchInput.hideKeyboard()
     }

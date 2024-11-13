@@ -52,6 +52,10 @@ val Uri.pathOrNull: String?
 val Uri.hostOrNull: String?
     get() = host?.ifBlank { null }
 
+fun Uri.containsQuery(key: String): Boolean {
+    return query(key) != null
+}
+
 fun Uri.query(key: String): String? {
     return getQueryParameter(key)?.trim()?.ifBlank { null }
 }

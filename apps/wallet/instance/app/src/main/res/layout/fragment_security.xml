@@ -71,8 +71,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="@dimen/offsetMedium"
                 android:textAppearance="@style/TextAppearance.Body2"
-                android:textColor="?attr/textTertiaryColor"
-                android:text="@string/safe_mode_description"/>
+                android:textColor="?attr/textTertiaryColor"/>
 
             <View
                 android:layout_width="match_parent"

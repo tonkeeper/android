@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
+import com.tonapps.tonkeeper.extensions.withUtmSource
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
@@ -31,7 +32,9 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.popup.ActionSheet
+import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeper.ui.component.TonConnectWebView
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.R
@@ -54,10 +57,7 @@ import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.BridgeWebView
 import java.util.concurrent.CancellationException
 
-class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_dapp, wallet) {
-
-    private val api: API by inject()
-    private val tonConnectManager: TonConnectManager by inject()
+class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragment_dapp, wallet) {
 
     private lateinit var headerDrawable: HeaderDrawable
     private lateinit var headerView: View
@@ -67,10 +67,12 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
     private lateinit var menuView: View
     private lateinit var closeView: View
     private lateinit var refreshView: SwipeRefreshLayout
-    private lateinit var webView: BridgeWebView
+    override lateinit var webView: TonConnectWebView
 
     private val args: DAppArgs by lazy { DAppArgs(requireArguments()) }
-    private val rootViewModel: RootViewModel by activityViewModel()
+
+    override val startUri: Uri
+        get() = args.url
 
     override val viewModel: DAppViewModel by walletViewModel {
         parametersOf(args.url)
@@ -81,19 +83,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
 
     private val webViewCallback = object : WebViewFixed.Callback() {
         override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
-            val refererUri = request.requestHeaders?.get("Referer")?.toUri()
-            val url = request.url.normalizeTONSites()
-            val scheme = url.scheme ?: ""
-            if (scheme == "https") {
-                return false
-            }
-            val deeplink = DeepLink(url, false, refererUri)
-            if (deeplink.route is DeepLinkRoute.TonConnect) {
-                rootViewModel.processTonConnectDeepLink(deeplink, null)
-            } else if (deeplink.route is DeepLinkRoute.Unknown) {
-                navigation?.openURL(url.toString())
-            }
-            return true
+            return overrideUrlLoading(request)
         }
 
         override fun onPageStarted(url: String, favicon: Bitmap?) {
@@ -122,7 +112,7 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEventClickDApp(args.url.toString(), rootViewModel.installId)
+        AnalyticsHelper.trackEventClickDApp(args.url.toString(), installId)
     }
 
     private fun applyHost(url: String) {
@@ -161,14 +151,14 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         webView.settings.loadWithOverviewMode = true
         webView.addCallback(webViewCallback)
         webView.jsBridge = DAppBridge(
-            deviceInfo = JsonBuilder.device(wallet.maxMessages, requireContext().appVersionName).toString(),
-            send = ::send,
+            deviceInfo = deviceInfo.toString(),
+            send = ::tonconnectSend,
             connect = ::tonconnect,
             restoreConnection = viewModel::restoreConnection,
             disconnect = { viewModel.disconnect() },
-            tonapiFetch = api::tonapiFetch,
+            tonapiFetch = ::tonapiFetch,
         )
-        webView.loadUrl(args.url)
+        webView.loadUrl(args.url.withUtmSource())
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.setColorSchemeColors(requireContext().tabBarActiveIconColor)
@@ -195,35 +185,6 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
             } else {
                 setConnectionState(connection)
             }
-        }
-    }
-
-    private suspend fun send(array: JSONArray): JSONObject {
-        val messages = BridgeEvent.Message.parse(array)
-        if (messages.size == 1) {
-            val message = messages.first()
-            val id = message.id
-            if (message.method != BridgeMethod.SEND_TRANSACTION) {
-                return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
-            }
-            val signRequests = message.params.map { SignRequestEntity(it, args.url) }
-            if (signRequests.size != 1) {
-                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${signRequests.size}"))
-            }
-            val signRequest = signRequests.first()
-            return try {
-                val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
-                JsonBuilder.responseSendTransaction(id, boc)
-            } catch (e: CancellationException) {
-                JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
-            } catch (e: BridgeException) {
-                JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))
-            } catch (e: Throwable) {
-                FirebaseCrashlytics.getInstance().recordException(e)
-                JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
-            }
-        } else {
-            return JsonBuilder.responseError(0, BridgeError.badRequest("Request contains excess messages. Required: 1, Provided: ${messages.size}"))
         }
     }
 
@@ -275,25 +236,6 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
         startActivity(shareIntent)
     }
 
-    private suspend fun tonconnect(
-        version: Int,
-        request: ConnectRequest
-    ): JSONObject {
-        if (version != 2) {
-            return JsonBuilder.connectEventError(BridgeError.badRequest("Version $version is not supported"))
-        }
-        val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
-        if (tonConnectManager.isScam(requireContext(), request.manifestUrl.toUri(), webView.url!!.toUri(), args.url)) {
-            return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
-        }
-
-        return tonConnectManager.launchConnectFlow(
-            activity = activity,
-            tonConnect = TonConnect.fromJsInject(request, webView.url?.toUri()),
-            wallet = wallet
-        )
-    }
-
     override fun onResume() {
         super.onResume()
         webView.addCallback(webViewCallback)
@@ -302,19 +244,6 @@ class DAppScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_da
     override fun onPause() {
         super.onPause()
         webView.removeCallback(webViewCallback)
-    }
-
-    private fun back() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            finish()
-        }
-    }
-
-    override fun onBackPressed(): Boolean {
-        back()
-        return false
     }
 
     override fun onDestroyView() {

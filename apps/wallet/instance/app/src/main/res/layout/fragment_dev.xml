@@ -54,11 +54,27 @@
                     android:text="Blur"/>
 
                 <uikit.widget.item.ItemSwitchView
+                    android:id="@+id/ignore_system_font_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    app:position="middle"
+                    android:text="Ignore system font size"/>
+
+                <uikit.widget.item.ItemSwitchView
                     android:id="@+id/tc_logs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:text="TonConnect logs"
+                    app:position="middle"/>
+
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Holders"
                     app:position="middle"/>
 
                 <uikit.widget.item.ItemTextView

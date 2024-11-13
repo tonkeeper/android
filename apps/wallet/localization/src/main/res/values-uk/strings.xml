@@ -192,6 +192,7 @@
     <string name="intro_line_2_description">Tonkeeper зберігає ваші криптографічні ключі на вашому пристрої без необхідності в документах, особистій інформації, контактних даних або KYC.</string>
     <string name="intro_line_3_title">Вбудовані підписки</string>
     <string name="intro_line_3_description">TON підписки є одноранговими та безкордонними, тому ніхто не може обмежити постачальників або клієнтів. Майже нульові комісії та повний контроль для вас.</string>
+    <string name="stories_safemode_3_subtitle">Щоб запобігти несподіваним ризикам.</string>
     <string name="start_title">Тонкіпер</string>
     <string name="no_internet_connection">Немає підключення до інтернету</string>
     <string name="start_description">Створіть новий гаманець або додайте існуючий</string>
@@ -380,7 +381,7 @@
     <string name="bluetooth_permissions_alert_title">Дозволи Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Будь ласка, увімкніть дозволи на використання Bluetooth у налаштуваннях, щоб скористатися цією функцією</string>
     <string name="bluetooth_permissions_alert_open_settings">Відкрити Налаштування</string>
-    <string name="intro_title">Вітаємо в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title">Вітаємо в <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="required_comment">Обов\'язковий коментар</string>
     <string name="biometric_enabled">Біометрія включена</string>
     <string name="sending_error">Помилка відправки, спробуйте пізніше</string>
@@ -490,5 +491,10 @@
     <string name="safe_mode">Безпечний режим</string>
     <string name="open_settings">Відкрийте налаштування</string>
     <string name="safe_mode_tonconnect_title">Підключення доступне лише для перевірених програм</string>
-    <string name="safe_mode_description">У цьому режимі доступні лише перевірені програми, NFT і токени. Дізнайтесь більше</string>
+    <string name="safe_mode_description">У цьому режимі доступні лише перевірені програми, NFT і токени. <annotation colorAttr="textAccentColor">Дізнайтесь більше</annotation></string>
+    <string name="stories_safemode_1_title">Лише перевірені програми та служби</string>
+    <string name="stories_safemode_1_subtitle">Щоб уникнути фішингу та шахрайства.</string>
+    <string name="stories_safemode_2_title">Тільки перевірені NFT</string>
+    <string name="stories_safemode_2_subtitle">Щоб уникнути спаму та фейків.</string>
+    <string name="stories_safemode_3_title">Тільки перевірені токени</string>
 </resources>

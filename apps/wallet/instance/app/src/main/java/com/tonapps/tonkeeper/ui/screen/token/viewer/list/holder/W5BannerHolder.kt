@@ -4,7 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
-import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
+import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.settings.SettingsRepository
 import uikit.navigation.Navigation

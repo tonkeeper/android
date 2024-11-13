@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.Browser
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import com.tonapps.extensions.activity
@@ -59,6 +60,7 @@ object BrowserHelper {
             .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_LIGHT, colorSchemeParams)
             .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_DARK, colorSchemeParams)
             .build()
+        intent.intent.putExtra(Browser.EXTRA_APPLICATION_ID, activity.packageName)
 
         try {
             intent.launchUrl(activity, uri)

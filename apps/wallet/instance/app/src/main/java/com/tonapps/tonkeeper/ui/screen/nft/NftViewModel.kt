@@ -46,7 +46,7 @@ class NftViewModel(
     fun hideCollection(callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val address = nft.collection?.address ?: nft.address
-            settingsRepository.setTokenState(wallet.id, address, TokenPrefsEntity.State.SPAM)
+            settingsRepository.setTokenHidden(wallet.id, address, true)
             withContext(Dispatchers.Main) {
                 callback()
             }

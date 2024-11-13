@@ -231,7 +231,7 @@
     <string name="token_id">Идентификатор токена</string>
     <string name="safe_mode">Безопасный режим</string>
     <string name="open_settings">Открыть настройки</string>
-    <string name="safe_mode_description">В этом режиме доступны только проверенные сервисы, NFT и токены. Подробнее</string>
+    <string name="safe_mode_description">В этом режиме доступны только проверенные сервисы, NFT и токены. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
     <string name="safe_mode_tonconnect_title">Подключение доступно только к проверенным приложениям</string>
     <string name="safe_mode_tonconnect_description">Вы можете изменить это в настройках безопасности вашего кошелька.</string>
 
@@ -303,7 +303,7 @@
 
     <string name="country_title">Выберите вашу страну</string>
     <string name="intro_description">Создайте новый кошелек или добавьте существующий</string>
-    <string name="intro_title" formatted="true">Приветствуем в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title" formatted="true">Приветствуем в <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="intro_line_1_title">Рекордная скорость</string>
     <string name="intro_line_1_description">TON — это сеть, созданная для скорости и пропускной способности. Комиссии значительно ниже, чем в других блокчейнах, а транзакции подтверждаются за считанные секунды.</string>
 
@@ -313,6 +313,7 @@
     <string name="intro_line_3_title">Встроенные подписки</string>
     <string name="intro_line_3_description">Подписки TON являются одноранговыми и не имеют границ, поэтому никто не может ограничивать поставщиков или клиентов. Практически нулевые комиссии и полный контроль для вас.</string>
 
+    <string name="stories_safemode_3_subtitle">Для предотвращения непредвиденных рисков.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="start_description">Создайте новый кошелек или добавьте существующий</string>
     <string name="start_create_new_wallet">Создать новый кошелёк</string>
@@ -554,6 +555,11 @@
     <string name="hidden">Скрытые</string>
     <string name="show_all">Показать все</string>
     <string name="token_details">Подробности токена</string>
+    <string name="stories_safemode_1_title">Только проверенные приложения и сервисы</string>
+    <string name="stories_safemode_1_subtitle">Чтобы избежать фишинга и мошенничества.</string>
+    <string name="stories_safemode_2_title">Только проверенные NFT</string>
+    <string name="stories_safemode_2_subtitle">Чтобы избежать спама и поддельных товаров.</string>
+    <string name="stories_safemode_3_title">Только проверенные токены</string>
 
 
 </resources>

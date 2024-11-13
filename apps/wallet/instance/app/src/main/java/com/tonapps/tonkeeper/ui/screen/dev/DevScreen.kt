@@ -37,6 +37,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
     private lateinit var logCopy: Button
     private lateinit var importPasscodeView: View
     private lateinit var importDAppsView: View
+    private lateinit var systemFontSizeView: ItemSwitchView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -55,7 +56,16 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         blurView.doOnCheckedChanged = { isChecked, byUser ->
             if (byUser) {
                 DevSettings.blurEnabled = isChecked
-                requireContext().showToast("Restart app to apply changes")
+                toastAfterChange()
+            }
+        }
+
+        systemFontSizeView = view.findViewById(R.id.ignore_system_font_size)
+        systemFontSizeView.setChecked(DevSettings.ignoreSystemFontSize, false)
+        systemFontSizeView.doOnCheckedChanged = { isChecked, byUser ->
+            if (byUser) {
+                DevSettings.ignoreSystemFontSize = isChecked
+                toastAfterChange()
             }
         }
 
@@ -64,7 +74,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         tonConnectLogsView.doOnCheckedChanged = { isChecked, byUser ->
             if (byUser) {
                 DevSettings.tonConnectLogs = isChecked
-                requireContext().showToast("Restart app to apply changes")
+                toastAfterChange()
             }
         }
 
@@ -89,8 +99,16 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             valuesFromLegacy()
         }
 
-        logCopy = view.findViewById(R.id.log_copy)
+        view.findViewById<View>(R.id.card).setOnLongClickListener {
+            viewModel.openCard()
+            true
+        }
 
+        logCopy = view.findViewById(R.id.log_copy)
+    }
+
+    private fun toastAfterChange() {
+        requireContext().showToast("Restart app to apply changes")
     }
 
     private fun valuesFromLegacy() {

@@ -49,6 +49,7 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
+import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
@@ -96,6 +97,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import uikit.extensions.activity
+import uikit.navigation.Navigation.Companion.navigation
 import java.util.concurrent.CancellationException
 
 class RootViewModel(

@@ -192,6 +192,7 @@
     <string name="intro_line_2_description">Tonkeeper在您的设备上存储您的加密密钥，无需文件、个人信息、联系方式或KYC。</string>
     <string name="intro_line_3_title">内置订阅</string>
     <string name="intro_line_3_description">TON 订阅是点对点和无国界的，因此没有人可以限制提供者或客户。几乎为零的费用和完全的控制权为您提供。</string>
+    <string name="stories_safemode_3_subtitle">防范意外风险。</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">没有网络连接</string>
     <string name="start_description">创建新钱包或添加现有钱包</string>
@@ -380,7 +381,7 @@
     <string name="bluetooth_permissions_alert_title">蓝牙权限</string>
     <string name="bluetooth_permissions_alert_message">请在设置中启用蓝牙权限以使用此功能</string>
     <string name="bluetooth_permissions_alert_open_settings">打开设置</string>
-    <string name="intro_title">欢迎来到 <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title">欢迎来到 <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="required_comment">必填注释</string>
     <string name="biometric_enabled">已启用生物识别</string>
     <string name="sending_error">发送错误，请稍后重试</string>
@@ -475,5 +476,10 @@
     <string name="safe_mode">安全模式</string>
     <string name="open_settings">打开“设置”</string>
     <string name="safe_mode_tonconnect_title">仅向经过验证的应用提供连接</string>
-    <string name="safe_mode_description">在此模式下，仅经过验证的应用、NFT 和代币可用。了解详情</string>
+    <string name="safe_mode_description">在此模式下，仅经过验证的应用、NFT 和代币可用。<annotation colorAttr="textAccentColor">了解详情</annotation></string>
+    <string name="stories_safemode_1_title">仅限经过验证的应用和服务</string>
+    <string name="stories_safemode_1_subtitle">避免网络钓鱼和欺诈。</string>
+    <string name="stories_safemode_2_title">仅限经过验证的 NFT</string>
+    <string name="stories_safemode_2_subtitle">以避免垃圾邮件和假冒物品。</string>
+    <string name="stories_safemode_3_title">仅限已验证的代币</string>
 </resources>

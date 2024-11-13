@@ -35,6 +35,8 @@ class CollectiblesManageViewModel(
     private val settingsRepository: SettingsRepository,
 ): BaseWalletVM(app) {
 
+    private val safeMode = settingsRepository.safeMode
+
     private val _showedAllFlow = MutableStateFlow(false)
     private val showedAllFlow = _showedAllFlow.asStateFlow()
 
@@ -160,23 +162,21 @@ class CollectiblesManageViewModel(
     private suspend fun collectionItems(collectibles: List<NftEntity>): List<Item.Collection> {
         val items = mutableListOf<Item.Collection>()
         for (nft in collectibles) {
+            if (safeMode && !nft.verified) {
+                continue
+            }
             val collection = nft.collection ?: continue
             val index = items.indexOfFirst {
                 it.address.equalsAddress(collection.address)
             }
             if (index == -1) {
                 val state = settingsRepository.getTokenPrefs(wallet.id, nft.address).state
-                val spam = if (state == State.TRUST) {
-                    false
-                } else {
-                    nft.trust == Trust.blacklist
-                }
                 items.add(Item.Collection(
                     address = collection.address,
                     title = collection.name,
                     imageUri = nft.thumbUri,
                     count = 1,
-                    spam = spam
+                    spam = state == State.SPAM
                 ))
             } else {
                 items[index] = items[index].copy(

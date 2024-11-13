@@ -23,6 +23,14 @@ object DevSettings {
             }
         }
 
+    var ignoreSystemFontSize: Boolean = prefs.getBoolean("ignore_system_font_size", false)
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.edit().putBoolean("ignore_system_font_size", value).apply()
+            }
+        }
+
 
     fun tonConnectLog(message: String, error: Boolean = false) {
         if (tonConnectLogs) {

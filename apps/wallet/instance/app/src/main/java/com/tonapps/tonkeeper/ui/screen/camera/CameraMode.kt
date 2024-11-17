@@ -7,4 +7,6 @@ import kotlinx.parcelize.Parcelize
 sealed class CameraMode: Parcelable {
     data object Default: CameraMode()
     data object Address: CameraMode()
+    data object TonConnect: CameraMode()
+    data object Signer: CameraMode()
 }

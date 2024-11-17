@@ -27,7 +27,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             ))
         }
         receiveView.setOnClickListener {
-            navigation?.add(QRScreen.newInstance(item.walletAddress, item.token, item.walletType))
+            navigation?.add(QRScreen.newInstance(item.wallet, item.token))
         }
         swapView.isEnabled = item.swap
         swapView.setOnClickListener {

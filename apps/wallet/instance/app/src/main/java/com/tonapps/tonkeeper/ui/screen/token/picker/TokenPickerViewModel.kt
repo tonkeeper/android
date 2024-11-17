@@ -34,7 +34,7 @@ class TokenPickerViewModel(
     private val tokenRepository: TokenRepository,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.safeMode
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled()
 
     private val _selectedTokenFlow = MutableStateFlow(selectedToken)
     private val selectedTokenFlow = _selectedTokenFlow.asStateFlow().filterNotNull()

@@ -132,6 +132,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val batteryBalance: Coins,
         val showBattery: Boolean,
         val batteryEmptyState: BatteryView.EmptyState,
+        val prefixYourAddress: Boolean
     ): Item(TYPE_BALANCE) {
 
         val address: String
@@ -154,6 +155,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat(),
             parcel.readEnum(BatteryView.EmptyState::class.java)!!,
+            parcel.readBooleanCompat(),
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -167,6 +169,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeParcelable(batteryBalance, flags)
             dest.writeBooleanCompat(showBattery)
             dest.writeEnum(batteryEmptyState)
+            dest.writeBooleanCompat(prefixYourAddress)
         }
 
         companion object CREATOR : Parcelable.Creator<Balance> {

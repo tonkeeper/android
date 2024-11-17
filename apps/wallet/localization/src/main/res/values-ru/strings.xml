@@ -177,6 +177,8 @@
     <string name="add_wallet">Добавить кошелёк</string>
     <string name="wallets">Кошельки</string>
     <string name="hide_collection">Скрыть NFT</string>
+    <string name="tx_marked_as_spam">Транзакция помечена как спам</string>
+    <string name="safe_mode_disabled">Безопасный режим отключён на 24 часа. Включится автоматически. <annotation colorAttr="textAccentColor">Отключить навсегда</annotation></string>
     <string name="hide_and_report_collection">Скрыть и пожаловаться</string>
     <string name="open_tonviewer">Открыть в Tonviewer</string>
     <string name="notifications">Уведомления</string>
@@ -234,7 +236,7 @@
     <string name="safe_mode_description">В этом режиме доступны только проверенные сервисы, NFT и токены. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
     <string name="safe_mode_tonconnect_title">Подключение доступно только к проверенным приложениям</string>
     <string name="safe_mode_tonconnect_description">Вы можете изменить это в настройках безопасности вашего кошелька.</string>
-
+    <string name="safe_mode_tokens_footer">Безопасный режим включён. Доступны только проверенные токены. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
 
 
 
@@ -313,12 +315,13 @@
     <string name="intro_line_3_title">Встроенные подписки</string>
     <string name="intro_line_3_description">Подписки TON являются одноранговыми и не имеют границ, поэтому никто не может ограничивать поставщиков или клиентов. Практически нулевые комиссии и полный контроль для вас.</string>
 
-    <string name="stories_safemode_3_subtitle">Для предотвращения непредвиденных рисков.</string>
+    <string name="stories_safemode_3_subtitle">Чтобы избежать неожиданных рисков.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="start_description">Создайте новый кошелек или добавьте существующий</string>
     <string name="start_create_new_wallet">Создать новый кошелёк</string>
     <string name="start_import_wallet">Подключить существующий</string>
-
+    <string name="setup_safe_mode">Настройте экран блокировки и безопасный режим</string>
+    <string name="hide_full_collection">Скрыть коллекцию</string>
 
     <string name="cancel">Отмена</string>
     <string name="fee">Комиссия</string>
@@ -558,7 +561,7 @@
     <string name="stories_safemode_1_title">Только проверенные приложения и сервисы</string>
     <string name="stories_safemode_1_subtitle">Чтобы избежать фишинга и мошенничества.</string>
     <string name="stories_safemode_2_title">Только проверенные NFT</string>
-    <string name="stories_safemode_2_subtitle">Чтобы избежать спама и поддельных товаров.</string>
+    <string name="stories_safemode_2_subtitle">Чтобы избежать спама и подделок</string>
     <string name="stories_safemode_3_title">Только проверенные токены</string>
 
 

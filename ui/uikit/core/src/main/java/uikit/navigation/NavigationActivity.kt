@@ -32,6 +32,7 @@ import uikit.extensions.findFragment
 import uikit.extensions.hapticConfirm
 import uikit.extensions.primaryFragment
 import uikit.extensions.runAnimation
+import uikit.extensions.scale
 import uikit.widget.ToastView
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -46,6 +47,7 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     private val modals: List<BaseFragment.Modal>
         get() = supportFragmentManager.fragments.filterIsInstance<BaseFragment.Modal>()
 
+    private lateinit var hostFragmentView: View
     private lateinit var baseView: View
     private lateinit var contentView: View
     private lateinit var toastView: ToastView
@@ -58,6 +60,7 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         enableEdgeToEdge()
         setContentView(R.layout.activity_navigation)
 
+        hostFragmentView = findViewById(hostFragmentId)
         baseView = findViewById(R.id.base)
 
         contentView = findViewById(android.R.id.content)
@@ -222,6 +225,8 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
 
         val fragments = supportFragmentManager.fragments.filter { it.javaClass in clazz }
         if (fragments.isEmpty()) {
+            hostFragmentView.scale = 1f
+            hostFragmentView.alpha = 1f
             runnable.run()
             return
         }
@@ -229,7 +234,11 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
             for (fragment in fragments) {
                 remove(fragment)
             }
-            runOnCommit(runnable)
+            runOnCommit {
+                hostFragmentView.scale = 1f
+                hostFragmentView.alpha = 1f
+                runnable.run()
+            }
         }
     }
 

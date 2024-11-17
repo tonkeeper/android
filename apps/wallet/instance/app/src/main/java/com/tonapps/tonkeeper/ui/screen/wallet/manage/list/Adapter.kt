@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.FooterHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.SpaceHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.TitleHolder
@@ -44,6 +45,7 @@ class Adapter(
             Item.TYPE_TITLE -> TitleHolder(parent)
             Item.TYPE_TOKEN -> TokenHolder(parent, doOnPinChange, doOnHiddeChange, doOnDrag)
             Item.TYPE_SPACE -> SpaceHolder(parent)
+            Item.TYPE_SAFE_MODE -> FooterHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

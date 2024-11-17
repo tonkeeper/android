@@ -70,7 +70,7 @@ class CollectiblesViewModel(
         hiddenBalances: Boolean,
         isOnline: Boolean,
     ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
-        val safeMode = settingsRepository.safeMode
+        val safeMode = settingsRepository.isSafeModeEnabled()
         val uiItems = mutableListOf<Item>()
         for (nft in result.list) {
             if (safeMode && !nft.verified) {

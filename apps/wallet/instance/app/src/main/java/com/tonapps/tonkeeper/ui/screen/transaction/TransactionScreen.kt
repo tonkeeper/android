@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
 import android.view.View
+import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.lifecycle.lifecycleScope
@@ -18,7 +19,9 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.withVerificationIcon
+import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
@@ -28,6 +31,8 @@ import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.settings.SpamTransactionState
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -45,6 +50,10 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     companion object {
 
+        private const val REPORT_SPAM_ID = 1L
+        private const val NOT_SPAM_ID = 2L
+        private const val OPEN_EXPLORER_ID = 3L
+
         private const val ARG_ACTION = "action_event"
 
         fun newInstance(action: HistoryItem.Event): TransactionScreen {
@@ -54,13 +63,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
     }
 
-    private val actionArgs: HistoryItem.Event? by lazy {
-        requireArguments().getParcelableCompat(ARG_ACTION)
+    private val settingsRepository: SettingsRepository by inject()
+
+    private val actionArgs: HistoryItem.Event by lazy {
+        requireArguments().getParcelableCompat(ARG_ACTION)!!
     }
 
     private val historyHelper: HistoryHelper by inject()
 
     private lateinit var iconView: FrescoView
+    private lateinit var moreView: View
     private lateinit var iconSwapView: View
     private lateinit var iconSwap1View: FrescoView
     private lateinit var iconSwap2View: FrescoView
@@ -76,6 +88,8 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     private lateinit var explorerButton: AppCompatTextView
     private lateinit var unverifiedView: View
     private lateinit var amount2View: AppCompatTextView
+    private lateinit var reportSpamButton: Button
+    private lateinit var notSpamButton: Button
 
     private val lockDrawable: Drawable by lazy {
         val drawable = requireContext().drawable(UIKitIcon.ic_lock_16)
@@ -85,16 +99,14 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         val action = actionArgs
-        if (action == null) {
-            finish()
-            return
-        }
 
         view.findViewById<View>(R.id.close).setOnClickListener {
             finish()
         }
+
+        moreView = view.findViewById(R.id.more)
+        moreView.setOnClickListener { openMore(it) }
 
         iconView = view.findViewById(R.id.icon)
         iconSwapView = view.findViewById(R.id.icon_swap)
@@ -155,6 +167,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             feeView.position = ListCell.Position.LAST
         }
 
+        reportSpamButton = view.findViewById(R.id.report_spam)
+        reportSpamButton.setOnClickListener { reportSpam() }
+
+        notSpamButton = view.findViewById(R.id.not_spam)
+        notSpamButton.setOnClickListener { notSpam() }
+
         applyAccount(action.isOut, action.account?.address, action.account?.name)
         applyCurrency(action.currency, action.hiddenBalance)
         applyDate(action.action, action.dateDetails)
@@ -168,10 +186,13 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         )
         explorerButton.text = txHashSpannable
 
-
-        explorerButton.setOnClickListener {
-            navigation?.openURL("https://tonviewer.com/transaction/${action.txId}")
+        explorerButton.setOnClickListener { openTonViewer() }
+        explorerButton.setOnLongClickListener {
+            requireContext().copyWithToast(action.txId)
+            true
         }
+
+        applySpamState()
 
         updateDataView()
 
@@ -205,6 +226,66 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         } else {
             iconSwapView.visibility = View.GONE
             iconView.visibility = View.GONE
+        }
+    }
+
+    private fun reportSpam() {
+        navigation?.toast(Localization.tx_marked_as_spam)
+        settingsRepository.setSpamStateTransaction(actionArgs.wallet.id, actionArgs.txId, SpamTransactionState.SPAM)
+        applySpamState()
+        finish()
+    }
+
+    private fun notSpam() {
+        settingsRepository.setSpamStateTransaction(actionArgs.wallet.id, actionArgs.txId, SpamTransactionState.NOT_SPAM)
+        applySpamState()
+    }
+
+    private fun openTonViewer() {
+        navigation?.openURL("https://tonviewer.com/transaction/${actionArgs.txId}")
+    }
+
+    private fun openMore(view: View) {
+        val actionSheet = ActionSheet(requireContext())
+        if (getSpamState() == SpamTransactionState.SPAM) {
+            actionSheet.addItem(NOT_SPAM_ID, Localization.not_spam, UIKitIcon.ic_block_16)
+        } else {
+            actionSheet.addItem(REPORT_SPAM_ID, Localization.report_spam, UIKitIcon.ic_block_16)
+        }
+        actionSheet.addItem(OPEN_EXPLORER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
+        actionSheet.doOnItemClick = { item ->
+            when (item.id) {
+                REPORT_SPAM_ID -> reportSpam()
+                NOT_SPAM_ID -> notSpam()
+                OPEN_EXPLORER_ID -> openTonViewer()
+            }
+        }
+        actionSheet.show(view)
+    }
+
+    private fun applySpamState() {
+        if (isCanReportSpam()) {
+            explorerButton.visibility = View.GONE
+            reportSpamButton.visibility = View.VISIBLE
+            notSpamButton.visibility = View.VISIBLE
+        } else {
+            explorerButton.visibility = View.VISIBLE
+            reportSpamButton.visibility = View.GONE
+            notSpamButton.visibility = View.GONE
+        }
+    }
+
+    private fun getSpamState(): SpamTransactionState {
+        return settingsRepository.getSpamStateTransaction(actionArgs.wallet.id, actionArgs.txId)
+    }
+
+    private fun isCanReportSpam(): Boolean {
+        return if (getSpamState() != SpamTransactionState.UNKNOWN) {
+            false
+        } else if (actionArgs.unverifiedToken) {
+            true
+        } else {
+            actionArgs.isMaybeSpam && actionArgs.comment != null && !actionArgs.isOut && !actionArgs.isScam
         }
     }
 

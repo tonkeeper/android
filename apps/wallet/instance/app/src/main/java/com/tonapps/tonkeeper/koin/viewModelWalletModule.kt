@@ -25,6 +25,7 @@ import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageVie
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsViewModel
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
+import com.tonapps.tonkeeper.ui.screen.qr.QRViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.add.AddContactViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.edit.EditContactViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerViewModel
@@ -69,4 +70,5 @@ val viewModelWalletModule = module {
     viewModelOf(::AppsViewModel)
     viewModelOf(::CollectiblesManageViewModel)
     viewModelOf(::CardViewModel)
+    viewModelOf(::QRViewModel)
 }

@@ -23,6 +23,7 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.recipient
 import com.tonapps.wallet.data.events.sender
+import com.tonapps.wallet.data.settings.SpamTransactionState
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.EncryptedComment
 import kotlinx.parcelize.IgnoredOnParcel
@@ -245,6 +246,8 @@ sealed class HistoryItem(
         val refund: CharSequence? = null,
         val refundInCurrency: CharSequence? = null,
         val wallet: WalletEntity,
+        val isMaybeSpam: Boolean = false,
+        val spamState: SpamTransactionState = SpamTransactionState.UNKNOWN,
     ): HistoryItem(TYPE_ACTION) {
 
         val account: Account?
@@ -333,7 +336,9 @@ sealed class HistoryItem(
             isScam = parcel.readBooleanCompat(),
             refund = parcel.readCharSequenceCompat(),
             refundInCurrency = parcel.readCharSequenceCompat(),
-            wallet = parcel.readParcelableCompat()!!
+            wallet = parcel.readParcelableCompat()!!,
+            isMaybeSpam = parcel.readBooleanCompat(),
+            spamState = parcel.readEnum(SpamTransactionState::class.java)!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -368,6 +373,8 @@ sealed class HistoryItem(
             dest.writeCharSequenceCompat(refund)
             dest.writeCharSequenceCompat(refundInCurrency)
             dest.writeParcelable(wallet, flags)
+            dest.writeBooleanCompat(isMaybeSpam)
+            dest.writeEnum(spamState)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

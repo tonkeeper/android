@@ -27,9 +27,12 @@ class AuthorizationInterceptor(
     private val domains: List<String>
         get() = allowDomains().mapNotNull { Uri.parse(it).host }
 
-    private val headerValue: String
+    private val headerValue: String?
         get() {
             val token = token()
+            if (token.isBlank()) {
+                return null
+            }
             return when(type) {
                 Type.BEARER -> "Bearer $token"
                 Type.BASIC -> "Basic $token"
@@ -43,10 +46,12 @@ class AuthorizationInterceptor(
         val domain = url.host
         if ((domains.isNotEmpty() && !domains.contains(domain))) {
             return chain.proceed(original)
+        } else if (headerValue.isNullOrBlank()) {
+            return chain.proceed(original)
         }
 
         val request = original.newBuilder()
-            .header("Authorization", headerValue)
+            .header("Authorization", headerValue!!)
             .method(original.method, original.body)
             .build()
 

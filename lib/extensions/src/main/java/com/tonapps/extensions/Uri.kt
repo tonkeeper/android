@@ -73,3 +73,16 @@ fun Uri.queryBoolean(key: String, defValue: Boolean = false): Boolean {
     return value.equals("true", ignoreCase = true) || value == "1"
 }
 
+fun Uri.hasUnsupportedQuery(
+    includingUTM: Boolean = false,
+    vararg supportedQuery: String
+): Boolean {
+    return queryParameterNames.any {
+        if (includingUTM) {
+            it.startsWith("utm_") || it !in supportedQuery
+        } else {
+            it !in supportedQuery
+        }
+    }
+}
+

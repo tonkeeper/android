@@ -54,7 +54,7 @@ class AssetsManager(
         currency: WalletCurrency = settingsRepository.currency,
         refresh: Boolean,
     ): List<AssetsEntity.Token> {
-        val safeMode = settingsRepository.safeMode
+        val safeMode = settingsRepository.isSafeModeEnabled()
         val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh) ?: return emptyList()
         return if (safeMode) {
             tokens.filter { it.verified }.map { AssetsEntity.Token(it) }

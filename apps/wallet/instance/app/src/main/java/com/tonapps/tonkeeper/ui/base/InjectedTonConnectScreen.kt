@@ -39,7 +39,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.activity
 import java.util.concurrent.CancellationException
 
-abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: WalletEntity): WalletContextScreen(layoutId, wallet), BaseFragment.SwipeBack {
+abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: WalletEntity): WalletContextScreen(layoutId, wallet) {
 
     private val tonConnectManager: TonConnectManager by inject()
     private val api: API by inject()

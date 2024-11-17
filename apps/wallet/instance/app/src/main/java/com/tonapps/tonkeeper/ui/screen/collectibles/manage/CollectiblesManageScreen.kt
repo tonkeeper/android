@@ -36,7 +36,7 @@ class CollectiblesManageScreen(wallet: WalletEntity): BaseListWalletScreen<Scree
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setTitle(getString(Localization.manage))
+        setTitle(getString(Localization.collectibles))
         setAdapter(adapter)
     }
 

@@ -38,6 +38,7 @@
     <string name="token_id">Token ID</string>
     <string name="safe_mode">Safe mode</string>
     <string name="open_settings">Open Settings</string>
+    <string name="hide_full_collection">Hide collection</string>
     <string name="safe_mode_description">In this mode, only verified apps, NFTs, and tokens are available. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
     <plurals name="nft_count">
         <item quantity="one">%1$d NFT</item>
@@ -45,6 +46,9 @@
         <item quantity="many">%1$d NFTs</item>
         <item quantity="other">%1$d NFTs</item>
     </plurals>
+    <string name="your_address">Your address:</string>
+    <string name="safe_mode_tokens_footer">Safe mode is enabled. Only verified tokens are available. <annotation colorAttr="textAccentColor">Settings</annotation></string>
+    <string name="setup_safe_mode">Set up your Lock Screen and Safe Mode</string>
     <string name="safe_mode_tonconnect_title">Connections are available only to verified apps</string>
     <string name="safe_mode_tonconnect_description">You can change this in your wallet’s Security Settings.</string>
 
@@ -461,9 +465,11 @@
     <string name="choose_wallet_already_added">Already added</string>
     <string name="hide">Hide</string>
 
-    <string name="hide_collection">Hide collection</string>
+    <string name="hide_collection">Hide NFT</string>
     <string name="hide_and_report_collection">Hide and report</string>
     <string name="open_tonviewer">Open in Tonviewer</string>
+    <string name="tx_marked_as_spam">Transaction marked as Spam</string>
+    <string name="safe_mode_disabled">Safe mode is off for 24 hours. It will turn on automatically. <annotation colorAttr="textAccentColor">Turn off permanently</annotation></string>
 
     <string name="customize">Customize</string>
     <string name="customize_wallet_title">Customize your Wallet</string>

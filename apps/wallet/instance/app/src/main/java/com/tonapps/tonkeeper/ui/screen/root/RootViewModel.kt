@@ -49,7 +49,6 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
-import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
@@ -59,6 +58,7 @@ import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
+import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
@@ -482,7 +482,7 @@ class RootViewModel(
                 openScreen(DAppScreen.newInstance(wallet, url = dAppUri))
             }
         } else if (route is DeepLinkRoute.SettingsSecurity && wallet.hasPrivateKey) {
-            openScreen(SettingsScreen.newInstance(wallet))
+            openScreen(SecurityScreen.newInstance())
         } else if (route is DeepLinkRoute.SettingsCurrency) {
             openScreen(CurrencyScreen.newInstance())
         } else if (route is DeepLinkRoute.SettingsLanguage) {
@@ -527,20 +527,16 @@ class RootViewModel(
         openScreen(TokenScreen.newInstance(wallet, token.address, token.name, token.symbol))
     }
 
+    fun processTransferDeepLink(route: DeepLinkRoute.Transfer) {
+        selectedWalletFlow.take(1).collectFlow {
+            processTransferDeepLink(it, route)
+        }
+    }
+
     private suspend fun processTransferDeepLink(wallet: WalletEntity, route: DeepLinkRoute.Transfer) {
         if (route.isExpired) {
             toast(Localization.expired_link)
             return
-        }
-        val bin: Cell? = if (route.bin.isNullOrEmpty()) {
-            null
-        } else {
-            try {
-                route.bin.cellFromBase64()
-            } catch (e: Throwable) {
-                toast(Localization.invalid_link)
-                return
-            }
         }
 
         _eventFlow.tryEmit(RootEvent.Transfer(
@@ -549,11 +545,11 @@ class RootViewModel(
             amount = route.amount,
             text = route.text,
             jettonAddress = route.jettonAddress,
-            bin = bin
+            bin = route.bin
         ))
     }
 
-    private fun processSignerDeepLink(route: DeepLinkRoute.Signer, fromQR: Boolean) {
+    fun processSignerDeepLink(route: DeepLinkRoute.Signer, fromQR: Boolean) {
         _eventFlow.tryEmit(RootEvent.Singer(
             publicKey = route.publicKey,
             name = route.name,

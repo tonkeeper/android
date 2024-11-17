@@ -66,6 +66,16 @@
                 app:position="single"/>
 
             <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/safe_mode_disabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/offsetMedium"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textTertiaryColor"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/safe_mode_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -84,7 +94,6 @@
                 app:position="single"
                 android:text="@string/change_passcode"
                 android:icon="@drawable/ic_lock_28"/>
-
 
         </uikit.widget.ColumnLayout>
 

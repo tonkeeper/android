@@ -6,6 +6,7 @@ import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -183,10 +184,14 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     }
 
     private fun setFragment(itemId: Int, wallet: WalletEntity, forceScrollUp: Boolean) {
-        setFragment(getFragment(itemId, wallet), forceScrollUp)
+        setFragment(getFragment(itemId, wallet), forceScrollUp, 0)
     }
 
-    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean) {
+    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, attempt: Int) {
+        if (attempt > 3) {
+            throw IllegalStateException("Failed to set main fragment")
+        }
+
         if (childFragmentManager.isStateSaved) {
             return
         }
@@ -211,7 +216,14 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         transaction.runOnCommit {
             checkBottomDivider(fragment)
         }
-        transaction.commitNow()
+        try {
+            transaction.commitNow()
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            postDelayed(1000) {
+                setFragment(fragment, forceScrollUp, attempt + 1)
+            }
+        }
     }
 
     private fun checkBottomDivider(fragment: Fragment) {

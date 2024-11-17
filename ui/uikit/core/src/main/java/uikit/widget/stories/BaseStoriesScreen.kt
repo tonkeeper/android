@@ -73,6 +73,8 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         }
 
         imageView = view.findViewById(R.id.story_image)
+        imageView.setScaleTypeCenterCrop()
+
         linesView = view.findViewById(R.id.stories_lines)
         closeView = view.findViewById(R.id.stories_close)
         titleView = view.findViewById(R.id.story_title)
@@ -183,7 +185,7 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
             isAutoSwitchPaused = false
         )
         val elapsedSincePause = System.currentTimeMillis() - state.lastPauseTime
-        if (120 >= elapsedSincePause) {
+        if (172 >= elapsedSincePause) {
             if (next && !isLastStory) {
                 nextStory()
             } else if (!next && !isFirstStory) {

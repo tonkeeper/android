@@ -3,12 +3,18 @@ package com.tonapps.tonkeeper.client.safemode
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.BlobDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -33,11 +39,15 @@ class SafeModeClient(
         }
     }.distinctUntilChanged()
 
+    private val _isReadyFlow = MutableStateFlow<Boolean?>(null)
+    val isReadyFlow = _isReadyFlow.asStateFlow().filterNotNull()
+
     init {
         badDomainsFlow.onEach {
             for (domain in it.array) {
                 scamDomains[domain] = true
             }
+            _isReadyFlow.value = true
         }.launchIn(scope)
     }
 

@@ -85,7 +85,7 @@
                 style="@style/Widget.App.Button.Secondary"
                 android:id="@+id/copy"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:background="@drawable/bg_button_secondary_24"
                 android:textAppearance="@style/TextAppearance.Label1"
                 android:textColor="?attr/buttonSecondaryForegroundColor"
@@ -105,6 +105,11 @@
                 android:background="@drawable/bg_oval_button_secondary"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_share_16"/>
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="0dp"/>
+
 
         </uikit.widget.RowLayout>
 

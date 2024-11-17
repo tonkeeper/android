@@ -155,11 +155,8 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     override fun getTopBarDrawable(): BarDrawable? {
-        /*if (this::headerDrawable.isInitialized) {
+        if (this::headerDrawable.isInitialized) {
             return headerDrawable
-        }*/
-        if (this::headerView.isInitialized) {
-            return headerView.background as BarDrawable
         }
         return null
     }

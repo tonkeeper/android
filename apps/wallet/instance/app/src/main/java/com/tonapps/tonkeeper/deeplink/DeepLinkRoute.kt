@@ -2,13 +2,16 @@ package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
 import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
+import com.tonapps.extensions.hasUnsupportedQuery
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
 import com.tonapps.extensions.query
 import com.tonapps.extensions.queryBoolean
 import com.tonapps.extensions.queryPositiveLong
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.cell.Cell
 
 sealed class DeepLinkRoute {
 
@@ -62,7 +65,7 @@ sealed class DeepLinkRoute {
         val amount: Long?,
         val text: String?,
         val jettonAddress: String?,
-        val bin: String?
+        val bin: Cell?
     ): DeepLinkRoute() {
 
         val isExpired: Boolean
@@ -74,8 +77,12 @@ sealed class DeepLinkRoute {
             amount = uri.queryPositiveLong("amount"),
             text = uri.query("text"),
             jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
-            bin = uri.query("bin")
-        )
+            bin = uri.query("bin")?.cellFromBase64()
+        ) {
+            if (uri.hasUnsupportedQuery(true, "exp", "amount", "text", "jettonAddress", "jetton", "bin")) {
+                throw IllegalArgumentException("Unsupported query parameters")
+            }
+        }
     }
 
 

@@ -33,7 +33,7 @@ class TokensManageViewModel(
     private val tokenRepository: TokenRepository
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.safeMode
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled()
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
         tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet).mapNotNull { token ->
@@ -81,6 +81,10 @@ class TokensManageViewModel(
                         hiddenBalance = hiddenBalance
                     ))
                 }
+            }
+
+            if (safeMode) {
+                items.add(Item.SafeMode)
             }
 
             items

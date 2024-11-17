@@ -82,7 +82,7 @@ class SendTransactionViewModel(
                     totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
                 }
 
-                val jettonsAddress = emulated.consequences.risk.jettons.map { it.jetton.address }
+                val jettonsAddress = emulated.consequences?.risk?.jettons?.map { it.jetton.address } ?: emptyList()
                 val sendTokens = tokens.filter { it.balance.token.address in jettonsAddress }
                 val hasCompressedJetton = sendTokens.any { it.isCompressed }
 
@@ -113,7 +113,7 @@ class SendTransactionViewModel(
                 } else {
                     _stateFlow.value = SendTransactionState.Details(
                         emulated = details,
-                        totalFormat = totalFormatBuilder.toString(),
+                        totalFormat = if (emulated.failed) getString(Localization.unknown) else totalFormatBuilder.toString(),
                         isDangerous = emulated.total.isDangerous,
                         nftCount = emulated.nftCount
                     )

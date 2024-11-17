@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.collectibles.manage.list
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.holder.AllHolder
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.holder.CollectionHolder
+import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.holder.FooterHolder
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.holder.SpaceHolder
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.holder.TitleHolder
 import com.tonapps.uikit.list.BaseListAdapter
@@ -20,6 +21,7 @@ class Adapter(
             Item.TYPE_SPACE -> SpaceHolder(parent)
             Item.TYPE_ALL -> AllHolder(parent, showAllClick)
             Item.TYPE_COLLECTION -> CollectionHolder(parent, onClick)
+            Item.TYPE_SAFE_MODE -> FooterHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

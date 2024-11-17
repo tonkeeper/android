@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
@@ -10,11 +11,13 @@ import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeScreen
 import com.tonapps.tonkeeper.ui.screen.stories.safemode.SafeModeStoriesScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
+import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
@@ -30,6 +33,7 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
     private lateinit var lockScreenView: ItemSwitchView
     private lateinit var changePasscodeView: ItemIconView
     private lateinit var safeModeView: ItemSwitchView
+    private lateinit var safeModeDisabledView: AppCompatTextView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -65,17 +69,31 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
         changePasscodeView.setOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }
 
         safeModeView = view.findViewById(R.id.safe_mode)
-        safeModeView.setChecked(viewModel.safeMode, false)
+        safeModeView.setChecked(viewModel.isSafeModeEnabled(), false)
         safeModeView.doOnCheckedChanged = { checked, byUser ->
             if (byUser) {
-                viewModel.safeMode = checked
+                viewModel.setSafeModeState(if (checked) SafeModeState.Enabled else SafeModeState.Disabled)
             }
+        }
+
+        safeModeDisabledView = view.findViewById(R.id.safe_mode_disabled)
+        safeModeDisabledView.text = requireContext().getSpannable(Localization.safe_mode_disabled)
+        safeModeDisabledView.setOnClickListener {
+            viewModel.setSafeModeState(SafeModeState.DisabledPermanently)
         }
 
         val safeModeDescriptionView = view.findViewById<AppCompatTextView>(R.id.safe_mode_description)
         safeModeDescriptionView.text = requireContext().getSpannable(Localization.safe_mode_description)
         safeModeDescriptionView.setOnClickListener {
             navigation?.add(SafeModeStoriesScreen.newInstance())
+        }
+
+        collectFlow(viewModel.safeModeFlow) { state ->
+            if (state != SafeModeState.Disabled) {
+                safeModeDisabledView.visibility = View.GONE
+            } else {
+                safeModeDisabledView.visibility = View.VISIBLE
+            }
         }
     }
 

@@ -6,11 +6,12 @@ import com.tonapps.wallet.data.core.WalletCurrency
 import io.tonapi.models.MessageConsequences
 
 data class Emulated(
-    val consequences: MessageConsequences,
+    val consequences: MessageConsequences?,
     val withBattery: Boolean = false,
     val total: Total,
     val extra: Extra,
     val currency: WalletCurrency,
+    val failed: Boolean = false
 ) {
 
     companion object {

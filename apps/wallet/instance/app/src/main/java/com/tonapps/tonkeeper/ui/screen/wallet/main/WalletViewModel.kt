@@ -213,7 +213,8 @@ class WalletViewModel(
                     pushEnabled = context.hasPushPermission() && walletPushEnabled,
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
-                    showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id)
+                    showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id),
+                    safeModeEnabled = settingsRepository.isSafeModeEnabled(),
                 )
             }
 
@@ -227,7 +228,8 @@ class WalletViewModel(
                 alerts = alerts,
                 dAppNotifications = State.DAppNotifications(pushes),
                 setup = uiSetup,
-                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale())
+                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale()),
+                prefixYourAddress = 3 > settingsRepository.getCopyCount(wallet.id)
             )
             if (uiItems.isNotEmpty()) {
                 _uiItemsFlow.value = uiItems

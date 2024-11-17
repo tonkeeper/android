@@ -12,6 +12,7 @@ import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.drawee.drawable.RoundedCornersDrawable
 import com.facebook.drawee.drawable.RoundedDrawable
+import com.facebook.drawee.drawable.ScalingUtils
 import com.facebook.drawee.generic.RoundingParams
 import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.common.ResizeOptions
@@ -34,6 +35,14 @@ class FrescoView @JvmOverloads constructor(
 
     fun setCircular() {
         hierarchy.roundingParams = RoundingParams.asCircle()
+    }
+
+    fun setScaleTypeCenterInside() {
+        hierarchy.actualImageScaleType = ScalingUtils.ScaleType.CENTER_INSIDE
+    }
+
+    fun setScaleTypeCenterCrop() {
+        hierarchy.actualImageScaleType = ScalingUtils.ScaleType.CENTER_CROP
     }
 
     fun setLocalRes(resId: Int) {

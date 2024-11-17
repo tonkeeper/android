@@ -14,6 +14,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_TITLE = 1
         const val TYPE_TOKEN = 2
         const val TYPE_SPACE = 3
+        const val TYPE_SAFE_MODE = 4
     }
 
     data class Title(
@@ -55,4 +56,6 @@ sealed class Item(type: Int): BaseListItem(type) {
     }
 
     data object Space: Item(TYPE_SPACE)
+
+    data object SafeMode: Item(TYPE_SAFE_MODE)
 }

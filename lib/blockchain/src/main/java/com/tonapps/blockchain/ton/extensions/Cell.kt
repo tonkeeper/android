@@ -24,6 +24,9 @@ fun String.bocFromHex(): BagOfCells {
 }
 
 fun String.cellFromBase64(): Cell {
+    if (this.isBlank()) {
+        throw IllegalArgumentException("Empty cell")
+    }
     val parsed = bocFromBase64()
     if (parsed.roots.size != 1) {
         throw IllegalArgumentException("Deserialized more than one cell")

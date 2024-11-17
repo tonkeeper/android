@@ -28,6 +28,7 @@ sealed class State {
         Biometry,
         Telegram,
         Backup,
+        SafeMode,
     }
 
     data class Battery(
@@ -42,6 +43,7 @@ sealed class State {
         val biometryEnabled: Boolean,
         val hasBackup: Boolean,
         val showTelegramChannel: Boolean,
+        val safeModeEnabled: Boolean
     ): State()
 
     data class Assets(
@@ -142,6 +144,7 @@ sealed class State {
             hiddenBalance: Boolean,
             status: Item.Status,
             lastUpdatedFormat: String,
+            prefixYourAddress: Boolean,
         ): Item.Balance {
             return Item.Balance(
                 balance = totalBalanceFormat,
@@ -154,6 +157,7 @@ sealed class State {
                 batteryBalance = battery.balance,
                 showBattery = !battery.disabled && (!battery.beta || !battery.balance.isZero),
                 batteryEmptyState = if (battery.viewed) BatteryView.EmptyState.SECONDARY else BatteryView.EmptyState.ACCENT,
+                prefixYourAddress = prefixYourAddress
             )
         }
 
@@ -215,6 +219,15 @@ sealed class State {
                         wallet = wallet,
                         settingsType = Item.SetupSwitch.TYPE_PUSH
                     )
+                    SetupType.SafeMode -> Item.SetupLink(
+                        position = position,
+                        iconRes = UIKitIcon.ic_control_28,
+                        textRes = Localization.setup_safe_mode,
+                        link = "tonkeeper://security",
+                        blue = true,
+                        walletId = wallet.id,
+                        settingsType = Item.SetupLink.TYPE_TELEGRAM_CHANNEL
+                    )
                 }
                 uiItems.add(item)
             }
@@ -237,6 +250,9 @@ sealed class State {
             if (!hasBackup) {
                 setupTypes.add(SetupType.Backup)
             }
+            if (!setup.safeModeEnabled) {
+                setupTypes.add(SetupType.SafeMode)
+            }
             return setupTypes.toList()
         }
 
@@ -249,6 +265,7 @@ sealed class State {
             dAppNotifications: DAppNotifications,
             setup: Setup?,
             lastUpdatedFormat: String,
+            prefixYourAddress: Boolean,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             if (alerts.isNotEmpty()) {
@@ -257,7 +274,7 @@ sealed class State {
                     uiItems.add(Item.Space(true))
                 }
             }
-            uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat))
+            uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat, prefixYourAddress))
             uiItems.add(uiItemActions(config))
             if (!dAppNotifications.isEmpty) {
                 uiItems.add(Item.Push(dAppNotifications.pushes))

@@ -858,7 +858,7 @@ class API(
                 .followSslRedirects(true)
                 .addInterceptor { chain ->
                     val request = chain.request().newBuilder()
-                        .addHeader("User-Agent", "TonWallet")
+                        .addHeader("User-Agent", userAgent)
                         .build()
                     chain.proceed(request)
                 }

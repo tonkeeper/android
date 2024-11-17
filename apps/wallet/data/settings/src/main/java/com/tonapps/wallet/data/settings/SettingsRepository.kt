@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.settings
 import android.content.Context
 import android.icu.util.Currency
 import android.util.Log
+import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
@@ -53,7 +54,7 @@ class SettingsRepository(
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
         private const val CHART_PERIOD_KEY = "chart_period"
-        private const val SAFE_MODE_KEY = "safe_mode"
+        private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -79,6 +80,9 @@ class SettingsRepository(
 
     private val _walletPush = MutableEffectFlow<Unit>()
     val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
+
+    private val _safeModeStateFlow = MutableStateFlow<SafeModeState?>(null)
+    val safeModeStateFlow = _safeModeStateFlow.asStateFlow().filterNotNull()
 
     private val _isMigratedFlow = MutableStateFlow<Boolean?>(null)
     val isMigratedFlow = _isMigratedFlow.asStateFlow().filterNotNull()
@@ -226,21 +230,45 @@ class SettingsRepository(
             }
         }
 
-
-    var safeMode: Boolean = prefs.getBoolean(SAFE_MODE_KEY, true)
-        set(value) {
-            if (value != field) {
-                prefs.edit().putBoolean(SAFE_MODE_KEY, value).apply()
-                field = value
-                tokenPrefsFolder.notifyChanged()
-            }
+    fun getSafeModeState(): SafeModeState {
+        val disabledUnix = prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, 0)
+        if (1L == disabledUnix) {
+            return SafeModeState.Enabled
+        } else if (0 >= disabledUnix) {
+            return SafeModeState.DisabledPermanently
         }
+        // Auto enabled after 24 hours
+        val disableTimeout = disabledUnix + 24 * 60 * 60 * 1000
+        val diff = disableTimeout - System.currentTimeMillis()
+        return if (diff > 0) {
+            SafeModeState.Disabled
+        } else {
+            SafeModeState.Enabled
+        }
+    }
+
+    fun isSafeModeEnabled() = getSafeModeState() == SafeModeState.Enabled
+
+    fun setSafeModeState(state: SafeModeState) {
+        prefs.edit {
+            val value = when (state) {
+                SafeModeState.Enabled -> 1
+                SafeModeState.DisabledPermanently -> 0
+                else -> System.currentTimeMillis()
+            }
+            putLong(SAFE_MODE_DISABLED_UNIX_KEY, value)
+        }
+
+        _safeModeStateFlow.tryEmit(state)
+    }
 
     fun isUSDTW5(walletId: String) = walletPrefsFolder.isUSDTW5(walletId)
 
     fun disableUSDTW5(walletId: String) = walletPrefsFolder.disableUSDTW5(walletId)
 
     fun getSpamStateTransaction(walletId: String, id: String) = walletPrefsFolder.getSpamStateTransaction(walletId, id)
+
+    fun setSpamStateTransaction(walletId: String, id: String, state: SpamTransactionState) = walletPrefsFolder.setSpamStateTransaction(walletId, id, state)
 
     fun isSpamTransaction(walletId: String, id: String) = getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
 
@@ -249,6 +277,10 @@ class SettingsRepository(
     fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
+
+    fun getCopyCount(walletId: String): Int = walletPrefsFolder.getCopyCount(walletId)
+
+    fun incrementCopyCount(walletId: String) = walletPrefsFolder.incrementCopyCount(walletId)
 
     suspend fun setPushWallet(walletId: String, value: Boolean) {
         walletPrefsFolder.setPushEnabled(walletId, value)
@@ -390,6 +422,7 @@ class SettingsRepository(
             _searchEngineFlow.tryEmit(searchEngine)
             _biometricFlow.tryEmit(biometric)
             _lockscreenFlow.tryEmit(lockScreen)
+            _safeModeStateFlow.tryEmit(getSafeModeState())
             _walletPush.tryEmit(Unit)
         }
     }

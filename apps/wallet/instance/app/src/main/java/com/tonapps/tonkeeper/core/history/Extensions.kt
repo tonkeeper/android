@@ -7,13 +7,31 @@ import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.rates.RatesRepository
+import io.tonapi.models.Action
 import io.tonapi.models.JettonSwapAction
+import io.tonapi.models.JettonTransferAction
+
+suspend fun Action.getTonAmountRaw(ratesRepository: RatesRepository): Coins {
+    val tonAmount = tonTransfer?.let { Coins.of(it.amount) }
+    val jettonAmountInTON = jettonTransfer?.let {
+        val amountCoins = it.amountCoins
+        val jettonAddress = it.jetton.address
+        val rates = ratesRepository.getRates(WalletCurrency.TON, jettonAddress)
+        rates.convert(jettonAddress, amountCoins)
+    }
+    return tonAmount ?: jettonAmountInTON ?: Coins.ZERO
+}
 
 val JettonSwapAction.tokenIn: TokenEntity
     get() {
         val jetton = jettonMasterIn?.let { TokenEntity(it) }
         return jetton ?: TokenEntity.TON
     }
+
+val JettonTransferAction.amountCoins: Coins
+    get() = Coins.ofNano(amount, jetton.decimals)
 
 val JettonSwapAction.amountCoinsIn: Coins
     get() {

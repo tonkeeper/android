@@ -35,7 +35,7 @@ class CollectiblesManageViewModel(
     private val settingsRepository: SettingsRepository,
 ): BaseWalletVM(app) {
 
-    private val safeMode = settingsRepository.safeMode
+    private val safeMode = settingsRepository.isSafeModeEnabled()
 
     private val _showedAllFlow = MutableStateFlow(false)
     private val showedAllFlow = _showedAllFlow.asStateFlow()
@@ -47,7 +47,7 @@ class CollectiblesManageViewModel(
         address = wallet.address,
         testnet = wallet.testnet,
         isOnline = true
-    ).map { it.list }.filterList { it.collection != null }
+    ).map { it.list }
 
     private val sortedCollectionFlow = combine(
         collectiblesFlow,
@@ -87,7 +87,8 @@ class CollectiblesManageViewModel(
         if (visibleCollection.isNotEmpty()) {
             uiItems.add(Item.Title(getString(Localization.visible)))
             uiItems.add(Item.Space)
-            val count = if (showedAll) visibleCollection.size else 3
+            val showAllButton = visibleCollection.size > 3 && !showedAll && (hiddenCollection.size > 0 || spamCollection.size > 0)
+            val count = if (!showAllButton) visibleCollection.size else 3
             for ((index, item) in visibleCollection.withIndex()) {
                 val isLast = index == count - 1
                 uiItems.add(item.copy(
@@ -99,7 +100,7 @@ class CollectiblesManageViewModel(
                     break
                 }
             }
-            if (visibleCollection.size > 3 && !showedAll) {
+            if (showAllButton) {
                 uiItems.add(Item.All)
             }
             uiItems.add(Item.Space)
@@ -128,6 +129,10 @@ class CollectiblesManageViewModel(
                 ))
             }
             uiItems.add(Item.Space)
+        }
+
+        if (safeMode) {
+            uiItems.add(Item.SafeMode)
         }
 
         uiItems.toList()
@@ -165,15 +170,16 @@ class CollectiblesManageViewModel(
             if (safeMode && !nft.verified) {
                 continue
             }
-            val collection = nft.collection ?: continue
+            val address = nft.collection?.address ?: nft.address
+            val name = nft.collection?.name ?: nft.name
             val index = items.indexOfFirst {
-                it.address.equalsAddress(collection.address)
+                it.address.equalsAddress(address)
             }
             if (index == -1) {
                 val state = settingsRepository.getTokenPrefs(wallet.id, nft.address).state
                 items.add(Item.Collection(
-                    address = collection.address,
-                    title = collection.name,
+                    address = address,
+                    title = name,
                     imageUri = nft.thumbUri,
                     count = 1,
                     spam = state == State.SPAM

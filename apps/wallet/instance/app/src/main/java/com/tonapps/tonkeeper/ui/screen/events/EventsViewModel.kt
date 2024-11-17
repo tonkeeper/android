@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.api.AccountEventWrap
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -28,11 +29,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import uikit.extensions.collectFlow
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
@@ -75,21 +80,20 @@ class EventsViewModel(
         uiFilterItems.toList()
     }
 
-
     private val _uiStateFlow = MutableStateFlow(EventsUiState())
     val uiStateFlow = _uiStateFlow.stateIn(viewModelScope, SharingStarted.Eagerly, EventsUiState())
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            setUiItems(getCached())
-            submitEvents(cache(), true)
+        settingsRepository.tokenPrefsChangedFlow.drop(1).collectFlow {
+            refresh()
+        }
 
-            val eventsDeferred = async { load() }
-            val dappEventsDeferred = async { loadDAppEvents() }
+        settingsRepository.walletPrefsChangedFlow.drop(1).collectFlow {
+            refresh()
+        }
 
-            submitEvents(eventsDeferred.await(), loading = false, updateState = false)
-            submitPushes(dappEventsDeferred.await(), updateState = false)
-            updateState()
+        transactionManager.eventsFlow(wallet).drop(1).collectFlow {
+            refresh()
         }
 
         eventsRepository.decryptedCommentFlow.collectFlow {
@@ -100,11 +104,16 @@ class EventsViewModel(
             updateState()
         }
 
-        transactionManager.eventsFlow(wallet).collectFlow { event ->
-            /*if (event.pending) {
-                appendEvent(AccountEventWrap(event.body))
-            }*/
-            refresh()
+        viewModelScope.launch(Dispatchers.IO) {
+            setUiItems(getCached())
+            submitEvents(cache(), true)
+
+            val eventsDeferred = async { load() }
+            val dappEventsDeferred = async { loadDAppEvents() }
+
+            submitEvents(eventsDeferred.await(), loading = false, updateState = false)
+            submitPushes(dappEventsDeferred.await(), updateState = false)
+            updateState()
         }
 
         autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
@@ -350,16 +359,13 @@ class EventsViewModel(
 
     private suspend fun load(beforeLt: Long? = null): List<AccountEventWrap> {
         val txFilterValue = txFilter.get()
-        if (txFilterValue == TX_FILTER_SENT) {
-            return loadSent(beforeLt)
-        } else if (txFilterValue == TX_FILTER_RECEIVED) {
-            return loadReceived(beforeLt)
-        } else if (txFilterValue == TX_FILTER_APP) {
-            return emptyList()
+        return when (txFilterValue) {
+            TX_FILTER_SENT -> loadSent(beforeLt)
+            TX_FILTER_RECEIVED -> loadReceived(beforeLt)
+            TX_FILTER_APP -> emptyList()
+            else -> return loadDefault(beforeLt)
         }
-        return loadDefault(beforeLt)
     }
-
 
     private suspend fun loadDefault(beforeLt: Long?): List<AccountEventWrap> {
         val list = eventsRepository.getRemote(

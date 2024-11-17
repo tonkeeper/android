@@ -10,17 +10,11 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyWithToast
-import com.tonapps.tonkeeper.extensions.showToast
-import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -39,11 +33,6 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -259,7 +248,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private fun showGrayMenu(view: View) {
         val actionSheet = ActionSheet(requireContext())
-        actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
+        if (nftEntity.collection == null) {
+            actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
+        } else {
+            actionSheet.addItem(HIDE_NFT_ID, Localization.hide_full_collection, UIKitIcon.ic_eye_disable_16)
+        }
         actionSheet.addItem(HIDE_AND_REPORT_ID, Localization.hide_and_report_collection, UIKitIcon.ic_block_16)
         actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
         if (isCanSend && !nftEntity.isTrusted) {

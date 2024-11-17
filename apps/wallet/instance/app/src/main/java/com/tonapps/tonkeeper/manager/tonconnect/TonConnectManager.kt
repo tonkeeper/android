@@ -46,10 +46,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -239,9 +242,9 @@ class TonConnectManager(
                 return null
             }
 
-            scope.launch {
+            safeModeClient.isReadyFlow.take(1).onEach {
                 connectRemoteApp(activity, tonConnect)
-            }
+            }.launchIn(scope)
             return null
         } catch (e: Exception) {
             if (uri.isEmptyQuery || uri.hasQuery("open") || uri.hasQuery("ret")) {
@@ -323,7 +326,7 @@ class TonConnectManager(
     }
 
     fun isScam(context: Context, vararg uris: Uri): Boolean {
-        if (settingsRepository.safeMode && safeModeClient.isHasScamUris(*uris)) {
+        if (settingsRepository.isSafeModeEnabled() && safeModeClient.isHasScamUris(*uris)) {
             TonConnectSafeModeDialog(context).show()
             return true
         }

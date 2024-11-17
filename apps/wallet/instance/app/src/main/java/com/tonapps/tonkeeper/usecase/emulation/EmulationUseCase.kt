@@ -44,14 +44,24 @@ class EmulationUseCase(
         forceRelayer: Boolean = false,
         params: Boolean = false,
     ): Emulated {
-        return if (forceRelayer || useBattery) {
-            emulateWithBattery(
-                message = message,
-                forceRelayer = forceRelayer,
-                params = params
+        return try {
+            if (forceRelayer || useBattery) {
+                emulateWithBattery(
+                    message = message,
+                    forceRelayer = forceRelayer,
+                    params = params
+                )
+            } else {
+                emulate(message, params)
+            }
+        } catch (e: Throwable) {
+            Emulated(
+                consequences = null,
+                total = Emulated.Total(ZERO, 0, false),
+                extra = Emulated.defaultExtra,
+                currency = settingsRepository.currency,
+                failed = true
             )
-        } else {
-            emulate(message, params)
         }
     }
 

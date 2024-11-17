@@ -5,8 +5,10 @@ import android.content.Context
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
@@ -26,11 +28,16 @@ class SecurityViewModel(
     val biometric: Boolean
         get() = settingsRepository.biometric
 
-    var safeMode: Boolean
-        get() = settingsRepository.safeMode
-        set(value) {
-            settingsRepository.safeMode = value
-        }
+    val safeModeFlow: Flow<SafeModeState>
+        get() = settingsRepository.safeModeStateFlow
+
+    fun getSafeModeState() = settingsRepository.getSafeModeState()
+
+    fun isSafeModeEnabled() = settingsRepository.isSafeModeEnabled()
+
+    fun setSafeModeState(state: SafeModeState) {
+        settingsRepository.setSafeModeState(state)
+    }
 
     fun enableBiometric(context: Context, value: Boolean) = flow {
         if (value) {

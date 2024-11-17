@@ -6,6 +6,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeperx.R
 import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation
+import uikit.widget.HeaderView
 
 class TonConnectSafeModeDialog(context: Context): ModalDialog(context, R.layout.dialog_tonconnect_safemode) {
 
@@ -14,6 +15,7 @@ class TonConnectSafeModeDialog(context: Context): ModalDialog(context, R.layout.
     }
 
     init {
+        findViewById<HeaderView>(R.id.header)!!.doOnCloseClick = { dismiss() }
         findViewById<View>(R.id.open_settings)!!.setOnClickListener {
             dismiss()
             navigation?.add(SecurityScreen.newInstance())

@@ -48,6 +48,7 @@ data class ConfigEntity(
     val tonapiSSETestnetEndpoint: String,
     val iapPackages: List<IAPPackageEntity>,
     val burnZeroDomain: String,
+    val scamAPIURL: String
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -108,7 +109,8 @@ data class ConfigEntity(
         iapPackages = json.optJSONArray("iap_packages")?.let { array ->
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
         } ?: emptyList(),
-        burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ") // tonkeeper-zero.ton
+        burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"), // tonkeeper-zero.ton
+        scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com")
     )
 
     constructor() : this(
@@ -150,7 +152,8 @@ data class ConfigEntity(
         tonapiSSEEndpoint = "https://rt.tonapi.io",
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
         iapPackages = emptyList(),
-        burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"
+        burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
+        scamAPIURL = "https://scam.tonkeeper.com"
     )
 
     companion object {

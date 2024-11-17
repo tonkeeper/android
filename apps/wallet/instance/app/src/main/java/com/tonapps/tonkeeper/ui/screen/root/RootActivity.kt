@@ -1,9 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.net.Uri
+import android.nfc.NfcAdapter
+import android.nfc.Tag
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
@@ -74,6 +78,10 @@ class RootActivity: BaseWalletActivity() {
     private val settingsRepository by inject<SettingsRepository>()
     private val passcodeManager by inject<PasscodeManager>()
 
+    private val nfcAdapter: NfcAdapter? by lazy {
+        NfcAdapter.getDefaultAdapter(this)
+    }
+
     private lateinit var uiHandler: Handler
 
     private lateinit var lockView: View
@@ -124,6 +132,17 @@ class RootActivity: BaseWalletActivity() {
         App.applyConfiguration(resources.configuration)
     }
 
+    private fun enableNfcForegroundDispatch() {
+        val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+        val filters = arrayOf(IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED))
+        nfcAdapter?.enableForegroundDispatch(this, pendingIntent, filters, null)
+    }
+
+    private fun disableNfcForegroundDispatch() {
+        nfcAdapter?.disableForegroundDispatch(this)
+    }
+
     override fun attachBaseContext(newBase: Context) {
         if (DevSettings.ignoreSystemFontSize) {
             val newConfig = Configuration(newBase.resources.configuration)
@@ -136,11 +155,13 @@ class RootActivity: BaseWalletActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.connectTonConnectBridge()
+        enableNfcForegroundDispatch()
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.disconnectTonConnectBridge()
+        disableNfcForegroundDispatch()
     }
 
     private suspend fun pinState(state: LockScreen.State) {
@@ -351,6 +372,12 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
+        Log.d("NFCLog", "Intent: $intent")
+        if (intent.action == NfcAdapter.ACTION_TAG_DISCOVERED) {
+            val detectedTag: Tag? = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
+            Log.d("NFCLog", "Tag discovered: $detectedTag")
+            return
+        }
         val uri = intent.data
         val extras = intent.extras
         if (uri != null) {

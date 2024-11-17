@@ -27,17 +27,6 @@ data class QRArgs(
         walletType = bundle.getEnum<Wallet.Type>(ARG_WALLET_TYPE, Wallet.Type.Default)
     )
 
-    fun getDeepLink(): String {
-        var deepLink = "ton://transfer/${address}"
-        if (!token.isTon) {
-            deepLink += "?token=${token.address.toUserFriendly(
-                wallet = false, 
-                testnet = walletType == Wallet.Type.Testnet
-            )}"
-        }
-        return deepLink
-    }
-
     override fun toBundle(): Bundle {
         val bundle = Bundle()
         bundle.putString(ARG_ADDRESS, address)

@@ -404,7 +404,7 @@ class HistoryHelper(
                 )
             }
 
-            if (chunkItems.size > 0 && !hasWrongPosition(chunkItems)) {
+            if (chunkItems.size > 0 && !hasWrongPosition(chunkItems, positionExtra)) {
                 items.addAll(chunkItems)
             }
         }
@@ -412,7 +412,10 @@ class HistoryHelper(
         return@withContext items
     }
 
-    private fun hasWrongPosition(items: List<HistoryItem>): Boolean {
+    private fun hasWrongPosition(items: List<HistoryItem>, positionExtra: Int): Boolean {
+        if (positionExtra > 0) {
+            return false
+        }
         if (items.isEmpty()) {
             return false
         } else if (items.size == 1) {

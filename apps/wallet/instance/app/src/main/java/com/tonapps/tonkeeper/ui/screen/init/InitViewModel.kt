@@ -38,6 +38,7 @@ import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
@@ -438,6 +439,14 @@ class InitViewModel(
             try {
                 if (requestSetPinCode) {
                     passcodeManager.save(savedState.passcode!!)
+                }
+
+                val alreadyWalletCount = accountRepository.getWallets()
+                if (alreadyWalletCount.isEmpty()) {
+                    settingsRepository.setSafeModeState(SafeModeState.Enabled)
+                    if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
+                        settingsRepository.showSafeModeSetup = true
+                    }
                 }
 
                 val wallets = mutableListOf<WalletEntity>()

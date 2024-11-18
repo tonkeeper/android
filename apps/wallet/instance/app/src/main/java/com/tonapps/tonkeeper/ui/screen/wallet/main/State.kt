@@ -43,7 +43,7 @@ sealed class State {
         val biometryEnabled: Boolean,
         val hasBackup: Boolean,
         val showTelegramChannel: Boolean,
-        val safeModeEnabled: Boolean
+        val safeModeBlock: Boolean
     ): State()
 
     data class Assets(
@@ -250,7 +250,7 @@ sealed class State {
             if (!hasBackup) {
                 setupTypes.add(SetupType.Backup)
             }
-            if (!setup.safeModeEnabled) {
+            if (setup.safeModeBlock) {
                 setupTypes.add(SetupType.SafeMode)
             }
             return setupTypes.toList()

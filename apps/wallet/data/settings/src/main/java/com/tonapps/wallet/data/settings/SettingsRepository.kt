@@ -55,6 +55,7 @@ class SettingsRepository(
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
         private const val CHART_PERIOD_KEY = "chart_period"
         private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
+        private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -226,6 +227,14 @@ class SettingsRepository(
         set(value) {
             if (value != field) {
                 prefs.edit().putBoolean(BATTERY_VIEWED_KEY, value).apply()
+                field = value
+            }
+        }
+
+    var showSafeModeSetup: Boolean = prefs.getBoolean(SHOW_SAFE_MODE_SETUP_KEY, true)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(SHOW_SAFE_MODE_SETUP_KEY, value).apply()
                 field = value
             }
         }

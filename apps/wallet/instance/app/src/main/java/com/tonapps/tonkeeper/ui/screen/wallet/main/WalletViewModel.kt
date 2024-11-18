@@ -214,7 +214,7 @@ class WalletViewModel(
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
                     showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id),
-                    safeModeEnabled = settingsRepository.isSafeModeEnabled(),
+                    safeModeBlock = settingsRepository.showSafeModeSetup,
                 )
             }
 

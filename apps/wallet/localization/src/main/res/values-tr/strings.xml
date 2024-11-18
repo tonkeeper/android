@@ -357,6 +357,7 @@
     <string name="hide_collection">Koleksiyonu gizle</string>
     <string name="hide_and_report_collection">Gizle ve bildir</string>
     <string name="open_tonviewer">Tonviewer\'da aç</string>
+    <string name="safe_mode_disabled">Güvenli mod 24 saat boyunca kapalıdır. Otomatik olarak açılacaktır. <annotation colorAttr="textAccentColor">Kalıcı olarak kapat</annotation></string>
     <string name="customize">Özelleştir</string>
     <string name="customize_wallet_title">Cüzdanınızı Özelleştirin</string>
     <string name="customize_wallet_subtitle">Cüzdan adı ve simgesi cihazınızda yerel olarak saklanır.</string>
@@ -480,11 +481,16 @@
     <string name="token_id">Jeton ID</string>
     <string name="safe_mode">Güvenli mod</string>
     <string name="open_settings">Ayarları Aç</string>
+    <string name="setup_safe_mode">Kilit Ekranınızı ve Güvenli Modunuzu ayarlayın</string>
     <string name="safe_mode_tonconnect_title">Bağlantılar yalnızca doğrulanmış uygulamalar için kullanılabilir</string>
+    <string name="hide_full_collection">Koleksiyonu gizle</string>
     <string name="safe_mode_description">Bu modda yalnızca doğrulanmış uygulamalar, NFT\'ler ve token\'lar kullanılabilir. <annotation colorAttr="textAccentColor">Daha fazla bilgi edinin</annotation></string>
     <string name="stories_safemode_1_title">Yalnızca Doğrulanmış Uygulamalar ve Hizmetler</string>
     <string name="stories_safemode_1_subtitle">Sahtekarlık ve dolandırıcılıktan korunmak için.</string>
     <string name="stories_safemode_2_title">Sadece Doğrulanmış NFT\'ler</string>
     <string name="stories_safemode_2_subtitle">Spam ve sahte ürünlerden kaçınmak için.</string>
     <string name="stories_safemode_3_title">Sadece Doğrulanmış Tokenlar</string>
+    <string name="tx_marked_as_spam">İşlem Spam olarak işaretlendi</string>
+    <string name="your_address">Adresiniz:</string>
+    <string name="safe_mode_tokens_footer">Güvenli mod etkinleştirildi. Yalnızca doğrulanmış tokenlar kullanılabilir. <annotation colorAttr="textAccentColor">Ayarlar</annotation></string>
 </resources>

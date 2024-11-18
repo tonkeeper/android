@@ -357,6 +357,7 @@
     <string name="hide_collection">隐藏收藏</string>
     <string name="hide_and_report_collection">隐藏并举报</string>
     <string name="open_tonviewer">在 Tonviewer 中打开</string>
+    <string name="safe_mode_disabled">安全模式关闭 24 小时。它将自动开启。<annotation colorAttr="textAccentColor">永久关闭</annotation></string>
     <string name="customize">自定义</string>
     <string name="customize_wallet_title">自定义您的钱包</string>
     <string name="customize_wallet_subtitle">钱包名称和图标存储在您的设备上。</string>
@@ -475,11 +476,16 @@
     <string name="token_id">代币 ID</string>
     <string name="safe_mode">安全模式</string>
     <string name="open_settings">打开“设置”</string>
+    <string name="setup_safe_mode">设置锁定屏幕和安全模式</string>
     <string name="safe_mode_tonconnect_title">仅向经过验证的应用提供连接</string>
+    <string name="hide_full_collection">隐藏收藏</string>
     <string name="safe_mode_description">在此模式下，仅经过验证的应用、NFT 和代币可用。<annotation colorAttr="textAccentColor">了解详情</annotation></string>
     <string name="stories_safemode_1_title">仅限经过验证的应用和服务</string>
     <string name="stories_safemode_1_subtitle">避免网络钓鱼和欺诈。</string>
     <string name="stories_safemode_2_title">仅限经过验证的 NFT</string>
     <string name="stories_safemode_2_subtitle">以避免垃圾邮件和假冒物品。</string>
     <string name="stories_safemode_3_title">仅限已验证的代币</string>
+    <string name="tx_marked_as_spam">交易被标记为垃圾邮件</string>
+    <string name="your_address">您的地址：</string>
+    <string name="safe_mode_tokens_footer">安全模式已启用。仅可使用经过验证的令牌。<annotation colorAttr="textAccentColor">设置</annotation></string>
 </resources>

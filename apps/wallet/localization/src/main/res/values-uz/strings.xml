@@ -357,6 +357,7 @@
     <string name="hide_collection">To\'plamni yashirish</string>
     <string name="hide_and_report_collection">Yashirish va hisobot berish</string>
     <string name="open_tonviewer">Tonviewer-da oching</string>
+    <string name="safe_mode_disabled">Xavfsiz rejim 24 soat davomida o\'chirilgan. U avtomatik ravishda yoqiladi. <annotation colorAttr="textAccentColor">Umumiy o\'chirish</annotation></string>
     <string name="customize">Moslashtirish</string>
     <string name="customize_wallet_title">Hamyoningizni sozlang</string>
     <string name="customize_wallet_subtitle">Hamyon nomi va belgisi qurilmangizda mahalliy saqlanadi.</string>
@@ -480,11 +481,16 @@
     <string name="token_id">Token ID</string>
     <string name="safe_mode">Xavfsiz rejim</string>
     <string name="open_settings">Sozlamalarni oching</string>
+    <string name="setup_safe_mode">Ekranni qulflash va Xavfsiz rejimni sozlang</string>
     <string name="safe_mode_tonconnect_title">Ulanishlar faqat tasdiqlangan ilovalar uchun mavjud</string>
+    <string name="hide_full_collection">To\'plamni yashirish</string>
     <string name="safe_mode_description">Bu rejimda faqat tasdiqlangan ilovalar, NFTlar va tokenlar mavjud. <annotation colorAttr="textAccentColor">Batafsil ma\'lumot</annotation></string>
     <string name="stories_safemode_1_title">Faqat tasdiqlangan ilovalar va xizmatlar</string>
     <string name="stories_safemode_1_subtitle">Firibgarlik va firibgarlikning oldini olish uchun.</string>
     <string name="stories_safemode_2_title">Faqat tasdiqlangan NFTlar</string>
     <string name="stories_safemode_2_subtitle">Spam va soxta narsalarni oldini olish uchun.</string>
     <string name="stories_safemode_3_title">Faqat tasdiqlangan tokenlar</string>
+    <string name="tx_marked_as_spam">Tranzaksiya Spam sifatida belgilandi</string>
+    <string name="your_address">Sizning manzilingiz:</string>
+    <string name="safe_mode_tokens_footer">Xavfsiz rejim yoqilgan. Faqat tasdiqlangan tokenlar mavjud. <annotation colorAttr="textAccentColor">Sozlamalar</annotation></string>
 </resources>

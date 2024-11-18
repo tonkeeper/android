@@ -357,6 +357,7 @@
     <string name="hide_collection">Ocultar colección</string>
     <string name="hide_and_report_collection">Ocultar y reportar</string>
     <string name="open_tonviewer">Abierto en Tonviewer</string>
+    <string name="safe_mode_disabled">El modo seguro está desactivado durante 24 horas. Se activará automáticamente. <annotation colorAttr="textAccentColor">Desactivar permanentemente</annotation></string>
     <string name="customize">Personalizar</string>
     <string name="customize_wallet_title">Personaliza tu Cartera</string>
     <string name="customize_wallet_subtitle">El nombre y el icono de la billetera se almacenan localmente en su dispositivo.</string>
@@ -480,12 +481,17 @@
     <string name="token_id">Identificación del token</string>
     <string name="safe_mode">Modo seguro</string>
     <string name="open_settings">Abrir configuración</string>
+    <string name="setup_safe_mode">Configura tu pantalla de bloqueo y modo seguro</string>
     <string name="safe_mode_tonconnect_title">Las conexiones solo están disponibles para aplicaciones verificadas</string>
+    <string name="hide_full_collection">Ocultar colección</string>
     <string name="safe_mode_description">En este modo, solo están disponibles las aplicaciones, los NFT y los tokens verificados. <annotation colorAttr="textAccentColor">Más información</annotation></string>
     <string name="stories_safemode_1_title">Solo aplicaciones y servicios verificados</string>
     <string name="stories_safemode_1_subtitle">Para evitar el phishing y el fraude.</string>
     <string name="stories_safemode_2_title">Solo NFT verificadas</string>
     <string name="stories_safemode_2_subtitle">Para evitar spam y artículos falsos.</string>
     <string name="stories_safemode_3_title">Solo tokens verificados</string>
+    <string name="tx_marked_as_spam">Transacción marcada como Spam</string>
+    <string name="your_address">Su dirección:</string>
+    <string name="safe_mode_tokens_footer">El modo seguro está habilitado. Solo están disponibles los tokens verificados. <annotation colorAttr="textAccentColor">Configuración</annotation></string>
 
 </resources>

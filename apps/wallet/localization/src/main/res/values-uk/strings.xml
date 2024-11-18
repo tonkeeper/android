@@ -357,6 +357,7 @@
     <string name="hide_collection">Сховати колекцію</string>
     <string name="hide_and_report_collection">Сховати і повідомити</string>
     <string name="open_tonviewer">Відкрити в Tonviewer</string>
+    <string name="safe_mode_disabled">Безпечний режим вимкнено на 24 години. Він увімкнеться автоматично. <annotation colorAttr="textAccentColor">Вимкнути назавжди</annotation></string>
     <string name="customize">Налаштувати</string>
     <string name="customize_wallet_title">Налаштуйте свій Гаманець</string>
     <string name="customize_wallet_subtitle">Назва гаманця та іконка зберігаються локально на вашому пристрої.</string>
@@ -490,11 +491,16 @@
     <string name="token_id">Токен ID</string>
     <string name="safe_mode">Безпечний режим</string>
     <string name="open_settings">Відкрийте налаштування</string>
+    <string name="setup_safe_mode">Налаштуйте екран блокування та безпечний режим</string>
     <string name="safe_mode_tonconnect_title">Підключення доступне лише для перевірених програм</string>
+    <string name="hide_full_collection">Сховати колекцію</string>
     <string name="safe_mode_description">У цьому режимі доступні лише перевірені програми, NFT і токени. <annotation colorAttr="textAccentColor">Дізнайтесь більше</annotation></string>
     <string name="stories_safemode_1_title">Лише перевірені програми та служби</string>
     <string name="stories_safemode_1_subtitle">Щоб уникнути фішингу та шахрайства.</string>
     <string name="stories_safemode_2_title">Тільки перевірені NFT</string>
     <string name="stories_safemode_2_subtitle">Щоб уникнути спаму та фейків.</string>
     <string name="stories_safemode_3_title">Тільки перевірені токени</string>
+    <string name="tx_marked_as_spam">Трансакцію позначено як спам</string>
+    <string name="your_address">Адреса гаманця:</string>
+    <string name="safe_mode_tokens_footer">Безпечний режим увімкнено. Доступні лише перевірені токени. <annotation colorAttr="textAccentColor">Налаштування</annotation></string>
 </resources>

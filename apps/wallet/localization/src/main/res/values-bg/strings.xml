@@ -29,6 +29,7 @@
     <string name="setup_finish_biometry">Използвайте биометрия за потвърждаване на транзакции</string>
     <string name="setup_finish_backup">Резервирайте възстановителната фраза на портфейла</string>
     <string name="setup_finish_telegram">Присъединете се към канала на Tonkeeper</string>
+    <string name="hide_full_collection">Скриване на колекцията</string>
     <string name="safe_mode_description">В този режим са налични само проверени приложения, NFT и токени. <annotation colorAttr="textAccentColor">Научете повече</annotation></string>
 
 
@@ -423,6 +424,7 @@
     <string name="hide_collection">Скриване на колекцията</string>
     <string name="hide_and_report_collection">Скрий се и докладвай</string>
     <string name="open_tonviewer">Отворете в Tonviewer</string>
+    <string name="safe_mode_disabled">Безопасният режим е изключен за 24 часа. Той ще се включи автоматично. <annotation colorAttr="textAccentColor">Изключване за постоянно</annotation></string>
     <string name="customize">Персонализиране</string>
     <string name="customize_wallet_title">Персонализирайте вашия портфейл</string>
     <string name="customize_wallet_subtitle">Името на портфейла и иконата се съхраняват локално на вашето устройство.</string>
@@ -527,10 +529,14 @@
     <string name="token_id">ID на токена</string>
     <string name="safe_mode">Безопасен режим</string>
     <string name="open_settings">Отворете Настройки</string>
+    <string name="setup_safe_mode">Настройте своя заключен екран и безопасен режим</string>
     <string name="safe_mode_tonconnect_title">Връзките са достъпни само за проверени приложения</string>
     <string name="stories_safemode_1_title">Само проверени приложения и услуги</string>
     <string name="stories_safemode_1_subtitle">За да избегнете фишинг и измами.</string>
     <string name="stories_safemode_2_title">Само проверени NFT</string>
     <string name="stories_safemode_2_subtitle">За да избегнете спам и фалшиви артикули.</string>
     <string name="stories_safemode_3_title">Само проверени токени</string>
+    <string name="tx_marked_as_spam">Транзакцията е маркирана като спам</string>
+    <string name="your_address">Вашият адрес:</string>
+    <string name="safe_mode_tokens_footer">Безопасният режим е активиран. Налични са само потвърдени токени. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
 </resources>

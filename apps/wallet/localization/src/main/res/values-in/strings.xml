@@ -357,6 +357,7 @@
     <string name="hide_collection">Sembunyikan koleksi</string>
     <string name="hide_and_report_collection">Sembunyikan dan laporkan</string>
     <string name="open_tonviewer">Buka di Tonviewer</string>
+    <string name="safe_mode_disabled">Mode aman dimatikan selama 24 jam. Mode ini akan aktif secara otomatis. <annotation colorAttr="textAccentColor">Matikan secara permanen</annotation></string>
     <string name="customize">Sesuaikan</string>
     <string name="customize_wallet_title">Sesuaikan Dompet Anda</string>
     <string name="customize_wallet_subtitle">Nama dan ikon dompet disimpan secara lokal di perangkat Anda.</string>
@@ -475,12 +476,17 @@
     <string name="token_id">ID Token</string>
     <string name="safe_mode">Mode aman</string>
     <string name="open_settings">Buka Pengaturan</string>
+    <string name="setup_safe_mode">Siapkan Layar Kunci dan Mode Aman Anda</string>
     <string name="safe_mode_tonconnect_title">Koneksi hanya tersedia untuk aplikasi yang terverifikasi</string>
+    <string name="hide_full_collection">Sembunyikan koleksi</string>
     <string name="safe_mode_description">Dalam mode ini, hanya aplikasi, NFT, dan token terverifikasi yang tersedia. <annotation colorAttr="textAccentColor">Pelajari lebih lanjut</annotation></string>
     <string name="stories_safemode_1_title">Hanya Aplikasi dan Layanan Terverifikasi</string>
     <string name="stories_safemode_1_subtitle">Untuk menghindari phishing dan penipuan.</string>
     <string name="stories_safemode_2_title">Hanya NFT Terverifikasi</string>
     <string name="stories_safemode_2_subtitle">Untuk menghindari spam dan barang palsu.</string>
     <string name="stories_safemode_3_title">Hanya Token Terverifikasi</string>
+    <string name="tx_marked_as_spam">Transaksi ditandai sebagai Spam</string>
+    <string name="your_address">Alamat Anda:</string>
+    <string name="safe_mode_tokens_footer">Mode aman diaktifkan. Hanya token terverifikasi yang tersedia. <annotation colorAttr="textAccentColor">Pengaturan</annotation></string>
 
 </resources>

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.network.get
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -71,6 +72,9 @@ class BrowserSearchViewModel(
     private fun uri(query: String): Uri? {
         if (isDomain(query)) {
             return Uri.parse("https://$query")
+        }
+        if (query.startsWith("http://")) {
+            return uri(query.replace("http://", "https://"))
         }
         return try {
             val uri = Uri.parse(query)

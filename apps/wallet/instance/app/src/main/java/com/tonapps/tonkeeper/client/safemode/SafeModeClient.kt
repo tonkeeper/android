@@ -53,7 +53,7 @@ class SafeModeClient(
 
     fun isHasScamUris(vararg uris: Uri): Boolean {
         for (uri in uris) {
-            if (uri == Uri.EMPTY) {
+            if (uri == Uri.EMPTY || uri.scheme != "https") {
                 continue
             }
             var host = uri.host ?: continue

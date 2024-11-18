@@ -238,12 +238,10 @@ class TonConnectManager(
                 fromPackageName = fromPackageName
             )
 
-            if (isScam(context, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
-                return null
-            }
-
             safeModeClient.isReadyFlow.take(1).onEach {
-                connectRemoteApp(activity, tonConnect)
+                if (!isScam(context, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
+                    connectRemoteApp(activity, tonConnect)
+                }
             }.launchIn(scope)
             return null
         } catch (e: Exception) {
@@ -275,6 +273,10 @@ class TonConnectManager(
         val clientId = tonConnect.clientId
         try {
             val app = readManifest(tonConnect.manifestUrl)
+            if (isScam(activity, app.iconUrl.toUri(), app.url)) {
+                return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
+            }
+
             val screen = TonConnectScreen.newInstance(
                 app = app,
                 proofPayload = tonConnect.proofPayload,
@@ -325,9 +327,11 @@ class TonConnectManager(
         }
     }
 
-    fun isScam(context: Context, vararg uris: Uri): Boolean {
+    suspend fun isScam(context: Context, vararg uris: Uri): Boolean {
         if (settingsRepository.isSafeModeEnabled() && safeModeClient.isHasScamUris(*uris)) {
-            TonConnectSafeModeDialog(context).show()
+            withContext(Dispatchers.Main) {
+                TonConnectSafeModeDialog(context).show()
+            }
             return true
         }
         return false

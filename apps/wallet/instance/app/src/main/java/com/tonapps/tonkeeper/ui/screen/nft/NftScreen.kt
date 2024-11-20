@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.nft
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -271,7 +272,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private fun showMenu(view: View) {
         val actionSheet = ActionSheet(requireContext())
-        actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
+        if (nftEntity.collection == null) {
+            actionSheet.addItem(HIDE_NFT_ID, Localization.hide_collection, UIKitIcon.ic_eye_disable_16)
+        } else {
+            actionSheet.addItem(HIDE_NFT_ID, Localization.hide_full_collection, UIKitIcon.ic_eye_disable_16)
+        }
         actionSheet.addItem(VIEWER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
         if (isCanSend && !nftEntity.isTrusted) {
             actionSheet.addItem(BURN_ID, Localization.burn, UIKitIcon.ic_fire_badge_16)

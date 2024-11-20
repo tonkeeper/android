@@ -8,7 +8,9 @@ import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.block.StateInit
 import org.ton.cell.Cell
+import org.ton.tlb.CellRef
 
 sealed class RootEvent {
     data class OpenTab(
@@ -41,7 +43,8 @@ sealed class RootEvent {
         val amount: Long?,
         val text: String?,
         val jettonAddress: String?,
-        val bin: Cell?
+        val bin: Cell?,
+        val initStateBase64: String?
     ): RootEvent()
 
     data object CloseCurrentTonConnect: RootEvent()

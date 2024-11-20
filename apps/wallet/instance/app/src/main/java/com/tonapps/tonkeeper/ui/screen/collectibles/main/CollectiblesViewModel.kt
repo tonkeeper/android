@@ -41,8 +41,9 @@ class CollectiblesViewModel(
         networkMonitor.isOnlineFlow,
         settingsRepository.hiddenBalancesFlow,
         settingsRepository.tokenPrefsChangedFlow,
+        settingsRepository.safeModeStateFlow,
         ltFlow,
-    ) { isOnline, hiddenBalances, _, _ ->
+    ) { isOnline, hiddenBalances, _, _, _ ->
         stateFlow(
             wallet = wallet,
             hiddenBalances = hiddenBalances,

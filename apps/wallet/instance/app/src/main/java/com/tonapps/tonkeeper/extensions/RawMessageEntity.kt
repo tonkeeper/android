@@ -143,7 +143,7 @@ fun RawMessageEntity.getWalletTransfer(
     val builder = WalletTransferBuilder()
     builder.destination = address
     builder.messageData = MessageData.Raw(body, newStateInit ?: getStateInitRef())
-    builder.bounceable = address.isBounceable()
+    builder.bounceable = addressValue.isBounceable()
     if (newCustomPayload != null) {
         val defCoins = Coins.of(0.5)
         if (defCoins.amount.value > coins.amount.value) {

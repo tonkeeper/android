@@ -84,6 +84,9 @@ class DAppsRepository(
     }
 
     suspend fun getPushes(tonProof: String, accountId: String): List<AppPushEntity> {
+        if (true) {
+            return emptyList()
+        }
         val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
         if (pushes.isEmpty()) {
             return emptyList()

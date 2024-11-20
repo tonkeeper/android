@@ -56,6 +56,7 @@ class SettingsRepository(
         private const val CHART_PERIOD_KEY = "chart_period"
         private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
         private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
+        private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -239,6 +240,9 @@ class SettingsRepository(
             }
         }
 
+    val addressCopyCount: Int
+        get() = prefs.getInt(ADDRESS_COPY_COUNT_KEY, 0)
+
     fun getSafeModeState(): SafeModeState {
         val disabledUnix = prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, 0)
         if (1L == disabledUnix) {
@@ -287,9 +291,11 @@ class SettingsRepository(
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
-    fun getCopyCount(walletId: String): Int = walletPrefsFolder.getCopyCount(walletId)
-
-    fun incrementCopyCount(walletId: String) = walletPrefsFolder.incrementCopyCount(walletId)
+    fun incrementCopyCount() {
+        val count = addressCopyCount + 1
+        prefs.edit().putInt(ADDRESS_COPY_COUNT_KEY, count).apply()
+        walletPrefsFolder.notifyChanged()
+    }
 
     suspend fun setPushWallet(walletId: String, value: Boolean) {
         walletPrefsFolder.setPushEnabled(walletId, value)

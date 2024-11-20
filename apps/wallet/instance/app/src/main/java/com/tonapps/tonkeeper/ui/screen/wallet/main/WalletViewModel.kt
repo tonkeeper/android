@@ -214,7 +214,7 @@ class WalletViewModel(
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
                     showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id),
-                    safeModeBlock = settingsRepository.showSafeModeSetup,
+                    safeModeBlock = wallet.initialized && settingsRepository.showSafeModeSetup,
                 )
             }
 
@@ -229,7 +229,7 @@ class WalletViewModel(
                 dAppNotifications = State.DAppNotifications(pushes),
                 setup = uiSetup,
                 lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale()),
-                prefixYourAddress = 3 > settingsRepository.getCopyCount(wallet.id)
+                prefixYourAddress = 2 > settingsRepository.addressCopyCount
             )
             if (uiItems.isNotEmpty()) {
                 _uiItemsFlow.value = uiItems

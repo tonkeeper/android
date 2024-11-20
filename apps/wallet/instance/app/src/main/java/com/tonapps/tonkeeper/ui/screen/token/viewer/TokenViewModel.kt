@@ -237,7 +237,8 @@ class TokenViewModel(
             wallet = wallet,
             events = events,
             removeDate = false,
-            hiddenBalances = settingsRepository.hiddenBalances
+            hiddenBalances = settingsRepository.hiddenBalances,
+            safeMode = settingsRepository.isSafeModeEnabled(),
         )
     }
 

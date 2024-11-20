@@ -17,5 +17,6 @@ data class AccountItem(
     val selected: Boolean,
     val position: ListCell.Position,
     val ledgerIndex: Int? = null,
-    val ledgerAdded: Boolean = false
+    val ledgerAdded: Boolean = false,
+    val initialized: Boolean,
 ): BaseListItem(0), Parcelable

@@ -193,8 +193,15 @@ class HistoryHelper(
         response: MessageConsequences,
         rates: RatesEntity,
         isBattery: Boolean = false,
+        safeMode: Boolean,
     ): Details {
-        val items = mapping(wallet, response.event, true, positionExtra = 1).toMutableList()
+        val items = mapping(
+            wallet = wallet,
+            event = response.event,
+            removeDate = true,
+            positionExtra = 1,
+            safeMode = safeMode
+        ).toMutableList()
         val extra = response.event.extra
 
         val fee = if (0 > extra) Coins.of(abs(extra)) else Coins.ZERO
@@ -322,7 +329,7 @@ class HistoryHelper(
         removeDate: Boolean = false,
         hiddenBalances: Boolean = false,
         positionExtra: Int = 0,
-        safeMode: Boolean = settingsRepository.isSafeModeEnabled()
+        safeMode: Boolean
     ): List<HistoryItem> {
         if (event == null) {
             return createFakeUnknownList()
@@ -334,10 +341,17 @@ class HistoryHelper(
         wallet: WalletEntity,
         eventId: String,
         removeDate: Boolean = false,
-        hiddenBalances: Boolean = false
+        hiddenBalances: Boolean = false,
+        safeMode: Boolean,
     ): List<HistoryItem> {
         val events = eventsRepository.getSingle(eventId, wallet.testnet) ?: return emptyList()
-        return mapping(wallet, events, removeDate, hiddenBalances)
+        return mapping(
+            wallet = wallet,
+            events = events,
+            removeDate = removeDate,
+            hiddenBalances = hiddenBalances,
+            safeMode = safeMode
+        )
     }
 
     suspend fun mapping(
@@ -346,7 +360,7 @@ class HistoryHelper(
         removeDate: Boolean = false,
         hiddenBalances: Boolean = false,
         positionExtra: Int = 0,
-        safeMode: Boolean = settingsRepository.isSafeModeEnabled()
+        safeMode: Boolean
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val items = mutableListOf<HistoryItem>()
         for (event in events) {
@@ -376,7 +390,8 @@ class HistoryHelper(
                     wallet = wallet,
                     action = action,
                     timestamp = timestamp,
-                    isScam = isScam
+                    isScam = isScam,
+                    safeMode = safeMode
                 ) ?: continue
 
                 chunkItems.add(
@@ -435,7 +450,7 @@ class HistoryHelper(
         action: Action,
         timestamp: Long,
         isScam: Boolean,
-        safeMode: Boolean = settingsRepository.isSafeModeEnabled()
+        safeMode: Boolean
     ): HistoryItem.Event? {
         val simplePreview = action.simplePreview
         val date = DateHelper.formatTransactionTime(timestamp, settingsRepository.getLocale())

@@ -84,7 +84,8 @@ internal class RNMigrationHelper(
                         xfp = it.xfp,
                         path = it.path
                     )
-                }
+                },
+                initialized = false
             )
             list.add(entity)
         }

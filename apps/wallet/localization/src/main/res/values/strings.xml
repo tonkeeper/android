@@ -46,6 +46,7 @@
         <item quantity="many">%1$d NFTs</item>
         <item quantity="other">%1$d NFTs</item>
     </plurals>
+    <string name="address_prefix">Address:</string>
     <string name="your_address">Your address:</string>
     <string name="safe_mode_tokens_footer">Safe mode is enabled. Only verified tokens are available. <annotation colorAttr="textAccentColor">Settings</annotation></string>
     <string name="setup_safe_mode">Set up your Lock Screen and Safe Mode</string>

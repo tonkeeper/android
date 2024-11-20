@@ -236,7 +236,8 @@
     <string name="safe_mode_description">В этом режиме доступны только проверенные сервисы, NFT и токены. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
     <string name="safe_mode_tonconnect_title">Подключение доступно только к проверенным приложениям</string>
     <string name="safe_mode_tonconnect_description">Вы можете изменить это в настройках безопасности вашего кошелька.</string>
-    <string name="your_address">Твой адрес:</string>
+    <string name="your_address">Ваш адрес:</string>
+    <string name="address_prefix">Адрес:</string>
     <string name="safe_mode_tokens_footer">Безопасный режим включён. Доступны только проверенные токены. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
 
 

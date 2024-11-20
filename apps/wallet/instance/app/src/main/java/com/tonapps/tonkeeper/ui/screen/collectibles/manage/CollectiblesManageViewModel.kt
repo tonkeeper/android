@@ -35,7 +35,8 @@ class CollectiblesManageViewModel(
     private val settingsRepository: SettingsRepository,
 ): BaseWalletVM(app) {
 
-    private val safeMode = settingsRepository.isSafeModeEnabled()
+    private val safeMode: Boolean
+        get() = settingsRepository.isSafeModeEnabled()
 
     private val _showedAllFlow = MutableStateFlow(false)
     private val showedAllFlow = _showedAllFlow.asStateFlow()

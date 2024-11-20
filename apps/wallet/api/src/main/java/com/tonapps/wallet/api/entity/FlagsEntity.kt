@@ -12,7 +12,8 @@ data class FlagsEntity(
     val disableDApps: Boolean,
     val disableBlur: Boolean,
     val disableLegacyBlur: Boolean,
-    val disableSigner: Boolean
+    val disableSigner: Boolean,
+    val safeModeEnabled: Boolean,
 ): Parcelable {
 
     constructor(json: JSONObject) : this(
@@ -21,7 +22,8 @@ data class FlagsEntity(
         disableDApps = json.optBoolean("disable_dapps", false),
         disableBlur = json.optBoolean("disable_blur", false),
         disableLegacyBlur = json.optBoolean("disable_legacy_blur", false),
-        disableSigner = json.optBoolean("disable_signer", false)
+        disableSigner = json.optBoolean("disable_signer", false),
+        safeModeEnabled = json.optBoolean("safe_mode_enabled", false)
     )
 
     constructor() : this(
@@ -30,6 +32,7 @@ data class FlagsEntity(
         disableDApps = false,
         disableBlur = false,
         disableLegacyBlur = false,
-        disableSigner = false
+        disableSigner = false,
+        safeModeEnabled = false
     )
 }

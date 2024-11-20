@@ -22,20 +22,10 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         private const val SPAM_STATE_TRANSACTION_PREFIX = "spam_state_transaction_"
         private const val BATTERY_TX_ENABLED_PREFIX = "batter_tx_enabled_"
         private const val USDT_W5_PREFIX = "usdt_w5_"
-        private const val COPY_COUNT_PREFIX = "copy_count_"
     }
 
     fun isUSDTW5(walletId: String): Boolean {
         return getBoolean(keyUsdtW5(walletId), true)
-    }
-
-    fun getCopyCount(walletId: String): Int {
-        return getInt(key(COPY_COUNT_PREFIX, walletId), 0)
-    }
-
-    fun incrementCopyCount(walletId: String) {
-        val count = getCopyCount(walletId) + 1
-        putInt(key(COPY_COUNT_PREFIX, walletId), count, count > 3)
     }
 
     fun disableUSDTW5(walletId: String) {

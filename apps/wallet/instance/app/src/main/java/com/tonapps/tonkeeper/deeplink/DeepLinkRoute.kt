@@ -11,7 +11,10 @@ import com.tonapps.extensions.query
 import com.tonapps.extensions.queryBoolean
 import com.tonapps.extensions.queryPositiveLong
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.block.StateInit
 import org.ton.cell.Cell
+import org.ton.tlb.CellRef
+import org.ton.tlb.asRef
 
 sealed class DeepLinkRoute {
 
@@ -65,7 +68,8 @@ sealed class DeepLinkRoute {
         val amount: Long?,
         val text: String?,
         val jettonAddress: String?,
-        val bin: Cell?
+        val bin: Cell?,
+        val initStateBase64: String?
     ): DeepLinkRoute() {
 
         val isExpired: Boolean
@@ -77,9 +81,10 @@ sealed class DeepLinkRoute {
             amount = uri.queryPositiveLong("amount"),
             text = uri.query("text"),
             jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
-            bin = uri.query("bin")?.cellFromBase64()
+            bin = uri.query("bin")?.cellFromBase64(),
+            initStateBase64 = uri.query("init")
         ) {
-            if (uri.hasUnsupportedQuery(true, "exp", "amount", "text", "jettonAddress", "jetton", "bin")) {
+            if (uri.hasUnsupportedQuery(true, "exp", "amount", "text", "jettonAddress", "jetton", "bin", "init")) {
                 throw IllegalArgumentException("Unsupported query parameters")
             }
         }

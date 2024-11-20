@@ -31,7 +31,8 @@ class W5StoriesViewModel(
                 label = Wallet.NewLabel(listOf(fixedLabel), wallet.label.emoji, wallet.label.color),
                 publicKey = wallet.publicKey,
                 versions = listOf(WalletVersion.V5R1),
-                type = wallet.type
+                type = wallet.type,
+                initialized = listOf(false)
             ).first()
         }.map { wallet ->
             val mnemonic = accountRepository.getMnemonic(wallet.id) ?: throw Exception("mnemonic not found")

@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.postDelayed
 import androidx.core.view.updatePadding
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.print
 import com.tonapps.extensions.toUriOrNull
@@ -58,7 +59,9 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.ton.block.StateInit
 import org.ton.cell.Cell
+import org.ton.tlb.CellRef
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
@@ -256,7 +259,8 @@ class RootActivity: BaseWalletActivity() {
                 amountNano = event.amount ?: 0L,
                 text = event.text,
                 wallet = event.wallet,
-                bin = event.bin
+                bin = event.bin,
+                initStateBase64 = event.initStateBase64
             )
             is RootEvent.CloseCurrentTonConnect -> closeCurrentTonConnect {}
             else -> { }
@@ -271,7 +275,8 @@ class RootActivity: BaseWalletActivity() {
         wallet: WalletEntity,
         targetAddress: String,
         amountNano: Long,
-        bin: Cell
+        bin: Cell?,
+        initStateBase64: String?
     ) {
 
         val request = SignRequestEntity.Builder()
@@ -280,8 +285,8 @@ class RootActivity: BaseWalletActivity() {
             .addMessage(RawMessageEntity(
                 addressValue = targetAddress,
                 amount = amountNano,
-                stateInitValue = null,
-                payloadValue = bin.base64()
+                stateInitValue = initStateBase64,
+                payloadValue = bin?.base64()
             ))
             .setTestnet(wallet.testnet)
             .build(Uri.parse("https://tonkeeper.com/"))
@@ -297,15 +302,22 @@ class RootActivity: BaseWalletActivity() {
         amountNano: Long = 0,
         text: String? = null,
         nftAddress: String? = null,
-        bin: Cell? = null
+        bin: Cell? = null,
+        initStateBase64: String? = null
     ) {
-        if (bin != null && 0 >= amountNano) {
+        if ((bin != null || initStateBase64 != null) && 0 >= amountNano) {
             toast(Localization.invalid_link)
             return
         }
 
-        if (targetAddress != null && amountNano > 0 && bin != null) {
-            openSign(wallet, targetAddress, amountNano, bin)
+        if (targetAddress != null && amountNano > 0 && (bin != null || initStateBase64 != null)) {
+            openSign(
+                wallet = wallet,
+                targetAddress = targetAddress,
+                amountNano = amountNano,
+                bin = bin,
+                initStateBase64 = initStateBase64
+            )
             return
         }
 

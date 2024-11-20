@@ -545,7 +545,8 @@ class RootViewModel(
             amount = route.amount,
             text = route.text,
             jettonAddress = route.jettonAddress,
-            bin = route.bin
+            bin = route.bin,
+            initStateBase64 = route.initStateBase64
         ))
     }
 
@@ -559,14 +560,22 @@ class RootViewModel(
 
     private suspend fun showTransaction(hash: String) {
         val wallet = selectedWalletFlow.firstOrNull() ?: return
-        val tx = historyHelper.getEvent(wallet, hash).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
+        val tx = historyHelper.getEvent(
+            wallet = wallet,
+            eventId = hash,
+            safeMode = settingsRepository.isSafeModeEnabled(),
+        ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }
 
     private suspend fun showTransaction(accountId: String, hash: String) {
         val wallet = accountRepository.getWalletByAccountId(accountId, false) ?: return
         val event = api.getTransactionEvents(wallet.accountId, wallet.testnet, hash) ?: return
-        val tx = historyHelper.mapping(wallet, event).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
+        val tx = historyHelper.mapping(
+            wallet = wallet,
+            event = event,
+            safeMode = settingsRepository.isSafeModeEnabled(),
+        ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }
 }

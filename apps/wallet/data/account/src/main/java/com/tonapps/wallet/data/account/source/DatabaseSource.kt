@@ -24,7 +24,7 @@ internal class DatabaseSource(
 
     private companion object {
         private const val DATABASE_NAME = "account"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
 
         private const val WALLET_TABLE_NAME = "wallet"
         private const val WALLET_TABLE_ID_COLUMN = "id"
@@ -37,6 +37,7 @@ internal class DatabaseSource(
 
         private const val WALLET_TABLE_KEYSTONE_XFP_COLUMN = "keystone_xfp"
         private const val WALLET_TABLE_KEYSTONE_PATH_COLUMN = "keystone_path"
+        private const val WALLET_TABLE_INITIALIZED_COLUMN = "initialized"
 
         private val walletFields = arrayOf(
             WALLET_TABLE_ID_COLUMN,
@@ -47,7 +48,8 @@ internal class DatabaseSource(
             WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN,
             WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN,
             WALLET_TABLE_KEYSTONE_XFP_COLUMN,
-            WALLET_TABLE_KEYSTONE_PATH_COLUMN
+            WALLET_TABLE_KEYSTONE_PATH_COLUMN,
+            WALLET_TABLE_INITIALIZED_COLUMN
         ).joinToString(",")
 
         private fun WalletEntity.toValues(): ContentValues {
@@ -65,6 +67,7 @@ internal class DatabaseSource(
                 values.put(WALLET_TABLE_KEYSTONE_XFP_COLUMN, it.xfp)
                 values.put(WALLET_TABLE_KEYSTONE_PATH_COLUMN, it.path)
             }
+            values.put(WALLET_TABLE_INITIALIZED_COLUMN, initialized)
             return values
         }
     }
@@ -97,6 +100,10 @@ internal class DatabaseSource(
         if (2 >= oldVersion && newVersion == 3) {
             db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_KEYSTONE_XFP_COLUMN TEXT;")
             db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_KEYSTONE_PATH_COLUMN TEXT;")
+        }
+
+        if (3 >= oldVersion && newVersion == 4) {
+            db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_INITIALIZED_COLUMN INTEGER;")
         }
     }
 
@@ -167,6 +174,7 @@ internal class DatabaseSource(
         val ledgerAccountIndexIndex = cursor.getColumnIndex(WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN)
         val keystoneXfpIndex = cursor.getColumnIndex(WALLET_TABLE_KEYSTONE_XFP_COLUMN)
         val keystonePathIndex = cursor.getColumnIndex(WALLET_TABLE_KEYSTONE_PATH_COLUMN)
+        val initializedIndex = cursor.getColumnIndex(WALLET_TABLE_INITIALIZED_COLUMN)
         val accounts = mutableListOf<WalletEntity>()
         while (cursor.moveToNext()) {
             val wallet = WalletEntity(
@@ -174,7 +182,8 @@ internal class DatabaseSource(
                 publicKey = PublicKeyEd25519(cursor.getBlob(publicKeyIndex)),
                 type = Wallet.typeOf(cursor.getInt(typeIndex)),
                 version = walletVersion(cursor.getInt(versionIndex)),
-                label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!
+                label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!,
+                initialized = cursor.getInt(initializedIndex) == 1
             )
             if (wallet.type == Wallet.Type.Ledger) {
                 accounts.add(

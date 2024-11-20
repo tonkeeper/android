@@ -10,6 +10,7 @@ import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.blockchain.ton.EntropyHelper
 import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletV5R1Contract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -41,6 +42,7 @@ import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
+import io.tonapi.models.AccountStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -242,11 +244,11 @@ class InitViewModel(
             val contract = WalletV5R1Contract(publicKey.publicKey, tonNetwork)
             val query = contract.address.toAccountId()
             if (publicKey.new) {
-                accounts.add(0, AccountDetailsEntity(contract, testnet, true))
+                accounts.add(0, AccountDetailsEntity(contract, testnet, new = true, initialized = false))
             } else {
                 val apiAccount = api.resolveAccount(query, testnet)
                 val account = if (apiAccount == null) {
-                    AccountDetailsEntity(contract, testnet, false)
+                    AccountDetailsEntity(contract, testnet = testnet, new = true, initialized = false)
                 } else {
                     AccountDetailsEntity(query, apiAccount.copy(
                         interfaces = listOf("wallet_v5r1")
@@ -308,6 +310,7 @@ class InitViewModel(
                 collectibles = false,
                 selected = true,
                 position = position,
+                initialized = false
             )
         } else {
             val tokensDeferred = async { api.getJettonsBalances(account.address, testnet) }
@@ -326,6 +329,7 @@ class InitViewModel(
                 collectibles = hasNftItems,
                 selected = account.walletVersion == WalletVersion.V5R1 || (account.balance > 0 || hasTokens || hasNftItems),
                 position = position,
+                initialized = account.initialized
             )
         }
     }
@@ -442,7 +446,7 @@ class InitViewModel(
                 }
 
                 val alreadyWalletCount = accountRepository.getWallets()
-                if (alreadyWalletCount.isEmpty()) {
+                if (alreadyWalletCount.isEmpty() && api.config.flags.safeModeEnabled) {
                     settingsRepository.setSafeModeState(SafeModeState.Enabled)
                     if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
                         settingsRepository.showSafeModeSetup = true
@@ -555,7 +559,7 @@ class InitViewModel(
             )
         })
 
-        val wallets = accountRepository.importWallet(ids, label, mnemonic, accounts.map { it.walletVersion }, testnet)
+        val wallets = accountRepository.importWallet(ids, label, mnemonic, accounts.map { it.walletVersion }, testnet, accounts.map { it.initialized })
         AnalyticsHelper.trackEvent("import_wallet", settingsRepository.installId)
         wallets
     }
@@ -582,6 +586,7 @@ class InitViewModel(
             label = label,
             ledgerAccounts = ledgerAccounts,
             deviceId = ledgerConnectData.deviceId,
+            initialized = accounts.map { it.initialized }
         )
     }
 
@@ -595,7 +600,7 @@ class InitViewModel(
             )
         })
 
-        return accountRepository.pairSigner(label, publicKey.publicKey, accounts.map { it.walletVersion }, qr)
+        return accountRepository.pairSigner(label, publicKey.publicKey, accounts.map { it.walletVersion }, qr, accounts.map { it.initialized })
     }
 
     private suspend fun keystoneWallet(): List<WalletEntity> {
@@ -606,7 +611,11 @@ class InitViewModel(
             version = WalletVersion.V4R2
         ))
 
-        return accountRepository.pairKeystone(label, publicKey.publicKey, keystone)
+        val contact = BaseWalletContract.create(publicKey.publicKey, WalletVersion.V4R2.title, tonNetwork.value)
+        val account = api.resolveAccount(contact.address.toWalletAddress(testnet = testnet), testnet)
+        val initialized = account != null && (account.status == AccountStatus.active || account.status == AccountStatus.frozen)
+
+        return accountRepository.pairKeystone(label, publicKey.publicKey, keystone, initialized)
     }
 
     private suspend fun saveMnemonic(

@@ -16,6 +16,7 @@ data class AccountDetailsEntity(
     val walletVersion: WalletVersion,
     val balance: Long,
     val new: Boolean = false,
+    val initialized: Boolean,
 ): Parcelable {
 
     val address: String
@@ -24,13 +25,19 @@ data class AccountDetailsEntity(
     val name: String?
         get() = preview.name
 
-    constructor(contract: BaseWalletContract, testnet: Boolean, new: Boolean = false) : this(
+    constructor(
+        contract: BaseWalletContract,
+        testnet: Boolean,
+        new: Boolean = false,
+        initialized: Boolean
+    ) : this(
         query = "",
         preview = AccountEntity(contract.address, testnet),
         active = true,
         walletVersion = contract.getWalletVersion(),
         balance = 0,
-        new = new
+        new = new,
+        initialized = initialized
     )
 
     constructor(query: String, account: Account, testnet: Boolean, new: Boolean = false) : this(
@@ -39,7 +46,8 @@ data class AccountDetailsEntity(
         active = account.status == AccountStatus.active,
         walletVersion = resolveVersion(account.interfaces),
         balance = account.balance,
-        new = new
+        new = new,
+        initialized = account.status == AccountStatus.active || account.status == AccountStatus.frozen
     )
 
     private companion object {

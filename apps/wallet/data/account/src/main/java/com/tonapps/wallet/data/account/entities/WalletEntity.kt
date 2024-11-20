@@ -12,8 +12,10 @@ import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readEnum
 import com.tonapps.extensions.readParcelableCompat
+import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.wallet.data.account.Wallet
 import kotlinx.parcelize.Parcelize
@@ -29,7 +31,8 @@ data class WalletEntity(
     val version: WalletVersion,
     val label: Wallet.Label,
     val ledger: Ledger? = null,
-    val keystone: Keystone? = null
+    val keystone: Keystone? = null,
+    val initialized: Boolean,
 ): Parcelable {
 
     companion object {
@@ -41,7 +44,8 @@ data class WalletEntity(
             version = WalletVersion.V5BETA,
             label = Wallet.Label("", "", 0),
             ledger = null,
-            keystone = null
+            keystone = null,
+            initialized = false,
         )
 
         @JvmField
@@ -112,7 +116,8 @@ data class WalletEntity(
         version = parcel.readEnum(WalletVersion::class.java)!!,
         label = parcel.readParcelableCompat()!!,
         ledger = parcel.readParcelableCompat(),
-        keystone = parcel.readParcelableCompat()
+        keystone = parcel.readParcelableCompat(),
+        initialized = parcel.readBooleanCompat(),
     )
 
     fun isMyAddress(address: String): Boolean {
@@ -158,6 +163,7 @@ data class WalletEntity(
         parcel.writeParcelable(label, flags)
         parcel.writeParcelable(ledger, flags)
         parcel.writeParcelable(keystone, flags)
+        parcel.writeBooleanCompat(initialized)
     }
 
     override fun describeContents(): Int {

@@ -177,7 +177,7 @@ class BalanceHolder(
                         context.copyWithToast(wallet.address)
                     }
                     if (walletType != Wallet.Type.Watch) {
-                        settingsRepository?.incrementCopyCount(wallet.id)
+                        settingsRepository?.incrementCopyCount()
                     }
                 }
             }
@@ -192,10 +192,12 @@ class BalanceHolder(
     ) {
         var builder = SpannableStringBuilder()
 
-        if (showYourAddress && type != Wallet.Type.Watch) {
-            builder.append(getString(Localization.your_address))
+        if (showYourAddress) {
+            val prefix = if (type == Wallet.Type.Watch) getString(Localization.address_prefix) else getString(Localization.your_address)
+            builder.append(prefix)
             builder.append(" ")
         }
+
 
         builder.append(address.shortAddress)
 

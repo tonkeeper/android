@@ -92,6 +92,10 @@ class EventsViewModel(
             refresh()
         }
 
+        settingsRepository.safeModeStateFlow.drop(1).collectFlow {
+            refresh()
+        }
+
         transactionManager.eventsFlow(wallet).drop(1).collectFlow {
             refresh()
         }
@@ -237,7 +241,8 @@ class EventsViewModel(
             wallet = wallet,
             events = events.map { it.copy() },
             removeDate = false,
-            hiddenBalances = settingsRepository.hiddenBalances
+            hiddenBalances = settingsRepository.hiddenBalances,
+            safeMode = settingsRepository.isSafeModeEnabled(),
         )
 
         if (txFilterValue == TX_FILTER_SENT || txFilterValue == TX_FILTER_RECEIVED) {

@@ -42,6 +42,7 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import io.ktor.util.reflect.instanceOf
 import io.tonapi.models.Account
+import io.tonapi.models.AccountStatus
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -419,7 +420,8 @@ class LedgerConnectionViewModel(
                     selected = false,
                     position = ListCell.getPosition(ledgerData.accounts.size, index),
                     ledgerIndex = ledgerAccount.path.index,
-                    ledgerAdded = alreadyAdded
+                    ledgerAdded = alreadyAdded,
+                    initialized = account != null && (account.status == AccountStatus.active || account.status == AccountStatus.frozen)
                 )
                 items.add(item)
             }

@@ -604,7 +604,7 @@ class HistoryHelper(
                 unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
                 isScam = isScam,
                 wallet = wallet,
-                isMaybeSpam = action.getTonAmountRaw(ratesRepository) < Coins.of(0.03),
+                isMaybeSpam = action.getTonAmountRaw(ratesRepository) < api.config.reportAmount,
                 spamState = settingsRepository.getSpamStateTransaction(wallet.id, txId),
                 actionOutStatus = if (isOut) ActionOutStatus.Send else ActionOutStatus.Received
             )
@@ -664,7 +664,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
-                isMaybeSpam = action.getTonAmountRaw(ratesRepository) < Coins.of(0.03),
+                isMaybeSpam = action.getTonAmountRaw(ratesRepository) < api.config.reportAmount,
                 spamState = settingsRepository.getSpamStateTransaction(wallet.id, txId),
                 actionOutStatus = if (isOut || isFromBattery || wallet.isMyAddress(tonTransfer.sender.address)) ActionOutStatus.Send else ActionOutStatus.Received
             )

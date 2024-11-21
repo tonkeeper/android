@@ -58,6 +58,7 @@ class SettingsRepository(
         private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
         private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
         private const val FILTER_TX_KEY = "filter_tx"
+        private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -241,7 +242,7 @@ class SettingsRepository(
             }
         }
 
-    var showSafeModeSetup: Boolean = prefs.getBoolean(SHOW_SAFE_MODE_SETUP_KEY, true)
+    var showSafeModeSetup: Boolean = prefs.getBoolean(SHOW_SAFE_MODE_SETUP_KEY, false)
         set(value) {
             if (value != field) {
                 prefs.edit().putBoolean(SHOW_SAFE_MODE_SETUP_KEY, value).apply()
@@ -267,6 +268,14 @@ class SettingsRepository(
         } else {
             SafeModeState.Enabled
         }
+    }
+
+    fun isStoriesViewed(storyId: String): Boolean {
+        return prefs.getBoolean(STORIES_VIEWED_PREFIX + storyId, false)
+    }
+
+    fun setStoriesViewed(storyId: String) {
+        prefs.edit().putBoolean(STORIES_VIEWED_PREFIX + storyId, true).apply()
     }
 
     fun isSafeModeEnabled() = getSafeModeState() == SafeModeState.Enabled

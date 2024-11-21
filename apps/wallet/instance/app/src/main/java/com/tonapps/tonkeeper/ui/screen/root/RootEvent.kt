@@ -5,6 +5,7 @@ import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
+import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import org.ton.api.pub.PublicKeyEd25519

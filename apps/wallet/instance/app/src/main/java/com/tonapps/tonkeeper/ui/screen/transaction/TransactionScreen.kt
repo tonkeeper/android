@@ -5,8 +5,6 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
-import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
@@ -80,6 +78,9 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     private val isScam: Boolean
         get() = localIsScam ?: actionArgs.isScam
+
+    private val comment: String?
+        get() = viewModel.getComment(actionArgs.txId) ?: actionArgs.comment?.body
 
     private val historyHelper: HistoryHelper by inject()
 
@@ -256,7 +257,10 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     private fun reportEncryptedComment() {
         if (actionArgs.comment?.isEncrypted == true) {
-            decryptComment(actionArgs, actionArgs.comment!!) { reportSpam(true) }
+            decryptComment(actionArgs, actionArgs.comment!!) {
+                applyComment(actionArgs, actionArgs.comment!!)
+                reportSpam(true)
+            }
         } else {
             reportSpam(true)
         }
@@ -266,7 +270,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         viewModel.reportSpam(
             wallet = actionArgs.wallet,
             txId = actionArgs.txId,
-            comment = actionArgs.comment?.body,
+            comment = comment,
             spam = spam
         ) {
             localIsScam = spam
@@ -286,7 +290,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     private fun openMore(view: View) {
         val actionSheet = ActionSheet(requireContext())
-        if (!actionArgs.wallet.testnet) {
+        if (!actionArgs.isOut && !actionArgs.wallet.testnet && !actionArgs.wallet.isWatchOnly && actionArgs.isMaybeSpam) {
             if (getSpamState() == SpamTransactionState.SPAM) {
                 actionSheet.addItem(NOT_SPAM_ID, Localization.not_spam, UIKitIcon.ic_block_16)
             } else {
@@ -321,7 +325,7 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     }
 
     private fun isCanReportSpam(): Boolean {
-        return if (getSpamState() != SpamTransactionState.UNKNOWN || actionArgs.isOut || actionArgs.wallet.testnet) {
+        return if (getSpamState() != SpamTransactionState.UNKNOWN || actionArgs.isOut || actionArgs.wallet.testnet || actionArgs.wallet.isWatchOnly) {
             false
         } else if (actionArgs.unverifiedToken) {
             true
@@ -360,12 +364,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
     }
 
-    private fun decryptComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment, callback: (() -> Unit)? = null) {
+    private fun decryptComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment, callback: ((comment: String) -> Unit)? = null) {
         historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.sender?.address ?: "").catch {
             context?.logError(it)
             commentView.reject()
         }.onEach {
-            callback?.invoke()
+            callback?.invoke(it.body)
             applyComment(action, it)
         }.launchIn(lifecycleScope)
     }

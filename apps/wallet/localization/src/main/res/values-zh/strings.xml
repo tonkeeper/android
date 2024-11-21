@@ -74,6 +74,7 @@
     <string name="domain_link_button">链接域</string>
     <string name="domain_renew_button">续订域名</string>
     <string name="staked">质押</string>
+    <string name="report_encrypted_comment_button">仍然举报垃圾邮件</string>
     <string name="manual">手册</string>
     <string name="manual_description">手动备份您的钱包，记下恢复短语。</string>
     <string name="manual_backup_done">手动备份完成</string>
@@ -486,6 +487,8 @@
     <string name="stories_safemode_2_subtitle">以避免垃圾邮件和假冒物品。</string>
     <string name="stories_safemode_3_title">仅限已验证的代币</string>
     <string name="tx_marked_as_spam">交易被标记为垃圾邮件</string>
+    <string name="address_prefix">地址：</string>
     <string name="your_address">您的地址：</string>
     <string name="safe_mode_tokens_footer">安全模式已启用。仅可使用经过验证的令牌。<annotation colorAttr="textAccentColor">设置</annotation></string>
+    <string name="report_encrypted_comment">此交易的评论将与报告一起以解密形式发送。</string>
 </resources>

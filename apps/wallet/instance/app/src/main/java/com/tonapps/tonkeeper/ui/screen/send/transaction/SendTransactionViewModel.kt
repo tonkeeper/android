@@ -28,6 +28,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
+import io.tonapi.models.JettonVerificationType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,22 +83,27 @@ class SendTransactionViewModel(
                     totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
                 }
 
-                val jettonsAddress = emulated.consequences?.risk?.jettons?.map { it.jetton.address } ?: emptyList()
+                val jettons = emulated.consequences?.risk?.jettons?.map { it.jetton } ?: emptyList()
+                val jettonsAddress = jettons.map { it.address }
                 val sendTokens = tokens.filter { it.balance.token.address in jettonsAddress }
                 val hasCompressedJetton = sendTokens.any { it.isCompressed }
-
+                val isExtraFee = jettons.indexOfFirst {
+                    it.verification == JettonVerificationType.whitelist && it.symbol.equals("HMSTR", true)
+                } != -1
+                val extraFee = if (isExtraFee) Coins.of(0.1) else Coins.of(0.05)
                 val tonBalance = getTONBalance()
                 val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
                 var transferFee = (if (!emulated.extra.isRefund) {
                     Coins.ZERO
                 } else {
                     emulated.extra.value
-                }) + Coins.of(0.05)
+                }) + extraFee
+
 
                 if (hasCompressedJetton) {
                     transferFee += Coins.of(0.1)
                 } else if (sendTokens.size > 1) {
-                    transferFee += Coins.of(0.05)
+                    transferFee += extraFee
                 }
 
                 val transferTotal = transferAmount + transferFee

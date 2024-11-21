@@ -74,6 +74,7 @@
     <string name="domain_link_button">Посилання на домен</string>
     <string name="domain_renew_button">Оновити домен</string>
     <string name="staked">Закладено</string>
+    <string name="report_encrypted_comment_button">Усе одно повідомити про спам</string>
     <string name="manual">Посібник</string>
     <string name="manual_description">Зробіть резервну копію гаманця вручну, записавши фразу відновлення.</string>
     <string name="manual_backup_done">Ручне резервне копіювання завершено</string>
@@ -501,6 +502,8 @@
     <string name="stories_safemode_2_subtitle">Щоб уникнути спаму та фейків.</string>
     <string name="stories_safemode_3_title">Тільки перевірені токени</string>
     <string name="tx_marked_as_spam">Трансакцію позначено як спам</string>
+    <string name="address_prefix">Адреса:</string>
     <string name="your_address">Адреса гаманця:</string>
     <string name="safe_mode_tokens_footer">Безпечний режим увімкнено. Доступні лише перевірені токени. <annotation colorAttr="textAccentColor">Налаштування</annotation></string>
+    <string name="report_encrypted_comment">Коментар цієї транзакції буде надіслано зі звітом у розшифрованому вигляді.</string>
 </resources>

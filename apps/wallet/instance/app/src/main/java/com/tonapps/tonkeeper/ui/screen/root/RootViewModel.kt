@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -61,6 +62,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
+import com.tonapps.tonkeeper.ui.screen.stories.remote.RemoteStoriesScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageScreen
@@ -97,6 +99,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import uikit.extensions.activity
+import uikit.extensions.collectFlow
 import uikit.navigation.Navigation.Companion.navigation
 import java.util.concurrent.CancellationException
 
@@ -186,10 +189,19 @@ class RootViewModel(
             initShortcuts(wallet)
         }
 
-        api.configFlow.take(1).collectFlow { config ->
+        api.configFlow.filter { !it.empty }.take(1).collectFlow { config ->
             AnalyticsHelper.setConfig(context, config)
             AnalyticsHelper.trackEvent("launch_app", settingsRepository.installId)
         }
+
+        combine(
+            accountRepository.selectedWalletFlow.take(1),
+            api.configFlow.filter { !it.empty }
+        ) { _, config ->
+            if (config.stories.isNotEmpty()) {
+                showStories(config.stories)
+            }
+        }.launch()
 
         settingsRepository.countryFlow.take(1).filter { it.isBlank() }.map {
             api.resolveCountry()
@@ -203,6 +215,16 @@ class RootViewModel(
                 checkAppUpdate()
             }
         }
+    }
+
+    private suspend fun showStories(storiesIds: List<String>) = withContext(Dispatchers.IO) {
+        val firstStoryId = storiesIds.firstOrNull { !settingsRepository.isStoriesViewed(it) } ?: return@withContext
+        showStory(firstStoryId)
+    }
+
+    private suspend fun showStory(id: String) = withContext(Dispatchers.IO) {
+        val stories = api.getStories(id) ?: return@withContext
+        openScreen(RemoteStoriesScreen.newInstance(stories))
     }
 
     private suspend fun checkAppUpdate() = withContext(Dispatchers.IO) {
@@ -420,6 +442,8 @@ class RootViewModel(
         val route = deeplink.route
         if (route is DeepLinkRoute.TonConnect && !wallet.isWatchOnly) {
             processTonConnectDeepLink(deeplink, fromPackageName)
+        } else if (route is DeepLinkRoute.Story) {
+            showStory(route.id)
         } else if (route is DeepLinkRoute.Tabs) {
             _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri, wallet))
         } else if (route is DeepLinkRoute.Send && !wallet.isWatchOnly) {

@@ -74,6 +74,7 @@
     <string name="domain_link_button">Tautkan domain</string>
     <string name="domain_renew_button">Perbarui domain</string>
     <string name="staked">Dipertaruhkan</string>
+    <string name="report_encrypted_comment_button">Laporkan Spam Apa Pun</string>
     <string name="manual">Manual</string>
     <string name="manual_description">Cadangkan dompet Anda secara manual dengan menuliskan frasa pemulihan.</string>
     <string name="manual_backup_done">Cadangan Manual Selesai</string>
@@ -486,7 +487,9 @@
     <string name="stories_safemode_2_subtitle">Untuk menghindari spam dan barang palsu.</string>
     <string name="stories_safemode_3_title">Hanya Token Terverifikasi</string>
     <string name="tx_marked_as_spam">Transaksi ditandai sebagai Spam</string>
+    <string name="address_prefix">Alamat:</string>
     <string name="your_address">Alamat Anda:</string>
     <string name="safe_mode_tokens_footer">Mode aman diaktifkan. Hanya token terverifikasi yang tersedia. <annotation colorAttr="textAccentColor">Pengaturan</annotation></string>
+    <string name="report_encrypted_comment">Komentar dari transaksi ini akan dikirim dengan laporan dalam bentuk terdekripsi.</string>
 
 </resources>

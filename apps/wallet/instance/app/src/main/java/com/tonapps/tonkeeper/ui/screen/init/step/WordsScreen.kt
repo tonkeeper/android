@@ -12,6 +12,7 @@ import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.component.WordEditText
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.iconPrimaryColor
 import com.tonapps.wallet.localization.Localization
@@ -39,7 +40,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
-    override val secure: Boolean = true
+    override val secure: Boolean = !BuildConfig.DEBUG
 
     private lateinit var scrollView: NestedScrollView
     private lateinit var contentView: ColumnLayout

@@ -30,6 +30,7 @@ import com.tonapps.wallet.api.entity.AccountEventEntity
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
+import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.api.internal.ConfigRepository
 import com.tonapps.wallet.api.internal.InternalApi
@@ -695,14 +696,13 @@ class API(
         json.put("device", deviceId)
         json.put("accounts", accountsArray)
 
-        Log.d("PushManagerLog", "Unsubscribing from $accounts")
-
         return withRetry {
             val response = tonAPIHttpClient.postJSON(url, json.toString())
-            Log.d("PushManagerLog", "Unsubscribed from $accounts: ${response}")
             response.isSuccessful
         } ?: false
     }
+
+    fun getStories(id: String) = internalApi.getStories(id)
 
     fun pushTonconnectSubscribe(
         token: String,

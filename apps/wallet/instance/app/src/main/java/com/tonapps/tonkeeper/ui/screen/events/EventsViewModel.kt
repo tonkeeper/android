@@ -22,6 +22,7 @@ import com.tonapps.wallet.data.events.isOutTransfer
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -30,9 +31,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -89,8 +93,11 @@ class EventsViewModel(
     private val _eventsFlow = MutableStateFlow<Array<AccountEventWrap>?>(null)
     private val _pushesFlow = MutableStateFlow<Array<AppPushEntity>?>(null)
 
-    private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull()
-    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull()
+    @OptIn(FlowPreview::class)
+    private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull().debounce(160)
+
+    @OptIn(FlowPreview::class)
+    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull().debounce(160)
 
     private val historyItemsFlow = combine(
         eventsFlow,
@@ -114,15 +121,27 @@ class EventsViewModel(
                 else -> true
             }
         })
-        if (isLoading.get()) {
+        val list = if (isLoading.get()) {
             historyHelper.withLoadingItem(uiItems)
         } else {
             historyHelper.removeLoadingItem(uiItems)
         }
-    }.flowOn(Dispatchers.IO).distinctUntilChanged()
+        setCached(list)
+        list
+    }.flowOn(Dispatchers.IO)
 
-    val uiStateFlow = uiItemsFlow.map {
-        EventsUiState(it, isLoading.get())
+    val uiStateFlow: Flow<EventsUiState> = flow {
+        val cached = getCached()
+        if (cached.isNotEmpty()) {
+            emit(EventsUiState(
+                uiItems = cached,
+                loading = true
+            ))
+        }
+
+        emitAll(uiItemsFlow.map {
+            EventsUiState(it, isLoading.get())
+        })
     }
 
     init {
@@ -198,16 +217,22 @@ class EventsViewModel(
     }
 
     fun initialLoad() {
+        Log.d("EventsViewModelLog", "initialLoad")
         if (!isLoading.get()) {
+            Log.d("EventsViewModelLog", "initialLoad: start")
             setLoading(loading = true, trigger = true)
             viewModelScope.launch(Dispatchers.IO) {
                 val eventsDeferred = async { loadDefault(beforeLt = null).toTypedArray() }
                 val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
 
+                Log.d("EventsViewModelLog", "initialLoad: done")
                 setLoading(loading = false, trigger = false)
                 _pushesFlow.value = dAppNotificationsDeferred.await()
                 _eventsFlow.value = eventsDeferred.await()
+                Log.d("EventsViewModelLog", "initialLoad: done2")
             }
+        } else {
+            Log.d("EventsViewModelLog", "initialLoad: stop")
         }
     }
 
@@ -251,6 +276,10 @@ class EventsViewModel(
         }
     }
 
+    private fun setCached(uiItems: List<HistoryItem>) {
+        screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
+    }
+
     private suspend fun updateState() {
         _triggerFlow.emit(Unit)
     }
@@ -272,7 +301,7 @@ class EventsViewModel(
             accountId = wallet.accountId,
             testnet = wallet.testnet,
             beforeLt = beforeLt,
-            limit = 50,
+            limit = 25,
         )?.events?.map(::AccountEventWrap)
         return list ?: emptyList()
     }

@@ -28,7 +28,7 @@ internal class ConfigRepository(
     var configEntity: ConfigEntity = ConfigEntity.default
         private set (value) {
             field = value
-            _stream.value = value
+            _stream.value = value.copy()
         }
 
     init {

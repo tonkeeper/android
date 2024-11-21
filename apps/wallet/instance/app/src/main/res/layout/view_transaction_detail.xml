@@ -38,6 +38,7 @@
                         android:gravity="right"
                         android:scrollbars="vertical"
                         android:maxLines="5"
+                        android:nestedScrollingEnabled="true"
                         android:textAppearance="@style/TextAppearance.Label1"
                         android:textColor="?attr/textPrimaryColor" />
                 </androidx.appcompat.widget.LinearLayoutCompat>

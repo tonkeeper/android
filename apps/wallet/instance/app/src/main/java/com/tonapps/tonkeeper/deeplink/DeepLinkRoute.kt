@@ -112,6 +112,14 @@ sealed class DeepLinkRoute {
         )
     }
 
+    data class Story(val id: String): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            id = uri.pathOrNull ?: throw IllegalArgumentException("Story id is required")
+        )
+
+    }
+
     data class AccountEvent(
         val eventId: String,
         val address: String?
@@ -203,6 +211,7 @@ sealed class DeepLinkRoute {
                     "manage" -> ManageAssets
                     "picker", "wallets" -> WalletPicker
                     "jetton", "token" -> Jetton(uri)
+                    "story", "stories" -> Story(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {

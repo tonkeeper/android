@@ -287,7 +287,7 @@ sealed class HistoryItem(
             }
 
             val isEncrypted: Boolean
-                get() = type != Type.Text
+                get() = type != Type.Text && type != Type.OriginalEncrypted
         }
 
         @IgnoredOnParcel

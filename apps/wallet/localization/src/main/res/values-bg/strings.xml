@@ -100,6 +100,7 @@
     <string name="domain_renew_button">Подновете домейн</string>
 
     <string name="staked">Заложено</string>
+    <string name="report_encrypted_comment_button">Все пак докладвайте за спам</string>
     <string name="manual">Ръководство</string>
     <string name="manual_description">Направете резервно копие на вашия портфейл ръчно, като запишете възстановителната фраза.</string>
     <string name="manual_backup_done">Ръчно резервно копие завършено</string>
@@ -537,6 +538,8 @@
     <string name="stories_safemode_2_subtitle">За да избегнете спам и фалшиви артикули.</string>
     <string name="stories_safemode_3_title">Само проверени токени</string>
     <string name="tx_marked_as_spam">Транзакцията е маркирана като спам</string>
+    <string name="address_prefix">Адрес:</string>
     <string name="your_address">Вашият адрес:</string>
     <string name="safe_mode_tokens_footer">Безопасният режим е активиран. Налични са само потвърдени токени. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
+    <string name="report_encrypted_comment">Коментарът от тази транзакция ще бъде изпратен с отчет в декриптирана форма.</string>
 </resources>

@@ -74,6 +74,7 @@
     <string name="domain_link_button">Alanı bağla</string>
     <string name="domain_renew_button">Alan adını yenile</string>
     <string name="staked">Stake Edildi</string>
+    <string name="report_encrypted_comment_button">Spam\'ı yine de bildir</string>
     <string name="manual">Kılavuz</string>
     <string name="manual_description">Cüzdanınızı manuel olarak yedeklemek için kurtarma ifadesini not edin.</string>
     <string name="manual_backup_done">Manuel Yedekleme Tamamlandı</string>
@@ -491,6 +492,8 @@
     <string name="stories_safemode_2_subtitle">Spam ve sahte ürünlerden kaçınmak için.</string>
     <string name="stories_safemode_3_title">Sadece Doğrulanmış Tokenlar</string>
     <string name="tx_marked_as_spam">İşlem Spam olarak işaretlendi</string>
+    <string name="address_prefix">Adres:</string>
     <string name="your_address">Adresiniz:</string>
     <string name="safe_mode_tokens_footer">Güvenli mod etkinleştirildi. Yalnızca doğrulanmış tokenlar kullanılabilir. <annotation colorAttr="textAccentColor">Ayarlar</annotation></string>
+    <string name="report_encrypted_comment">Bu işlemden gelen yorum, şifresi çözülmüş bir şekilde raporla birlikte gönderilecektir.</string>
 </resources>

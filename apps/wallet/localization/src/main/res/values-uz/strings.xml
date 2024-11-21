@@ -74,6 +74,7 @@
     <string name="domain_link_button">Domenni ulash</string>
     <string name="domain_renew_button">Domenni yangilang</string>
     <string name="staked">Tikilgan</string>
+    <string name="report_encrypted_comment_button">Baribir spam haqida xabar bering</string>
     <string name="manual">Qo\'llanma</string>
     <string name="manual_description">Hamyoningizni zaxira qilish uchun tiklash iborasini yozib qo\'ying.</string>
     <string name="manual_backup_done">Qo\'lda zaxira nusxasi bajarildi</string>
@@ -491,6 +492,8 @@
     <string name="stories_safemode_2_subtitle">Spam va soxta narsalarni oldini olish uchun.</string>
     <string name="stories_safemode_3_title">Faqat tasdiqlangan tokenlar</string>
     <string name="tx_marked_as_spam">Tranzaksiya Spam sifatida belgilandi</string>
+    <string name="address_prefix">Manzil:</string>
     <string name="your_address">Sizning manzilingiz:</string>
     <string name="safe_mode_tokens_footer">Xavfsiz rejim yoqilgan. Faqat tasdiqlangan tokenlar mavjud. <annotation colorAttr="textAccentColor">Sozlamalar</annotation></string>
+    <string name="report_encrypted_comment">Ushbu tranzaksiyaga oid fikr shifrlangan koʻrinishda hisobot bilan yuboriladi.</string>
 </resources>

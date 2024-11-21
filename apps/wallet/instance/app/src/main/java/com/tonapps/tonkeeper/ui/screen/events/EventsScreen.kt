@@ -62,7 +62,11 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         headerView.setColor(requireContext().backgroundTransparentColor)
 
         refreshView = view.findViewById(R.id.refresh)
-        refreshView.setOnRefreshListener { viewModel.initialLoad() }
+        refreshView.offsetTopAndBottom(0)
+        refreshView.setOnRefreshListener {
+            setLoading(true)
+            viewModel.initialLoad()
+        }
 
         headerDrawable = HeaderDrawable(requireContext())
         headerDrawable.setColor(requireContext().backgroundTransparentColor)
@@ -113,7 +117,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     private fun setLoading(loading: Boolean) {
-        if (refreshView.isRefreshing) {
+        if (refreshView.isRefreshing != loading) {
             refreshView.isRefreshing = loading
         }
         if (loading) {

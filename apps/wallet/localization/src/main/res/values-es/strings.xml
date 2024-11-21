@@ -74,6 +74,7 @@
     <string name="domain_link_button">Vincular dominio</string>
     <string name="domain_renew_button">Renovar dominio</string>
     <string name="staked">Apostado</string>
+    <string name="report_encrypted_comment_button">Reportar spam de todos modos</string>
     <string name="manual">Manual</string>
     <string name="manual_description">Haz una copia de seguridad de tu billetera manualmente escribiendo la frase de recuperación.</string>
     <string name="manual_backup_done">Copia de seguridad manual completada</string>
@@ -491,7 +492,9 @@
     <string name="stories_safemode_2_subtitle">Para evitar spam y artículos falsos.</string>
     <string name="stories_safemode_3_title">Solo tokens verificados</string>
     <string name="tx_marked_as_spam">Transacción marcada como Spam</string>
+    <string name="address_prefix">DIRECCIÓN:</string>
     <string name="your_address">Su dirección:</string>
     <string name="safe_mode_tokens_footer">El modo seguro está habilitado. Solo están disponibles los tokens verificados. <annotation colorAttr="textAccentColor">Configuración</annotation></string>
+    <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
 
 </resources>

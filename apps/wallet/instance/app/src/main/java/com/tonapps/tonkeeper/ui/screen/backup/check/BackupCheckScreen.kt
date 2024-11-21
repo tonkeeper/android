@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
@@ -32,7 +33,7 @@ class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     private val args: BackupCheckArgs by lazy { BackupCheckArgs(requireArguments()) }
 
-    override val secure: Boolean = true
+    override val secure: Boolean = !BuildConfig.DEBUG
 
     override val viewModel: BackupCheckViewModel by walletViewModel()
 

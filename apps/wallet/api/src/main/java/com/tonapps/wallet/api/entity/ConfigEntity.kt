@@ -3,12 +3,15 @@ package com.tonapps.wallet.api.entity
 import android.net.Uri
 import android.os.Parcelable
 import android.util.Log
+import com.tonapps.extensions.toStringList
+import com.tonapps.icu.Coins
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
 @Parcelize
 data class ConfigEntity(
+    val empty: Boolean,
     val supportLink: String,
     val nftExplorer: String,
     val transactionExplorer: String,
@@ -48,7 +51,9 @@ data class ConfigEntity(
     val tonapiSSETestnetEndpoint: String,
     val iapPackages: List<IAPPackageEntity>,
     val burnZeroDomain: String,
-    val scamAPIURL: String
+    val scamAPIURL: String,
+    val reportAmount: Coins,
+    val stories: List<String>
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -65,6 +70,7 @@ data class ConfigEntity(
     }
 
     constructor(json: JSONObject, debug: Boolean) : this(
+        empty = false,
         supportLink = json.getString("supportLink"),
         nftExplorer = json.getString("NFTOnExplorerUrl"),
         transactionExplorer = json.getString("transactionExplorer"),
@@ -110,10 +116,13 @@ data class ConfigEntity(
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
         } ?: emptyList(),
         burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"), // tonkeeper-zero.ton
-        scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com")
+        scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com"),
+        reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
+        stories = json.getJSONArray("stories").toStringList()
     )
 
     constructor() : this(
+        empty = true,
         supportLink = "mailto:support@tonkeeper.com",
         nftExplorer = "https://tonviewer.com/nft/%s",
         transactionExplorer = "https://tonviewer.com/transaction/%s",
@@ -153,7 +162,9 @@ data class ConfigEntity(
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
         iapPackages = emptyList(),
         burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
-        scamAPIURL = "https://scam.tonkeeper.com"
+        scamAPIURL = "https://scam.tonkeeper.com",
+        reportAmount = Coins.of("0.03"),
+        stories = emptyList()
     )
 
     companion object {

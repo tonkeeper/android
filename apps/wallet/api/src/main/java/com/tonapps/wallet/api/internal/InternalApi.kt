@@ -3,12 +3,15 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
+import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
+import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.api.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,11 +28,12 @@ internal class InternalApi(
         path: String,
         testnet: Boolean,
         platform: String,
-        build: String
+        build: String,
+        boot: Boolean = false
     ): String {
         val builder = Uri.Builder()
         builder.scheme("https")
-            .authority("api.tonkeeper.com")
+            .authority(if (boot) "boot.tonkeeper.com" else "api.tonkeeper.com")
             .appendEncodedPath(path)
             .appendQueryParameter("lang", context.locale.language)
             .appendQueryParameter("build", build)
@@ -44,8 +48,9 @@ internal class InternalApi(
         platform: String = "android", // "android_x"
         build: String = context.appVersionName,
         locale: Locale,
+        boot: Boolean = false
     ): JSONObject {
-        val url = endpoint(path, testnet, platform, build)
+        val url = endpoint(path, testnet, platform, build, boot)
         val headers = ArrayMap<String, String>()
         headers["Accept-Language"] = locale.toString()
         val body = withRetry {
@@ -94,9 +99,29 @@ internal class InternalApi(
 
     fun downloadConfig(testnet: Boolean): ConfigEntity? {
         return try {
-            val json = request("keys", testnet, locale = context.locale)
+            val json = request("keys", testnet, locale = context.locale, boot = true)
             ConfigEntity(json, context.isDebug)
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            null
+        }
+    }
+
+    fun getStories(id: String): StoryEntity.Stories? {
+        return try {
+            val json = request("stories/$id", false, locale = context.locale)
+            val pages = json.getJSONArray("pages")
+            val list = mutableListOf<StoryEntity>()
+            for (i in 0 until pages.length()) {
+                list.add(StoryEntity(pages.getJSONObject(i)))
+            }
+            if (list.isEmpty()) {
+                null
+            } else {
+                StoryEntity.Stories(id, list.toList())
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             null
         }
     }
@@ -111,6 +136,7 @@ internal class InternalApi(
                 country.uppercase()
             }
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             null
         }
     }

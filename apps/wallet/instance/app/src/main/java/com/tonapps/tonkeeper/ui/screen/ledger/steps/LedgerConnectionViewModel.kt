@@ -184,7 +184,10 @@ class LedgerConnectionViewModel(
         bleManager.startScanning {
             val device = it.first()
 
-            bleManager.stopScanning()
+            try {
+                bleManager.stopScanning()
+            } catch (_: Exception) {}
+
             connect(device.id)
         }
     }

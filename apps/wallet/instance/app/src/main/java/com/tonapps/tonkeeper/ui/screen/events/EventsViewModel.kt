@@ -69,7 +69,7 @@ class EventsViewModel(
     private val _triggerFlow = MutableEffectFlow<Unit>()
     private val _loadingTriggerFlow = MutableEffectFlow<Unit>()
 
-    private val _selectedFilter = MutableStateFlow<FilterItem?>(null)
+    private val _selectedFilter = MutableStateFlow(getSavedFilter())
     private val selectedFilter = _selectedFilter.asStateFlow()
 
     private val _filterAppsFlow = MutableStateFlow<List<AppEntity>>(emptyList())
@@ -196,8 +196,10 @@ class EventsViewModel(
     fun clickFilter(filter: FilterItem) {
         if (_selectedFilter.value?.id == filter.id) {
             _selectedFilter.value = null
+            saveFilter(null)
         } else {
             _selectedFilter.value = filter
+            saveFilter(filter)
         }
     }
 
@@ -217,22 +219,18 @@ class EventsViewModel(
     }
 
     fun initialLoad() {
-        Log.d("EventsViewModelLog", "initialLoad")
-        if (!isLoading.get()) {
-            Log.d("EventsViewModelLog", "initialLoad: start")
-            setLoading(loading = true, trigger = true)
-            viewModelScope.launch(Dispatchers.IO) {
-                val eventsDeferred = async { loadDefault(beforeLt = null).toTypedArray() }
-                val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
+        if (isLoading.get()) {
+            return
+        }
 
-                Log.d("EventsViewModelLog", "initialLoad: done")
-                setLoading(loading = false, trigger = false)
-                _pushesFlow.value = dAppNotificationsDeferred.await()
-                _eventsFlow.value = eventsDeferred.await()
-                Log.d("EventsViewModelLog", "initialLoad: done2")
-            }
-        } else {
-            Log.d("EventsViewModelLog", "initialLoad: stop")
+        setLoading(loading = true, trigger = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            val eventsDeferred = async { loadDefault(beforeLt = null).toTypedArray() }
+            val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
+
+            setLoading(loading = false, trigger = false)
+            _pushesFlow.value = dAppNotificationsDeferred.await()
+            _eventsFlow.value = eventsDeferred.await()
         }
     }
 
@@ -278,6 +276,18 @@ class EventsViewModel(
 
     private fun setCached(uiItems: List<HistoryItem>) {
         screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
+    }
+
+    private fun getSavedFilter(): FilterItem? {
+        return when (settingsRepository.filterTX) {
+            FilterItem.TYPE_SEND -> FilterItem.Send(true)
+            FilterItem.TYPE_RECEIVE -> FilterItem.Receive(true)
+            else -> null
+        }
+    }
+
+    private fun saveFilter(filter: FilterItem?) {
+        settingsRepository.filterTX = filter?.type ?: 0
     }
 
     private suspend fun updateState() {

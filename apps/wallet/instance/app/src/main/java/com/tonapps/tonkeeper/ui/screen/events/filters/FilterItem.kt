@@ -1,9 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.events.filters
 
 import android.net.Uri
+import android.os.Parcelable
 import androidx.core.net.toUri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import kotlinx.parcelize.Parcelize
 
 sealed class FilterItem(type: Int, open val selected: Boolean, open val id: String): BaseListItem(type) {
 
@@ -20,10 +22,11 @@ sealed class FilterItem(type: Int, open val selected: Boolean, open val id: Stri
 
     data class Receive(override val selected: Boolean) : FilterItem(TYPE_RECEIVE, selected, RECEIVE_ID)
 
+    @Parcelize
     data class App(
         override val selected: Boolean,
         val app: AppEntity,
-    ): FilterItem(TYPE_APP, selected, app.id) {
+    ): FilterItem(TYPE_APP, selected, app.id), Parcelable {
 
         val name: String
             get() = app.name

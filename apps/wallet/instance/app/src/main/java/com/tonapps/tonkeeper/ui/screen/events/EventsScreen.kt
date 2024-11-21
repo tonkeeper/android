@@ -82,9 +82,10 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         })
 
         listView = view.findViewById(R.id.list)
+        listView.addItemDecoration(HistoryItemDecoration())
         listView.adapter = legacyAdapter
         listView.addOnScrollListener(paginationListener)
-        listView.addItemDecoration(HistoryItemDecoration())
+
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->

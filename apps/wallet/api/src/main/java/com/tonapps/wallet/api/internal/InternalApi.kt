@@ -3,11 +3,9 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
-import android.util.Log
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
-import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
@@ -50,7 +48,9 @@ internal class InternalApi(
         val url = endpoint(path, testnet, platform, build)
         val headers = ArrayMap<String, String>()
         headers["Accept-Language"] = locale.toString()
-        val body = okHttpClient.get(url, headers)
+        val body = withRetry {
+            okHttpClient.get(url, headers)
+        } ?: throw IllegalStateException("Internal API request failed")
         return JSONObject(body)
     }
 
@@ -103,11 +103,8 @@ internal class InternalApi(
 
     suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
         try {
-            val country = withRetry {
-                okHttpClient.get("https://boot.tonkeeper.com/my/ip")
-            }?.let {
-                JSONObject(it).getString("country")
-            }
+            val json = request("my/ip", false, locale = context.locale)
+            val country = json.getString("country")
             if (country.isNullOrBlank()) {
                 null
             } else {

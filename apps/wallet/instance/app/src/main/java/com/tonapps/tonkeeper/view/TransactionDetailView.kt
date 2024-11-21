@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.view
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.text.method.ScrollingMovementMethod
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
@@ -78,6 +79,7 @@ class TransactionDetailView @JvmOverloads constructor(
         titleView = findViewById(R.id.title)
         subtitleView = findViewById(R.id.subtitle)
         valueView = findViewById(R.id.value)
+        valueView.movementMethod = ScrollingMovementMethod()
         descriptionView = findViewById(R.id.description)
         loaderView = findViewById(R.id.loader)
 

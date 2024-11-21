@@ -10,6 +10,7 @@ data class BatteryConfigEntity(
     val excessesAccount: String?,
     val fundReceiver: String?,
     val rechargeMethods: List<RechargeMethodEntity>,
+    val gasProxy: List<String>
 ) : Parcelable {
 
     @IgnoredOnParcel
@@ -21,7 +22,8 @@ data class BatteryConfigEntity(
         val Empty = BatteryConfigEntity(
             excessesAccount = null,
             fundReceiver = null,
-            rechargeMethods = emptyList()
+            rechargeMethods = emptyList(),
+            gasProxy = emptyList()
         )
     }
 }

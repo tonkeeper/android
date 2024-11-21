@@ -239,6 +239,8 @@
     <string name="your_address">Ваш адрес:</string>
     <string name="address_prefix">Адрес:</string>
     <string name="safe_mode_tokens_footer">Безопасный режим включён. Доступны только проверенные токены. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
+    <string name="report_encrypted_comment">Комментарий из этой транзакции будет отправлен вместе с жалобой в расшифрованном виде.</string>
+    <string name="report_encrypted_comment_button">Пожаловаться всё равно</string>
 
 
 

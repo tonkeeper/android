@@ -135,6 +135,8 @@
     <string name="domain_link_button">Link domain</string>
     <string name="domain_renew_button">Renew domain</string>
     <string name="staked">Staked</string>
+    <string name="report_encrypted_comment">Comment from this transaction will be sent with report in decrypted form.</string>
+    <string name="report_encrypted_comment_button">Report Spam Anyway</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>

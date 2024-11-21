@@ -20,7 +20,6 @@ import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
 import com.tonapps.tonkeeper.ui.screen.card.CardViewModel
-import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageScreen
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsViewModel
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseViewModel
@@ -34,6 +33,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.apps.AppsViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawViewModel
+import com.tonapps.tonkeeper.ui.screen.transaction.TransactionViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 
@@ -71,4 +71,5 @@ val viewModelWalletModule = module {
     viewModelOf(::CollectiblesManageViewModel)
     viewModelOf(::CardViewModel)
     viewModelOf(::QRViewModel)
+    viewModelOf(::TransactionViewModel)
 }

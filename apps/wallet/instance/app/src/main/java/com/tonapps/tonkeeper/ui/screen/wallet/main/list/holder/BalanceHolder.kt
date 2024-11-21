@@ -116,7 +116,6 @@ class BalanceHolder(
             backupIconContainerView.visibility = View.GONE
         }
 
-
         if (item.showBattery) {
             batteryView.visibility = View.VISIBLE
             batteryView.setBatteryLevel(item.batteryBalance.value.toFloat())
@@ -176,9 +175,7 @@ class BalanceHolder(
                     } else {
                         context.copyWithToast(wallet.address)
                     }
-                    if (walletType != Wallet.Type.Watch) {
-                        settingsRepository?.incrementCopyCount()
-                    }
+                    settingsRepository?.incrementCopyCount()
                 }
             }
         }

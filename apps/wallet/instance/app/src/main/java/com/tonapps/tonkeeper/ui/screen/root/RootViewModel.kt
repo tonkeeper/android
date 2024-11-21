@@ -389,6 +389,7 @@ class RootViewModel(
         savedState.returnUri = null
         val deeplink = DeepLink(uri, fromQR, refSource)
         if (deeplink.route is DeepLinkRoute.Unknown) {
+            viewModelScope.launch { toast(Localization.invalid_link) }
             return false
         }
         if (deeplink.route is DeepLinkRoute.Internal && !internal) {

@@ -1,9 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.transaction
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
+import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
@@ -19,7 +22,6 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
-import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.withVerificationIcon
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
@@ -38,13 +40,16 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.dialog.modal.ModalDialog
 import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.reject
 import uikit.extensions.setColor
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
+
 
 class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment.Modal {
 
@@ -63,11 +68,18 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
     }
 
+    private val viewModel: TransactionViewModel by viewModel()
+
     private val settingsRepository: SettingsRepository by inject()
 
     private val actionArgs: HistoryItem.Event by lazy {
         requireArguments().getParcelableCompat(ARG_ACTION)!!
     }
+
+    private var localIsScam: Boolean? = null
+
+    private val isScam: Boolean
+        get() = localIsScam ?: actionArgs.isScam
 
     private val historyHelper: HistoryHelper by inject()
 
@@ -99,8 +111,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val action = actionArgs
-
         view.findViewById<View>(R.id.close).setOnClickListener {
             finish()
         }
@@ -116,7 +126,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
         amountView = view.findViewById(R.id.amount)
         spamView = view.findViewById(R.id.spam)
-        spamView.visibility = if (action.isScam) View.VISIBLE else View.GONE
 
         amount2View = view.findViewById(R.id.amount2)
 
@@ -130,7 +139,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         dataView = view.findViewById(R.id.data)
 
         feeView = view.findViewById(R.id.fee)
-        feeView.title = if (action.refund == null) getString(Localization.fee) else getString(Localization.refund)
 
         commentView = view.findViewById(R.id.comment)
         commentView.title = getString(Localization.comment)
@@ -140,44 +148,57 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
         explorerButton = view.findViewById(R.id.open_explorer)
 
-        unverifiedView.visibility = if (action.unverifiedToken) {
+        reportSpamButton = view.findViewById(R.id.report_spam)
+        reportSpamButton.setOnClickListener { reportSpamWithDialog(true) }
+
+        notSpamButton = view.findViewById(R.id.not_spam)
+        notSpamButton.setOnClickListener { reportSpamWithDialog(false) }
+
+        explorerButton.setOnClickListener { openTonViewer() }
+
+        initArgs()
+    }
+
+    private fun initArgs() {
+        spamView.visibility = if (isScam) View.VISIBLE else View.GONE
+        feeView.title = if (actionArgs.refund == null) getString(Localization.fee) else getString(Localization.refund)
+        unverifiedView.visibility = if (actionArgs.unverifiedToken) {
             View.VISIBLE
         } else {
             View.GONE
         }
 
-        if (action.hiddenBalance) {
+        if (actionArgs.hiddenBalance) {
             amountView.text = HIDDEN_BALANCE
             feeView.setData(HIDDEN_BALANCE, HIDDEN_BALANCE)
         } else {
-            amountView.text = action.value.withCustomSymbol(requireContext())
-            if (action.refund != null) {
-                feeView.setData(action.refund.withCustomSymbol(requireContext()), action.refundInCurrency!!.withCustomSymbol(requireContext()))
-            } else if (action.fee != null) {
-                feeView.setData(action.fee.withCustomSymbol(requireContext()), action.feeInCurrency!!.withCustomSymbol(requireContext()))
+            amountView.text = actionArgs.value.withCustomSymbol(requireContext())
+            if (actionArgs.refund != null) {
+                feeView.setData(actionArgs.refund!!.withCustomSymbol(requireContext()), actionArgs.refundInCurrency!!.withCustomSymbol(requireContext()))
+            } else if (actionArgs.fee != null) {
+                feeView.setData(actionArgs.fee!!.withCustomSymbol(requireContext()), actionArgs.feeInCurrency!!.withCustomSymbol(requireContext()))
             } else {
                 feeView.visibility = View.GONE
             }
         }
 
-        if (action.comment != null && !action.isScam) {
-            applyComment(action, action.comment)
+        if (actionArgs.comment != null && !isScam) {
+            applyComment(actionArgs, actionArgs.comment!!)
         } else {
             commentView.visibility = View.GONE
             feeView.position = ListCell.Position.LAST
         }
 
-        reportSpamButton = view.findViewById(R.id.report_spam)
-        reportSpamButton.setOnClickListener { reportSpam() }
+        applyAccount(actionArgs.isOut, actionArgs.account?.address, actionArgs.account?.name)
+        applyCurrency(actionArgs.currency, actionArgs.hiddenBalance)
+        applyDate(actionArgs.action, actionArgs.dateDetails)
 
-        notSpamButton = view.findViewById(R.id.not_spam)
-        notSpamButton.setOnClickListener { notSpam() }
+        explorerButton.setOnLongClickListener {
+            requireContext().copyWithToast(actionArgs.txId)
+            true
+        }
 
-        applyAccount(action.isOut, action.account?.address, action.account?.name)
-        applyCurrency(action.currency, action.hiddenBalance)
-        applyDate(action.action, action.dateDetails)
-
-        val txHashText = getString(Localization.transaction) + " " + action.txId.substring(0, 8)
+        val txHashText = getString(Localization.transaction) + " " + actionArgs.txId.substring(0, 8)
         val txHashSpannable = SpannableString(txHashText)
         txHashSpannable.setColor(
             requireContext().textTertiaryColor,
@@ -186,29 +207,19 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         )
         explorerButton.text = txHashSpannable
 
-        explorerButton.setOnClickListener { openTonViewer() }
-        explorerButton.setOnLongClickListener {
-            requireContext().copyWithToast(action.txId)
-            true
-        }
-
-        applySpamState()
-
-        updateDataView()
-
-        if (action.isScam) {
+        if (isScam) {
             iconView.visibility = View.GONE
             iconSwapView.visibility = View.GONE
-        } else if (action.isSwap) {
+        } else if (actionArgs.isSwap) {
             iconView.visibility = View.GONE
-            iconSwap1View.setImageURI(Uri.parse(action.coinIconUrl), this)
-            iconSwap2View.setImageURI(Uri.parse(action.coinIconUrl2), this)
+            iconSwap1View.setImageURI(Uri.parse(actionArgs.coinIconUrl), this)
+            iconSwap2View.setImageURI(Uri.parse(actionArgs.coinIconUrl2), this)
             amount2View.visibility = View.VISIBLE
-            amount2View.text = action.value2.withCustomSymbol(requireContext())
+            amount2View.text = actionArgs.value2.withCustomSymbol(requireContext())
             accountAddressView.title = getString(Localization.recipient_address)
-        } else if (action.hasNft) {
+        } else if (actionArgs.hasNft) {
             iconSwapView.visibility = View.GONE
-            val nft = action.nft!!
+            val nft = actionArgs.nft!!
             iconView.setImageURI(nft.mediumUri, null)
             iconView.setRound(16f.dp)
             currencyView.visibility = View.VISIBLE
@@ -220,43 +231,73 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             amount2View.visibility = View.VISIBLE
             amount2View.text = nft.name
             amount2View.setTextColor(requireContext().textPrimaryColor)
-        } else if (action.coinIconUrl.isNotBlank()) {
+        } else if (actionArgs.coinIconUrl.isNotBlank()) {
             iconSwapView.visibility = View.GONE
-            iconView.setImageURI(Uri.parse(action.coinIconUrl), null)
+            iconView.setImageURI(Uri.parse(actionArgs.coinIconUrl), null)
         } else {
             iconSwapView.visibility = View.GONE
             iconView.visibility = View.GONE
         }
+
+        applySpamState()
+        updateDataView()
     }
 
-    private fun reportSpam() {
-        navigation?.toast(Localization.tx_marked_as_spam)
-        settingsRepository.setSpamStateTransaction(actionArgs.wallet.id, actionArgs.txId, SpamTransactionState.SPAM)
-        applySpamState()
-        finish()
+    private fun reportSpamWithDialog(spam: Boolean) {
+        val isEncryptedComment = actionArgs.comment?.isEncrypted == true || actionArgs.comment?.type == HistoryItem.Event.Comment.Type.OriginalEncrypted
+        if (isEncryptedComment && spam) {
+            CommentReportDialog(requireContext()).show {
+                reportEncryptedComment()
+            }
+        } else {
+            reportSpam(spam)
+        }
     }
 
-    private fun notSpam() {
-        settingsRepository.setSpamStateTransaction(actionArgs.wallet.id, actionArgs.txId, SpamTransactionState.NOT_SPAM)
-        applySpamState()
+    private fun reportEncryptedComment() {
+        if (actionArgs.comment?.isEncrypted == true) {
+            decryptComment(actionArgs, actionArgs.comment!!) { reportSpam(true) }
+        } else {
+            reportSpam(true)
+        }
+    }
+
+    private fun reportSpam(spam: Boolean) {
+        viewModel.reportSpam(
+            wallet = actionArgs.wallet,
+            txId = actionArgs.txId,
+            comment = actionArgs.comment?.body,
+            spam = spam
+        ) {
+            localIsScam = spam
+            spamView.visibility = if (spam) View.VISIBLE else View.GONE
+            initArgs()
+        }
     }
 
     private fun openTonViewer() {
-        navigation?.openURL("https://tonviewer.com/transaction/${actionArgs.txId}")
+        val url = if (actionArgs.wallet.testnet) {
+            "https://testnet.tonviewer.com/transaction"
+        } else {
+            "https://tonviewer.com/transaction"
+        }
+        navigation?.openURL("$url/${actionArgs.txId}")
     }
 
     private fun openMore(view: View) {
         val actionSheet = ActionSheet(requireContext())
-        if (getSpamState() == SpamTransactionState.SPAM) {
-            actionSheet.addItem(NOT_SPAM_ID, Localization.not_spam, UIKitIcon.ic_block_16)
-        } else {
-            actionSheet.addItem(REPORT_SPAM_ID, Localization.report_spam, UIKitIcon.ic_block_16)
+        if (!actionArgs.wallet.testnet) {
+            if (getSpamState() == SpamTransactionState.SPAM) {
+                actionSheet.addItem(NOT_SPAM_ID, Localization.not_spam, UIKitIcon.ic_block_16)
+            } else {
+                actionSheet.addItem(REPORT_SPAM_ID, Localization.report_spam, UIKitIcon.ic_block_16)
+            }
         }
         actionSheet.addItem(OPEN_EXPLORER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
         actionSheet.doOnItemClick = { item ->
             when (item.id) {
-                REPORT_SPAM_ID -> reportSpam()
-                NOT_SPAM_ID -> notSpam()
+                REPORT_SPAM_ID -> reportSpamWithDialog(true)
+                NOT_SPAM_ID -> reportSpamWithDialog(false)
                 OPEN_EXPLORER_ID -> openTonViewer()
             }
         }
@@ -280,12 +321,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     }
 
     private fun isCanReportSpam(): Boolean {
-        return if (getSpamState() != SpamTransactionState.UNKNOWN) {
+        return if (getSpamState() != SpamTransactionState.UNKNOWN || actionArgs.isOut || actionArgs.wallet.testnet) {
             false
         } else if (actionArgs.unverifiedToken) {
             true
         } else {
-            actionArgs.isMaybeSpam && actionArgs.comment != null && !actionArgs.isOut && !actionArgs.isScam
+            actionArgs.isMaybeSpam && actionArgs.comment != null && !actionArgs.isOut && !isScam
         }
     }
 
@@ -319,11 +360,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
     }
 
-    private fun decryptComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment) {
+    private fun decryptComment(action: HistoryItem.Event, comment: HistoryItem.Event.Comment, callback: (() -> Unit)? = null) {
         historyHelper.requestDecryptComment(requireContext(), comment, action.txId, action.sender?.address ?: "").catch {
             context?.logError(it)
             commentView.reject()
         }.onEach {
+            callback?.invoke()
             applyComment(action, it)
         }.launchIn(lifecycleScope)
     }
@@ -388,4 +430,20 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             visibleViews[i].position = ListCell.getPosition(visibleViews.size, i)
         }
     }
+
+    private class CommentReportDialog(context: Context): ModalDialog(context, R.layout.dialog_tx_report_comment) {
+
+        init {
+            findViewById<View>(R.id.close)?.setOnClickListener { dismiss() }
+        }
+
+        fun show(callback: () -> Unit) {
+            super.show()
+            findViewById<View>(R.id.button)?.setOnClickListener {
+                callback()
+                dismiss()
+            }
+        }
+    }
+
 }

@@ -1,11 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
+import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.events.filters.FiltersAdapter
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
@@ -19,6 +22,8 @@ import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.withContext
 import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
@@ -57,9 +62,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         headerView.setColor(requireContext().backgroundTransparentColor)
 
         refreshView = view.findViewById(R.id.refresh)
-        refreshView.setOnRefreshListener {
-            viewModel.refresh()
-        }
+        refreshView.setOnRefreshListener { viewModel.initialLoad() }
 
         headerDrawable = HeaderDrawable(requireContext())
         headerDrawable.setColor(requireContext().backgroundTransparentColor)
@@ -88,21 +91,21 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
             }
         }
 
-        collectFlow(viewModel.uiStateFlow, ::applyState)
+        // collectFlow(viewModel.uiStateFlow, ::applyState)
         collectFlow(viewModel.uiFilterItemsFlow, filtersAdapter::submitList)
+        collectFlow(viewModel.uiStateFlow, ::applyState)
     }
 
-    private suspend fun applyState(state: EventsUiState) = withContext(Dispatchers.Main) {
-        if (state.isEmpty) {
+
+    private fun applyState(state: EventsUiState) {
+        if (state.uiItems.isEmpty() && !state.loading) {
             setEmptyState()
-            setLoading(false)
         } else {
-            setListState()
-            if (state.isLoading) {
+            if (state.loading) {
                 setLoading(true)
             }
-            legacyAdapter.submitList(state.items) {
-                if (!state.isLoading) {
+            setListState(state.uiItems) {
+                if (!state.loading) {
                     setLoading(false)
                 }
             }
@@ -123,7 +126,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     override fun scrollUp() {
         super.scrollUp()
         listView.scrollToPosition(0)
-        viewModel.refresh()
+        viewModel.initialLoad()
     }
 
     private fun openQRCode() {
@@ -131,20 +134,20 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     private fun setEmptyState() {
-        if (emptyView.visibility == View.VISIBLE) {
-            return
+        setLoading(false)
+        if (emptyView.visibility != View.VISIBLE) {
+            headerView.setSubtitle(null)
+            emptyView.visibility = View.VISIBLE
+            refreshView.visibility = View.GONE
         }
-        headerView.setSubtitle(null)
-        emptyView.visibility = View.VISIBLE
-        refreshView.visibility = View.GONE
     }
 
-    private fun setListState() {
-        if (refreshView.visibility == View.VISIBLE) {
-            return
+    private fun setListState(uiItems: List<HistoryItem>, commitCallback: Runnable) {
+        legacyAdapter.submitList(uiItems, commitCallback)
+        if (refreshView.visibility != View.VISIBLE) {
+            emptyView.visibility = View.GONE
+            refreshView.visibility = View.VISIBLE
         }
-        emptyView.visibility = View.GONE
-        refreshView.visibility = View.VISIBLE
     }
 
     override fun getRecyclerView(): RecyclerView? {

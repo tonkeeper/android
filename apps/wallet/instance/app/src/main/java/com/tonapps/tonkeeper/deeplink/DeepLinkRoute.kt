@@ -87,9 +87,16 @@ sealed class DeepLinkRoute {
             if (uri.hasUnsupportedQuery(true, "exp", "amount", "text", "jettonAddress", "jetton", "bin", "init")) {
                 throw IllegalArgumentException("Unsupported query parameters")
             }
+
+            if (text != null && bin != null) {
+                throw IllegalArgumentException("Text and bin are mutually exclusive")
+            }
+
+            if (amount == null && (bin != null || initStateBase64 != null)) {
+                throw IllegalArgumentException("Amount is required for bin or init")
+            }
         }
     }
-
 
     data class PickWallet(val walletId: String): DeepLinkRoute() {
 

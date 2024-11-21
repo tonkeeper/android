@@ -57,6 +57,7 @@ class SettingsRepository(
         private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
         private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
         private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
+        private const val FILTER_TX_KEY = "filter_tx"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -109,6 +110,14 @@ class SettingsRepository(
             val id = java.util.UUID.randomUUID().toString()
             prefs.edit().putString(INSTALL_ID_KEY, id).apply()
             id
+        }
+
+    var filterTX: Int = prefs.getInt(FILTER_TX_KEY, 0)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putInt(FILTER_TX_KEY, value).apply()
+                field = value
+            }
         }
 
     var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)

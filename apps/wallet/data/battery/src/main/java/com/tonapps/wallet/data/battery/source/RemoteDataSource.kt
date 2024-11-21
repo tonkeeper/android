@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.battery.source
 
+import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
@@ -37,7 +38,8 @@ internal class RemoteDataSource(
         BatteryConfigEntity(
             excessesAccount = config.excessAccount,
             fundReceiver = config.fundReceiver,
-            rechargeMethods = rechargeMethods.methods.map(::RechargeMethodEntity)
+            rechargeMethods = rechargeMethods.methods.map(::RechargeMethodEntity),
+            gasProxy = config.gasProxy.map { it.address }
         )
     }
 

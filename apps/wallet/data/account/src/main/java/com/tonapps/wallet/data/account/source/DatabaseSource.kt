@@ -82,7 +82,8 @@ internal class DatabaseSource(
                 "$WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN TEXT," +
                 "$WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN INTEGER," +
                 "$WALLET_TABLE_KEYSTONE_XFP_COLUMN TEXT," +
-                "$WALLET_TABLE_KEYSTONE_PATH_COLUMN TEXT" +
+                "$WALLET_TABLE_KEYSTONE_PATH_COLUMN TEXT," +
+                "$WALLET_TABLE_INITIALIZED_COLUMN INTEGER DEFAULT 0" +
                 ");")
 
         val walletIndexPrefix = "idx_$WALLET_TABLE_NAME"

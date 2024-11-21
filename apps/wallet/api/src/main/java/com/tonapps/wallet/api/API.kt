@@ -841,6 +841,25 @@ class API(
         response.body?.string() ?: throw Exception("Empty response")
     }
 
+    suspend fun reportTX(
+        txId: String,
+        comment: String?,
+        recipient: String,
+    ) = withContext(Dispatchers.IO) {
+        val url = config.scamEndpoint + "/v1/report/tx/$txId"
+        val json = JSONObject()
+        json.put("recipient", recipient)
+        comment?.let { json.put("comment", it) }
+        val data = json.toString()
+        val response = withRetry {
+            tonAPIHttpClient.postJSON(url, data)
+        } ?: throw Exception("Empty response")
+        if (!response.isSuccessful) {
+            throw Exception("Failed creating proof: ${response.code}")
+        }
+        response.body?.string() ?: throw Exception("Empty response")
+    }
+
     companion object {
 
         const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"

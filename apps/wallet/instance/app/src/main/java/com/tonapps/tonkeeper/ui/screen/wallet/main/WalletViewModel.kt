@@ -76,8 +76,9 @@ class WalletViewModel(
 
     private val updateWalletSettings = combine(
         settingsRepository.tokenPrefsChangedFlow,
-        settingsRepository.walletPrefsChangedFlow
-    ) { _, _ -> }
+        settingsRepository.walletPrefsChangedFlow,
+        settingsRepository.safeModeStateFlow,
+    ) { _, _, _ -> }
 
     private val _stateSettingsFlow = combine(
         settingsRepository.hiddenBalancesFlow,
@@ -214,7 +215,7 @@ class WalletViewModel(
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
                     showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id),
-                    safeModeBlock = wallet.initialized && settingsRepository.showSafeModeSetup,
+                    safeModeBlock = wallet.hasPrivateKey && wallet.initialized && settingsRepository.showSafeModeSetup,
                 )
             }
 
@@ -229,7 +230,7 @@ class WalletViewModel(
                 dAppNotifications = State.DAppNotifications(pushes),
                 setup = uiSetup,
                 lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale()),
-                prefixYourAddress = 2 > settingsRepository.addressCopyCount
+                prefixYourAddress = 3 > settingsRepository.addressCopyCount
             )
             if (uiItems.isNotEmpty()) {
                 _uiItemsFlow.value = uiItems

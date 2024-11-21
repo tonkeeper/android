@@ -14,6 +14,7 @@ import com.tonapps.extensions.readParcelableCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
+import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.uikit.list.BaseListItem
@@ -248,6 +249,7 @@ sealed class HistoryItem(
         val wallet: WalletEntity,
         val isMaybeSpam: Boolean = false,
         val spamState: SpamTransactionState = SpamTransactionState.UNKNOWN,
+        val actionOutStatus: ActionOutStatus,
     ): HistoryItem(TYPE_ACTION) {
 
         val account: Account?
@@ -260,7 +262,7 @@ sealed class HistoryItem(
         ): Parcelable {
 
             enum class Type {
-                Text, Simple
+                Text, Simple, OriginalEncrypted
             }
 
             companion object {
@@ -271,10 +273,10 @@ sealed class HistoryItem(
                     localText: String?
                 ): Comment? {
                     if (!text.isNullOrBlank()) {
-                        return Comment(text)
+                        return Comment(Type.Text, text)
                     }
                     if (!localText.isNullOrBlank()) {
-                        return Comment(localText)
+                        return Comment(Type.OriginalEncrypted, localText)
                     }
                     val data = encrypted ?: return null
                     if (data.encryptionType == "simple" && data.cipherText.isNotBlank()) {
@@ -286,11 +288,6 @@ sealed class HistoryItem(
 
             val isEncrypted: Boolean
                 get() = type != Type.Text
-
-            constructor(body: String) : this(
-                type = Type.Text,
-                body = body
-            )
         }
 
         @IgnoredOnParcel
@@ -338,7 +335,8 @@ sealed class HistoryItem(
             refundInCurrency = parcel.readCharSequenceCompat(),
             wallet = parcel.readParcelableCompat()!!,
             isMaybeSpam = parcel.readBooleanCompat(),
-            spamState = parcel.readEnum(SpamTransactionState::class.java)!!
+            spamState = parcel.readEnum(SpamTransactionState::class.java)!!,
+            actionOutStatus = parcel.readEnum(ActionOutStatus::class.java)!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -375,6 +373,7 @@ sealed class HistoryItem(
             dest.writeParcelable(wallet, flags)
             dest.writeBooleanCompat(isMaybeSpam)
             dest.writeEnum(spamState)
+            dest.writeEnum(actionOutStatus)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

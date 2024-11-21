@@ -102,6 +102,14 @@ class AccountRepository(
         }
     }
 
+    suspend fun setInitialized(id: String, initialized: Boolean) {
+        try {
+            database.setInitialized(id, initialized)
+        } catch (e: Throwable) {
+            recordException(e)
+        }
+    }
+
     suspend fun importPrivateKeysFromRNLegacy(passcode: String): Boolean = withContext(Dispatchers.IO) {
         val vaultState = migrationHelper.loadSecureStore(passcode)
         if (vaultState.hasError) {

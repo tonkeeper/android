@@ -6,6 +6,7 @@ import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
 import com.tonapps.tonkeeper.core.entities.StakedEntity
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
@@ -15,8 +16,10 @@ import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 
 class AssetsManager(
     private val scope: CoroutineScope,
@@ -24,6 +27,7 @@ class AssetsManager(
     private val tokenRepository: TokenRepository,
     private val stakingRepository: StakingRepository,
     private val settingsRepository: SettingsRepository,
+    private val accountRepository: AccountRepository,
 ) {
 
     private val cache = TotalBalanceCache()
@@ -53,9 +57,14 @@ class AssetsManager(
         wallet: WalletEntity,
         currency: WalletCurrency = settingsRepository.currency,
         refresh: Boolean,
-    ): List<AssetsEntity.Token> {
+    ): List<AssetsEntity.Token>  {
         val safeMode = settingsRepository.isSafeModeEnabled()
         val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh) ?: return emptyList()
+        tokens.firstOrNull()?.let {
+            if (wallet.initialized != it.balance.initializedAccount) {
+                accountRepository.setInitialized(wallet.accountId, it.balance.initializedAccount)
+            }
+        }
         return if (safeMode) {
             tokens.filter { it.verified }.map { AssetsEntity.Token(it) }
         } else {

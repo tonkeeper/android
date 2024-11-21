@@ -147,12 +147,14 @@ class RootActivity: BaseWalletActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase)
         if (DevSettings.ignoreSystemFontSize) {
             val newConfig = Configuration(newBase.resources.configuration)
-            newConfig.fontScale = 1.0f
+            if (newConfig.fontScale >= 1.0f) {
+                newConfig.fontScale = .9f
+            }
             applyOverrideConfiguration(newConfig)
         }
-        super.attachBaseContext(newBase)
     }
 
     override fun onResume() {

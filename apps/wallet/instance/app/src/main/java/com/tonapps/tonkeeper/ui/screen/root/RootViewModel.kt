@@ -356,7 +356,7 @@ class RootViewModel(
         crashlytics.setCustomKeys {
             key("testnet", wallet.testnet)
             key("walletType", wallet.type.name)
-            key("wallet", wallet.address)
+            key("installId", settingsRepository.installId)
         }
     }
 

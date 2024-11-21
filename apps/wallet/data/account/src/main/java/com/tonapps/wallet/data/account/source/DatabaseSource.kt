@@ -8,12 +8,14 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import androidx.core.database.getStringOrNull
 import com.tonapps.blockchain.ton.contract.walletVersion
+import com.tonapps.extensions.isNullOrEmpty
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.withTransaction
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -112,6 +114,15 @@ internal class DatabaseSource(
         writableDatabase.delete(WALLET_TABLE_NAME, null, null)
     }
 
+    suspend fun setInitialized(id: String, initialized: Boolean) = withContext(scope.coroutineContext) {
+        val values = ContentValues()
+        values.put(WALLET_TABLE_INITIALIZED_COLUMN, if (initialized) 1 else 0)
+        val count = writableDatabase.update(WALLET_TABLE_NAME, values, "$WALLET_TABLE_ID_COLUMN = ?", arrayOf(id))
+        if (count == 0) {
+            throw IllegalStateException("Account with id $id not found")
+        }
+    }
+
     suspend fun deleteAccount(id: String) = withContext(scope.coroutineContext) {
         val count = writableDatabase.delete(WALLET_TABLE_NAME, "$WALLET_TABLE_ID_COLUMN = ?", arrayOf(id))
         if (count == 0) {
@@ -139,14 +150,22 @@ internal class DatabaseSource(
     suspend fun getAccounts(): List<WalletEntity> = withContext(scope.coroutineContext) {
         val query = "SELECT $walletFields FROM $WALLET_TABLE_NAME LIMIT 1000;"
         val cursor = readableDatabase.rawQuery(query, null)
-        readAccounts(cursor)
+        if (cursor.isNullOrEmpty()) {
+            emptyList()
+        } else {
+            readAccounts(cursor)
+        }
     }
 
     suspend fun getAccount(id: String): WalletEntity? = withContext(scope.coroutineContext) {
         if (id.isNotBlank()) {
             val query = "SELECT $walletFields FROM $WALLET_TABLE_NAME WHERE $WALLET_TABLE_ID_COLUMN = ?;"
             val cursor = readableDatabase.rawQuery(query, arrayOf(id))
-            readAccounts(cursor).firstOrNull()
+            if (cursor.isNullOrEmpty()) {
+                null
+            } else {
+                readAccounts(cursor).firstOrNull()
+            }
         } else {
             null
         }

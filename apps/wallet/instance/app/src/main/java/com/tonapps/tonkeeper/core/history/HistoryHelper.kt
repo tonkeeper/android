@@ -132,6 +132,9 @@ class HistoryHelper(
     }
 
     fun groupByDate(items: List<HistoryItem>): List<HistoryItem> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
         val events = sort(items)
         val output = arrayMapOf<String, ActionDateSection>()
         for (event in events) {
@@ -319,6 +322,10 @@ class HistoryHelper(
     }
 
     fun withLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
+
         val last = items.lastOrNull()
         if (last is HistoryItem.Loader) {
             return items
@@ -330,6 +337,10 @@ class HistoryHelper(
     }
 
     fun removeLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
+
         val last = items.lastOrNull()
         if (last is HistoryItem.Loader) {
             val newItems = items.toMutableList()

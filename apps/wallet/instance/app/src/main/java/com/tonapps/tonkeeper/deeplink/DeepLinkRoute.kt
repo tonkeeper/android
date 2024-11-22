@@ -20,11 +20,11 @@ sealed class DeepLinkRoute {
 
     data class Unknown(val uri: Uri): DeepLinkRoute()
 
-    sealed class Tabs(val tabUri: String): DeepLinkRoute() {
-        data object Main: Tabs("tonkeeper://wallet")
-        data object Activity: Tabs("tonkeeper://activity")
-        data object Browser: Tabs("tonkeeper://browser")
-        data object Collectibles: Tabs("tonkeeper://collectibles")
+    sealed class Tabs(val tabUri: String, open val from: String): DeepLinkRoute() {
+        data class Main(override val from: String): Tabs("tonkeeper://wallet", from)
+        data class Activity(override val from: String): Tabs("tonkeeper://activity", from)
+        data class Browser(override val from: String): Tabs("tonkeeper://browser", from)
+        data class Collectibles(override val from: String): Tabs("tonkeeper://collectibles", from)
     }
 
     sealed class Internal: DeepLinkRoute()
@@ -175,6 +175,7 @@ sealed class DeepLinkRoute {
 
         fun resolve(input: Uri): DeepLinkRoute {
             val uri = normalize(input)
+            val from = input.query("from") ?: "deep-link"
             val domain = uri.hostOrNull ?: return Unknown(uri)
             try {
                 return when (domain) {
@@ -182,10 +183,10 @@ sealed class DeepLinkRoute {
                     "staking" -> Staking
                     "buy-ton" -> Purchase
                     "send" -> Send
-                    "wallet", "main" -> Tabs.Main
-                    "activity", "history" -> Tabs.Activity
-                    "browser" -> Tabs.Browser
-                    "collectibles" -> Tabs.Collectibles
+                    "wallet", "main" -> Tabs.Main(from)
+                    "activity", "history" -> Tabs.Activity(from)
+                    "browser" -> Tabs.Browser(from)
+                    "collectibles" -> Tabs.Collectibles(from)
                     "settings" -> Settings
                     "pool" -> StakingPool(uri)
                     "swap" -> Swap(uri)

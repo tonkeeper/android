@@ -61,6 +61,9 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
     val isFirstStory: Boolean
         get() = state.currentIndex == 0
 
+    val currentIndex: Int
+        get() = state.currentIndex
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<View>(R.id.stories_close).setOnClickListener { finish() }

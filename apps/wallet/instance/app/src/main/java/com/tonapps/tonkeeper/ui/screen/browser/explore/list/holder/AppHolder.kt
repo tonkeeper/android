@@ -24,7 +24,12 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_brows
 
     override fun onBind(item: Item.App) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(DAppScreen.newInstance(item.wallet, item.name, item.url))
+            Navigation.from(context)?.add(DAppScreen.newInstance(
+                wallet = item.wallet,
+                title = item.name,
+                url = item.url,
+                source = "browser"
+            ))
         }
         iconView.setImageURI(item.icon, ResizeOptions.forSquareSize(172))
         nameView.text = item.name

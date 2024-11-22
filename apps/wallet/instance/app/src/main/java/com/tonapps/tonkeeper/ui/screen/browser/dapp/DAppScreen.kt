@@ -127,7 +127,12 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEventClickDApp(args.url.toString(), installId)
+        AnalyticsHelper.trackEventClickDApp(
+            url = args.url.toString(),
+            name = args.title ?: "unknown",
+            installId = installId,
+            source = args.source
+        )
     }
 
     private fun applyHost(url: String) {
@@ -316,9 +321,10 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         fun newInstance(
             wallet: WalletEntity,
             title: String? = null,
-            url: Uri
+            url: Uri,
+            source: String,
         ): DAppScreen {
-            return newInstance(wallet, DAppArgs(title, url))
+            return newInstance(wallet, DAppArgs(title, url, source))
         }
 
         fun newInstance(

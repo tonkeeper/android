@@ -71,7 +71,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         refreshView.offsetTopAndBottom(0)
         refreshView.setOnRefreshListener {
             setLoading(true)
-            viewModel.initialLoad()
+            viewModel.refresh()
         }
 
         headerDrawable = HeaderDrawable(requireContext())
@@ -140,7 +140,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     override fun scrollUp() {
         super.scrollUp()
         listView.scrollToPosition(0)
-        viewModel.initialLoad()
+        viewModel.refresh()
     }
 
     private fun openQRCode() {

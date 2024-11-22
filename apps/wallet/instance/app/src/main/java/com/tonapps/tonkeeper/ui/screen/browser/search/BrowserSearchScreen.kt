@@ -34,7 +34,12 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
     override val viewModel: BrowserSearchViewModel by viewModel()
 
     private val adapter = Adapter { title, url ->
-        navigation?.add(DAppScreen.newInstance(screenContext.wallet, title, url.toUri()))
+        navigation?.add(DAppScreen.newInstance(
+            wallet = screenContext.wallet,
+            title = title,
+            url = url.toUri(),
+            source = "browser_search"
+        ))
         finish()
     }
 
@@ -98,9 +103,17 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         val query = searchInput.text.toString()
         val url = BrowserSearchViewModel.parseIfUrl(query)
         if (url != null) {
-            navigation?.add(DAppScreen.newInstance(wallet, url = url))
+            navigation?.add(DAppScreen.newInstance(
+                wallet = wallet,
+                url = url,
+                source = "browser_search_direct"
+            ))
         } else {
-            navigation?.add(DAppScreen.newInstance(wallet, url = viewModel.createSearchUrl(query)))
+            navigation?.add(DAppScreen.newInstance(
+                wallet = wallet,
+                url = viewModel.createSearchUrl(query),
+                source = "browser_search_direct"
+            ))
         }
         searchInput.hideKeyboard()
     }

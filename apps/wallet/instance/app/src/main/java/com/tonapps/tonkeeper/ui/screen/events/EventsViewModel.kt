@@ -96,11 +96,8 @@ class EventsViewModel(
     private val _eventsFlow = MutableStateFlow<Array<AccountEventWrap>?>(null)
     private val _pushesFlow = MutableStateFlow<Array<AppPushEntity>?>(null)
 
-    @OptIn(FlowPreview::class)
-    private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull().debounce(60)
-
-    @OptIn(FlowPreview::class)
-    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull().debounce(60)
+    private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull()
+    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull()
 
     private val historyItemsFlow = combine(
         eventsFlow,
@@ -148,8 +145,6 @@ class EventsViewModel(
     }
 
     init {
-        _triggerFlow.tryEmit(Unit)
-
         with(settingsRepository) {
             tokenPrefsChangedFlow.drop(1).collectFlow { initialLoad() }
             walletPrefsChangedFlow.drop(1).collectFlow { initialLoad() }
@@ -165,7 +160,8 @@ class EventsViewModel(
             }
         }
 
-        initialLoad(true)
+        viewModelScope.launch { initialLoad(true) }
+        _triggerFlow.tryEmit(Unit)
     }
 
     private fun setLoading(loading: Boolean, trigger: Boolean) {
@@ -215,36 +211,40 @@ class EventsViewModel(
 
     private fun checkAutoRefresh() {
         if (hasPendingEvents()) {
+            refresh()
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
             initialLoad()
         }
     }
 
-    fun initialLoad(first: Boolean = false) {
+    private suspend fun initialLoad(first: Boolean = false) = withContext(Dispatchers.IO) {
         if (isLoading.get()) {
-            return
+            return@withContext
         }
 
         setLoading(loading = true, trigger = true)
 
-        viewModelScope.launch(Dispatchers.IO) {
-            if (first) {
-                val cached = cache().toTypedArray()
-                if (cached.isNotEmpty()) {
-                    _eventsFlow.value = cached
-                    _pushesFlow.value = emptyArray()
-                }
+        if (first) {
+            val cached = cache().toTypedArray()
+            if (cached.isNotEmpty()) {
+                _eventsFlow.value = cached
+                _pushesFlow.value = emptyArray()
             }
-
-            val eventsDeferred = async { loadDefault(beforeLt = null).toTypedArray() }
-            val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
-
-            setLoading(loading = false, trigger = false)
-            _pushesFlow.value = null
-            _pushesFlow.value = dAppNotificationsDeferred.await()
-
-            _eventsFlow.value = null
-            _eventsFlow.value = eventsDeferred.await()
         }
+
+        val eventsDeferred = async { loadDefault(beforeLt = null).toTypedArray() }
+        val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
+
+        val events = eventsDeferred.await()
+        val pushes = dAppNotificationsDeferred.await()
+
+        setLoading(loading = false, trigger = false)
+        _eventsFlow.value = events
+        _pushesFlow.value = pushes
     }
 
     fun loadMore() {
@@ -288,7 +288,9 @@ class EventsViewModel(
     }
 
     private fun setCached(uiItems: List<HistoryItem>) {
-        screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
+        if (uiItems.isNotEmpty()) {
+            screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
+        }
     }
 
     private suspend fun updateState() {

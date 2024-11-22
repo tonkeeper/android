@@ -121,7 +121,8 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         if (nftEntity.isDomain && nftEntity.metadata.buttons.isEmpty()) {
             val url = Uri.parse("https://dns.tonkeeper.com/manage?v=${nftEntity.userFriendlyAddress}")
             val dAppArgs = DAppArgs(
-                url = url
+                url = url,
+                source = "nft",
             )
             domainLinkButton.setOnClickListener {
                 navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))
@@ -221,7 +222,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
             val uri = url.toUriOrNull() ?: return
             rootViewModel.processDeepLink(uri, false, null, false, null)
         } else {
-            navigation?.add(DAppScreen.newInstance(wallet, url = url.toUri()))
+            navigation?.add(DAppScreen.newInstance(
+                wallet = wallet,
+                url = url.toUri(),
+                source = "nft"
+            ))
         }
         finish()
     }

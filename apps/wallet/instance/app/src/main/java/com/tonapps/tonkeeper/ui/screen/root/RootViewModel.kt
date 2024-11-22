@@ -220,12 +220,12 @@ class RootViewModel(
 
     private suspend fun showStories(storiesIds: List<String>) = withContext(Dispatchers.IO) {
         val firstStoryId = storiesIds.firstOrNull { !settingsRepository.isStoriesViewed(it) } ?: return@withContext
-        showStory(firstStoryId)
+        showStory(firstStoryId, "wallet")
     }
 
-    private suspend fun showStory(id: String) = withContext(Dispatchers.IO) {
+    private suspend fun showStory(id: String, from: String) = withContext(Dispatchers.IO) {
         val stories = api.getStories(id) ?: return@withContext
-        // openScreen(RemoteStoriesScreen.newInstance(stories))
+        openScreen(RemoteStoriesScreen.newInstance(stories, from))
     }
 
     private suspend fun checkAppUpdate() = withContext(Dispatchers.IO) {
@@ -392,7 +392,11 @@ class RootViewModel(
         }
         val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
         val openUrl = bundle.getString("link")?.toUriOrNull() ?: dappUrl
-        openScreen(DAppScreen.newInstance(wallet, url = openUrl))
+        openScreen(DAppScreen.newInstance(
+            wallet = wallet,
+            url = openUrl,
+            source = "push"
+        ))
     }
 
     private suspend fun processDeepLinkPush(uri: Uri, bundle: Bundle) {
@@ -444,9 +448,9 @@ class RootViewModel(
         if (route is DeepLinkRoute.TonConnect && !wallet.isWatchOnly) {
             processTonConnectDeepLink(deeplink, fromPackageName)
         } else if (route is DeepLinkRoute.Story) {
-            showStory(route.id)
+            showStory(route.id, "deep-link")
         } else if (route is DeepLinkRoute.Tabs) {
-            _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri, wallet))
+            _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri, wallet, route.from))
         } else if (route is DeepLinkRoute.Send && !wallet.isWatchOnly) {
             openScreen(SendScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.Staking && !wallet.isWatchOnly) {
@@ -505,7 +509,11 @@ class RootViewModel(
             if (dApp == null) {
                 toast(Localization.app_not_found)
             } else {
-                openScreen(DAppScreen.newInstance(wallet, url = dAppUri))
+                openScreen(DAppScreen.newInstance(
+                    wallet = wallet,
+                    url = dAppUri,
+                    source = "deep-link"
+                ))
             }
         } else if (route is DeepLinkRoute.SettingsSecurity) {
             openScreen(SecurityScreen.newInstance(wallet))

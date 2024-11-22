@@ -3,7 +3,10 @@ package com.tonapps.tonkeeper.ui.screen.stories.remote
 import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
+import com.tonapps.extensions.containsQuery
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import org.koin.android.ext.android.inject
@@ -16,7 +19,14 @@ class RemoteStoriesScreen: BaseStoriesScreen() {
         requireArguments().getParcelableCompat(ARG_STORIES)!!
     }
 
+    private val from: String by lazy {
+        requireArguments().getString(ARG_FROM)!!
+    }
+
     private val settingsRepository: SettingsRepository by inject()
+
+    private val installId: String
+        get() = settingsRepository.installId
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -28,13 +38,40 @@ class RemoteStoriesScreen: BaseStoriesScreen() {
                 button = it.button?.title
             )
         })
+
+        AnalyticsHelper.trackStoryOpen(
+            installId = installId,
+            storiesId = stories.id,
+            from = from
+        )
+    }
+
+    override fun onStoryItem(item: Item) {
+        super.onStoryItem(item)
+        AnalyticsHelper.trackStoryView(
+            installId = installId,
+            storiesId = stories.id,
+            index = currentIndex
+        )
     }
 
     override fun onStoryButton(index: Int) {
         super.onStoryButton(index)
         val button = stories.list.getOrNull(index)?.button ?: return
+
+        AnalyticsHelper.trackStoryClick(
+            installId = installId,
+            storiesId = stories.id,
+            button = button
+        )
+
         if (button.type == "deeplink") {
-            navigation?.openURL(button.payload)
+            val uri = button.payload.toUriOrNull() ?: return
+            val builder = uri.buildUpon() ?: return
+            if (!uri.containsQuery("from")) {
+                builder.appendQueryParameter("from", "story")
+            }
+            navigation?.openURL(builder.build().toString())
             finish()
         }
     }
@@ -47,10 +84,12 @@ class RemoteStoriesScreen: BaseStoriesScreen() {
     companion object {
 
         private const val ARG_STORIES = "ARG_STORIES"
+        private const val ARG_FROM = "ARG_FROM"
 
-        fun newInstance(stories: StoryEntity.Stories): RemoteStoriesScreen {
+        fun newInstance(stories: StoryEntity.Stories, from: String): RemoteStoriesScreen {
             val fragment = RemoteStoriesScreen()
             fragment.putParcelableArg(ARG_STORIES, stories)
+            fragment.putStringArg(ARG_FROM, from)
             return fragment
         }
     }

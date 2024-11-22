@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
@@ -133,9 +134,9 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
 
         rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().onEach {
-            val itemId = mainDeepLinks[it.link] ?: return@onEach
+            val itemId = resolveId(it.link)
             bottomTabsView.selectedItemId = itemId
-            setFragment(itemId, it.wallet, true)
+            setFragment(itemId, it.wallet, it.from,true)
             parentClearState()
         }.launchIn(lifecycleScope)
 
@@ -151,7 +152,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 bottomTabsView.selectedItemId
             }
             applyWallet(wallet)
-            setFragment(itemId, wallet, false)
+            setFragment(itemId, wallet, "wallet",false)
         }
     }
 
@@ -170,29 +171,35 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
 
         bottomTabsView.doOnClick = { itemId ->
-            setFragment(itemId, wallet, false)
+            setFragment(itemId, wallet, "wallet",false)
+            if (itemId == R.id.browser) {
+                AnalyticsHelper.trackEvent("browser_click", rootViewModel.installId)
+            }
         }
     }
 
-    private fun getFragment(itemId: Int, wallet: WalletEntity): Fragment {
-        return fragments[itemId] ?: createFragment(itemId, wallet).also {
+    private fun getFragment(itemId: Int, wallet: WalletEntity, from: String): Fragment {
+        return fragments[itemId] ?: createFragment(itemId, wallet, from).also {
             fragments[itemId] = it
+            if (it is BrowserMainScreen) {
+                it.sendAnalytics(from)
+            }
         }
     }
 
-    private fun createFragment(itemId: Int, wallet: WalletEntity): Fragment {
+    private fun createFragment(itemId: Int, wallet: WalletEntity, from: String): Fragment {
         val fragment = when(itemId) {
             R.id.wallet -> WalletScreen.newInstance(wallet)
             R.id.activity -> EventsScreen.newInstance(wallet)
             R.id.collectibles -> CollectiblesScreen.newInstance(wallet)
-            R.id.browser -> BrowserMainScreen.newInstance(wallet)
+            R.id.browser -> BrowserMainScreen.newInstance(wallet, from)
             else -> throw IllegalArgumentException("Unknown itemId: $itemId")
         }
         return fragment
     }
 
-    private fun setFragment(itemId: Int, wallet: WalletEntity, forceScrollUp: Boolean) {
-        setFragment(getFragment(itemId, wallet), forceScrollUp, 0)
+    private fun setFragment(itemId: Int, wallet: WalletEntity, from: String, forceScrollUp: Boolean) {
+        setFragment(getFragment(itemId, wallet, from), forceScrollUp, 0)
     }
 
     private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, attempt: Int) {
@@ -245,14 +252,19 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         window?.setBackgroundDrawable(requireContext().constantBlackColor.drawable)
     }
 
-    companion object {
+    private fun resolveId(deeplink: String): Int {
+        if (deeplink.startsWith("tonkeeper://activity")) {
+            return R.id.activity
+        } else if (deeplink.startsWith("tonkeeper://browser")) {
+            return R.id.browser
+        } else if (deeplink.startsWith("tonkeeper://collectibles")) {
+            return R.id.collectibles
+        }
+        return R.id.wallet
 
-        private val mainDeepLinks = mapOf(
-            "tonkeeper://wallet" to R.id.wallet,
-            "tonkeeper://activity" to R.id.activity,
-            "tonkeeper://browser" to R.id.browser,
-            "tonkeeper://collectibles" to R.id.collectibles
-        )
+    }
+
+    companion object {
 
         fun newInstance() = MainScreen()
     }

@@ -29,7 +29,8 @@ class HistoryAppHolder(
                 DAppScreen.newInstance(
                     wallet = item.wallet,
                     title = item.title,
-                    url = item.deepLink.toUri()
+                    url = item.deepLink.toUri(),
+                    source = "activity"
             ))
         }
         imageView.setImageURI(item.iconUri, this)

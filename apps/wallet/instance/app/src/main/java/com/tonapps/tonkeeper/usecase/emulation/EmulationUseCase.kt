@@ -1,13 +1,8 @@
 package com.tonapps.tonkeeper.usecase.emulation
 
-import android.util.Log
 import com.tonapps.blockchain.ton.AndroidSecureRandom
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
-import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.icu.Coins
-import com.tonapps.icu.Coins.Companion.ZERO
 import com.tonapps.icu.Coins.Companion.sumOf
-import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
@@ -26,7 +21,6 @@ import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import java.math.BigDecimal
-import java.math.BigInteger
 import kotlin.math.abs
 
 class EmulationUseCase(
@@ -57,7 +51,7 @@ class EmulationUseCase(
         } catch (e: Throwable) {
             Emulated(
                 consequences = null,
-                total = Emulated.Total(ZERO, 0, false),
+                total = Emulated.Total(Coins.ZERO, 0, false),
                 extra = Emulated.defaultExtra,
                 currency = settingsRepository.currency,
                 failed = true
@@ -149,7 +143,7 @@ class EmulationUseCase(
             rates.convert(token.token.address, token.value)
         }.sumOf { it }
 
-        val diff = if (balanceFiat > ZERO) {
+        val diff = if (balanceFiat > Coins.ZERO) {
             totalFiat.value / balanceFiat.value
         } else {
             totalFiat.value

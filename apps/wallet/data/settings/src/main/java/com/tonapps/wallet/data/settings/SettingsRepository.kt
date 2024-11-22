@@ -57,7 +57,6 @@ class SettingsRepository(
         private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
         private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
         private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
-        private const val FILTER_TX_KEY = "filter_tx"
         private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
     }
 
@@ -111,14 +110,6 @@ class SettingsRepository(
             val id = java.util.UUID.randomUUID().toString()
             prefs.edit().putString(INSTALL_ID_KEY, id).apply()
             id
-        }
-
-    var filterTX: Int = prefs.getInt(FILTER_TX_KEY, 0)
-        set(value) {
-            if (value != field) {
-                prefs.edit().putInt(FILTER_TX_KEY, value).apply()
-                field = value
-            }
         }
 
     var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)
@@ -254,8 +245,10 @@ class SettingsRepository(
         get() = prefs.getInt(ADDRESS_COPY_COUNT_KEY, 0)
 
     fun getSafeModeState(): SafeModeState {
-        val disabledUnix = prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, 0)
-        if (1L == disabledUnix) {
+        val disabledUnix = prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, -5)
+        if (disabledUnix == -5L) {
+            return SafeModeState.Default
+        } else if (1L == disabledUnix) {
             return SafeModeState.Enabled
         } else if (0 >= disabledUnix) {
             return SafeModeState.DisabledPermanently
@@ -278,13 +271,12 @@ class SettingsRepository(
         prefs.edit().putBoolean(STORIES_VIEWED_PREFIX + storyId, true).apply()
     }
 
-    fun isSafeModeEnabled() = getSafeModeState() == SafeModeState.Enabled
-
     fun setSafeModeState(state: SafeModeState) {
         prefs.edit {
             val value = when (state) {
                 SafeModeState.Enabled -> 1
                 SafeModeState.DisabledPermanently -> 0
+                SafeModeState.Default -> -5
                 else -> System.currentTimeMillis()
             }
             putLong(SAFE_MODE_DISABLED_UNIX_KEY, value)

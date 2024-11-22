@@ -67,7 +67,7 @@ class SettingsScreen(
             is Item.Account -> navigation?.add(EditNameScreen.newInstance(item.wallet))
             is Item.Theme -> navigation?.add(ThemeScreen.newInstance())
             is Item.Widget -> installWidget()
-            is Item.Security -> navigation?.add(SecurityScreen.newInstance())
+            is Item.Security -> navigation?.add(SecurityScreen.newInstance(screenContext.wallet))
             is Item.Legal -> navigation?.add(LegalScreen.newInstance())
             is Item.News -> navigation?.openURL(item.url)
             is Item.Support -> navigation?.openURL(item.url)

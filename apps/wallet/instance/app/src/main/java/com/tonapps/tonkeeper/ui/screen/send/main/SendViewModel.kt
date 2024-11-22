@@ -916,10 +916,17 @@ class SendViewModel(
         val extra = getRawExtra()
         val fee = getFee()
 
-        val jettonTransferAmount = when {
+        val token = selectedTokenFlow.value
+        val isExtraAmount = token.verified && token.symbol.equals("HMSTR", true)
+
+        var jettonTransferAmount = when {
             sendTransferType is SendTransferType.Gasless || extra.isNegative -> TransferEntity.BASE_FORWARD_AMOUNT
             fee.isZero -> TransferEntity.POINT_ONE_TON
             else -> fee + TransferEntity.BASE_FORWARD_AMOUNT
+        }
+
+        if (isExtraAmount) {
+            jettonTransferAmount = Coins.of(0.1)
         }
 
         val boc = signUseCase(

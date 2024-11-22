@@ -8,9 +8,11 @@ import com.tonapps.tonkeeper.api.AccountEventWrap
 import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
@@ -62,6 +64,7 @@ class EventsViewModel(
     private val settingsRepository: SettingsRepository,
     private val transactionManager: TransactionManager,
     private val dAppsRepository: DAppsRepository,
+    private val api: API,
 ): BaseWalletVM(app) {
 
     private var autoRefreshJob: Job? = null
@@ -69,7 +72,7 @@ class EventsViewModel(
     private val _triggerFlow = MutableEffectFlow<Unit>()
     private val _loadingTriggerFlow = MutableEffectFlow<Unit>()
 
-    private val _selectedFilter = MutableStateFlow(getSavedFilter())
+    private val _selectedFilter = MutableStateFlow<FilterItem?>(null)
     private val selectedFilter = _selectedFilter.asStateFlow()
 
     private val _filterAppsFlow = MutableStateFlow<List<AppEntity>>(emptyList())
@@ -162,7 +165,7 @@ class EventsViewModel(
             }
         }
 
-        initialLoad()
+        initialLoad(true)
     }
 
     private fun setLoading(loading: Boolean, trigger: Boolean) {
@@ -196,10 +199,8 @@ class EventsViewModel(
     fun clickFilter(filter: FilterItem) {
         if (_selectedFilter.value?.id == filter.id) {
             _selectedFilter.value = null
-            saveFilter(null)
         } else {
             _selectedFilter.value = filter
-            saveFilter(filter)
         }
     }
 
@@ -218,13 +219,21 @@ class EventsViewModel(
         }
     }
 
-    fun initialLoad() {
+    fun initialLoad(first: Boolean = false) {
         if (isLoading.get()) {
             return
         }
 
         setLoading(loading = true, trigger = true)
         viewModelScope.launch(Dispatchers.IO) {
+            if (first) {
+                val cached = cache().toTypedArray()
+                if (cached.isNotEmpty()) {
+                    _eventsFlow.value = cached
+                    _pushesFlow.value = emptyArray()
+                }
+            }
+
             val eventsDeferred = async { loadDefault(beforeLt = null).toTypedArray() }
             val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
 
@@ -262,7 +271,7 @@ class EventsViewModel(
             events = events.map { it.copy() },
             removeDate = false,
             hiddenBalances = settingsRepository.hiddenBalances,
-            safeMode = settingsRepository.isSafeModeEnabled(),
+            safeMode = settingsRepository.isSafeModeEnabled(api),
         )
 
         return eventItems + pushesItems
@@ -276,18 +285,6 @@ class EventsViewModel(
 
     private fun setCached(uiItems: List<HistoryItem>) {
         screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
-    }
-
-    private fun getSavedFilter(): FilterItem? {
-        return when (settingsRepository.filterTX) {
-            FilterItem.TYPE_SEND -> FilterItem.Send(true)
-            FilterItem.TYPE_RECEIVE -> FilterItem.Receive(true)
-            else -> null
-        }
-    }
-
-    private fun saveFilter(filter: FilterItem?) {
-        settingsRepository.filterTX = filter?.type ?: 0
     }
 
     private suspend fun updateState() {
@@ -311,7 +308,7 @@ class EventsViewModel(
             accountId = wallet.accountId,
             testnet = wallet.testnet,
             beforeLt = beforeLt,
-            limit = 25,
+            limit = 50,
         )?.events?.map(::AccountEventWrap)
         return list ?: emptyList()
     }

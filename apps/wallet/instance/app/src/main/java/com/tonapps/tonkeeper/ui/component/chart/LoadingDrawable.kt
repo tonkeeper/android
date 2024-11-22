@@ -14,7 +14,7 @@ import kotlin.math.sin
 class LoadingDrawable(context: Context) : BaseChartDrawable(context) {
     private var path = Path()
     private val snakePoints = mutableListOf<PointF>()
-    private val animationDuration = 1400L
+    private val animationDuration = 3200L
     private var progress = 0f
 
     private val animator = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -38,7 +38,7 @@ class LoadingDrawable(context: Context) : BaseChartDrawable(context) {
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = accentColor
-        strokeWidth = strokeSize * 2
+        strokeWidth = strokeSize
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND

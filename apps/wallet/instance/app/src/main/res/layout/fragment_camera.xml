@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColor="?attr/textPrimaryColor"
+            android:textColor="@color/constantWhite"
             android:textAppearance="@style/TextAppearance.H2"
             android:text="@string/scan_qr_code"/>
 

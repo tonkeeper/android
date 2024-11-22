@@ -64,7 +64,7 @@ val Context.packageInfo: PackageInfo
     get() = packageManager.getPackageInfo(packageName, 0)
 
 val Context.appVersionName: String
-    get() = packageInfo.versionName
+    get() = packageInfo.versionName ?: "unknown"
 
 val Context.appVersionCode: Long
     get() = packageInfo.versionCodeCompat

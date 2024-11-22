@@ -56,7 +56,7 @@ sealed class State {
         val size: Int
             get() = list.size
 
-        private fun getTotalBalanceFiat(wallet: WalletEntity): Coins {
+        fun getTotalBalanceFiat(wallet: WalletEntity): Coins {
             return if (wallet.testnet) {
                 list.first().fiat
             } else {
@@ -86,6 +86,9 @@ sealed class State {
         val lt: Long?,
         val isOnline: Boolean,
     ): State() {
+
+        val totalBalanceFiat: Coins
+            get() = assets.getTotalBalanceFiat(wallet)
 
         private val totalBalanceFormat: CharSequence
             get() = assets.getTotalBalanceFormat(wallet)

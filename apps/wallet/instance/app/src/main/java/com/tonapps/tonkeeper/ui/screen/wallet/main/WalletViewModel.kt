@@ -155,7 +155,7 @@ class WalletViewModel(
             val localAssets = getAssets(walletCurrency, false)
             if (localAssets != null) {
                 val batteryBalance = getBatteryBalance(wallet)
-                _stateMainFlow.value = State.Main(
+                val state = State.Main(
                     wallet = wallet,
                     assets = localAssets,
                     hasBackup = hasBackup,
@@ -168,13 +168,15 @@ class WalletViewModel(
                     lt = currentLt,
                     isOnline = currentIsOnline,
                 )
+                assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
+                _stateMainFlow.value = state
             }
 
             if (isRequestUpdate) {
                 val remoteAssets = getAssets(walletCurrency, true)
                 val batteryBalance = getBatteryBalance(wallet, true)
                 if (remoteAssets != null) {
-                    _stateMainFlow.value = State.Main(
+                    val state = State.Main(
                         wallet,
                         remoteAssets,
                         hasBackup = hasBackup,
@@ -187,6 +189,8 @@ class WalletViewModel(
                         lt = currentLt,
                         isOnline = currentIsOnline,
                     )
+                    _stateMainFlow.value = state
+                    assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
                     settingsRepository.setWalletLastUpdated(wallet.id)
                     setStatus(Status.Default)
                 }
@@ -216,7 +220,7 @@ class WalletViewModel(
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
                     showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id),
-                    safeModeBlock = wallet.hasPrivateKey && wallet.initialized && settingsRepository.showSafeModeSetup,
+                    safeModeBlock = wallet.initialized && settingsRepository.showSafeModeSetup,
                 )
             }
 

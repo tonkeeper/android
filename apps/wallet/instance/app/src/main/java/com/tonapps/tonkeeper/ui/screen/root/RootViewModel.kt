@@ -38,6 +38,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.safeExternalOpenUri
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.helper.ShortcutHelper
@@ -506,8 +507,8 @@ class RootViewModel(
             } else {
                 openScreen(DAppScreen.newInstance(wallet, url = dAppUri))
             }
-        } else if (route is DeepLinkRoute.SettingsSecurity && wallet.hasPrivateKey) {
-            openScreen(SecurityScreen.newInstance())
+        } else if (route is DeepLinkRoute.SettingsSecurity) {
+            openScreen(SecurityScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.SettingsCurrency) {
             openScreen(CurrencyScreen.newInstance())
         } else if (route is DeepLinkRoute.SettingsLanguage) {
@@ -588,7 +589,7 @@ class RootViewModel(
         val tx = historyHelper.getEvent(
             wallet = wallet,
             eventId = hash,
-            safeMode = settingsRepository.isSafeModeEnabled(),
+            safeMode = settingsRepository.isSafeModeEnabled(api),
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }
@@ -599,7 +600,7 @@ class RootViewModel(
         val tx = historyHelper.mapping(
             wallet = wallet,
             event = event,
-            safeMode = settingsRepository.isSafeModeEnabled(),
+            safeMode = settingsRepository.isSafeModeEnabled(api),
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }

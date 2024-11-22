@@ -4,11 +4,13 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.flattenFirst
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.list.Item
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -32,6 +34,7 @@ class CollectiblesViewModel(
     private val networkMonitor: NetworkMonitor,
     private val settingsRepository: SettingsRepository,
     private val transactionManager: TransactionManager,
+    private val api: API
 ): BaseWalletVM(app) {
 
     private val _ltFlow = MutableStateFlow(0L)
@@ -71,7 +74,7 @@ class CollectiblesViewModel(
         hiddenBalances: Boolean,
         isOnline: Boolean,
     ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
-        val safeMode = settingsRepository.isSafeModeEnabled()
+        val safeMode = settingsRepository.isSafeModeEnabled(api)
         val uiItems = mutableListOf<Item>()
         for (nft in result.list) {
             if (safeMode && !nft.verified) {

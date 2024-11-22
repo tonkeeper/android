@@ -6,6 +6,7 @@ import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.list.Adapter
@@ -13,6 +14,7 @@ import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageScr
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -38,7 +40,11 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.collectibles)
-        headerView.setColor(requireContext().backgroundTransparentColor)
+        if (requireContext().isLightTheme) {
+            headerView.setColor(requireContext().backgroundPageColor)
+        } else {
+            headerView.setColor(requireContext().backgroundTransparentColor)
+        }
         headerView.setAction(UIKitIcon.ic_sliders_16)
         headerView.doOnActionClick = { navigation?.add(CollectiblesManageScreen.newInstance(wallet)) }
 

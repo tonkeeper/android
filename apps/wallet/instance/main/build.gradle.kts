@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.ton_keeper"
         minSdk = Build.minSdkVersion
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 600
 
         versionName = "5.0.16" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed

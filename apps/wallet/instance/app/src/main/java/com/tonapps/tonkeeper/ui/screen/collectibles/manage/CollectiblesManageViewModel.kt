@@ -7,9 +7,11 @@ import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.mapList
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftCollectionEntity
@@ -33,10 +35,11 @@ class CollectiblesManageViewModel(
     private val wallet: WalletEntity,
     private val collectiblesRepository: CollectiblesRepository,
     private val settingsRepository: SettingsRepository,
+    private val api: API,
 ): BaseWalletVM(app) {
 
     private val safeMode: Boolean
-        get() = settingsRepository.isSafeModeEnabled()
+        get() = settingsRepository.isSafeModeEnabled(api)
 
     private val _showedAllFlow = MutableStateFlow(false)
     private val showedAllFlow = _showedAllFlow.asStateFlow()
@@ -133,7 +136,7 @@ class CollectiblesManageViewModel(
         }
 
         if (safeMode) {
-            uiItems.add(Item.SafeMode)
+            uiItems.add(Item.SafeMode(wallet))
         }
 
         uiItems.toList()

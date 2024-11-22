@@ -1,13 +1,18 @@
 package com.tonapps.tonkeeper.manager.assets
 
+import android.content.Context
+import android.util.Log
+import com.tonapps.extensions.getParcelable
+import com.tonapps.extensions.prefs
+import com.tonapps.extensions.putParcelable
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import java.util.concurrent.ConcurrentHashMap
 
-internal class TotalBalanceCache {
+internal class TotalBalanceCache(context: Context) {
 
-    private val memoryCache = ConcurrentHashMap<String, Coins>(100, 1.0f, 2)
+    private val storageCache = context.prefs("total_balance_cache")
 
     fun get(
         wallet: WalletEntity,
@@ -15,7 +20,7 @@ internal class TotalBalanceCache {
         sorted: Boolean
     ): Coins? {
         val key = createKey(wallet, currency, sorted)
-        return memoryCache[key]?.copy()
+        return storageCache.getParcelable<Coins>(key)
     }
 
     fun set(
@@ -25,7 +30,7 @@ internal class TotalBalanceCache {
         value: Coins
     ) {
         val key = createKey(wallet, currency, sorted)
-        memoryCache[key] = value.copy()
+        storageCache.putParcelable(key, value)
     }
 
     private fun createKey(
@@ -41,6 +46,6 @@ internal class TotalBalanceCache {
     }
 
     fun clear() {
-        memoryCache.clear()
+        storageCache.edit().clear().apply()
     }
 }

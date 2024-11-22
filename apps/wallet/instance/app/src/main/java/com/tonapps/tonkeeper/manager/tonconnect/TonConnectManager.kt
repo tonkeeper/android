@@ -21,6 +21,7 @@ import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.core.DevSettings
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.Bridge
@@ -260,7 +261,7 @@ class TonConnectManager(
             )
 
             safeModeClient.isReadyFlow.take(1).onEach {
-                if (!isScam(context, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
+                if (!isScam(context, WalletEntity.EMPTY, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
                     connectRemoteApp(activity, tonConnect)
                 }
             }.launchIn(scope)
@@ -294,7 +295,7 @@ class TonConnectManager(
         val clientId = tonConnect.clientId
         try {
             val app = readManifest(tonConnect.manifestUrl)
-            if (isScam(activity, app.iconUrl.toUri(), app.url)) {
+            if (isScam(activity, wallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
                 return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
             }
 
@@ -348,10 +349,10 @@ class TonConnectManager(
         }
     }
 
-    suspend fun isScam(context: Context, vararg uris: Uri): Boolean {
-        if (settingsRepository.isSafeModeEnabled() && safeModeClient.isHasScamUris(*uris)) {
+    suspend fun isScam(context: Context, wallet: WalletEntity, vararg uris: Uri): Boolean {
+        if (settingsRepository.isSafeModeEnabled(api) && safeModeClient.isHasScamUris(*uris)) {
             withContext(Dispatchers.Main) {
-                TonConnectSafeModeDialog(context).show()
+                TonConnectSafeModeDialog(context).show(wallet)
             }
             return true
         }

@@ -155,10 +155,12 @@ class SettingsViewModel(
         val uiItems = mutableListOf<Item>()
         uiItems.add(Item.Account(displayWallet))
 
+        uiItems.add(Item.Space)
         if (wallet.hasPrivateKey) {
-            uiItems.add(Item.Space)
             uiItems.add(Item.Backup(ListCell.Position.FIRST, hasBackup))
             uiItems.add(Item.Security(ListCell.Position.LAST))
+        } else {
+            uiItems.add(Item.Security(ListCell.Position.SINGLE))
         }
 
         uiItems.add(Item.Space)

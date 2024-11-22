@@ -2,7 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.app.Application
 import android.content.Context
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SafeModeState
@@ -17,6 +19,7 @@ class SecurityViewModel(
     private val settingsRepository: SettingsRepository,
     private val rnLegacy: RNLegacy,
     private val passcodeManager: PasscodeManager,
+    private val api: API
 ): BaseWalletVM(app) {
 
     var lockScreen: Boolean
@@ -31,9 +34,7 @@ class SecurityViewModel(
     val safeModeFlow: Flow<SafeModeState>
         get() = settingsRepository.safeModeStateFlow
 
-    fun getSafeModeState() = settingsRepository.getSafeModeState()
-
-    fun isSafeModeEnabled() = settingsRepository.isSafeModeEnabled()
+    fun isSafeModeEnabled() = settingsRepository.isSafeModeEnabled(api)
 
     fun setSafeModeState(state: SafeModeState) {
         settingsRepository.setSafeModeState(state)

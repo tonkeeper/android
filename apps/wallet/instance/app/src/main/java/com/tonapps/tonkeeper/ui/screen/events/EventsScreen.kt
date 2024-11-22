@@ -9,12 +9,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.events.filters.FiltersAdapter
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.uikit.list.ListPaginationListener
@@ -59,7 +61,11 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.history)
         headerView.setSubtitle(Localization.updating)
-        headerView.setColor(requireContext().backgroundTransparentColor)
+        if (requireContext().isLightTheme) {
+            headerView.setColor(requireContext().backgroundPageColor)
+        } else {
+            headerView.setColor(requireContext().backgroundTransparentColor)
+        }
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.offsetTopAndBottom(0)
@@ -69,7 +75,11 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         }
 
         headerDrawable = HeaderDrawable(requireContext())
-        headerDrawable.setColor(requireContext().backgroundTransparentColor)
+        if (requireContext().isLightTheme) {
+            headerDrawable.setColor(requireContext().backgroundPageColor)
+        } else {
+            headerDrawable.setColor(requireContext().backgroundTransparentColor)
+        }
 
         filtersView = view.findViewById(R.id.filters)
         filtersView.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
@@ -85,7 +95,6 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         listView.addItemDecoration(HistoryItemDecoration())
         listView.adapter = legacyAdapter
         listView.addOnScrollListener(paginationListener)
-
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->

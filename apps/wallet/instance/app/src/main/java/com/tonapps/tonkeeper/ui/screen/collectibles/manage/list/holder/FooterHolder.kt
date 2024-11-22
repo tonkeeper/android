@@ -15,13 +15,12 @@ class FooterHolder(parent: ViewGroup): Holder<Item.SafeMode>(parent, R.layout.vi
 
     init {
         view.text = context.getSpannable(Localization.safe_mode_tokens_footer)
-        view.setOnClickListener {
-            Navigation.from(context)?.add(SecurityScreen.newInstance())
-        }
     }
 
     override fun onBind(item: Item.SafeMode) {
-
+        view.setOnClickListener {
+            Navigation.from(context)?.add(SecurityScreen.newInstance(item.wallet))
+        }
     }
 
 

@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeScreen
 import com.tonapps.tonkeeper.ui.screen.stories.safemode.SafeModeStoriesScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.localization.Localization
@@ -24,9 +25,12 @@ import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 import uikit.widget.item.ItemSwitchView
 
-class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_security, ScreenContext.None), BaseFragment.SwipeBack {
+class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_security, ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
     override val viewModel: SecurityViewModel by viewModel()
+
+    private val wallet: WalletEntity
+        get() = screenContext.wallet
 
     private lateinit var headerView: HeaderView
     private lateinit var biometricView: ItemSwitchView
@@ -47,15 +51,24 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
                 enableBiometric(checked)
             }
         }
+        if (!wallet.hasPrivateKey) {
+            biometricView.visibility = View.GONE
+            view.findViewById<View>(R.id.lock_screen_description).visibility = View.GONE
+        }
+
 
         val biometricDescriptionView = view.findViewById<View>(R.id.biometric_description)
-        val biometricVisibility = if (PasscodeBiometric.isAvailableOnDevice(requireContext())) {
+        val biometricVisibility = if (wallet.hasPrivateKey && PasscodeBiometric.isAvailableOnDevice(requireContext())) {
             View.VISIBLE
         } else {
             View.GONE
         }
-        biometricView.visibility = biometricVisibility
         biometricDescriptionView.visibility = biometricVisibility
+        if (!wallet.hasPrivateKey) {
+            biometricDescriptionView.visibility = View.GONE
+        } else {
+            biometricView.visibility = biometricVisibility
+        }
 
         lockScreenView = view.findViewById(R.id.lock_screen)
         lockScreenView.setChecked(viewModel.lockScreen, false)
@@ -64,9 +77,15 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
                 viewModel.lockScreen = checked
             }
         }
+        if (!wallet.hasPrivateKey) {
+            lockScreenView.visibility = View.GONE
+        }
 
         changePasscodeView = view.findViewById(R.id.change_passcode)
         changePasscodeView.setOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }
+        if (!wallet.hasPrivateKey) {
+            changePasscodeView.visibility = View.GONE
+        }
 
         safeModeView = view.findViewById(R.id.safe_mode)
         safeModeView.setChecked(viewModel.isSafeModeEnabled(), false)
@@ -104,6 +123,6 @@ class SecurityScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_sec
     }
 
     companion object {
-        fun newInstance() = SecurityScreen()
+        fun newInstance(wallet: WalletEntity) = SecurityScreen(wallet)
     }
 }

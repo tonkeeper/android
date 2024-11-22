@@ -6,9 +6,11 @@ import androidx.lifecycle.ViewModel
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -32,9 +34,10 @@ class TokenPickerViewModel(
     allowedTokens: List<String>,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
+    private val api: API,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled()
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
 
     private val _selectedTokenFlow = MutableStateFlow(selectedToken)
     private val selectedTokenFlow = _selectedTokenFlow.asStateFlow().filterNotNull()

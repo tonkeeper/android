@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.extensions
 
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
@@ -17,4 +18,12 @@ fun SettingsRepository.getNormalizeCountryFlow(api: API) = countryFlow.map { cou
 
 fun SettingsRepository.getLocaleCountryFlow(api: API) = getNormalizeCountryFlow(api).map {
     Locale("", it)
+}
+
+fun SettingsRepository.isSafeModeEnabled(api: API): Boolean {
+    val state = getSafeModeState()
+    if (state == SafeModeState.Default) {
+        return api.config.flags.safeModeEnabled
+    }
+    return state == SafeModeState.Enabled
 }

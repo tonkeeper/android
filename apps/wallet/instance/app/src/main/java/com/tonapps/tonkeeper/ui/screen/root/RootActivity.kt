@@ -153,11 +153,11 @@ class RootActivity: BaseWalletActivity() {
         if (DevSettings.ignoreSystemFontSize) {
             newConfig = Configuration(currentConfig)
             if (newConfig.fontScale >= 1.0f) {
-                newConfig.fontScale = .9f
+                newConfig.fontScale = 1f
             }
-        } else if (currentConfig.fontScale >= 1.4f) {
+        } else if (currentConfig.fontScale >= 1.2f) {
             newConfig = Configuration(currentConfig)
-            newConfig.fontScale = 1.4f
+            newConfig.fontScale = 1.2f
         }
         newConfig?.let {
             applyOverrideConfiguration(it)

@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -20,6 +21,8 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootEvent
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletScreen
+import com.tonapps.uikit.color.backgroundPageColor
+import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -111,6 +114,11 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         childFragmentManager.removeAllFragments()
 
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
+        if (requireContext().isLightTheme) {
+            bottomTabsView.setBgColor(requireContext().backgroundPageColor)
+        } else {
+            bottomTabsView.setBgColor(requireContext().backgroundTransparentColor)
+        }
         bottomTabsView.doOnLongClick = { itemId ->
             if (itemId == R.id.wallet) {
                 navigation?.add(PickerScreen.newInstance())

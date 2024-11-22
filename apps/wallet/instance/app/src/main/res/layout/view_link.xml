@@ -8,4 +8,5 @@
     android:background="@drawable/bg_button_secondary_18"
     android:textAppearance="@style/TextAppearance.Label2"
     android:textColor="?attr/textPrimaryColor"
-    android:drawablePadding="10dp"/>
+    android:drawablePadding="10dp"
+    android:drawableTint="?attr/iconPrimaryColor"/>

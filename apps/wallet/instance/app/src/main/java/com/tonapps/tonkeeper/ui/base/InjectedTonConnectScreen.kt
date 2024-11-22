@@ -104,7 +104,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             return JsonBuilder.connectEventError(BridgeError.badRequest("Version $version is not supported"))
         }
         val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
-        if (tonConnectManager.isScam(requireContext(), request.manifestUrl.toUri(), webView.url!!.toUri(), startUri)) {
+        if (tonConnectManager.isScam(requireContext(), wallet, request.manifestUrl.toUri(), webView.url!!.toUri(), startUri)) {
             return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
         }
 

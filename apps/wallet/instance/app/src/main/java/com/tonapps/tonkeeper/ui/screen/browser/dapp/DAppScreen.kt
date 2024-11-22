@@ -216,9 +216,9 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         actionSheet.addItem(REFRESH_ID, Localization.refresh, UIKitIcon.ic_refresh_16)
         actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
         actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
-        if (isRequestPinShortcutSupported) {
+        /*if (isRequestPinShortcutSupported) {
             actionSheet.addItem(ADD_HOME_SCREEN_ID, Localization.add_to_home_screen, UIKitIcon.ic_apps_16)
-        }
+        }*/
         actionSheet.doOnItemClick = { actionClick(it.id) }
         actionSheet.show(view)
     }
@@ -232,9 +232,9 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
         actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
         actionSheet.addItem(DISCONNECT_ID, Localization.disconnect, UIKitIcon.ic_disconnect_16)
-        if (isRequestPinShortcutSupported) {
+        /*if (isRequestPinShortcutSupported) {
             actionSheet.addItem(ADD_HOME_SCREEN_ID, Localization.add_to_home_screen, UIKitIcon.ic_apps_16)
-        }
+        }*/
         actionSheet.doOnItemClick = { actionClick(it.id) }
         actionSheet.show(view)
     }

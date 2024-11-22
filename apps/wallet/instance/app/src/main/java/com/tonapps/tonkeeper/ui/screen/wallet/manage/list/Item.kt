@@ -7,6 +7,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.account.entities.WalletEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -57,5 +58,5 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data object Space: Item(TYPE_SPACE)
 
-    data object SafeMode: Item(TYPE_SAFE_MODE)
+    data class SafeMode(val wallet: WalletEntity): Item(TYPE_SAFE_MODE)
 }

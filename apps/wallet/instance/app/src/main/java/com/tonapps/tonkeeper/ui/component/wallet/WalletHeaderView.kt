@@ -13,7 +13,10 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.WindowInsetsCompat
 import com.tonapps.emoji.ui.EmojiView
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundContentTintColor
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.account.Wallet
 import uikit.drawable.BarDrawable
@@ -76,7 +79,11 @@ class WalletHeaderView @JvmOverloads constructor(
     private val arrowView: AppCompatImageView
     private val settingsDot: View
     private val drawable = HeaderDrawable(context).apply {
-        setColor(context.backgroundTransparentColor)
+        if (context.isLightTheme) {
+            setColor(context.backgroundPageColor)
+        } else {
+            setColor(context.backgroundTransparentColor)
+        }
     }
 
     var onSettingsClick: (() -> Unit)? = null

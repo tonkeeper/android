@@ -58,7 +58,9 @@ class FrescoView @JvmOverloads constructor(
     }
 
     override fun setImageURI(uri: Uri, callerContext: Any?) {
-        if (UriUtil.isLocalResourceUri(uri)) {
+        if (callerContext is ResizeOptions) {
+            setImageURIWithResize(uri, callerContext)
+        } else if (UriUtil.isLocalResourceUri(uri)) {
             loadLocalUri(uri, callerContext)
         } else {
             hierarchy.setPlaceholderImage(null)
@@ -76,7 +78,7 @@ class FrescoView @JvmOverloads constructor(
         }
     }
 
-    fun setImageURI(uri: Uri, resizeOptions: ResizeOptions) {
+    private fun setImageURIWithResize(uri: Uri, resizeOptions: ResizeOptions) {
         val request = ImageRequestBuilder.newBuilderWithSource(uri)
             .setResizeOptions(resizeOptions)
             .build()
@@ -119,7 +121,7 @@ class FrescoView @JvmOverloads constructor(
 
         if (isCircular) {
             return RoundedCornersDrawable(iconDrawable).apply {
-                setCircle(true)
+                setType(RoundedCornersDrawable.Type.CLIPPING)
             }
         }
         return iconDrawable

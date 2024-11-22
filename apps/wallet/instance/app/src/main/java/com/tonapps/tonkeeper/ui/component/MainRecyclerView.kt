@@ -8,9 +8,13 @@ import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import blur.BlurCompat
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.isBlurDisabled
 import com.tonapps.tonkeeper.isLowDevice
+import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.settings.SettingsRepository
+import org.koin.java.KoinJavaComponent.inject
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.useAttributes
 import uikit.widget.SimpleRecyclerView
@@ -36,7 +40,7 @@ class MainRecyclerView @JvmOverloads constructor(
     private val bottomPadding: Int
         get() = bottomOffset + bottomBarSize
 
-    private val blurDisabled = context.isBlurDisabled
+    private val blurDisabled = context.isBlurDisabled || context.isLightTheme
     private val topBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
     private val bottomBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
 

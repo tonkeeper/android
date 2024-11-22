@@ -85,11 +85,11 @@ data class ConfigEntity(
         tonCommunityChatUrl = json.getString("tonCommunityChatUrl"),
         tonApiV2Key = json.getString("tonApiV2Key"),
         featuredPlayInterval = json.optInt("featured_play_interval", 3000),
-        flags = if (debug) {
+        flags = FlagsEntity(json.getJSONObject("flags")), /*if (debug) {
             FlagsEntity()
         } else {
             FlagsEntity(json.getJSONObject("flags"))
-        },
+        },*/
         faqUrl = json.getString("faq_url"),
         aptabaseEndpoint = json.getString("aptabaseEndpoint"),
         aptabaseAppKey = json.getString("aptabaseAppKey"),
@@ -119,7 +119,9 @@ data class ConfigEntity(
         scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com"),
         reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
         stories = json.getJSONArray("stories").toStringList()
-    )
+    ) {
+        Log.d("FlagsEntityLog", "json#1: $json")
+    }
 
     constructor() : this(
         empty = true,

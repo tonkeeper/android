@@ -9,19 +9,27 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.facebook.drawee.backends.pipeline.Fresco
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
+import com.tonapps.tonkeeper.extensions.loadSquare
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.withUtmSource
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
@@ -36,6 +44,7 @@ import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.R
@@ -46,6 +55,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import org.koin.android.ext.android.inject
@@ -71,6 +81,10 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
     override lateinit var webView: TonConnectWebView
 
     private val args: DAppArgs by lazy { DAppArgs(requireArguments()) }
+
+    private val isRequestPinShortcutSupported: Boolean by lazy {
+        ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())
+    }
 
     override val startUri: Uri
         get() = args.url
@@ -155,7 +169,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             deviceInfo = deviceInfo.toString(),
             send = ::tonconnectSend,
             connect = ::tonconnect,
-            restoreConnection = viewModel::restoreConnection,
+            restoreConnection = { viewModel.restoreConnection(currentUrl) },
             disconnect = { viewModel.disconnect() },
             tonapiFetch = ::tonapiFetch,
         )
@@ -202,6 +216,9 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         actionSheet.addItem(REFRESH_ID, Localization.refresh, UIKitIcon.ic_refresh_16)
         actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
         actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
+        if (isRequestPinShortcutSupported) {
+            actionSheet.addItem(ADD_HOME_SCREEN_ID, Localization.add_to_home_screen, UIKitIcon.ic_apps_16)
+        }
         actionSheet.doOnItemClick = { actionClick(it.id) }
         actionSheet.show(view)
     }
@@ -215,8 +232,41 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
         actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
         actionSheet.addItem(DISCONNECT_ID, Localization.disconnect, UIKitIcon.ic_disconnect_16)
+        if (isRequestPinShortcutSupported) {
+            actionSheet.addItem(ADD_HOME_SCREEN_ID, Localization.add_to_home_screen, UIKitIcon.ic_apps_16)
+        }
         actionSheet.doOnItemClick = { actionClick(it.id) }
         actionSheet.show(view)
+    }
+
+    private fun addToHomeScreen() {
+        lifecycleScope.launch {
+            try {
+                val app = viewModel.getApp()
+                val title = app.name
+                val bitmap = Fresco.getImagePipeline().loadSquare(app.iconUrl.toUri(), 512) ?: throw IllegalArgumentException("Failed to load icon")
+
+                val targetIntent = Intent(context, RootActivity::class.java).apply {
+                    data = createDeeplink()
+                    action = Intent.ACTION_MAIN
+                }
+
+                val info = ShortcutInfoCompat.Builder(requireContext(), args.url.host ?: "unknown")
+                    .setShortLabel(title)
+                    .setIntent(targetIntent)
+                    .setIcon(IconCompat.createWithBitmap(bitmap))
+                    .build()
+
+                ShortcutManagerCompat.requestPinShortcut(requireContext(), info, null)
+            } catch (e: Throwable) {
+                navigation?.toast(Localization.unknown_error)
+            }
+        }
+    }
+
+    private fun createDeeplink(): Uri {
+        val appUrlWithoutProtocol = startUri.toString().substringAfter("://")
+        return Uri.parse("tonkeeper://dapp/$appUrlWithoutProtocol")
     }
 
     private fun actionClick(id: Long) {
@@ -226,6 +276,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             SHARE_ID -> shareLink()
             COPY_ID -> requireContext().copyToClipboard(currentUrl)
             DISCONNECT_ID -> viewModel.disconnect()
+            ADD_HOME_SCREEN_ID -> addToHomeScreen()
         }
     }
 
@@ -260,6 +311,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         private const val SHARE_ID = 3L
         private const val COPY_ID = 4L
         private const val DISCONNECT_ID = 5L
+        private const val ADD_HOME_SCREEN_ID = 6L
 
         fun newInstance(
             wallet: WalletEntity,

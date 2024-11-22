@@ -1,6 +1,7 @@
 <resources>
     <string name="transaction_expired">Tranzaksiya muddati tugadi</string>
     <string name="add_contact">Manzillar kitobiga qo\'shish</string>
+    <string name="add_to_home_screen">Asosiy ekranga qo\'shish</string>
     <string name="multi_account_secret_wrong">Multi-Wallet hisobi uchun Tonkeeper Desktop-dan foydalaning</string>
     <string name="total">Jami: %1$s</string>
     <string name="staking_ready_withdraw">%1$s tayyor. Birgalikda yig\'ish-ga teging.</string>

@@ -1,6 +1,7 @@
 <resources>
     <string name="transaction_expired">Термін дії транзакції минув</string>
     <string name="add_contact">Додати до адресної книги</string>
+    <string name="add_to_home_screen">Додати на головний екран</string>
     <string name="multi_account_secret_wrong">Будь ласка, використовуйте Tonkeeper Desktop для кількох гаманців</string>
     <string name="total">Усього: %1$s</string>
     <string name="staking_ready_withdraw">%1$s готовий. Торкніться спільного збору.</string>

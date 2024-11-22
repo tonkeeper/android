@@ -159,6 +159,27 @@ class TonConnectManager(
         }
     }
 
+    suspend fun getConnection(
+        accountId: String,
+        testnet: Boolean,
+        appUrl: Uri,
+        type: AppConnectEntity.Type
+    ): AppConnectEntity? {
+        val apps = dAppsRepository.getConnections(accountId, testnet)
+        if (apps.isEmpty) {
+            return null
+        }
+        val connections = apps.filter {
+            it.key.url == appUrl || it.key.url.host == appUrl.host
+        }.values.flatten()
+        for (connection in connections) {
+            if (connection.type == type) {
+                return connection
+            }
+        }
+        return null
+    }
+
     fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type? = null) {
         scope.launch(Dispatchers.IO) {
             val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.testnet, appUrl, type)

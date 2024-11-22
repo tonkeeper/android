@@ -12,6 +12,7 @@
     <string name="staking_apy" translatable="false">APY</string>
     <string name="transaction_expired">Transaction expired</string>
     <string name="add_contact">Add to Address Book</string>
+    <string name="add_to_home_screen">Add to Home Screen</string>
     <string name="multi_account_secret_wrong">Please use Tonkeeper Desktop for Multi-Wallet Account</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>

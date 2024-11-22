@@ -28,6 +28,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import okhttp3.Response
@@ -161,8 +162,8 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             tonConnectManager.disconnect(wallet, url, AppConnectEntity.Type.Internal)
         }
 
-        suspend fun restoreConnection(): JSONObject {
-            val connection = loadConnection()
+        suspend fun restoreConnection(currentUri: Uri?): JSONObject {
+            val connection = loadConnection(currentUri = currentUri)
             return if (connection == null) {
                 JsonBuilder.connectEventError(BridgeError.unknownApp())
             } else {
@@ -170,8 +171,23 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             }
         }
 
-        private suspend fun loadConnection(): AppConnectEntity? {
-            return connectionFlow.firstOrNull()
+        private suspend fun loadConnection(attempt: Int = 0, currentUri: Uri?): AppConnectEntity? {
+            if (attempt > 3) {
+                val firstApp = tonConnectManager.getConnection(wallet.accountId, wallet.testnet, url, AppConnectEntity.Type.Internal)
+                if (firstApp != null) {
+                    return firstApp
+                }
+                if (currentUri != null) {
+                    return tonConnectManager.getConnection(wallet.accountId, wallet.testnet, currentUri, AppConnectEntity.Type.Internal)
+                }
+                return null
+            }
+            val connection = connectionFlow.firstOrNull()
+            if (connection != null) {
+                return connection
+            }
+            delay(140)
+            return loadConnection(attempt + 1, currentUri)
         }
     }
 

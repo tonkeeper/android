@@ -12,6 +12,7 @@ import androidx.core.view.updateLayoutParams
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
@@ -62,7 +63,7 @@ class CardScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             deviceInfo = deviceInfo.toString(),
             send = ::tonconnectSend,
             connect = ::tonconnect,
-            restoreConnection = viewModel::restoreConnection,
+            restoreConnection = { viewModel.restoreConnection(webView.url?.toUriOrNull()) },
             disconnect = { viewModel.disconnect() },
             tonapiFetch = ::tonapiFetch,
         )

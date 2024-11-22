@@ -248,6 +248,10 @@ class DAppsRepository(
         return apps
     }
 
+    suspend fun getApp(url: Uri): AppEntity {
+        return getApps(listOf(url)).firstOrNull() ?: emptyApp(url)
+    }
+
     suspend fun insertApp(app: AppEntity) {
         database.insertApp(app)
     }
@@ -348,6 +352,7 @@ class DAppsRepository(
 
         return legacyApps.toList()
     }
+
 
     private suspend fun resolveAppByHost(url: Uri): AppEntity = withContext(Dispatchers.IO) {
         val host = url.host ?: return@withContext emptyApp(url)

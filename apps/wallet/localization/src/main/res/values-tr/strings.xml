@@ -1,6 +1,7 @@
 <resources>
     <string name="transaction_expired">İşlem süresi doldu</string>
     <string name="add_contact">Adres Defterine Ekle</string>
+    <string name="add_to_home_screen">Ana Ekrana Ekle</string>
     <string name="multi_account_secret_wrong">Lütfen Çoklu Cüzdan Hesabı için Tonkeeper Masaüstünü kullanın</string>
     <string name="total">Toplam: %1$s</string>
     <string name="staking_ready_withdraw">%1$s hazır. Toplamak için dokunun.</string>

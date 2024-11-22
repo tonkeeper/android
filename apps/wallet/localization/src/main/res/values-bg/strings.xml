@@ -1,6 +1,7 @@
 <resources>
     <string name="transaction_expired">Транзакцията е изтекла</string>
     <string name="add_contact">Добавяне към адресната книга</string>
+    <string name="add_to_home_screen">Добавяне към началния екран</string>
     <string name="multi_account_secret_wrong">Моля, използвайте Tonkeeper Desktop за Multi-Wallet акаунт</string>
     <string name="total">Общо: %1$s</string>
     <string name="staking_ready_withdraw">%1$s готов. Докоснете съвместно събиране.</string>

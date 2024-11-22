@@ -1,6 +1,7 @@
 <resources>
     <string name="transaction_expired">Transaksi telah berakhir</string>
     <string name="add_contact">Tambahkan ke Buku Alamat</string>
+    <string name="add_to_home_screen">Tambahkan ke Layar Beranda</string>
     <string name="multi_account_secret_wrong">Silakan gunakan Tonkeeper Desktop untuk Akun Multi-Dompet</string>
     <string name="total">Jumlah: %1$s</string>
     <string name="staking_ready_withdraw">%1$s sudah siap. Ketuk kumpulkan bersama.</string>

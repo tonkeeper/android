@@ -216,6 +216,7 @@
     <string name="wallet_address">Адрес кошелька</string>
     <string name="contacts_save_latest">Сохранить адрес</string>
     <string name="contacts">Адресная книга</string>
+    <string name="add_to_home_screen">Добавить на главный экран</string>
     <string name="multi_account_secret_wrong">Пожалуйста, используйте Tonkeeper Desktop для акаунта мульти-кошелька</string>
     <string name="insufficient_balance_default">Необходимо: %1$s.\nВаш баланс: %2$s.</string>
     <string name="name">Имя</string>

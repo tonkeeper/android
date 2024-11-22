@@ -1,6 +1,7 @@
 <resources>
     <string name="transaction_expired">Transacción expirada</string>
     <string name="add_contact">Agregar a la libreta de direcciones</string>
+    <string name="add_to_home_screen">Agregar a la pantalla de inicio</string>
     <string name="multi_account_secret_wrong">Utilice Tonkeeper Desktop para cuentas con múltiples billeteras</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s listo. Toca para recoger.</string>

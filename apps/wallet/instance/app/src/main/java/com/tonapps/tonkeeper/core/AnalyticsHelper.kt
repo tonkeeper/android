@@ -11,7 +11,11 @@ import com.tonapps.wallet.api.entity.StoryEntity
 object AnalyticsHelper {
 
     fun setConfig(context: Context, config: ConfigEntity) {
-        initAptabase(context, config.aptabaseAppKey, config.aptabaseEndpoint)
+        initAptabase(
+            context = context,
+            appKey = config.aptabaseAppKey,
+            host = config.aptabaseEndpoint
+        )
     }
 
     fun trackBrowserOpen(installId: String, from: String) {

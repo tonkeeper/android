@@ -8,6 +8,7 @@ enum class TONOpCode(val code: Long) {
     JETTON_TRANSFER(0xf8a7ea5),
     NFT_TRANSFER(0x5fcc3d14),
     STONFI_SWAP(0x25938561),
+    STONFI_SWAP_V2(0x6664de2a),
     CHANGE_DNS_RECORD(0x4eb1f0f9),
     LIQUID_TF_DEPOSIT(0x47d54391),
     LIQUID_TF_BURN(0x595f07bc),

@@ -17,6 +17,7 @@ data class BalanceEntity(
     val initializedAccount: Boolean = true,
     val isCompressed: Boolean = false,
     val isTransferable: Boolean = true,
+    val lastActivity: Long = -1,
 ): Parcelable {
 
     companion object {

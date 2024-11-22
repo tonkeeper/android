@@ -1,7 +1,6 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
-import android.os.Build
 import android.util.ArrayMap
 import android.util.Log
 import com.squareup.moshi.JsonAdapter
@@ -12,15 +11,10 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
-import com.tonapps.extensions.appVersionName
-import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
-import com.tonapps.network.SSLSocketFactoryTcpNoDelay
 import com.tonapps.network.get
-import com.tonapps.network.interceptor.AcceptLanguageInterceptor
-import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.network.post
 import com.tonapps.network.postJSON
 import com.tonapps.network.sse
@@ -30,7 +24,6 @@ import com.tonapps.wallet.api.entity.AccountEventEntity
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
-import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.api.internal.ConfigRepository
 import com.tonapps.wallet.api.internal.InternalApi
@@ -71,16 +64,11 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import org.ton.crypto.hex
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class API(
     private val context: Context,
     private val scope: CoroutineScope
-) {
-
-    private val userAgent = "Tonkeeper/${context.appVersionName} (Linux; Android ${Build.VERSION.RELEASE}; ${Build.MODEL})"
-
-    val defaultHttpClient = baseOkHttpClientBuilder(userAgent).build()
+): CoreAPI(context) {
 
     private val internalApi = InternalApi(context, defaultHttpClient)
     private val configRepository = ConfigRepository(context, scope, internalApi)
@@ -92,12 +80,7 @@ class API(
         get() = configRepository.stream
 
     private val tonAPIHttpClient: OkHttpClient by lazy {
-        createTonAPIHttpClient(
-            context = context,
-            userAgent = userAgent,
-            tonApiV2Key = { config.tonApiV2Key },
-            allowDomains = { config.domains }
-        )
+        tonAPIHttpClient { config }
     }
 
     @Volatile
@@ -213,10 +196,15 @@ class API(
         }
     }
 
-    fun realtime(accountId: String, testnet: Boolean, onFailure: ((Throwable) -> Unit)?): Flow<SSEvent> {
+    fun realtime(
+        accountId: String,
+        testnet: Boolean,
+        config: ConfigEntity,
+        onFailure: ((Throwable) -> Unit)?
+    ): Flow<SSEvent> {
         val endpoint = if (testnet) config.tonapiSSETestnetEndpoint else config.tonapiSSEEndpoint
-        val url = "$endpoint/sse/traces?account=$accountId"
-        return tonAPIHttpClient.sse(url, onFailure = onFailure)
+        val url = "$endpoint/sse/traces?account=$accountId&token=${config.tonApiV2Key}"
+        return seeHttpClient.sse(url, onFailure = onFailure)
     }
 
     fun get(url: String): String {
@@ -304,10 +292,10 @@ class API(
 
     fun getTonBalance(
         accountId: String,
-        testnet: Boolean
+        testnet: Boolean,
+        currency: String,
     ): BalanceEntity? {
-        val account = getAccount(accountId, testnet) ?: return null
-        account.currenciesBalance
+        val account = getAccount(accountId, testnet, currency) ?: return null
         val initializedAccount = account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
         return BalanceEntity(
             token = TokenEntity.TON,
@@ -315,7 +303,8 @@ class API(
             walletAddress = accountId,
             initializedAccount = initializedAccount,
             isCompressed = false,
-            isTransferable = true
+            isTransferable = true,
+            lastActivity = account.lastActivity
         )
     }
 
@@ -363,7 +352,7 @@ class API(
         testnet: Boolean
     ): AccountDetailsEntity? {
         return try {
-            val account = getAccount(query, testnet) ?: return null
+            val account = getAccount(query, testnet, null) ?: return null
             val details = AccountDetailsEntity(query, account, testnet)
             if (details.walletVersion != WalletVersion.UNKNOWN) {
                 details
@@ -458,7 +447,7 @@ class API(
         }
         val value = publicKeys.joinToString(",")
         val url = "${BRIDGE_URL}/events?client_id=$value"
-        return tonAPIHttpClient.sse(url, lastEventId, onFailure).filter { it.type == "message" }
+        return seeHttpClient.sse(url, lastEventId, onFailure).filter { it.type == "message" }
     }
 
     fun tonconnectPayload(): String? {
@@ -620,7 +609,7 @@ class API(
             return@withContext getAccount(value, testnet)
         }
         return@withContext resolveDomain(value.lowercase().trim(), testnet)*/
-        getAccount(value, testnet)
+        getAccount(value, testnet, null)
     }
 
     /*private suspend fun resolveDomain(domain: String, testnet: Boolean): Account? {
@@ -629,7 +618,8 @@ class API(
 
     private fun getAccount(
         accountId: String,
-        testnet: Boolean
+        testnet: Boolean,
+        currency: String?,
     ): Account? {
         var normalizedAccountId = accountId
         if (normalizedAccountId.startsWith("https://")) {
@@ -861,43 +851,6 @@ class API(
     }
 
     companion object {
-
         const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"
-
-        private val socketFactoryTcpNoDelay = SSLSocketFactoryTcpNoDelay()
-
-        private fun baseOkHttpClientBuilder(userAgent: String): OkHttpClient.Builder {
-            return OkHttpClient().newBuilder()
-                .retryOnConnectionFailure(true)
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
-                .writeTimeout(5, TimeUnit.SECONDS)
-                .callTimeout(5, TimeUnit.SECONDS)
-                .pingInterval(5, TimeUnit.SECONDS)
-                .followSslRedirects(true)
-                .addInterceptor { chain ->
-                    val request = chain.request().newBuilder()
-                        .addHeader("User-Agent", userAgent)
-                        .build()
-                    chain.proceed(request)
-                }
-                .followRedirects(true)
-                // .sslSocketFactory(socketFactoryTcpNoDelay.sslSocketFactory, socketFactoryTcpNoDelay.trustManager)
-                // .socketFactory(SocketFactoryTcpNoDelay())
-        }
-
-        private fun createTonAPIHttpClient(
-            context: Context,
-            userAgent: String,
-            tonApiV2Key: () -> String,
-            allowDomains: () -> List<String>
-        ): OkHttpClient {
-            return baseOkHttpClientBuilder(userAgent)
-                .addInterceptor(AcceptLanguageInterceptor(context.locale))
-                .addInterceptor(AuthorizationInterceptor.bearer(
-                    token = tonApiV2Key,
-                    allowDomains = allowDomains
-                )).build()
-        }
     }
 }

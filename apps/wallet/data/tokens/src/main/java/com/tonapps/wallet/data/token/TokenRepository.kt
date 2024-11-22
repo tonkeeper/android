@@ -204,17 +204,56 @@ class TokenRepository(
         return localDataSource.getCache(key)
     }
 
+    private fun updateRates(currency: WalletCurrency, tokens: List<String>) {
+        ratesRepository.load(currency, tokens.toMutableList())
+    }
+
     private suspend fun load(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean
     ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
-        val balances = remoteDataSource.load(currency, accountId, testnet) ?: return@withContext null
-        ratesRepository.load(currency, TokenEntity.TON.symbol)
-        insertRates(currency, balances)
-        localDataSource.setCache(cacheKey(accountId, testnet), balances)
+        val tonBalance = remoteDataSource.loadTON(currency, accountId, testnet) ?: return@withContext null
+        val lastActivity = localDataSource.getLastActivity(accountId)
+        if (tonBalance.lastActivity <= lastActivity) {
+            val tokens = localDataSource.getCache(cacheKey(accountId, testnet))
+            if (!tokens.isNullOrEmpty()) {
+                updateRates(currency, tokens.map { it.token.address })
+                return@withContext tokens
+            }
+        }
+
+        val jettons = remoteDataSource.loadJettons(currency, accountId, testnet)?.toMutableList() ?: return@withContext null
+        localDataSource.setLastActivity(accountId, tonBalance.lastActivity)
+
+        val usdtIndex = jettons.indexOfFirst {
+            it.token.address == TokenEntity.USDT.address
+        }
+
+        val entities = mutableListOf<BalanceEntity>()
+        entities.add(tonBalance)
+        if (usdtIndex == -1 && !testnet) {
+            entities.add(BalanceEntity(
+                token = TokenEntity.USDT,
+                value = Coins.ZERO,
+                walletAddress = accountId,
+                initializedAccount = tonBalance.initializedAccount,
+                isCompressed = false,
+                isTransferable = true
+            ))
+        } else if (usdtIndex >= 0) {
+            jettons[usdtIndex] = jettons[usdtIndex].copy(
+                token = TokenEntity.USDT
+            )
+        }
+
+        entities.addAll(jettons)
+
+        updateRates(currency, listOf(TokenEntity.TON.symbol))
+        bindRates(currency, entities)
+        localDataSource.setCache(cacheKey(accountId, testnet), entities)
         totalBalanceCache.remove(cacheKey(accountId, testnet))
-        balances
+        entities.toList()
     }
 
     private fun cacheKey(accountId: String, testnet: Boolean): String {
@@ -224,7 +263,7 @@ class TokenRepository(
         return "${accountId}_testnet"
     }
 
-    private fun insertRates(currency: WalletCurrency, list: List<BalanceEntity>) {
+    private suspend fun bindRates(currency: WalletCurrency, list: List<BalanceEntity>) {
         val rates = ArrayMap<String, TokenRates>()
         for (balance in list) {
             balance.rates?.let {

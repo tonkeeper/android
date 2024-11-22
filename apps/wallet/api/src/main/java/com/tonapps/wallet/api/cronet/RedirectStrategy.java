@@ -1,4 +1,4 @@
-package com.tonapps.wallet.http.okhttptransport;
+package com.tonapps.wallet.api.cronet;
 
 /** Defines a redirect strategy for the Cronet OkHttp transport layer. */
 public abstract class RedirectStrategy {

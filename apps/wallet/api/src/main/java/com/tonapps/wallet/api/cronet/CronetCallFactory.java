@@ -1,4 +1,4 @@
-package com.tonapps.wallet.http.okhttptransport;
+package com.tonapps.wallet.api.cronet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

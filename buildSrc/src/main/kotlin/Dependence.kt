@@ -137,7 +137,6 @@ object Dependence {
     object Wallet {
         const val localization = ":apps:wallet:localization"
         const val api = ":apps:wallet:api"
-        const val http = ":apps:wallet:http"
         const val app = ":apps:wallet:instance:app"
 
         object Data {

@@ -38,11 +38,16 @@ internal class TotalBalanceCache(context: Context) {
         currency: WalletCurrency,
         sorted: Boolean
     ): String {
-        val prefix = "${wallet.id}_${currency.code}"
-        if (sorted) {
-            return "${prefix}_sorted"
+        val builder = StringBuilder(wallet.accountId)
+        builder.append("_")
+        builder.append(currency.code)
+        if (wallet.testnet) {
+            builder.append("_testnet")
         }
-        return prefix
+        if (sorted) {
+            builder.append("_sorted")
+        }
+        return builder.toString()
     }
 
     fun clear() {

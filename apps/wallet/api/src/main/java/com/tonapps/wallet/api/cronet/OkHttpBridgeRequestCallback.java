@@ -1,8 +1,10 @@
-package com.tonapps.wallet.http.okhttptransport;
+package com.tonapps.wallet.api.cronet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
+import android.util.Log;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -160,6 +162,7 @@ class OkHttpBridgeRequestCallback extends UrlRequest.Callback {
 
     @Override
     public void onFailed(UrlRequest urlRequest, UrlResponseInfo urlResponseInfo, CronetException e) {
+        Log.e("CronetLog", "onFailed: ", e);
         // If this was called before we start reading the body, the exception will
         // propagate in the future providing headers and the body wrapper.
         if (headersFuture.setException(e) && bodySourceFuture.setException(e)) {

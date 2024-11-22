@@ -1,4 +1,4 @@
-package com.tonapps.wallet.http.okhttptransport;
+package com.tonapps.wallet.api.cronet;
 
 import androidx.annotation.Nullable;
 import okhttp3.MediaType;

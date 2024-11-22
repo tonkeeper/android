@@ -1,4 +1,4 @@
-package com.tonapps.wallet.http.okhttptransport;
+package com.tonapps.wallet.api.cronet;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;

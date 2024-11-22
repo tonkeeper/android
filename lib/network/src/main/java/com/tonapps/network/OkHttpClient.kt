@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.ArrayMap
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
@@ -18,6 +19,8 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.internal.http2.ErrorCode
+import okhttp3.internal.http2.StreamResetException
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
@@ -136,7 +139,11 @@ fun OkHttpClient.sse(
     val events = sseFactory().newEventSource(request, listener)
     awaitClose { events.cancel() }
 }.retry { cause ->
-    onFailure?.invoke(cause)
-    delay(3000)
-    true
+    if ((cause is StreamResetException && cause.errorCode == ErrorCode.CANCEL) || cause is java.util.concurrent.CancellationException) {
+        false
+    } else {
+        onFailure?.invoke(cause)
+        delay(1000)
+        true
+    }
 }.cancellable()

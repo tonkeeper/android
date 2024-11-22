@@ -42,12 +42,16 @@ fun <R> withRetry(
         try {
             return retryBlock()
         } catch (e: CancellationException) {
+            Log.e("CronetHolderLog", "failed request", e)
             throw e
         } catch (e: SocketTimeoutException) {
+            Log.e("CronetHolderLog", "failed request", e)
             return null
         } catch (e: IOException) {
+            Log.e("CronetHolderLog", "failed request", e)
             return null
         } catch (e: Throwable) {
+            Log.e("CronetHolderLog", "failed request", e)
             val statusCode = e.getHttpStatusCode()
             if (statusCode == 429 || statusCode == 401 || statusCode == 502 || statusCode == 520) {
                 SystemClock.sleep(delay)

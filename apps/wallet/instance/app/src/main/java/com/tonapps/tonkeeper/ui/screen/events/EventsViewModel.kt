@@ -225,6 +225,7 @@ class EventsViewModel(
         }
 
         setLoading(loading = true, trigger = true)
+
         viewModelScope.launch(Dispatchers.IO) {
             if (first) {
                 val cached = cache().toTypedArray()

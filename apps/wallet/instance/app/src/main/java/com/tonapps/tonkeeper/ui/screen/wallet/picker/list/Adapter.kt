@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker.list
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
@@ -7,14 +8,19 @@ import androidx.collection.ArrayMap
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.isUIThread
 import com.tonapps.extensions.putEnum
+import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.manager.assets.WalletBalanceEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.AddHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.SkeletonHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.WalletHolder
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.localization.Localization
 import java.util.Collections
 
 class Adapter(
@@ -29,18 +35,31 @@ class Adapter(
         )
 
         fun map(
+            context: Context,
             wallets: List<WalletEntity>,
             activeWallet: WalletEntity,
-            balances: ArrayMap<String, CharSequence> = ArrayMap(),
+            currency: WalletCurrency,
+            balances: List<WalletBalanceEntity>,
             hiddenBalance: Boolean = false,
             walletIdFocus: String = "",
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             for ((index, wallet) in wallets.withIndex()) {
+                val balance = balances.find {
+                    it.accountId.equalsAddress(wallet.accountId) && it.testnet == wallet.testnet
+                }
+
+                val balanceFormat = balance?.balance?.let {
+                    CurrencyFormatter.formatFiat(
+                        currency = if (wallet.testnet) WalletCurrency.TON.code else currency.code,
+                        value = it
+                    )
+                } ?: context.getString(Localization.loading)
+
                 val item = Item.Wallet(
                     selected = wallet.id == activeWallet.id,
                     position = ListCell.getPosition(wallets.size, index),
-                    balance = balances[wallet.id],
+                    balance = balanceFormat,
                     hiddenBalance = hiddenBalance,
                     wallet = wallet.copy(),
                     focusAnimation = walletIdFocus == wallet.id

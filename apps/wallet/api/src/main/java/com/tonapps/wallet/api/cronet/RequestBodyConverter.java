@@ -1,4 +1,4 @@
-package com.tonapps.wallet.http.okhttptransport;
+package com.tonapps.wallet.api.cronet;
 
 import java.io.IOException;
 import okhttp3.RequestBody;

@@ -97,10 +97,10 @@ class EventsViewModel(
     private val _pushesFlow = MutableStateFlow<Array<AppPushEntity>?>(null)
 
     @OptIn(FlowPreview::class)
-    private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull().debounce(160)
+    private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull().debounce(60)
 
     @OptIn(FlowPreview::class)
-    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull().debounce(160)
+    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull().debounce(60)
 
     private val historyItemsFlow = combine(
         eventsFlow,
@@ -238,7 +238,10 @@ class EventsViewModel(
             val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
 
             setLoading(loading = false, trigger = false)
+            _pushesFlow.value = null
             _pushesFlow.value = dAppNotificationsDeferred.await()
+
+            _eventsFlow.value = null
             _eventsFlow.value = eventsDeferred.await()
         }
     }

@@ -215,12 +215,13 @@ class WalletViewModel(
             val isSetupHidden = settingsRepository.isSetupHidden(state.wallet.id)
             val uiSetup: State.Setup? = if (isSetupHidden) null else {
                 val walletPushEnabled = settingsRepository.getPushWallet(state.wallet.id)
+                val hasInitializedWallet = accountRepository.getInitializedWallets().isNotEmpty()
                 State.Setup(
                     pushEnabled = context.hasPushPermission() && walletPushEnabled,
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
                     showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id),
-                    safeModeBlock = wallet.initialized && settingsRepository.showSafeModeSetup,
+                    safeModeBlock = hasInitializedWallet && settingsRepository.showSafeModeSetup,
                 )
             }
 

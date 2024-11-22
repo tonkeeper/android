@@ -241,6 +241,8 @@ class AccountRepository(
 
     suspend fun getUninitializedWallets() = database.getAccounts().filter { !it.initialized }
 
+    suspend fun getInitializedWallets() = database.getAccounts().filter { it.initialized }
+
     suspend fun getMnemonic(id: String): Array<String>? {
         val wallet = database.getAccount(id) ?: return null
         return vaultSource.getMnemonic(wallet.publicKey)

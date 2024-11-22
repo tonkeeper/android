@@ -225,7 +225,7 @@ class RootViewModel(
 
     private suspend fun showStory(id: String) = withContext(Dispatchers.IO) {
         val stories = api.getStories(id) ?: return@withContext
-        openScreen(RemoteStoriesScreen.newInstance(stories))
+        // openScreen(RemoteStoriesScreen.newInstance(stories))
     }
 
     private suspend fun checkAppUpdate() = withContext(Dispatchers.IO) {

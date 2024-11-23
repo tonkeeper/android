@@ -31,7 +31,7 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_brows
                 source = "browser"
             ))
         }
-        iconView.setImageURI(item.icon, ResizeOptions.forSquareSize(172))
+        iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(172)!!)
         nameView.text = item.name
     }
 }

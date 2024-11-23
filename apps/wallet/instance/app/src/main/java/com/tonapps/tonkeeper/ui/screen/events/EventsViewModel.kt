@@ -236,7 +236,7 @@ class EventsViewModel(
             }
         }
 
-        val eventsDeferred = async { loadDefault(beforeLt = null).toTypedArray() }
+        val eventsDeferred = async { loadDefault(beforeLt = null, limit = 12).toTypedArray() }
         val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
 
         val events = eventsDeferred.await()
@@ -256,7 +256,7 @@ class EventsViewModel(
         setLoading(loading = true, trigger = true)
         viewModelScope.launch(Dispatchers.IO) {
             val currentEvents = (_eventsFlow.value?.toMutableList() ?: mutableListOf())
-            val beforeLtEvents = loadDefault(beforeLt = lastLt)
+            val beforeLtEvents = loadDefault(beforeLt = lastLt, limit = 50)
             val events = (currentEvents + beforeLtEvents).distinctBy { it.eventId }.sortedBy {
                 it.timestamp
             }.reversed()
@@ -309,12 +309,12 @@ class EventsViewModel(
         return _eventsFlow.value?.firstOrNull { it.inProgress } != null
     }
 
-    private suspend fun loadDefault(beforeLt: Long?): List<AccountEventWrap> {
+    private suspend fun loadDefault(beforeLt: Long?, limit: Int): List<AccountEventWrap> {
         val list = eventsRepository.getRemote(
             accountId = wallet.accountId,
             testnet = wallet.testnet,
             beforeLt = beforeLt,
-            limit = 50,
+            limit = limit,
         )?.events?.map(::AccountEventWrap)
         return list ?: emptyList()
     }

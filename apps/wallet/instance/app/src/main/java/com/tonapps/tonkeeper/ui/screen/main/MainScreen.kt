@@ -27,6 +27,7 @@ import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import kotlinx.coroutines.android.awaitFrame
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
@@ -181,9 +182,6 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     private fun getFragment(itemId: Int, wallet: WalletEntity, from: String): Fragment {
         return fragments[itemId] ?: createFragment(itemId, wallet, from).also {
             fragments[itemId] = it
-            if (it is BrowserMainScreen) {
-                it.sendAnalytics(from)
-            }
         }
     }
 
@@ -192,17 +190,17 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             R.id.wallet -> WalletScreen.newInstance(wallet)
             R.id.activity -> EventsScreen.newInstance(wallet)
             R.id.collectibles -> CollectiblesScreen.newInstance(wallet)
-            R.id.browser -> BrowserMainScreen.newInstance(wallet, from)
+            R.id.browser -> BrowserMainScreen.newInstance(wallet)
             else -> throw IllegalArgumentException("Unknown itemId: $itemId")
         }
         return fragment
     }
 
     private fun setFragment(itemId: Int, wallet: WalletEntity, from: String, forceScrollUp: Boolean) {
-        setFragment(getFragment(itemId, wallet, from), forceScrollUp, 0)
+        setFragment(getFragment(itemId, wallet, from), forceScrollUp, from, 0)
     }
 
-    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, attempt: Int) {
+    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, from: String, attempt: Int) {
         if (attempt > 3) {
             throw IllegalStateException("Failed to set main fragment")
         }
@@ -230,13 +228,16 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
         transaction.runOnCommit {
             checkBottomDivider(fragment)
+            if (fragment is BrowserMainScreen) {
+                AnalyticsHelper.trackBrowserOpen(rootViewModel.installId, from)
+            }
         }
         try {
             transaction.commitNow()
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             postDelayed(1000) {
-                setFragment(fragment, forceScrollUp, attempt + 1)
+                setFragment(fragment, forceScrollUp, from,attempt + 1)
             }
         }
     }

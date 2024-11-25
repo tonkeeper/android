@@ -6,9 +6,12 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.facebook.shimmer.Shimmer
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.extensions.applyColors
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.events.filters.FiltersAdapter
@@ -18,6 +21,7 @@ import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -31,6 +35,7 @@ import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
+import uikit.extensions.withAlpha
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
@@ -55,6 +60,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     private lateinit var listView: RecyclerView
     private lateinit var filtersView: RecyclerView
     private lateinit var emptyView: EmptyLayout
+    private lateinit var shimmerView: ShimmerFrameLayout
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -105,21 +111,26 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
             }
         }
 
-        // collectFlow(viewModel.uiStateFlow, ::applyState)
+        shimmerView = view.findViewById(R.id.shimmer)
+        shimmerView.applyColors()
+
         collectFlow(viewModel.uiFilterItemsFlow, filtersAdapter::submitList)
         collectFlow(viewModel.uiStateFlow, ::applyState)
     }
 
-
     private fun applyState(state: EventsUiState) {
+        shimmerView.visibility = View.GONE
+        refreshView.visibility = View.VISIBLE
+        filtersView.visibility = View.VISIBLE
+
         if (state.uiItems.isEmpty() && !state.loading) {
             setEmptyState()
         } else {
-            if (state.loading) {
+            if (state.loading && !state.isFooterLoading) {
                 setLoading(true)
             }
             setListState(state.uiItems) {
-                if (!state.loading) {
+                if (!state.loading && !state.isFooterLoading) {
                     setLoading(false)
                 }
             }
@@ -127,9 +138,14 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     private fun setLoading(loading: Boolean) {
-        if (refreshView.isRefreshing != loading) {
-            refreshView.isRefreshing = loading
+        if (loading && refreshView.isRefreshing) {
+            return
+        } else if (!loading && refreshView.isRefreshing) {
+            refreshView.isRefreshing = false
         }
+        /*if (refreshView.isRefreshing != loading) {
+            refreshView.isRefreshing = loading
+        }*/
         if (loading) {
             headerView.setSubtitle(Localization.updating)
         } else {

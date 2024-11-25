@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -23,6 +24,7 @@ import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
@@ -66,7 +68,7 @@ class SendTransactionViewModel(
             val tokens = getTokens()
             val transfers = transfers(tokens.filter { it.isCompressed }, true)
             val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
-            val internalMessage = forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
+            val internalMessage = wallet.initialized && (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
             try {
                 val emulated = emulationUseCase(
                     message = message,
@@ -83,27 +85,21 @@ class SendTransactionViewModel(
                     totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
                 }
 
-                val jettons = emulated.consequences?.risk?.jettons?.map { it.jetton } ?: emptyList()
-                val jettonsAddress = jettons.map { it.address }
-                val sendTokens = tokens.filter { it.balance.token.address in jettonsAddress }
-                val hasCompressedJetton = sendTokens.any { it.isCompressed }
-                val isExtraFee = jettons.indexOfFirst {
-                    it.verification == JettonVerificationType.whitelist && it.symbol.equals("HMSTR", true)
-                } != -1
-                val extraFee = if (isExtraFee) Coins.of(0.1) else Coins.of(0.05)
+                val jettons = emulated.loadTokens(wallet.testnet, tokenRepository)
+                val hasCompressedJetton = jettons.any { it.isCompressed }
                 val tonBalance = getTONBalance()
                 val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
                 var transferFee = (if (!emulated.extra.isRefund) {
                     Coins.ZERO
                 } else {
                     emulated.extra.value
-                }) + extraFee
-
+                }) + Coins.of(0.05)
 
                 if (hasCompressedJetton) {
                     transferFee += Coins.of(0.1)
-                } else if (sendTokens.size > 1) {
-                    transferFee += extraFee
+                }
+                if (jettons.size > 1) {
+                    transferFee += Coins.of(0.05)
                 }
 
                 val transferTotal = transferAmount + transferFee

@@ -917,7 +917,7 @@ class SendViewModel(
         val fee = getFee()
 
         val token = selectedTokenFlow.value
-        val isExtraAmount = token.verified && token.symbol.equals("HMSTR", true)
+        val isExtraAmount = token.isCompressed
 
         var jettonTransferAmount = when {
             sendTransferType is SendTransferType.Gasless || extra.isNegative -> TransferEntity.BASE_FORWARD_AMOUNT

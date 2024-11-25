@@ -20,7 +20,8 @@
         android:layout_width="44dp"
         android:layout_height="44dp"
         android:layout_gravity="center"
-        app:roundedCornerRadius="8dp"/>
+        app:roundedCornerRadius="8dp"
+        app:placeholderImage="@drawable/bg_content_tint_8"/>
 
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"

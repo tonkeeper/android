@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -19,12 +18,12 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
-import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.currentTimeSeconds
+import com.tonapps.extensions.getStringValue
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
 import com.tonapps.extensions.toUriOrNull
@@ -98,10 +97,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import org.ton.cell.Cell
 import uikit.extensions.activity
-import uikit.extensions.collectFlow
-import uikit.navigation.Navigation.Companion.navigation
 import java.util.concurrent.CancellationException
 
 class RootViewModel(
@@ -373,6 +369,8 @@ class RootViewModel(
 
     fun processIntentExtras(bundle: Bundle) {
         val pushType = bundle.getString("type") ?: return
+        val marketingCampaignId = bundle.getStringValue("utm_id", "utm_campaign", "marketing_id")
+        AnalyticsHelper.trackPushClick(installId, marketingCampaignId ?: pushType)
         hasWalletFlow.take(1).collectFlow {
             if (pushType == "console_dapp_notification") {
                 processDAppPush(bundle)

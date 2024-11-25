@@ -29,15 +29,11 @@ class CollectiblesManageScreen(wallet: WalletEntity): BaseListWalletScreen<Scree
         showAllClick = { viewModel.showAll() }
     )
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setTitle(getString(Localization.collectibles))
         setAdapter(adapter)
+        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
     }
 
     private fun showSpamDialog(item: Item.Collection) {

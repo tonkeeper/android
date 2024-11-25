@@ -393,12 +393,6 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        Log.d("NFCLog", "Intent: $intent")
-        if (intent.action == NfcAdapter.ACTION_TAG_DISCOVERED) {
-            val detectedTag: Tag? = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
-            Log.d("NFCLog", "Tag discovered: $detectedTag")
-            return
-        }
         val uri = intent.data
         val extras = intent.extras
         if (uri != null) {

@@ -39,6 +39,16 @@ class TokenRepository(
         return remoteDataSource.getJetton(accountId, testnet)
     }
 
+    suspend fun getTokens(testnet: Boolean, accountIds: List<String>): List<TokenEntity> = withContext(Dispatchers.IO) {
+        if (accountIds.isEmpty()) {
+            return@withContext emptyList()
+        }
+        val deferredTokens = accountIds.map { accountId ->
+            async { getToken(accountId, testnet) }
+        }
+        deferredTokens.mapNotNull { it.await() }
+    }
+
     fun getToken(accountId: String): TokenEntity? {
         return getToken(accountId, false) ?: getToken(accountId, true)
     }

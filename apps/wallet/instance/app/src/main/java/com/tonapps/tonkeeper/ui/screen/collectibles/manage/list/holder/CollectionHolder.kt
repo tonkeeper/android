@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.facebook.imagepipeline.common.ResizeOptions
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
@@ -24,7 +25,7 @@ class CollectionHolder(
 
     override fun onBind(item: Item.Collection) {
         itemView.background = item.position.drawable(context)
-        iconView.setImageURI(item.imageUri, null)
+        iconView.setImageURIWithResize(item.imageUri, ResizeOptions.forSquareSize(128)!!)
         titleView.text = item.title
         countView.text = context.resources.getQuantityString(
             Plurals.nft_count,

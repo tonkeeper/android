@@ -379,6 +379,7 @@ class SettingsRepository(
     ) = withContext(Dispatchers.IO) {
         tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
         rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
+        setTokenState(walletId, tokenAddress, TokenPrefsEntity.State.NONE)
     }
 
     suspend fun setTokenState(

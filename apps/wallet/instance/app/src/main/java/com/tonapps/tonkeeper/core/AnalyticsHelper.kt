@@ -18,6 +18,16 @@ object AnalyticsHelper {
         )
     }
 
+    @UiThread
+    fun trackPushClick(installId: String, id: String) {
+        Aptabase.instance.trackEvent("push_click", hashMapOf(
+            "firebase_user_id" to installId,
+            "id" to id,
+        ))
+    }
+
+
+    @UiThread
     fun trackBrowserOpen(installId: String, from: String) {
         Aptabase.instance.trackEvent("browser_open", hashMapOf(
             "firebase_user_id" to installId,

@@ -5,6 +5,17 @@ import android.os.Bundle
 import androidx.core.os.BundleCompat
 import java.io.Serializable
 
+fun Bundle.getStringValue(vararg keys: String): String? {
+    for (key in keys) {
+        val value = getString(key)
+        if (value.isNullOrBlank()) {
+            continue
+        }
+        return value
+    }
+    return null
+}
+
 inline fun <reified T : Serializable> Bundle.getSerializableCompat(key: String): T? {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         getSerializable(key, T::class.java)

@@ -279,6 +279,19 @@ class HistoryHelper(
             )
         }
 
+        val lastIndex = items.lastIndex
+        val lastFixedPosition = if (items.size == 1) {
+            ListCell.Position.FIRST
+        } else {
+            ListCell.Position.MIDDLE
+        }
+        val lastItem = (items.getOrNull(lastIndex) as? HistoryItem.Event)?.copy(
+            position = lastFixedPosition
+        )
+        lastItem?.let {
+            items[lastIndex] = it
+        }
+
         val feeFormat = "≈ " + CurrencyFormatter.format("TON", emulated.extra.value)
         val feeFiatFormat = CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
 
@@ -460,7 +473,7 @@ class HistoryHelper(
 
             if (chunkItems.size > 0 && !hasWrongPosition(chunkItems, positionExtra)) {
                 val actionOutStatus = when {
-                    actionOutStatusReceived > 0 && actionOutStatusSend > 0 -> ActionOutStatus.Any
+                    (actionOutStatusReceived > 0 && actionOutStatusSend > 0) || actionOutStatusAny > 0 -> ActionOutStatus.Any
                     actionOutStatusReceived > 0 -> ActionOutStatus.Received
                     actionOutStatusSend > 0 -> ActionOutStatus.Send
                     else -> ActionOutStatus.Any

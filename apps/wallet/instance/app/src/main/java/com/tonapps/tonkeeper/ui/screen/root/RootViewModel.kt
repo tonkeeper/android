@@ -367,6 +367,12 @@ class RootViewModel(
         _eventFlow.tryEmit(RootEvent.Ledger(connectData, accounts))
     }
 
+    fun openDApp(url: Uri) {
+        selectedWalletFlow.take(1).collectFlow {
+            _eventFlow.tryEmit(RootEvent.OpenDAppByShortcut(it, url))
+        }
+    }
+
     fun processIntentExtras(bundle: Bundle) {
         val pushType = bundle.getString("type") ?: return
         val marketingCampaignId = bundle.getStringValue("utm_id", "utm_campaign", "marketing_id")

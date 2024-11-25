@@ -3,6 +3,7 @@ package com.tonapps.wallet.api
 import android.content.Context
 import android.os.Build
 import com.google.android.gms.net.CronetProviderInstaller
+import com.google.firebase.crashlytics.BuildConfig
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.locale
@@ -33,8 +34,10 @@ abstract class CoreAPI(private val context: Context) {
     ).build()
 
     init {
-        requestCronet(context, userAgent) {
-            cronetEngine = it
+        if (!BuildConfig.DEBUG) {
+            requestCronet(context, userAgent) {
+                cronetEngine = it
+            }
         }
     }
 

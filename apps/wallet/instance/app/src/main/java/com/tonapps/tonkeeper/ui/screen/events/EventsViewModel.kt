@@ -236,7 +236,7 @@ class EventsViewModel(
             }
         }
 
-        val eventsDeferred = async { loadDefault(beforeLt = null, limit = 12).toTypedArray() }
+        val eventsDeferred = async { loadDefault(beforeLt = null, limit = 15).toTypedArray() }
         val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
 
         val events = eventsDeferred.await()
@@ -256,7 +256,10 @@ class EventsViewModel(
         setLoading(loading = true, trigger = true)
         viewModelScope.launch(Dispatchers.IO) {
             val currentEvents = (_eventsFlow.value?.toMutableList() ?: mutableListOf())
-            val beforeLtEvents = loadDefault(beforeLt = lastLt, limit = 50)
+            val beforeLtEvents = loadDefault(
+                beforeLt = lastLt,
+                limit = 25
+            )
             val events = (currentEvents + beforeLtEvents).distinctBy { it.eventId }.sortedBy {
                 it.timestamp
             }.reversed()

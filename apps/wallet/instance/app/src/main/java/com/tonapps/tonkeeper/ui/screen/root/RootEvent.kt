@@ -50,4 +50,9 @@ sealed class RootEvent {
     ): RootEvent()
 
     data object CloseCurrentTonConnect: RootEvent()
+
+    data class OpenDAppByShortcut(
+        val wallet: WalletEntity,
+        val url: Uri
+    ): RootEvent()
 }

@@ -33,6 +33,7 @@ import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
@@ -272,8 +273,19 @@ class RootActivity: BaseWalletActivity() {
                 initStateBase64 = event.initStateBase64
             )
             is RootEvent.CloseCurrentTonConnect -> closeCurrentTonConnect {}
+            is RootEvent.OpenDAppByShortcut -> openDAppByShortcut(event.wallet, event.url)
             else -> { }
         }
+    }
+
+    private fun openDAppByShortcut(wallet: WalletEntity, uri: Uri) {
+        removeByClass({
+            add(DAppScreen.newInstance(
+                wallet = wallet,
+                url = uri,
+                source = "shortcut",
+            ))
+        }, DAppScreen::class.java)
     }
 
     private fun closeCurrentTonConnect(runnable: Runnable) {
@@ -395,7 +407,10 @@ class RootActivity: BaseWalletActivity() {
     private fun handleIntent(intent: Intent) {
         val uri = intent.data
         val extras = intent.extras
-        if (uri != null) {
+        val dappDeepLink = extras?.getString("dapp_deeplink")?.toUriOrNull()
+        if (dappDeepLink != null) {
+            viewModel.openDApp(dappDeepLink)
+        } else if (uri != null) {
             processDeepLink(DeepLink.fixBadUri(uri), false, intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))
         } else if (extras != null && !extras.isEmpty) {
             viewModel.processIntentExtras(extras)

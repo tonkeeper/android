@@ -568,6 +568,7 @@
     <string name="stories_safemode_2_title">Только проверенные NFT</string>
     <string name="stories_safemode_2_subtitle">Чтобы избежать спама и подделок</string>
     <string name="stories_safemode_3_title">Только проверенные токены</string>
+    <string name="select_from_gallery">Выбрать из галереи</string>
 
 
 </resources>

@@ -207,6 +207,7 @@
             android:paddingHorizontal="@dimen/offsetMedium"
             android:drawableLeft="@drawable/ic_globe_16"
             android:drawablePadding="8dp"
+            android:drawableTint="?attr/iconPrimaryColor"
             android:text="@string/transaction" />
 
         <Button

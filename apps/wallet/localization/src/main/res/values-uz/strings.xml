@@ -497,4 +497,5 @@
     <string name="your_address">Sizning manzilingiz:</string>
     <string name="safe_mode_tokens_footer">Xavfsiz rejim yoqilgan. Faqat tasdiqlangan tokenlar mavjud. <annotation colorAttr="textAccentColor">Sozlamalar</annotation></string>
     <string name="report_encrypted_comment">Ushbu tranzaksiyaga oid fikr shifrlangan koʻrinishda hisobot bilan yuboriladi.</string>
+    <string name="select_from_gallery">Galereyadan tanlang</string>
 </resources>

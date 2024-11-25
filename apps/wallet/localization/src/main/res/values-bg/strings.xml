@@ -89,6 +89,7 @@
     <string name="battery_disclaimer">Едно таксуване покрива средната такса за транзакция. Някои транзакции може да струват повече.</string>
     <string name="restore_purchases">Възстановяване на покупките</string>
     <string name="battery_refilled">Заредена батерия</string>
+    <string name="select_from_gallery">Изберете От галерии</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="staking_minimal_deposit">Минимален депозит</string>
     <string name="staking_details_description">Стейкингът е базиран на умни договори от трети страни. Tonkeeper не носи отговорност за изживяването по време на стейкинг.</string>

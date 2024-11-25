@@ -492,4 +492,5 @@
     <string name="your_address">您的地址：</string>
     <string name="safe_mode_tokens_footer">安全模式已启用。仅可使用经过验证的令牌。<annotation colorAttr="textAccentColor">设置</annotation></string>
     <string name="report_encrypted_comment">此交易的评论将与报告一起以解密形式发送。</string>
+    <string name="select_from_gallery">从画廊中选择</string>
 </resources>

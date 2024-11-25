@@ -497,4 +497,5 @@
     <string name="your_address">Adresiniz:</string>
     <string name="safe_mode_tokens_footer">Güvenli mod etkinleştirildi. Yalnızca doğrulanmış tokenlar kullanılabilir. <annotation colorAttr="textAccentColor">Ayarlar</annotation></string>
     <string name="report_encrypted_comment">Bu işlemden gelen yorum, şifresi çözülmüş bir şekilde raporla birlikte gönderilecektir.</string>
+    <string name="select_from_gallery">Galeriden seç</string>
 </resources>

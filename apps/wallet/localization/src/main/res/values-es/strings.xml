@@ -497,5 +497,6 @@
     <string name="your_address">Su dirección:</string>
     <string name="safe_mode_tokens_footer">El modo seguro está habilitado. Solo están disponibles los tokens verificados. <annotation colorAttr="textAccentColor">Configuración</annotation></string>
     <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
+    <string name="select_from_gallery">Seleccionar de la galería</string>
 
 </resources>

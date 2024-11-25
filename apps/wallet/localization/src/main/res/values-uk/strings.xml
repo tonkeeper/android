@@ -507,4 +507,5 @@
     <string name="your_address">Адреса гаманця:</string>
     <string name="safe_mode_tokens_footer">Безпечний режим увімкнено. Доступні лише перевірені токени. <annotation colorAttr="textAccentColor">Налаштування</annotation></string>
     <string name="report_encrypted_comment">Коментар цієї транзакції буде надіслано зі звітом у розшифрованому вигляді.</string>
+    <string name="select_from_gallery">Виберати із галереї</string>
 </resources>

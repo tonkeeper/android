@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.name.base
 
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -179,11 +180,11 @@ abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None
     fun setEmoji(newEmoji: CharSequence) {
         val oldEmoji = walletEmoji.getEmoji()
         if (oldEmoji.isEmpty()) {
-            walletEmoji.setEmoji(newEmoji)
+            walletEmoji.setEmoji(newEmoji, Color.TRANSPARENT)
         } else if (oldEmoji != newEmoji) {
             HapticHelper.selection(requireContext())
             walletEmoji.runAnimation(uikit.R.anim.scale_switch)
-            walletEmoji.setEmoji(newEmoji)
+            walletEmoji.setEmoji(newEmoji, Color.TRANSPARENT)
         }
     }
 

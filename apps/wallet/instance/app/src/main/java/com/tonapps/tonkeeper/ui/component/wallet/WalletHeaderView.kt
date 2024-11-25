@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.component.wallet
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
 import android.view.GestureDetector
@@ -134,7 +135,7 @@ class WalletHeaderView @JvmOverloads constructor(
 
         walletView.visibility = View.VISIBLE
         nameView.text = walletLabel.name
-        emojiView.setEmoji(walletLabel.emoji)
+        emojiView.setEmoji(walletLabel.emoji, Color.TRANSPARENT)
         walletView.backgroundTintList = ColorStateList.valueOf(walletLabel.color)
     }
 

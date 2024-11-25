@@ -2,6 +2,7 @@ package com.tonapps.emoji
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.annotation.DrawableRes
@@ -62,29 +63,45 @@ object Emoji {
         return emojis.any { it.value == value }
     }
 
-    suspend fun getBitmap(context: Context, emoji: CharSequence): Bitmap {
-        return getDrawable(context, emoji).bitmap
+    suspend fun getBitmap(
+        context: Context,
+        emoji: CharSequence,
+        tintColor: Int
+    ): Bitmap {
+        return getDrawable(context, emoji, tintColor).bitmap
     }
 
-    internal suspend fun getDrawable(context: Context, emoji: CharSequence): PictogramDrawable {
-        return createDrawable(context, emoji)
+    internal suspend fun getDrawable(
+        context: Context,
+        emoji: CharSequence,
+        tintColor: Int
+    ): PictogramDrawable {
+        return createDrawable(context, emoji, tintColor)
     }
 
-    private suspend fun createDrawable(context: Context, emoji: CharSequence): PictogramDrawable = withContext(Dispatchers.IO) {
+    private suspend fun createDrawable(
+        context: Context,
+        emoji: CharSequence,
+        tintColor: Int
+    ): PictogramDrawable = withContext(Dispatchers.IO) {
         val customIcon = customIcons[emoji]
         if (customIcon == null) {
             drawEmoji(context, emoji)
         } else {
-            drawCustomIcon(context, emoji, customIcon)
+            drawCustomIcon(context, emoji, customIcon, tintColor)
         }
     }
 
     private fun drawCustomIcon(
         context: Context,
         emoji: CharSequence,
-        @DrawableRes resId: Int
+        @DrawableRes resId: Int,
+        tintColor: Int
     ): PictogramDrawable {
-        val drawable = AppCompatResources.getDrawable(context, resId)!!
+        val drawable = AppCompatResources.getDrawable(context, resId)!!.mutate()
+        if (tintColor != Color.TRANSPARENT) {
+            drawable.setTint(tintColor)
+        }
         val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)

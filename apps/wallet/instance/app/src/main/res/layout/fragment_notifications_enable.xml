@@ -49,7 +49,6 @@
         android:layout_marginHorizontal="@dimen/offsetLarge"
         android:layout_marginBottom="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
-        android:textColor="?attr/textPrimaryColor"
         android:text="@string/enable_notification"/>
 
 </FrameLayout>

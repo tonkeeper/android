@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<uikit.widget.NFTLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.facebook.shimmer.ShimmerFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/shimmer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_margin="4dp"
-    android:background="@drawable/bg_nft"/>
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp">
+
+    <uikit.widget.NFTLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_nft"/>
+
+</com.facebook.shimmer.ShimmerFrameLayout>

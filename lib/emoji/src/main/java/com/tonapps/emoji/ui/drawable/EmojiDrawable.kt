@@ -2,6 +2,7 @@ package com.tonapps.emoji.ui.drawable
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.ColorFilter
 import android.graphics.PixelFormat
 import android.graphics.Rect
@@ -30,6 +31,7 @@ internal class EmojiDrawable(
 
     private var currentJob: Job? = null
     private var currentEmoji: CharSequence = ""
+    private var currentTintColor = Color.TRANSPARENT
     private var startTime = 0L
 
     var fadeEnable: Boolean = false
@@ -89,19 +91,20 @@ internal class EmojiDrawable(
         return interpolator.getInterpolation(value)
     }
 
-    fun setEmoji(emoji: CharSequence) {
-        if (currentEmoji == emoji) {
+    fun setEmoji(emoji: CharSequence, tintColor: Int) {
+        if (currentEmoji == emoji && currentTintColor == tintColor) {
             return
         }
 
         currentEmoji = emoji
+        currentTintColor = tintColor
         clear()
         load()
     }
 
     private fun load() {
         currentJob = Emoji.scope.launch(Dispatchers.Default) {
-            val drawable = Emoji.getDrawable(context, currentEmoji)
+            val drawable = Emoji.getDrawable(context, currentEmoji, currentTintColor)
             setEmojiDrawable(drawable)
         }
     }

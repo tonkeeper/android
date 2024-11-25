@@ -9,6 +9,7 @@
     <string name="ok" translatable="false">OK</string>
     <string name="keystone" translatable="false">Keystone</string>
     <string name="w5" translatable="false">W5</string>
+    <string name="select_from_gallery">Select from Gallery</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="transaction_expired">Transaction expired</string>
     <string name="add_contact">Add to Address Book</string>

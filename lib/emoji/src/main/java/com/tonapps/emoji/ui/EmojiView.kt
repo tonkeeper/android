@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.View
+import com.tonapps.emoji.Emoji
 import com.tonapps.emoji.R
 import com.tonapps.emoji.ui.drawable.EmojiDrawable
 
@@ -33,10 +34,10 @@ class EmojiView @JvmOverloads constructor(
         }
     }
 
-    fun setEmoji(emoji: CharSequence): Boolean {
+    fun setEmoji(emoji: CharSequence, tintColor: Int): Boolean {
         if (this.emoji != emoji) {
             this.emoji = emoji
-            drawable.setEmoji(emoji)
+            drawable.setEmoji(emoji, tintColor)
             return true
         }
         return false

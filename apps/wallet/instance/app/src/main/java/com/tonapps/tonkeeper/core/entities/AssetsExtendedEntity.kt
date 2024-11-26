@@ -31,7 +31,7 @@ data class AssetsExtendedEntity(
                 balance = BalanceEntity.create(
                     accountId = accountId,
                     value = raw.staked.balance,
-                    isCompressed = false,
+                    isRequestMinting = false,
                     isTransferable = true
                 ),
             )

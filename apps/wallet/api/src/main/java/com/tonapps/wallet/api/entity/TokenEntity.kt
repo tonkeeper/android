@@ -25,7 +25,7 @@ data class TokenEntity(
     val imageUri: Uri,
     val decimals: Int,
     val verification: Verification,
-    private val compressedValue: Boolean,
+    val isRequestMinting: Boolean,
     val isTransferable: Boolean,
     val lock: Lock? = null,
     val customPayloadApiUri: String?
@@ -33,10 +33,6 @@ data class TokenEntity(
 
     val isLiquid: Boolean
         get() = verification == Verification.whitelist && symbol.equals("tsTON", true)
-
-    @IgnoredOnParcel
-    val isCompressed: Boolean
-        get() = compressedValue || customPayloadApiUri != null
 
     enum class Verification {
         whitelist, blacklist, none
@@ -94,7 +90,7 @@ data class TokenEntity(
             imageUri = TON_ICON_URI,
             decimals = 9,
             verification = Verification.whitelist,
-            compressedValue = false,
+            isRequestMinting = false,
             isTransferable = true,
             customPayloadApiUri = null
         )
@@ -106,7 +102,7 @@ data class TokenEntity(
             imageUri = USDT_ICON_URI,
             decimals = 6,
             verification = Verification.whitelist,
-            compressedValue = false,
+            isRequestMinting = false,
             isTransferable = true,
             customPayloadApiUri = null
         )
@@ -143,7 +139,7 @@ data class TokenEntity(
         imageUri = Uri.parse(jetton.image),
         decimals = jetton.decimals,
         verification = convertVerification(jetton.verification),
-        compressedValue = extensions?.contains(Extension.CustomPayload.value) == true,
+        isRequestMinting = extensions?.contains(Extension.CustomPayload.value) == true,
         isTransferable = extensions?.contains(Extension.NonTransferable.value) != true,
         lock = lock?.let { Lock(it) },
         customPayloadApiUri = jetton.customPayloadApiUri
@@ -160,7 +156,7 @@ data class TokenEntity(
         imageUri = Uri.parse(jetton.metadata.image),
         decimals = jetton.metadata.decimals.toInt(),
         verification = convertVerification(jetton.verification),
-        compressedValue = extensions?.contains(Extension.CustomPayload.value) == true,
+        isRequestMinting = extensions?.contains(Extension.CustomPayload.value) == true,
         isTransferable = extensions?.contains(Extension.NonTransferable.value) != true,
         lock = lock?.let { Lock(it) },
         customPayloadApiUri = jetton.customPayloadApiUri

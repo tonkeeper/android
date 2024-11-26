@@ -66,10 +66,9 @@ class SendTransactionViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
-            val tonToken = tokens.first()
-            val transfers = transfers(tokens.filter { it.isCompressed }, true)
+            val transfers = transfers(tokens.filter { it.isRequestMinting }, true)
             val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
-            val internalMessage = tonToken.balance.initializedAccount && (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
+            val internalMessage = (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
             try {
                 val emulated = emulationUseCase(
                     message = message,
@@ -87,7 +86,7 @@ class SendTransactionViewModel(
                 }
 
                 val jettons = emulated.loadTokens(wallet.testnet, tokenRepository)
-                val hasCompressedJetton = jettons.any { it.isCompressed }
+                val hasCompressedJetton = jettons.any { it.isRequestMinting || it.customPayloadApiUri != null }
                 val tonBalance = getTONBalance()
                 val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
                 var transferFee = (if (!emulated.extra.isRefund) {
@@ -174,7 +173,7 @@ class SendTransactionViewModel(
 
     fun send() = flow {
         val isBattery = isBattery.get()
-        val compressedTokens = getTokens().filter { it.isCompressed }
+        val compressedTokens = getTokens().filter { it.isRequestMinting }
         val transfers = transfers(compressedTokens, false)
         val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
         val unsignedBody = message.createUnsignedBody(isBattery)

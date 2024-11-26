@@ -248,7 +248,7 @@ class TokenRepository(
                 value = Coins.ZERO,
                 walletAddress = accountId,
                 initializedAccount = tonBalance.initializedAccount,
-                isCompressed = false,
+                isRequestMinting = false,
                 isTransferable = true
             ))
         } else if (usdtIndex >= 0) {

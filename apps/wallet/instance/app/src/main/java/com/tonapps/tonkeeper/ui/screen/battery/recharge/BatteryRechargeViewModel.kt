@@ -362,7 +362,7 @@ class BatteryRechargeViewModel(
             _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
         } else {
             val queryId = TransferEntity.newWalletQueryId()
-            val customPayload = if (token.isCompressed) {
+            val customPayload = if (token.isRequestMinting) {
                 api.getJettonCustomPayload(wallet.accountId, wallet.testnet, token.address)
             } else {
                 null

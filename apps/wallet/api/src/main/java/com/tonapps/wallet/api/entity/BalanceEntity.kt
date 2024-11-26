@@ -15,7 +15,7 @@ data class BalanceEntity(
     val value: Coins,
     val walletAddress: String,
     val initializedAccount: Boolean = true,
-    val isCompressed: Boolean = false,
+    val isRequestMinting: Boolean = false,
     val isTransferable: Boolean = true,
     val lastActivity: Long = -1,
 ): Parcelable {
@@ -31,14 +31,14 @@ data class BalanceEntity(
         fun create(
             accountId: String,
             value: Coins,
-            isCompressed: Boolean = false,
+            isRequestMinting: Boolean = false,
             isTransferable: Boolean = true
         ) = BalanceEntity(
             token = TokenEntity.TON,
             value = value,
             walletAddress = accountId,
             initializedAccount = false,
-            isCompressed = isCompressed,
+            isRequestMinting = isRequestMinting,
             isTransferable = isTransferable
         )
     }
@@ -52,12 +52,15 @@ data class BalanceEntity(
     val decimals: Int
         get() = token.decimals
 
+    val customPayloadApiUri: String?
+        get() = token.customPayloadApiUri
+
     constructor(jettonBalance: JettonBalance) : this(
         token = TokenEntity(jettonBalance.jetton, jettonBalance.extensions, jettonBalance.lock),
         value = Coins.of(BigDecimal(jettonBalance.balance).movePointLeft(jettonBalance.jetton.decimals), jettonBalance.jetton.decimals),
         walletAddress = jettonBalance.walletAddress.address,
         initializedAccount = true,
-        isCompressed = jettonBalance.extensions?.contains(TokenEntity.Extension.CustomPayload.value) == true,
+        isRequestMinting = jettonBalance.extensions?.contains(TokenEntity.Extension.CustomPayload.value) == true,
         isTransferable = jettonBalance.extensions?.contains(TokenEntity.Extension.NonTransferable.value) != true
     ) {
         rates = jettonBalance.price

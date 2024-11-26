@@ -302,7 +302,7 @@ class API(
             value = Coins.of(account.balance),
             walletAddress = accountId,
             initializedAccount = initializedAccount,
-            isCompressed = false,
+            isRequestMinting = false,
             isTransferable = true,
             lastActivity = account.lastActivity
         )

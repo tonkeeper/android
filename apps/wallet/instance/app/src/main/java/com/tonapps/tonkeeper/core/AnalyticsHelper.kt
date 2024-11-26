@@ -75,7 +75,7 @@ object AnalyticsHelper {
 
     @UiThread
     fun trackEventClickDApp(url: String, name: String, source: String, installId: String) {
-        Aptabase.instance.trackEvent("browser_click", hashMapOf(
+        Aptabase.instance.trackEvent("click_dapp", hashMapOf(
             "url" to url,
             "name" to name,
             "source" to source,

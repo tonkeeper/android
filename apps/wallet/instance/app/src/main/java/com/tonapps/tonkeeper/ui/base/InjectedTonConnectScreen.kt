@@ -13,6 +13,7 @@ import com.tonapps.extensions.filterList
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
@@ -49,6 +50,9 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     abstract var webView: TonConnectWebView
 
     abstract val startUri: Uri
+
+    private val uri: Uri
+        get() = webView.url?.toUri() ?: startUri
 
     val deviceInfo: JSONObject by lazy {
         JsonBuilder.device(wallet.maxMessages, requireContext().appVersionName)
@@ -116,31 +120,38 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     }
 
     suspend fun tonconnectSend(array: JSONArray): JSONObject {
-        val messages = BridgeEvent.Message.parse(array)
-        if (messages.size == 1) {
-            val message = messages.first()
-            val id = message.id
-            if (message.method != BridgeMethod.SEND_TRANSACTION) {
-                return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
+        var id = 0L
+        try {
+            val messages = BridgeEvent.Message.parse(array)
+            if (messages.size == 1) {
+                val message = messages.first()
+                id = message.id
+                if (message.method != BridgeMethod.SEND_TRANSACTION) {
+                    return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
+                }
+                val signRequests = message.params.map { SignRequestEntity(it, uri) }
+                if (signRequests.size != 1) {
+                    return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${signRequests.size}"))
+                }
+                val signRequest = signRequests.first()
+                return try {
+                    val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
+                    JsonBuilder.responseSendTransaction(id, boc)
+                } catch (e: CancellationException) {
+                    JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
+                } catch (e: BridgeException) {
+                    JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))
+                } catch (e: Throwable) {
+                    FirebaseCrashlytics.getInstance().recordException(e)
+                    JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
+                }
+            } else {
+                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess messages. Required: 1, Provided: ${messages.size}"))
             }
-            val signRequests = message.params.map { SignRequestEntity(it, startUri) }
-            if (signRequests.size != 1) {
-                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${signRequests.size}"))
-            }
-            val signRequest = signRequests.first()
-            return try {
-                val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
-                JsonBuilder.responseSendTransaction(id, boc)
-            } catch (e: CancellationException) {
-                JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
-            } catch (e: BridgeException) {
-                JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))
-            } catch (e: Throwable) {
-                FirebaseCrashlytics.getInstance().recordException(e)
-                JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
-            }
-        } else {
-            return JsonBuilder.responseError(0, BridgeError.badRequest("Request contains excess messages. Required: 1, Provided: ${messages.size}"))
+        } catch (e: Throwable) {
+            navigation?.toast(e.bestMessage)
+            FirebaseCrashlytics.getInstance().recordException(e)
+            return JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
         }
     }
 

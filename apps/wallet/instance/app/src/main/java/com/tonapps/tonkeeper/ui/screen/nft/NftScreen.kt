@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.nft
 
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
@@ -16,6 +17,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -232,10 +234,14 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     }
 
     private fun newNftButton(parent: ColumnLayout, first: Boolean): Button {
+        val isLight = requireContext().isLightTheme
         val layout = if (first) R.layout.view_nft_button_green else R.layout.view_nft_button
         val view = parent.context.inflate(layout)
         val button = view.findViewById<Button>(R.id.nft_button)
         button.isEnabled = isCanSend
+        if (isLight) {
+            button.setTextColor(Color.WHITE)
+        }
         val iconView = view.findViewById<AppCompatImageView>(R.id.nft_button_icon)
         if (!isCanSend) {
             iconView.alpha = 0.5f

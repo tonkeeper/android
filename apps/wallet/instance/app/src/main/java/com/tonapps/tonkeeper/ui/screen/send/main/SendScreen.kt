@@ -5,9 +5,11 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnLayout
+import androidx.core.view.updateLayoutParams
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
@@ -56,6 +58,7 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.expandTouchArea
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hideKeyboard
 import uikit.extensions.setEndDrawable
 import uikit.span.ClickableSpanCompat
@@ -220,6 +223,9 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         if (args.isNft) {
             amountView.visibility = View.GONE
             convertedContainerView.visibility = View.GONE
+            commentInput.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+            }
         }
 
         view.doKeyboardAnimation { offset, _, _ ->

@@ -19,10 +19,11 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun trackPushClick(installId: String, id: String, payload: String) {
+    fun trackPushClick(installId: String, pushId: String, payload: String) {
         Aptabase.instance.trackEvent("push_click", hashMapOf(
             "firebase_user_id" to installId,
-            "id" to id,
+            "push_id" to pushId,
+            "payload" to payload
         ))
     }
 
@@ -40,11 +41,9 @@ object AnalyticsHelper {
         Aptabase.instance.trackEvent("story_click", hashMapOf(
             "firebase_user_id" to installId,
             "story_id" to storiesId,
-            "button" to hashMapOf(
-                "title" to button.title,
-                "type" to button.type,
-                "payload" to button.payload
-            )
+            "button_title" to button.title,
+            "button_type" to button.type,
+            "button_payload" to button.payload,
         ))
     }
 
@@ -78,7 +77,7 @@ object AnalyticsHelper {
         Aptabase.instance.trackEvent("click_dapp", hashMapOf(
             "url" to url,
             "name" to name,
-            "source" to source,
+            "from" to source,
             "firebase_user_id" to installId,
         ))
     }

@@ -23,7 +23,7 @@ class AppHolder(
                 wallet = item.wallet,
                 title = item.name,
                 url = item.url,
-                source = "browser"
+                source = "browser_connected"
             ))
         }
         itemView.setOnLongClickListener {

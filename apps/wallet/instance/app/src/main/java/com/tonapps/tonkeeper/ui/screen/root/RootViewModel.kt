@@ -376,7 +376,7 @@ class RootViewModel(
 
     fun processIntentExtras(bundle: Bundle) {
         val pushType = bundle.getString("type") ?: return
-        val marketingCampaignId = bundle.getStringValue("utm_id", "utm_campaign", "marketing_id", "push_id")
+        val pushId = bundle.getStringValue("push_id", "utm_id", "utm_campaign")
         hasWalletFlow.take(1).collectFlow {
             if (pushType == "console_dapp_notification") {
                 processDAppPush(bundle)
@@ -384,8 +384,8 @@ class RootViewModel(
                 val deeplink = bundle.getString("deeplink")?.toUriOrNull() ?: return@collectFlow
                 AnalyticsHelper.trackPushClick(
                     installId = installId,
-                    id = marketingCampaignId ?: pushType,
-                    payload = deeplink.toString()
+                    pushId = pushId ?: pushType,
+                    payload = deeplink.toString(),
                 )
                 processDeepLinkPush(deeplink, bundle)
             }

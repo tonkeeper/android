@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.manager.assets
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putParcelable
@@ -50,7 +51,14 @@ internal class TotalBalanceCache(context: Context) {
         return builder.toString()
     }
 
-    fun clear() {
+    fun clear(wallet: WalletEntity, currency: WalletCurrency) {
+        storageCache.edit {
+            remove(createKey(wallet, currency, true))
+            remove(createKey(wallet, currency, false))
+        }
+    }
+
+    fun clearAll() {
         storageCache.edit().clear().apply()
     }
 }

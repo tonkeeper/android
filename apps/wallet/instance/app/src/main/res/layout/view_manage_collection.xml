@@ -12,6 +12,7 @@
         android:layout_gravity="center"
         android:layout_marginRight="@dimen/offsetMedium"
         android:scaleType="centerInside"
+        android:tint="?attr/iconPrimaryColor"
         android:background="@drawable/bg_oval"
         android:backgroundTint="?attr/backgroundContentTintColor"/>
     

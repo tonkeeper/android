@@ -22,7 +22,7 @@ class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.l
                 wallet = item.wallet,
                 title = item.name,
                 url = item.url,
-                source = "browser_banner"
+                source = "banner"
             ))
         }
 

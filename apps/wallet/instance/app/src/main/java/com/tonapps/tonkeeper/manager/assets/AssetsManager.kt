@@ -40,7 +40,9 @@ class AssetsManager(
 
     init {
         settingsRepository.tokenPrefsChangedFlow.drop(1).onEach {
-            cache.clear()
+            accountRepository.getSelectedWallet()?.let {
+                cache.clear(it, settingsRepository.currency)
+            }
         }.launchIn(scope)
     }
 

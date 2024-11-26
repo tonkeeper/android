@@ -119,9 +119,7 @@ data class ConfigEntity(
         scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com"),
         reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
         stories = json.getJSONArray("stories").toStringList()
-    ) {
-        Log.d("FlagsEntityLog", "json#1: $json")
-    }
+    )
 
     constructor() : this(
         empty = true,

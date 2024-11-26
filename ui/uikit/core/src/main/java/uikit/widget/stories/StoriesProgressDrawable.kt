@@ -2,6 +2,7 @@ package uikit.widget.stories
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import com.tonapps.uikit.color.iconPrimaryColor
 import uikit.base.BaseDrawable
@@ -17,8 +18,8 @@ class StoriesProgressDrawable(context: Context): BaseDrawable() {
         }
 
     private val radius = 2f.dp
-    private val backgroundColor = context.iconPrimaryColor.withAlpha(.24f)
-    private val progressColor = context.iconPrimaryColor
+    private val backgroundColor = Color.WHITE.withAlpha(.24f)
+    private val progressColor = Color.WHITE
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = backgroundColor

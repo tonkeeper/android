@@ -23,7 +23,7 @@ data class FlagsEntity(
         disableBlur = json.optBoolean("disable_blur", false),
         disableLegacyBlur = json.optBoolean("disable_legacy_blur", false),
         disableSigner = json.optBoolean("disable_signer", false),
-        safeModeEnabled = true // json.optBoolean("safe_mode_enabled", false)
+        safeModeEnabled = json.optBoolean("safe_mode_enabled", false)
     )
 
     constructor() : this(

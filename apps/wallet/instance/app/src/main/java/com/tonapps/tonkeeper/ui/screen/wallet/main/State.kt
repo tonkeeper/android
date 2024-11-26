@@ -229,7 +229,7 @@ sealed class State {
                         link = "tonkeeper://security",
                         blue = true,
                         walletId = wallet.id,
-                        settingsType = Item.SetupLink.TYPE_TELEGRAM_CHANNEL
+                        settingsType = Item.SetupLink.TYPE_SAFE_MODE
                     )
                 }
                 uiItems.add(item)

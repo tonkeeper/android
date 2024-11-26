@@ -27,6 +27,7 @@ import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.worker.PushToggleWorker
+import com.tonapps.tonkeeper.worker.TotalBalancesWorker
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
@@ -472,6 +473,10 @@ class InitViewModel(
                     withContext(Dispatchers.Main) {
                         PushToggleWorker.run(context, wallets, PushManager.State.Enable)
                     }
+                }
+
+                withContext(Dispatchers.Main) {
+                    TotalBalancesWorker.run(context)
                 }
 
                 val selectedWalletId = wallets.minByOrNull { it.version }!!.id

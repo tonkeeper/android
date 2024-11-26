@@ -52,7 +52,10 @@ data class JettonInfo (
     val holdersCount: kotlin.Int,
 
     @Json(name = "admin")
-    val admin: AccountAddress? = null
+    val admin: AccountAddress? = null,
+
+    @Json(name = "custom_payload_api_uri")
+    val customPayloadApiUri: kotlin.String? = null
 
 )
 

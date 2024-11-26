@@ -73,6 +73,7 @@
                         android:textAppearance="@style/TextAppearance.Body2"
                         android:textColor="?attr/textSecondaryColor"
                         android:scrollbars="vertical"
+                        android:nestedScrollingEnabled="true"
                         android:visibility="gone" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
             </androidx.appcompat.widget.LinearLayoutCompat>

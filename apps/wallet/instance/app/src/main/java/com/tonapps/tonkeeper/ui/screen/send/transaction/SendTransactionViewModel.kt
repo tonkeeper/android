@@ -66,9 +66,10 @@ class SendTransactionViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
+            val tonToken = tokens.first()
             val transfers = transfers(tokens.filter { it.isCompressed }, true)
             val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
-            val internalMessage = wallet.initialized && (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
+            val internalMessage = tonToken.balance.initializedAccount && (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
             try {
                 val emulated = emulationUseCase(
                     message = message,

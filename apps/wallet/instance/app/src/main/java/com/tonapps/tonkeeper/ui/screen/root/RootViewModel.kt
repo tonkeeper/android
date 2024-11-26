@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.root
 import android.app.Application
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -375,13 +376,17 @@ class RootViewModel(
 
     fun processIntentExtras(bundle: Bundle) {
         val pushType = bundle.getString("type") ?: return
-        val marketingCampaignId = bundle.getStringValue("utm_id", "utm_campaign", "marketing_id")
-        AnalyticsHelper.trackPushClick(installId, marketingCampaignId ?: pushType)
+        val marketingCampaignId = bundle.getStringValue("utm_id", "utm_campaign", "marketing_id", "push_id")
         hasWalletFlow.take(1).collectFlow {
             if (pushType == "console_dapp_notification") {
                 processDAppPush(bundle)
             } else {
                 val deeplink = bundle.getString("deeplink")?.toUriOrNull() ?: return@collectFlow
+                AnalyticsHelper.trackPushClick(
+                    installId = installId,
+                    id = marketingCampaignId ?: pushType,
+                    payload = deeplink.toString()
+                )
                 processDeepLinkPush(deeplink, bundle)
             }
         }
@@ -404,10 +409,18 @@ class RootViewModel(
     }
 
     private suspend fun processDeepLinkPush(uri: Uri, bundle: Bundle) {
-        val accountId = bundle.getString("account") ?: return
-        val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
+        val wallet = deeplinkResolveWallet(bundle) ?: return
         val deeplink = DeepLink(uri, false, null)
         processDeepLink(wallet, deeplink, null)
+    }
+
+    private suspend fun deeplinkResolveWallet(bundle: Bundle): WalletEntity? {
+        try {
+            val accountId = bundle.getString("account") ?: throw IllegalArgumentException("Key 'account' not found")
+            return accountRepository.getWalletByAccountId(accountId) ?: throw IllegalArgumentException("Wallet not found")
+        } catch (e: Throwable) {
+            return accountRepository.selectedWalletFlow.firstOrNull()
+        }
     }
 
     fun processDeepLink(

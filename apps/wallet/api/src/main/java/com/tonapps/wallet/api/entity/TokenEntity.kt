@@ -10,6 +10,7 @@ import io.tonapi.models.JettonInfo
 import io.tonapi.models.JettonPreview
 import io.tonapi.models.JettonTransferPayload
 import io.tonapi.models.JettonVerificationType
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.ton.block.StateInit
 import org.ton.cell.Cell
@@ -24,13 +25,18 @@ data class TokenEntity(
     val imageUri: Uri,
     val decimals: Int,
     val verification: Verification,
-    val isCompressed: Boolean,
+    private val compressedValue: Boolean,
     val isTransferable: Boolean,
-    val lock: Lock? = null
+    val lock: Lock? = null,
+    val customPayloadApiUri: String?
 ): Parcelable {
 
     val isLiquid: Boolean
         get() = verification == Verification.whitelist && symbol.equals("tsTON", true)
+
+    @IgnoredOnParcel
+    val isCompressed: Boolean
+        get() = compressedValue || customPayloadApiUri != null
 
     enum class Verification {
         whitelist, blacklist, none
@@ -88,8 +94,9 @@ data class TokenEntity(
             imageUri = TON_ICON_URI,
             decimals = 9,
             verification = Verification.whitelist,
-            isCompressed = false,
-            isTransferable = true
+            compressedValue = false,
+            isTransferable = true,
+            customPayloadApiUri = null
         )
 
         val USDT = TokenEntity(
@@ -99,8 +106,9 @@ data class TokenEntity(
             imageUri = USDT_ICON_URI,
             decimals = 6,
             verification = Verification.whitelist,
-            isCompressed = false,
-            isTransferable = true
+            compressedValue = false,
+            isTransferable = true,
+            customPayloadApiUri = null
         )
 
         private fun convertVerification(verification: JettonVerificationType): Verification {
@@ -135,9 +143,10 @@ data class TokenEntity(
         imageUri = Uri.parse(jetton.image),
         decimals = jetton.decimals,
         verification = convertVerification(jetton.verification),
-        isCompressed = extensions?.contains(Extension.CustomPayload.value) == true,
+        compressedValue = extensions?.contains(Extension.CustomPayload.value) == true,
         isTransferable = extensions?.contains(Extension.NonTransferable.value) != true,
-        lock = lock?.let { Lock(it) }
+        lock = lock?.let { Lock(it) },
+        customPayloadApiUri = jetton.customPayloadApiUri
     )
 
     constructor(
@@ -151,8 +160,9 @@ data class TokenEntity(
         imageUri = Uri.parse(jetton.metadata.image),
         decimals = jetton.metadata.decimals.toInt(),
         verification = convertVerification(jetton.verification),
-        isCompressed = extensions?.contains(Extension.CustomPayload.value) == true,
+        compressedValue = extensions?.contains(Extension.CustomPayload.value) == true,
         isTransferable = extensions?.contains(Extension.NonTransferable.value) != true,
-        lock = lock?.let { Lock(it) }
+        lock = lock?.let { Lock(it) },
+        customPayloadApiUri = jetton.customPayloadApiUri
     )
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.currency.list.Item
+import com.tonapps.tonkeeper.worker.TotalBalancesWorker
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -34,6 +35,7 @@ class CurrencyViewModel(
 
     fun selectCurrency(currency: String) {
         settings.currency = WalletCurrency(currency)
+        TotalBalancesWorker.run(context)
     }
 
     private fun buildUiItems(selectedCurrency: WalletCurrency): List<Item> {

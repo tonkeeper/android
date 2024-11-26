@@ -89,6 +89,12 @@ class TransactionDetailView @JvmOverloads constructor(
         }
     }
 
+    override fun setOnClickListener(l: OnClickListener?) {
+        super.setOnClickListener(l)
+        valueView.setOnClickListener(l)
+        descriptionView.setOnClickListener(l)
+    }
+
     fun setTitleRightDrawable(drawable: Drawable?) {
         titleView.setRightDrawable(drawable)
     }

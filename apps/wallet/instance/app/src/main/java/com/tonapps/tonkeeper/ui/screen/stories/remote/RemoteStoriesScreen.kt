@@ -51,7 +51,7 @@ class RemoteStoriesScreen: BaseStoriesScreen() {
         AnalyticsHelper.trackStoryView(
             installId = installId,
             storiesId = stories.id,
-            index = currentIndex
+            index = currentIndex + 1
         )
     }
 

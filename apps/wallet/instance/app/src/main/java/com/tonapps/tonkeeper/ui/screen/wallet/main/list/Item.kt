@@ -558,6 +558,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         companion object {
             const val TYPE_NONE = 1
             const val TYPE_TELEGRAM_CHANNEL = 2
+            const val TYPE_SAFE_MODE = 3
 
             @JvmField
             val CREATOR = object : Parcelable.Creator<SetupLink> {

@@ -1,5 +1,6 @@
 package uikit.widget.stories
 
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -14,6 +15,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
@@ -24,6 +26,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import uikit.R
 import uikit.base.BaseFragment
+import uikit.extensions.activity
 import uikit.extensions.dp
 import uikit.extensions.getViews
 import uikit.extensions.round
@@ -64,8 +67,23 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
     val currentIndex: Int
         get() = state.currentIndex
 
+    val windowInsetsController: WindowInsetsControllerCompat?
+        get() = window?.let {
+            WindowInsetsControllerCompat(it, it.decorView)
+        }
+
+    private val initialIsAppearanceLightStatusBars: Boolean by lazy {
+        windowInsetsController?.isAppearanceLightStatusBars ?: false
+    }
+
+    private val initialIsAppearanceLightNavigationBars: Boolean by lazy {
+        windowInsetsController?.isAppearanceLightNavigationBars ?: false
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.setBackgroundColor(Color.BLACK)
+
         view.findViewById<View>(R.id.stories_close).setOnClickListener { finish() }
 
         contentView = view.findViewById(R.id.stories_content)
@@ -90,6 +108,24 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
             val navBarOffset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             applyContentMargin(statusBarOffset, navBarOffset)
             insets
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (initialIsAppearanceLightStatusBars || initialIsAppearanceLightNavigationBars) {
+            windowInsetsController?.let {
+                it.isAppearanceLightStatusBars = false
+                it.isAppearanceLightNavigationBars = false
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        windowInsetsController?.let {
+            it.isAppearanceLightStatusBars = initialIsAppearanceLightStatusBars
+            it.isAppearanceLightNavigationBars = initialIsAppearanceLightNavigationBars
         }
     }
 

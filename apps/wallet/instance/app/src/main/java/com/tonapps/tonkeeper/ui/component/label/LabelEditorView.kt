@@ -74,7 +74,7 @@ class LabelEditorView @JvmOverloads constructor(
     var emoji: CharSequence
         get() = emojiView.getEmoji()
         set(value) {
-            if (emojiView.setEmoji(value)) {
+            if (emojiView.setEmoji(value, Color.TRANSPARENT)) {
                 HapticHelper.selection(context)
                 emojiView.runAnimation(uikit.R.anim.scale_switch)
                 notifyChange()

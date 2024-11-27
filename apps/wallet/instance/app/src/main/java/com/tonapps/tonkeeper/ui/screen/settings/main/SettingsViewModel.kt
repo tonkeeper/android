@@ -113,7 +113,7 @@ class SettingsViewModel(
                 names = listOf(newLabel.name),
                 emoji = newLabel.emoji,
                 color = newLabel.color,
-            ), mnemonic, versions, wallet.testnet)
+            ), mnemonic, versions, wallet.testnet, listOf(false))
             backupRepository.addBackup(walletId)
             accountRepository.setSelectedWallet(walletId)
             finish()
@@ -155,10 +155,12 @@ class SettingsViewModel(
         val uiItems = mutableListOf<Item>()
         uiItems.add(Item.Account(displayWallet))
 
+        uiItems.add(Item.Space)
         if (wallet.hasPrivateKey) {
-            uiItems.add(Item.Space)
             uiItems.add(Item.Backup(ListCell.Position.FIRST, hasBackup))
             uiItems.add(Item.Security(ListCell.Position.LAST))
+        } else {
+            uiItems.add(Item.Security(ListCell.Position.SINGLE))
         }
 
         uiItems.add(Item.Space)

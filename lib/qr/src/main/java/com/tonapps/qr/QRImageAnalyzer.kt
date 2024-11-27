@@ -19,7 +19,7 @@ class QRImageAnalyzer: ImageAnalysis.Analyzer {
         it.rawValue
     }
 
-    private val barcodeScanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder()
+    val barcodeScanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
         .build())
 

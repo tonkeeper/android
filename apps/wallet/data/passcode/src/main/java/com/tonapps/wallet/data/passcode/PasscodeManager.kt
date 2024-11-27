@@ -51,7 +51,9 @@ class PasscodeManager(
     }
 
     fun lockscreenCheck(context: Context, code: String) {
-        scope.launch { lockscreen.check(context, code) }
+        scope.launch {
+            lockscreen.check(context, code)
+        }
     }
 
     suspend fun hasPinCode(): Boolean = withContext(Dispatchers.IO) {
@@ -85,7 +87,6 @@ class PasscodeManager(
         } else {
             try {
                 migration(context, code)
-                true
             } catch (e: Throwable) {
                 FirebaseCrashlytics.getInstance().recordException(e)
                 context.logError(e)
@@ -95,22 +96,23 @@ class PasscodeManager(
     }
 
     suspend fun change(context: Context, old: String, new: String): Boolean = withContext(Dispatchers.IO) {
-        if (isRequestMigration()) {
-            migration(context, old)
-        }
-        if (!helper.change(context, old, new)) {
+        if (isRequestMigration() && !migration(context, old)) {
             false
         } else {
-            try {
-                rnLegacy.changePasscode(old, new)
-                if (settingsRepository.biometric) {
-                    rnLegacy.setupBiometry(new)
-                }
-                true
-            } catch (e: Throwable) {
-                FirebaseCrashlytics.getInstance().recordException(e)
-                context.logError(e)
+            if (!helper.change(context, old, new)) {
                 false
+            } else {
+                try {
+                    rnLegacy.changePasscode(old, new)
+                    if (settingsRepository.biometric) {
+                        rnLegacy.setupBiometry(new)
+                    }
+                    true
+                } catch (e: Throwable) {
+                    FirebaseCrashlytics.getInstance().recordException(e)
+                    context.logError(e)
+                    false
+                }
             }
         }
     }
@@ -126,6 +128,16 @@ class PasscodeManager(
         rnLegacy.clearMnemonic()
     }
 
+    suspend fun isBiometricRequest(context: Context): Boolean = withContext(Dispatchers.IO) {
+        if (!PasscodeBiometric.isAvailableOnDevice(context)) {
+            false
+        } else if (isRequestMigration()) {
+            rnLegacy.getWallets().biometryEnabled
+        } else {
+            settingsRepository.biometric
+        }
+    }
+
     suspend fun confirmationByBiometric(
         context: Context,
         title: String
@@ -137,7 +149,6 @@ class PasscodeManager(
                     throw Exception("failed to request passcode")
                 }
                 migration(context, passcode)
-                true
             } else {
                 PasscodeBiometric.showPrompt(context, title)
             }
@@ -155,16 +166,15 @@ class PasscodeManager(
             return@withContext confirmationMigration(context)
         }
 
-        val showDialog = if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context)) {
-            !PasscodeBiometric.showPrompt(context, title)
-        } else {
+        if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context) && PasscodeBiometric.showPrompt(context, title)) {
             true
-        }
-
-        if (showDialog) {
-            PasscodeDialog.confirmation(context)
         } else {
-            true
+            val passcode = PasscodeDialog.request(context)
+            if (passcode.isNullOrBlank()) {
+                false
+            } else {
+                helper.isValid(context, passcode)
+            }
         }
     }
 
@@ -213,7 +223,6 @@ class PasscodeManager(
                 throw Exception("failed to request passcode")
             }
             migration(context, passcode)
-            true
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             context.logError(e)
@@ -224,12 +233,17 @@ class PasscodeManager(
     private suspend fun migration(
         context: Context,
         code: String
-    ) = withContext(Dispatchers.Main) {
+    ): Boolean = withContext(Dispatchers.Main) {
         val navigation = Navigation.from(context)
         navigation?.migrationLoader(true)
-        accountRepository.importPrivateKeysFromRNLegacy(code)
-        save(code)
-        navigation?.migrationLoader(false)
+        if (accountRepository.importPrivateKeysFromRNLegacy(code)) {
+            save(code)
+            navigation?.migrationLoader(false)
+            true
+        } else {
+            navigation?.migrationLoader(false)
+            false
+        }
     }
 
     fun confirmationFlow(context: Context, title: String) = flow {

@@ -62,7 +62,6 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEvent("browser_open", viewModel.installId)
         navigation?.setFragmentResultListener(COUNTRY_REQUEST_KEY) { bundle ->
 
         }
@@ -153,7 +152,6 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     companion object {
 
         private const val COUNTRY_REQUEST_KEY = "country_request"
-
         private val CONTAINER_ID = R.id.browser_fragment_container
 
         fun newInstance(wallet: WalletEntity) = BrowserMainScreen(wallet)

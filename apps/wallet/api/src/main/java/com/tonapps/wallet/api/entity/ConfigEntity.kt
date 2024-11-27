@@ -3,12 +3,15 @@ package com.tonapps.wallet.api.entity
 import android.net.Uri
 import android.os.Parcelable
 import android.util.Log
+import com.tonapps.extensions.toStringList
+import com.tonapps.icu.Coins
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
 @Parcelize
 data class ConfigEntity(
+    val empty: Boolean,
     val supportLink: String,
     val nftExplorer: String,
     val transactionExplorer: String,
@@ -48,6 +51,9 @@ data class ConfigEntity(
     val tonapiSSETestnetEndpoint: String,
     val iapPackages: List<IAPPackageEntity>,
     val burnZeroDomain: String,
+    val scamAPIURL: String,
+    val reportAmount: Coins,
+    val stories: List<String>
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -64,6 +70,7 @@ data class ConfigEntity(
     }
 
     constructor(json: JSONObject, debug: Boolean) : this(
+        empty = false,
         supportLink = json.getString("supportLink"),
         nftExplorer = json.getString("NFTOnExplorerUrl"),
         transactionExplorer = json.getString("transactionExplorer"),
@@ -78,11 +85,11 @@ data class ConfigEntity(
         tonCommunityChatUrl = json.getString("tonCommunityChatUrl"),
         tonApiV2Key = json.getString("tonApiV2Key"),
         featuredPlayInterval = json.optInt("featured_play_interval", 3000),
-        flags = if (debug) {
+        flags = FlagsEntity(json.getJSONObject("flags")), /*if (debug) {
             FlagsEntity()
         } else {
             FlagsEntity(json.getJSONObject("flags"))
-        },
+        },*/
         faqUrl = json.getString("faq_url"),
         aptabaseEndpoint = json.getString("aptabaseEndpoint"),
         aptabaseAppKey = json.getString("aptabaseAppKey"),
@@ -108,10 +115,14 @@ data class ConfigEntity(
         iapPackages = json.optJSONArray("iap_packages")?.let { array ->
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
         } ?: emptyList(),
-        burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ") // tonkeeper-zero.ton
+        burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"), // tonkeeper-zero.ton
+        scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com"),
+        reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
+        stories = json.getJSONArray("stories").toStringList()
     )
 
     constructor() : this(
+        empty = true,
         supportLink = "mailto:support@tonkeeper.com",
         nftExplorer = "https://tonviewer.com/nft/%s",
         transactionExplorer = "https://tonviewer.com/transaction/%s",
@@ -150,7 +161,10 @@ data class ConfigEntity(
         tonapiSSEEndpoint = "https://rt.tonapi.io",
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
         iapPackages = emptyList(),
-        burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"
+        burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
+        scamAPIURL = "https://scam.tonkeeper.com",
+        reportAmount = Coins.of("0.03"),
+        stories = emptyList()
     )
 
     companion object {

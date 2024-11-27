@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list.holder
 
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
@@ -32,7 +33,7 @@ class AccountHolder(
         itemView.background = ListCell.Position.SINGLE.drawable(context)
 
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)
-        emojiView.setEmoji(item.emoji)
+        emojiView.setEmoji(item.emoji, Color.TRANSPARENT)
         nameView.text = item.title
         balanceView.setText(Localization.customize)
         checkView.setImageResource(UIKitIcon.ic_chevron_right_16)

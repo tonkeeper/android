@@ -30,11 +30,13 @@ suspend fun <T> BillingClient.ready(block: suspend (client: BillingClient) -> T)
 private suspend fun BillingClient.getReady(): BillingClient = suspendCancellableCoroutine { continuation ->
     startConnection(object : BillingClientStateListener {
         override fun onBillingSetupFinished(result: BillingResult) {
-            if (!continuation.isActive) return
-            if (result.isSuccess) {
+            if (!continuation.isActive) {
+                return
+            } else if (result.isSuccess) {
                 continuation.resume(this@getReady)
             } else {
-                continuation.resumeWithException(ErrorForUserException.of(result.debugMessage))
+                val message = result?.debugMessage ?: "unknown error"
+                continuation.resumeWithException(ErrorForUserException.of(message))
             }
         }
 

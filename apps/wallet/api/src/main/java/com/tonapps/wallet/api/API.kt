@@ -11,14 +11,10 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
-import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
-import com.tonapps.network.SSLSocketFactoryTcpNoDelay
 import com.tonapps.network.get
-import com.tonapps.network.interceptor.AcceptLanguageInterceptor
-import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.network.post
 import com.tonapps.network.postJSON
 import com.tonapps.network.sse
@@ -68,14 +64,11 @@ import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import org.ton.crypto.hex
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class API(
     private val context: Context,
     private val scope: CoroutineScope
-) {
-
-    val defaultHttpClient = baseOkHttpClientBuilder().build()
+): CoreAPI(context) {
 
     private val internalApi = InternalApi(context, defaultHttpClient)
     private val configRepository = ConfigRepository(context, scope, internalApi)
@@ -87,15 +80,7 @@ class API(
         get() = configRepository.stream
 
     private val tonAPIHttpClient: OkHttpClient by lazy {
-        createTonAPIHttpClient(
-            context = context,
-            tonApiV2Key = { config.tonApiV2Key },
-            allowDomains = { config.domains  }
-        )
-    }
-
-    private val batteryHttpClient: OkHttpClient by lazy {
-        createBatteryAPIHttpClient(context)
+        tonAPIHttpClient { config }
     }
 
     @Volatile
@@ -145,7 +130,7 @@ class API(
     }
 
     private val batteryApi by lazy {
-        SourceAPI(BatteryApi(config.batteryHost, batteryHttpClient), BatteryApi(config.batteryTestnetHost, batteryHttpClient))
+        SourceAPI(BatteryApi(config.batteryHost, tonAPIHttpClient), BatteryApi(config.batteryTestnetHost, tonAPIHttpClient))
     }
 
     private val emulationJSONAdapter: JsonAdapter<MessageConsequences> by lazy {
@@ -211,10 +196,15 @@ class API(
         }
     }
 
-    fun realtime(accountId: String, testnet: Boolean, onFailure: ((Throwable) -> Unit)?): Flow<SSEvent> {
+    fun realtime(
+        accountId: String,
+        testnet: Boolean,
+        config: ConfigEntity,
+        onFailure: ((Throwable) -> Unit)?
+    ): Flow<SSEvent> {
         val endpoint = if (testnet) config.tonapiSSETestnetEndpoint else config.tonapiSSEEndpoint
-        val url = "$endpoint/sse/traces?account=$accountId"
-        return tonAPIHttpClient.sse(url, onFailure = onFailure)
+        val url = "$endpoint/sse/traces?account=$accountId&token=${config.tonApiV2Key}"
+        return seeHttpClient.sse(url, onFailure = onFailure)
     }
 
     fun get(url: String): String {
@@ -302,18 +292,19 @@ class API(
 
     fun getTonBalance(
         accountId: String,
-        testnet: Boolean
+        testnet: Boolean,
+        currency: String,
     ): BalanceEntity? {
-        val account = getAccount(accountId, testnet) ?: return null
-        account.currenciesBalance
+        val account = getAccount(accountId, testnet, currency) ?: return null
         val initializedAccount = account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
         return BalanceEntity(
             token = TokenEntity.TON,
             value = Coins.of(account.balance),
             walletAddress = accountId,
             initializedAccount = initializedAccount,
-            isCompressed = false,
-            isTransferable = true
+            isRequestMinting = false,
+            isTransferable = true,
+            lastActivity = account.lastActivity
         )
     }
 
@@ -361,7 +352,7 @@ class API(
         testnet: Boolean
     ): AccountDetailsEntity? {
         return try {
-            val account = getAccount(query, testnet) ?: return null
+            val account = getAccount(query, testnet, null) ?: return null
             val details = AccountDetailsEntity(query, account, testnet)
             if (details.walletVersion != WalletVersion.UNKNOWN) {
                 details
@@ -456,7 +447,7 @@ class API(
         }
         val value = publicKeys.joinToString(",")
         val url = "${BRIDGE_URL}/events?client_id=$value"
-        return tonAPIHttpClient.sse(url, lastEventId, onFailure).filter { it.type == "message" }
+        return seeHttpClient.sse(url, lastEventId, onFailure).filter { it.type == "message" }
     }
 
     fun tonconnectPayload(): String? {
@@ -618,7 +609,7 @@ class API(
             return@withContext getAccount(value, testnet)
         }
         return@withContext resolveDomain(value.lowercase().trim(), testnet)*/
-        getAccount(value, testnet)
+        getAccount(value, testnet, null)
     }
 
     /*private suspend fun resolveDomain(domain: String, testnet: Boolean): Account? {
@@ -627,7 +618,8 @@ class API(
 
     private fun getAccount(
         accountId: String,
-        testnet: Boolean
+        testnet: Boolean,
+        currency: String?,
     ): Account? {
         var normalizedAccountId = accountId
         if (normalizedAccountId.startsWith("https://")) {
@@ -694,14 +686,13 @@ class API(
         json.put("device", deviceId)
         json.put("accounts", accountsArray)
 
-        Log.d("PushManagerLog", "Unsubscribing from $accounts")
-
         return withRetry {
             val response = tonAPIHttpClient.postJSON(url, json.toString())
-            Log.d("PushManagerLog", "Unsubscribed from $accounts: ${response}")
             response.isSuccessful
         } ?: false
     }
+
+    fun getStories(id: String) = internalApi.getStories(id)
 
     fun pushTonconnectSubscribe(
         token: String,
@@ -793,6 +784,10 @@ class API(
         }
     }
 
+    suspend fun getScamDomains(): Array<String> = withContext(Dispatchers.IO) {
+        internalApi.getScamDomains()
+    }
+
     fun loadChart(
         token: String,
         currency: String,
@@ -836,45 +831,26 @@ class API(
         response.body?.string() ?: throw Exception("Empty response")
     }
 
+    suspend fun reportTX(
+        txId: String,
+        comment: String?,
+        recipient: String,
+    ) = withContext(Dispatchers.IO) {
+        val url = config.scamEndpoint + "/v1/report/tx/$txId"
+        val json = JSONObject()
+        json.put("recipient", recipient)
+        comment?.let { json.put("comment", it) }
+        val data = json.toString()
+        val response = withRetry {
+            tonAPIHttpClient.postJSON(url, data)
+        } ?: throw Exception("Empty response")
+        if (!response.isSuccessful) {
+            throw Exception("Failed creating proof: ${response.code}")
+        }
+        response.body?.string() ?: throw Exception("Empty response")
+    }
+
     companion object {
-
         const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"
-
-        private val socketFactoryTcpNoDelay = SSLSocketFactoryTcpNoDelay()
-
-        private fun baseOkHttpClientBuilder(): OkHttpClient.Builder {
-            return OkHttpClient().newBuilder()
-                .retryOnConnectionFailure(true)
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
-                .writeTimeout(5, TimeUnit.SECONDS)
-                .callTimeout(5, TimeUnit.SECONDS)
-                .pingInterval(5, TimeUnit.SECONDS)
-                .followSslRedirects(true)
-                .followRedirects(true)
-                // .sslSocketFactory(socketFactoryTcpNoDelay.sslSocketFactory, socketFactoryTcpNoDelay.trustManager)
-                // .socketFactory(SocketFactoryTcpNoDelay())
-        }
-
-        private fun createTonAPIHttpClient(
-            context: Context,
-            tonApiV2Key: () -> String,
-            allowDomains: () -> List<String>
-        ): OkHttpClient {
-            return baseOkHttpClientBuilder()
-                .addInterceptor(AcceptLanguageInterceptor(context.locale))
-                .addInterceptor(AuthorizationInterceptor.bearer(
-                    token = tonApiV2Key,
-                    allowDomains = allowDomains
-                )).build()
-        }
-
-        private fun createBatteryAPIHttpClient(
-            context: Context,
-        ): OkHttpClient {
-            return baseOkHttpClientBuilder()
-                 .addInterceptor(AcceptLanguageInterceptor(context.locale))
-                .build()
-        }
     }
 }

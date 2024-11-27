@@ -35,7 +35,10 @@ data class Config (
 
     /* when building a message to transfer an NFT or Jetton, use this address to send excess funds back to Battery Service. */
     @Json(name = "excess_account")
-    val excessAccount: kotlin.String
+    val excessAccount: kotlin.String,
+
+    @Json(name = "gas_proxy")
+    val gasProxy: List<GasProxyAddress>,
 
 ) {
 

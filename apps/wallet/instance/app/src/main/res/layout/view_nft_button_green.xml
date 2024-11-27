@@ -18,6 +18,7 @@
         android:layout_height="28dp"
         android:layout_gravity="end|center_vertical"
         android:layout_marginRight="@dimen/offsetMedium"
-        android:src="@drawable/ic_link_28"/>
+        android:src="@drawable/ic_link_28"
+        android:textColor="?attr/iconPrimaryColor"/>
 
 </FrameLayout>

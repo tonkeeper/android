@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class DAppsRepository(
     context: Context,
@@ -86,7 +87,6 @@ class DAppsRepository(
         if (true) {
             return emptyList()
         }
-
         val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
         if (pushes.isEmpty()) {
             return emptyList()
@@ -234,7 +234,22 @@ class DAppsRepository(
     }
 
     suspend fun getApps(urls: List<Uri>): List<AppEntity> {
-        return database.getApps(urls)
+        val apps = database.getApps(urls).toMutableList()
+        val notFoundApps = urls.filter { url -> apps.none { it.url == url } }
+        if (notFoundApps.isNotEmpty()) {
+            for (url in notFoundApps) {
+                val app = resolveAppByHost(url)
+                if (!app.empty) {
+                    insertApp(app)
+                }
+                apps.add(app)
+            }
+        }
+        return apps
+    }
+
+    suspend fun getApp(url: Uri): AppEntity {
+        return getApps(listOf(url)).firstOrNull() ?: emptyApp(url)
     }
 
     suspend fun insertApp(app: AppEntity) {
@@ -338,6 +353,30 @@ class DAppsRepository(
         return legacyApps.toList()
     }
 
+
+    private suspend fun resolveAppByHost(url: Uri): AppEntity = withContext(Dispatchers.IO) {
+        val host = url.host ?: return@withContext emptyApp(url)
+        for (path in manifestPaths) {
+            val manifestUrl = "https://$host/$path"
+            try {
+                return@withContext AppEntity(api.get(manifestUrl))
+            } catch (e: Throwable) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+                continue
+            }
+        }
+        emptyApp(url)
+    }
+
+    private fun emptyApp(url: Uri): AppEntity {
+        val domain = url.host ?: "unknown"
+        return AppEntity(
+            url = url,
+            name = domain,
+            iconUrl = "https://$domain/favicon.ico",
+            empty = true
+        )
+    }
 
     companion object {
 

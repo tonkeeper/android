@@ -228,7 +228,7 @@ class BatteryRefillViewModel(
 
         return Item.Battery(
             balance = balance.balance.value.toFloat(),
-            beta = config.batteryBeta,
+            beta = false, // config.batteryBeta,
             changes = charges,
             formattedChanges = formattedChanges
         )

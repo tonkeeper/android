@@ -1,29 +1,41 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.facebook.shimmer.Shimmer
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
+import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.extensions.applyColors
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.events.filters.FiltersAdapter
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
+import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.withContext
 import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
+import uikit.extensions.withAlpha
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
@@ -48,21 +60,32 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     private lateinit var listView: RecyclerView
     private lateinit var filtersView: RecyclerView
     private lateinit var emptyView: EmptyLayout
+    private lateinit var shimmerView: ShimmerFrameLayout
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.history)
         headerView.setSubtitle(Localization.updating)
-        headerView.setColor(requireContext().backgroundTransparentColor)
+        if (requireContext().isLightTheme) {
+            headerView.setColor(requireContext().backgroundPageColor)
+        } else {
+            headerView.setColor(requireContext().backgroundTransparentColor)
+        }
 
         refreshView = view.findViewById(R.id.refresh)
+        refreshView.offsetTopAndBottom(0)
         refreshView.setOnRefreshListener {
+            setLoading(true)
             viewModel.refresh()
         }
 
         headerDrawable = HeaderDrawable(requireContext())
-        headerDrawable.setColor(requireContext().backgroundTransparentColor)
+        if (requireContext().isLightTheme) {
+            headerDrawable.setColor(requireContext().backgroundPageColor)
+        } else {
+            headerDrawable.setColor(requireContext().backgroundTransparentColor)
+        }
 
         filtersView = view.findViewById(R.id.filters)
         filtersView.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
@@ -75,9 +98,9 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         })
 
         listView = view.findViewById(R.id.list)
+        listView.addItemDecoration(HistoryItemDecoration())
         listView.adapter = legacyAdapter
         listView.addOnScrollListener(paginationListener)
-        listView.addItemDecoration(HistoryItemDecoration())
 
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
@@ -88,21 +111,26 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
             }
         }
 
-        collectFlow(viewModel.uiStateFlow, ::applyState)
+        shimmerView = view.findViewById(R.id.shimmer)
+        shimmerView.applyColors()
+
         collectFlow(viewModel.uiFilterItemsFlow, filtersAdapter::submitList)
+        collectFlow(viewModel.uiStateFlow, ::applyState)
     }
 
-    private suspend fun applyState(state: EventsUiState) = withContext(Dispatchers.Main) {
-        if (state.isEmpty) {
+    private fun applyState(state: EventsUiState) {
+        shimmerView.visibility = View.GONE
+        refreshView.visibility = View.VISIBLE
+        filtersView.visibility = View.VISIBLE
+
+        if (state.uiItems.isEmpty() && !state.loading) {
             setEmptyState()
-            setLoading(false)
         } else {
-            setListState()
-            if (state.isLoading) {
+            if (state.loading && !state.isFooterLoading) {
                 setLoading(true)
             }
-            legacyAdapter.submitList(state.items) {
-                if (!state.isLoading) {
+            setListState(state.uiItems) {
+                if (!state.loading && !state.isFooterLoading) {
                     setLoading(false)
                 }
             }
@@ -110,9 +138,14 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     private fun setLoading(loading: Boolean) {
-        if (refreshView.isRefreshing) {
-            refreshView.isRefreshing = loading
+        if (loading && refreshView.isRefreshing) {
+            return
+        } else if (!loading && refreshView.isRefreshing) {
+            refreshView.isRefreshing = false
         }
+        /*if (refreshView.isRefreshing != loading) {
+            refreshView.isRefreshing = loading
+        }*/
         if (loading) {
             headerView.setSubtitle(Localization.updating)
         } else {
@@ -131,20 +164,20 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     private fun setEmptyState() {
-        if (emptyView.visibility == View.VISIBLE) {
-            return
+        setLoading(false)
+        if (emptyView.visibility != View.VISIBLE) {
+            headerView.setSubtitle(null)
+            emptyView.visibility = View.VISIBLE
+            refreshView.visibility = View.GONE
         }
-        headerView.setSubtitle(null)
-        emptyView.visibility = View.VISIBLE
-        refreshView.visibility = View.GONE
     }
 
-    private fun setListState() {
-        if (refreshView.visibility == View.VISIBLE) {
-            return
+    private fun setListState(uiItems: List<HistoryItem>, commitCallback: Runnable) {
+        legacyAdapter.submitList(uiItems, commitCallback)
+        if (refreshView.visibility != View.VISIBLE) {
+            emptyView.visibility = View.GONE
+            refreshView.visibility = View.VISIBLE
         }
-        emptyView.visibility = View.GONE
-        refreshView.visibility = View.VISIBLE
     }
 
     override fun getRecyclerView(): RecyclerView? {
@@ -155,11 +188,8 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     }
 
     override fun getTopBarDrawable(): BarDrawable? {
-        /*if (this::headerDrawable.isInitialized) {
+        if (this::headerDrawable.isInitialized) {
             return headerDrawable
-        }*/
-        if (this::headerView.isInitialized) {
-            return headerView.background as BarDrawable
         }
         return null
     }

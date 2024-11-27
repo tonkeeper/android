@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.koin
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
+import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -27,9 +28,8 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.passcode.ChangePasscodeViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
-import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesViewModel
+import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesViewModel
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectViewModel
-import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -55,6 +55,7 @@ val koinModel = module {
     singleOf(::TransactionManager)
     singleOf(::TonConnectManager)
     singleOf(::PushManager)
+    singleOf(::SafeModeClient)
 
     factoryOf(::SignUseCase)
     factoryOf(::EmulationUseCase)

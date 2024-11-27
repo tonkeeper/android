@@ -1,12 +1,12 @@
 package com.tonapps.tonkeeper.ui.component.label
 
 import android.graphics.Color
-import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.emoji.EmojiEntity
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.iconPrimaryColor
 import uikit.extensions.inflate
 
 class EmojiAdapter(
@@ -26,7 +26,7 @@ class EmojiAdapter(
             itemView.setOnClickListener {
                 listener(emoji)
             }
-            emojiView.setEmoji(emoji.value)
+            emojiView.setEmoji(emoji.value, itemView.context.iconPrimaryColor)
         }
     }
 

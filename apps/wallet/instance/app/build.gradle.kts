@@ -40,6 +40,12 @@ dependencies {
     implementation(Dependence.KotlinX.datetime)
     implementation(Dependence.j2objc)
     implementation(Dependence.cbor)
+    implementation(Dependence.TON.tvm)
+    implementation(Dependence.TON.crypto)
+    implementation(Dependence.TON.tlb)
+    implementation(Dependence.TON.blockTlb)
+    implementation(Dependence.TON.tonapiTl)
+    implementation(Dependence.TON.contract)
 
     implementation(project(Dependence.Wallet.localization))
     implementation(project(Dependence.Wallet.api))

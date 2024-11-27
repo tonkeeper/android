@@ -1,12 +1,14 @@
 <resources>
     <string name="transaction_expired">İşlem süresi doldu</string>
     <string name="add_contact">Adres Defterine Ekle</string>
+    <string name="add_to_home_screen">Ana Ekrana Ekle</string>
     <string name="multi_account_secret_wrong">Lütfen Çoklu Cüzdan Hesabı için Tonkeeper Masaüstünü kullanın</string>
     <string name="total">Toplam: %1$s</string>
     <string name="staking_ready_withdraw">%1$s hazır. Toplamak için dokunun.</string>
     <string name="staking_pending_deposit">%1$s %2$s\'ye yatırılacak</string>
     <string name="staking_pending_withdraw">%1$s %2$s içinde çekilecek</string>
     <string name="edit_full">Düzenlemek</string>
+    <string name="safe_mode_tonconnect_description">Bunu cüzdanınızın Güvenlik Ayarları\'ndan değiştirebilirsiniz.</string>
     <string name="staking_unstake_cycle">Paydan çıkarma isteği, %1$s\'deki doğrulama döngüsünün bitiminden sonra işlenecektir.</string>
     <string name="send_transaction_scroll">Onaylamak için tüm ayrıntıları kontrol edin</string>
     <string name="send_transaction_detail">Cüzdanınızdan gönderilecek tokenların toplam değeri. İadeler toplam değere dahil değildir.</string>
@@ -73,6 +75,7 @@
     <string name="domain_link_button">Alanı bağla</string>
     <string name="domain_renew_button">Alan adını yenile</string>
     <string name="staked">Stake Edildi</string>
+    <string name="report_encrypted_comment_button">Spam\'ı yine de bildir</string>
     <string name="manual">Kılavuz</string>
     <string name="manual_description">Cüzdanınızı manuel olarak yedeklemek için kurtarma ifadesini not edin.</string>
     <string name="manual_backup_done">Manuel Yedekleme Tamamlandı</string>
@@ -191,6 +194,7 @@
     <string name="intro_line_2_description">Tonkeeper, belgeler, kişisel bilgiler, iletişim detayları veya KYC gerektirmeden kriptografik anahtarlarınızı cihazınızda saklar.</string>
     <string name="intro_line_3_title">Yerleşik abonelikler</string>
     <string name="intro_line_3_description">TON abonelikleri eşler arası ve sınırsızdır, bu nedenle hiç kimse sağlayıcıları veya müşterileri kısıtlayamaz. Neredeyse sıfır ücretler ve tam kontrol sizin için.</string>
+    <string name="stories_safemode_3_subtitle">Beklenmeyen riskleri önlemek için.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">İnternet bağlantısı yok</string>
     <string name="start_description">Yeni bir cüzdan oluşturun veya mevcut bir cüzdan ekleyin</string>
@@ -355,6 +359,7 @@
     <string name="hide_collection">Koleksiyonu gizle</string>
     <string name="hide_and_report_collection">Gizle ve bildir</string>
     <string name="open_tonviewer">Tonviewer\'da aç</string>
+    <string name="safe_mode_disabled">Güvenli mod 24 saat boyunca kapalıdır. Otomatik olarak açılacaktır. <annotation colorAttr="textAccentColor">Kalıcı olarak kapat</annotation></string>
     <string name="customize">Özelleştir</string>
     <string name="customize_wallet_title">Cüzdanınızı Özelleştirin</string>
     <string name="customize_wallet_subtitle">Cüzdan adı ve simgesi cihazınızda yerel olarak saklanır.</string>
@@ -379,7 +384,7 @@
     <string name="bluetooth_permissions_alert_title">Bluetooth İzinleri</string>
     <string name="bluetooth_permissions_alert_message">Lütfen bu özelliği kullanmak için ayarlardan Bluetooth izinlerini etkinleştirin</string>
     <string name="bluetooth_permissions_alert_open_settings">Ayarları Aç</string>
-    <string name="intro_title"><annotation colorRes="textAccent">Tonkeeper</annotation>\'a hoş geldiniz</string>
+    <string name="intro_title"><annotation ccolorAttr="textAccentColor">Tonkeeper</annotation>\'a hoş geldiniz</string>
     <string name="required_comment">Gerekli yorum</string>
     <string name="biometric_enabled">Biyometrik etkin</string>
     <string name="sending_error">Gönderim hatası, daha sonra tekrar deneyin</string>
@@ -471,4 +476,26 @@
     <string name="connected_apps_empty">Bağlı uygulama yok</string>
     <string name="send_all_balance">Bakiyenizin tamamını göndermek istediğinizden emin misiniz?</string>
     <string name="wrong_promocode">Girilen kod geçerli değil</string>
+    <string name="visible">Görünür</string>
+    <string name="hidden">Gizlenmiş</string>
+    <string name="show_all">Tümünü göster</string>
+    <string name="token_details">Jeton detayları</string>
+    <string name="token_id">Jeton ID</string>
+    <string name="safe_mode">Güvenli mod</string>
+    <string name="open_settings">Ayarları Aç</string>
+    <string name="setup_safe_mode">Kilit Ekranınızı ve Güvenli Modunuzu ayarlayın</string>
+    <string name="safe_mode_tonconnect_title">Bağlantılar yalnızca doğrulanmış uygulamalar için kullanılabilir</string>
+    <string name="hide_full_collection">Koleksiyonu gizle</string>
+    <string name="safe_mode_description">Bu modda yalnızca doğrulanmış uygulamalar, NFT\'ler ve token\'lar kullanılabilir. <annotation colorAttr="textAccentColor">Daha fazla bilgi edinin</annotation></string>
+    <string name="stories_safemode_1_title">Yalnızca Doğrulanmış Uygulamalar ve Hizmetler</string>
+    <string name="stories_safemode_1_subtitle">Sahtekarlık ve dolandırıcılıktan korunmak için.</string>
+    <string name="stories_safemode_2_title">Sadece Doğrulanmış NFT\'ler</string>
+    <string name="stories_safemode_2_subtitle">Spam ve sahte ürünlerden kaçınmak için.</string>
+    <string name="stories_safemode_3_title">Sadece Doğrulanmış Tokenlar</string>
+    <string name="tx_marked_as_spam">İşlem Spam olarak işaretlendi</string>
+    <string name="address_prefix">Adres:</string>
+    <string name="your_address">Adresiniz:</string>
+    <string name="safe_mode_tokens_footer">Güvenli mod etkinleştirildi. Yalnızca doğrulanmış tokenlar kullanılabilir. <annotation colorAttr="textAccentColor">Ayarlar</annotation></string>
+    <string name="report_encrypted_comment">Bu işlemden gelen yorum, şifresi çözülmüş bir şekilde raporla birlikte gönderilecektir.</string>
+    <string name="select_from_gallery">Galeriden seç</string>
 </resources>

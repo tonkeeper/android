@@ -124,8 +124,13 @@ object WidgetManager {
     }
 
     private fun getWidgetIds(context: Context, cls: Class<*>): IntArray {
-        val provider = ComponentName(context, cls)
-        return AppWidgetManager.getInstance(context).getAppWidgetIds(provider).sortedArray()
+        try {
+            val provider = ComponentName(context, cls)
+            return AppWidgetManager.getInstance(context).getAppWidgetIds(provider).sortedArray()
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            return intArrayOf()
+        }
     }
 
     private fun getWidgetIds(context: Context): IntArray {

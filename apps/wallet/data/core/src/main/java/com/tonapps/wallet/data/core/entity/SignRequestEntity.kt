@@ -14,6 +14,8 @@ import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.block.AddrStd
+import org.ton.block.StateInit
+import org.ton.tlb.CellRef
 import kotlin.time.Duration.Companion.seconds
 
 @Parcelize

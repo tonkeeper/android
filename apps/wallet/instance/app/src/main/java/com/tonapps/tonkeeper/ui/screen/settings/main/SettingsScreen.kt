@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.settings.main
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.core.net.toUri
 import com.google.android.play.core.review.ReviewInfo
@@ -26,7 +25,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeScreen
-import com.tonapps.tonkeeper.ui.screen.w5.stories.W5StoriesScreen
+import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesScreen
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.SearchEngine
@@ -68,7 +67,7 @@ class SettingsScreen(
             is Item.Account -> navigation?.add(EditNameScreen.newInstance(item.wallet))
             is Item.Theme -> navigation?.add(ThemeScreen.newInstance())
             is Item.Widget -> installWidget()
-            is Item.Security -> navigation?.add(SecurityScreen.newInstance())
+            is Item.Security -> navigation?.add(SecurityScreen.newInstance(screenContext.wallet))
             is Item.Legal -> navigation?.add(LegalScreen.newInstance())
             is Item.News -> navigation?.openURL(item.url)
             is Item.Support -> navigation?.openURL(item.url)

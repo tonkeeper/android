@@ -67,7 +67,7 @@ object ShortcutHelper {
         context: Context,
         wallet: WalletEntity
     ): Bitmap {
-        val iconBitmap = Emoji.getBitmap(context, wallet.label.emoji)
+        val iconBitmap = Emoji.getBitmap(context, wallet.label.emoji, Color.TRANSPARENT)
 
         val size = 64.dp
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)

@@ -2,23 +2,29 @@ package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
 import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
+import com.tonapps.extensions.hasUnsupportedQuery
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
 import com.tonapps.extensions.query
 import com.tonapps.extensions.queryBoolean
 import com.tonapps.extensions.queryPositiveLong
 import org.ton.api.pub.PublicKeyEd25519
+import org.ton.block.StateInit
+import org.ton.cell.Cell
+import org.ton.tlb.CellRef
+import org.ton.tlb.asRef
 
 sealed class DeepLinkRoute {
 
     data class Unknown(val uri: Uri): DeepLinkRoute()
 
-    sealed class Tabs(val tabUri: String): DeepLinkRoute() {
-        data object Main: Tabs("tonkeeper://wallet")
-        data object Activity: Tabs("tonkeeper://activity")
-        data object Browser: Tabs("tonkeeper://browser")
-        data object Collectibles: Tabs("tonkeeper://collectibles")
+    sealed class Tabs(val tabUri: String, open val from: String): DeepLinkRoute() {
+        data class Main(override val from: String): Tabs("tonkeeper://wallet", from)
+        data class Activity(override val from: String): Tabs("tonkeeper://activity", from)
+        data class Browser(override val from: String): Tabs("tonkeeper://browser", from)
+        data class Collectibles(override val from: String): Tabs("tonkeeper://collectibles", from)
     }
 
     sealed class Internal: DeepLinkRoute()
@@ -62,7 +68,8 @@ sealed class DeepLinkRoute {
         val amount: Long?,
         val text: String?,
         val jettonAddress: String?,
-        val bin: String?
+        val bin: Cell?,
+        val initStateBase64: String?
     ): DeepLinkRoute() {
 
         val isExpired: Boolean
@@ -74,10 +81,22 @@ sealed class DeepLinkRoute {
             amount = uri.queryPositiveLong("amount"),
             text = uri.query("text"),
             jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
-            bin = uri.query("bin")
-        )
-    }
+            bin = uri.query("bin")?.cellFromBase64(),
+            initStateBase64 = uri.query("init")
+        ) {
+            if (uri.hasUnsupportedQuery(true, "exp", "amount", "text", "jettonAddress", "jetton", "bin", "init")) {
+                throw IllegalArgumentException("Unsupported query parameters")
+            }
 
+            if (text != null && bin != null) {
+                throw IllegalArgumentException("Text and bin are mutually exclusive")
+            }
+
+            if (amount == null && (bin != null || initStateBase64 != null)) {
+                throw IllegalArgumentException("Amount is required for bin or init")
+            }
+        }
+    }
 
     data class PickWallet(val walletId: String): DeepLinkRoute() {
 
@@ -91,6 +110,14 @@ sealed class DeepLinkRoute {
         constructor(uri: Uri) : this(
             promocode = uri.query("promocode")
         )
+    }
+
+    data class Story(val id: String): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            id = uri.pathOrNull ?: throw IllegalArgumentException("Story id is required")
+        )
+
     }
 
     data class AccountEvent(
@@ -148,6 +175,7 @@ sealed class DeepLinkRoute {
 
         fun resolve(input: Uri): DeepLinkRoute {
             val uri = normalize(input)
+            val from = input.query("from") ?: "deep-link"
             val domain = uri.hostOrNull ?: return Unknown(uri)
             try {
                 return when (domain) {
@@ -155,10 +183,10 @@ sealed class DeepLinkRoute {
                     "staking" -> Staking
                     "buy-ton" -> Purchase
                     "send" -> Send
-                    "wallet", "main" -> Tabs.Main
-                    "activity", "history" -> Tabs.Activity
-                    "browser" -> Tabs.Browser
-                    "collectibles" -> Tabs.Collectibles
+                    "wallet", "main" -> Tabs.Main(from)
+                    "activity", "history" -> Tabs.Activity(from)
+                    "browser" -> Tabs.Browser(from)
+                    "collectibles" -> Tabs.Collectibles(from)
                     "settings" -> Settings
                     "pool" -> StakingPool(uri)
                     "swap" -> Swap(uri)
@@ -184,6 +212,7 @@ sealed class DeepLinkRoute {
                     "manage" -> ManageAssets
                     "picker", "wallets" -> WalletPicker
                     "jetton", "token" -> Jetton(uri)
+                    "story", "stories" -> Story(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {

@@ -2,11 +2,15 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.app.Application
 import android.content.Context
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
@@ -15,6 +19,7 @@ class SecurityViewModel(
     private val settingsRepository: SettingsRepository,
     private val rnLegacy: RNLegacy,
     private val passcodeManager: PasscodeManager,
+    private val api: API
 ): BaseWalletVM(app) {
 
     var lockScreen: Boolean
@@ -26,17 +31,14 @@ class SecurityViewModel(
     val biometric: Boolean
         get() = settingsRepository.biometric
 
-    var onlyVerifyNFTs: Boolean
-        get() = settingsRepository.onlyVerifyNFTs
-        set(value) {
-            settingsRepository.onlyVerifyNFTs = value
-        }
+    val safeModeFlow: Flow<SafeModeState>
+        get() = settingsRepository.safeModeStateFlow
 
-    var onlyVerifyTokens: Boolean
-        get() = settingsRepository.onlyVerifyTokens
-        set(value) {
-            settingsRepository.onlyVerifyTokens = value
-        }
+    fun isSafeModeEnabled() = settingsRepository.isSafeModeEnabled(api)
+
+    fun setSafeModeState(state: SafeModeState) {
+        settingsRepository.setSafeModeState(state)
+    }
 
     fun enableBiometric(context: Context, value: Boolean) = flow {
         if (value) {

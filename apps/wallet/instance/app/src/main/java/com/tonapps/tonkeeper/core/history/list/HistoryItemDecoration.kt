@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.core.history.list
 
 import android.graphics.Rect
+import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.RecyclerView
@@ -23,14 +24,7 @@ class HistoryItemDecoration: RecyclerView.ItemDecoration() {
             return
         }
 
-        if (parent.isLayoutRequested) {
-            parent.doOnLayout {
-                getItemOffsets(outRect, view, parent, state)
-            }
-            return
-        }
-
-        val holder = parent.findViewHolderForAdapterPosition(position) ?: return
+        val holder = findViewHolder(parent, position) ?: return
         val item = (holder as? BaseListHolder<*>)?.item ?: return
 
         if (item is HistoryItem.Event && (item.position == ListCell.Position.LAST || item.position == ListCell.Position.SINGLE)) {
@@ -38,6 +32,10 @@ class HistoryItemDecoration: RecyclerView.ItemDecoration() {
         } else if (item is HistoryItem.App) {
             outRect.bottom = 6.dp
         }
+    }
+
+    private fun findViewHolder(parent: RecyclerView, position: Int): RecyclerView.ViewHolder? {
+        return parent.findViewHolderForLayoutPosition(position) ?: parent.findViewHolderForAdapterPosition(position)
     }
 
 }

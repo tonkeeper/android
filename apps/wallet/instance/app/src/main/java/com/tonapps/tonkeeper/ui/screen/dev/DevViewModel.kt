@@ -7,10 +7,13 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.extensions.requestVault
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.mnemonic.Mnemonic
@@ -30,6 +33,13 @@ class DevViewModel(
                 callback(json)
             }
         }*/
+    }
+
+    fun openCard() {
+        accountRepository.selectedWalletFlow.take(1).onEach {
+            openScreen(CardScreen.newInstance(it))
+            finish()
+        }.launch()
     }
 
     fun importApps(callback: (result: String) -> Unit) {

@@ -5,6 +5,7 @@ import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.signer.SignerHelper
+import com.tonapps.tonkeeper.extensions.requestPrivateKey
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
 import com.tonapps.tonkeeper.ui.screen.external.qr.signer.sign.SignerSignScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
@@ -114,7 +115,7 @@ class SignTransaction(
         if (!isValidPasscode) {
             throw SendException.WrongPasscode()
         }
-        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw SendException.UnableSendTransaction()
+        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id) ?: throw SendException.UnableSendTransaction()
         val hash = privateKey.sign(unsignedBody.hash())
         BitString(hash)
     }

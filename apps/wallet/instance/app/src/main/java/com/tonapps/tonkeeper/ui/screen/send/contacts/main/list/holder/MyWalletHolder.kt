@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.holder
 
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
+import com.tonapps.uikit.color.iconPrimaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.extensions.drawable
 
@@ -18,7 +19,7 @@ class MyWalletHolder(
         itemView.setOnClickListener { onClick(item) }
         itemView.background = item.position.drawable(context)
 
-        emojiView.setEmoji(item.emoji)
+        emojiView.setEmoji(item.emoji, itemView.context.iconPrimaryColor)
         nameView.text = item.name
     }
 

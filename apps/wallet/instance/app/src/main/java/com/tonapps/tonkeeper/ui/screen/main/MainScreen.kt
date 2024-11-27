@@ -6,6 +6,9 @@ import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -13,15 +16,18 @@ import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesScreen
+import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesScreen
 import com.tonapps.tonkeeper.ui.screen.events.EventsScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootEvent
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletScreen
+import com.tonapps.uikit.color.backgroundPageColor
+import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import kotlinx.coroutines.android.awaitFrame
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
@@ -110,6 +116,11 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         childFragmentManager.removeAllFragments()
 
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
+        if (requireContext().isLightTheme) {
+            bottomTabsView.setBgColor(requireContext().backgroundPageColor)
+        } else {
+            bottomTabsView.setBgColor(requireContext().backgroundTransparentColor)
+        }
         bottomTabsView.doOnLongClick = { itemId ->
             if (itemId == R.id.wallet) {
                 navigation?.add(PickerScreen.newInstance())
@@ -124,9 +135,9 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
 
         rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().onEach {
-            val itemId = mainDeepLinks[it.link] ?: return@onEach
+            val itemId = resolveId(it.link)
             bottomTabsView.selectedItemId = itemId
-            setFragment(itemId, it.wallet, true)
+            setFragment(itemId, it.wallet, it.from,true)
             parentClearState()
         }.launchIn(lifecycleScope)
 
@@ -142,7 +153,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 bottomTabsView.selectedItemId
             }
             applyWallet(wallet)
-            setFragment(itemId, wallet, false)
+            setFragment(itemId, wallet, "wallet",false)
         }
     }
 
@@ -161,17 +172,20 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
 
         bottomTabsView.doOnClick = { itemId ->
-            setFragment(itemId, wallet, false)
+            setFragment(itemId, wallet, "wallet",false)
+            if (itemId == R.id.browser) {
+                AnalyticsHelper.trackEvent("browser_click", rootViewModel.installId)
+            }
         }
     }
 
-    private fun getFragment(itemId: Int, wallet: WalletEntity): Fragment {
-        return fragments[itemId] ?: createFragment(itemId, wallet).also {
+    private fun getFragment(itemId: Int, wallet: WalletEntity, from: String): Fragment {
+        return fragments[itemId] ?: createFragment(itemId, wallet, from).also {
             fragments[itemId] = it
         }
     }
 
-    private fun createFragment(itemId: Int, wallet: WalletEntity): Fragment {
+    private fun createFragment(itemId: Int, wallet: WalletEntity, from: String): Fragment {
         val fragment = when(itemId) {
             R.id.wallet -> WalletScreen.newInstance(wallet)
             R.id.activity -> EventsScreen.newInstance(wallet)
@@ -182,11 +196,15 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         return fragment
     }
 
-    private fun setFragment(itemId: Int, wallet: WalletEntity, forceScrollUp: Boolean) {
-        setFragment(getFragment(itemId, wallet), forceScrollUp)
+    private fun setFragment(itemId: Int, wallet: WalletEntity, from: String, forceScrollUp: Boolean) {
+        setFragment(getFragment(itemId, wallet, from), forceScrollUp, from, 0)
     }
 
-    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean) {
+    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, from: String, attempt: Int) {
+        if (attempt > 3) {
+            throw IllegalStateException("Failed to set main fragment")
+        }
+
         if (childFragmentManager.isStateSaved) {
             return
         }
@@ -210,8 +228,18 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
         transaction.runOnCommit {
             checkBottomDivider(fragment)
+            if (fragment is BrowserMainScreen) {
+                AnalyticsHelper.trackBrowserOpen(rootViewModel.installId, from)
+            }
         }
-        transaction.commitNow()
+        try {
+            transaction.commitNow()
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            postDelayed(1000) {
+                setFragment(fragment, forceScrollUp, from,attempt + 1)
+            }
+        }
     }
 
     private fun checkBottomDivider(fragment: Fragment) {
@@ -225,14 +253,19 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         window?.setBackgroundDrawable(requireContext().constantBlackColor.drawable)
     }
 
-    companion object {
+    private fun resolveId(deeplink: String): Int {
+        if (deeplink.startsWith("tonkeeper://activity")) {
+            return R.id.activity
+        } else if (deeplink.startsWith("tonkeeper://browser")) {
+            return R.id.browser
+        } else if (deeplink.startsWith("tonkeeper://collectibles")) {
+            return R.id.collectibles
+        }
+        return R.id.wallet
 
-        private val mainDeepLinks = mapOf(
-            "tonkeeper://wallet" to R.id.wallet,
-            "tonkeeper://activity" to R.id.activity,
-            "tonkeeper://browser" to R.id.browser,
-            "tonkeeper://collectibles" to R.id.collectibles
-        )
+    }
+
+    companion object {
 
         fun newInstance() = MainScreen()
     }

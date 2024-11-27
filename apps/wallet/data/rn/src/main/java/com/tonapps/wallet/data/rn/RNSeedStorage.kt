@@ -21,6 +21,8 @@ internal class RNSeedStorage(context: Context) {
         private const val biometryKey = "biometry_passcode"
     }
 
+    private var seedState: SeedState? = null
+
     private val kv = SecureStoreModule(context)
 
     fun setActivity(activity: FragmentActivity) {
@@ -74,7 +76,8 @@ internal class RNSeedStorage(context: Context) {
 
     suspend fun hasPinCode(): Boolean {
         return try {
-            readState() != null
+            readState()
+            true
         } catch (e: Exception) {
             FirebaseCrashlytics.getInstance().recordException(e)
             false
@@ -115,6 +118,12 @@ internal class RNSeedStorage(context: Context) {
     }
 
     private suspend fun readState(): SeedState {
+        return seedState ?: requestState().also {
+            seedState = it
+        }
+    }
+
+    private suspend fun requestState(): SeedState {
         val chunks = kv.getItemImpl("${walletsKey}_chunks")?.toIntOrNull() ?: 0
         if (0 >= chunks) {
             throw RNException.EmptyChunks

@@ -3,13 +3,12 @@ package com.tonapps.tonkeeper.ui.component
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
-import android.util.Log
 import android.view.WindowInsets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import blur.BlurCompat
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.isBlurDisabled
-import com.tonapps.tonkeeper.isLowDevice
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.useAttributes
@@ -36,7 +35,7 @@ class MainRecyclerView @JvmOverloads constructor(
     private val bottomPadding: Int
         get() = bottomOffset + bottomBarSize
 
-    private val blurDisabled = context.isBlurDisabled
+    private val blurDisabled = context.isBlurDisabled || context.isLightTheme
     private val topBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
     private val bottomBlur: BlurCompat? = if (!blurDisabled) BlurCompat(context) else null
 

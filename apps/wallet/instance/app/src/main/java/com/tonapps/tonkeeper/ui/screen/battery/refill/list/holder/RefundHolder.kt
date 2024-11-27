@@ -25,7 +25,11 @@ class RefundHolder(
         itemView.background = ListCell.Position.SINGLE.drawable(context)
         itemView.setOnClickListener {
             context.activity?.onBackPressed()
-            navigation?.add(DAppScreen.newInstance(wallet = item.wallet, url = item.refundUrl.toUri()))
+            navigation?.add(DAppScreen.newInstance(
+                wallet = item.wallet,
+                url = item.refundUrl.toUri(),
+                source = "battery_refund"
+            ))
         }
         refundImageView.visibility = View.VISIBLE
         titleView.text = context.getString(Localization.battery_refund_title)

@@ -40,9 +40,7 @@ class BottomTabsView @JvmOverloads constructor(
             }
         }
 
-    private val drawable = FooterDrawable(context).apply {
-        setColor(context.backgroundTransparentColor)
-    }
+    private val drawable = FooterDrawable(context)
 
     private val menu: MenuBuilder by lazy { MenuBuilder(context) }
     private val menuInflater: MenuInflater by lazy { MenuInflater(context) }
@@ -79,6 +77,10 @@ class BottomTabsView @JvmOverloads constructor(
                 view.visibility = View.GONE
             }
         }
+    }
+
+    fun setBgColor(color: Int) {
+        drawable.setColor(color)
     }
 
     fun showItem(id: Int) {

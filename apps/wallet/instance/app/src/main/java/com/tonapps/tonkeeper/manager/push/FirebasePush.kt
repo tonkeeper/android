@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.manager.push
 
+import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -30,6 +31,7 @@ class FirebasePush: FirebaseMessagingService() {
                 if (!task.isSuccessful) {
                     continuation.resume(null)
                 } else {
+                    Log.d("FirebasePusLog", "token: ${task.result}")
                     continuation.resume(task.result)
                 }
             }

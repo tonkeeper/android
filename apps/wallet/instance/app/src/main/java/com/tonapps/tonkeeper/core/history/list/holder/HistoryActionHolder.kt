@@ -180,7 +180,7 @@ class HistoryActionHolder(
         } else {
             commentView.text = comment.body.max24
             commentView.setLeftDrawable(null)
-            commentView.setOnClickListener(null)
+            commentView.setOnClickListener { context.navigation?.add(TransactionScreen.newInstance(item!!)) }
         }
     }
 

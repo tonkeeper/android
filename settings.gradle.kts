@@ -54,7 +54,6 @@ include(":lib:base64")
 include(":apps:wallet:instance:app")
 include(":apps:wallet:instance:main")
 include(":apps:wallet:localization")
-include(":apps:wallet:http")
 include(":apps:wallet:api")
 
 include(":apps:wallet:data:core")

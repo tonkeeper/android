@@ -916,10 +916,16 @@ class SendViewModel(
         val extra = getRawExtra()
         val fee = getFee()
 
-        val jettonTransferAmount = when {
+        val token = selectedTokenFlow.value
+
+        var jettonTransferAmount = when {
             sendTransferType is SendTransferType.Gasless || extra.isNegative -> TransferEntity.BASE_FORWARD_AMOUNT
             fee.isZero -> TransferEntity.POINT_ONE_TON
             else -> fee + TransferEntity.BASE_FORWARD_AMOUNT
+        }
+
+        if (token.isRequestMinting || token.customPayloadApiUri != null) {
+            jettonTransferAmount = Coins.of(0.1)
         }
 
         val boc = signUseCase(
@@ -976,10 +982,12 @@ class SendViewModel(
         }.launchIn(viewModelScope)
     }
 
-    private fun getTokenCustomPayload(token: TokenEntity): TokenEntity.TransferPayload {
+    private fun getTokenCustomPayload(
+        token: TokenEntity
+    ): TokenEntity.TransferPayload {
         if (token.isTon) {
             return TokenEntity.TransferPayload.empty("TON")
-        } else if (!token.isCompressed) {
+        } else if (!token.isRequestMinting) {
             return TokenEntity.TransferPayload.empty(token.address)
         }
         if (tokenCustomPayload != null && tokenCustomPayload!!.tokenAddress.equalsAddress(token.address)) {

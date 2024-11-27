@@ -38,6 +38,7 @@
             android:layout_height="32dp"
             android:layout_gravity="top|end"
             android:layout_marginTop="@dimen/offsetMedium"
+            android:filterTouchesWhenObscured="true"
             android:background="@drawable/bg_oval_button_secondary"
             android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
             android:scaleType="centerInside"
@@ -99,7 +100,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="@dimen/offsetMedium"
-                android:text="@string/slide_to_confirm" />
+                android:text="@string/slide_to_confirm"
+                android:filterTouchesWhenObscured="true"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/total"

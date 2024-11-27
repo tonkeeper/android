@@ -26,6 +26,7 @@
             android:layout_marginTop="@dimen/offsetMedium"
             android:scaleType="centerInside"
             android:src="@drawable/ic_close_16"
+            android:filterTouchesWhenObscured="true"
             android:tint="?attr/buttonSecondaryForegroundColor"
             android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
             android:background="@drawable/bg_oval_button_secondary"/>
@@ -185,6 +186,7 @@
             <Button
                 style="@style/Widget.App.Button"
                 android:id="@+id/button"
+                android:filterTouchesWhenObscured="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"

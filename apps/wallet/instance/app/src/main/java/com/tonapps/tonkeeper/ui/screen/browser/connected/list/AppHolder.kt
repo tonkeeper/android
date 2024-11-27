@@ -19,7 +19,12 @@ class AppHolder(
 
     override fun onBind(item: Item) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(DAppScreen.newInstance(item.wallet, item.name, item.url))
+            Navigation.from(context)?.add(DAppScreen.newInstance(
+                wallet = item.wallet,
+                title = item.name,
+                url = item.url,
+                source = "browser_connected"
+            ))
         }
         itemView.setOnLongClickListener {
             onLongClick(item.app)

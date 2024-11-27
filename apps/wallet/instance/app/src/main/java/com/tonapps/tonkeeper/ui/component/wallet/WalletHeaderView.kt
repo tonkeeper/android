@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.component.wallet
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
 import android.view.GestureDetector
@@ -13,7 +14,10 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.WindowInsetsCompat
 import com.tonapps.emoji.ui.EmojiView
+import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundContentTintColor
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.account.Wallet
 import uikit.drawable.BarDrawable
@@ -76,7 +80,11 @@ class WalletHeaderView @JvmOverloads constructor(
     private val arrowView: AppCompatImageView
     private val settingsDot: View
     private val drawable = HeaderDrawable(context).apply {
-        setColor(context.backgroundTransparentColor)
+        if (context.isLightTheme) {
+            setColor(context.backgroundPageColor)
+        } else {
+            setColor(context.backgroundTransparentColor)
+        }
     }
 
     var onSettingsClick: (() -> Unit)? = null
@@ -127,7 +135,7 @@ class WalletHeaderView @JvmOverloads constructor(
 
         walletView.visibility = View.VISIBLE
         nameView.text = walletLabel.name
-        emojiView.setEmoji(walletLabel.emoji)
+        emojiView.setEmoji(walletLabel.emoji, Color.TRANSPARENT)
         walletView.backgroundTintList = ColorStateList.valueOf(walletLabel.color)
     }
 

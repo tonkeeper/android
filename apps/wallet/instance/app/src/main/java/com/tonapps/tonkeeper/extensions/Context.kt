@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.WorkManager
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.extensions.bestMessage
+import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.color.accentGreenColor
@@ -40,6 +41,9 @@ val Context.uiMode: Int
 
 val Context.isDarkMode: Boolean
     get() = uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+
+val Context.isLightTheme: Boolean
+    get() = settingsRepository?.theme?.light ?: false
 
 fun Context.safeExternalOpenUri(uri: Uri) {
     if (TonConnectManager.isTonConnectDeepLink(uri)) {

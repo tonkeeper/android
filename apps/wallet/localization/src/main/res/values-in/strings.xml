@@ -1,12 +1,14 @@
 <resources>
     <string name="transaction_expired">Transaksi telah berakhir</string>
     <string name="add_contact">Tambahkan ke Buku Alamat</string>
+    <string name="add_to_home_screen">Tambahkan ke Layar Beranda</string>
     <string name="multi_account_secret_wrong">Silakan gunakan Tonkeeper Desktop untuk Akun Multi-Dompet</string>
     <string name="total">Jumlah: %1$s</string>
     <string name="staking_ready_withdraw">%1$s sudah siap. Ketuk kumpulkan bersama.</string>
     <string name="staking_pending_deposit">%1$s akan disimpan di %2$s</string>
     <string name="staking_pending_withdraw">%1$s akan ditarik dalam %2$s</string>
     <string name="edit_full">Sunting</string>
+    <string name="safe_mode_tonconnect_description">Anda dapat mengubahnya di Pengaturan Keamanan dompet Anda.</string>
     <string name="staking_unstake_cycle">Permintaan pembatalan taruhan akan diproses setelah akhir siklus validasi dalam %1$s</string>
     <string name="send_transaction_scroll">Periksa semua detail untuk konfirmasi</string>
     <string name="send_transaction_detail">Nilai total token yang akan dikirim dari dompet Anda. Pengembalian dana tidak termasuk dalam nilai total.</string>
@@ -73,6 +75,7 @@
     <string name="domain_link_button">Tautkan domain</string>
     <string name="domain_renew_button">Perbarui domain</string>
     <string name="staked">Dipertaruhkan</string>
+    <string name="report_encrypted_comment_button">Laporkan Spam Apa Pun</string>
     <string name="manual">Manual</string>
     <string name="manual_description">Cadangkan dompet Anda secara manual dengan menuliskan frasa pemulihan.</string>
     <string name="manual_backup_done">Cadangan Manual Selesai</string>
@@ -191,6 +194,7 @@
     <string name="intro_line_2_description">Tonkeeper menyimpan kunci kriptografi Anda di perangkat Anda tanpa memerlukan dokumen, informasi pribadi, detail kontak, atau KYC.</string>
     <string name="intro_line_3_title">Langganan bawaan</string>
     <string name="intro_line_3_description">Langganan TON adalah peer-to-peer dan tanpa batas sehingga tidak ada yang dapat membatasi penyedia atau pelanggan. Biaya hampir nol dan kendali penuh untuk Anda.</string>
+    <string name="stories_safemode_3_subtitle">Untuk mencegah risiko yang tidak terduga.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">Tidak ada koneksi internet</string>
     <string name="start_description">Buat dompet baru atau tambahkan yang sudah ada</string>
@@ -355,6 +359,7 @@
     <string name="hide_collection">Sembunyikan koleksi</string>
     <string name="hide_and_report_collection">Sembunyikan dan laporkan</string>
     <string name="open_tonviewer">Buka di Tonviewer</string>
+    <string name="safe_mode_disabled">Mode aman dimatikan selama 24 jam. Mode ini akan aktif secara otomatis. <annotation colorAttr="textAccentColor">Matikan secara permanen</annotation></string>
     <string name="customize">Sesuaikan</string>
     <string name="customize_wallet_title">Sesuaikan Dompet Anda</string>
     <string name="customize_wallet_subtitle">Nama dan ikon dompet disimpan secara lokal di perangkat Anda.</string>
@@ -379,7 +384,7 @@
     <string name="bluetooth_permissions_alert_title">Izin Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Silakan aktifkan izin Bluetooth di pengaturan Anda untuk menggunakan fitur ini</string>
     <string name="bluetooth_permissions_alert_open_settings">Buka Pengaturan</string>
-    <string name="intro_title">Selamat datang di <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title">Selamat datang di <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="required_comment">Komentar yang diperlukan</string>
     <string name="biometric_enabled">Biometrik diaktifkan</string>
     <string name="sending_error">Kesalahan pengiriman, coba lagi nanti</string>
@@ -466,4 +471,27 @@
     <string name="connected_apps_empty">Tidak ada aplikasi yang terhubung</string>
     <string name="send_all_balance">Apakah Anda yakin ingin mengirimkan semua saldo Anda?</string>
     <string name="wrong_promocode">Kode yang dimasukkan tidak valid</string>
+    <string name="visible">Bisa dilihat</string>
+    <string name="hidden">Tersembunyi</string>
+    <string name="show_all">Tampilkan semua</string>
+    <string name="token_details">Rincian token</string>
+    <string name="token_id">ID Token</string>
+    <string name="safe_mode">Mode aman</string>
+    <string name="open_settings">Buka Pengaturan</string>
+    <string name="setup_safe_mode">Siapkan Layar Kunci dan Mode Aman Anda</string>
+    <string name="safe_mode_tonconnect_title">Koneksi hanya tersedia untuk aplikasi yang terverifikasi</string>
+    <string name="hide_full_collection">Sembunyikan koleksi</string>
+    <string name="safe_mode_description">Dalam mode ini, hanya aplikasi, NFT, dan token terverifikasi yang tersedia. <annotation colorAttr="textAccentColor">Pelajari lebih lanjut</annotation></string>
+    <string name="stories_safemode_1_title">Hanya Aplikasi dan Layanan Terverifikasi</string>
+    <string name="stories_safemode_1_subtitle">Untuk menghindari phishing dan penipuan.</string>
+    <string name="stories_safemode_2_title">Hanya NFT Terverifikasi</string>
+    <string name="stories_safemode_2_subtitle">Untuk menghindari spam dan barang palsu.</string>
+    <string name="stories_safemode_3_title">Hanya Token Terverifikasi</string>
+    <string name="tx_marked_as_spam">Transaksi ditandai sebagai Spam</string>
+    <string name="address_prefix">Alamat:</string>
+    <string name="your_address">Alamat Anda:</string>
+    <string name="safe_mode_tokens_footer">Mode aman diaktifkan. Hanya token terverifikasi yang tersedia. <annotation colorAttr="textAccentColor">Pengaturan</annotation></string>
+    <string name="report_encrypted_comment">Komentar dari transaksi ini akan dikirim dengan laporan dalam bentuk terdekripsi.</string>
+    <string name="select_from_gallery">Pilih Dari Galeri</string>
+
 </resources>

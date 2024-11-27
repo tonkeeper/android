@@ -2,6 +2,8 @@ package com.tonapps.wallet.data.settings
 
 import android.content.Context
 import android.icu.util.Currency
+import android.util.Log
+import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
@@ -52,8 +54,10 @@ class SettingsRepository(
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
         private const val CHART_PERIOD_KEY = "chart_period"
-        private const val ONLY_VERIFY_NFTS_KEY = "only_verify_nfts"
-        private const val ONLY_VERIFY_TOKENS_KEY = "only_verify_tokens"
+        private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
+        private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
+        private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
+        private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -79,6 +83,9 @@ class SettingsRepository(
 
     private val _walletPush = MutableEffectFlow<Unit>()
     val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
+
+    private val _safeModeStateFlow = MutableStateFlow<SafeModeState?>(null)
+    val safeModeStateFlow = _safeModeStateFlow.asStateFlow().filterNotNull()
 
     private val _isMigratedFlow = MutableStateFlow<Boolean?>(null)
     val isMigratedFlow = _isMigratedFlow.asStateFlow().filterNotNull()
@@ -226,30 +233,65 @@ class SettingsRepository(
             }
         }
 
-
-    var onlyVerifyNFTs: Boolean = prefs.getBoolean(ONLY_VERIFY_NFTS_KEY, false)
+    var showSafeModeSetup: Boolean = prefs.getBoolean(SHOW_SAFE_MODE_SETUP_KEY, false)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(ONLY_VERIFY_NFTS_KEY, value).apply()
+                prefs.edit().putBoolean(SHOW_SAFE_MODE_SETUP_KEY, value).apply()
                 field = value
-                walletPrefsFolder.notifyChanged()
             }
         }
 
-    var onlyVerifyTokens: Boolean = prefs.getBoolean(ONLY_VERIFY_TOKENS_KEY, false)
-        set(value) {
-            if (value != field) {
-                prefs.edit().putBoolean(ONLY_VERIFY_TOKENS_KEY, value).apply()
-                field = value
-                walletPrefsFolder.notifyChanged()
-            }
+    val addressCopyCount: Int
+        get() = prefs.getInt(ADDRESS_COPY_COUNT_KEY, 0)
+
+    fun getSafeModeState(): SafeModeState {
+        val disabledUnix = prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, -5)
+        if (disabledUnix == -5L) {
+            return SafeModeState.Default
+        } else if (1L == disabledUnix) {
+            return SafeModeState.Enabled
+        } else if (0 >= disabledUnix) {
+            return SafeModeState.DisabledPermanently
         }
+        // Auto enabled after 24 hours
+        val disableTimeout = disabledUnix + 24 * 60 * 60 * 1000
+        val diff = disableTimeout - System.currentTimeMillis()
+        return if (diff > 0) {
+            SafeModeState.Disabled
+        } else {
+            SafeModeState.Enabled
+        }
+    }
+
+    fun isStoriesViewed(storyId: String): Boolean {
+        return prefs.getBoolean(STORIES_VIEWED_PREFIX + storyId, false)
+    }
+
+    fun setStoriesViewed(storyId: String) {
+        prefs.edit().putBoolean(STORIES_VIEWED_PREFIX + storyId, true).apply()
+    }
+
+    fun setSafeModeState(state: SafeModeState) {
+        prefs.edit {
+            val value = when (state) {
+                SafeModeState.Enabled -> 1
+                SafeModeState.DisabledPermanently -> 0
+                SafeModeState.Default -> -5
+                else -> System.currentTimeMillis()
+            }
+            putLong(SAFE_MODE_DISABLED_UNIX_KEY, value)
+        }
+
+        _safeModeStateFlow.tryEmit(state)
+    }
 
     fun isUSDTW5(walletId: String) = walletPrefsFolder.isUSDTW5(walletId)
 
     fun disableUSDTW5(walletId: String) = walletPrefsFolder.disableUSDTW5(walletId)
 
     fun getSpamStateTransaction(walletId: String, id: String) = walletPrefsFolder.getSpamStateTransaction(walletId, id)
+
+    fun setSpamStateTransaction(walletId: String, id: String, state: SpamTransactionState) = walletPrefsFolder.setSpamStateTransaction(walletId, id, state)
 
     fun isSpamTransaction(walletId: String, id: String) = getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
 
@@ -258,6 +300,12 @@ class SettingsRepository(
     fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
+
+    fun incrementCopyCount() {
+        val count = addressCopyCount + 1
+        prefs.edit().putInt(ADDRESS_COPY_COUNT_KEY, count).apply()
+        walletPrefsFolder.notifyChanged()
+    }
 
     suspend fun setPushWallet(walletId: String, value: Boolean) {
         walletPrefsFolder.setPushEnabled(walletId, value)
@@ -331,6 +379,7 @@ class SettingsRepository(
     ) = withContext(Dispatchers.IO) {
         tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
         rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
+        setTokenState(walletId, tokenAddress, TokenPrefsEntity.State.NONE)
     }
 
     suspend fun setTokenState(
@@ -399,6 +448,7 @@ class SettingsRepository(
             _searchEngineFlow.tryEmit(searchEngine)
             _biometricFlow.tryEmit(biometric)
             _lockscreenFlow.tryEmit(lockScreen)
+            _safeModeStateFlow.tryEmit(getSafeModeState())
             _walletPush.tryEmit(Unit)
         }
     }

@@ -102,12 +102,26 @@ class AccountRepository(
         }
     }
 
-    suspend fun importPrivateKeysFromRNLegacy(passcode: String) = withContext(Dispatchers.IO) {
-        val list = migrationHelper.loadSecureStore(passcode)
-        if (list.isNotEmpty()) {
-            for (mnemonic in list) {
-                vaultSource.addMnemonic(mnemonic.mnemonic.split(" "))
+    suspend fun setInitialized(id: String, initialized: Boolean) {
+        try {
+            database.setInitialized(id, initialized)
+        } catch (e: Throwable) {
+            recordException(e)
+        }
+    }
+
+    suspend fun importPrivateKeysFromRNLegacy(passcode: String): Boolean = withContext(Dispatchers.IO) {
+        val vaultState = migrationHelper.loadSecureStore(passcode)
+        if (vaultState.hasError) {
+            false
+        } else {
+            val list = vaultState.list()
+            if (list.isNotEmpty()) {
+                for (mnemonic in list) {
+                    vaultSource.addMnemonic(mnemonic.mnemonic.split(" "))
+                }
             }
+            true
         }
     }
 
@@ -225,6 +239,10 @@ class AccountRepository(
 
     suspend fun getWallets() = database.getAccounts()
 
+    suspend fun getUninitializedWallets() = database.getAccounts().filter { !it.initialized }
+
+    suspend fun getInitializedWallets() = database.getAccounts().filter { it.initialized }
+
     suspend fun getMnemonic(id: String): Array<String>? {
         val wallet = database.getAccount(id) ?: return null
         return vaultSource.getMnemonic(wallet.publicKey)
@@ -238,7 +256,8 @@ class AccountRepository(
     suspend fun pairLedger(
         label: Wallet.NewLabel,
         ledgerAccounts: List<LedgerAccount>,
-        deviceId: String
+        deviceId: String,
+        initialized: List<Boolean>
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
         for ((index, account) in ledgerAccounts.withIndex()) {
@@ -251,7 +270,8 @@ class AccountRepository(
                 ledger = WalletEntity.Ledger(
                     deviceId = deviceId,
                     accountIndex = account.path.index
-                )
+                ),
+                initialized = initialized[index]
             )
             list.add(entity)
         }
@@ -264,16 +284,18 @@ class AccountRepository(
         label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
-        qr: Boolean
+        qr: Boolean,
+        initialized: List<Boolean>
     ): List<WalletEntity> {
         val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
-        return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type)
+        return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type, initialized = initialized)
     }
 
     suspend fun pairKeystone(
         label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         keystone: WalletEntity.Keystone,
+        initialized: Boolean
     ): List<WalletEntity> {
         val entity = WalletEntity(
             id = newWalletId(),
@@ -281,7 +303,8 @@ class AccountRepository(
             type = Wallet.Type.Keystone,
             version = WalletVersion.V4R2,
             label = label.create(0),
-            keystone = keystone
+            keystone = keystone,
+            initialized = initialized
         )
 
         val list = listOf(entity)
@@ -294,11 +317,12 @@ class AccountRepository(
         label: Wallet.NewLabel,
         mnemonic: List<String>,
         versions: List<WalletVersion>,
-        testnet: Boolean
+        testnet: Boolean,
+        initialized: List<Boolean>
     ): List<WalletEntity> {
         val publicKey = vaultSource.addMnemonic(mnemonic)
         val type = if (testnet) Wallet.Type.Testnet else Wallet.Type.Default
-        return addWallet(ids, label, publicKey, versions, type)
+        return addWallet(ids, label, publicKey, versions, type, initialized = initialized)
     }
 
     suspend fun addWallet(
@@ -306,7 +330,8 @@ class AccountRepository(
         label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
-        type: Wallet.Type
+        type: Wallet.Type,
+        initialized: List<Boolean>
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
         for ((index, version) in versions.withIndex()) {
@@ -315,7 +340,8 @@ class AccountRepository(
                 publicKey = publicKey,
                 type = type,
                 version = version,
-                label = label.create(index)
+                label = label.create(index),
+                initialized = initialized[index]
             )
             list.add(entity)
         }
@@ -329,7 +355,7 @@ class AccountRepository(
         publicKey: PublicKeyEd25519,
         version: WalletVersion,
     ): WalletEntity {
-        return addWallet(newWalletId(), label, publicKey, Wallet.Type.Watch, version)
+        return addWallet(newWalletId(), label, publicKey, Wallet.Type.Watch, version, initialized = false)
     }
 
     suspend fun addNewWallet(
@@ -338,7 +364,7 @@ class AccountRepository(
         mnemonic: List<String>
     ): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
-        return addWallet(id, label, publicKey, Wallet.Type.Default, WalletVersion.V5R1, true)
+        return addWallet(id, label, publicKey, Wallet.Type.Default, WalletVersion.V5R1, new = true, initialized = false)
     }
 
     private suspend fun addWallet(
@@ -348,13 +374,15 @@ class AccountRepository(
         type: Wallet.Type,
         version: WalletVersion,
         new: Boolean = false,
+        initialized: Boolean
     ): WalletEntity {
         val entity = WalletEntity(
             id = id,
             publicKey = publicKey,
             type = type,
             version = version,
-            label = label.create(0)
+            label = label.create(0),
+            initialized = initialized
         )
 
         insertWallets(listOf(entity), new)

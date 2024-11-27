@@ -6,6 +6,7 @@ import org.json.JSONObject
 data class RNVaultState(
     val keys: ArrayMap<String, RNDecryptedData> = ArrayMap(),
     val original: String,
+    val cause: Throwable?
 ) {
 
     companion object {
@@ -15,7 +16,7 @@ data class RNVaultState(
             for (m in list) {
                 keys[m.identifier] = m
             }
-            return RNVaultState(keys, "{none}")
+            return RNVaultState(keys, "{none}", null)
         }
 
         fun of(json: JSONObject): RNVaultState {
@@ -23,12 +24,15 @@ data class RNVaultState(
             for (key in json.keys()) {
                 keys[key] = RNDecryptedData(json.getJSONObject(key))
             }
-            return RNVaultState(keys, json.toString())
+            return RNVaultState(keys, json.toString(), null)
         }
     }
 
     val string: String
         get() = toJSON().toString()
+
+    val hasError: Boolean
+        get() = cause != null
 
     fun getDecryptedData(walletId: String): RNDecryptedData? {
         return keys[walletId]

@@ -16,9 +16,12 @@ import com.tonapps.extensions.flatter
 import com.tonapps.extensions.hasQuery
 import com.tonapps.extensions.isEmptyQuery
 import com.tonapps.extensions.mapList
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
+import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.core.DevSettings
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.Bridge
@@ -27,6 +30,7 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.manager.tonconnect.exceptions.ManifestException
+import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.wallet.api.API
@@ -34,6 +38,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,10 +47,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -60,6 +68,8 @@ class TonConnectManager(
     private val api: API,
     private val dAppsRepository: DAppsRepository,
     private val pushManager: PushManager,
+    private val safeModeClient: SafeModeClient,
+    private val settingsRepository: SettingsRepository,
 ) {
 
     private val bridge: Bridge = Bridge(api)
@@ -150,6 +160,27 @@ class TonConnectManager(
         }
     }
 
+    suspend fun getConnection(
+        accountId: String,
+        testnet: Boolean,
+        appUrl: Uri,
+        type: AppConnectEntity.Type
+    ): AppConnectEntity? {
+        val apps = dAppsRepository.getConnections(accountId, testnet)
+        if (apps.isEmpty) {
+            return null
+        }
+        val connections = apps.filter {
+            it.key.url == appUrl || it.key.url.host == appUrl.host
+        }.values.flatten()
+        for (connection in connections) {
+            if (connection.type == type) {
+                return connection
+            }
+        }
+        return null
+    }
+
     fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type? = null) {
         scope.launch(Dispatchers.IO) {
             val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.testnet, appUrl, type)
@@ -228,9 +259,12 @@ class TonConnectManager(
                 returnUri = returnUri,
                 fromPackageName = fromPackageName
             )
-            scope.launch {
-                connectRemoteApp(activity, tonConnect)
-            }
+
+            safeModeClient.isReadyFlow.take(1).onEach {
+                if (!isScam(context, WalletEntity.EMPTY, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
+                    connectRemoteApp(activity, tonConnect)
+                }
+            }.launchIn(scope)
             return null
         } catch (e: Exception) {
             if (uri.isEmptyQuery || uri.hasQuery("open") || uri.hasQuery("ret")) {
@@ -261,6 +295,10 @@ class TonConnectManager(
         val clientId = tonConnect.clientId
         try {
             val app = readManifest(tonConnect.manifestUrl)
+            if (isScam(activity, wallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
+                return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
+            }
+
             val screen = TonConnectScreen.newInstance(
                 app = app,
                 proofPayload = tonConnect.proofPayload,
@@ -309,6 +347,16 @@ class TonConnectManager(
             FirebaseCrashlytics.getInstance().recordException(e)
             JsonBuilder.connectEventError(BridgeError.unknown(e.bestMessage))
         }
+    }
+
+    suspend fun isScam(context: Context, wallet: WalletEntity, vararg uris: Uri): Boolean {
+        if (settingsRepository.isSafeModeEnabled(api) && safeModeClient.isHasScamUris(*uris)) {
+            withContext(Dispatchers.Main) {
+                TonConnectSafeModeDialog(context).show(wallet)
+            }
+            return true
+        }
+        return false
     }
 
     private suspend fun readManifest(url: String): AppEntity {

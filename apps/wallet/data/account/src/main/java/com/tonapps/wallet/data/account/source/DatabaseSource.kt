@@ -8,12 +8,14 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import androidx.core.database.getStringOrNull
 import com.tonapps.blockchain.ton.contract.walletVersion
+import com.tonapps.extensions.isNullOrEmpty
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.withTransaction
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -24,7 +26,7 @@ internal class DatabaseSource(
 
     private companion object {
         private const val DATABASE_NAME = "account"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
 
         private const val WALLET_TABLE_NAME = "wallet"
         private const val WALLET_TABLE_ID_COLUMN = "id"
@@ -37,6 +39,7 @@ internal class DatabaseSource(
 
         private const val WALLET_TABLE_KEYSTONE_XFP_COLUMN = "keystone_xfp"
         private const val WALLET_TABLE_KEYSTONE_PATH_COLUMN = "keystone_path"
+        private const val WALLET_TABLE_INITIALIZED_COLUMN = "initialized"
 
         private val walletFields = arrayOf(
             WALLET_TABLE_ID_COLUMN,
@@ -47,7 +50,8 @@ internal class DatabaseSource(
             WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN,
             WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN,
             WALLET_TABLE_KEYSTONE_XFP_COLUMN,
-            WALLET_TABLE_KEYSTONE_PATH_COLUMN
+            WALLET_TABLE_KEYSTONE_PATH_COLUMN,
+            WALLET_TABLE_INITIALIZED_COLUMN
         ).joinToString(",")
 
         private fun WalletEntity.toValues(): ContentValues {
@@ -65,6 +69,7 @@ internal class DatabaseSource(
                 values.put(WALLET_TABLE_KEYSTONE_XFP_COLUMN, it.xfp)
                 values.put(WALLET_TABLE_KEYSTONE_PATH_COLUMN, it.path)
             }
+            values.put(WALLET_TABLE_INITIALIZED_COLUMN, initialized)
             return values
         }
     }
@@ -79,7 +84,8 @@ internal class DatabaseSource(
                 "$WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN TEXT," +
                 "$WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN INTEGER," +
                 "$WALLET_TABLE_KEYSTONE_XFP_COLUMN TEXT," +
-                "$WALLET_TABLE_KEYSTONE_PATH_COLUMN TEXT" +
+                "$WALLET_TABLE_KEYSTONE_PATH_COLUMN TEXT," +
+                "$WALLET_TABLE_INITIALIZED_COLUMN INTEGER DEFAULT 0" +
                 ");")
 
         val walletIndexPrefix = "idx_$WALLET_TABLE_NAME"
@@ -98,10 +104,23 @@ internal class DatabaseSource(
             db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_KEYSTONE_XFP_COLUMN TEXT;")
             db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_KEYSTONE_PATH_COLUMN TEXT;")
         }
+
+        if (3 >= oldVersion && newVersion == 4) {
+            db.execSQL("ALTER TABLE $WALLET_TABLE_NAME ADD COLUMN $WALLET_TABLE_INITIALIZED_COLUMN INTEGER;")
+        }
     }
 
     suspend fun clearAccounts() = withContext(scope.coroutineContext) {
         writableDatabase.delete(WALLET_TABLE_NAME, null, null)
+    }
+
+    suspend fun setInitialized(id: String, initialized: Boolean) = withContext(scope.coroutineContext) {
+        val values = ContentValues()
+        values.put(WALLET_TABLE_INITIALIZED_COLUMN, if (initialized) 1 else 0)
+        val count = writableDatabase.update(WALLET_TABLE_NAME, values, "$WALLET_TABLE_ID_COLUMN = ?", arrayOf(id))
+        if (count == 0) {
+            throw IllegalStateException("Account with id $id not found")
+        }
     }
 
     suspend fun deleteAccount(id: String) = withContext(scope.coroutineContext) {
@@ -131,14 +150,22 @@ internal class DatabaseSource(
     suspend fun getAccounts(): List<WalletEntity> = withContext(scope.coroutineContext) {
         val query = "SELECT $walletFields FROM $WALLET_TABLE_NAME LIMIT 1000;"
         val cursor = readableDatabase.rawQuery(query, null)
-        readAccounts(cursor)
+        if (cursor.isNullOrEmpty()) {
+            emptyList()
+        } else {
+            readAccounts(cursor)
+        }
     }
 
     suspend fun getAccount(id: String): WalletEntity? = withContext(scope.coroutineContext) {
         if (id.isNotBlank()) {
             val query = "SELECT $walletFields FROM $WALLET_TABLE_NAME WHERE $WALLET_TABLE_ID_COLUMN = ?;"
             val cursor = readableDatabase.rawQuery(query, arrayOf(id))
-            readAccounts(cursor).firstOrNull()
+            if (cursor.isNullOrEmpty()) {
+                null
+            } else {
+                readAccounts(cursor).firstOrNull()
+            }
         } else {
             null
         }
@@ -167,6 +194,7 @@ internal class DatabaseSource(
         val ledgerAccountIndexIndex = cursor.getColumnIndex(WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN)
         val keystoneXfpIndex = cursor.getColumnIndex(WALLET_TABLE_KEYSTONE_XFP_COLUMN)
         val keystonePathIndex = cursor.getColumnIndex(WALLET_TABLE_KEYSTONE_PATH_COLUMN)
+        val initializedIndex = cursor.getColumnIndex(WALLET_TABLE_INITIALIZED_COLUMN)
         val accounts = mutableListOf<WalletEntity>()
         while (cursor.moveToNext()) {
             val wallet = WalletEntity(
@@ -174,7 +202,8 @@ internal class DatabaseSource(
                 publicKey = PublicKeyEd25519(cursor.getBlob(publicKeyIndex)),
                 type = Wallet.typeOf(cursor.getInt(typeIndex)),
                 version = walletVersion(cursor.getInt(versionIndex)),
-                label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!
+                label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!,
+                initialized = cursor.getInt(initializedIndex) == 1
             )
             if (wallet.type == Wallet.Type.Ledger) {
                 accounts.add(

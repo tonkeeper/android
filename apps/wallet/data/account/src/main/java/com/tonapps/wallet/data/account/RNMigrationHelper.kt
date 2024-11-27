@@ -5,6 +5,7 @@ import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNDecryptedData
+import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallet.Companion.int
 import org.ton.api.pub.PublicKeyEd25519
@@ -14,8 +15,8 @@ internal class RNMigrationHelper(
     private val rnLegacy: RNLegacy
 ) {
 
-    suspend fun loadSecureStore(passcode: String): List<RNDecryptedData> {
-        return rnLegacy.getVaultState(passcode).list()
+    suspend fun loadSecureStore(passcode: String): RNVaultState {
+        return rnLegacy.getVaultState(passcode)
     }
 
     suspend fun loadLegacy(): Pair<String, List<WalletEntity>> {
@@ -83,7 +84,8 @@ internal class RNMigrationHelper(
                         xfp = it.xfp,
                         path = it.path
                     )
-                }
+                },
+                initialized = false
             )
             list.add(entity)
         }

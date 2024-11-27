@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.network.get
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -72,6 +73,9 @@ class BrowserSearchViewModel(
         if (isDomain(query)) {
             return Uri.parse("https://$query")
         }
+        if (query.startsWith("http://")) {
+            return uri(query.replace("http://", "https://"))
+        }
         return try {
             val uri = Uri.parse(query)
             if (uri.scheme != "https") {
@@ -84,6 +88,15 @@ class BrowserSearchViewModel(
             }
         } catch (ignored: Throwable) {
             null
+        }
+    }
+
+    fun createSearchUrl(query: String): Uri {
+        val searchEngine = settingsRepository.searchEngine
+        return if (searchEngine == SearchEngine.GOOGLE) {
+            Uri.parse("https://www.google.com/search?q=$query")
+        } else {
+            Uri.parse("https://duckduckgo.com/?q=$query")
         }
     }
 

@@ -1,14 +1,12 @@
 package com.tonapps.tonkeeper.manager.tx
 
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.join
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.AccountEventEntity
+import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.CoroutineScope
@@ -17,19 +15,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import kotlin.time.Duration.Companion.seconds
@@ -53,9 +48,12 @@ class TransactionManager(
             _transactionFlow.tryEmit(transaction)
         }.launchIn(scope)
 
-        accountRepository.selectedWalletFlow.flatMapLatest { wallet ->
-            realtime(wallet)
-        }.filterNotNull().onEach { transaction ->
+        combine(
+            api.configFlow.filter { !it.empty },
+            accountRepository.selectedWalletFlow
+        ) { config, wallet ->
+            realtime(config, wallet)
+        }.flatMapLatest { it }.filterNotNull().onEach { transaction ->
             _transactionFlow.tryEmit(transaction)
         }.launchIn(scope)
 
@@ -69,9 +67,10 @@ class TransactionManager(
         it.accountId == wallet.accountId && it.testnet == wallet.testnet
     }
 
-    private fun realtime(wallet: WalletEntity) = api.realtime(
+    private fun realtime(config: ConfigEntity, wallet: WalletEntity) = api.realtime(
         accountId = wallet.accountId,
         testnet = wallet.testnet,
+        config = config,
         onFailure = null
     ).map { it.data }.map { getTransaction(wallet, it) }
 

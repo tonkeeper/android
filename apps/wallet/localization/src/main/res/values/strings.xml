@@ -9,9 +9,11 @@
     <string name="ok" translatable="false">OK</string>
     <string name="keystone" translatable="false">Keystone</string>
     <string name="w5" translatable="false">W5</string>
+    <string name="select_from_gallery">Select from Gallery</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="transaction_expired">Transaction expired</string>
     <string name="add_contact">Add to Address Book</string>
+    <string name="add_to_home_screen">Add to Home Screen</string>
     <string name="multi_account_secret_wrong">Please use Tonkeeper Desktop for Multi-Wallet Account</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>
@@ -31,6 +33,27 @@
     <string name="wallet_address">Wallet Address</string>
     <string name="contacts_save_latest">Save Address</string>
     <string name="edit_full">Edit</string>
+    <string name="visible">Visible</string>
+    <string name="hidden">Hidden</string>
+    <string name="show_all">Show all</string>
+    <string name="token_details">Token details</string>
+    <string name="token_id">Token ID</string>
+    <string name="safe_mode">Safe mode</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="hide_full_collection">Hide collection</string>
+    <string name="safe_mode_description">In this mode, only verified apps, NFTs, and tokens are available. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
+    <plurals name="nft_count">
+        <item quantity="one">%1$d NFT</item>
+        <item quantity="few">%1$d NFTs</item>
+        <item quantity="many">%1$d NFTs</item>
+        <item quantity="other">%1$d NFTs</item>
+    </plurals>
+    <string name="address_prefix">Address:</string>
+    <string name="your_address">Your address:</string>
+    <string name="safe_mode_tokens_footer">Safe mode is enabled. Only verified tokens are available. <annotation colorAttr="textAccentColor">Settings</annotation></string>
+    <string name="setup_safe_mode">Set up your Lock Screen and Safe Mode</string>
+    <string name="safe_mode_tonconnect_title">Connections are available only to verified apps</string>
+    <string name="safe_mode_tonconnect_description">You can change this in your wallet’s Security Settings.</string>
 
     <string name="staking_unstake_cycle">Unstake request will be processed after the end of the validation cycle in %1$s</string>
 
@@ -114,6 +137,8 @@
     <string name="domain_link_button">Link domain</string>
     <string name="domain_renew_button">Renew domain</string>
     <string name="staked">Staked</string>
+    <string name="report_encrypted_comment">Comment from this transaction will be sent with report in decrypted form.</string>
+    <string name="report_encrypted_comment_button">Report Spam Anyway</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>
@@ -242,7 +267,7 @@
     <string name="wallets">Wallets</string>
     <string name="country_title">Choose your country</string>
     <string name="intro_description">Create a new wallet or add an existing one</string>
-    <string name="intro_title" formatted="true">Welcome to <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title" formatted="true">Welcome to <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="intro_line_1_title">World-class speed</string>
     <string name="intro_line_1_description">TON is a network designed for speed and throughput. Fees are significantly lower than on other blockchains, and transactions are confirmed in a matter of seconds.</string>
 
@@ -251,6 +276,16 @@
 
     <string name="intro_line_3_title">Built-in subscriptions</string>
     <string name="intro_line_3_description">TON subscriptions are peer-to-peer and borderless so that no one can restrict providers or customers. Near-zero fees and full control for you.</string>
+
+    <string name="stories_safemode_1_title">Only Verified Apps and Services</string>
+    <string name="stories_safemode_1_subtitle">To avoid phishing and fraud.</string>
+
+    <string name="stories_safemode_2_title">Only Verified NFTs</string>
+    <string name="stories_safemode_2_subtitle">To avoid spam and fake items.</string>
+
+    <string name="stories_safemode_3_title">Only Verified Tokens</string>
+    <string name="stories_safemode_3_subtitle">To prevent unexpected risks.</string>
+
 
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">No internet connection</string>
@@ -435,9 +470,11 @@
     <string name="choose_wallet_already_added">Already added</string>
     <string name="hide">Hide</string>
 
-    <string name="hide_collection">Hide collection</string>
+    <string name="hide_collection">Hide NFT</string>
     <string name="hide_and_report_collection">Hide and report</string>
     <string name="open_tonviewer">Open in Tonviewer</string>
+    <string name="tx_marked_as_spam">Transaction marked as Spam</string>
+    <string name="safe_mode_disabled">Safe mode is off for 24 hours. It will turn on automatically. <annotation colorAttr="textAccentColor">Turn off permanently</annotation></string>
 
     <string name="customize">Customize</string>
     <string name="customize_wallet_title">Customize your Wallet</string>

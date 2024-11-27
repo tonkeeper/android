@@ -18,6 +18,7 @@ import com.tonapps.tonkeeper.api.refund
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.api.title
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.core.history.list.item.HistoryItem.Event.Comment.Type
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.Action
@@ -33,6 +34,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.events.CommentEncryption
@@ -62,6 +64,7 @@ class HistoryHelper(
     private val settingsRepository: SettingsRepository,
     private val eventsRepository: EventsRepository,
     private val passcodeManager: PasscodeManager,
+    private val batteryRepository: BatteryRepository,
     private val api: API,
 ) {
 
@@ -129,6 +132,9 @@ class HistoryHelper(
     }
 
     fun groupByDate(items: List<HistoryItem>): List<HistoryItem> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
         val events = sort(items)
         val output = arrayMapOf<String, ActionDateSection>()
         for (event in events) {
@@ -176,7 +182,7 @@ class HistoryHelper(
             senderAddress
         )
         eventsRepository.saveDecryptedComment(txId, decrypted)
-        HistoryItem.Event.Comment(decrypted)
+        HistoryItem.Event.Comment(Type.OriginalEncrypted, decrypted)
     }.flowOn(Dispatchers.IO)
 
     data class Details(
@@ -193,8 +199,15 @@ class HistoryHelper(
         response: MessageConsequences,
         rates: RatesEntity,
         isBattery: Boolean = false,
+        safeMode: Boolean,
     ): Details {
-        val items = mapping(wallet, response.event, true, positionExtra = 1).toMutableList()
+        val items = mapping(
+            wallet = wallet,
+            event = response.event,
+            removeDate = true,
+            positionExtra = 1,
+            safeMode = safeMode
+        ).toMutableList()
         val extra = response.event.extra
 
         val fee = if (0 > extra) Coins.of(abs(extra)) else Coins.ZERO
@@ -226,7 +239,9 @@ class HistoryHelper(
                 recipient = null,
                 failed = false,
                 isScam = false,
-                wallet = wallet
+                wallet = wallet,
+                isMaybeSpam = false,
+                actionOutStatus = ActionOutStatus.Send
             )
         )
 
@@ -242,9 +257,40 @@ class HistoryHelper(
 
     suspend fun create(
         wallet: WalletEntity,
-        emulated: Emulated,
+        emulated: Emulated
     ): Details {
-        val items = mapping(wallet, emulated.consequences.event, true, positionExtra = 1).toMutableList()
+        val items = mapping(
+            wallet = wallet,
+            event = emulated.consequences?.event,
+            removeDate = true,
+            hiddenBalances = false,
+            positionExtra = 0,
+            safeMode = false
+        ).toMutableList()
+
+        if (emulated.consequences == null) {
+            return Details(
+                accountId = wallet.accountId,
+                items = items.toList(),
+                fee = Coins.ZERO,
+                feeFormat = "...",
+                feeFiat = Coins.ZERO,
+                feeFiatFormat = "..."
+            )
+        }
+
+        val lastIndex = items.lastIndex
+        val lastFixedPosition = if (items.size == 1) {
+            ListCell.Position.FIRST
+        } else {
+            ListCell.Position.MIDDLE
+        }
+        val lastItem = (items.getOrNull(lastIndex) as? HistoryItem.Event)?.copy(
+            position = lastFixedPosition
+        )
+        lastItem?.let {
+            items[lastIndex] = it
+        }
 
         val feeFormat = "≈ " + CurrencyFormatter.format("TON", emulated.extra.value)
         val feeFiatFormat = CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
@@ -265,7 +311,8 @@ class HistoryHelper(
                 recipient = null,
                 failed = false,
                 isScam = false,
-                wallet = wallet
+                wallet = wallet,
+                actionOutStatus = ActionOutStatus.Any,
             )
         )
 
@@ -288,6 +335,10 @@ class HistoryHelper(
     }
 
     fun withLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
+
         val last = items.lastOrNull()
         if (last is HistoryItem.Loader) {
             return items
@@ -299,6 +350,10 @@ class HistoryHelper(
     }
 
     fun removeLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
+
         val last = items.lastOrNull()
         if (last is HistoryItem.Loader) {
             val newItems = items.toMutableList()
@@ -310,22 +365,34 @@ class HistoryHelper(
 
     suspend fun mapping(
         wallet: WalletEntity,
-        event: AccountEvent,
+        event: AccountEvent?,
         removeDate: Boolean = false,
         hiddenBalances: Boolean = false,
         positionExtra: Int = 0,
+        safeMode: Boolean
     ): List<HistoryItem> {
-        return mapping(wallet, listOf(event), removeDate, hiddenBalances, positionExtra)
+        if (event == null) {
+            val position = if (positionExtra == 0) ListCell.Position.SINGLE else ListCell.Position.FIRST
+            return listOf(createFakeUnknown(position))
+        }
+        return mapping(wallet, listOf(event), removeDate, hiddenBalances, positionExtra, safeMode)
     }
 
     suspend fun getEvent(
         wallet: WalletEntity,
         eventId: String,
         removeDate: Boolean = false,
-        hiddenBalances: Boolean = false
+        hiddenBalances: Boolean = false,
+        safeMode: Boolean,
     ): List<HistoryItem> {
         val events = eventsRepository.getSingle(eventId, wallet.testnet) ?: return emptyList()
-        return mapping(wallet, events, removeDate, hiddenBalances)
+        return mapping(
+            wallet = wallet,
+            events = events,
+            removeDate = removeDate,
+            hiddenBalances = hiddenBalances,
+            safeMode = safeMode
+        )
     }
 
     suspend fun mapping(
@@ -334,9 +401,9 @@ class HistoryHelper(
         removeDate: Boolean = false,
         hiddenBalances: Boolean = false,
         positionExtra: Int = 0,
+        safeMode: Boolean
     ): List<HistoryItem> = withContext(Dispatchers.IO) {
         val items = mutableListOf<HistoryItem>()
-
         for (event in events) {
             val pending = event.inProgress
 
@@ -350,11 +417,17 @@ class HistoryHelper(
             val feeInCurrency = rates.convert(TokenEntity.TON.symbol, fee)
             val refundInCurrency = rates.convert(TokenEntity.TON.symbol, refund)
 
-            val chunkItems = mutableListOf<HistoryItem>()
+            val chunkItems = mutableListOf<HistoryItem.Event>()
+            var actionOutStatusReceived = 0
+            var actionOutStatusSend = 0
+            var actionOutStatusAny = 0
+
             for ((actionIndex, action) in actions.withIndex()) {
+                if (safeMode && event.isScam) {
+                    continue
+                }
                 val timestamp = if (removeDate) 0 else event.timestamp
-                val isScam =
-                    event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
+                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
 
                 val item = action(
                     index = actionIndex,
@@ -362,8 +435,17 @@ class HistoryHelper(
                     wallet = wallet,
                     action = action,
                     timestamp = timestamp,
-                    isScam = isScam
-                )
+                    isScam = isScam,
+                    safeMode = safeMode
+                ) ?: continue
+
+                when (item.actionOutStatus) {
+                    ActionOutStatus.Any -> actionOutStatusAny++
+                    ActionOutStatus.Received -> actionOutStatusReceived++
+                    ActionOutStatus.Send -> actionOutStatusSend++
+                    ActionOutStatus.App -> { }
+                }
+
                 chunkItems.add(
                     item.copy(
                         pending = pending,
@@ -389,12 +471,34 @@ class HistoryHelper(
                 )
             }
 
-            if (chunkItems.size > 0) {
-                items.addAll(chunkItems)
+            if (chunkItems.size > 0 && !hasWrongPosition(chunkItems, positionExtra)) {
+                val actionOutStatus = when {
+                    (actionOutStatusReceived > 0 && actionOutStatusSend > 0) || actionOutStatusAny > 0 -> ActionOutStatus.Any
+                    actionOutStatusReceived > 0 -> ActionOutStatus.Received
+                    actionOutStatusSend > 0 -> ActionOutStatus.Send
+                    else -> ActionOutStatus.Any
+                }
+                items.addAll(chunkItems.map { it.copy(actionOutStatus = actionOutStatus) })
             }
         }
 
         return@withContext items
+    }
+
+    private fun hasWrongPosition(items: List<HistoryItem>, positionExtra: Int): Boolean {
+        if (positionExtra > 0) {
+            return false
+        }
+        if (items.isEmpty()) {
+            return false
+        } else if (items.size == 1) {
+            val first = items.first() as? HistoryItem.Event ?: return false
+            return first.position != ListCell.Position.SINGLE
+        } else {
+            val first = items.first() as? HistoryItem.Event ?: return false
+            val last = items.last() as? HistoryItem.Event ?: return false
+            return first.position != ListCell.Position.FIRST || last.position != ListCell.Position.LAST
+        }
     }
 
     private suspend fun action(
@@ -404,17 +508,21 @@ class HistoryHelper(
         action: Action,
         timestamp: Long,
         isScam: Boolean,
-    ): HistoryItem.Event {
-
+        safeMode: Boolean
+    ): HistoryItem.Event? {
         val simplePreview = action.simplePreview
         val date = DateHelper.formatTransactionTime(timestamp, settingsRepository.getLocale())
-        val dateDetails =
-            DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
+        val dateDetails = DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
 
+        // actionArgs.isTon && !actionArgs.isOut && !actionArgs.isScam && actionArgs.comment != null
         if (action.jettonSwap != null) {
             val jettonSwap = action.jettonSwap!!
             val tokenIn = jettonSwap.tokenIn
             val tokenOut = jettonSwap.tokenOut
+
+            if ((!tokenIn.verified || !tokenOut.verified) && safeMode) {
+                return null
+            }
 
             val amountIn = jettonSwap.amountCoinsIn
             val amountOut = jettonSwap.amountCoinsOut
@@ -447,10 +555,16 @@ class HistoryHelper(
                 unverifiedToken = !tokenIn.verified || !tokenOut.verified,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Any,
             )
         } else if (action.jettonTransfer != null) {
             val jettonTransfer = action.jettonTransfer!!
             val token = jettonTransfer.jetton.address
+
+            if (safeMode && jettonTransfer.jetton.verification != JettonVerificationType.whitelist) {
+                return null
+            }
+
             val symbol = jettonTransfer.jetton.symbol
             val isOut = !wallet.isMyAddress(jettonTransfer.recipient?.address ?: "")
 
@@ -514,14 +628,19 @@ class HistoryHelper(
                 unverifiedToken = jettonTransfer.jetton.verification != JettonVerificationType.whitelist,
                 isScam = isScam,
                 wallet = wallet,
+                isMaybeSpam = action.getTonAmountRaw(ratesRepository) < api.config.reportAmount,
+                spamState = settingsRepository.getSpamStateTransaction(wallet.id, txId),
+                actionOutStatus = if (isOut) ActionOutStatus.Send else ActionOutStatus.Received
             )
         } else if (action.tonTransfer != null) {
             val tonTransfer = action.tonTransfer!!
+            val batteryConfig = batteryRepository.getConfig(wallet.testnet)
 
             val isOut = !wallet.isMyAddress(tonTransfer.recipient.address)
 
             val itemAction: ActionType
             val accountAddress: AccountAddress
+            val isFromBattery: Boolean
 
             val amount = Coins.of(tonTransfer.amount)
             var value = CurrencyFormatter.format("TON", amount, 2)
@@ -530,10 +649,12 @@ class HistoryHelper(
                 itemAction = ActionType.Send
                 accountAddress = tonTransfer.recipient
                 value = value.withMinus
+                isFromBattery = false
             } else {
                 itemAction = ActionType.Received
                 accountAddress = tonTransfer.sender
                 value = value.withPlus
+                isFromBattery = batteryConfig.gasProxy.contains(accountAddress.address)
             }
 
             val rates = ratesRepository.getRates(currency, TokenEntity.TON.symbol)
@@ -567,6 +688,9 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                isMaybeSpam = action.getTonAmountRaw(ratesRepository) < api.config.reportAmount,
+                spamState = settingsRepository.getSpamStateTransaction(wallet.id, txId),
+                actionOutStatus = if (isOut || isFromBattery || wallet.isMyAddress(tonTransfer.sender.address)) ActionOutStatus.Send else ActionOutStatus.Received
             )
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!
@@ -593,6 +717,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Any
             )
         } else if (action.nftItemTransfer != null) {
             val nftItemTransfer = action.nftItemTransfer!!
@@ -629,6 +754,10 @@ class HistoryHelper(
                 it.with(pref)
             }
 
+            if (safeMode && nftItem?.verified != true) {
+                return null
+            }
+
             val isEncryptedComment = nftItemTransfer.encryptedComment != null
 
             val comment = HistoryItem.Event.Comment.create(
@@ -658,6 +787,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = if (isOut) ActionOutStatus.Send else ActionOutStatus.Received
             )
         } else if (action.contractDeploy != null) {
             return HistoryItem.Event(
@@ -678,6 +808,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Any,
             )
         } else if (action.depositStake != null) {
             val depositStake = action.depositStake!!
@@ -704,9 +835,14 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Send
             )
         } else if (action.jettonMint != null) {
             val jettonMint = action.jettonMint!!
+
+            if (safeMode && jettonMint.jetton.verification != JettonVerificationType.whitelist) {
+                return null
+            }
 
             val amount = jettonMint.parsedAmount
 
@@ -731,6 +867,7 @@ class HistoryHelper(
                 unverifiedToken = jettonMint.jetton.verification != JettonVerificationType.whitelist,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Received
             )
         } else if (action.withdrawStakeRequest != null) {
             val withdrawStakeRequest = action.withdrawStakeRequest!!
@@ -757,6 +894,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Received
             )
         } else if (action.domainRenew != null) {
             val domainRenew = action.domainRenew!!
@@ -778,6 +916,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Send
             )
         } else if (action.auctionBid != null) {
             val auctionBid = action.auctionBid!!
@@ -808,6 +947,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Send
             )
         } else if (action.type == Action.Type.unknown) {
             return createUnknown(
@@ -846,9 +986,14 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Received
             )
         } else if (action.nftPurchase != null) {
             val nftPurchase = action.nftPurchase!!
+
+            if (safeMode && !nftPurchase.nft.verified) {
+                return null
+            }
 
             val amount = Coins.of(nftPurchase.amount.value.toLong())
             val value = CurrencyFormatter.format(nftPurchase.amount.tokenName, amount, 2)
@@ -880,9 +1025,14 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Any
             )
         } else if (action.jettonBurn != null) {
             val jettonBurn = action.jettonBurn!!
+
+            if (safeMode && jettonBurn.jetton.verification != JettonVerificationType.whitelist) {
+                return null
+            }
 
             val amount = jettonBurn.parsedAmount
             val value = CurrencyFormatter.format(jettonBurn.jetton.symbol, amount, 2)
@@ -906,6 +1056,7 @@ class HistoryHelper(
                 unverifiedToken = jettonBurn.jetton.verification != JettonVerificationType.whitelist,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Send
             )
         } else if (action.unSubscribe != null) {
             val unsubscribe = action.unSubscribe!!
@@ -928,6 +1079,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Send
             )
         } else if (action.subscribe != null) {
             val subscribe = action.subscribe!!
@@ -953,6 +1105,7 @@ class HistoryHelper(
                 failed = action.status == Action.Status.failed,
                 isScam = isScam,
                 wallet = wallet,
+                actionOutStatus = ActionOutStatus.Send
             )
         } else {
             return createUnknown(
@@ -968,6 +1121,28 @@ class HistoryHelper(
             )
         }
     }
+
+
+    private fun createFakeUnknown(position: ListCell.Position = ListCell.Position.SINGLE) = HistoryItem.Event(
+        index = 0,
+        txId = "",
+        action = ActionType.Unknown,
+        title = context.getString(Localization.unknown),
+        subtitle = context.getString(Localization.unknown_error),
+        position = position,
+        value = MINUS_SYMBOL,
+        tokenCode = "TON",
+        timestamp = 0,
+        date = "",
+        dateDetails = "",
+        isOut = false,
+        sender = null,
+        recipient = null,
+        failed = false,
+        isScam = false,
+        wallet = WalletEntity.EMPTY,
+        actionOutStatus = ActionOutStatus.Any
+    )
 
     private fun createUnknown(
         index: Int,
@@ -996,5 +1171,6 @@ class HistoryHelper(
         failed = action.status == Action.Status.failed,
         isScam = isScam,
         wallet = wallet,
+        actionOutStatus = ActionOutStatus.Any
     )
 }

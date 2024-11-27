@@ -58,7 +58,7 @@ open class ActionSheet(
         contentView = context.inflate(R.layout.action_sheet_base)
         contentView.round(context.getDimensionPixelSize(uikit.R.dimen.cornerMedium))
         container = contentView.findViewById(R.id.action_sheet_content)
-        width = 196.dp
+        width = 220.dp
         isOutsideTouchable = true
     }
 

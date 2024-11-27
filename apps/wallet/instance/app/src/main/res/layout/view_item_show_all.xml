@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="56dp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_button_secondary_24"
+        android:textAppearance="@style/TextAppearance.Label2"
+        android:textColor="?attr/buttonSecondaryForegroundColor"
+        android:paddingHorizontal="20dp"
+        android:text="@string/show_all"/>
+
+</FrameLayout>

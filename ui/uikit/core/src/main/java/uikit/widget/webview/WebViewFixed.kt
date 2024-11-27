@@ -1,5 +1,6 @@
 package uikit.widget.webview
 
+import android.app.Dialog
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
@@ -11,6 +12,7 @@ import android.os.Message
 import android.util.AttributeSet
 import android.util.Log
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
@@ -20,9 +22,11 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.appcompat.app.AlertDialog
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import uikit.R
+import uikit.base.BaseDialog
 import java.util.LinkedList
 import kotlin.coroutines.resume
 
@@ -42,6 +46,7 @@ open class WebViewFixed @JvmOverloads constructor(
         open fun onReceivedTitle(title: String) { }
         open fun onProgressChanged(newProgress: Int) { }
         open fun onLoadResource(url: String): Boolean { return true }
+        open fun onWindowClose() { }
     }
 
     private var isPageLoaded = false
@@ -68,14 +73,13 @@ open class WebViewFixed @JvmOverloads constructor(
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         settings.javaScriptCanOpenWindowsAutomatically = true
+        settings.setSupportMultipleWindows(true)
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         settings.allowFileAccess = false
         settings.cacheMode = WebSettings.LOAD_NO_CACHE
-        settings.allowFileAccess = false
         settings.allowContentAccess = false
         settings.allowFileAccessFromFileURLs = false
         settings.allowUniversalAccessFromFileURLs = false
-        settings.javaScriptCanOpenWindowsAutomatically = false
         settings.setGeolocationEnabled(false)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -140,22 +144,40 @@ open class WebViewFixed @JvmOverloads constructor(
                 isDialog: Boolean,
                 isUserGesture: Boolean,
                 resultMsg: Message?
-            ): Boolean {
-                return true
-            }
+            ) = resultMsg?.let { openNewWindow(it) } ?: false
 
-            override fun onShowFileChooser(
-                webView: WebView,
-                filePathCallback: ValueCallback<Array<Uri>>,
-                fileChooserParams: FileChooserParams
-            ): Boolean {
-                // Deny file chooser
-                filePathCallback.onReceiveValue(null)
-                return true
+            override fun onCloseWindow(window: WebView) {
+                super.onCloseWindow(window)
+                callbacks.forEach { it.onWindowClose() }
             }
         }
 
         applyAndroidWebViewBridge()
+    }
+
+    private fun openNewWindow(resultMsg: Message): Boolean {
+        val dialog = NewWindowDialog(context)
+        dialog.show()
+
+        val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
+        transport.webView = dialog.webView
+        resultMsg.sendToTarget()
+        return true
+    }
+
+    private class NewWindowDialog(context: Context): Dialog(context, R.style.Widget_Dialog) {
+
+        val webView = WebViewFixed(context)
+
+        init {
+            webView.addCallback(object : Callback() {
+                override fun onWindowClose() {
+                    dismiss()
+                }
+            })
+            setContentView(webView)
+            window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
     }
 
     private fun applyAndroidWebViewBridge() {

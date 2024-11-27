@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder
 
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.RippleDrawable
 import android.util.Log
 import android.view.View
@@ -40,7 +41,7 @@ class WalletHolder(
 
     override fun onBind(item: Item.Wallet) {
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)
-        emojiView.setEmoji(item.emoji)
+        emojiView.setEmoji(item.emoji, Color.TRANSPARENT)
         nameView.text = item.name
         typesView.text = context.getWalletBadges(item.wallet.type, item.wallet.version)
 

@@ -5,7 +5,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
-import com.tonapps.tonkeeper.ui.screen.collectibles.CollectiblesViewModel
+import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
@@ -19,9 +19,12 @@ import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
+import com.tonapps.tonkeeper.ui.screen.card.CardViewModel
+import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsViewModel
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseViewModel
 import com.tonapps.tonkeeper.ui.screen.nft.NftViewModel
+import com.tonapps.tonkeeper.ui.screen.qr.QRViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.add.AddContactViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.edit.EditContactViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerViewModel
@@ -30,8 +33,10 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.apps.AppsViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawViewModel
+import com.tonapps.tonkeeper.ui.screen.transaction.TransactionViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
+
 
 val viewModelWalletModule = module {
     viewModelOf(::WalletViewModel)
@@ -63,4 +68,8 @@ val viewModelWalletModule = module {
     viewModelOf(::AddContactViewModel)
     viewModelOf(::EditContactViewModel)
     viewModelOf(::AppsViewModel)
+    viewModelOf(::CollectiblesManageViewModel)
+    viewModelOf(::CardViewModel)
+    viewModelOf(::QRViewModel)
+    viewModelOf(::TransactionViewModel)
 }

@@ -14,6 +14,7 @@ import com.tonapps.extensions.readParcelableCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
+import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.uikit.list.BaseListItem
@@ -23,6 +24,7 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.recipient
 import com.tonapps.wallet.data.events.sender
+import com.tonapps.wallet.data.settings.SpamTransactionState
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.EncryptedComment
 import kotlinx.parcelize.IgnoredOnParcel
@@ -245,6 +247,9 @@ sealed class HistoryItem(
         val refund: CharSequence? = null,
         val refundInCurrency: CharSequence? = null,
         val wallet: WalletEntity,
+        val isMaybeSpam: Boolean = false,
+        val spamState: SpamTransactionState = SpamTransactionState.UNKNOWN,
+        val actionOutStatus: ActionOutStatus,
     ): HistoryItem(TYPE_ACTION) {
 
         val account: Account?
@@ -257,7 +262,7 @@ sealed class HistoryItem(
         ): Parcelable {
 
             enum class Type {
-                Text, Simple
+                Text, Simple, OriginalEncrypted
             }
 
             companion object {
@@ -268,10 +273,10 @@ sealed class HistoryItem(
                     localText: String?
                 ): Comment? {
                     if (!text.isNullOrBlank()) {
-                        return Comment(text)
+                        return Comment(Type.Text, text)
                     }
                     if (!localText.isNullOrBlank()) {
-                        return Comment(localText)
+                        return Comment(Type.OriginalEncrypted, localText)
                     }
                     val data = encrypted ?: return null
                     if (data.encryptionType == "simple" && data.cipherText.isNotBlank()) {
@@ -282,12 +287,7 @@ sealed class HistoryItem(
             }
 
             val isEncrypted: Boolean
-                get() = type != Type.Text
-
-            constructor(body: String) : this(
-                type = Type.Text,
-                body = body
-            )
+                get() = type != Type.Text && type != Type.OriginalEncrypted
         }
 
         @IgnoredOnParcel
@@ -333,7 +333,10 @@ sealed class HistoryItem(
             isScam = parcel.readBooleanCompat(),
             refund = parcel.readCharSequenceCompat(),
             refundInCurrency = parcel.readCharSequenceCompat(),
-            wallet = parcel.readParcelableCompat()!!
+            wallet = parcel.readParcelableCompat()!!,
+            isMaybeSpam = parcel.readBooleanCompat(),
+            spamState = parcel.readEnum(SpamTransactionState::class.java)!!,
+            actionOutStatus = parcel.readEnum(ActionOutStatus::class.java)!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -368,6 +371,9 @@ sealed class HistoryItem(
             dest.writeCharSequenceCompat(refund)
             dest.writeCharSequenceCompat(refundInCurrency)
             dest.writeParcelable(wallet, flags)
+            dest.writeBooleanCompat(isMaybeSpam)
+            dest.writeEnum(spamState)
+            dest.writeEnum(actionOutStatus)
         }
 
         companion object CREATOR : Parcelable.Creator<Event> {

@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.pool.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.staking.stake.pool.list.Item
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import uikit.extensions.collectFlow
 
@@ -35,7 +36,7 @@ class StakePoolFragment(wallet: WalletEntity): BaseHolderWalletScreen.ChildListS
         setAdapter(adapter)
         setCloseIcon(UIKitIcon.ic_chevron_left_16) { popBackStack() }
         setActionIcon(UIKitIcon.ic_close_16) { finish() }
-        setTitle(info.name)
+        setTitle(getString(StakingPool.getTitle(info.implementation)))
     }
 
     companion object {

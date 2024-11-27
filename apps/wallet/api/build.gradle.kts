@@ -23,13 +23,14 @@ android {
 }
 
 dependencies {
+    api(Dependence.guava)
     implementation(Dependence.Koin.core)
-    implementation(project(Dependence.Wallet.http))
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Lib.network))
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.icu))
+    implementation(Dependence.GooglePlay.cronet)
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)
     implementation(Dependence.Squareup.moshi)

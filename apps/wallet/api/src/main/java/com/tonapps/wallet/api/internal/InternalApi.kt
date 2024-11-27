@@ -4,12 +4,14 @@ import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
+import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.api.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -26,11 +28,12 @@ internal class InternalApi(
         path: String,
         testnet: Boolean,
         platform: String,
-        build: String
+        build: String,
+        boot: Boolean = false
     ): String {
         val builder = Uri.Builder()
         builder.scheme("https")
-            .authority("api.tonkeeper.com")
+            .authority(if (boot) "boot.tonkeeper.com" else "api.tonkeeper.com")
             .appendEncodedPath(path)
             .appendQueryParameter("lang", context.locale.language)
             .appendQueryParameter("build", build)
@@ -45,11 +48,14 @@ internal class InternalApi(
         platform: String = "android", // "android_x"
         build: String = context.appVersionName,
         locale: Locale,
+        boot: Boolean = false
     ): JSONObject {
-        val url = endpoint(path, testnet, platform, build)
+        val url = endpoint(path, testnet, platform, build, boot)
         val headers = ArrayMap<String, String>()
         headers["Accept-Language"] = locale.toString()
-        val body = okHttpClient.get(url, headers)
+        val body = withRetry {
+            okHttpClient.get(url, headers)
+        } ?: throw IllegalStateException("Internal API request failed")
         return JSONObject(body)
     }
 
@@ -61,6 +67,24 @@ internal class InternalApi(
             list.add(NotificationEntity(array.getJSONObject(i)))
         }
         return list.toList()
+    }
+
+    fun getScamDomains(): Array<String> {
+        val array = withRetry {
+            okHttpClient.get("https://scam.tonkeeper.com/v1/scam/domains")
+        }?.let { JSONObject(it).getJSONArray("items") } ?: return emptyArray()
+
+        val domains = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            var url = array.getJSONObject(i).getString("url")
+            if (url.startsWith("www.")) {
+                url = url.substring(5)
+            } else if (url.startsWith("@")) {
+                continue
+            }
+            domains.add(url)
+        }
+        return domains.toTypedArray()
     }
 
     fun getBrowserApps(testnet: Boolean, locale: Locale): JSONObject {
@@ -75,26 +99,44 @@ internal class InternalApi(
 
     fun downloadConfig(testnet: Boolean): ConfigEntity? {
         return try {
-            val json = request("keys", testnet, locale = context.locale)
+            val json = request("keys", testnet, locale = context.locale, boot = true)
             ConfigEntity(json, context.isDebug)
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            null
+        }
+    }
+
+    fun getStories(id: String): StoryEntity.Stories? {
+        return try {
+            val json = request("stories/$id", false, locale = context.locale)
+            val pages = json.getJSONArray("pages")
+            val list = mutableListOf<StoryEntity>()
+            for (i in 0 until pages.length()) {
+                list.add(StoryEntity(pages.getJSONObject(i)))
+            }
+            if (list.isEmpty()) {
+                null
+            } else {
+                StoryEntity.Stories(id, list.toList())
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             null
         }
     }
 
     suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
         try {
-            val country = withRetry {
-                okHttpClient.get("https://boot.tonkeeper.com/my/ip")
-            }?.let {
-                JSONObject(it).getString("country")
-            }
+            val json = request("my/ip", false, locale = context.locale)
+            val country = json.getString("country")
             if (country.isNullOrBlank()) {
                 null
             } else {
                 country.uppercase()
             }
         } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
             null
         }
     }

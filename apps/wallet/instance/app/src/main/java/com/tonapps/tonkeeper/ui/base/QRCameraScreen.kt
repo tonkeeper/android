@@ -17,6 +17,7 @@ import androidx.camera.view.PreviewView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
+import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.tonapps.qr.QRImageAnalyzer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,6 +65,9 @@ abstract class QRCameraScreen(
     private val cameraController: LifecycleCameraController by lazy {
         createCameraController(requireContext())
     }
+
+    val barcodeScanner: BarcodeScanner
+        get() = qrAnalyzer.barcodeScanner
 
     val readerFlow: Flow<String> = qrAnalyzer.flow.map {
         it.rawValue

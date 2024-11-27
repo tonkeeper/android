@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.passcode.source
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.tonapps.extensions.clear
 import com.tonapps.extensions.putString
 import com.tonapps.extensions.remove
@@ -42,7 +43,11 @@ class PasscodeStore(context: Context) {
 
     suspend fun compare(code: String): Boolean = withContext(Dispatchers.IO) {
         val savedCode = keyValue.getString(CODE_KEY, null)
-        savedCode == code
+        if (savedCode.isNullOrBlank()) {
+            false
+        } else {
+            savedCode == code
+        }
     }
 
 }

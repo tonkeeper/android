@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.holder
 
+import android.graphics.Color
 import android.view.Gravity
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -21,7 +22,7 @@ class LatestHolder(
     }
 
     init {
-        emojiView.setEmoji("\uD83D\uDD57")
+        emojiView.setEmoji("\uD83D\uDD57", Color.TRANSPARENT)
         iconView.setImageResource(R.drawable.ic_ellipsis_16)
     }
 

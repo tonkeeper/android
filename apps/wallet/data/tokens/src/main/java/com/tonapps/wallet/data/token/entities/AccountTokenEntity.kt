@@ -23,7 +23,7 @@ data class AccountTokenEntity(
                 value = Coins.ZERO,
                 walletAddress = "",
                 initializedAccount = false,
-                isCompressed = false,
+                isRequestMinting = false,
                 isTransferable = true,
             )
         )
@@ -68,6 +68,10 @@ data class AccountTokenEntity(
     val blacklist: Boolean
         get() = balance.token.blacklist
 
-    val isCompressed: Boolean
-        get() = balance.isCompressed
+    val isRequestMinting: Boolean
+        get() = balance.isRequestMinting
+
+    val customPayloadApiUri: String?
+        get() = balance.customPayloadApiUri
+
 }

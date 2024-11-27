@@ -7,7 +7,7 @@ data class TokenRateEntity(
     val currency: WalletCurrency,
     val fiat: Coins,
     val rate: Coins,
-    val rateDiff24h: String
+    val rateDiff24h: String,
 ) {
 
     companion object {

@@ -50,7 +50,10 @@ data class JettonPreview (
     val image: kotlin.String,
 
     @Json(name = "verification")
-    val verification: JettonVerificationType
+    val verification: JettonVerificationType,
+
+    @Json(name = "custom_payload_api_uri")
+    val customPayloadApiUri: kotlin.String? = null
 
 )
 

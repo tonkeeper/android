@@ -177,6 +177,8 @@
     <string name="add_wallet">Добавить кошелёк</string>
     <string name="wallets">Кошельки</string>
     <string name="hide_collection">Скрыть NFT</string>
+    <string name="tx_marked_as_spam">Транзакция помечена как спам</string>
+    <string name="safe_mode_disabled">Безопасный режим отключён на 24 часа. Включится автоматически. <annotation colorAttr="textAccentColor">Отключить навсегда</annotation></string>
     <string name="hide_and_report_collection">Скрыть и пожаловаться</string>
     <string name="open_tonviewer">Открыть в Tonviewer</string>
     <string name="notifications">Уведомления</string>
@@ -214,6 +216,7 @@
     <string name="wallet_address">Адрес кошелька</string>
     <string name="contacts_save_latest">Сохранить адрес</string>
     <string name="contacts">Адресная книга</string>
+    <string name="add_to_home_screen">Добавить на главный экран</string>
     <string name="multi_account_secret_wrong">Пожалуйста, используйте Tonkeeper Desktop для акаунта мульти-кошелька</string>
     <string name="insufficient_balance_default">Необходимо: %1$s.\nВаш баланс: %2$s.</string>
     <string name="name">Имя</string>
@@ -228,7 +231,17 @@
     <string name="connected_apps_empty">Нет подключённых приложений</string>
     <string name="send_all_balance">Вы уверены, что хотите отправить весь свой баланс?</string>
     <string name="wrong_promocode">Введённый промокод недействителен</string>
-
+    <string name="token_id">Идентификатор токена</string>
+    <string name="safe_mode">Безопасный режим</string>
+    <string name="open_settings">Открыть настройки</string>
+    <string name="safe_mode_description">В этом режиме доступны только проверенные сервисы, NFT и токены. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
+    <string name="safe_mode_tonconnect_title">Подключение доступно только к проверенным приложениям</string>
+    <string name="safe_mode_tonconnect_description">Вы можете изменить это в настройках безопасности вашего кошелька.</string>
+    <string name="your_address">Ваш адрес:</string>
+    <string name="address_prefix">Адрес:</string>
+    <string name="safe_mode_tokens_footer">Безопасный режим включён. Доступны только проверенные токены. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
+    <string name="report_encrypted_comment">Комментарий из этой транзакции будет отправлен вместе с жалобой в расшифрованном виде.</string>
+    <string name="report_encrypted_comment_button">Пожаловаться всё равно</string>
 
 
 
@@ -297,7 +310,7 @@
 
     <string name="country_title">Выберите вашу страну</string>
     <string name="intro_description">Создайте новый кошелек или добавьте существующий</string>
-    <string name="intro_title" formatted="true">Приветствуем в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title" formatted="true">Приветствуем в <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="intro_line_1_title">Рекордная скорость</string>
     <string name="intro_line_1_description">TON — это сеть, созданная для скорости и пропускной способности. Комиссии значительно ниже, чем в других блокчейнах, а транзакции подтверждаются за считанные секунды.</string>
 
@@ -307,11 +320,13 @@
     <string name="intro_line_3_title">Встроенные подписки</string>
     <string name="intro_line_3_description">Подписки TON являются одноранговыми и не имеют границ, поэтому никто не может ограничивать поставщиков или клиентов. Практически нулевые комиссии и полный контроль для вас.</string>
 
+    <string name="stories_safemode_3_subtitle">Чтобы избежать неожиданных рисков.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="start_description">Создайте новый кошелек или добавьте существующий</string>
     <string name="start_create_new_wallet">Создать новый кошелёк</string>
     <string name="start_import_wallet">Подключить существующий</string>
-
+    <string name="setup_safe_mode">Настройте экран блокировки и безопасный режим</string>
+    <string name="hide_full_collection">Скрыть коллекцию</string>
 
     <string name="cancel">Отмена</string>
     <string name="fee">Комиссия</string>
@@ -544,6 +559,16 @@
     <string name="buy_ton">Купить TON</string>
     <string name="recharge_battery">Зарядить батарейку</string>
     <string name="nothing_to_restore">Нечего восстанавливать</string>
+    <string name="visible">Видимые</string>
+    <string name="hidden">Скрытые</string>
+    <string name="show_all">Показать все</string>
+    <string name="token_details">Подробности токена</string>
+    <string name="stories_safemode_1_title">Только проверенные приложения и сервисы</string>
+    <string name="stories_safemode_1_subtitle">Чтобы избежать фишинга и мошенничества.</string>
+    <string name="stories_safemode_2_title">Только проверенные NFT</string>
+    <string name="stories_safemode_2_subtitle">Чтобы избежать спама и подделок</string>
+    <string name="stories_safemode_3_title">Только проверенные токены</string>
+    <string name="select_from_gallery">Выбрать из галереи</string>
 
 
 </resources>

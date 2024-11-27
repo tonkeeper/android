@@ -52,6 +52,10 @@ val Uri.pathOrNull: String?
 val Uri.hostOrNull: String?
     get() = host?.ifBlank { null }
 
+fun Uri.containsQuery(key: String): Boolean {
+    return query(key) != null
+}
+
 fun Uri.query(key: String): String? {
     return getQueryParameter(key)?.trim()?.ifBlank { null }
 }
@@ -67,5 +71,18 @@ fun Uri.queryPositiveLong(key: String): Long? {
 fun Uri.queryBoolean(key: String, defValue: Boolean = false): Boolean {
     val value = query(key) ?: return defValue
     return value.equals("true", ignoreCase = true) || value == "1"
+}
+
+fun Uri.hasUnsupportedQuery(
+    includingUTM: Boolean = false,
+    vararg supportedQuery: String
+): Boolean {
+    return queryParameterNames.any {
+        if (includingUTM) {
+            it.startsWith("utm_") || it !in supportedQuery
+        } else {
+            it !in supportedQuery
+        }
+    }
 }
 

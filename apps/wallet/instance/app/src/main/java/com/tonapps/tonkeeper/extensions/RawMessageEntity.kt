@@ -60,7 +60,8 @@ private fun rebuildBodyWithCustomExcessesAccount(
 ): Cell {
     val slice = payload.beginParse()
     val builder = CellBuilder.beginCell()
-    return when (slice.loadOpCode()) {
+    val opCode = slice.loadOpCode()
+    return when (opCode) {
         // stonfi swap
         TONOpCode.STONFI_SWAP -> {
             builder
@@ -78,8 +79,29 @@ private fun rebuildBodyWithCustomExcessesAccount(
                 .storeAddress(excessesAddress)
                 .endCell()
         }
+        // stonfi swap v2
+        TONOpCode.STONFI_SWAP_V2 -> {
+            builder
+                .storeOpCode(TONOpCode.STONFI_SWAP_V2)
+                .storeAddress(slice.loadAddress()) // token_wallet1
+                .storeAddress(slice.loadAddress()) // refund_address
+            slice.loadAddress()
+            builder
+                .storeAddress(excessesAddress) // excesses_address
+                .storeUInt64(slice.loadUInt64()) // tx_deadline
+                .storeRefs(slice.loadRef())
+            slice.endParse()
+            builder.endCell()
+        }
+
         TONOpCode.NFT_TRANSFER -> payload
-        TONOpCode.JETTON_TRANSFER -> rebuildJettonWithCustomExcessesAccount(payload, slice, builder, excessesAddress)
+        TONOpCode.JETTON_TRANSFER -> rebuildJettonWithCustomExcessesAccount(
+            payload,
+            slice,
+            builder,
+            excessesAddress
+        )
+
         else -> payload
     }
 }
@@ -143,7 +165,7 @@ fun RawMessageEntity.getWalletTransfer(
     val builder = WalletTransferBuilder()
     builder.destination = address
     builder.messageData = MessageData.Raw(body, newStateInit ?: getStateInitRef())
-    builder.bounceable = address.isBounceable()
+    builder.bounceable = addressValue.isBounceable()
     if (newCustomPayload != null) {
         val defCoins = Coins.of(0.5)
         if (defCoins.amount.value > coins.amount.value) {

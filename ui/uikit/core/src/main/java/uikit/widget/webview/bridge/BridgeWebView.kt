@@ -17,7 +17,7 @@ import uikit.widget.webview.bridge.message.BridgeMessage
 import uikit.widget.webview.bridge.message.FunctionInvokeBridgeMessage
 import uikit.widget.webview.bridge.message.FunctionResponseBridgeMessage
 
-class BridgeWebView @JvmOverloads constructor(
+open class BridgeWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = android.R.attr.webViewStyle,

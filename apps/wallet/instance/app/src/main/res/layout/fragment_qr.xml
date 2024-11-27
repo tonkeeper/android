@@ -85,13 +85,14 @@
                 style="@style/Widget.App.Button.Secondary"
                 android:id="@+id/copy"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:background="@drawable/bg_button_secondary_24"
                 android:textAppearance="@style/TextAppearance.Label1"
                 android:textColor="?attr/buttonSecondaryForegroundColor"
                 android:paddingHorizontal="20dp"
                 android:drawableStart="@drawable/ic_copy_16"
                 android:drawablePadding="8dp"
+                android:drawableTint="?attr/iconPrimaryColor"
                 android:text="@string/copy"/>
 
             <Space
@@ -104,7 +105,13 @@
                 android:layout_height="48dp"
                 android:background="@drawable/bg_oval_button_secondary"
                 android:scaleType="centerInside"
-                android:src="@drawable/ic_share_16"/>
+                android:src="@drawable/ic_share_16"
+                android:tint="?attr/iconPrimaryColor"/>
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="0dp"/>
+
 
         </uikit.widget.RowLayout>
 

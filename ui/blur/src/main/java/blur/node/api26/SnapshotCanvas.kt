@@ -19,6 +19,10 @@ class SnapshotCanvas(
     private var scaleY = 0f
 
     fun capture(source: (output: Canvas) -> Unit): Bitmap {
+        if (bitmap.isRecycled) {
+            return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        }
+
         bitmap.eraseColor(Color.TRANSPARENT)
         val save = canvas.save()
         canvas.scale(scaleX, scaleY)

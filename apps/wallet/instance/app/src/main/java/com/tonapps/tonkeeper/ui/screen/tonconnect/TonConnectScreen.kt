@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.tonconnect
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
@@ -276,7 +277,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
 
     private fun applyWallet(wallet: WalletEntity) {
         walletColorView.backgroundTintList = wallet.label.color.stateList
-        walletEmojiView.setEmoji(wallet.label.emoji)
+        walletEmojiView.setEmoji(wallet.label.emoji, Color.TRANSPARENT)
         walletNameView.text = wallet.label.name
         walletTypesView.text = requireContext().getWalletBadges(wallet.type, wallet.version)
         walletAddressView.text = wallet.address.short4

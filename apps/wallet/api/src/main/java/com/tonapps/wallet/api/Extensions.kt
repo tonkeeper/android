@@ -5,6 +5,8 @@ import io.tonapi.infrastructure.Serializer
 import com.squareup.moshi.adapter
 import io.tonapi.infrastructure.ClientException
 import android.util.Log
+import android.widget.Toast
+import com.google.firebase.crashlytics.BuildConfig
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.network.OkHttpError
 import io.tonapi.infrastructure.ClientError

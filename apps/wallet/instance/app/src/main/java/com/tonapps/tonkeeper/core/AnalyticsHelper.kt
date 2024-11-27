@@ -6,11 +6,63 @@ import com.aptabase.Aptabase
 import com.aptabase.InitOptions
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.api.entity.ConfigEntity
+import com.tonapps.wallet.api.entity.StoryEntity
 
 object AnalyticsHelper {
 
     fun setConfig(context: Context, config: ConfigEntity) {
-        initAptabase(context, config.aptabaseAppKey, config.aptabaseEndpoint)
+        initAptabase(
+            context = context,
+            appKey = config.aptabaseAppKey,
+            host = config.aptabaseEndpoint
+        )
+    }
+
+    @UiThread
+    fun trackPushClick(installId: String, pushId: String, payload: String) {
+        Aptabase.instance.trackEvent("push_click", hashMapOf(
+            "firebase_user_id" to installId,
+            "push_id" to pushId,
+            "payload" to payload
+        ))
+    }
+
+
+    @UiThread
+    fun trackBrowserOpen(installId: String, from: String) {
+        Aptabase.instance.trackEvent("browser_open", hashMapOf(
+            "firebase_user_id" to installId,
+            "from" to from
+        ))
+    }
+
+    @UiThread
+    fun trackStoryClick(installId: String, storiesId: String, button: StoryEntity.Button) {
+        Aptabase.instance.trackEvent("story_click", hashMapOf(
+            "firebase_user_id" to installId,
+            "story_id" to storiesId,
+            "button_title" to button.title,
+            "button_type" to button.type,
+            "button_payload" to button.payload,
+        ))
+    }
+
+    @UiThread
+    fun trackStoryView(installId: String, storiesId: String, index: Int) {
+        Aptabase.instance.trackEvent("story_page_view", hashMapOf(
+            "firebase_user_id" to installId,
+            "story_id" to storiesId,
+            "page_number" to index
+        ))
+    }
+
+    @UiThread
+    fun trackStoryOpen(installId: String, storiesId: String, from: String) {
+        Aptabase.instance.trackEvent("story_open", hashMapOf(
+            "firebase_user_id" to installId,
+            "story_id" to storiesId,
+            "from" to from
+        ))
     }
 
     @UiThread
@@ -21,10 +73,12 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun trackEventClickDApp(url: String, installId: String) {
+    fun trackEventClickDApp(url: String, name: String, source: String, installId: String) {
         Aptabase.instance.trackEvent("click_dapp", hashMapOf(
-            url to "url",
-            "firebase_user_id" to installId
+            "url" to url,
+            "name" to name,
+            "from" to source,
+            "firebase_user_id" to installId,
         ))
     }
 

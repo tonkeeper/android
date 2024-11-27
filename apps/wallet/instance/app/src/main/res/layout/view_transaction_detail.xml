@@ -36,6 +36,9 @@
                         android:layout_height="wrap_content"
                         android:drawablePadding="4dp"
                         android:gravity="right"
+                        android:scrollbars="vertical"
+                        android:maxLines="5"
+                        android:nestedScrollingEnabled="true"
                         android:textAppearance="@style/TextAppearance.Label1"
                         android:textColor="?attr/textPrimaryColor" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
@@ -69,6 +72,8 @@
                         android:gravity="right"
                         android:textAppearance="@style/TextAppearance.Body2"
                         android:textColor="?attr/textSecondaryColor"
+                        android:scrollbars="vertical"
+                        android:nestedScrollingEnabled="true"
                         android:visibility="gone" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
             </androidx.appcompat.widget.LinearLayoutCompat>

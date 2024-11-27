@@ -38,9 +38,11 @@ internal class BlurNodeLegacy(
 
         blur(bitmap, blurBitmap)
 
-        drawBitmap.eraseColor(Color.TRANSPARENT)
-        drawBitmapCanvas.drawBitmap(blurBitmap, null, drawBitmapRect, null)
-        drawBitmapCanvas.drawRect(0f, 0f, drawBitmap.width.toFloat(), drawBitmap.height.toFloat(), paint)
+        if (!drawBitmap.isRecycled) {
+            drawBitmap.eraseColor(Color.TRANSPARENT)
+            drawBitmapCanvas.drawBitmap(blurBitmap, null, drawBitmapRect, null)
+            drawBitmapCanvas.drawRect(0f, 0f, drawBitmap.width.toFloat(), drawBitmap.height.toFloat(), paint)
+        }
     }
 
     private fun blur(inputBitmap: Bitmap, outputBitmap: Bitmap) {
@@ -94,7 +96,9 @@ internal class BlurNodeLegacy(
     }
 
     override fun draw(input: Canvas, drawOutput: (output: Canvas) -> Unit) {
-        input.drawBitmap(drawBitmap, null, bounds, null)
+        if (!drawBitmap.isRecycled) {
+            input.drawBitmap(drawBitmap, null, bounds, null)
+        }
     }
 
 }

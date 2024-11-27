@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -23,11 +24,13 @@ import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
+import io.tonapi.models.JettonVerificationType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,9 +66,9 @@ class SendTransactionViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
-            val transfers = transfers(tokens.filter { it.isCompressed }, true)
+            val transfers = transfers(tokens.filter { it.isRequestMinting }, true)
             val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
-            val internalMessage = forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
+            val internalMessage = (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
             try {
                 val emulated = emulationUseCase(
                     message = message,
@@ -82,10 +85,8 @@ class SendTransactionViewModel(
                     totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
                 }
 
-                val jettonsAddress = emulated.consequences.risk.jettons.map { it.jetton.address }
-                val sendTokens = tokens.filter { it.balance.token.address in jettonsAddress }
-                val hasCompressedJetton = sendTokens.any { it.isCompressed }
-
+                val jettons = emulated.loadTokens(wallet.testnet, tokenRepository)
+                val hasCompressedJetton = jettons.any { it.isRequestMinting || it.customPayloadApiUri != null }
                 val tonBalance = getTONBalance()
                 val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
                 var transferFee = (if (!emulated.extra.isRefund) {
@@ -96,7 +97,8 @@ class SendTransactionViewModel(
 
                 if (hasCompressedJetton) {
                     transferFee += Coins.of(0.1)
-                } else if (sendTokens.size > 1) {
+                }
+                if (jettons.size > 1) {
                     transferFee += Coins.of(0.05)
                 }
 
@@ -113,7 +115,7 @@ class SendTransactionViewModel(
                 } else {
                     _stateFlow.value = SendTransactionState.Details(
                         emulated = details,
-                        totalFormat = totalFormatBuilder.toString(),
+                        totalFormat = if (emulated.failed) getString(Localization.unknown) else totalFormatBuilder.toString(),
                         isDangerous = emulated.total.isDangerous,
                         nftCount = emulated.nftCount
                     )
@@ -171,7 +173,7 @@ class SendTransactionViewModel(
 
     fun send() = flow {
         val isBattery = isBattery.get()
-        val compressedTokens = getTokens().filter { it.isCompressed }
+        val compressedTokens = getTokens().filter { it.isRequestMinting }
         val transfers = transfers(compressedTokens, false)
         val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
         val unsignedBody = message.createUnsignedBody(isBattery)

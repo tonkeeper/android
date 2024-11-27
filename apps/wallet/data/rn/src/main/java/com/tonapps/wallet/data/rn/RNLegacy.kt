@@ -135,7 +135,7 @@ class RNLegacy(
             seedStorage.get(passcode)
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
-            RNVaultState(original = e.bestMessage)
+            RNVaultState(original = e.bestMessage, cause = e)
         }
     }
 

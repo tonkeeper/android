@@ -16,16 +16,12 @@ fun AddrStd.toAccountId(): String {
     ).lowercase()
 }
 
-fun AddrStd.isBounceable(): Boolean {
-    return toString(userFriendly = true).isBounceable()
-}
-
 fun String.isTestnetAddress(): Boolean {
     return startsWith("0Q") || startsWith("kQ")
 }
 
 fun String.isBounceable(): Boolean {
-    return !startsWith("UQ")
+    return startsWith("0:") || startsWith("E")
 }
 
 fun String.toUserFriendly(

@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -30,14 +32,15 @@ class TokensManageViewModel(
     app: Application,
     private val wallet: WalletEntity,
     private val settingsRepository: SettingsRepository,
-    private val tokenRepository: TokenRepository
+    private val tokenRepository: TokenRepository,
+    private val api: API,
 ): BaseWalletVM(app) {
 
-    private val onlyVerifyToken: Boolean = settingsRepository.onlyVerifyTokens
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
         tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet).mapNotNull { token ->
-            if (onlyVerifyToken && !token.verified) {
+            if (safeMode && !token.verified) {
                 return@mapNotNull null
             }
             AssetsExtendedEntity(
@@ -81,6 +84,10 @@ class TokensManageViewModel(
                         hiddenBalance = hiddenBalance
                     ))
                 }
+            }
+
+            if (safeMode) {
+                items.add(Item.SafeMode(wallet))
             }
 
             items

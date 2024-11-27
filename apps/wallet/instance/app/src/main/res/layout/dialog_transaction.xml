@@ -10,6 +10,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/more"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_ellipsis_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/title"
             android:layout_width="match_parent"
@@ -183,15 +195,42 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <androidx.appcompat.widget.AppCompatTextView
-        style="@style/Widget.App.Button.Small.Secondary"
-        android:id="@+id/open_explorer"
+    <uikit.widget.RowLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginVertical="@dimen/offsetLarge"
-        android:layout_gravity="center"
-        android:paddingStart="@dimen/offsetMedium"
-        android:paddingEnd="@dimen/offsetMedium"
-        android:drawableLeft="@drawable/ic_globe_16"
-        android:drawablePadding="8dp"
-        android:text="@string/transaction" />
+        android:layout_gravity="center">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/Widget.App.Button.Small.Secondary"
+            android:id="@+id/open_explorer"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:drawableLeft="@drawable/ic_globe_16"
+            android:drawablePadding="8dp"
+            android:drawableTint="?attr/iconPrimaryColor"
+            android:text="@string/transaction" />
+
+        <Button
+            style="@style/Widget.App.Button.Orange"
+            android:id="@+id/report_spam"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:text="@string/report_spam"/>
+
+        <Button
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/not_spam"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginLeft="8dp"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:text="@string/not_spam"/>
+
+    </uikit.widget.RowLayout>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

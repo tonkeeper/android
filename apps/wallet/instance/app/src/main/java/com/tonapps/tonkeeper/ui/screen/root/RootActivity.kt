@@ -1,9 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.net.Uri
+import android.nfc.NfcAdapter
+import android.nfc.Tag
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
@@ -13,11 +17,15 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.postDelayed
 import androidx.core.view.updatePadding
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.currentTimeSeconds
+import com.tonapps.extensions.print
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
@@ -25,6 +33,8 @@ import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
@@ -50,13 +60,16 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.ton.block.StateInit
 import org.ton.cell.Cell
+import org.ton.tlb.CellRef
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
+import uikit.navigation.Navigation.Companion.navigation
 
 class RootActivity: BaseWalletActivity() {
 
@@ -68,6 +81,10 @@ class RootActivity: BaseWalletActivity() {
     private val legacyRN: RNLegacy by inject()
     private val settingsRepository by inject<SettingsRepository>()
     private val passcodeManager by inject<PasscodeManager>()
+
+    private val nfcAdapter: NfcAdapter? by lazy {
+        NfcAdapter.getDefaultAdapter(this)
+    }
 
     private lateinit var uiHandler: Handler
 
@@ -119,21 +136,45 @@ class RootActivity: BaseWalletActivity() {
         App.applyConfiguration(resources.configuration)
     }
 
+    private fun enableNfcForegroundDispatch() {
+        val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+        val filters = arrayOf(IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED))
+        nfcAdapter?.enableForegroundDispatch(this, pendingIntent, filters, null)
+    }
+
+    private fun disableNfcForegroundDispatch() {
+        nfcAdapter?.disableForegroundDispatch(this)
+    }
+
     override fun attachBaseContext(newBase: Context) {
-        /*val newConfig = Configuration(newBase.resources.configuration)
-        newConfig.fontScale = 1.0f
-        applyOverrideConfiguration(newConfig)*/
         super.attachBaseContext(newBase)
+        val currentConfig = newBase.resources.configuration
+        var newConfig: Configuration? = null
+        if (DevSettings.ignoreSystemFontSize) {
+            newConfig = Configuration(currentConfig)
+            if (newConfig.fontScale >= 1.0f) {
+                newConfig.fontScale = 1f
+            }
+        } else if (currentConfig.fontScale >= 1.2f) {
+            newConfig = Configuration(currentConfig)
+            newConfig.fontScale = 1.2f
+        }
+        newConfig?.let {
+            applyOverrideConfiguration(it)
+        }
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.connectTonConnectBridge()
+        enableNfcForegroundDispatch()
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.disconnectTonConnectBridge()
+        disableNfcForegroundDispatch()
     }
 
     private suspend fun pinState(state: LockScreen.State) {
@@ -144,10 +185,12 @@ class RootActivity: BaseWalletActivity() {
             lockPasscodeView.setError()
         } else {
             lockView.visibility = View.VISIBLE
-            if (passcodeManager.confirmationByBiometric(this, getString(Localization.app_name))) {
-                passcodeManager.lockscreenBiometric()
-            } else {
-                toast(Localization.authorization_required)
+            if (passcodeManager.isBiometricRequest(this)) {
+                if (passcodeManager.confirmationByBiometric(this, getString(Localization.app_name))) {
+                    passcodeManager.lockscreenBiometric()
+                } else {
+                    toast(Localization.authorization_required)
+                }
             }
         }
     }
@@ -226,11 +269,23 @@ class RootActivity: BaseWalletActivity() {
                 amountNano = event.amount ?: 0L,
                 text = event.text,
                 wallet = event.wallet,
-                bin = event.bin
+                bin = event.bin,
+                initStateBase64 = event.initStateBase64
             )
             is RootEvent.CloseCurrentTonConnect -> closeCurrentTonConnect {}
+            is RootEvent.OpenDAppByShortcut -> openDAppByShortcut(event.wallet, event.url)
             else -> { }
         }
+    }
+
+    private fun openDAppByShortcut(wallet: WalletEntity, uri: Uri) {
+        removeByClass({
+            add(DAppScreen.newInstance(
+                wallet = wallet,
+                url = uri,
+                source = "shortcut",
+            ))
+        }, DAppScreen::class.java)
     }
 
     private fun closeCurrentTonConnect(runnable: Runnable) {
@@ -241,7 +296,8 @@ class RootActivity: BaseWalletActivity() {
         wallet: WalletEntity,
         targetAddress: String,
         amountNano: Long,
-        bin: Cell
+        bin: Cell?,
+        initStateBase64: String?
     ) {
 
         val request = SignRequestEntity.Builder()
@@ -250,8 +306,8 @@ class RootActivity: BaseWalletActivity() {
             .addMessage(RawMessageEntity(
                 addressValue = targetAddress,
                 amount = amountNano,
-                stateInitValue = null,
-                payloadValue = bin.base64()
+                stateInitValue = initStateBase64,
+                payloadValue = bin?.base64()
             ))
             .setTestnet(wallet.testnet)
             .build(Uri.parse("https://tonkeeper.com/"))
@@ -267,15 +323,22 @@ class RootActivity: BaseWalletActivity() {
         amountNano: Long = 0,
         text: String? = null,
         nftAddress: String? = null,
-        bin: Cell? = null
+        bin: Cell? = null,
+        initStateBase64: String? = null
     ) {
-        if (bin != null && 0 >= amountNano) {
+        if ((bin != null || initStateBase64 != null) && 0 >= amountNano) {
             toast(Localization.invalid_link)
             return
         }
 
-        if (targetAddress != null && amountNano > 0 && bin != null) {
-            openSign(wallet, targetAddress, amountNano, bin)
+        if (targetAddress != null && amountNano > 0 && (bin != null || initStateBase64 != null)) {
+            openSign(
+                wallet = wallet,
+                targetAddress = targetAddress,
+                amountNano = amountNano,
+                bin = bin,
+                initStateBase64 = initStateBase64
+            )
             return
         }
 
@@ -344,7 +407,10 @@ class RootActivity: BaseWalletActivity() {
     private fun handleIntent(intent: Intent) {
         val uri = intent.data
         val extras = intent.extras
-        if (uri != null) {
+        val dappDeepLink = extras?.getString("dapp_deeplink")?.toUriOrNull()
+        if (dappDeepLink != null) {
+            viewModel.openDApp(dappDeepLink)
+        } else if (uri != null) {
             processDeepLink(DeepLink.fixBadUri(uri), false, intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))
         } else if (extras != null && !extras.isEmpty) {
             viewModel.processIntentExtras(extras)

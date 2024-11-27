@@ -6,14 +6,17 @@ import androidx.lifecycle.ViewModel
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -31,7 +34,10 @@ class TokenPickerViewModel(
     allowedTokens: List<String>,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
+    private val api: API,
 ): BaseWalletVM(app) {
+
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
 
     private val _selectedTokenFlow = MutableStateFlow(selectedToken)
     private val selectedTokenFlow = _selectedTokenFlow.asStateFlow().filterNotNull()
@@ -44,12 +50,24 @@ class TokenPickerViewModel(
             it.balance.isTransferable
         } ?: emptyList()
 
-        if (allowedTokens.isNotEmpty()) {
+        val list = if (allowedTokens.isNotEmpty()) {
             tokens.filter { allowedTokens.contains(it.address) }
         } else {
             tokens
         }
-    }
+
+        if (safeMode) {
+            val safeModeList = mutableListOf< AccountTokenEntity>()
+            for (token in list) {
+                if (token.verified) {
+                    safeModeList.add(token)
+                }
+            }
+            safeModeList
+        } else {
+            list
+        }
+    }.flowOn(Dispatchers.IO)
 
     private val searchTokensFlow = combine(tokensFlow, queryFlow) { tokens, query ->
         tokens.filter { it.symbol.contains(query, ignoreCase = true) }

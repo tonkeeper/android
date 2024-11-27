@@ -114,13 +114,13 @@ class EventsRepository(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
-        limit: Int = 12
+        limit: Int = 50
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             if (beforeLt != null) {
                 remoteDataSource.get(accountId, testnet, beforeLt, limit)
             } else {
-                val events = remoteDataSource.get(accountId, testnet)?.also {
+                val events = remoteDataSource.get(accountId, testnet, null, limit)?.also {
                     localDataSource.setEvents(cacheEventsKey(accountId, testnet), it)
                 }
                 events

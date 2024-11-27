@@ -28,6 +28,7 @@ sealed class State {
         Biometry,
         Telegram,
         Backup,
+        SafeMode,
     }
 
     data class Battery(
@@ -42,6 +43,7 @@ sealed class State {
         val biometryEnabled: Boolean,
         val hasBackup: Boolean,
         val showTelegramChannel: Boolean,
+        val safeModeBlock: Boolean
     ): State()
 
     data class Assets(
@@ -54,7 +56,7 @@ sealed class State {
         val size: Int
             get() = list.size
 
-        private fun getTotalBalanceFiat(wallet: WalletEntity): Coins {
+        fun getTotalBalanceFiat(wallet: WalletEntity): Coins {
             return if (wallet.testnet) {
                 list.first().fiat
             } else {
@@ -84,6 +86,9 @@ sealed class State {
         val lt: Long?,
         val isOnline: Boolean,
     ): State() {
+
+        val totalBalanceFiat: Coins
+            get() = assets.getTotalBalanceFiat(wallet)
 
         private val totalBalanceFormat: CharSequence
             get() = assets.getTotalBalanceFormat(wallet)
@@ -142,6 +147,7 @@ sealed class State {
             hiddenBalance: Boolean,
             status: Item.Status,
             lastUpdatedFormat: String,
+            prefixYourAddress: Boolean,
         ): Item.Balance {
             return Item.Balance(
                 balance = totalBalanceFormat,
@@ -154,6 +160,7 @@ sealed class State {
                 batteryBalance = battery.balance,
                 showBattery = !battery.disabled && (!battery.beta || !battery.balance.isZero),
                 batteryEmptyState = if (battery.viewed) BatteryView.EmptyState.SECONDARY else BatteryView.EmptyState.ACCENT,
+                prefixYourAddress = prefixYourAddress
             )
         }
 
@@ -215,6 +222,15 @@ sealed class State {
                         wallet = wallet,
                         settingsType = Item.SetupSwitch.TYPE_PUSH
                     )
+                    SetupType.SafeMode -> Item.SetupLink(
+                        position = position,
+                        iconRes = UIKitIcon.ic_control_28,
+                        textRes = Localization.setup_safe_mode,
+                        link = "tonkeeper://security",
+                        blue = true,
+                        walletId = wallet.id,
+                        settingsType = Item.SetupLink.TYPE_SAFE_MODE
+                    )
                 }
                 uiItems.add(item)
             }
@@ -237,6 +253,9 @@ sealed class State {
             if (!hasBackup) {
                 setupTypes.add(SetupType.Backup)
             }
+            if (setup.safeModeBlock) {
+                setupTypes.add(SetupType.SafeMode)
+            }
             return setupTypes.toList()
         }
 
@@ -249,6 +268,7 @@ sealed class State {
             dAppNotifications: DAppNotifications,
             setup: Setup?,
             lastUpdatedFormat: String,
+            prefixYourAddress: Boolean,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             if (alerts.isNotEmpty()) {
@@ -257,7 +277,7 @@ sealed class State {
                     uiItems.add(Item.Space(true))
                 }
             }
-            uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat))
+            uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat, prefixYourAddress))
             uiItems.add(uiItemActions(config))
             if (!dAppNotifications.isEmpty) {
                 uiItems.add(Item.Push(dAppNotifications.pushes))

@@ -6,11 +6,20 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.annotation.ColorInt
+import com.tonapps.extensions.containsQuery
 import com.tonapps.extensions.isLocal
+import com.tonapps.extensions.query
 import uikit.extensions.drawable
 
 fun Uri.isTonSite(): Boolean {
     return this.host?.endsWith(".ton") ?: false
+}
+
+fun Uri.withUtmSource(source: String = "tonkeeper"): Uri {
+    if (containsQuery("utm_source")) {
+        return this
+    }
+    return this.buildUpon().appendQueryParameter("utm_source", source).build()
 }
 
 fun Uri.normalizeTONSites(): Uri {

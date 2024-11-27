@@ -1,12 +1,14 @@
 <resources>
     <string name="transaction_expired">Transacción expirada</string>
     <string name="add_contact">Agregar a la libreta de direcciones</string>
+    <string name="add_to_home_screen">Agregar a la pantalla de inicio</string>
     <string name="multi_account_secret_wrong">Utilice Tonkeeper Desktop para cuentas con múltiples billeteras</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s listo. Toca para recoger.</string>
     <string name="staking_pending_deposit">%1$s se depositará en %2$s</string>
     <string name="staking_pending_withdraw">%1$s se retirarán en %2$s</string>
     <string name="edit_full">Editar</string>
+    <string name="safe_mode_tonconnect_description">Puedes cambiar esto en la configuración de seguridad de tu billetera.</string>
     <string name="staking_unstake_cycle">La solicitud de cancelación de participación se procesará después del final del ciclo de validación en %1$s</string>
     <string name="send_transaction_scroll">Verifique todos los detalles para confirmar</string>
     <string name="send_transaction_detail">El valor total de los tokens que se enviarán desde su billetera. Los reembolsos no están incluidos en el valor total.</string>
@@ -73,6 +75,7 @@
     <string name="domain_link_button">Vincular dominio</string>
     <string name="domain_renew_button">Renovar dominio</string>
     <string name="staked">Apostado</string>
+    <string name="report_encrypted_comment_button">Reportar spam de todos modos</string>
     <string name="manual">Manual</string>
     <string name="manual_description">Haz una copia de seguridad de tu billetera manualmente escribiendo la frase de recuperación.</string>
     <string name="manual_backup_done">Copia de seguridad manual completada</string>
@@ -191,6 +194,7 @@
     <string name="intro_line_2_description">Tonkeeper almacena tus claves criptográficas en tu dispositivo sin requerir documentos, información personal, datos de contacto o KYC.</string>
     <string name="intro_line_3_title">Suscripciones integradas</string>
     <string name="intro_line_3_description">Las suscripciones de TON son peer-to-peer y sin fronteras para que nadie pueda restringir a los proveedores o clientes. Tarifas casi nulas y control total para ti.</string>
+    <string name="stories_safemode_3_subtitle">Para prevenir riesgos inesperados.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">Sin conexión a internet</string>
     <string name="start_description">Crea una nueva billetera o añade una existente</string>
@@ -355,6 +359,7 @@
     <string name="hide_collection">Ocultar colección</string>
     <string name="hide_and_report_collection">Ocultar y reportar</string>
     <string name="open_tonviewer">Abierto en Tonviewer</string>
+    <string name="safe_mode_disabled">El modo seguro está desactivado durante 24 horas. Se activará automáticamente. <annotation colorAttr="textAccentColor">Desactivar permanentemente</annotation></string>
     <string name="customize">Personalizar</string>
     <string name="customize_wallet_title">Personaliza tu Cartera</string>
     <string name="customize_wallet_subtitle">El nombre y el icono de la billetera se almacenan localmente en su dispositivo.</string>
@@ -379,7 +384,7 @@
     <string name="bluetooth_permissions_alert_title">Permisos de Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Por favor, habilite los permisos de Bluetooth en su configuración para usar esta función</string>
     <string name="bluetooth_permissions_alert_open_settings">Abrir Configuración</string>
-    <string name="intro_title">Bienvenido a <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title">Bienvenido a <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="required_comment">Comentario requerido</string>
     <string name="biometric_enabled">Biométrico habilitado</string>
     <string name="sending_error">Error de envío, inténtalo de nuevo más tarde</string>
@@ -471,4 +476,27 @@
     <string name="connected_apps_empty">No hay aplicaciones conectadas</string>
     <string name="send_all_balance">¿Estás segura de que quieres enviar todo tu saldo?</string>
     <string name="wrong_promocode">El código ingresado no es válido</string>
+    <string name="visible">Visible</string>
+    <string name="hidden">Oculto</string>
+    <string name="show_all">Mostrar todo</string>
+    <string name="token_details">Detalles del token</string>
+    <string name="token_id">Identificación del token</string>
+    <string name="safe_mode">Modo seguro</string>
+    <string name="open_settings">Abrir configuración</string>
+    <string name="setup_safe_mode">Configura tu pantalla de bloqueo y modo seguro</string>
+    <string name="safe_mode_tonconnect_title">Las conexiones solo están disponibles para aplicaciones verificadas</string>
+    <string name="hide_full_collection">Ocultar colección</string>
+    <string name="safe_mode_description">En este modo, solo están disponibles las aplicaciones, los NFT y los tokens verificados. <annotation colorAttr="textAccentColor">Más información</annotation></string>
+    <string name="stories_safemode_1_title">Solo aplicaciones y servicios verificados</string>
+    <string name="stories_safemode_1_subtitle">Para evitar el phishing y el fraude.</string>
+    <string name="stories_safemode_2_title">Solo NFT verificadas</string>
+    <string name="stories_safemode_2_subtitle">Para evitar spam y artículos falsos.</string>
+    <string name="stories_safemode_3_title">Solo tokens verificados</string>
+    <string name="tx_marked_as_spam">Transacción marcada como Spam</string>
+    <string name="address_prefix">DIRECCIÓN:</string>
+    <string name="your_address">Su dirección:</string>
+    <string name="safe_mode_tokens_footer">El modo seguro está habilitado. Solo están disponibles los tokens verificados. <annotation colorAttr="textAccentColor">Configuración</annotation></string>
+    <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
+    <string name="select_from_gallery">Seleccionar de la galería</string>
+
 </resources>

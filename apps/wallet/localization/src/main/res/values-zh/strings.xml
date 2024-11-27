@@ -1,12 +1,14 @@
 <resources>
     <string name="transaction_expired">交易已过期</string>
     <string name="add_contact">添加到地址簿</string>
+    <string name="add_to_home_screen">添加到主屏幕</string>
     <string name="multi_account_secret_wrong">请使用 Tonkeeper Desktop 管理多钱包账户</string>
     <string name="total">总计：%1$s</string>
     <string name="staking_ready_withdraw">%1$s 已准备就绪。点击共同收集。</string>
     <string name="staking_pending_deposit">%1$s 将存入 %2$s</string>
     <string name="staking_pending_withdraw">%1$s 将在 %2$s 内被提取</string>
     <string name="edit_full">编辑</string>
+    <string name="safe_mode_tonconnect_description">您可以在钱包的安全设置中更改此设置。</string>
     <string name="staking_unstake_cycle">取消质押请求将在 %1$s 的验证周期结束后处理</string>
     <string name="send_transaction_scroll">检查所有详细信息以确认</string>
     <string name="send_transaction_detail">将从您的钱包发送的代币总价值。退款不包含在总价值中。</string>
@@ -73,6 +75,7 @@
     <string name="domain_link_button">链接域</string>
     <string name="domain_renew_button">续订域名</string>
     <string name="staked">质押</string>
+    <string name="report_encrypted_comment_button">仍然举报垃圾邮件</string>
     <string name="manual">手册</string>
     <string name="manual_description">手动备份您的钱包，记下恢复短语。</string>
     <string name="manual_backup_done">手动备份完成</string>
@@ -191,6 +194,7 @@
     <string name="intro_line_2_description">Tonkeeper在您的设备上存储您的加密密钥，无需文件、个人信息、联系方式或KYC。</string>
     <string name="intro_line_3_title">内置订阅</string>
     <string name="intro_line_3_description">TON 订阅是点对点和无国界的，因此没有人可以限制提供者或客户。几乎为零的费用和完全的控制权为您提供。</string>
+    <string name="stories_safemode_3_subtitle">防范意外风险。</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">没有网络连接</string>
     <string name="start_description">创建新钱包或添加现有钱包</string>
@@ -355,6 +359,7 @@
     <string name="hide_collection">隐藏收藏</string>
     <string name="hide_and_report_collection">隐藏并举报</string>
     <string name="open_tonviewer">在 Tonviewer 中打开</string>
+    <string name="safe_mode_disabled">安全模式关闭 24 小时。它将自动开启。<annotation colorAttr="textAccentColor">永久关闭</annotation></string>
     <string name="customize">自定义</string>
     <string name="customize_wallet_title">自定义您的钱包</string>
     <string name="customize_wallet_subtitle">钱包名称和图标存储在您的设备上。</string>
@@ -379,7 +384,7 @@
     <string name="bluetooth_permissions_alert_title">蓝牙权限</string>
     <string name="bluetooth_permissions_alert_message">请在设置中启用蓝牙权限以使用此功能</string>
     <string name="bluetooth_permissions_alert_open_settings">打开设置</string>
-    <string name="intro_title">欢迎来到 <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title">欢迎来到 <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="required_comment">必填注释</string>
     <string name="biometric_enabled">已启用生物识别</string>
     <string name="sending_error">发送错误，请稍后重试</string>
@@ -466,4 +471,26 @@
     <string name="connected_apps_empty">没有连接的应用程序</string>
     <string name="send_all_balance">您确定要发送所有余额吗？</string>
     <string name="wrong_promocode">输入的代码无效</string>
+    <string name="visible">可见的</string>
+    <string name="hidden">隐</string>
+    <string name="show_all">显示全部</string>
+    <string name="token_details">代币详细信息</string>
+    <string name="token_id">代币 ID</string>
+    <string name="safe_mode">安全模式</string>
+    <string name="open_settings">打开“设置”</string>
+    <string name="setup_safe_mode">设置锁定屏幕和安全模式</string>
+    <string name="safe_mode_tonconnect_title">仅向经过验证的应用提供连接</string>
+    <string name="hide_full_collection">隐藏收藏</string>
+    <string name="safe_mode_description">在此模式下，仅经过验证的应用、NFT 和代币可用。<annotation colorAttr="textAccentColor">了解详情</annotation></string>
+    <string name="stories_safemode_1_title">仅限经过验证的应用和服务</string>
+    <string name="stories_safemode_1_subtitle">避免网络钓鱼和欺诈。</string>
+    <string name="stories_safemode_2_title">仅限经过验证的 NFT</string>
+    <string name="stories_safemode_2_subtitle">以避免垃圾邮件和假冒物品。</string>
+    <string name="stories_safemode_3_title">仅限已验证的代币</string>
+    <string name="tx_marked_as_spam">交易被标记为垃圾邮件</string>
+    <string name="address_prefix">地址：</string>
+    <string name="your_address">您的地址：</string>
+    <string name="safe_mode_tokens_footer">安全模式已启用。仅可使用经过验证的令牌。<annotation colorAttr="textAccentColor">设置</annotation></string>
+    <string name="report_encrypted_comment">此交易的评论将与报告一起以解密形式发送。</string>
+    <string name="select_from_gallery">从画廊中选择</string>
 </resources>

@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -76,12 +77,13 @@ class WalletViewModel(
 
     private val updateWalletSettings = combine(
         settingsRepository.tokenPrefsChangedFlow,
-        settingsRepository.walletPrefsChangedFlow
-    ) { _, _ -> }
+        settingsRepository.walletPrefsChangedFlow,
+        settingsRepository.safeModeStateFlow,
+    ) { _, _, _ -> }
 
     private val _stateSettingsFlow = combine(
         settingsRepository.hiddenBalancesFlow,
-        api.configFlow,
+        api.configFlow.filter { !it.empty },
         statusFlow,
     ) { hiddenBalance, config, status ->
         State.Settings(hiddenBalance, config, status)
@@ -153,7 +155,7 @@ class WalletViewModel(
             val localAssets = getAssets(walletCurrency, false)
             if (localAssets != null) {
                 val batteryBalance = getBatteryBalance(wallet)
-                _stateMainFlow.value = State.Main(
+                val state = State.Main(
                     wallet = wallet,
                     assets = localAssets,
                     hasBackup = hasBackup,
@@ -166,13 +168,15 @@ class WalletViewModel(
                     lt = currentLt,
                     isOnline = currentIsOnline,
                 )
+                assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
+                _stateMainFlow.value = state
             }
 
             if (isRequestUpdate) {
                 val remoteAssets = getAssets(walletCurrency, true)
                 val batteryBalance = getBatteryBalance(wallet, true)
                 if (remoteAssets != null) {
-                    _stateMainFlow.value = State.Main(
+                    val state = State.Main(
                         wallet,
                         remoteAssets,
                         hasBackup = hasBackup,
@@ -185,6 +189,8 @@ class WalletViewModel(
                         lt = currentLt,
                         isOnline = currentIsOnline,
                     )
+                    _stateMainFlow.value = state
+                    assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
                     settingsRepository.setWalletLastUpdated(wallet.id)
                     setStatus(Status.Default)
                 }
@@ -209,11 +215,13 @@ class WalletViewModel(
             val isSetupHidden = settingsRepository.isSetupHidden(state.wallet.id)
             val uiSetup: State.Setup? = if (isSetupHidden) null else {
                 val walletPushEnabled = settingsRepository.getPushWallet(state.wallet.id)
+                val hasInitializedWallet = accountRepository.getInitializedWallets().isNotEmpty()
                 State.Setup(
                     pushEnabled = context.hasPushPermission() && walletPushEnabled,
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
-                    showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id)
+                    showTelegramChannel = !settingsRepository.isTelegramChannel(state.wallet.id),
+                    safeModeBlock = !api.config.flags.safeModeEnabled && hasInitializedWallet && settingsRepository.showSafeModeSetup,
                 )
             }
 
@@ -227,7 +235,8 @@ class WalletViewModel(
                 alerts = alerts,
                 dAppNotifications = State.DAppNotifications(pushes),
                 setup = uiSetup,
-                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale())
+                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale()),
+                prefixYourAddress = 3 > settingsRepository.addressCopyCount
             )
             if (uiItems.isNotEmpty()) {
                 _uiItemsFlow.value = uiItems

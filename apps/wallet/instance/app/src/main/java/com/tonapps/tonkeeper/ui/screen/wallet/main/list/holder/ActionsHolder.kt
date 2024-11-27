@@ -28,7 +28,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
 
     override fun onBind(item: Item.Actions) {
         receiveView.setOnClickListener {
-            navigation?.add(QRScreen.newInstance(item.address, item.token, item.walletType))
+            navigation?.add(QRScreen.newInstance(item.wallet, item.token))
         }
         swapView.setOnClickListener {
             navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.address, TokenEntity.TON.address))

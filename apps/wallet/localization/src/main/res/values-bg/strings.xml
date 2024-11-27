@@ -1,12 +1,14 @@
 <resources>
     <string name="transaction_expired">Транзакцията е изтекла</string>
     <string name="add_contact">Добавяне към адресната книга</string>
+    <string name="add_to_home_screen">Добавяне към началния екран</string>
     <string name="multi_account_secret_wrong">Моля, използвайте Tonkeeper Desktop за Multi-Wallet акаунт</string>
     <string name="total">Общо: %1$s</string>
     <string name="staking_ready_withdraw">%1$s готов. Докоснете съвместно събиране.</string>
     <string name="staking_pending_deposit">%1$s ще бъдат депозирани в %2$s</string>
     <string name="staking_pending_withdraw">%1$s ще бъде изтеглен след %2$s</string>
     <string name="edit_full">Редактиране</string>
+    <string name="safe_mode_tonconnect_description">Можете да промените това в настройките за сигурност на портфейла си.</string>
     <string name="staking_unstake_cycle">Заявката за премахване на залагане ще бъде обработена след края на цикъла на валидиране в %1$s</string>
     <string name="send_transaction_scroll">Проверете всички подробности, за да потвърдите</string>
     <string name="send_transaction_detail">Общата стойност на токените, които ще бъдат изпратени от вашия портфейл. Възстановяванията не са включени в общата стойност.</string>
@@ -28,6 +30,9 @@
     <string name="setup_finish_biometry">Използвайте биометрия за потвърждаване на транзакции</string>
     <string name="setup_finish_backup">Резервирайте възстановителната фраза на портфейла</string>
     <string name="setup_finish_telegram">Присъединете се към канала на Tonkeeper</string>
+    <string name="hide_full_collection">Скриване на колекцията</string>
+    <string name="safe_mode_description">В този режим са налични само проверени приложения, NFT и токени. <annotation colorAttr="textAccentColor">Научете повече</annotation></string>
+
 
     <string name="contacts">Контакти</string>
     <string name="step_1">Етап 1</string>
@@ -84,6 +89,7 @@
     <string name="battery_disclaimer">Едно таксуване покрива средната такса за транзакция. Някои транзакции може да струват повече.</string>
     <string name="restore_purchases">Възстановяване на покупките</string>
     <string name="battery_refilled">Заредена батерия</string>
+    <string name="select_from_gallery">Изберете От галерии</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="staking_minimal_deposit">Минимален депозит</string>
     <string name="staking_details_description">Стейкингът е базиран на умни договори от трети страни. Tonkeeper не носи отговорност за изживяването по време на стейкинг.</string>
@@ -96,6 +102,7 @@
     <string name="domain_renew_button">Подновете домейн</string>
 
     <string name="staked">Заложено</string>
+    <string name="report_encrypted_comment_button">Все пак докладвайте за спам</string>
     <string name="manual">Ръководство</string>
     <string name="manual_description">Направете резервно копие на вашия портфейл ръчно, като запишете възстановителната фраза.</string>
     <string name="manual_backup_done">Ръчно резервно копие завършено</string>
@@ -225,7 +232,7 @@
     <string name="wallets">Портфейли</string>
     <string name="country_title">Изберете вашата страна</string>
     <string name="intro_description">Създайте нов портфейл или добавете съществуващ</string>
-    <string name="intro_title" formatted="true">Добре дошли в <annotation colorRes="textAccent">Tonkeeper</annotation></string>
+    <string name="intro_title" formatted="true">Добре дошли в <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
     <string name="intro_line_1_title">Световно ниво на скорост</string>
     <string name="intro_line_1_description">TON е мрежа, проектирана за скорост и производителност. Таксите са значително по-ниски, отколкото на други блокчейн платформи, а транзакциите се потвърждават в рамките на секунди.</string>
 
@@ -235,6 +242,7 @@
     <string name="intro_line_3_title">Вградени абонаменти</string>
     <string name="intro_line_3_description">TON абонаментите са между потребителите и не познават граници, така че никой не може да ограничи доставчиците или клиентите. Почти нулеви такси и пълен контрол за вас.</string>
 
+    <string name="stories_safemode_3_subtitle">За предотвратяване на неочаквани рискове.</string>
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">Няма интернет връзка</string>
     <string name="start_description">Създайте нов портфейл или добавете съществуващ</string>
@@ -419,6 +427,7 @@
     <string name="hide_collection">Скриване на колекцията</string>
     <string name="hide_and_report_collection">Скрий се и докладвай</string>
     <string name="open_tonviewer">Отворете в Tonviewer</string>
+    <string name="safe_mode_disabled">Безопасният режим е изключен за 24 часа. Той ще се включи автоматично. <annotation colorAttr="textAccentColor">Изключване за постоянно</annotation></string>
     <string name="customize">Персонализиране</string>
     <string name="customize_wallet_title">Персонализирайте вашия портфейл</string>
     <string name="customize_wallet_subtitle">Името на портфейла и иконата се съхраняват локално на вашето устройство.</string>
@@ -516,4 +525,23 @@
     <string name="connected_apps_empty">Няма свързани приложения</string>
     <string name="send_all_balance">Сигурни ли сте, че искате да изпратите цялото си салдо?</string>
     <string name="wrong_promocode">Въведеният код не е валиден</string>
+    <string name="visible">Видими</string>
+    <string name="hidden">Скрити</string>
+    <string name="show_all">Покажи всички</string>
+    <string name="token_details">Подробности за токена</string>
+    <string name="token_id">ID на токена</string>
+    <string name="safe_mode">Безопасен режим</string>
+    <string name="open_settings">Отворете Настройки</string>
+    <string name="setup_safe_mode">Настройте своя заключен екран и безопасен режим</string>
+    <string name="safe_mode_tonconnect_title">Връзките са достъпни само за проверени приложения</string>
+    <string name="stories_safemode_1_title">Само проверени приложения и услуги</string>
+    <string name="stories_safemode_1_subtitle">За да избегнете фишинг и измами.</string>
+    <string name="stories_safemode_2_title">Само проверени NFT</string>
+    <string name="stories_safemode_2_subtitle">За да избегнете спам и фалшиви артикули.</string>
+    <string name="stories_safemode_3_title">Само проверени токени</string>
+    <string name="tx_marked_as_spam">Транзакцията е маркирана като спам</string>
+    <string name="address_prefix">Адрес:</string>
+    <string name="your_address">Вашият адрес:</string>
+    <string name="safe_mode_tokens_footer">Безопасният режим е активиран. Налични са само потвърдени токени. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
+    <string name="report_encrypted_comment">Коментарът от тази транзакция ще бъде изпратен с отчет в декриптирана форма.</string>
 </resources>

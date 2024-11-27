@@ -1,13 +1,19 @@
 package com.tonapps.tonkeeper.manager.assets
 
+import android.content.Context
+import android.util.Log
+import androidx.core.content.edit
+import com.tonapps.extensions.getParcelable
+import com.tonapps.extensions.prefs
+import com.tonapps.extensions.putParcelable
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
 import java.util.concurrent.ConcurrentHashMap
 
-internal class TotalBalanceCache {
+internal class TotalBalanceCache(context: Context) {
 
-    private val memoryCache = ConcurrentHashMap<String, Coins>(100, 1.0f, 2)
+    private val storageCache = context.prefs("total_balance_cache")
 
     fun get(
         wallet: WalletEntity,
@@ -15,7 +21,7 @@ internal class TotalBalanceCache {
         sorted: Boolean
     ): Coins? {
         val key = createKey(wallet, currency, sorted)
-        return memoryCache[key]?.copy()
+        return storageCache.getParcelable<Coins>(key)
     }
 
     fun set(
@@ -25,7 +31,7 @@ internal class TotalBalanceCache {
         value: Coins
     ) {
         val key = createKey(wallet, currency, sorted)
-        memoryCache[key] = value.copy()
+        storageCache.putParcelable(key, value)
     }
 
     private fun createKey(
@@ -33,14 +39,26 @@ internal class TotalBalanceCache {
         currency: WalletCurrency,
         sorted: Boolean
     ): String {
-        val prefix = "${wallet.id}_${currency.code}"
-        if (sorted) {
-            return "${prefix}_sorted"
+        val builder = StringBuilder(wallet.accountId)
+        builder.append("_")
+        builder.append(currency.code)
+        if (wallet.testnet) {
+            builder.append("_testnet")
         }
-        return prefix
+        if (sorted) {
+            builder.append("_sorted")
+        }
+        return builder.toString()
     }
 
-    fun clear() {
-        memoryCache.clear()
+    fun clear(wallet: WalletEntity, currency: WalletCurrency) {
+        storageCache.edit {
+            remove(createKey(wallet, currency, true))
+            remove(createKey(wallet, currency, false))
+        }
+    }
+
+    fun clearAll() {
+        storageCache.edit().clear().apply()
     }
 }

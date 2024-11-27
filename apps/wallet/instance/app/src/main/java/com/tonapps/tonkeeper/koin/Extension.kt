@@ -26,12 +26,6 @@ import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.Qualifier
 
-inline fun <reified T: RecyclerView.Adapter<*>> Module.uiAdapter(
-    noinline definition: Definition<T>
-): KoinDefinition<T> {
-    return single(definition = definition)
-}
-
 @MainThread
 inline fun <reified T : ViewModel> BaseWalletScreen<ScreenContext.Wallet>.walletViewModel(
     qualifier: Qualifier? = null,

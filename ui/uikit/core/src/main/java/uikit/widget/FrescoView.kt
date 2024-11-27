@@ -12,6 +12,7 @@ import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.drawee.drawable.RoundedCornersDrawable
 import com.facebook.drawee.drawable.RoundedDrawable
+import com.facebook.drawee.drawable.ScalingUtils
 import com.facebook.drawee.generic.RoundingParams
 import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.common.ResizeOptions
@@ -25,6 +26,11 @@ class FrescoView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : SimpleDraweeView(context, attrs, defStyle) {
 
+    private var currentUri: Uri? = null
+
+    private val isCurrentLocal: Boolean
+        get() = currentUri?.let { UriUtil.isLocalResourceUri(it) } ?: false
+
     val isCircular: Boolean
         get() = hierarchy.roundingParams?.roundAsCircle ?: false
 
@@ -34,6 +40,14 @@ class FrescoView @JvmOverloads constructor(
 
     fun setCircular() {
         hierarchy.roundingParams = RoundingParams.asCircle()
+    }
+
+    fun setScaleTypeCenterInside() {
+        hierarchy.actualImageScaleType = ScalingUtils.ScaleType.CENTER_INSIDE
+    }
+
+    fun setScaleTypeCenterCrop() {
+        hierarchy.actualImageScaleType = ScalingUtils.ScaleType.CENTER_CROP
     }
 
     fun setLocalRes(resId: Int) {
@@ -49,25 +63,28 @@ class FrescoView @JvmOverloads constructor(
     }
 
     override fun setImageURI(uri: Uri, callerContext: Any?) {
-        if (UriUtil.isLocalResourceUri(uri)) {
+        currentUri = uri
+        if (callerContext is ResizeOptions) {
+            setImageURIWithResize(uri, callerContext)
+        } else if (UriUtil.isLocalResourceUri(uri)) {
             loadLocalUri(uri, callerContext)
         } else {
-            hierarchy.setPlaceholderImage(null)
             super.setImageURI(uri, callerContext)
         }
     }
 
     private fun loadLocalUri(uri: Uri, callerContext: Any?) {
+        currentUri = uri
         val drawable = requestDrawable(uri)
         if (drawable == null) {
-            hierarchy.setPlaceholderImage(null)
             super.setImageURI(uri, callerContext)
         } else {
             setImageDrawable(drawable, callerContext)
         }
     }
 
-    fun setImageURI(uri: Uri, resizeOptions: ResizeOptions) {
+    fun setImageURIWithResize(uri: Uri, resizeOptions: ResizeOptions) {
+        currentUri = uri
         val request = ImageRequestBuilder.newBuilderWithSource(uri)
             .setResizeOptions(resizeOptions)
             .build()
@@ -78,14 +95,15 @@ class FrescoView @JvmOverloads constructor(
         if (UriUtil.isLocalResourceUri(request.sourceUri)) {
             loadLocalUri(request.sourceUri, null)
         } else {
-            setImageDrawable(null)
-            setPlaceholder(ColorDrawable(Color.TRANSPARENT))
             super.setImageRequest(request)
         }
     }
 
-    fun setPlaceholder(drawable: Drawable) {
+    fun setPlaceholder(drawable: Drawable?) {
         hierarchy.setPlaceholderImage(drawable)
+        //
+        // setImageDrawable(null)
+        // setPlaceholder(ColorDrawable(Color.TRANSPARENT))
     }
 
     private fun setImageDrawable(drawable: Drawable, callerContext: Any?) {
@@ -110,7 +128,7 @@ class FrescoView @JvmOverloads constructor(
 
         if (isCircular) {
             return RoundedCornersDrawable(iconDrawable).apply {
-                setCircle(true)
+                setType(RoundedCornersDrawable.Type.CLIPPING)
             }
         }
         return iconDrawable

@@ -11,6 +11,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.Formatter
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.wallet.api.API
@@ -237,7 +238,8 @@ class TokenViewModel(
             wallet = wallet,
             events = events,
             removeDate = false,
-            hiddenBalances = settingsRepository.hiddenBalances
+            hiddenBalances = settingsRepository.hiddenBalances,
+            safeMode = settingsRepository.isSafeModeEnabled(api),
         )
     }
 

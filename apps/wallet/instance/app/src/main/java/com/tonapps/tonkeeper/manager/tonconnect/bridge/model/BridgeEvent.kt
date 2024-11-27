@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge.model
 
+import android.util.Log
 import com.tonapps.extensions.getLongCompat
 import com.tonapps.extensions.toStringList
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException

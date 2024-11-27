@@ -124,23 +124,7 @@ internal class DatabaseSource(
             ))
         }
         cursor.close()
-        val notFoundApps = urls.filter { url -> apps.none { it.url == url } }
-        if (notFoundApps.isNotEmpty()) {
-            for (url in notFoundApps) {
-                val domain = url.host ?: "unknown"
-                apps.add(AppEntity(
-                    url = url,
-                    name = domain.split(".").firstOrNull() ?: domain,
-                    iconUrl = "https://$domain/favicon.ico",
-                    empty = true
-                ))
-            }
-        }
         apps.toList()
-    }
-
-    suspend fun getApp(url: Uri): AppEntity? = withContext(coroutineContext) {
-        getApps(listOf(url)).firstOrNull()
     }
 
     suspend fun insertApp(appEntity: AppEntity): Boolean = withContext(coroutineContext) {

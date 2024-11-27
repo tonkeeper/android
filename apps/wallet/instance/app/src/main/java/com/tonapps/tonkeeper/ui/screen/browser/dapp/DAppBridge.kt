@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
+import android.util.Log
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import okhttp3.Headers
 import okhttp3.Response

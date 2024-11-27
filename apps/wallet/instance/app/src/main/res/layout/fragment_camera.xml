@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColor="?attr/textPrimaryColor"
+            android:textColor="@color/constantWhite"
             android:textAppearance="@style/TextAppearance.H2"
             android:text="@string/scan_qr_code"/>
 
@@ -58,5 +58,19 @@
             android:layout_gravity="center"/>
 
     </uikit.widget.ColumnLayout>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/gallery"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="@dimen/offsetLarge"
+        android:paddingHorizontal="26dp"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="@color/constantWhite"
+        android:backgroundTint="#454545"
+        android:background="@drawable/bg_content_tint_24"
+        android:text="@string/select_from_gallery"/>
 
 </FrameLayout>

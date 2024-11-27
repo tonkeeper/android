@@ -38,6 +38,7 @@ import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
@@ -115,7 +116,6 @@ class BalanceHolder(
             backupIconContainerView.visibility = View.GONE
         }
 
-
         if (item.showBattery) {
             batteryView.visibility = View.VISIBLE
             batteryView.setBatteryLevel(item.batteryBalance.value.toFloat())
@@ -126,49 +126,56 @@ class BalanceHolder(
 
         setWalletState(
             state = item.status,
-            address = item.address,
-            walletType = item.walletType,
-            walletVersion = item.walletVersion,
-            lastUpdatedFormat = item.lastUpdatedFormat
+            wallet = item.wallet,
+            lastUpdatedFormat = item.lastUpdatedFormat,
+            showYourAddress = item.prefixYourAddress
         )
     }
 
     private fun setWalletState(
         state: Item.Status,
-        address: String,
-        walletType: Wallet.Type,
-        walletVersion: WalletVersion,
+        wallet: WalletEntity,
         lastUpdatedFormat: String,
+        showYourAddress: Boolean,
     ) {
-        if (state == Item.Status.LastUpdated) {
-            walletLoaderView.visibility = View.GONE
-            walletAddressView.text = context.getString(Localization.last_updated, lastUpdatedFormat)
-            walletAddressView.setTextColor(context.textSecondaryColor)
-        } else if (state == Item.Status.Updating) {
-            walletLoaderView.visibility = View.VISIBLE
-            walletAddressView.setText(Localization.updating)
-            walletAddressView.setTextColor(context.textSecondaryColor)
-        } else if (state == Item.Status.SendingTransaction) {
-            walletLoaderView.visibility = View.VISIBLE
-            walletAddressView.setText(Localization.sending_transaction)
-            walletAddressView.setTextColor(context.textSecondaryColor)
-        } else if (state == Item.Status.TransactionConfirmed) {
-            walletLoaderView.visibility = View.GONE
-            walletAddressView.setText(Localization.transaction_confirmed)
-            walletAddressView.setTextColor(context.accentGreenColor)
-        } else if (state == Item.Status.NoInternet) {
-            walletLoaderView.visibility = View.GONE
-            walletAddressView.setText(Localization.no_internet_connection)
-            walletAddressView.setTextColor(context.accentOrangeColor)
-        } else {
-            walletLoaderView.visibility = View.GONE
-            setWalletAddressWithType(address.shortAddress, walletType, walletVersion)
-            walletAddressView.setTextColor(context.textSecondaryColor)
-            walletAddressView.setOnClickListener {
-                if (walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Watch) {
-                    context.copyWithToast(address, getTypeColor(walletType))
-                } else {
-                    context.copyWithToast(address)
+        when (state) {
+            Item.Status.LastUpdated -> {
+                walletLoaderView.visibility = View.GONE
+                walletAddressView.text = context.getString(Localization.last_updated, lastUpdatedFormat)
+                walletAddressView.setTextColor(context.textSecondaryColor)
+            }
+            Item.Status.Updating -> {
+                walletLoaderView.visibility = View.VISIBLE
+                walletAddressView.setText(Localization.updating)
+                walletAddressView.setTextColor(context.textSecondaryColor)
+            }
+            Item.Status.SendingTransaction -> {
+                walletLoaderView.visibility = View.VISIBLE
+                walletAddressView.setText(Localization.sending_transaction)
+                walletAddressView.setTextColor(context.textSecondaryColor)
+            }
+            Item.Status.TransactionConfirmed -> {
+                walletLoaderView.visibility = View.GONE
+                walletAddressView.setText(Localization.transaction_confirmed)
+                walletAddressView.setTextColor(context.accentGreenColor)
+            }
+            Item.Status.NoInternet -> {
+                walletLoaderView.visibility = View.GONE
+                walletAddressView.setText(Localization.no_internet_connection)
+                walletAddressView.setTextColor(context.accentOrangeColor)
+            }
+            else -> {
+                walletLoaderView.visibility = View.GONE
+                setWalletAddressWithType(wallet.address.shortAddress, wallet.type, wallet.version, showYourAddress)
+                walletAddressView.setTextColor(context.textSecondaryColor)
+                walletAddressView.setOnClickListener {
+                    val walletType = wallet.type
+                    if (walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Watch) {
+                        context.copyWithToast(wallet.address, getTypeColor(walletType))
+                    } else {
+                        context.copyWithToast(wallet.address)
+                    }
+                    settingsRepository?.incrementCopyCount()
                 }
             }
         }
@@ -177,9 +184,19 @@ class BalanceHolder(
     private fun setWalletAddressWithType(
         address: String,
         type: Wallet.Type,
-        version: WalletVersion
+        version: WalletVersion,
+        showYourAddress: Boolean,
     ) {
-        var builder = SpannableStringBuilder(address.shortAddress)
+        var builder = SpannableStringBuilder()
+
+        if (showYourAddress) {
+            val prefix = if (type == Wallet.Type.Watch) getString(Localization.address_prefix) else getString(Localization.your_address)
+            builder.append(prefix)
+            builder.append(" ")
+        }
+
+
+        builder.append(address.shortAddress)
 
         if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
             val resId = if (version == WalletVersion.V5BETA) {

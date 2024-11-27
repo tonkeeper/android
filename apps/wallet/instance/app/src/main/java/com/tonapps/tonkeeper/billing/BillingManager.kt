@@ -134,8 +134,7 @@ class BillingManager(
         try {
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(ProductType.INAPP)
-
-            return queryPurchases(client, params.build()).filter { !it.isAcknowledged }
+            return queryPurchases(client, params.build())
         } catch (e: Throwable) {
             log("Failed to get pending purchases", e)
             return emptyList()

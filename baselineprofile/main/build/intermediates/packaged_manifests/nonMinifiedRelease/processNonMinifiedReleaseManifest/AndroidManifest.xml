@@ -4,7 +4,7 @@
 
     <uses-sdk
         android:minSdkVersion="28"
-        android:targetSdkVersion="34" />
+        android:targetSdkVersion="35" />
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
@@ -13,12 +13,6 @@
         android:label="Tests for com.tonapps.main.baselineprofile"
         android:targetPackage="com.tonapps.main.baselineprofile" />
 
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <!--
-         Internet permission is required for perfetto trace shell processor http server but
-        it's used to reach localhost only
-    -->
-    <uses-permission android:name="android.permission.INTERNET" />
     <!--
     This is needed to write benchmark report data to an external directory during instrumented
     tests to allow the accompanying androidx.benchmark gradle plugin to pull the reports onto host
@@ -26,6 +20,12 @@
     -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!--
+         Internet permission is required for perfetto trace shell processor http server but
+        it's used to reach localhost only
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
 
     <queries>

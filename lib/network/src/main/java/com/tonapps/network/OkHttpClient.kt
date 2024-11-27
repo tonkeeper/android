@@ -5,10 +5,12 @@ import android.graphics.BitmapFactory
 import android.util.ArrayMap
 import android.util.Log
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.retry
@@ -116,15 +118,17 @@ fun OkHttpClient.sse(
 ): Flow<SSEvent> = callbackFlow {
     val listener = object : EventSourceListener() {
         override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
-            this@callbackFlow.trySendBlocking(SSEvent(id, type, data))
+            if (!this@callbackFlow.trySend(SSEvent(id, type, data)).isSuccess) {
+                eventSource.cancel()
+            }
         }
 
         override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-            this@callbackFlow.close(t)
+            this@callbackFlow.close(t ?: Throwable("Unknown SSE failure"))
         }
 
         override fun onClosed(eventSource: EventSource) {
-            this@callbackFlow.close(Throwable("EventSource closed"))
+            this@callbackFlow.close(CancellationException("EventSource closed"))
         }
     }
     val builder = requestBuilder(url)
@@ -138,12 +142,15 @@ fun OkHttpClient.sse(
     val request = builder.build()
     val events = sseFactory().newEventSource(request, listener)
     awaitClose { events.cancel() }
-}.retry { cause ->
-    if ((cause is StreamResetException && cause.errorCode == ErrorCode.CANCEL) || cause is java.util.concurrent.CancellationException) {
-        false
-    } else {
-        onFailure?.invoke(cause)
-        delay(1000)
-        true
+}.buffer(64, BufferOverflow.DROP_OLDEST).retry { cause ->
+    when {
+        cause is CancellationException -> false
+        cause is StreamResetException && cause.errorCode == ErrorCode.CANCEL -> false
+        cause is OutOfMemoryError -> false
+        else -> {
+            onFailure?.invoke(cause)
+            delay(1000)
+            true
+        }
     }
 }.cancellable()

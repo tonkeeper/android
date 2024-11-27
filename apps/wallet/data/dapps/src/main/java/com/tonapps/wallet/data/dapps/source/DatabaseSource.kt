@@ -8,20 +8,25 @@ import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
+import androidx.core.database.sqlite.transaction
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putLong
 import com.tonapps.extensions.putParcelable
 import com.tonapps.extensions.putString
 import com.tonapps.extensions.remove
+import com.tonapps.extensions.toByteArray
+import com.tonapps.extensions.toParcel
 import com.tonapps.extensions.withoutQuery
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.Security
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.dapps.entities.ConnectionEncryptedEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -34,7 +39,7 @@ internal class DatabaseSource(
 
     private companion object {
         private const val DATABASE_NAME = "dapps"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         private const val KEY_ALIAS = "_com_tonapps_dapps_master_key_"
 
@@ -54,6 +59,12 @@ internal class DatabaseSource(
         private const val CONNECT_TABLE_TYPE_COLUMN = "type"
         private const val CONNECT_TABLE_TIMESTAMP_COLUMN = "timestamp"
 
+        private const val NOTIFICATIONS_TABLE_NAME = "notifications"
+        private const val NOTIFICATIONS_TABLE_ID_COLUMN = "id"
+        private const val NOTIFICATIONS_TABLE_APP_URL_COLUMN = "app_url"
+        private const val NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN = "account_id"
+        private const val NOTIFICATIONS_TABLE_BODY_COLUMN = "body"
+
         private val appFields = arrayOf(
             APP_TABLE_URL_COLUMN,
             APP_TABLE_NAME_COLUMN,
@@ -67,6 +78,13 @@ internal class DatabaseSource(
             CONNECT_TABLE_CLIENT_ID_COLUMN,
             CONNECT_TABLE_TYPE_COLUMN,
             CONNECT_TABLE_TIMESTAMP_COLUMN
+        ).joinToString(",")
+
+        private val notificationsFields = arrayOf(
+            NOTIFICATIONS_TABLE_ID_COLUMN,
+            NOTIFICATIONS_TABLE_APP_URL_COLUMN,
+            NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN,
+            NOTIFICATIONS_TABLE_BODY_COLUMN
         ).joinToString(",")
     }
 
@@ -102,9 +120,67 @@ internal class DatabaseSource(
         db.execSQL("CREATE INDEX ${connectIndexPrefix}_app_url ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_TYPE_COLUMN, $CONNECT_TABLE_APP_URL_COLUMN)")
     }
 
+    private fun createNotificationsTable(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE $NOTIFICATIONS_TABLE_NAME (" +
+                "$NOTIFICATIONS_TABLE_ID_COLUMN INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "$NOTIFICATIONS_TABLE_APP_URL_COLUMN TEXT," +
+                "$NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN TEXT," +
+                "$NOTIFICATIONS_TABLE_BODY_COLUMN TEXT" +
+                ")")
+
+        val notificationsIndexPrefix = "idx_$NOTIFICATIONS_TABLE_NAME"
+        db.execSQL("CREATE INDEX ${notificationsIndexPrefix}_app_url ON $NOTIFICATIONS_TABLE_NAME ($NOTIFICATIONS_TABLE_APP_URL_COLUMN)")
+        db.execSQL("CREATE INDEX ${notificationsIndexPrefix}_account_id ON $NOTIFICATIONS_TABLE_NAME ($NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN)")
+    }
+
     override fun create(db: SQLiteDatabase) {
         createAppTable(db)
         createConnectTable(db)
+        createNotificationsTable(db)
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        super.onUpgrade(db, oldVersion, newVersion)
+        if (oldVersion < 2) {
+            createNotificationsTable(db)
+        }
+    }
+
+    suspend fun insertNotifications(accountId: String, list: List<AppPushEntity.Body>) = withContext(coroutineContext) {
+        writableDatabase.transaction {
+            writableDatabase.delete(NOTIFICATIONS_TABLE_NAME, "$NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN = ?", arrayOf(accountId))
+            for (body in list) {
+                val values = ContentValues()
+                values.put(NOTIFICATIONS_TABLE_APP_URL_COLUMN, body.dappUrl.withoutQuery.toString().removeSuffix("/"))
+                values.put(NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN, accountId)
+                values.put(NOTIFICATIONS_TABLE_BODY_COLUMN, body.toByteArray())
+                writableDatabase.insert(NOTIFICATIONS_TABLE_NAME, null, values)
+            }
+        }
+    }
+
+    suspend fun insertNotification(body: AppPushEntity.Body) = withContext(coroutineContext) {
+        writableDatabase.transaction {
+            val values = ContentValues()
+            values.put(NOTIFICATIONS_TABLE_APP_URL_COLUMN, body.dappUrl.withoutQuery.toString().removeSuffix("/"))
+            values.put(NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN, body.account.toRawAddress())
+            values.put(NOTIFICATIONS_TABLE_BODY_COLUMN, body.toByteArray())
+            writableDatabase.insert(NOTIFICATIONS_TABLE_NAME, null, values)
+        }
+    }
+
+    suspend fun getNotifications(accountId: String): List<AppPushEntity.Body> = withContext(coroutineContext) {
+        val query = "SELECT $notificationsFields FROM $NOTIFICATIONS_TABLE_NAME WHERE $NOTIFICATIONS_TABLE_ACCOUNT_ID_COLUMN = ?"
+        val cursor = readableDatabase.rawQuery(query, arrayOf(accountId))
+        val list = mutableListOf<AppPushEntity.Body>()
+        val bodyIndex = cursor.getColumnIndex(NOTIFICATIONS_TABLE_BODY_COLUMN)
+        while (cursor.moveToNext()) {
+            cursor.getBlob(bodyIndex).toParcel<AppPushEntity.Body>()?.let {
+                list.add(it)
+            }
+        }
+        cursor.close()
+        list
     }
 
     suspend fun getApps(urls: List<Uri>): List<AppEntity> = withContext(coroutineContext) {

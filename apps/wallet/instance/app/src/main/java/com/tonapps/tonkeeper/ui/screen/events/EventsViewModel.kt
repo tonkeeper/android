@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.api.AccountEventWrap
@@ -9,6 +8,8 @@ import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
+import com.tonapps.tonkeeper.extensions.notificationsFlow
+import com.tonapps.tonkeeper.extensions.refreshNotifications
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
@@ -18,39 +19,31 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.AppNotificationsEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.events.isOutTransfer
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 // TODO: Refactor this class
@@ -68,6 +61,11 @@ class EventsViewModel(
 ): BaseWalletVM(app) {
 
     private var autoRefreshJob: Job? = null
+
+    private val appNotifications = dAppsRepository.notificationsFlow(
+        wallet = wallet,
+        scope = viewModelScope
+    )
 
     private val _triggerFlow = MutableEffectFlow<Unit>()
     private val _loadingTriggerFlow = MutableEffectFlow<Unit>()
@@ -160,6 +158,11 @@ class EventsViewModel(
             }
         }
 
+        appNotifications.collectFlow {
+            _filterAppsFlow.value = it.apps
+            _pushesFlow.value = it.notifications.toTypedArray()
+        }
+
         viewModelScope.launch { initialLoad(true) }
         _triggerFlow.tryEmit(Unit)
     }
@@ -200,15 +203,6 @@ class EventsViewModel(
         }
     }
 
-    private suspend fun getDAppEvents(): List<AppPushEntity> {
-        if (!wallet.isTonConnectSupported) {
-            return emptyList()
-        }
-
-        val tonProof = accountsRepository.requestTonProofToken(wallet) ?: return emptyList()
-        return dAppsRepository.getPushes(tonProof, wallet.accountId)
-    }
-
     private fun checkAutoRefresh() {
         if (hasPendingEvents()) {
             refresh()
@@ -232,23 +226,21 @@ class EventsViewModel(
             val cached = cache().toTypedArray()
             if (cached.isNotEmpty()) {
                 _eventsFlow.value = cached
-                _pushesFlow.value = emptyArray()
+            }
+            if (_pushesFlow.value.isNullOrEmpty()){
+                dAppsRepository.refreshNotifications(wallet, accountsRepository)
             }
         }
 
-        val eventsDeferred = async { loadDefault(beforeLt = null, limit = 15).toTypedArray() }
-        val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
-
-        val events = eventsDeferred.await()
-        val pushes = dAppNotificationsDeferred.await()
+        val events = loadDefault(beforeLt = null, limit = 15).toTypedArray()
 
         setLoading(loading = false, trigger = false)
+
         _eventsFlow.value = events
-        _pushesFlow.value = pushes
     }
 
     fun loadMore() {
-        if (isLoading.get()) {
+        if (isLoading.get() || _selectedFilter.value is FilterItem.App) {
             return
         }
 

@@ -421,7 +421,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
         constructor(pushes: List<AppPushEntity>) : this(
             pushes.map { it.body.message }.first(),
-            pushes.map { Uri.parse(it.iconUrl) }
+            pushes.map { Uri.parse(it.iconUrl) }.distinctBy { it }
         )
 
         constructor(parcel: Parcel) : this(

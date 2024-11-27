@@ -758,9 +758,11 @@ class API(
     ): JSONArray {
         return try {
             val url = "${config.tonapiMainnetHost}/v1/messages/history?account=$accountId"
-            val response = tonAPIHttpClient.get(url, ArrayMap<String, String>().apply {
-                set("X-TonConnect-Auth", token)
-            })
+            val response = withRetry {
+                tonAPIHttpClient.get(url, ArrayMap<String, String>().apply {
+                    set("X-TonConnect-Auth", token)
+                })
+            } ?: throw Exception("Empty response")
             val json = JSONObject(response)
             json.getJSONArray("items")
         } catch (e: Throwable) {

@@ -9,13 +9,20 @@ import java.net.URLConnection
 val Uri.isLocal: Boolean
     get() = scheme == "file" || scheme == "content" || scheme == "res"
 
+fun Uri.getQueryParameterSafe(key: String): String? {
+    return try {
+        getQueryParameter(key)
+    } catch (e: Exception) {
+        null
+    }
+}
 
 fun Uri.getQueryLong(key: String): Long? {
-    return getQueryParameter(key)?.toLongOrNull()
+    return getQueryParameterSafe(key)?.toLongOrNull()
 }
 
 fun Uri.hasQuery(key: String): Boolean {
-    return getQueryParameter(key) != null
+    return getQueryParameterSafe(key) != null
 }
 
 val Uri.isEmptyQuery: Boolean
@@ -35,7 +42,7 @@ fun Uri.getBitmap(): Bitmap? {
 
 fun Uri.getMultipleQuery(vararg keys: String): String? {
     for (key in keys) {
-        val value = getQueryParameter(key)
+        val value = getQueryParameterSafe(key)
         if (value != null) {
             return value
         }
@@ -57,7 +64,7 @@ fun Uri.containsQuery(key: String): Boolean {
 }
 
 fun Uri.query(key: String): String? {
-    return getQueryParameter(key)?.trim()?.ifBlank { null }
+    return getQueryParameterSafe(key)?.trim()?.ifBlank { null }
 }
 
 fun Uri.queryLong(key: String): Long? {

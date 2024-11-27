@@ -93,6 +93,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         configBuilder.setMemoryChunkType(MemoryChunkType.BUFFER_MEMORY)
         configBuilder.setImageTranscoderType(ImageTranscoderType.JAVA_TRANSCODER)
         configBuilder.experiment().setNativeCodeDisabled(true)
+        configBuilder.experiment().setPartialImageCachingEnabled(false)
         configBuilder.experiment().setUseDownsampligRatioForResizing(true)
         configBuilder.experiment().useBitmapPrepareToDraw = true
         configBuilder.setDownsampleMode(DownsampleMode.ALWAYS)

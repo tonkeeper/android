@@ -232,7 +232,7 @@ class EventsViewModel(
             }
         }
 
-        val events = loadDefault(beforeLt = null, limit = 15).toTypedArray()
+        val events = loadDefault(beforeLt = null, limit = 20).toTypedArray()
 
         setLoading(loading = false, trigger = false)
 
@@ -250,7 +250,7 @@ class EventsViewModel(
             val currentEvents = (_eventsFlow.value?.toMutableList() ?: mutableListOf())
             val beforeLtEvents = loadDefault(
                 beforeLt = lastLt,
-                limit = 25
+                limit = 35
             )
             val events = (currentEvents + beforeLtEvents).distinctBy { it.eventId }.sortedBy {
                 it.timestamp

@@ -102,7 +102,6 @@ class PushManager(
     }
 
     private suspend fun walletUnsubscribe(wallets: List<WalletEntity>, delete: Boolean): Boolean {
-        Log.d("PushManagerLog", "walletUnsubscribe: ${wallets}")
         if (wallets.isEmpty()) {
             return true
         }

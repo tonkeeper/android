@@ -9,6 +9,7 @@ import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.extensions.notificationsFlow
 import com.tonapps.tonkeeper.extensions.refreshNotifications
 import com.tonapps.tonkeeper.helper.DateHelper
+import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -57,6 +58,7 @@ class WalletViewModel(
     private val transactionManager: TransactionManager,
     private val assetsManager: AssetsManager,
     private val dAppsRepository: DAppsRepository,
+    private val apkManager: APKManager,
 ): BaseWalletVM(app) {
 
     private var autoRefreshJob: Job? = null
@@ -134,7 +136,8 @@ class WalletViewModel(
             backupRepository.stream,
             networkMonitor.isOnlineFlow,
             _streamFlow,
-        ) { currency, backups, currentIsOnline, currentLt ->
+            apkManager.statusFlow,
+        ) { currency, backups, currentIsOnline, currentLt, apkStatus ->
             val lastLt = _stateMainFlow.value?.lt ?: 0
             val lastIsOnline = _stateMainFlow.value?.isOnline
 
@@ -169,6 +172,7 @@ class WalletViewModel(
                     ),
                     lt = currentLt,
                     isOnline = currentIsOnline,
+                    apkStatus = apkStatus,
                 )
                 assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
                 _stateMainFlow.value = state
@@ -190,6 +194,7 @@ class WalletViewModel(
                         ),
                         lt = currentLt,
                         isOnline = currentIsOnline,
+                        apkStatus = apkStatus,
                     )
                     _stateMainFlow.value = state
                     assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
@@ -370,7 +375,7 @@ class WalletViewModel(
                     } else {
                         it
                     }
-                }
+                }.filter { it !is Item.ApkStatus }
                 if (items.isEmpty()) {
                     return null
                 }

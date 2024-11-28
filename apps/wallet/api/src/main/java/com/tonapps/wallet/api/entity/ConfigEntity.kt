@@ -53,7 +53,9 @@ data class ConfigEntity(
     val burnZeroDomain: String,
     val scamAPIURL: String,
     val reportAmount: Coins,
-    val stories: List<String>
+    val stories: List<String>,
+    val apkDownloadUrl: String?,
+    val apkName: AppVersion?,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -67,6 +69,13 @@ data class ConfigEntity(
     @IgnoredOnParcel
     val domains: List<String> by lazy {
         listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
+    }
+
+    @IgnoredOnParcel
+    val apk: ApkEntity? by lazy {
+        val name = apkName ?: return@lazy null
+        val url = apkDownloadUrl ?: return@lazy null
+        ApkEntity(url, name)
     }
 
     constructor(json: JSONObject, debug: Boolean) : this(
@@ -118,7 +127,9 @@ data class ConfigEntity(
         burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"), // tonkeeper-zero.ton
         scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com"),
         reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
-        stories = json.getJSONArray("stories").toStringList()
+        stories = json.getJSONArray("stories").toStringList(),
+        apkDownloadUrl = json.optString("apk_download_url"),
+        apkName = json.optString("apk_name")?.let { AppVersion(it) }
     )
 
     constructor() : this(
@@ -164,7 +175,9 @@ data class ConfigEntity(
         burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
         scamAPIURL = "https://scam.tonkeeper.com",
         reportAmount = Coins.of("0.03"),
-        stories = emptyList()
+        stories = emptyList(),
+        apkDownloadUrl = null,
+        apkName = null
     )
 
     companion object {

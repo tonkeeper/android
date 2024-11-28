@@ -1,9 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.app.Application
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
+import androidx.core.content.FileProvider
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -42,11 +46,13 @@ import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.safeExternalOpenUri
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.helper.ShortcutHelper
+import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.component.UpdateAvailableDialog
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
@@ -68,6 +74,7 @@ import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
+import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -114,6 +121,7 @@ class RootViewModel(
     private val tokenRepository: TokenRepository,
     private val environment: Environment,
     private val passcodeManager: PasscodeManager,
+    private val apkManager: APKManager,
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
@@ -212,6 +220,22 @@ class RootViewModel(
                 delay(2000)
                 checkAppUpdate()
             }
+        }
+
+        apkManager.statusFlow.filter {
+            it is APKManager.Status.UpdateAvailable
+        }.collectFlow {
+            showUpdateAvailable(it as APKManager.Status.UpdateAvailable)
+        }
+    }
+
+    private fun showUpdateAvailable(status: APKManager.Status.UpdateAvailable) {
+        try {
+            UpdateAvailableDialog(context).show {
+                apkManager.download(status.apk)
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
         }
     }
 
@@ -552,7 +576,15 @@ class RootViewModel(
             openScreen(PickerScreen.newInstance())
         } else if (route is DeepLinkRoute.Jetton) {
             openTokenViewer(wallet, route)
+        } else if (route is DeepLinkRoute.Install) {
+            installAPK(route)
         } else {
+            toast(Localization.invalid_link)
+        }
+    }
+
+    private suspend fun installAPK(route: DeepLinkRoute.Install) {
+        if (!apkManager.install(context, route.file)) {
             toast(Localization.invalid_link)
         }
     }

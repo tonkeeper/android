@@ -6,6 +6,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.BalanceType
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.uikit.icon.UIKitIcon
@@ -85,6 +86,7 @@ sealed class State {
         val battery: Battery,
         val lt: Long?,
         val isOnline: Boolean,
+        val apkStatus: APKManager.Status,
     ): State() {
 
         val totalBalanceFiat: Coins
@@ -271,6 +273,9 @@ sealed class State {
             prefixYourAddress: Boolean,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
+            if (apkStatus != APKManager.Status.Default) {
+                uiItems.add(Item.ApkStatus(apkStatus))
+            }
             if (alerts.isNotEmpty()) {
                 for (alert in alerts) {
                     uiItems.add(Item.Alert(alert))

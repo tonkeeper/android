@@ -33,9 +33,6 @@ suspend fun DAppsRepository.refreshNotifications(
     wallet: WalletEntity,
     accountRepository: AccountRepository,
 ) = withContext(Dispatchers.IO) {
-    if (true) {
-        return@withContext
-    }
     if (wallet.isTonConnectSupported && !wallet.testnet) {
         val tonProof = accountRepository.requestTonProofToken(wallet)
         refreshPushes(wallet.accountId, tonProof)

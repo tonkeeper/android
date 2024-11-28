@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.HistoryHelper
+import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -72,3 +73,6 @@ val Context.historyHelper: HistoryHelper?
 
 val Context.pushManager: PushManager?
     get() = koin?.get<PushManager>()
+
+val Context.apkManager: APKManager?
+    get() = koin?.get<APKManager>()

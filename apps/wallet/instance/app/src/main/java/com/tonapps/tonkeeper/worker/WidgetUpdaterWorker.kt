@@ -200,7 +200,7 @@ class WidgetUpdaterWorker(
                 .setRequiresBatteryNotLow(true)
                 .build()
 
-            val request = PeriodicWorkRequestBuilder<WidgetUpdaterWorker>(1, TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<WidgetUpdaterWorker>(30, TimeUnit.MINUTES)
                 .setConstraints(constraints)
                 .setInputData(Data.EMPTY)
                 .build()

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
@@ -15,6 +16,7 @@ import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.tlb.CellRef
 import org.ton.tlb.asRef
+import java.io.File
 
 sealed class DeepLinkRoute {
 
@@ -59,6 +61,17 @@ sealed class DeepLinkRoute {
         constructor(uri: Uri) : this(
             from = uri.query("ft") ?: "TON",
             to = uri.query("tt")
+        )
+    }
+
+    data class Install(
+        val file: File
+    ): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            file = uri.query("file")?.let {
+                File(it)
+            } ?: throw IllegalArgumentException("\"file\" query parameter is required")
         )
     }
 
@@ -213,9 +226,11 @@ sealed class DeepLinkRoute {
                     "picker", "wallets" -> WalletPicker
                     "jetton", "token" -> Jetton(uri)
                     "story", "stories" -> Story(uri)
+                    "install" -> Install(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {
+                Log.e("ApkDownloadWorker", "Failed to resolve deep link: $uri", e)
                 return Unknown(uri)
             }
         }

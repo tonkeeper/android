@@ -110,11 +110,11 @@ platform :android do
 
     desc "Build and upload to GooglePlay"
     lane :beta do
+        assemble_release
+
         fetch_and_increment_build_number
         build_release
         upload_release
-
-        assemble_release
     end
 end
 

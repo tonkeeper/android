@@ -35,8 +35,7 @@
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <uses-feature android:name="android.hardware.nfc.hce" android:required="false" />
 
-    ${inAppUpdate ? '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />' : ''}
-
+    ${requestInstallPackagesPermission}
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>

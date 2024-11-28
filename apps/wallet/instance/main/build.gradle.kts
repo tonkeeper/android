@@ -27,10 +27,10 @@ android {
         versionName = "5.0.15" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        if (isCI) {
-            manifestPlaceholders["inAppUpdate"] = project.hasProperty("android.injected.feature.in-app-update.apk")
+        if (project.hasProperty("android.injected.feature.in-app-update.apk")) {
+            manifestPlaceholders["requestInstallPackagesPermission"] = "<uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\"/>"
         } else {
-            manifestPlaceholders["inAppUpdate"] = false
+            manifestPlaceholders["requestInstallPackagesPermission"] = ""
         }
     }
 

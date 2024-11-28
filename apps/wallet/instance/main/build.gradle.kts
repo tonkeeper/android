@@ -27,6 +27,8 @@ android {
         versionName = "5.0.15" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders["includeNonPlayStore"] = true
     }
 
     buildFeatures {
@@ -44,6 +46,7 @@ android {
             if (isCI) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            manifestPlaceholders["includeNonPlayStore"] = !project.hasProperty("buildBundle")
         }
 
         debug {
@@ -70,6 +73,12 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    bundle {
+        beforeEvaluate {
+            android.defaultConfig.manifestPlaceholders["includeNonPlayStore"] = false
+        }
+    }
 }
 
 baselineProfile {
@@ -78,7 +87,7 @@ baselineProfile {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
     implementation(project(Dependence.Wallet.app))
 
     testImplementation("junit:junit:4.13.2")

@@ -27,8 +27,11 @@ android {
         versionName = "5.0.15" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        manifestPlaceholders["includeNonPlayStore"] = true
+        if (isCI) {
+            manifestPlaceholders["inAppUpdate"] = project.hasProperty("android.injected.feature.in-app-update.apk")
+        } else {
+            manifestPlaceholders["inAppUpdate"] = false
+        }
     }
 
     buildFeatures {
@@ -46,7 +49,6 @@ android {
             if (isCI) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            manifestPlaceholders["includeNonPlayStore"] = !project.hasProperty("buildBundle")
         }
 
         debug {
@@ -72,12 +74,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
-    }
-
-    bundle {
-        beforeEvaluate {
-            android.defaultConfig.manifestPlaceholders["includeNonPlayStore"] = false
-        }
     }
 }
 

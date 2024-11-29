@@ -1,9 +1,9 @@
-package com.tonapps.tonkeeper.ui.screen.browser.explore.list.holder
+package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.imagepipeline.common.ResizeOptions
-import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
+import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreItem
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundContentTintColor
@@ -11,7 +11,7 @@ import uikit.extensions.drawable
 import uikit.navigation.Navigation
 import uikit.widget.FrescoView
 
-class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_browser_app) {
+class ExploreAppExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.App>(parent, R.layout.view_browser_app) {
 
     private val iconView = findViewById<FrescoView>(R.id.icon)
     private val nameView = findViewById<AppCompatTextView>(R.id.name)
@@ -22,7 +22,7 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_brows
         iconView.setPlaceholder(placeholderDrawable)
     }
 
-    override fun onBind(item: Item.App) {
+    override fun onBind(item: ExploreItem.App) {
         itemView.setOnClickListener {
             Navigation.from(context)?.add(DAppScreen.newInstance(
                 wallet = item.wallet,
@@ -33,5 +33,6 @@ class AppHolder(parent: ViewGroup): Holder<Item.App>(parent, R.layout.view_brows
         }
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(172)!!)
         nameView.text = item.name
+        nameView.isSingleLine = item.singleLine
     }
 }

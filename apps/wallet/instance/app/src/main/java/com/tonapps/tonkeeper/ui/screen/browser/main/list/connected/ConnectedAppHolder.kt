@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.browser.connected.list
+package com.tonapps.tonkeeper.ui.screen.browser.main.list.connected
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -9,15 +9,15 @@ import com.tonapps.wallet.data.dapps.entities.AppEntity
 import uikit.navigation.Navigation
 import uikit.widget.FrescoView
 
-class AppHolder(
+class ConnectedAppHolder(
     parent: ViewGroup,
     private val onLongClick: (AppEntity) -> Unit
-): BaseListHolder<Item>(parent, R.layout.view_browser_app) {
+): BaseListHolder<ConnectedItem>(parent, R.layout.view_browser_app) {
 
     private val iconView = findViewById<FrescoView>(R.id.icon)
     private val nameView = findViewById<AppCompatTextView>(R.id.name)
 
-    override fun onBind(item: Item) {
+    override fun onBind(item: ConnectedItem) {
         itemView.setOnClickListener {
             Navigation.from(context)?.add(DAppScreen.newInstance(
                 wallet = item.wallet,

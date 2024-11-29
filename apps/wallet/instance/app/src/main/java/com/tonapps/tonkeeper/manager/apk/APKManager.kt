@@ -66,7 +66,7 @@ class APKManager(
             return
         }
         val file = folder.file("Tonkeeper_${apk.apkName}.apk")
-        if (file.exists()) {
+        if (file.exists() && file.length() > 0) {
             _statusFlow.value = Status.Downloaded(apk, file)
         } else {
             _statusFlow.value = Status.UpdateAvailable(apk)

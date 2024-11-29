@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.browser.explore.banners
+package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.banners
 
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem

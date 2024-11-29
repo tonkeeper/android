@@ -20,7 +20,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center_horizontal"
-        android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body3"
         android:textColor="?attr/textSecondaryColor"/>
 

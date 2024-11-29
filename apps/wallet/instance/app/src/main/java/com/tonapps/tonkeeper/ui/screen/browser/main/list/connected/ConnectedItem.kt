@@ -1,11 +1,11 @@
-package com.tonapps.tonkeeper.ui.screen.browser.connected.list
+package com.tonapps.tonkeeper.ui.screen.browser.main.list.connected
 
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 
-data class Item(
+data class ConnectedItem(
     val wallet: WalletEntity,
     val app: AppEntity,
 ): BaseListItem(0) {

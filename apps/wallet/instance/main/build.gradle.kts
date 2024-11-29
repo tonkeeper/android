@@ -28,7 +28,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (project.hasProperty("android.injected.feature.in-app-update.apk")) {
-            manifestPlaceholders["requestInstallPackagesPermission"] = "<uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\"/>"
+            manifestPlaceholders["requestInstallPackagesPermission"] = "<uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\"/><uses-permission android:name=\"android.permission.FOREGROUND_SERVICE_DATA_SYNC\" />"
         } else {
             manifestPlaceholders["requestInstallPackagesPermission"] = ""
         }

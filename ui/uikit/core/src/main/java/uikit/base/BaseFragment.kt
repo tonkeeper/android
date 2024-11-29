@@ -287,7 +287,7 @@ open class BaseFragment(
         super.onDestroy()
     }
 
-    private fun finishInternal() {
+    open fun finishInternal() {
         navigation?.remove(this)
     }
 

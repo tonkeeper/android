@@ -6,8 +6,6 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameViewModel
 import com.tonapps.tonkeeper.ui.screen.events.EventsViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesViewModel
-import com.tonapps.tonkeeper.ui.screen.browser.explore.BrowserExploreViewModel
-import com.tonapps.tonkeeper.ui.screen.browser.connected.BrowserConnectedViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
 import com.tonapps.tonkeeper.ui.screen.notifications.NotificationsManageViewModel
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenViewModel
@@ -19,6 +17,8 @@ import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
+import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseViewModel
+import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreViewModel
 import com.tonapps.tonkeeper.ui.screen.card.CardViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageViewModel
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsViewModel
@@ -34,9 +34,7 @@ import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.apps.AppsViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawViewModel
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionViewModel
-import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
-
 
 val viewModelWalletModule = module {
     viewModelOf(::WalletViewModel)
@@ -44,8 +42,6 @@ val viewModelWalletModule = module {
     viewModelOf(::EditNameViewModel)
     viewModelOf(::EventsViewModel)
     viewModelOf(::CollectiblesViewModel)
-    viewModelOf(::BrowserExploreViewModel)
-    viewModelOf(::BrowserConnectedViewModel)
     viewModelOf(::DAppViewModel)
     viewModelOf(::NotificationsManageViewModel)
     viewModelOf(::TokenViewModel)
@@ -72,4 +68,6 @@ val viewModelWalletModule = module {
     viewModelOf(::CardViewModel)
     viewModelOf(::QRViewModel)
     viewModelOf(::TransactionViewModel)
+    viewModelOf(::BrowserMoreViewModel)
+    viewModelOf(::BrowserBaseViewModel)
 }

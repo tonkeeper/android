@@ -1,14 +1,14 @@
-package com.tonapps.tonkeeper.ui.screen.browser.explore.list.holder
+package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder
 
 import android.view.ViewGroup
 import androidx.viewpager2.widget.ViewPager2
-import com.tonapps.tonkeeper.ui.screen.browser.explore.banners.BannerAppItem
-import com.tonapps.tonkeeper.ui.screen.browser.explore.banners.BannersAdapter
-import com.tonapps.tonkeeper.ui.screen.browser.explore.list.Item
+import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.banners.BannerAppItem
+import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.banners.BannersAdapter
+import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreItem
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.dp
 
-class BannersHolder(parent: ViewGroup): Holder<Item.Banners>(parent, R.layout.view_browser_banners) {
+class ExploreBannersExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.Banners>(parent, R.layout.view_browser_banners) {
 
     private companion object {
         private var currentPosition = 0
@@ -38,7 +38,7 @@ class BannersHolder(parent: ViewGroup): Holder<Item.Banners>(parent, R.layout.vi
         }
     }
 
-    override fun onBind(item: Item.Banners) {
+    override fun onBind(item: ExploreItem.Banners) {
         val items = BannerAppItem.createApps(item.wallet, item.apps)
         interval = item.interval.toLong()
         adapter.submitList(items) {

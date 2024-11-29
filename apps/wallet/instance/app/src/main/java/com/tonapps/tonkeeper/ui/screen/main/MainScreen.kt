@@ -13,8 +13,8 @@ import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesScreen
 import com.tonapps.tonkeeper.ui.screen.events.EventsScreen
@@ -27,13 +27,13 @@ import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import kotlinx.coroutines.android.awaitFrame
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
+import uikit.base.BaseFragment
 import uikit.drawable.BarDrawable
 import uikit.extensions.activity
 import uikit.extensions.collectFlow
@@ -157,6 +157,17 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
     }
 
+    override fun onBackPressed(): Boolean {
+        val visibleFragment = childFragmentManager.fragments.find {
+            !it.isHidden && !it.isDetached
+        } as BaseFragment
+        return if (visibleFragment is BrowserBaseScreen) {
+            visibleFragment.onBackPressed()
+        } else {
+            super.onBackPressed()
+        }
+    }
+
     private fun parentClearState() {
         val activity = context?.activity ?: return
         val view = activity.findViewById<View>(uikit.R.id.root_container)
@@ -190,7 +201,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             R.id.wallet -> WalletScreen.newInstance(wallet)
             R.id.activity -> EventsScreen.newInstance(wallet)
             R.id.collectibles -> CollectiblesScreen.newInstance(wallet)
-            R.id.browser -> BrowserMainScreen.newInstance(wallet)
+            R.id.browser -> BrowserBaseScreen.newInstance(wallet)
             else -> throw IllegalArgumentException("Unknown itemId: $itemId")
         }
         return fragment
@@ -228,7 +239,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
         transaction.runOnCommit {
             checkBottomDivider(fragment)
-            if (fragment is BrowserMainScreen) {
+            if (fragment is BrowserBaseScreen) {
                 AnalyticsHelper.trackBrowserOpen(rootViewModel.installId, from)
             }
         }
@@ -243,7 +254,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     }
 
     private fun checkBottomDivider(fragment: Fragment) {
-        if (fragment is BrowserMainScreen) {
+        if (fragment is BrowserBaseScreen) {
             bottomTabsView.setDivider(false)
         }
     }

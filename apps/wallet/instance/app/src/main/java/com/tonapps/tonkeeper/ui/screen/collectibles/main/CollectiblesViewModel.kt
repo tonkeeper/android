@@ -81,15 +81,13 @@ class CollectiblesViewModel(
                 continue
             }
 
-            val isHiddenCollection = nft.collection?.address?.let {
-                settingsRepository.getTokenPrefs(wallet.id, it).isHidden
-            } ?: false
+            val isHiddenCollection = settingsRepository.getTokenPrefs(wallet.id, nft.collectionAddressOrNFTAddress).isHidden
 
             if (isHiddenCollection) {
                 continue
             }
 
-            val nftPref = settingsRepository.getTokenPrefs(wallet.id, nft.address)
+            val nftPref = settingsRepository.getTokenPrefs(wallet.id, nft.collectionAddressOrNFTAddress)
             if (nftPref.isHidden) {
                 continue
             }

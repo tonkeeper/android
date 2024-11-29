@@ -23,6 +23,9 @@ data class NftEntity(
     val trust: Trust,
 ): Parcelable {
 
+    val collectionAddressOrNFTAddress: String
+        get() = collection?.address ?: address
+
     val id: String
         get() = if (testnet) "testnet:$address" else address
 

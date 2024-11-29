@@ -47,7 +47,7 @@ class SuffixDrawable(
 
     override fun draw(canvas: Canvas) {
         val string = text ?: return
-        val centerY = bounds.height() / 2f - textBounds.centerY()
+        val centerY = (bounds.height() / 2f - textBounds.centerY()) + 1.dp
         canvas.drawText(string, 0f, centerY, textPaint)
     }
 

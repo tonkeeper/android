@@ -112,7 +112,7 @@ platform :android do
     lane :beta do
         fetch_and_increment_build_number
         build_release
-
+        upload_release
 
         assemble_release
     end

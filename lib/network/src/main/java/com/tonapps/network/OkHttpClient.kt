@@ -27,6 +27,7 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import org.json.JSONObject
+import java.io.IOException
 
 private fun requestBuilder(url: String): Request.Builder {
     val builder = Request.Builder()
@@ -124,7 +125,12 @@ fun OkHttpClient.sse(
         }
 
         override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-            this@callbackFlow.close(t ?: Throwable("Unknown SSE failure"))
+            val error = when (t) {
+                is StreamResetException -> t
+                null -> IOException("SSE connection failed with response: ${response?.code}")
+                else -> t
+            }
+            this@callbackFlow.close(error)
         }
 
         override fun onClosed(eventSource: EventSource) {
@@ -135,13 +141,18 @@ fun OkHttpClient.sse(
         .addHeader("Accept", "text/event-stream")
         .addHeader("Cache-Control", "no-cache")
         .addHeader("Connection", "keep-alive")
+        .addHeader("Keep-Alive", "timeout=60")
 
     if (lastEventId != null) {
         builder.addHeader("Last-Event-ID", lastEventId.toString())
     }
     val request = builder.build()
     val events = sseFactory().newEventSource(request, listener)
-    awaitClose { events.cancel() }
+    awaitClose {
+        try {
+            events.cancel()
+        } catch (ignored: Exception) { }
+    }
 }.buffer(64, BufferOverflow.DROP_OLDEST).retry { cause ->
     when {
         cause is CancellationException -> false

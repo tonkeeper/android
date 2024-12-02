@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="76dp"
+    android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/offsetMedium">
     
@@ -22,7 +22,6 @@
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Label2"
             android:textColor="?attr/textPrimaryColor"/>
 
@@ -31,7 +30,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Body3"
             android:textColor="?attr/textSecondaryColor"/>
 

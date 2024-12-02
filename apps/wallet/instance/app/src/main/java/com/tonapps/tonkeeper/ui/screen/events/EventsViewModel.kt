@@ -98,11 +98,11 @@ class EventsViewModel(
     private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull()
 
     private val historyItemsFlow = combine(
-        eventsFlow,
-        pushesFlow,
+        eventsFlow.map { list -> list.map { it.event } },
+        pushesFlow.map { list -> list.toMutableList() },
         _triggerFlow,
     ) { events, pushes, _ ->
-        mapping(events.map { it.event }, pushes.toList())
+        mapping(events, pushes)
     }
 
     private val uiItemsFlow = combine(
@@ -113,7 +113,7 @@ class EventsViewModel(
         val actionOutStatus = resolveActionOutStatus(resolveFilter(filter))
         val uiItems = historyHelper.groupByDate(historyItems.filter {
             when (actionOutStatus) {
-                ActionOutStatus.App -> it is HistoryItem.App
+                ActionOutStatus.App -> it is HistoryItem.App && it.url == (filter as? FilterItem.App)?.url
                 ActionOutStatus.Send -> it is HistoryItem.Event && (it.actionOutStatus == ActionOutStatus.Send || it.actionOutStatus == ActionOutStatus.Any)
                 ActionOutStatus.Received -> it is HistoryItem.Event && (it.actionOutStatus == ActionOutStatus.Received || it.actionOutStatus == ActionOutStatus.Any)
                 else -> true
@@ -124,9 +124,24 @@ class EventsViewModel(
         } else {
             historyHelper.removeLoadingItem(uiItems)
         }
-        setCached(list)
+        if (actionOutStatus == ActionOutStatus.Any) {
+            setCached(list)
+        }
         list
     }.flowOn(Dispatchers.IO)
+
+    /*
+    val onlyApps = filter is FilterItem.App
+        val onlyEvents = filter == null || filter is FilterItem.Send || filter is FilterItem.Receive
+        val lastTimestamp = if (onlyApps) 0 else events.lastOrNull()?.timestamp ?: 0
+        val inTimestampPushes = if (onlyEvents) {
+            emptyList()
+        } else if (0 >= lastTimestamp) {
+            pushes
+        } else {
+            pushes.filter { it.timestamp > lastTimestamp }
+        }
+     */
 
     val uiStateFlow: Flow<EventsUiState> = flow {
         val cached = getCached()

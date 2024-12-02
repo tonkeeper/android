@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
@@ -26,8 +27,10 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.hideKeyboard
+import uikit.extensions.inflate
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
+import uikit.widget.HeaderView
 
 class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_search, wallet) {
 
@@ -43,6 +46,7 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         finish()
     }
 
+    private lateinit var headerView: HeaderView
     private lateinit var footerDrawable: FooterDrawable
     private lateinit var searchContainer: View
     private lateinit var searchInput: AppCompatEditText
@@ -58,6 +62,8 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        headerView = view.findViewById(R.id.header)
+
         footerDrawable = FooterDrawable(requireContext())
         footerDrawable.setColor(requireContext().backgroundTransparentColor)
 
@@ -96,6 +102,10 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         collectFlow(viewModel.uiItemsFlow) {
             submitList(it)
             placeholderView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
+        }
+
+        view.findViewById<Button>(R.id.cancel_button).setOnClickListener {
+            finish()
         }
     }
 

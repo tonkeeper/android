@@ -217,6 +217,7 @@ open class HeaderView @JvmOverloads constructor(
 
     fun hideIcon() {
         closeView.visibility = View.GONE
+        actionView.visibility = View.GONE
     }
 
     fun setTitleGravity(gravity: Int) {

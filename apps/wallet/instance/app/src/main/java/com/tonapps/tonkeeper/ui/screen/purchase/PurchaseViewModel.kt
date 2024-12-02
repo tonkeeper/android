@@ -35,7 +35,7 @@ class PurchaseViewModel(
     private val _tabFlow = MutableStateFlow(Tab.BUY)
     val tabFlow = _tabFlow.asStateFlow()
 
-    private val dataFlow = settingsRepository.countryFlow.map { country ->
+    private val dataFlow = countryFlow.map { country ->
         purchaseRepository.get(wallet.testnet, country, settingsRepository.getLocale())
     }.filterNotNull().flowOn(Dispatchers.IO)
 

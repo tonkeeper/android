@@ -33,6 +33,12 @@ class ExploreAppExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.App>
         }
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(172)!!)
         nameView.text = item.name
-        nameView.isSingleLine = item.singleLine
+        if (item.singleLine) {
+            nameView.isSingleLine = true
+            nameView.maxLines = 1
+        } else {
+            nameView.isSingleLine = false
+            nameView.maxLines = 2
+        }
     }
 }

@@ -44,8 +44,10 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     override val viewModel: EventsViewModel by walletViewModel()
 
     private val legacyAdapter = HistoryAdapter()
+
     private val filtersAdapter = FiltersAdapter {
         viewModel.clickFilter(it)
+        scrollToFirst()
     }
 
     private val paginationListener = object : ListPaginationListener() {
@@ -137,15 +139,18 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         }
     }
 
+    private fun scrollToFirst() {
+        listView.postDelayed({
+            listView.scrollToPosition(0)
+        }, 120)
+    }
+
     private fun setLoading(loading: Boolean) {
         if (loading && refreshView.isRefreshing) {
             return
         } else if (!loading && refreshView.isRefreshing) {
             refreshView.isRefreshing = false
         }
-        /*if (refreshView.isRefreshing != loading) {
-            refreshView.isRefreshing = loading
-        }*/
         if (loading) {
             headerView.setSubtitle(Localization.updating)
         } else {

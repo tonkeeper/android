@@ -145,15 +145,8 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             navigation?.add(SwapScreen.newInstance(it.wallet, it.uri, it.address, it.from, it.to))
         }
         collectFlow(viewModel.selectedWalletFlow) { wallet ->
-            val browserTabEnabled = (wallet.isTonConnectSupported)
-            bottomTabsView.toggleItem(R.id.browser, browserTabEnabled)
-            val itemId = if (childFragmentManager.fragments.isEmpty() || (!browserTabEnabled && bottomTabsView.selectedItemId == R.id.browser)) {
-                R.id.wallet
-            } else {
-                bottomTabsView.selectedItemId
-            }
             applyWallet(wallet)
-            setFragment(itemId, wallet, "wallet",false)
+            setFragment(bottomTabsView.selectedItemId, wallet, "wallet",false)
         }
     }
 

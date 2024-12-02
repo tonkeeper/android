@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreIte
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
+import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -70,8 +71,15 @@ class BrowserMainViewModel(
             if (!isDigitalNomads) {
                 items.add(ExploreItem.Title(category.title, category.id))
             }
-            val take = if (category.apps.size >= 8) 8 else 4
-            for (app in category.apps.take(take)) {
+
+            val apps = mutableListOf<BrowserAppEntity>()
+            for (chunk in category.apps.chunked(4)) {
+                if (chunk.size > 3) {
+                    apps.addAll(chunk)
+                }
+            }
+
+            for (app in apps) {
                 items.add(ExploreItem.App(
                     app = app,
                     wallet = wallet,

@@ -74,7 +74,7 @@ class BrowserMainViewModel(
 
             val apps = mutableListOf<BrowserAppEntity>()
             for (chunk in category.apps.chunked(4)) {
-                if (chunk.size > 3) {
+                if (chunk.size >= 2) {
                     apps.addAll(chunk)
                 }
             }

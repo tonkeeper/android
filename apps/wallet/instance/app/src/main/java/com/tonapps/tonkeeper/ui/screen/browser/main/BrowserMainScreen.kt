@@ -110,7 +110,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
                 spanSizeLookup = object : SpanSizeLookup() {
                     override fun getSpanSize(position: Int): Int {
                         return when (exploreAdapter.getItemViewType(position)) {
-                            ExploreItem.TYPE_TITLE, ExploreItem.TYPE_BANNERS -> 4
+                            ExploreItem.TYPE_TITLE, ExploreItem.TYPE_BANNERS, ExploreItem.TYPE_ADS -> 4
                             else -> 1
                         }
                     }

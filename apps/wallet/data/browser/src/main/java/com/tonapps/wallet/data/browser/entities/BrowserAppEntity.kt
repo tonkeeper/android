@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.browser.entities
 import android.graphics.Color
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.extensions.toUriOrNull
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject
@@ -37,7 +38,7 @@ data class BrowserAppEntity(
         description = json.getString("description"),
         icon = Uri.parse(json.getString("icon")),
         poster = json.optString("poster")?.let { Uri.parse(it) },
-        url = Uri.parse(json.getString("url")),
+        url = json.optString("url").toUriOrNull() ?: Uri.EMPTY,
         textColor = Color.parseColor(json.optString("textColor", "#ffffff")),
         button = json.optJSONObject("button")?.let { Button(it) }
     )

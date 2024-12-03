@@ -53,6 +53,7 @@ import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.component.UpdateAvailableDialog
+import com.tonapps.tonkeeper.ui.screen.add.AddWalletScreen
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
@@ -486,7 +487,11 @@ class RootViewModel(
 
     private suspend fun processDeepLink(wallet: WalletEntity, deeplink: DeepLink, fromPackageName: String?) {
         val route = deeplink.route
-        if (route is DeepLinkRoute.TonConnect && !wallet.isWatchOnly) {
+        if (route is DeepLinkRoute.TonConnect) {
+            if (!wallet.isTonConnectSupported && accountRepository.getWallets().count { it.isTonConnectSupported } == 0) {
+                openScreen(AddWalletScreen.newInstance(true))
+                return
+            }
             processTonConnectDeepLink(deeplink, fromPackageName)
         } else if (route is DeepLinkRoute.Story) {
             showStory(route.id, "deep-link")

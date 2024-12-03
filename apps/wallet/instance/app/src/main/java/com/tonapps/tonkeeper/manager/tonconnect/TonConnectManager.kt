@@ -294,8 +294,10 @@ class TonConnectManager(
 
         val clientId = tonConnect.clientId
         try {
+            val targetWallet = if (wallet != null && wallet.isTonConnectSupported) wallet else null
+
             val app = readManifest(tonConnect.manifestUrl)
-            if (isScam(activity, wallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
+            if (isScam(activity, targetWallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
                 return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
             }
 
@@ -303,7 +305,7 @@ class TonConnectManager(
                 app = app,
                 proofPayload = tonConnect.proofPayload,
                 returnUri = tonConnect.returnUri,
-                wallet = wallet,
+                wallet = targetWallet,
                 fromPackageName = tonConnect.fromPackageName
             )
             val bundle = activity.addForResult(screen)

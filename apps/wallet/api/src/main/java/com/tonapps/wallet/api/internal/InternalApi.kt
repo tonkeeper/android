@@ -39,6 +39,7 @@ internal class InternalApi(
             .appendQueryParameter("build", build)
             .appendQueryParameter("platform", platform)
             .appendQueryParameter("chainName", if (testnet) "testnet" else "mainnet")
+
         return builder.build().toString()
     }
 

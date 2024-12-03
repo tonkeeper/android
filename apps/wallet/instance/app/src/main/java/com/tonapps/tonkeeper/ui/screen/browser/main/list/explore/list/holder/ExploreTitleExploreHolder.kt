@@ -11,11 +11,11 @@ class ExploreTitleExploreHolder(
 ): ExploreHolder<ExploreItem.Title>(parent, R.layout.view_browser_title) {
 
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
-    private val allView = findViewById<AppCompatTextView>(R.id.all)
+    // private val allView = findViewById<AppCompatTextView>(R.id.all)
 
     override fun onBind(item: ExploreItem.Title) {
         titleView.text = item.title
-        allView.setOnClickListener {
+        itemView.setOnClickListener {
             onMoreClick(item.id)
         }
     }

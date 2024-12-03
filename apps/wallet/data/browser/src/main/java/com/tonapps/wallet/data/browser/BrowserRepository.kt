@@ -44,7 +44,7 @@ class BrowserRepository(context: Context, api: API) {
         locale: Locale
     ) = flow {
         loadLocal(country, locale)?.let { emit(it) }
-        load(country, testnet, locale)?.let { emit(it) }
+        loadRemote(country, testnet, locale)?.let { emit(it) }
     }
 
     suspend fun load(country: String, testnet: Boolean, locale: Locale): BrowserDataEntity? = withContext(Dispatchers.IO) {

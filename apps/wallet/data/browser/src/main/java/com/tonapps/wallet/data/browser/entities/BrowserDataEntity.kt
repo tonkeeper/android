@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.browser.entities
 
 import android.os.Parcelable
+import android.util.Log
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 

@@ -4,7 +4,7 @@
             "outputFile": "com.tonapps.main.baselineprofile.main-mergeNonMinifiedReleaseResources-16:/values-v21/values-v21.xml",
             "map": [
                 {
-                    "source": "/Users/polstianka/.gradle/caches/8.9/transforms/201486d539326de0097093b677baf168/transformed/core-1.6.1/res/values-v21/values.xml",
+                    "source": "/Users/polstianka/.gradle/caches/8.9/transforms/2e5e94f2266d88e24bdad522f10cdcdf/transformed/core-1.6.1/res/values-v21/values.xml",
                     "from": {
                         "startLines": "4,13",
                         "startColumns": "0,0",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "/Users/polstianka/.gradle/caches/8.9/transforms/aa83e6faf0bdc5be207497c0aa108387/transformed/core-1.9.0/res/values-v21/values-v21.xml",
+                    "source": "/Users/polstianka/.gradle/caches/8.9/transforms/5919ca63a346f69f39bfa1fb45a7053f/transformed/core-1.9.0/res/values-v21/values-v21.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,13",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4",

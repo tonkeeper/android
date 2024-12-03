@@ -134,6 +134,9 @@ class DAppsRepository(
     }
 
     private suspend fun loadPushes(accountId: String, tonProof: String): AppNotificationsEntity {
+        if (true) {
+            return AppNotificationsEntity(accountId)
+        }
         val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
         database.insertNotifications(accountId, pushes)
         if (pushes.isEmpty()) {

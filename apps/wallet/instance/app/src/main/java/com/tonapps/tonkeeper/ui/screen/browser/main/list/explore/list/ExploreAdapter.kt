@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder.ExploreAdsHolder
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder.ExploreAppExploreHolder
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder.ExploreBannersExploreHolder
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder.ExploreTitleExploreHolder
@@ -18,6 +19,7 @@ class ExploreAdapter(
             ExploreItem.TYPE_TITLE -> ExploreTitleExploreHolder(parent, onMoreClick)
             ExploreItem.TYPE_APP -> ExploreAppExploreHolder(parent)
             ExploreItem.TYPE_BANNERS -> ExploreBannersExploreHolder(parent)
+            ExploreItem.TYPE_ADS -> ExploreAdsHolder(parent)
             else -> throw IllegalArgumentException("Unknown viewType: $viewType")
         }
     }

@@ -63,10 +63,19 @@ class BrowserMainViewModel(
         if (data.apps.isNotEmpty()) {
             items.add(ExploreItem.Banners(data.apps, api.config.featuredPlayInterval, wallet))
         }
+
+        var adsItem: ExploreItem.Ads? = null
         for (category in data.categories) {
             if (category.id == "featured") {
                 continue
+            } else if (category.id == "ads" && category.apps.isNotEmpty()) {
+                val ads = category.apps.first()
+                if (ads.button != null) {
+                    adsItem = ExploreItem.Ads(category.apps.first(), wallet)
+                }
+                continue
             }
+
             val isDigitalNomads = category.id == "digital_nomads"
             if (!isDigitalNomads) {
                 items.add(ExploreItem.Title(category.title, category.id))
@@ -86,6 +95,10 @@ class BrowserMainViewModel(
                     singleLine = !isDigitalNomads
                 ))
             }
+        }
+
+        adsItem?.let {
+            items.add(1, it)
         }
 
         _uiExploreItemsFlow.value = items.toList()

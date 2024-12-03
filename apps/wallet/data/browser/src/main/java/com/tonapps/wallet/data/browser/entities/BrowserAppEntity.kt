@@ -15,7 +15,22 @@ data class BrowserAppEntity(
     val poster: Uri?,
     val url: Uri,
     val textColor: Int,
+    val button: Button? = null
 ): Parcelable {
+
+    @Parcelize
+    data class Button(
+        val type: String,
+        val payload: String,
+        val title: String
+    ): Parcelable {
+
+        constructor(json: JSONObject) : this(
+            type = json.getString("type"),
+            payload = json.getString("payload"),
+            title = json.getString("title")
+        )
+    }
 
     constructor(json: JSONObject) : this(
         name = json.getString("name"),
@@ -23,7 +38,8 @@ data class BrowserAppEntity(
         icon = Uri.parse(json.getString("icon")),
         poster = json.optString("poster")?.let { Uri.parse(it) },
         url = Uri.parse(json.getString("url")),
-        textColor = Color.parseColor(json.optString("textColor", "#ffffff"))
+        textColor = Color.parseColor(json.optString("textColor", "#ffffff")),
+        button = json.optJSONObject("button")?.let { Button(it) }
     )
 
     companion object {

@@ -467,7 +467,7 @@ class RootActivity: BaseWalletActivity() {
         }
     }
 
-    private fun processDeepLink(uri: Uri, internal: Boolean, fromPackageName: String?) {
+    fun processDeepLink(uri: Uri, internal: Boolean, fromPackageName: String?) {
         viewModel.processDeepLink(uri, false, getReferrer(), internal, fromPackageName)
     }
 }

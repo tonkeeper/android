@@ -2,6 +2,7 @@
     <string name="transaction_expired">Термін дії транзакції минув</string>
     <string name="add_contact">Додати до адресної книги</string>
     <string name="add_to_home_screen">Додати на головний екран</string>
+    <string name="remind_me_later">Нагадай мені пізніше</string>
     <string name="multi_account_secret_wrong">Будь ласка, використовуйте Tonkeeper Desktop для кількох гаманців</string>
     <string name="total">Усього: %1$s</string>
     <string name="staking_ready_withdraw">%1$s готовий. Торкніться спільного збору.</string>
@@ -506,6 +507,19 @@
     <string name="address_prefix">Адреса:</string>
     <string name="your_address">Адреса гаманця:</string>
     <string name="safe_mode_tokens_footer">Безпечний режим увімкнено. Доступні лише перевірені токени. <annotation colorAttr="textAccentColor">Налаштування</annotation></string>
+    <string name="all">Всі</string>
     <string name="report_encrypted_comment">Коментар цієї транзакції буде надіслано зі звітом у розшифрованому вигляді.</string>
     <string name="select_from_gallery">Виберати із галереї</string>
+    <string name="downloading">Завантаження…</string>
+    <string name="update_tonkeeper">Оновити Tonkeeper</string>
+    <string name="update_tonkeeper_subtitle">Доступна нова версія Tonkeeper. Ви можете завантажити його зараз.</string>
+    <string name="download_error">Помилка завантаження. Торкніться, щоб повторити спробу.</string>
+    <string name="downloading_app_update">Завантаження оновлення програми</string>
+    <string name="preparing_for_downloading">Підготовка до завантаження</string>
+    <string name="notification_channel_updates_title">Оновлення</string>
+    <string name="notification_channel_updates_description">Відображає сповіщення про оновлення програми.</string>
+    <string name="download_completed">Завантаження завершено</string>
+    <string name="tap_to_install">Торкніться, щоб установити</string>
+    <string name="tap_to_update">Торкніться, щоб оновити</string>
+    <string name="download">Завантажити</string>
 </resources>

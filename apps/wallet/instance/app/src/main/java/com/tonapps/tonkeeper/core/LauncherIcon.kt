@@ -10,12 +10,9 @@ import com.tonapps.tonkeeperx.R
 
 enum class LauncherIcon(val type: String, @DrawableRes val iconRes: Int) {
     Default("Default", R.mipmap.ic_launcher),
-    Green("Green", R.mipmap.ic_green_launcher),
-    Red("Red", R.mipmap.ic_red_launcher),
-    Orange("Orange", R.mipmap.ic_orange_launcher),
-    Purple("Purple", R.mipmap.ic_purple_launcher),
-    Blue("Blue", R.mipmap.ic_blue_launcher),
-    Black("Black", R.mipmap.ic_black_launcher);
+    Accent("Accent", R.mipmap.ic_accent_launcher),
+    Dark("Dark", R.mipmap.ic_dark_launcher),
+    Light("Light", R.mipmap.ic_light_launcher);
 
     fun getComponent(context: Context): ComponentName {
         return ComponentName(context.packageName, "com.tonapps.tonkeeper.${type}LauncherIcon")

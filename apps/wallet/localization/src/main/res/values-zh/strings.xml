@@ -2,6 +2,7 @@
     <string name="transaction_expired">交易已过期</string>
     <string name="add_contact">添加到地址簿</string>
     <string name="add_to_home_screen">添加到主屏幕</string>
+    <string name="remind_me_later">稍后提醒我</string>
     <string name="multi_account_secret_wrong">请使用 Tonkeeper Desktop 管理多钱包账户</string>
     <string name="total">总计：%1$s</string>
     <string name="staking_ready_withdraw">%1$s 已准备就绪。点击共同收集。</string>
@@ -491,6 +492,19 @@
     <string name="address_prefix">地址：</string>
     <string name="your_address">您的地址：</string>
     <string name="safe_mode_tokens_footer">安全模式已启用。仅可使用经过验证的令牌。<annotation colorAttr="textAccentColor">设置</annotation></string>
+    <string name="all">全部</string>
     <string name="report_encrypted_comment">此交易的评论将与报告一起以解密形式发送。</string>
     <string name="select_from_gallery">从画廊中选择</string>
+    <string name="downloading">正在下载…</string>
+    <string name="update_tonkeeper">更新 Tonkeeper</string>
+    <string name="update_tonkeeper_subtitle">Tonkeeper 有新版本可用。您现在就可以下载。</string>
+    <string name="download_error">下载错误。点击重试。</string>
+    <string name="downloading_app_update">正在下载应用程序更新</string>
+    <string name="preparing_for_downloading">准备下载</string>
+    <string name="notification_channel_updates_title">更新</string>
+    <string name="notification_channel_updates_description">显示应用程序更新通知。</string>
+    <string name="download_completed">下载完成</string>
+    <string name="tap_to_install">点击安装</string>
+    <string name="tap_to_update">点击更新</string>
+    <string name="download">下载</string>
 </resources>

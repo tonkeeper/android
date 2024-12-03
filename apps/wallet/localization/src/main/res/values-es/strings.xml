@@ -2,6 +2,7 @@
     <string name="transaction_expired">Transacción expirada</string>
     <string name="add_contact">Agregar a la libreta de direcciones</string>
     <string name="add_to_home_screen">Agregar a la pantalla de inicio</string>
+    <string name="remind_me_later">Recuérdamelo más tarde</string>
     <string name="multi_account_secret_wrong">Utilice Tonkeeper Desktop para cuentas con múltiples billeteras</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s listo. Toca para recoger.</string>
@@ -496,7 +497,20 @@
     <string name="address_prefix">DIRECCIÓN:</string>
     <string name="your_address">Su dirección:</string>
     <string name="safe_mode_tokens_footer">El modo seguro está habilitado. Solo están disponibles los tokens verificados. <annotation colorAttr="textAccentColor">Configuración</annotation></string>
+    <string name="all">Todo</string>
     <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
     <string name="select_from_gallery">Seleccionar de la galería</string>
+    <string name="downloading">Descargando…</string>
+    <string name="update_tonkeeper">Actualizar Tonkeeper</string>
+    <string name="update_tonkeeper_subtitle">Hay una nueva versión de Tonkeeper disponible. Puedes descargarla ahora.</string>
+    <string name="download_error">Error de descarga. Pulsa para volver a intentarlo.</string>
+    <string name="downloading_app_update">Descargando actualización de la aplicación</string>
+    <string name="preparing_for_downloading">Preparándose para la descarga</string>
+    <string name="notification_channel_updates_title">Actualizaciones</string>
+    <string name="notification_channel_updates_description">Muestra notificaciones de actualización de la aplicación.</string>
+    <string name="download_completed">Descarga completada</string>
+    <string name="tap_to_install">Toque para instalar</string>
+    <string name="tap_to_update">Toque para actualizar</string>
+    <string name="download">Descargar</string>
 
 </resources>

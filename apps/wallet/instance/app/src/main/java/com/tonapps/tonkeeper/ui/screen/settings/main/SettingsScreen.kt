@@ -65,7 +65,7 @@ class SettingsScreen(
             is Item.Currency -> navigation?.add(CurrencyScreen.newInstance())
             is Item.Language -> navigation?.add(LanguageScreen.newInstance())
             is Item.Account -> navigation?.add(EditNameScreen.newInstance(item.wallet))
-            is Item.Theme -> navigation?.add(ThemeScreen.newInstance())
+            is Item.Theme -> navigation?.add(ThemeScreen.newInstance(screenContext.wallet))
             is Item.Widget -> installWidget()
             is Item.Security -> navigation?.add(SecurityScreen.newInstance(screenContext.wallet))
             is Item.Legal -> navigation?.add(LegalScreen.newInstance())

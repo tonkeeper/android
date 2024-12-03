@@ -2,6 +2,7 @@
     <string name="transaction_expired">Transaksi telah berakhir</string>
     <string name="add_contact">Tambahkan ke Buku Alamat</string>
     <string name="add_to_home_screen">Tambahkan ke Layar Beranda</string>
+    <string name="remind_me_later">Ingatkan aku nanti</string>
     <string name="multi_account_secret_wrong">Silakan gunakan Tonkeeper Desktop untuk Akun Multi-Dompet</string>
     <string name="total">Jumlah: %1$s</string>
     <string name="staking_ready_withdraw">%1$s sudah siap. Ketuk kumpulkan bersama.</string>
@@ -491,7 +492,20 @@
     <string name="address_prefix">Alamat:</string>
     <string name="your_address">Alamat Anda:</string>
     <string name="safe_mode_tokens_footer">Mode aman diaktifkan. Hanya token terverifikasi yang tersedia. <annotation colorAttr="textAccentColor">Pengaturan</annotation></string>
+    <string name="all">Semua</string>
     <string name="report_encrypted_comment">Komentar dari transaksi ini akan dikirim dengan laporan dalam bentuk terdekripsi.</string>
     <string name="select_from_gallery">Pilih Dari Galeri</string>
+    <string name="downloading">Sedang mengunduh…</string>
+    <string name="update_tonkeeper">Perbarui Tonkeeper</string>
+    <string name="update_tonkeeper_subtitle">Versi baru Tonkeeper sudah tersedia. Anda dapat mengunduhnya sekarang.</string>
+    <string name="download_error">Terjadi kesalahan pengunduhan. Ketuk untuk mencoba lagi.</string>
+    <string name="downloading_app_update">Mengunduh pembaruan aplikasi</string>
+    <string name="preparing_for_downloading">Mempersiapkan untuk mengunduh</string>
+    <string name="notification_channel_updates_title">Pembaruan</string>
+    <string name="notification_channel_updates_description">Menampilkan pemberitahuan pembaruan aplikasi.</string>
+    <string name="download_completed">Unduhan selesai</string>
+    <string name="tap_to_install">Ketuk untuk menginstal</string>
+    <string name="tap_to_update">Ketuk untuk memperbarui</string>
+    <string name="download">Unduh</string>
 
 </resources>

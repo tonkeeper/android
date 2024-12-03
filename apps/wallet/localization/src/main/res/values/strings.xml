@@ -14,6 +14,11 @@
     <string name="transaction_expired">Transaction expired</string>
     <string name="add_contact">Add to Address Book</string>
     <string name="add_to_home_screen">Add to Home Screen</string>
+    <string name="appearance">Appearance</string>
+    <string name="color_scheme">Color Scheme</string>
+    <string name="app_icon">App Icon</string>
+    <string name="app_icon_changed">App icon changed</string>
+    <string name="default_font_size">Default Font Size</string>
     <string name="downloading">Downloading…</string>
     <string name="update_tonkeeper">Update Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">A new version of Tonkeeper is available. You can download it now.</string>

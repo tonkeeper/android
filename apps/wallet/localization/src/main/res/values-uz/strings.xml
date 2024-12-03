@@ -2,6 +2,7 @@
     <string name="transaction_expired">Tranzaksiya muddati tugadi</string>
     <string name="add_contact">Manzillar kitobiga qo\'shish</string>
     <string name="add_to_home_screen">Asosiy ekranga qo\'shish</string>
+    <string name="remind_me_later">Keyinroq eslating</string>
     <string name="multi_account_secret_wrong">Multi-Wallet hisobi uchun Tonkeeper Desktop-dan foydalaning</string>
     <string name="total">Jami: %1$s</string>
     <string name="staking_ready_withdraw">%1$s tayyor. Birgalikda yig\'ish-ga teging.</string>
@@ -496,6 +497,19 @@
     <string name="address_prefix">Manzil:</string>
     <string name="your_address">Sizning manzilingiz:</string>
     <string name="safe_mode_tokens_footer">Xavfsiz rejim yoqilgan. Faqat tasdiqlangan tokenlar mavjud. <annotation colorAttr="textAccentColor">Sozlamalar</annotation></string>
+    <string name="all">Hammasi</string>
     <string name="report_encrypted_comment">Ushbu tranzaksiyaga oid fikr shifrlangan koʻrinishda hisobot bilan yuboriladi.</string>
     <string name="select_from_gallery">Galereyadan tanlang</string>
+    <string name="downloading">Yuklab olinmoqda…</string>
+    <string name="update_tonkeeper">Tonkeeper-ni yangilang</string>
+    <string name="update_tonkeeper_subtitle">Tonkeeper ilovasining yangi versiyasi mavjud. Uni hozir yuklab olishingiz mumkin.</string>
+    <string name="download_error">Yuklab olish xatosi. Qayta urinish uchun bosing.</string>
+    <string name="downloading_app_update">Ilova yangilanishi yuklab olinmoqda</string>
+    <string name="preparing_for_downloading">Yuklab olishga tayyorlanmoqda</string>
+    <string name="notification_channel_updates_title">Yangilanishlar</string>
+    <string name="notification_channel_updates_description">Ilovani yangilash bildirishnomalarini ko\'rsatadi.</string>
+    <string name="download_completed">Yuklab olish tugallandi</string>
+    <string name="tap_to_install">Oʻrnatish uchun bosing</string>
+    <string name="tap_to_update">Yangilash uchun bosing</string>
+    <string name="download">Yuklab olish</string>
 </resources>

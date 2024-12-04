@@ -11,6 +11,7 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
@@ -568,12 +569,20 @@ class API(
         boc: String,
         tonProofToken: String,
         testnet: Boolean,
+        source: String,
+        confirmationTime: Double,
     ): SendBlockchainState = withContext(Dispatchers.IO) {
         if (!isOkStatus(testnet)) {
             return@withContext SendBlockchainState.STATUS_ERROR
         }
 
-        val request = io.batteryapi.models.EmulateMessageToWalletRequest(boc)
+        val request = io.batteryapi.models.EmulateMessageToWalletRequest(
+            boc = boc,
+            platform = "android",
+            version = context.appVersionName,
+            source = source,
+            confirmationTime = confirmationTime
+        )
 
         withRetry {
             battery(testnet).sendMessage(tonProofToken, request)
@@ -583,13 +592,21 @@ class API(
 
     suspend fun sendToBlockchain(
         boc: String,
-        testnet: Boolean
+        testnet: Boolean,
+        source: String,
+        confirmationTime: Double,
     ): SendBlockchainState = withContext(Dispatchers.IO) {
         if (!isOkStatus(testnet)) {
             return@withContext SendBlockchainState.STATUS_ERROR
         }
 
-        val request = SendBlockchainMessageRequest(boc)
+        val request = SendBlockchainMessageRequest(
+            boc = boc,
+            platform = "android",
+            version = context.appVersionName,
+            source = source,
+            confirmationTime = confirmationTime
+        )
         withRetry {
             blockchain(testnet).sendBlockchainMessage(request)
             SendBlockchainState.SUCCESS

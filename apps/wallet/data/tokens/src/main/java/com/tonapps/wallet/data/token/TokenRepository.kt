@@ -223,14 +223,12 @@ class TokenRepository(
         accountId: String,
         testnet: Boolean
     ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
-
         val tonBalanceDeferred = async { remoteDataSource.loadTON(currency, accountId, testnet) }
         val jettonsDeferred = async { remoteDataSource.loadJettons(currency, accountId, testnet) }
 
-
         val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
 
-        val jettons = jettonsDeferred.await()?.toMutableList() ?: return@withContext null
+        val jettons = jettonsDeferred.await()?.toMutableList() ?: mutableListOf()
 
         val usdtIndex = jettons.indexOfFirst {
             it.token.address == TokenEntity.USDT.address

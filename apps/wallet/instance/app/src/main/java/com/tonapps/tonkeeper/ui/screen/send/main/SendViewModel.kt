@@ -964,6 +964,8 @@ class SendViewModel(
             wallet = wallet,
             boc = message,
             withBattery = withBattery,
+            source = "",
+            confirmationTime = 0.0,
         )
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)

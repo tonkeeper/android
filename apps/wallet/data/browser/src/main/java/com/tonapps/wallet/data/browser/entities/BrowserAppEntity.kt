@@ -3,8 +3,10 @@ package com.tonapps.wallet.data.browser.entities
 import android.graphics.Color
 import android.net.Uri
 import android.os.Parcelable
+import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.extensions.toUriOrNull
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject
@@ -17,8 +19,12 @@ data class BrowserAppEntity(
     val poster: Uri?,
     val url: Uri,
     val textColor: Int,
-    val button: Button? = null
+    val button: Button? = null,
 ): Parcelable {
+
+    @IgnoredOnParcel
+    val useCustomTabs: Boolean
+        get() = url.host?.endsWith("mercuryo.io") == true
 
     @Parcelize
     data class Button(

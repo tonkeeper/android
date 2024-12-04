@@ -32,8 +32,8 @@ inline fun <reified T> fromJSON(json: String): T {
 }
 
 fun <R> withRetry(
-    times: Int = 5,
-    delay: Long = 500,
+    times: Int = 3,
+    delay: Long = 100,
     retryBlock: () -> R
 ): R? {
     var index = -1

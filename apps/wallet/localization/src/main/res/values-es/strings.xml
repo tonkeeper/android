@@ -500,6 +500,7 @@
     <string name="all">Todo</string>
     <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
     <string name="select_from_gallery">Seleccionar de la galería</string>
+    <string name="open">Abierto</string>
     <string name="downloading">Descargando…</string>
     <string name="update_tonkeeper">Actualizar Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Hay una nueva versión de Tonkeeper disponible. Puedes descargarla ahora.</string>
@@ -512,5 +513,10 @@
     <string name="tap_to_install">Toque para instalar</string>
     <string name="tap_to_update">Toque para actualizar</string>
     <string name="download">Descargar</string>
+    <string name="appearance">Apariencia</string>
+    <string name="color_scheme">Esquema de colores</string>
+    <string name="app_icon">Icono de la aplicación</string>
+    <string name="app_icon_changed">El icono de la aplicación cambió</string>
+    <string name="default_font_size">Tamaño de fuente predeterminado</string>
 
 </resources>

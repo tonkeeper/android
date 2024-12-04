@@ -495,6 +495,7 @@
     <string name="all">Semua</string>
     <string name="report_encrypted_comment">Komentar dari transaksi ini akan dikirim dengan laporan dalam bentuk terdekripsi.</string>
     <string name="select_from_gallery">Pilih Dari Galeri</string>
+    <string name="open">Membuka</string>
     <string name="downloading">Sedang mengunduh…</string>
     <string name="update_tonkeeper">Perbarui Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Versi baru Tonkeeper sudah tersedia. Anda dapat mengunduhnya sekarang.</string>
@@ -507,5 +508,10 @@
     <string name="tap_to_install">Ketuk untuk menginstal</string>
     <string name="tap_to_update">Ketuk untuk memperbarui</string>
     <string name="download">Unduh</string>
+    <string name="appearance">Penampilan</string>
+    <string name="color_scheme">Skema Warna</string>
+    <string name="app_icon">Ikon Aplikasi</string>
+    <string name="app_icon_changed">Ikon aplikasi berubah</string>
+    <string name="default_font_size">Ukuran Font Default</string>
 
 </resources>

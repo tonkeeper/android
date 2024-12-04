@@ -571,6 +571,7 @@
     <string name="stories_safemode_2_subtitle">Чтобы избежать спама и подделок</string>
     <string name="stories_safemode_3_title">Только проверенные токены</string>
     <string name="select_from_gallery">Выбрать из галереи</string>
+    <string name="open">Открыть</string>
     <string name="downloading">Загрузка…</string>
     <string name="update_tonkeeper">Обновление Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Доступна новая версия Tonkeeper. Вы можете скачать ее сейчас.</string>
@@ -583,6 +584,11 @@
     <string name="tap_to_install">Нажмите, чтобы установить</string>
     <string name="tap_to_update">Нажмите, чтобы обновить</string>
     <string name="download">Скачать</string>
+    <string name="appearance">Внешний вид</string>
+    <string name="color_scheme">Цветовая схема</string>
+    <string name="app_icon">Иконка приложения</string>
+    <string name="app_icon_changed">Иконка приложения изменен</string>
+    <string name="default_font_size">Размер шрифта по умолчанию</string>
 
 
 </resources>

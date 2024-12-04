@@ -24,7 +24,7 @@ class ThemeHolder(
     override fun onBind(item: Item.Theme) {
         itemIconView.setOnClickListener { onClickTheme(item) }
         itemIconView.position = item.position
-        itemIconView.text = item.theme.key.capitalized
+        itemIconView.text = item.title.capitalized
         itemIconView.iconRes = if (item.selected) {
             UIKitIcon.ic_done_16
         } else {

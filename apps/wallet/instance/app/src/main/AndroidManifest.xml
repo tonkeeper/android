@@ -63,9 +63,9 @@
         android:fullBackupContent="false"
         android:enableOnBackInvokedCallback="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_default_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_default_launcher_round"
         android:supportsRtl="false"
         android:theme="@style/Theme.Wallet.SplashScreen"
         android:hardwareAccelerated="true"
@@ -80,8 +80,8 @@
             android:enabled="true"
             android:name="com.tonapps.tonkeeper.DefaultLauncherIcon"
             android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_launcher"
-            android:roundIcon="@mipmap/ic_launcher_round"
+            android:icon="@mipmap/ic_default_launcher"
+            android:roundIcon="@mipmap/ic_default_launcher_round"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -500,6 +500,7 @@
     <string name="all">Hammasi</string>
     <string name="report_encrypted_comment">Ushbu tranzaksiyaga oid fikr shifrlangan koʻrinishda hisobot bilan yuboriladi.</string>
     <string name="select_from_gallery">Galereyadan tanlang</string>
+    <string name="open">Ochiq</string>
     <string name="downloading">Yuklab olinmoqda…</string>
     <string name="update_tonkeeper">Tonkeeper-ni yangilang</string>
     <string name="update_tonkeeper_subtitle">Tonkeeper ilovasining yangi versiyasi mavjud. Uni hozir yuklab olishingiz mumkin.</string>
@@ -512,4 +513,9 @@
     <string name="tap_to_install">Oʻrnatish uchun bosing</string>
     <string name="tap_to_update">Yangilash uchun bosing</string>
     <string name="download">Yuklab olish</string>
+    <string name="appearance">Tashqi ko\'rinish</string>
+    <string name="color_scheme">Rang sxemasi</string>
+    <string name="app_icon">Ilova belgisi</string>
+    <string name="app_icon_changed">Ilova belgisi oʻzgartirildi</string>
+    <string name="default_font_size">Standart shrift hajmi</string>
 </resources>

@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.browser.entities
 import android.graphics.Color
 import android.net.Uri
 import android.os.Parcelable
+import androidx.core.net.toUri
 import com.tonapps.extensions.toUriOrNull
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
@@ -38,7 +39,7 @@ data class BrowserAppEntity(
         description = json.getString("description"),
         icon = Uri.parse(json.getString("icon")),
         poster = json.optString("poster")?.let { Uri.parse(it) },
-        url = json.optString("url").toUriOrNull() ?: Uri.EMPTY,
+        url = parseUrl(json.optString("url")),
         textColor = Color.parseColor(json.optString("textColor", "#ffffff")),
         button = json.optJSONObject("button")?.let { Button(it) }
     )
@@ -47,6 +48,20 @@ data class BrowserAppEntity(
 
         fun parse(array: JSONArray): List<BrowserAppEntity> {
             return (0 until array.length()).map { BrowserAppEntity(array.getJSONObject(it)) }
+        }
+
+        private fun parseUrl(value: String?): Uri {
+            if (value.isNullOrBlank()) {
+                return Uri.EMPTY
+            }
+            if (value.startsWith("http://")) {
+                return parseUrl(value.replace("http://", "https://"))
+            }
+            val uri = value.toUriOrNull() ?: return Uri.EMPTY
+            if (uri.scheme.isNullOrBlank()) {
+                return parseUrl("https://$value")
+            }
+            return uri
         }
     }
 }

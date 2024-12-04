@@ -19,7 +19,11 @@ sealed class Item(type: Int): BaseListItem(type) {
         val position: ListCell.Position,
         val theme: com.tonapps.wallet.data.core.Theme,
         val selected: Boolean
-    ): Item(TYPE_THEME)
+    ): Item(TYPE_THEME) {
+
+        val title: String
+            get() = theme.title
+    }
 
     data class Title(
         val title: String

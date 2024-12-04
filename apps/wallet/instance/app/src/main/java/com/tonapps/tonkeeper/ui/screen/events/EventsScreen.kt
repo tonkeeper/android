@@ -170,11 +170,9 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
 
     private fun setEmptyState() {
         setLoading(false)
-        if (emptyView.visibility != View.VISIBLE) {
-            headerView.setSubtitle(null)
-            emptyView.visibility = View.VISIBLE
-            refreshView.visibility = View.GONE
-        }
+        headerView.setSubtitle(null)
+        emptyView.visibility = View.VISIBLE
+        refreshView.visibility = View.GONE
     }
 
     private fun setListState(uiItems: List<HistoryItem>, commitCallback: Runnable) {

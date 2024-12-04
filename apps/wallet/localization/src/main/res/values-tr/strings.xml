@@ -500,6 +500,7 @@
     <string name="all">Tüm</string>
     <string name="report_encrypted_comment">Bu işlemden gelen yorum, şifresi çözülmüş bir şekilde raporla birlikte gönderilecektir.</string>
     <string name="select_from_gallery">Galeriden seç</string>
+    <string name="open">Açık</string>
     <string name="downloading">İndiriliyor…</string>
     <string name="update_tonkeeper">Tonkeeper\'ı güncelle</string>
     <string name="update_tonkeeper_subtitle">Tonkeeper\'ın yeni bir sürümü mevcut. Şimdi indirebilirsiniz.</string>
@@ -512,4 +513,9 @@
     <string name="tap_to_install">Yüklemek için dokunun</string>
     <string name="tap_to_update">Güncellemek için dokunun</string>
     <string name="download">İndirmek</string>
+    <string name="appearance">Dış görünüş</string>
+    <string name="color_scheme">Renk Şeması</string>
+    <string name="app_icon">Uygulama simgesi</string>
+    <string name="app_icon_changed">Uygulama simgesi değişti</string>
+    <string name="default_font_size">Varsayılan Yazı Tipi Boyutu</string>
 </resources>

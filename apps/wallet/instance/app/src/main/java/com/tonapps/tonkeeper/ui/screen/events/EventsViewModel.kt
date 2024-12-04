@@ -130,19 +130,6 @@ class EventsViewModel(
         list
     }.flowOn(Dispatchers.IO)
 
-    /*
-    val onlyApps = filter is FilterItem.App
-        val onlyEvents = filter == null || filter is FilterItem.Send || filter is FilterItem.Receive
-        val lastTimestamp = if (onlyApps) 0 else events.lastOrNull()?.timestamp ?: 0
-        val inTimestampPushes = if (onlyEvents) {
-            emptyList()
-        } else if (0 >= lastTimestamp) {
-            pushes
-        } else {
-            pushes.filter { it.timestamp > lastTimestamp }
-        }
-     */
-
     val uiStateFlow: Flow<EventsUiState> = flow {
         val cached = getCached()
         if (cached.isNotEmpty()) {

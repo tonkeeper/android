@@ -38,6 +38,7 @@ import com.tonapps.wallet.data.purchase.purchaseModule
 import com.tonapps.wallet.data.rn.rnLegacyModule
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
+import com.tonapps.wallet.localization.Localization
 import org.koin.core.component.KoinComponent
 import org.koin.android.ext.android.inject
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -67,10 +68,10 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         }
 
         super.onCreate()
-        Theme.add("system", 0)
-        Theme.add("blue", uikit.R.style.Theme_App_Blue)
-        Theme.add("dark", uikit.R.style.Theme_App_Dark)
-        Theme.add("light", uikit.R.style.Theme_App_Light, true)
+        Theme.add("blue", uikit.R.style.Theme_App_Blue, title = "Deep Blue")
+        Theme.add("dark", uikit.R.style.Theme_App_Dark, title = "Dark")
+        Theme.add("light", uikit.R.style.Theme_App_Light, true, "Light")
+        Theme.add("system", 0, title = getString(Localization.system))
 
         instance = this
 

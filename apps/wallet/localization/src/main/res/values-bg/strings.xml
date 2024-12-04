@@ -546,6 +546,7 @@
     <string name="safe_mode_tokens_footer">Безопасният режим е активиран. Налични са само потвърдени токени. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
     <string name="all">Всички</string>
     <string name="report_encrypted_comment">Коментарът от тази транзакция ще бъде изпратен с отчет в декриптирана форма.</string>
+    <string name="open">Отворете</string>
     <string name="downloading">Изтегля се...</string>
     <string name="update_tonkeeper">Актуализирайте Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Налична е нова версия на Tonkeeper. Можете да го изтеглите сега.</string>
@@ -558,4 +559,9 @@
     <string name="tap_to_install">Докоснете за инсталиране</string>
     <string name="tap_to_update">Докоснете за актуализиране</string>
     <string name="download">Изтегляне</string>
+    <string name="appearance">Външен вид</string>
+    <string name="color_scheme">Цветова схема</string>
+    <string name="app_icon">Икона на приложението</string>
+    <string name="app_icon_changed">Иконата на приложението е променена</string>
+    <string name="default_font_size">Размер на шрифта по подразбиране</string>
 </resources>

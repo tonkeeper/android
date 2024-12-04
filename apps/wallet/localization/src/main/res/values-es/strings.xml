@@ -501,6 +501,7 @@
     <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
     <string name="select_from_gallery">Seleccionar de la galería</string>
     <string name="open">Abierto</string>
+    <string name="theme_light">Ligero</string>
     <string name="downloading">Descargando…</string>
     <string name="update_tonkeeper">Actualizar Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Hay una nueva versión de Tonkeeper disponible. Puedes descargarla ahora.</string>
@@ -518,5 +519,9 @@
     <string name="app_icon">Icono de la aplicación</string>
     <string name="app_icon_changed">El icono de la aplicación cambió</string>
     <string name="default_font_size">Tamaño de fuente predeterminado</string>
+    <string name="words12">12 palabras</string>
+    <string name="words24">24 palabras</string>
+    <string name="theme_deep_blue">Azul profundo</string>
+    <string name="theme_dark">Oscuro</string>
 
 </resources>

@@ -33,6 +33,7 @@ class WordEditText @JvmOverloads constructor(
 ) : AppCompatEditText(context, attrs, defStyle) {
 
     var doOnTextChanged: ((Editable) -> Unit)? = null
+    var doOnFocusChanged: ((Boolean) -> Unit)? = null
 
     private val scope: CoroutineScope?
         get() = findViewTreeLifecycleOwner()?.lifecycleScope
@@ -48,6 +49,7 @@ class WordEditText @JvmOverloads constructor(
             } else {
                 checkValue()
             }
+            doOnFocusChanged?.invoke(hasFocus)
         }
         setOnKeyListener { _, keyCode, event ->
             if (keyCode != KeyEvent.KEYCODE_DEL || text?.isNotBlank() == true || event.action != KeyEvent.ACTION_UP) {

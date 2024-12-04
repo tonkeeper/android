@@ -10,7 +10,14 @@ object TonMnemonic {
     private val mnemonicWords = Mnemonic.mnemonicWords()
 
     fun findWords(prefix: String): List<String> {
+        if (prefix.isBlank()) {
+            return emptyList()
+        }
         return mnemonicWords.filter { it.startsWith(prefix, ignoreCase = true) }
+    }
+
+    fun findWord(prefix: String): String? {
+        return findWords(prefix).firstOrNull()
     }
 
     fun isValid(word: String?): Boolean {

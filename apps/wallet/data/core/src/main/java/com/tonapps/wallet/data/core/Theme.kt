@@ -14,6 +14,10 @@ data class Theme(
 
         private val supportedThemes = mutableListOf<Theme>()
 
+        fun clear() {
+            supportedThemes.clear()
+        }
+
         fun getByKey(key: String): Theme {
             return supportedThemes.firstOrNull { it.key == key } ?: supportedThemes.first()
         }

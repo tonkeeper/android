@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.language
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.language.list.Item

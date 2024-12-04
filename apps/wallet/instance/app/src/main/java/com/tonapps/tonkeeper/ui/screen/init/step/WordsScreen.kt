@@ -46,7 +46,9 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ColumnLayout
 import uikit.widget.LoaderView
 import uikit.widget.RowLayout
+import uikit.widget.TextHeaderView
 
+// TODO Need to refactor this screen
 class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
@@ -62,6 +64,10 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private lateinit var suggestionsView: RowLayout
     private lateinit var words24View: AppCompatTextView
     private lateinit var words12View: AppCompatTextView
+    private lateinit var titleView: TextHeaderView
+
+    private val isVisibleSuggestions: Boolean
+        get() = suggestionsView.visibility == View.VISIBLE && suggestionsView.alpha > 0f
 
     private val wordInputs: List<WordEditText> by lazy {
         contentView.getViews().filterIsInstance<WordEditText>()
@@ -69,6 +75,8 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        titleView = view.findViewById(R.id.header_title)
 
         words24View = view.findViewById(R.id.words_24)
         words24View.setOnClickListener { setWordsCount(WORDS24) }
@@ -88,14 +96,17 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         loaderView.setColor(requireContext().iconPrimaryColor)
 
         for ((index, wordInput) in wordInputs.withIndex()) {
-            val isLast = index == wordInputs.size - 1
+            wordInput.doOnFocusChanged = { onFocusChange(index, it) }
             wordInput.doOnTextChanged = { onTextChanged(index, it) }
-            wordInput.imeOptions = if (isLast) EditorInfo.IME_ACTION_DONE else EditorInfo.IME_ACTION_NEXT
+            wordInput.imeOptions = if (isLastIndex(index)) EditorInfo.IME_ACTION_DONE else EditorInfo.IME_ACTION_NEXT
             wordInput.setOnEditorActionListener { _, actionId, _ ->
-                if (isLast && actionId == EditorInfo.IME_ACTION_DONE) {
+                if (actionId == EditorInfo.IME_ACTION_NEXT && isVisibleSuggestions && suggestionsView.childCount == 1) {
+                    autoSetWord(index)
+                }
+                if (isLastIndex(index) && actionId == EditorInfo.IME_ACTION_DONE) {
                     next()
                     true
-                } else if (isLast && actionId == EditorInfo.IME_ACTION_NEXT) {
+                } else if (isLastIndex(index) && actionId == EditorInfo.IME_ACTION_NEXT) {
                     nextInput(index)
                     true
                 } else {
@@ -121,6 +132,10 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         }
     }
 
+    private fun isLastIndex(index: Int): Boolean {
+        return wordsCount - 1 == index
+    }
+
     private fun setWordsCount(count: Int) {
         if (wordsCount == count || count != WORDS24 && count != WORDS12) {
             return
@@ -129,11 +144,16 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             words24View.setBackgroundResource(uikit.R.drawable.bg_content_tint_16)
             words12View.background = null
             wordsCount = count
+            titleView.desciption = getString(Localization.import_wallet_description)
+            wordInputs[11].imeOptions = EditorInfo.IME_ACTION_NEXT
         } else {
             words12View.setBackgroundResource(uikit.R.drawable.bg_content_tint_16)
             words24View.background = null
+            titleView.desciption = getString(Localization.import_wallet_description).replace("24", "12")
+            wordInputs[23].imeOptions = EditorInfo.IME_ACTION_NEXT
         }
         wordsCount = count
+        wordInputs[count - 1].imeOptions = EditorInfo.IME_ACTION_DONE
         updateVisibleInputs()
     }
 
@@ -148,6 +168,19 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         val nextView = wordInputs.getOrNull(index + 1) ?: return
         nextView.requestFocus()
         scrollView.scrollView(nextView, false)
+    }
+
+    private fun autoSetWord(index: Int) {
+        val inputView = wordInputs.getOrNull(index) ?: return
+        val text = inputView.text.toString()
+        lifecycleScope.launch(Dispatchers.IO) {
+            val word = TonMnemonic.findWord(text)
+            if (!word.isNullOrBlank()) {
+                withContext(Dispatchers.Main) {
+                    inputView.setText(word)
+                }
+            }
+        }
     }
 
     private fun next() {
@@ -184,6 +217,14 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         wordInputs.forEach { it.isEnabled = true }
     }
 
+    private fun onFocusChange(index: Int, hasFocus: Boolean) {
+        if (hasFocus) {
+            checkSuggestions(index, wordInputs[index].text.toString())
+        } else {
+            suggestionsView.visibility = View.GONE
+        }
+    }
+
     private fun onTextChanged(index: Int, editable: Editable) {
         if (index == 0) {
             val words = TonMnemonic.parseMnemonic(editable.toString())
@@ -203,16 +244,16 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     }
 
     private fun checkSuggestions(index: Int, text: String) {
-        if (!wordInputs[index].isFocused) {
-            suggestionsView.visibility = View.GONE
-            return
-        }
-        if (text.isEmpty()) {
+        if (!wordInputs[index].isFocused || text.isEmpty()) {
             suggestionsView.visibility = View.GONE
         } else {
             lifecycleScope.launch(Dispatchers.IO) {
                 val words = TonMnemonic.findWords(text).take(3)
-                setSuggestions(index, words)
+                if (words.size == 1 && words.first().equals(text, true)) {
+                    setSuggestions(index, emptyList())
+                } else {
+                    setSuggestions(index, words)
+                }
             }
         }
     }
@@ -249,9 +290,9 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
         val nextFocusInput = inputView.focusSearch(View.FOCUS_DOWN) as? WordEditText
 
-        if (nextFocusInput != null) {
+        if (nextFocusInput != null && nextFocusInput.visibility == View.VISIBLE) {
             nextFocusInput.requestFocus()
-            if (index > 20) {
+            if (index > (wordsCount - 4)) {
                 scrollView.scrollDown(true)
             } else {
                 scrollView.scrollView(

@@ -23,6 +23,7 @@ dependencies {
 
     implementation(Dependence.KotlinX.coroutines)
     implementation(Dependence.AndroidX.core)
+    implementation(Dependence.AndroidX.webkit)
     implementation(Dependence.AndroidX.activity)
     implementation(Dependence.AndroidX.fragment)
     implementation(Dependence.AndroidX.appCompat)

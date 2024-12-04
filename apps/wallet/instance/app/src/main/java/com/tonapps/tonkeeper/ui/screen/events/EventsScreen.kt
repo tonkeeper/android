@@ -134,6 +134,8 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
             setListState(state.uiItems) {
                 if (!state.loading && !state.isFooterLoading) {
                     setLoading(false)
+                } else {
+
                 }
             }
         }
@@ -177,10 +179,8 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
 
     private fun setListState(uiItems: List<HistoryItem>, commitCallback: Runnable) {
         legacyAdapter.submitList(uiItems, commitCallback)
-        if (refreshView.visibility != View.VISIBLE) {
-            emptyView.visibility = View.GONE
-            refreshView.visibility = View.VISIBLE
-        }
+        emptyView.visibility = View.GONE
+        refreshView.visibility = View.VISIBLE
     }
 
     override fun getRecyclerView(): RecyclerView? {

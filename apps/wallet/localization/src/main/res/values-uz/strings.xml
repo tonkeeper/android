@@ -501,6 +501,7 @@
     <string name="report_encrypted_comment">Ushbu tranzaksiyaga oid fikr shifrlangan koʻrinishda hisobot bilan yuboriladi.</string>
     <string name="select_from_gallery">Galereyadan tanlang</string>
     <string name="open">Ochiq</string>
+    <string name="theme_light">Nur</string>
     <string name="downloading">Yuklab olinmoqda…</string>
     <string name="update_tonkeeper">Tonkeeper-ni yangilang</string>
     <string name="update_tonkeeper_subtitle">Tonkeeper ilovasining yangi versiyasi mavjud. Uni hozir yuklab olishingiz mumkin.</string>
@@ -518,4 +519,8 @@
     <string name="app_icon">Ilova belgisi</string>
     <string name="app_icon_changed">Ilova belgisi oʻzgartirildi</string>
     <string name="default_font_size">Standart shrift hajmi</string>
+    <string name="words12">12 so\'z</string>
+    <string name="words24">24 so\'z</string>
+    <string name="theme_deep_blue">Chuqur moviy</string>
+    <string name="theme_dark">Qorong\'i</string>
 </resources>

@@ -431,7 +431,7 @@
     <string name="received">Получено</string>
     <string name="language">Язык</string>
     <string name="sent">Отправлено</string>
-    <string name="system">Системный</string>
+    <string name="system">Системная</string>
     <string name="network_fee">Комиссия</string>
     <string name="confirm">Подтвердить</string>
     <string name="banner_top">Сейчас вы используете экспериментальную версию Tonkeeper.</string>
@@ -572,6 +572,7 @@
     <string name="stories_safemode_3_title">Только проверенные токены</string>
     <string name="select_from_gallery">Выбрать из галереи</string>
     <string name="open">Открыть</string>
+    <string name="theme_light">Светлая</string>
     <string name="downloading">Загрузка…</string>
     <string name="update_tonkeeper">Обновление Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Доступна новая версия Tonkeeper. Вы можете скачать ее сейчас.</string>
@@ -584,11 +585,15 @@
     <string name="tap_to_install">Нажмите, чтобы установить</string>
     <string name="tap_to_update">Нажмите, чтобы обновить</string>
     <string name="download">Скачать</string>
-    <string name="appearance">Внешний вид</string>
+    <string name="appearance">Оформление</string>
     <string name="color_scheme">Цветовая схема</string>
     <string name="app_icon">Иконка приложения</string>
     <string name="app_icon_changed">Иконка приложения изменен</string>
-    <string name="default_font_size">Размер шрифта по умолчанию</string>
+    <string name="default_font_size">Стандартный размер шрифта</string>
+    <string name="words24">24 слова</string>
+    <string name="theme_deep_blue">Тёмно-синяя</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="words12">12 слов</string>
 
 
 </resources>

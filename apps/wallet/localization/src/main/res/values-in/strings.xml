@@ -496,6 +496,7 @@
     <string name="report_encrypted_comment">Komentar dari transaksi ini akan dikirim dengan laporan dalam bentuk terdekripsi.</string>
     <string name="select_from_gallery">Pilih Dari Galeri</string>
     <string name="open">Membuka</string>
+    <string name="theme_light">Lampu</string>
     <string name="downloading">Sedang mengunduh…</string>
     <string name="update_tonkeeper">Perbarui Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Versi baru Tonkeeper sudah tersedia. Anda dapat mengunduhnya sekarang.</string>
@@ -513,5 +514,9 @@
     <string name="app_icon">Ikon Aplikasi</string>
     <string name="app_icon_changed">Ikon aplikasi berubah</string>
     <string name="default_font_size">Ukuran Font Default</string>
+    <string name="words12">12 kata</string>
+    <string name="words24">24 kata</string>
+    <string name="theme_deep_blue">Biru Tua</string>
+    <string name="theme_dark">Gelap</string>
 
 </resources>

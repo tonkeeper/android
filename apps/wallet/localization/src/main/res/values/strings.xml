@@ -22,6 +22,9 @@
     <string name="open">Open</string>
     <string name="words12">12 words</string>
     <string name="words24">24 words</string>
+    <string name="theme_deep_blue">Deep Blue</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
     <string name="downloading">Downloading…</string>
     <string name="update_tonkeeper">Update Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">A new version of Tonkeeper is available. You can download it now.</string>

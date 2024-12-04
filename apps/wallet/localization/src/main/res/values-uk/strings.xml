@@ -511,6 +511,7 @@
     <string name="report_encrypted_comment">Коментар цієї транзакції буде надіслано зі звітом у розшифрованому вигляді.</string>
     <string name="select_from_gallery">Виберати із галереї</string>
     <string name="open">Відкрити</string>
+    <string name="theme_light">Світла</string>
     <string name="downloading">Завантаження…</string>
     <string name="update_tonkeeper">Оновити Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Доступна нова версія Tonkeeper. Ви можете завантажити його зараз.</string>
@@ -523,9 +524,13 @@
     <string name="tap_to_install">Торкніться, щоб установити</string>
     <string name="tap_to_update">Торкніться, щоб оновити</string>
     <string name="download">Завантажити</string>
-    <string name="appearance">Зовнішній вигляд</string>
+    <string name="appearance">Оформлення</string>
     <string name="color_scheme">Схема кольорів</string>
     <string name="app_icon">Іконка програми</string>
     <string name="app_icon_changed">Іконка програми змінено</string>
     <string name="default_font_size">Розмір шрифту за замовчуванням</string>
+    <string name="words12">12 слів</string>
+    <string name="words24">24 слова</string>
+    <string name="theme_deep_blue">Темно-синя</string>
+    <string name="theme_dark">Темна</string>
 </resources>

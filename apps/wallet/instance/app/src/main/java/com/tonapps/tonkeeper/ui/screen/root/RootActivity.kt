@@ -237,7 +237,7 @@ class RootActivity: BaseWalletActivity() {
         if (!theme.isSystem) {
             setTheme(theme.resId)
         } else if (isDarkMode) {
-            setTheme(uikit.R.style.Theme_App_Blue)
+            setTheme(uikit.R.style.Theme_App_Dark)
         } else {
             setTheme(uikit.R.style.Theme_App_Light)
         }

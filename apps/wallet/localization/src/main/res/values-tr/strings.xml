@@ -501,6 +501,7 @@
     <string name="report_encrypted_comment">Bu işlemden gelen yorum, şifresi çözülmüş bir şekilde raporla birlikte gönderilecektir.</string>
     <string name="select_from_gallery">Galeriden seç</string>
     <string name="open">Açık</string>
+    <string name="theme_light">Işık</string>
     <string name="downloading">İndiriliyor…</string>
     <string name="update_tonkeeper">Tonkeeper\'ı güncelle</string>
     <string name="update_tonkeeper_subtitle">Tonkeeper\'ın yeni bir sürümü mevcut. Şimdi indirebilirsiniz.</string>
@@ -518,4 +519,8 @@
     <string name="app_icon">Uygulama simgesi</string>
     <string name="app_icon_changed">Uygulama simgesi değişti</string>
     <string name="default_font_size">Varsayılan Yazı Tipi Boyutu</string>
+    <string name="words12">12 kelime</string>
+    <string name="words24">24 kelime</string>
+    <string name="theme_deep_blue">Derin Mavi</string>
+    <string name="theme_dark">Karanlık</string>
 </resources>

@@ -4,10 +4,10 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -18,55 +18,31 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 import com.facebook.drawee.backends.pipeline.Fresco
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.extensions.appVersionName
-import com.tonapps.extensions.bestMessage
-import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.loadSquare
-import com.tonapps.tonkeeper.extensions.normalizeTONSites
+import com.tonapps.tonkeeper.extensions.setWallet
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.withUtmSource
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
-import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
-import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
-import org.json.JSONArray
-import org.json.JSONObject
-import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.core.parameter.parametersOf
 import uikit.drawable.HeaderDrawable
-import uikit.extensions.activity
 import uikit.extensions.collectFlow
 import uikit.widget.webview.WebViewFixed
-import uikit.widget.webview.bridge.BridgeWebView
-import java.util.concurrent.CancellationException
 
 class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragment_dapp, wallet) {
 
@@ -167,6 +143,10 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         closeView.setOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web_view)
+        if (viewModel.isDarkTheme && WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+            WebSettingsCompat.setAlgorithmicDarkeningAllowed(webView.settings, true)
+        }
+
         webView.setWallet(wallet)
         webView.settings.useWideViewPort = true
         webView.settings.loadWithOverviewMode = true

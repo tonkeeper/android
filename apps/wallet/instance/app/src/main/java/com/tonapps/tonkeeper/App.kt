@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.StrictMode
 import android.util.Log
+import android.webkit.CookieManager
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import com.facebook.drawee.backends.pipeline.Fresco
@@ -68,10 +69,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         }
 
         super.onCreate()
-        Theme.add("blue", uikit.R.style.Theme_App_Blue, title = "Deep Blue")
-        Theme.add("dark", uikit.R.style.Theme_App_Dark, title = "Dark")
-        Theme.add("light", uikit.R.style.Theme_App_Light, true, "Light")
-        Theme.add("system", 0, title = getString(Localization.system))
+        updateThemes()
 
         instance = this
 
@@ -82,6 +80,14 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         }
         setLocales(settingsRepository.localeList)
         initFresco()
+    }
+
+    fun updateThemes() {
+        Theme.clear()
+        Theme.add("blue", uikit.R.style.Theme_App_Blue, title = getString(Localization.theme_deep_blue))
+        Theme.add("dark", uikit.R.style.Theme_App_Dark, title = getString(Localization.theme_dark))
+        Theme.add("light", uikit.R.style.Theme_App_Light, true, title = getString(Localization.theme_light))
+        Theme.add("system", 0, title = getString(Localization.system))
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

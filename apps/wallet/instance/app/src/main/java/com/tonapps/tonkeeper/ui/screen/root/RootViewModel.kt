@@ -34,6 +34,7 @@ import com.tonapps.extensions.locale
 import com.tonapps.extensions.setLocales
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -175,6 +176,7 @@ class RootViewModel(
 
         settingsRepository.languageFlow.collectFlow {
             context.setLocales(settingsRepository.localeList)
+            App.instance.updateThemes()
         }
 
         accountRepository.selectedStateFlow.filter {

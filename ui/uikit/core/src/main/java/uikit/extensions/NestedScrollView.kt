@@ -16,8 +16,8 @@ fun NestedScrollView.scrollDown(smooth: Boolean = false) {
     }
 }
 
-fun NestedScrollView.scrollView(view: View, smooth: Boolean = false) {
-    scroll(view.left, view.top, smooth)
+fun NestedScrollView.scrollView(view: View, smooth: Boolean = false, top: Int = 0) {
+    scroll(view.left, view.top + top, smooth)
 }
 
 fun NestedScrollView.scroll(x: Int, y: Int, smooth: Boolean = false) {

@@ -9,6 +9,10 @@ object TonMnemonic {
     private val mnemonicDividers = listOf(" ", "\n", ",", ";")
     private val mnemonicWords = Mnemonic.mnemonicWords()
 
+    fun findWords(prefix: String): List<String> {
+        return mnemonicWords.filter { it.startsWith(prefix, ignoreCase = true) }
+    }
+
     fun isValid(word: String?): Boolean {
         if (word.isNullOrBlank()) {
             return false

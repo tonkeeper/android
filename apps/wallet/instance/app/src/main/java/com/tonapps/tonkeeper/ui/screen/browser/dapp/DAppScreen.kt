@@ -167,6 +167,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         closeView.setOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web_view)
+        webView.setWallet(wallet)
         webView.settings.useWideViewPort = true
         webView.settings.loadWithOverviewMode = true
         webView.addCallback(webViewCallback)

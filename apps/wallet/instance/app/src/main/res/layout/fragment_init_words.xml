@@ -1,262 +1,376 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scroll"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:clipToPadding="false">
+    android:layout_height="match_parent">
 
-    <uikit.widget.ColumnLayout
-        android:id="@+id/content"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="@dimen/offsetLarge">
+        android:clipToPadding="false">
 
-        <uikit.widget.TextHeaderView
+        <uikit.widget.ColumnLayout
+            android:id="@+id/content"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/offsetMedium"
-            android:title="@string/import_wallet_title"
-            android:description="@string/import_wallet_description"/>
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/offsetLarge">
 
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusDown="@+id/word_2"
-            android:tag="1"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_1"
-            android:nextFocusDown="@+id/word_3"
-            android:tag="2"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_2"
-            android:nextFocusDown="@+id/word_4"
-            android:tag="3"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_3"
-            android:nextFocusDown="@+id/word_5"
-            android:tag="4"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_5"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_4"
-            android:nextFocusDown="@+id/word_6"
-            android:tag="5"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_6"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_5"
-            android:nextFocusDown="@+id/word_7"
-            android:tag="6"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_7"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_6"
-            android:nextFocusDown="@+id/word_8"
-            android:tag="7"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_8"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_7"
-            android:nextFocusDown="@+id/word_9"
-            android:tag="8"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_9"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_8"
-            android:nextFocusDown="@+id/word_10"
-            android:tag="9"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_10"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_9"
-            android:nextFocusDown="@+id/word_11"
-            android:tag="10"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_11"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_10"
-            android:nextFocusDown="@+id/word_12"
-            android:tag="11"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_12"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_11"
-            android:nextFocusDown="@+id/word_13"
-            android:tag="12"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_13"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_12"
-            android:nextFocusDown="@+id/word_14"
-            android:tag="13"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_14"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_13"
-            android:nextFocusDown="@+id/word_15"
-            android:tag="14"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_15"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_14"
-            android:nextFocusDown="@+id/word_16"
-            android:tag="15"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_16"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_15"
-            android:nextFocusDown="@+id/word_17"
-            android:tag="16"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_17"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_16"
-            android:nextFocusDown="@+id/word_18"
-            android:tag="17"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_18"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_17"
-            android:nextFocusDown="@+id/word_19"
-            android:tag="18"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_19"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_18"
-            android:nextFocusDown="@+id/word_20"
-            android:tag="19"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_20"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_19"
-            android:nextFocusDown="@+id/word_21"
-            android:tag="20"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_21"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_20"
-            android:nextFocusDown="@+id/word_22"
-            android:tag="21"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_22"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_21"
-            android:nextFocusDown="@+id/word_23"
-            android:tag="22"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_23"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_22"
-            android:nextFocusDown="@+id/word_24"
-            android:tag="23"/>
-
-        <com.tonapps.tonkeeper.ui.component.WordEditText
-            style="@style/Widget.App.WordEditText"
-            android:id="@+id/word_24"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@+id/word_23"
-            android:imeOptions="actionDone"
-            android:tag="24"/>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/offsetLarge">
-
-            <Button
-                style="@style/Widget.App.Button"
-                android:id="@+id/button"
+            <uikit.widget.TextHeaderView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.Label1"
-                android:enabled="false"
-                android:text="@string/continue_action"/>
-            
-            <uikit.widget.LoaderView
-                android:id="@+id/loader"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_marginBottom="@dimen/offsetMedium"
+                android:title="@string/import_wallet_title"
+                android:description="@string/import_wallet_description"/>
+
+            <uikit.widget.RowLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:visibility="gone"/>
+                android:padding="4dp"
+                android:background="@drawable/bg_content_20">
 
-        </FrameLayout>
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/words_24"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:textColor="?attr/textPrimaryColor"
+                    android:textAppearance="@style/TextAppearance.Label2"
+                    android:paddingHorizontal="14dp"
+                    android:background="@drawable/bg_content_tint_16"
+                    android:gravity="center"
+                    android:text="@string/words24"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/words_12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:textColor="?attr/textPrimaryColor"
+                    android:textAppearance="@style/TextAppearance.Label2"
+                    android:paddingHorizontal="14dp"
+                    android:gravity="center"
+                    android:text="@string/words12"/>
+
+            </uikit.widget.RowLayout>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusDown="@+id/word_2"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="1"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_1"
+                android:nextFocusDown="@+id/word_3"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="2"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_2"
+                android:nextFocusDown="@+id/word_4"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="3"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_3"
+                android:nextFocusDown="@+id/word_5"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="4"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_4"
+                android:nextFocusDown="@+id/word_6"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="5"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_5"
+                android:nextFocusDown="@+id/word_7"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="6"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_7"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_6"
+                android:nextFocusDown="@+id/word_8"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="7"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_8"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_7"
+                android:nextFocusDown="@+id/word_9"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="8"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_9"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_8"
+                android:nextFocusDown="@+id/word_10"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="9"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_10"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_9"
+                android:nextFocusDown="@+id/word_11"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="10"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_11"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_10"
+                android:nextFocusDown="@+id/word_12"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="11"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_12"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_11"
+                android:nextFocusDown="@+id/word_13"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="12"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_13"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_12"
+                android:nextFocusDown="@+id/word_14"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="13"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_14"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_13"
+                android:nextFocusDown="@+id/word_15"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="14"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_15"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_14"
+                android:nextFocusDown="@+id/word_16"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="15"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_16"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_15"
+                android:nextFocusDown="@+id/word_17"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="16"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_17"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_16"
+                android:nextFocusDown="@+id/word_18"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="17"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_18"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_17"
+                android:nextFocusDown="@+id/word_19"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="18"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_19"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_18"
+                android:nextFocusDown="@+id/word_20"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="19"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_20"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_19"
+                android:nextFocusDown="@+id/word_21"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="20"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_21"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_20"
+                android:nextFocusDown="@+id/word_22"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="21"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_22"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_21"
+                android:nextFocusDown="@+id/word_23"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="22"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_23"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_22"
+                android:nextFocusDown="@+id/word_24"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="23"/>
+
+            <com.tonapps.tonkeeper.ui.component.WordEditText
+                style="@style/Widget.App.WordEditText"
+                android:id="@+id/word_24"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@+id/word_23"
+                android:imeOptions="actionDone"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:tag="24"/>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge">
+
+                <Button
+                    style="@style/Widget.App.Button"
+                    android:id="@+id/button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Label1"
+                    android:enabled="false"
+                    android:text="@string/continue_action"/>
+
+                <uikit.widget.LoaderView
+                    android:id="@+id/loader"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+
+            </FrameLayout>
 
 
-    </uikit.widget.ColumnLayout>
+        </uikit.widget.ColumnLayout>
 
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <uikit.widget.RowLayout
+        android:id="@+id/suggestions"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_gravity="bottom"
+        android:visibility="gone"/>
+
+</FrameLayout>

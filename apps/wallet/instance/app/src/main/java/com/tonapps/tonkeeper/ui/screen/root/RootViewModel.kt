@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.webkit.WebView
 import androidx.core.content.FileProvider
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -184,6 +185,11 @@ class RootViewModel(
                 ShortcutManagerCompat.removeAllDynamicShortcuts(context)
             } else if (state is AccountRepository.SelectedState.Wallet) {
                 _hasWalletFlow.tryEmit(true)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    try {
+                        WebView.setDataDirectorySuffix("wallet_${state.wallet.id.replace("-", "")}")
+                    } catch (ignored: Throwable) { }
+                }
             }
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
 

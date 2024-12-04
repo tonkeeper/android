@@ -13,6 +13,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
@@ -37,12 +39,17 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
     override val viewModel: BrowserSearchViewModel by viewModel()
 
     private val adapter = Adapter { title, url ->
-        navigation?.add(DAppScreen.newInstance(
-            wallet = screenContext.wallet,
-            title = title,
-            url = url.toUri(),
-            source = "browser_search"
-        ))
+        val uri = url.toUriOrNull() ?: return@Adapter
+        if (uri.host?.endsWith("mercuryo.io") == true) {
+            BrowserHelper.open(requireContext(), url)
+        } else {
+            navigation?.add(DAppScreen.newInstance(
+                wallet = screenContext.wallet,
+                title = title,
+                url = url.toUri(),
+                source = "browser_search"
+            ))
+        }
         finish()
     }
 

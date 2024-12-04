@@ -2,9 +2,15 @@ package com.tonapps.tonkeeper.ui.screen.init.step
 
 import android.os.Bundle
 import android.text.Editable
+import android.util.Log
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.LinearLayout
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.updatePadding
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
@@ -14,7 +20,9 @@ import com.tonapps.tonkeeper.ui.component.WordEditText
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.iconPrimaryColor
+import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -23,9 +31,11 @@ import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
+import uikit.drawable.FooterDrawable
 import uikit.extensions.clear
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
+import uikit.extensions.dp
 import uikit.extensions.getCurrentFocusEditText
 import uikit.extensions.getViews
 import uikit.extensions.hideKeyboard
@@ -35,6 +45,7 @@ import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ColumnLayout
 import uikit.widget.LoaderView
+import uikit.widget.RowLayout
 
 class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
@@ -42,10 +53,15 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     override val secure: Boolean = !BuildConfig.DEBUG
 
+    private var wordsCount = WORDS24
+
     private lateinit var scrollView: NestedScrollView
     private lateinit var contentView: ColumnLayout
     private lateinit var button: Button
     private lateinit var loaderView: LoaderView
+    private lateinit var suggestionsView: RowLayout
+    private lateinit var words24View: AppCompatTextView
+    private lateinit var words12View: AppCompatTextView
 
     private val wordInputs: List<WordEditText> by lazy {
         contentView.getViews().filterIsInstance<WordEditText>()
@@ -53,10 +69,14 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        words24View = view.findViewById(R.id.words_24)
+        words24View.setOnClickListener { setWordsCount(WORDS24) }
+
+        words12View = view.findViewById(R.id.words_12)
+        words12View.setOnClickListener { setWordsCount(WORDS12) }
+
         scrollView = view.findViewById(R.id.scroll)
-        scrollView.doKeyboardAnimation { offset, _, _ ->
-            scrollView.updatePadding(bottom = offset)
-        }
 
         contentView = view.findViewById(R.id.content)
 
@@ -84,9 +104,44 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             }
         }
 
+        suggestionsView = view.findViewById(R.id.suggestions)
+        suggestionsView.background = FooterDrawable(requireContext()).apply {
+            setDivider(true)
+            setColor(requireContext().backgroundContentTintColor)
+        }
+
         collectFlow(initViewModel.uiTopOffset) {
             contentView.updatePadding(top = it)
         }
+
+        scrollView.doKeyboardAnimation { offset, progress, isShowing ->
+            scrollView.updatePadding(bottom = offset)
+            suggestionsView.translationY = -offset.toFloat()
+            suggestionsView.alpha = progress
+        }
+    }
+
+    private fun setWordsCount(count: Int) {
+        if (wordsCount == count || count != WORDS24 && count != WORDS12) {
+            return
+        }
+        if (count == WORDS24) {
+            words24View.setBackgroundResource(uikit.R.drawable.bg_content_tint_16)
+            words12View.background = null
+            wordsCount = count
+        } else {
+            words12View.setBackgroundResource(uikit.R.drawable.bg_content_tint_16)
+            words24View.background = null
+        }
+        wordsCount = count
+        updateVisibleInputs()
+    }
+
+    private fun updateVisibleInputs() {
+        wordInputs.forEachIndexed { index, wordInput ->
+            wordInput.visibility = if (index < wordsCount) View.VISIBLE else View.GONE
+        }
+        postOnAnimation { checkWords() }
     }
 
     private fun nextInput(index: Int) {
@@ -98,7 +153,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private fun next() {
         lifecycleScope.launch {
             val words = getMnemonic()
-            if (words.isEmpty() || !Mnemonic.isValid(words)) {
+            if (words.isEmpty() || (wordsCount == WORDS24 && !Mnemonic.isValid(words))) {
                 if (TonMnemonic.isValidTONKeychain(words)) {
                     navigation?.toast(Localization.multi_account_secret_wrong)
                 } else {
@@ -132,13 +187,81 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private fun onTextChanged(index: Int, editable: Editable) {
         if (index == 0) {
             val words = TonMnemonic.parseMnemonic(editable.toString())
-            post {
-                applyWords(words)
+            postOnAnimation {
+                if (words.isNotEmpty()) {
+                    applyWords(words)
+                } else {
+                    checkSuggestions(index, editable.toString())
+                }
             }
         } else {
-            post {
+            postOnAnimation {
                 checkWords()
+                checkSuggestions(index, editable.toString())
             }
+        }
+    }
+
+    private fun checkSuggestions(index: Int, text: String) {
+        if (!wordInputs[index].isFocused) {
+            suggestionsView.visibility = View.GONE
+            return
+        }
+        if (text.isEmpty()) {
+            suggestionsView.visibility = View.GONE
+        } else {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val words = TonMnemonic.findWords(text).take(3)
+                setSuggestions(index, words)
+            }
+        }
+    }
+
+    private suspend fun setSuggestions(
+        index: Int,
+        words: List<String>
+    ) = withContext(Dispatchers.Main) {
+        if (words.isEmpty()) {
+            suggestionsView.visibility = View.GONE
+        } else {
+            suggestionsView.removeAllViews()
+            for (word in words) {
+                val textView = AppCompatTextView(requireContext()).apply {
+                    setTextAppearance(uikit.R.style.TextAppearance_Label2)
+                    setTextColor(requireContext().textPrimaryColor)
+                    text = word
+                    gravity = Gravity.CENTER
+                    setOnClickListener { setWord(index, word) }
+                }
+                suggestionsView.addView(textView, LinearLayoutCompat.LayoutParams(LinearLayoutCompat.LayoutParams.MATCH_PARENT, LinearLayoutCompat.LayoutParams.MATCH_PARENT, 1f))
+            }
+            suggestionsView.visibility = View.VISIBLE
+        }
+    }
+
+    private fun setWord(index: Int, value: String) {
+        if (suggestionsView.alpha == 0f || suggestionsView.visibility != View.VISIBLE) {
+            return
+        }
+        suggestionsView.visibility = View.GONE
+        val inputView = wordInputs.getOrNull(index) ?: return
+        inputView.setText(value)
+
+        val nextFocusInput = inputView.focusSearch(View.FOCUS_DOWN) as? WordEditText
+
+        if (nextFocusInput != null) {
+            nextFocusInput.requestFocus()
+            if (index > 20) {
+                scrollView.scrollDown(true)
+            } else {
+                scrollView.scrollView(
+                    view = nextFocusInput,
+                    smooth = true,
+                    top = (-128).dp
+                )
+            }
+        } else {
+            next()
         }
     }
 
@@ -156,7 +279,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             if (delay > 0) {
                 delay(delay)
             }
-            button.isEnabled = getMnemonic().size == 24
+            button.isEnabled = getMnemonic().size == wordsCount
         }
     }
 
@@ -165,8 +288,9 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             .map { it.text?.toString() }
             .filter { TonMnemonic.isValid(it) }
             .filterNotNull()
+            .take(wordsCount)
 
-        if (words.size == wordInputs.size) {
+        if (words.size == wordInputs.count { it.visibility == View.VISIBLE }) {
             words
         } else {
             emptyList()
@@ -186,6 +310,9 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     }
 
     companion object {
+
+        private const val WORDS24 = 24
+        private const val WORDS12 = 12
 
         private const val ARG_TESTNET = "testnet"
 

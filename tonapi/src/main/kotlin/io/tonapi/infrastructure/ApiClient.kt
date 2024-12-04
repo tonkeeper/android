@@ -1,5 +1,6 @@
 package io.tonapi.infrastructure
 
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody

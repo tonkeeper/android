@@ -101,6 +101,9 @@ class DAppsRepository(
     }
 
     private suspend fun refreshLocalPushes(accountId: String) {
+        if (true) {
+            return
+        }
         val local = getPushes(accountId)
         if (!local.isEmpty) {
             setAppNotifications(local)

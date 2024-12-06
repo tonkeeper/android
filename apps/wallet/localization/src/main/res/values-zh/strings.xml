@@ -209,12 +209,12 @@
     <string name="passcode_new">创建新密码</string>
     <string name="import_wallet">导入钱包</string>
     <string name="import_wallet_subtitle">从以下选项中选择。</string>
-    <string name="import_wallet_words">使用24个秘密恢复词导入钱包</string>
+    <string name="import_wallet_words">使用 24 或 12 个秘密恢复词导入钱包</string>
     <string name="watch_wallet">观察账户</string>
     <string name="watch_wallet_subtitle">用于监控钱包活动而无需恢复短语</string>
     <string name="watch_wallet_add">在不需要恢复短语的情况下监控钱包活动。您将收到来自此钱包的任何交易通知。</string>
     <string name="testnet_wallet">测试网账户</string>
-    <string name="testnet_wallet_subtitle">使用24个秘密恢复词导入钱包到测试网</string>
+    <string name="testnet_wallet_subtitle">将带有 24 或 12 个秘密恢复字的钱包导入测试网</string>
     <string name="signer_wallet">与签名者配对</string>
     <string name="signer_wallet_subtitle">更高级别的控制和安全</string>
     <string name="cancel">取消</string>
@@ -227,7 +227,7 @@
     <string name="enable_notification_subtitle">在您收到TON、代币和NFT时获取通知</string>
     <string name="widget_placeholder">需要选择一个钱包</string>
     <string name="import_wallet_title">输入您的恢复短语</string>
-    <string name="import_wallet_description">要恢复对钱包的访问，请输入在创建钱包时提供给您的24个秘密恢复词。</string>
+    <string name="import_wallet_description">要恢复对钱包的访问权限，请输入您创建钱包时提供的 24 或 12 个秘密恢复词。</string>
     <string name="start_dialog_title">让我们设置你的钱包</string>
     <string name="start_dialog_description">要使用Tonkeeper，您需要连接一个钱包。您可以创建一个新钱包或导入现有的钱包。</string>
     <string name="wallet_generating">正在生成钱包…</string>

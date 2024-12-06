@@ -257,12 +257,12 @@
     <string name="passcode_new">Създайте нов код за достъп</string>
     <string name="import_wallet">Импортиране на портфейл</string>
     <string name="import_wallet_subtitle">Изберете от опциите по-долу.</string>
-    <string name="import_wallet_words">Импортиране на портфейл с 24 тайни възстановителни думи</string>
+    <string name="import_wallet_words">Импортирайте портфейла с 24 или 12 тайни думи за възстановяване</string>
     <string name="watch_wallet">Наблюдателен акаунт</string>
     <string name="watch_wallet_subtitle">За мониторинг на активността на портфейла без възстановителна фраза</string>
     <string name="watch_wallet_add">Мониторинг на активността на портфейла без възстановителна фраза. Ще бъдете уведомявани за всички транзакции от този портфейл.</string>
     <string name="testnet_wallet">Testnet акаунт</string>
-    <string name="testnet_wallet_subtitle">Импортиране на портфейл с 24 тайни възстановителни думи към Testnet</string>
+    <string name="testnet_wallet_subtitle">Импортирайте портфейл с 24 или 12 тайни думи за възстановяване в Testnet</string>
     <string name="signer_wallet">Сдвояване със Signer</string>
     <string name="signer_wallet_subtitle">По-високо ниво на контрол и сигурност</string>
     <string name="cancel">Отказ</string>
@@ -276,8 +276,8 @@
     <string name="widget_placeholder">Трябва да изберете портфейл</string>
 
     <string name="import_wallet_title">Въведете вашата възстановителна фраза</string>
-    <string name="import_wallet_description">За да възстановите достъпа до вашия портфейл, въведете 24-те тайни възстановителни думи, които сте получили при създаването на вашия портфейл.</string>
 
+    <string name="import_wallet_description">За да възстановите достъпа до портфейла си, въведете 24 или 12 тайни думи за възстановяване, дадени ви когато сте създали своя портфейл.</string>
     <string name="start_dialog_title">Нека настроим вашия портфейл</string>
     <string name="start_dialog_description">Необходим ви е свързан портфейл, за да използвате Tonkeeper. Създайте нов портфейл или импортирайте съществуващ.</string>
 

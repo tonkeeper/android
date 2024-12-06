@@ -209,12 +209,12 @@
     <string name="passcode_new">Yangi parol yarating</string>
     <string name="import_wallet">Hamyonni import qilish</string>
     <string name="import_wallet_subtitle">Quyidagi variantlardan birini tanlang.</string>
-    <string name="import_wallet_words">24 ta maxfiy tiklash so\'zlari bilan hamyonni import qiling</string>
+    <string name="import_wallet_words">24 yoki 12 maxfiy soʻzli hamyonni import qiling</string>
     <string name="watch_wallet">Hisobni kuzatish</string>
     <string name="watch_wallet_subtitle">Hamyon faoliyatini tiklash iborasiz kuzatish uchun</string>
     <string name="watch_wallet_add">Hamyon faoliyatini tiklash iborasisiz kuzatib boring. Ushbu hamyondan amalga oshirilgan har qanday tranzaksiyalar haqida xabardor qilinasiz.</string>
     <string name="testnet_wallet">Testnet Hisobi</string>
-    <string name="testnet_wallet_subtitle">Testnet uchun 24 ta maxfiy tiklash so\'zlari bilan hamyonni import qiling</string>
+    <string name="testnet_wallet_subtitle">24 yoki 12 maxfiy soʻzli hamyonni Testnet’ga import qiling</string>
     <string name="signer_wallet">Imzo qo\'yuvchi bilan juftlashtirish</string>
     <string name="signer_wallet_subtitle">Yuqori darajadagi nazorat va xavfsizlik</string>
     <string name="cancel">Bekor qilish</string>
@@ -227,7 +227,7 @@
     <string name="enable_notification_subtitle">TON, tokenlar va NFTlarni qabul qilganingizda xabarnoma oling</string>
     <string name="widget_placeholder">Hamyon tanlash kerak</string>
     <string name="import_wallet_title">Qayta tiklash iborangizni kiriting</string>
-    <string name="import_wallet_description">Hamyoningizga kirishni tiklash uchun, hamyoningizni yaratganingizda sizga berilgan 24 ta maxfiy tiklash so\'zlarini kiriting.</string>
+    <string name="import_wallet_description">Hamyoningizga kirishni tiklash uchun, hamyoningizni yaratganingizda sizga berilgan 24 yoki 12-sonli yashirin tiklanish so\'zlarini kiriting.</string>
     <string name="start_dialog_title">Keling, hamyoningizni sozlaymiz</string>
     <string name="start_dialog_description">Tonkeeper’dan foydalanish uchun sizga ulangan hamyon kerak. Yangi hamyon yarating yoki mavjudini import qiling.</string>
     <string name="wallet_generating">Hamyon yaratilmoqda…</string>

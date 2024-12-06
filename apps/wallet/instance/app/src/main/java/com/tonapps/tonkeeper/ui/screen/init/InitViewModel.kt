@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.blockchain.ton.EntropyHelper
 import com.tonapps.blockchain.ton.TonMnemonic
@@ -127,6 +129,12 @@ class InitViewModel(
     private val requestSetPinCode: Boolean
         get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !isPinSet.get()
 
+    var wordsCount: Int
+        get() = savedState.wordsCount
+        set(value) {
+            savedState.wordsCount = value
+        }
+
     init {
         savedState.publicKey = args.publicKey?.let {
             InitModelState.PublicKey(publicKey = it)
@@ -220,16 +228,23 @@ class InitViewModel(
         }
     }
 
-    suspend fun setMnemonic(words: List<String>) {
-        savedState.mnemonic = words
-        resolveWallets(words)
+    suspend fun setMnemonic(words: List<String>): Boolean {
+        if (resolveWallets(words)) {
+            savedState.mnemonic = words
+            return true
+        }
+        return false
     }
 
-    private suspend fun resolveWallets(mnemonic: List<String>) = withContext(Dispatchers.IO) {
-        val seed = Mnemonic.toSeed(mnemonic)
-        val privateKey = PrivateKeyEd25519(seed)
-        val publicKey = privateKey.publicKey()
-        resolveWallets(InitModelState.PublicKey(publicKey = publicKey))
+    private suspend fun resolveWallets(mnemonic: List<String>): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val privateKey = MnemonicHelper.privateKey(mnemonic)
+            val publicKey = privateKey.publicKey()
+            resolveWallets(InitModelState.PublicKey(publicKey = publicKey))
+            true
+        } catch (e: Throwable) {
+            false
+        }
     }
 
     private suspend fun resolveWallets(publicKey: InitModelState.PublicKey) = withContext(Dispatchers.IO) {

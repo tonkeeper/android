@@ -18,6 +18,8 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.uikit.color.textSecondaryColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.mnemonic.Mnemonic
@@ -39,6 +41,7 @@ class WordEditText @JvmOverloads constructor(
         get() = findViewTreeLifecycleOwner()?.lifecycleScope
 
     private val inputDrawable = InputDrawable(context)
+    private var checkValueJob: Job? = null
 
     init {
         background = inputDrawable
@@ -63,15 +66,16 @@ class WordEditText @JvmOverloads constructor(
         setStartDrawable(IndexDrawable(context, tag))
     }
 
-    private fun checkValue() {
+    fun checkValue() {
+        checkValueJob?.cancel()
         val value = text.toString()
         if (value.isEmpty()) {
+            inputDrawable.error = false
             return
         }
-        scope?.launch {
-            if (!isValidWord(value)) {
-                inputDrawable.error = true
-            }
+        checkValueJob = scope?.launch {
+            delay(120)
+            inputDrawable.error = !isValidWord(value)
         }
     }
 

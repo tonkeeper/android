@@ -147,6 +147,7 @@
     <string name="passcode_new">Задайте новый пин-код</string>
     <string name="receive_coin">Получить %1$s</string>
     <string name="receive_coin_description">Отправляйте на этот адрес только %1$s и токены в сети TON, иначе вы можете потерять свои средства.</string>
+    <string name="testnet_wallet_subtitle">Добавить кошелёк с помощью секретного ключа из 24 или 12 слов для тестнета</string>
     <string name="signer_wallet">Подключить Signer</string>
     <string name="signer_wallet_subtitle">Полностью оффлайн, изолированный, все функции TON</string>
     <string name="signer_description">Откройте Signer » Выберите ключ » Отсканируйте QR-код</string>
@@ -159,11 +160,10 @@
     <string name="confirm_and_send">Подтвердить и отправить</string>
     <string name="send_request_comment">Обязательно укажите memo или тег при отправке на биржу.</string>
     <string name="import_wallet">Существующий кошелёк</string>
-    <string name="import_wallet_words">Добавить кошелёк с помощью секретного ключа из 24 слов</string>
+    <string name="import_wallet_words">Добавить кошелёк с помощью секретного ключа из 24 или 12 слов</string>
     <string name="watch_wallet">Аккаунт для просмотра</string>
     <string name="watch_wallet_subtitle">Для отслеживания активности кошелька без ввода секретного ключа</string>
     <string name="testnet_wallet">Аккаунт в Testnet</string>
-    <string name="testnet_wallet_subtitle">Добавить кошелёк с помощью секретного ключа из 24 слов</string>
     <string name="keystone_description">Откройте Keystone » Программные кошельки » Tonkeeper</string>
     <string name="keystone_about">О Keystone</string>
     <string name="signer_about">Подробнее про Signer</string>
@@ -339,8 +339,8 @@
     <string name="widget_placeholder">Нужно выбрать кошелек</string>
 
     <string name="import_wallet_title">Введите фразу восстановления</string>
-    <string name="import_wallet_description">Чтобы восстановить доступ к вашему кошельку, введите 24 секретных слова восстановления, данные вам при создании кошелька.</string>
 
+    <string name="import_wallet_description">Чтобы восстановить доступ, введите 24 или 12 секретных слова, которые вы получили при создании кошелька.</string>
     <string name="start_dialog_title">Сперва подключим кошелёк</string>
     <string name="start_dialog_description">Чтобы использовать Tonkeeper, нужен кошелёк. Создайте новый или подключите существующий.</string>
 

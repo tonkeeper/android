@@ -14,6 +14,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.updatePadding
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.TonMnemonic
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.component.WordEditText
@@ -55,8 +56,6 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     override val secure: Boolean = !BuildConfig.DEBUG
 
-    private var wordsCount = WORDS24
-
     private lateinit var scrollView: NestedScrollView
     private lateinit var contentView: ColumnLayout
     private lateinit var button: Button
@@ -70,7 +69,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         get() = suggestionsView.visibility == View.VISIBLE && suggestionsView.alpha > 0f
 
     private val wordInputs: List<WordEditText> by lazy {
-        contentView.getViews().filterIsInstance<WordEditText>()
+        contentView.findViewById<ColumnLayout>(R.id.inputs).getViews().filterIsInstance<WordEditText>()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -125,41 +124,41 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             contentView.updatePadding(top = it)
         }
 
-        scrollView.doKeyboardAnimation { offset, progress, isShowing ->
+        scrollView.doKeyboardAnimation { offset, progress, _ ->
             scrollView.updatePadding(bottom = offset)
             suggestionsView.translationY = -offset.toFloat()
             suggestionsView.alpha = progress
         }
+
+        setWordsCount(initViewModel.wordsCount)
     }
 
     private fun isLastIndex(index: Int): Boolean {
-        return wordsCount - 1 == index
+        return initViewModel.wordsCount - 1 == index
     }
 
     private fun setWordsCount(count: Int) {
-        if (wordsCount == count || count != WORDS24 && count != WORDS12) {
+        if (initViewModel.wordsCount == count || count != WORDS24 && count != WORDS12) {
             return
         }
         if (count == WORDS24) {
             words24View.setBackgroundResource(uikit.R.drawable.bg_content_tint_16)
             words12View.background = null
-            wordsCount = count
-            titleView.desciption = getString(Localization.import_wallet_description)
+            initViewModel.wordsCount = count
             wordInputs[11].imeOptions = EditorInfo.IME_ACTION_NEXT
         } else {
             words12View.setBackgroundResource(uikit.R.drawable.bg_content_tint_16)
             words24View.background = null
-            titleView.desciption = getString(Localization.import_wallet_description).replace("24", "12")
             wordInputs[23].imeOptions = EditorInfo.IME_ACTION_NEXT
         }
-        wordsCount = count
+        initViewModel.wordsCount = count
         wordInputs[count - 1].imeOptions = EditorInfo.IME_ACTION_DONE
         updateVisibleInputs()
     }
 
     private fun updateVisibleInputs() {
         wordInputs.forEachIndexed { index, wordInput ->
-            wordInput.visibility = if (index < wordsCount) View.VISIBLE else View.GONE
+            wordInput.visibility = if (index < initViewModel.wordsCount) View.VISIBLE else View.GONE
         }
         postOnAnimation { checkWords() }
     }
@@ -178,6 +177,8 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             if (!word.isNullOrBlank()) {
                 withContext(Dispatchers.Main) {
                     inputView.setText(word)
+                    inputView.checkValue()
+                    suggestionsView.visibility = View.GONE
                 }
             }
         }
@@ -185,21 +186,18 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private fun next() {
         lifecycleScope.launch {
+            setLoading()
             val words = getMnemonic()
-            if (words.isEmpty() || (wordsCount == WORDS24 && !Mnemonic.isValid(words))) {
-                if (TonMnemonic.isValidTONKeychain(words)) {
-                    navigation?.toast(Localization.multi_account_secret_wrong)
-                } else {
+            if (TonMnemonic.isValidTONKeychain(words)) {
+                navigation?.toast(Localization.multi_account_secret_wrong)
+            } else {
+                try {
+                    initViewModel.setMnemonic(words)
+                } catch (e: Throwable) {
                     navigation?.toast(Localization.incorrect_phrase)
                 }
-                return@launch
             }
-            setLoading()
-            try {
-                initViewModel.setMnemonic(words)
-            } catch (e: Throwable) {
-                setDefault()
-            }
+            setDefault()
         }
     }
 
@@ -292,7 +290,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
         if (nextFocusInput != null && nextFocusInput.visibility == View.VISIBLE) {
             nextFocusInput.requestFocus()
-            if (index > (wordsCount - 4)) {
+            if (index > (initViewModel.wordsCount - 4)) {
                 scrollView.scrollDown(true)
             } else {
                 scrollView.scrollView(
@@ -320,7 +318,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             if (delay > 0) {
                 delay(delay)
             }
-            button.isEnabled = getMnemonic().size == wordsCount
+            button.isEnabled = getMnemonic().size == initViewModel.wordsCount
         }
     }
 
@@ -329,7 +327,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             .map { it.text?.toString() }
             .filter { TonMnemonic.isValid(it) }
             .filterNotNull()
-            .take(wordsCount)
+            .take(initViewModel.wordsCount)
 
         if (words.size == wordInputs.count { it.visibility == View.VISIBLE }) {
             words

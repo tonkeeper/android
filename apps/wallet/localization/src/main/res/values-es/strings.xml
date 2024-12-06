@@ -209,12 +209,12 @@
     <string name="passcode_new">Crear nuevo código de acceso</string>
     <string name="import_wallet">Importar cartera</string>
     <string name="import_wallet_subtitle">Elige entre las opciones a continuación.</string>
-    <string name="import_wallet_words">Importar billetera con 24 palabras secretas de recuperación</string>
+    <string name="import_wallet_words">Importar billetera con 24 o 12 palabras de recuperación secretas</string>
     <string name="watch_wallet">Ver Cuenta</string>
     <string name="watch_wallet_subtitle">Para monitorear la actividad de la billetera sin frase de recuperación</string>
     <string name="watch_wallet_add">Monitorea la actividad de la billetera sin frase de recuperación. Serás notificado de cualquier transacción desde esta billetera.</string>
     <string name="testnet_wallet">Cuenta de Testnet</string>
-    <string name="testnet_wallet_subtitle">Importar billetera con 24 palabras secretas de recuperación a Testnet</string>
+    <string name="testnet_wallet_subtitle">Importar billetera con 24 o 12 palabras de recuperación secretas a Testnet</string>
     <string name="signer_wallet">Emparejar con Firmante</string>
     <string name="signer_wallet_subtitle">Un mayor nivel de control y seguridad</string>
     <string name="cancel">Cancelar</string>
@@ -227,7 +227,7 @@
     <string name="enable_notification_subtitle">Recibe notificaciones cuando recibas TON, tokens y NFTs</string>
     <string name="widget_placeholder">Necesitas seleccionar una cartera</string>
     <string name="import_wallet_title">Introduce tu frase de recuperación</string>
-    <string name="import_wallet_description">Para restaurar el acceso a tu billetera, ingresa las 24 palabras secretas de recuperación que se te dieron al crear tu billetera.</string>
+    <string name="import_wallet_description">Para restaurar el acceso a su billetera, ingrese las 24 o 12 palabras secretas de recuperación que le proporcionaron cuando creó su billetera.</string>
     <string name="start_dialog_title">Configuremos tu billetera</string>
     <string name="start_dialog_description">Necesitas una billetera conectada para usar Tonkeeper. Crea una nueva billetera o importa una existente.</string>
     <string name="wallet_generating">Generando cartera…</string>

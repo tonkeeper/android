@@ -209,12 +209,12 @@
     <string name="passcode_new">Yeni şifre oluştur</string>
     <string name="import_wallet">Cüzdanı içe aktar</string>
     <string name="import_wallet_subtitle">Aşağıdaki seçeneklerden birini seçin.</string>
-    <string name="import_wallet_words">24 gizli kurtarma kelimesi ile cüzdanı içe aktar</string>
+    <string name="import_wallet_words">24 veya 12 gizli kurtarma sözcüğü içeren cüzdanı içe aktarın</string>
     <string name="watch_wallet">Hesabı İzle</string>
     <string name="watch_wallet_subtitle">Kurtarma ifadesi olmadan cüzdan etkinliğini izlemek için</string>
     <string name="watch_wallet_add">Kurtarma ifadesi olmadan cüzdan etkinliğini izleyin. Bu cüzdandan yapılan herhangi bir işlemden haberdar edileceksiniz.</string>
     <string name="testnet_wallet">Testnet Hesabı</string>
-    <string name="testnet_wallet_subtitle">24 gizli kurtarma kelimesi ile cüzdanı Testnet\'e aktar</string>
+    <string name="testnet_wallet_subtitle">24 veya 12 gizli kurtarma sözcüğü içeren cüzdanı Testnet\'e aktarın</string>
     <string name="signer_wallet">İmzalayıcı ile Eşleştir</string>
     <string name="signer_wallet_subtitle">Daha yüksek düzeyde kontrol ve güvenlik</string>
     <string name="cancel">İptal</string>
@@ -227,7 +227,7 @@
     <string name="enable_notification_subtitle">TON, token ve NFT aldığınızda bildirim alın</string>
     <string name="widget_placeholder">Cüzdan seçmeniz gerekiyor</string>
     <string name="import_wallet_title">Kurtarma ifadenizi girin</string>
-    <string name="import_wallet_description">Cüzdanınıza erişimi geri yüklemek için, cüzdanınızı oluşturduğunuzda size verilen 24 gizli kurtarma kelimesini girin.</string>
+    <string name="import_wallet_description">Cüzdanınıza erişiminizi geri yüklemek için, cüzdanınızı oluştururken size verilen 24 veya 12 gizli kurtarma kelimesini girin.</string>
     <string name="start_dialog_title">Cüzdanınızı ayarlayalım</string>
     <string name="start_dialog_description">Tonkeeper\'ı kullanmak için bağlı bir cüzdana ihtiyacınız var. Yeni bir cüzdan oluşturun veya mevcut bir cüzdanı içe aktarın.</string>
     <string name="wallet_generating">Cüzdan oluşturuluyor…</string>

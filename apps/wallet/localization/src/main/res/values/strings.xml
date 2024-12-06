@@ -325,12 +325,12 @@
     <string name="passcode_new">Create new passcode</string>
     <string name="import_wallet">Import wallet</string>
     <string name="import_wallet_subtitle">Choose from the options below.</string>
-    <string name="import_wallet_words">Import wallet with a 24 secret recovery words</string>
+    <string name="import_wallet_words">Import wallet with a 24 or 12 secret recovery words</string>
     <string name="watch_wallet">Watch Account</string>
     <string name="watch_wallet_subtitle">For monitor wallet activity without recovery phrase</string>
     <string name="watch_wallet_add">Monitor wallet activity without recovery phrase. You will be notified of any transactions from this wallet.</string>
     <string name="testnet_wallet">Testnet Account</string>
-    <string name="testnet_wallet_subtitle">Import wallet with a 24 secret recovery words to Testnet</string>
+    <string name="testnet_wallet_subtitle">Import wallet with a 24 or 12 secret recovery words to Testnet</string>
     <string name="signer_wallet">Pair with Signer</string>
     <string name="signer_wallet_subtitle">A higher level of control and security</string>
     <string name="cancel">Cancel</string>
@@ -344,7 +344,7 @@
     <string name="widget_placeholder">Need to select a wallet</string>
 
     <string name="import_wallet_title">Enter your recovery phrase</string>
-    <string name="import_wallet_description">To restore access to your wallet, enter the 24 secret recovery words given to you when you created your wallet.</string>
+    <string name="import_wallet_description">To restore access to your wallet, enter the 24 or 12 secret recovery words given to you when you created your wallet.</string>
 
     <string name="start_dialog_title">Let’s set up your wallet</string>
     <string name="start_dialog_description">You need a connected wallet to use Tonkeeper. Either create a new wallet or import an existing one.</string>

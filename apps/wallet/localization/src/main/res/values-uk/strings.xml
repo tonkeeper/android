@@ -209,12 +209,12 @@
     <string name="passcode_new">Створити новий пароль</string>
     <string name="import_wallet">Імпортувати гаманець</string>
     <string name="import_wallet_subtitle">Виберіть один з варіантів нижче.</string>
-    <string name="import_wallet_words">Імпортувати гаманець за допомогою 24 секретних слів відновлення</string>
+    <string name="import_wallet_words">Імпортуйте гаманець із 24 або 12 секретними словами відновлення</string>
     <string name="watch_wallet">Перегляд акаунту</string>
     <string name="watch_wallet_subtitle">Для моніторингу активності гаманця без фрази відновлення</string>
     <string name="watch_wallet_add">Відстежуйте активність гаманця без фрази відновлення. Ви будете повідомлені про будь-які транзакції з цього гаманця.</string>
     <string name="testnet_wallet">Тестовий рахунок</string>
-    <string name="testnet_wallet_subtitle">Імпортуйте гаманець за допомогою 24 секретних слів відновлення до Testnet</string>
+    <string name="testnet_wallet_subtitle">Імпортуйте гаманець із 24 або 12 секретними словами відновлення в Testnet</string>
     <string name="signer_wallet">Підключитися до Signer</string>
     <string name="signer_wallet_subtitle">Вищий рівень контролю та безпеки</string>
     <string name="cancel">Скасувати</string>
@@ -227,7 +227,7 @@
     <string name="enable_notification_subtitle">Отримуйте сповіщення, коли ви отримуєте TON, токени та NFT</string>
     <string name="widget_placeholder">Потрібно вибрати гаманець</string>
     <string name="import_wallet_title">Введіть свою фразу для відновлення</string>
-    <string name="import_wallet_description">Щоб відновити доступ до вашого гаманця, введіть 24 секретні слова відновлення, які ви отримали під час створення гаманця.</string>
+    <string name="import_wallet_description">Щоб відновити доступ до вашого гаманця, введіть 24 або 12 секретних слів для відновлення, наданих вам під час створення гаманця.</string>
     <string name="start_dialog_title">Налаштуймо ваш гаманець</string>
     <string name="start_dialog_description">Вам потрібен підключений гаманець для використання Tonkeeper. Створіть новий гаманець або імпортуйте існуючий.</string>
     <string name="wallet_generating">Створення гаманця…</string>

@@ -107,7 +107,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
             if (first) {
-                navigation?.add(PurchaseScreen.newInstance(screenContext.wallet))
+                navigation?.add(PurchaseScreen.newInstance(screenContext.wallet, "events"))
             } else {
                 openQRCode()
             }

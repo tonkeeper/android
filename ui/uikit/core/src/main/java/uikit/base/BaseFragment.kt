@@ -314,6 +314,14 @@ open class BaseFragment(
         view?.postDelayed(action, delay)
     }
 
+    fun runOnUiThread(action: () -> Unit) {
+        if (Thread.currentThread() == requireActivity().mainLooper.thread) {
+            action()
+        } else {
+            post(Runnable(action))
+        }
+    }
+
     fun post(action: Runnable) {
         view?.post(action)
     }

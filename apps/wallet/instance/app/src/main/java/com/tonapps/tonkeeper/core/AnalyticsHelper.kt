@@ -19,6 +19,26 @@ object AnalyticsHelper {
     }
 
     @UiThread
+    fun onRampOpen(installId: String, source: String) {
+        Aptabase.instance.trackEvent("onramp_open", hashMapOf(
+            "firebase_user_id" to installId,
+            "from" to source
+        ))
+    }
+
+    @UiThread
+    fun onRampClick(installId: String, type: String, placement: String, location: String, name: String, url: String) {
+        Aptabase.instance.trackEvent("onramp_click", hashMapOf(
+            "firebase_user_id" to installId,
+            "type" to type,
+            "placement" to placement,
+            "location" to location,
+            "name" to name,
+            "url" to url
+        ))
+    }
+
+    @UiThread
     fun trackPushClick(installId: String, pushId: String, payload: String) {
         Aptabase.instance.trackEvent("push_click", hashMapOf(
             "firebase_user_id" to installId,

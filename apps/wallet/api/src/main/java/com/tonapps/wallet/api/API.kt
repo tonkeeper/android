@@ -2,7 +2,6 @@ package com.tonapps.wallet.api
 
 import android.content.Context
 import android.util.ArrayMap
-import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -11,7 +10,6 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
-import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
@@ -71,7 +69,7 @@ class API(
     private val scope: CoroutineScope
 ): CoreAPI(context) {
 
-    private val internalApi = InternalApi(context, defaultHttpClient)
+    private val internalApi = InternalApi(context, defaultHttpClient, appVersionName)
     private val configRepository = ConfigRepository(context, scope, internalApi)
 
     val config: ConfigEntity
@@ -579,7 +577,7 @@ class API(
         val request = io.batteryapi.models.EmulateMessageToWalletRequest(
             boc = boc,
             platform = "android",
-            version = context.appVersionName,
+            version = appVersionName,
             source = source,
             confirmationTime = confirmationTime
         )
@@ -603,7 +601,7 @@ class API(
         val request = SendBlockchainMessageRequest(
             boc = boc,
             platform = "android",
-            version = context.appVersionName,
+            version = appVersionName,
             source = source,
             confirmationTime = confirmationTime
         )

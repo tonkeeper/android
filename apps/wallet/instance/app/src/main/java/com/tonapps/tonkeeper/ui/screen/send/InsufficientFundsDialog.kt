@@ -38,7 +38,7 @@ class InsufficientFundsDialog(context: Context): ModalDialog(context, R.layout.d
         batteryButton.visibility = if (withRechargeBattery) View.VISIBLE else View.GONE
 
         tonButton.setOnClickListener {
-            navigation?.add(PurchaseScreen.newInstance(wallet))
+            navigation?.add(PurchaseScreen.newInstance(wallet, "insufficientFunds"))
             dismiss()
         }
 

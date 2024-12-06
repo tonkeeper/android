@@ -338,7 +338,7 @@
     <string name="enable_notification_subtitle">Получайте уведомления при получении TON, токенов и NFT.</string>
     <string name="widget_placeholder">Нужно выбрать кошелек</string>
 
-    <string name="import_wallet_title">Введите фразу восстановления</string>
+    <string name="import_wallet_title">Введите секретный ключ</string>
 
     <string name="import_wallet_description">Чтобы восстановить доступ, введите 24 или 12 секретных слова, которые вы получили при создании кошелька.</string>
     <string name="start_dialog_title">Сперва подключим кошелёк</string>

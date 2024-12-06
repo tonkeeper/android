@@ -12,6 +12,7 @@ import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -35,6 +36,15 @@ class PurchaseViewModel(
     private val _tabFlow = MutableStateFlow(Tab.BUY)
     val tabFlow = _tabFlow.asStateFlow()
 
+    val country: String
+        get() = (countryFlow as? StateFlow)?.value ?: settingsRepository.country
+
+    val tabName: String
+        get() = when (tabFlow.value) {
+            Tab.BUY -> "buy"
+            Tab.SELL -> "sell"
+        }
+
     private val dataFlow = countryFlow.map { country ->
         purchaseRepository.get(wallet.testnet, country, settingsRepository.getLocale())
     }.filterNotNull().flowOn(Dispatchers.IO)
@@ -49,7 +59,7 @@ class PurchaseViewModel(
             items.add(Item.Title(category.title))
             for ((methodIndex, method) in category.items.withIndex()) {
                 val position = ListCell.getPosition(category.items.size, methodIndex)
-                items.add(Item.Method(method, position))
+                items.add(Item.Method(method, position, category.type))
             }
         }
         items.add(Item.Space)

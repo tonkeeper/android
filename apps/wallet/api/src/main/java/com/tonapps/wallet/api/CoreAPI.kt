@@ -17,7 +17,9 @@ import java.util.concurrent.TimeUnit
 
 abstract class CoreAPI(private val context: Context) {
 
-    private val userAgent = "Tonkeeper/${context.appVersionName} (Linux; Android ${Build.VERSION.RELEASE}; ${Build.MODEL})"
+    val appVersionName = context.appVersionName
+
+    private val userAgent = "Tonkeeper/${appVersionName} (Linux; Android ${Build.VERSION.RELEASE}; ${Build.MODEL})"
 
     private var cronetEngine: CronetEngine? = null
 

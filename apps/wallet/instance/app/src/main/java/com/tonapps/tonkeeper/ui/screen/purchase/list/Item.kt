@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.purchase.list
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.data.purchase.entity.PurchaseCategoryEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -20,6 +21,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Method(
         val entity: PurchaseMethodEntity,
         val position: ListCell.Position,
+        val categoryType: String,
     ): Item(TYPE_METHOD) {
 
         val iconUri: Uri

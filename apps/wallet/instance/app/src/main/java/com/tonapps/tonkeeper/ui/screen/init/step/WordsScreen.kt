@@ -16,6 +16,7 @@ import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.TonMnemonic
+import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.component.WordEditText
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
@@ -68,24 +69,31 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private val isVisibleSuggestions: Boolean
         get() = suggestionsView.visibility == View.VISIBLE && suggestionsView.alpha > 0f
 
-    private val wordInputs: List<WordEditText> by lazy {
-        contentView.findViewById<ColumnLayout>(R.id.inputs).getViews().filterIsInstance<WordEditText>()
-    }
+    private lateinit var wordInputs: List<WordEditText>
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         titleView = view.findViewById(R.id.header_title)
 
         words24View = view.findViewById(R.id.words_24)
-        words24View.setOnClickListener { setWordsCount(WORDS24) }
+        words24View.setOnClickListener {
+            if (initViewModel.wordsCount != WORDS24) {
+                setWordsCount(WORDS24)
+            }
+        }
 
         words12View = view.findViewById(R.id.words_12)
-        words12View.setOnClickListener { setWordsCount(WORDS12) }
+        words12View.setOnClickListener {
+            if (initViewModel.wordsCount != WORDS12) {
+                setWordsCount(WORDS12)
+            }
+        }
 
         scrollView = view.findViewById(R.id.scroll)
 
         contentView = view.findViewById(R.id.content)
+
+        wordInputs = contentView.findViewById<ColumnLayout>(R.id.inputs).getViews().filterIsInstance<WordEditText>()
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener { next() }
@@ -138,7 +146,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     }
 
     private fun setWordsCount(count: Int) {
-        if (initViewModel.wordsCount == count || count != WORDS24 && count != WORDS12) {
+        if (count != WORDS24 && count != WORDS12) {
             return
         }
         if (count == WORDS24) {
@@ -157,10 +165,10 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     }
 
     private fun updateVisibleInputs() {
-        wordInputs.forEachIndexed { index, wordInput ->
-            wordInput.visibility = if (index < initViewModel.wordsCount) View.VISIBLE else View.GONE
+        for ((index, input) in wordInputs.withIndex()) {
+            input.visibility = if (index < initViewModel.wordsCount) View.VISIBLE else View.GONE
         }
-        postOnAnimation { checkWords() }
+        checkWords()
     }
 
     private fun nextInput(index: Int) {
@@ -299,8 +307,6 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                     top = (-128).dp
                 )
             }
-        } else {
-            next()
         }
     }
 
@@ -338,11 +344,10 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private fun setWords(list: List<String>) {
         for (i in list.indices) {
-            val wordInput = wordInputs.getOrNull(i) ?: break
-            wordInput.setText(list[i])
+            wordInputs.getOrNull(i)?.setText(list[i])
         }
-        if (list.size == wordInputs.size) {
-            context?.getCurrentFocusEditText()?.hideKeyboard()
+        if (list.size == initViewModel.wordsCount) {
+            hideKeyboard()
             scrollView.scrollDown(true)
             checkWords(500)
         }

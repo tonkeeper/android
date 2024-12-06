@@ -532,7 +532,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Battery && !wallet.isWatchOnly) {
             openBattery(wallet, route)
         } else if (route is DeepLinkRoute.Purchase && !wallet.isWatchOnly) {
-            openScreen(PurchaseScreen.newInstance(wallet))
+            openScreen(PurchaseScreen.newInstance(wallet, "deep-link"))
         } else if (route is DeepLinkRoute.Exchange && !wallet.isWatchOnly) {
             val method = purchaseRepository.getMethod(
                 id = route.methodName,

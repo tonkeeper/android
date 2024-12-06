@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -17,6 +18,7 @@ import com.tonapps.tonkeeper.ui.screen.purchase.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.purchase.entity.PurchaseCategoryEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.launch
@@ -33,6 +35,10 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     private val settingsRepository: SettingsRepository by inject()
     private val api: API by inject()
 
+    private val source: String by lazy {
+        arguments?.getString(ARG_SOURCE) ?: "unknown"
+    }
+
     private val adapter: Adapter by lazy { Adapter(::open) }
     private val confirmDialog: PurchaseConfirmDialog by lazy {
         PurchaseConfirmDialog(requireContext())
@@ -46,6 +52,7 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         collectFlow(viewModel.uiItemsFlow, adapter::submitList)
+        AnalyticsHelper.onRampOpen(settingsRepository.installId, source)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -84,7 +91,7 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
         }
     }
 
-    private fun open(method: PurchaseMethodEntity) {
+    private fun open(method: PurchaseMethodEntity, category: String) {
         lifecycleScope.launch {
             val currency = api.getCurrencyCodeByCountry(settingsRepository)
             val activity = requireActivity() as NavigationActivity
@@ -99,6 +106,14 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
                     if (!showAgain) {
                         viewModel.disableConfirmDialog(screenContext.wallet, method)
                     }
+                    AnalyticsHelper.onRampClick(
+                        installId = settingsRepository.installId,
+                        type = viewModel.tabName,
+                        placement = category,
+                        location = viewModel.country,
+                        name = method.title,
+                        url = method.infoButtons.firstOrNull()?.url ?: ""
+                    )
                     BrowserHelper.openPurchase(activity, methodWrapped)
                 }
             } else {
@@ -111,7 +126,12 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
 
     companion object {
         private const val COUNTRY_REQUEST_KEY = "buy_country_request"
+        private const val ARG_SOURCE = "source"
 
-        fun newInstance(wallet: WalletEntity) = PurchaseScreen(wallet)
+        fun newInstance(wallet: WalletEntity, source: String): PurchaseScreen {
+            val screen = PurchaseScreen(wallet)
+            screen.putStringArg(ARG_SOURCE, source)
+            return screen
+        }
     }
 }

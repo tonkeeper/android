@@ -2,21 +2,16 @@ package com.tonapps.tonkeeper.ui.screen.root
 
 import android.app.PendingIntent
 import android.content.Context
-import android.content.ContextParams
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.net.Uri
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
-import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
 import androidx.core.app.ActivityCompat
-import androidx.core.view.LayoutInflaterCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -24,12 +19,12 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
-import com.tonapps.tonkeeper.manager.theme.MainContextWrapper
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
@@ -42,7 +37,6 @@ import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
-import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -129,6 +123,11 @@ class RootActivity: BaseWalletActivity() {
         collectFlow(viewModel.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
+
+        if (0L >= DevSettings.firstLaunchDate) {
+            AnalyticsHelper.firstLaunch(settingsRepository.installId)
+            DevSettings.firstLaunchDate = currentTimeSeconds()
+        }
     }
 
     private fun enableNfcForegroundDispatch() {

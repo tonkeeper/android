@@ -16,6 +16,7 @@ import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.TonMnemonic
+import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.component.WordEditText
@@ -137,8 +138,16 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             suggestionsView.translationY = -offset.toFloat()
             suggestionsView.alpha = progress
         }
+        getCountFromClipboard()
+    }
 
-        setWordsCount(initViewModel.wordsCount)
+    private fun getCountFromClipboard() {
+        val count = TonMnemonic.parseMnemonic(requireContext().clipboardText()).size
+        if (count == 12 || count == 24) {
+            setWordsCount(count)
+        } else {
+            setWordsCount(initViewModel.wordsCount)
+        }
     }
 
     private fun isLastIndex(index: Int): Boolean {
@@ -199,9 +208,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             if (TonMnemonic.isValidTONKeychain(words)) {
                 navigation?.toast(Localization.multi_account_secret_wrong)
             } else {
-                try {
-                    initViewModel.setMnemonic(words)
-                } catch (e: Throwable) {
+                if (!initViewModel.setMnemonic(words)) {
                     navigation?.toast(Localization.incorrect_phrase)
                 }
             }

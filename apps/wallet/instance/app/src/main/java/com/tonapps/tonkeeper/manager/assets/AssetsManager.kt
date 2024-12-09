@@ -108,12 +108,13 @@ class AssetsManager(
         sorted: Boolean = false,
     ) = cache.get(wallet, currency, sorted)
 
-    suspend fun getRemoteTotalBalance(
+    suspend fun requestTotalBalance(
         wallet: WalletEntity,
         currency: WalletCurrency,
+        refresh: Boolean = false,
         sorted: Boolean = false,
     ): Coins? {
-        val totalBalance = calculateTotalBalance(wallet, currency, true, sorted) ?: return null
+        val totalBalance = calculateTotalBalance(wallet, currency, refresh, sorted) ?: return null
         cache.set(wallet, currency, sorted, totalBalance)
         return totalBalance
     }
@@ -131,7 +132,7 @@ class AssetsManager(
         wallet: WalletEntity,
         currency: WalletCurrency,
         sorted: Boolean = false
-    ) = getCachedTotalBalance(wallet, currency, sorted) ?: getRemoteTotalBalance(wallet, currency, sorted)
+    ) = getCachedTotalBalance(wallet, currency, sorted) ?: requestTotalBalance(wallet, currency, sorted)
 
     private suspend fun calculateTotalBalance(
         wallet: WalletEntity,

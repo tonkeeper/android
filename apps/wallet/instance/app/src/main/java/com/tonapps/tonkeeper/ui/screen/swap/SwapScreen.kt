@@ -1,15 +1,21 @@
 package com.tonapps.tonkeeper.ui.screen.swap
 
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebSettings
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.perf.ktx.performance
 import com.tonapps.extensions.appVersionName
+import com.tonapps.extensions.locale
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
@@ -38,9 +44,29 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
     private lateinit var webView: BridgeWebView
 
     private val webViewCallback = object : WebViewFixed.Callback() {
+
+        private val swapTrace = Firebase.performance.newTrace("swap_webview")
+        private var isAlreadySendTrace = false
+
         override fun onPageFinished(url: String) {
             super.onPageFinished(url)
+            if (!isAlreadySendTrace) {
+                swapTrace.stop()
+                isAlreadySendTrace = true
+            }
             hideCloseView()
+        }
+
+        override fun onPageStarted(url: String, favicon: Bitmap?) {
+            super.onPageStarted(url, favicon)
+            if (!isAlreadySendTrace) {
+                swapTrace.start()
+            }
+        }
+
+        override fun onNewTab(url: String) {
+            super.onNewTab(url)
+            BrowserHelper.open(requireContext(), url)
         }
     }
 
@@ -57,6 +83,7 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
         webView = view.findViewById(R.id.web)
         webView.addCallback(webViewCallback)
         webView.clipToPadding = false
+        webView.settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
         webView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
         webView.loadUrl(getUri().toString())
         webView.jsBridge = StonfiBridge2(
@@ -87,16 +114,23 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
         val builder = args.uri.buildUpon()
         builder.appendQueryParameter("clientVersion", requireContext().appVersionName)
         builder.appendQueryParameter("ft", args.fromToken)
+        builder.appendQueryParameter("lang", requireContext().locale.toString())
         args.toToken?.let {
             builder.appendQueryParameter("tt", it)
         }
+        val theme = settingsRepository.theme
+        builder.appendQueryParameter("theme", if (theme.isSystem) "dark" else theme.key)
         return builder.build()
     }
 
     private suspend fun sing(
         request: SignRequestEntity
     ): String {
-        return SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP)
+        return try {
+            SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP)
+        } catch (e: Throwable) {
+            ""
+        }
     }
 
     override fun onDestroyView() {

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.swap
 
 import android.net.Uri
 import android.os.Bundle
+import androidx.core.net.toUri
 import com.tonapps.extensions.getParcelableCompat
 import uikit.base.BaseArgs
 

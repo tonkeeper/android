@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.usecase.emulation
 import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
@@ -89,6 +90,7 @@ class EmulationUseCase(
                 testnet = wallet.testnet,
                 boc = boc,
                 forceRelayer = forceRelayer,
+                safeModeEnabled = settingsRepository.isSafeModeEnabled(api)
             ) ?: throw IllegalStateException("Failed to emulate battery")
 
             return parseEmulated(wallet, consequences, withBattery)
@@ -105,14 +107,18 @@ class EmulationUseCase(
                 cell = boc,
                 testnet = wallet.testnet,
                 address = wallet.address,
-                balance = ((Coins.ONE + Coins.ONE) + calculateTransferAmount(message.transfers)).toLong()
+                balance = ((Coins.ONE + Coins.ONE) + calculateTransferAmount(message.transfers)).toLong(),
+                safeModeEnabled = settingsRepository.isSafeModeEnabled(api)
             )
         } else {
-            api.emulate(boc, wallet.testnet)
+            api.emulate(
+                cell = boc,
+                testnet = wallet.testnet,
+                safeModeEnabled = settingsRepository.isSafeModeEnabled(api)
+            )
         }) ?: throw IllegalArgumentException("Emulation failed")
         return parseEmulated(wallet, consequences, false)
     }
-
 
     private suspend fun parseEmulated(
         wallet: WalletEntity,

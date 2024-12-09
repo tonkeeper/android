@@ -10,7 +10,7 @@ import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
 
 class Adapter(
-    private val onClick: (title: String, url: String) -> Unit
+    private val onClick: (title: String, url: String, sendAnalytics: Boolean) -> Unit
 ): BaseListAdapter() {
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when(viewType) {

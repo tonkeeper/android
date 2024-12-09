@@ -19,6 +19,13 @@ object AnalyticsHelper {
     }
 
     @UiThread
+    fun firstLaunch(installId: String) {
+        Aptabase.instance.trackEvent("first_launch", hashMapOf(
+            "firebase_user_id" to installId
+        ))
+    }
+
+    @UiThread
     fun onRampOpen(installId: String, source: String) {
         Aptabase.instance.trackEvent("onramp_open", hashMapOf(
             "firebase_user_id" to installId,
@@ -46,7 +53,6 @@ object AnalyticsHelper {
             "payload" to payload
         ))
     }
-
 
     @UiThread
     fun trackBrowserOpen(installId: String, from: String) {

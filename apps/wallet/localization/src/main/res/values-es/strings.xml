@@ -226,7 +226,7 @@
     <string name="enable_notification_title">Recibe notificaciones instantáneas</string>
     <string name="enable_notification_subtitle">Recibe notificaciones cuando recibas TON, tokens y NFTs</string>
     <string name="widget_placeholder">Necesitas seleccionar una cartera</string>
-    <string name="import_wallet_title">Introduce tu frase de recuperación</string>
+    <string name="import_wallet_title">Introduce tu de recuperación</string>
     <string name="import_wallet_description">Para restaurar el acceso a su billetera, ingrese las 24 o 12 palabras secretas de recuperación que le proporcionaron cuando creó su billetera.</string>
     <string name="start_dialog_title">Configuremos tu billetera</string>
     <string name="start_dialog_description">Necesitas una billetera conectada para usar Tonkeeper. Crea una nueva billetera o importa una existente.</string>

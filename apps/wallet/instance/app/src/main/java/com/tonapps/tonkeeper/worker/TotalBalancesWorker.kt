@@ -22,10 +22,11 @@ class TotalBalancesWorker(
         try {
             val wallets = accountRepository.getWallets()
             for (wallet in wallets) {
-                assetsManager.getRemoteTotalBalance(
+                assetsManager.requestTotalBalance(
                     wallet = wallet,
                     currency = settingsRepository.currency,
-                    sorted = true
+                    sorted = true,
+                    refresh = true,
                 )
             }
             return Result.success()

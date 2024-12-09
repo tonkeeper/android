@@ -55,6 +55,7 @@ class AuthorizationInterceptor(
             .method(original.method, original.body)
             .build()
 
+        Log.d("AuthorizationLog", "AuthorizationInterceptor: ${request.headers}")
         return chain.proceed(request)
     }
 }

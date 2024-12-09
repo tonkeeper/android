@@ -275,7 +275,7 @@
     <string name="enable_notification_subtitle">Получавайте уведомления, когато получите TON, токени и NFTs</string>
     <string name="widget_placeholder">Трябва да изберете портфейл</string>
 
-    <string name="import_wallet_title">Въведете вашата възстановителна фраза</string>
+    <string name="import_wallet_title">Въведете възстановителна фраза</string>
 
     <string name="import_wallet_description">За да възстановите достъпа до портфейла си, въведете 24 или 12 тайни думи за възстановяване, дадени ви когато сте създали своя портфейл.</string>
     <string name="start_dialog_title">Нека настроим вашия портфейл</string>

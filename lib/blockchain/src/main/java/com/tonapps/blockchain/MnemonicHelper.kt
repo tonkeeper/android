@@ -1,11 +1,11 @@
 package com.tonapps.blockchain
 
-import android.util.Log
 import io.ktor.util.hex
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.crypto.digest.sha2.SHA512Digest
 import org.ton.crypto.kdf.PKCSS2ParametersGenerator
 import org.ton.mnemonic.Mnemonic
+import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -26,13 +26,46 @@ object MnemonicHelper {
         if (mnemonic.isEmpty()) {
             return false
         }
-        if (!mnemonic.all { word -> Mnemonic.mnemonicWords().contains(word) }) {
-            return false
-        }
+        val words = Mnemonic.mnemonicWords()
+
         if (mnemonic.size % 3 != 0) {
             return false
         }
-        return true
+
+        val belongToList = mnemonic.all { word ->
+            word in words
+        }
+        if (!belongToList) {
+            return false
+        }
+
+        try {
+            val bits = mnemonic.joinToString("") { word ->
+                val index = words.indexOf(word)
+                index.toString(2).padStart(11, '0')
+            }
+
+            val dividerIndex = (bits.length / 33) * 32
+            val entropy = bits.substring(0, dividerIndex)
+            val checksum = bits.substring(dividerIndex)
+
+            val entropyBytes = entropy.chunked(8).map { bin ->
+                bin.toInt(2).toByte()
+            }.toByteArray()
+
+            val newChecksum = checksumBits(entropyBytes)
+            return newChecksum == checksum
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    private fun checksumBits(entropyBytes: ByteArray): String {
+        val messageDigest = MessageDigest.getInstance("SHA-256")
+        val hash = messageDigest.digest(entropyBytes)
+        val ENT = entropyBytes.size * 8
+        val CS = ENT / 32
+        return hash.toBinaryString().take(CS)
     }
 
     fun privateKey(mnemonic: List<String>): PrivateKeyEd25519 {
@@ -111,6 +144,12 @@ object MnemonicHelper {
             first = bytes.sliceArray(0 until 32),
             second = bytes.sliceArray(32 until 64)
         )
+    }
+
+    private fun ByteArray.toBinaryString(): String {
+        return joinToString("") { byte ->
+            byte.toUByte().toString(2).padStart(8, '0')
+        }
     }
 }
 

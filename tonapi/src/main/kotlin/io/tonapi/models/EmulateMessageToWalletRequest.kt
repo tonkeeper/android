@@ -35,7 +35,9 @@ data class EmulateMessageToWalletRequest (
 
     /* additional per account configuration */
     @Json(name = "params")
-    val params: kotlin.collections.List<EmulateMessageToWalletRequestParamsInner>? = null
+    val params: kotlin.collections.List<EmulateMessageToWalletRequestParamsInner>? = null,
 
+    @Json(name = "safe_mode")
+    val safeMode: kotlin.Boolean? = null
 )
 

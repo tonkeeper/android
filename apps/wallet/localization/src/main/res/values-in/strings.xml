@@ -226,7 +226,7 @@
     <string name="enable_notification_title">Dapatkan notifikasi instan</string>
     <string name="enable_notification_subtitle">Dapatkan pemberitahuan saat Anda menerima TON, token, dan NFT</string>
     <string name="widget_placeholder">Perlu memilih dompet</string>
-    <string name="import_wallet_title">Masukkan frasa pemulihan Anda</string>
+    <string name="import_wallet_title">Masukkan pemulihan Anda</string>
     <string name="import_wallet_description">Untuk memulihkan akses ke dompet Anda, masukkan 24 atau 12 kata pemulihan rahasia yang diberikan kepada Anda saat membuat dompet.</string>
     <string name="start_dialog_title">Mari atur dompet Anda</string>
     <string name="start_dialog_description">Anda memerlukan dompet yang terhubung untuk menggunakan Tonkeeper. Buat dompet baru atau impor yang sudah ada.</string>

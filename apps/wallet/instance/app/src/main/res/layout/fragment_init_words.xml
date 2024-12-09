@@ -66,7 +66,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:nextFocusDown="@+id/word_2"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="1"/>
@@ -78,7 +78,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_1"
                     android:nextFocusDown="@+id/word_3"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="2"/>
@@ -90,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_2"
                     android:nextFocusDown="@+id/word_4"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="3"/>
@@ -102,7 +102,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_3"
                     android:nextFocusDown="@+id/word_5"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="4"/>
@@ -114,7 +114,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_4"
                     android:nextFocusDown="@+id/word_6"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="5"/>
@@ -126,6 +126,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_5"
                     android:nextFocusDown="@+id/word_7"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="6"/>
@@ -137,7 +138,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_6"
                     android:nextFocusDown="@+id/word_8"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="7"/>
@@ -149,7 +150,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_7"
                     android:nextFocusDown="@+id/word_9"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="8"/>
@@ -161,7 +162,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_8"
                     android:nextFocusDown="@+id/word_10"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="9"/>
@@ -173,7 +174,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_9"
                     android:nextFocusDown="@+id/word_11"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="10"/>
@@ -185,7 +186,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_10"
                     android:nextFocusDown="@+id/word_12"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="11"/>
@@ -197,7 +198,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_11"
                     android:nextFocusDown="@+id/word_13"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="12"/>
@@ -209,7 +210,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_12"
                     android:nextFocusDown="@+id/word_14"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="13"/>
@@ -221,7 +222,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_13"
                     android:nextFocusDown="@+id/word_15"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="14"/>
@@ -233,7 +234,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_14"
                     android:nextFocusDown="@+id/word_16"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="15"/>
@@ -245,7 +246,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_15"
                     android:nextFocusDown="@+id/word_17"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="16"/>
@@ -257,7 +258,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_16"
                     android:nextFocusDown="@+id/word_18"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="17"/>
@@ -269,7 +270,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_17"
                     android:nextFocusDown="@+id/word_19"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="18"/>
@@ -281,7 +282,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_18"
                     android:nextFocusDown="@+id/word_20"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="19"/>
@@ -293,7 +294,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_19"
                     android:nextFocusDown="@+id/word_21"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="20"/>
@@ -305,7 +306,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_20"
                     android:nextFocusDown="@+id/word_22"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="21"/>
@@ -317,7 +318,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_21"
                     android:nextFocusDown="@+id/word_23"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="22"/>
@@ -329,7 +330,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_22"
                     android:nextFocusDown="@+id/word_24"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="23"/>
@@ -341,7 +342,7 @@
                     android:layout_height="wrap_content"
                     android:nextFocusUp="@+id/word_23"
                     android:imeOptions="actionDone"
-                    android:inputType="textNoSuggestions"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
                     android:singleLine="true"
                     android:maxLines="1"
                     android:tag="24"/>

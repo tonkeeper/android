@@ -1,14 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.app.Application
-import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import android.util.Log
 import android.webkit.WebView
-import androidx.core.content.FileProvider
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
@@ -77,7 +73,6 @@ import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
-import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity

@@ -57,17 +57,11 @@ class WalletViewModel(
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
     private val assetsManager: AssetsManager,
-    private val dAppsRepository: DAppsRepository,
     private val apkManager: APKManager,
 ): BaseWalletVM(app) {
 
     private var autoRefreshJob: Job? = null
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
-
-    private val dAppPushesFlow = dAppsRepository.notificationsFlow(
-        wallet = wallet,
-        scope = viewModelScope
-    )
 
     private val _uiLabelFlow = MutableStateFlow<Wallet.Label?>(null)
     val uiLabelFlow = _uiLabelFlow.asStateFlow()
@@ -207,10 +201,9 @@ class WalletViewModel(
         combine(
             stateMainFlow,
             alertNotificationsFlow,
-            dAppPushesFlow,
             _stateSettingsFlow,
             updateWalletSettings,
-        ) { state, alerts, pushes, settings, _ ->
+        ) { state, alerts, settings, _ ->
             val status = settings.status /* if (settings.status == Status.NoInternet) {
                 settings.status
             } else if (settings.status != Status.SendingTransaction && settings.status != Status.TransactionConfirmed) {
@@ -240,7 +233,7 @@ class WalletViewModel(
                 status = status,
                 config = settings.config,
                 alerts = alerts,
-                dAppNotifications = State.DAppNotifications(pushes.notifications),
+                dAppNotifications = State.DAppNotifications(emptyList()),
                 setup = uiSetup,
                 lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale()),
                 prefixYourAddress = 3 > settingsRepository.addressCopyCount
@@ -252,7 +245,6 @@ class WalletViewModel(
         }.launchIn(viewModelScope)
 
         loadAlertNotifications()
-        loadDAppNotifications()
 
         autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
@@ -265,12 +257,6 @@ class WalletViewModel(
     fun refresh() {
         _statusFlow.value = Status.Updating
         _lastLtFlow.value += 1
-    }
-
-    private fun loadDAppNotifications() {
-        viewModelScope.launch {
-            dAppsRepository.refreshNotifications(wallet, accountRepository)
-        }
     }
 
     private suspend fun checkAutoRefresh() {

@@ -226,7 +226,7 @@
     <string name="enable_notification_title">Отримуйте миттєві сповіщення</string>
     <string name="enable_notification_subtitle">Отримуйте сповіщення, коли ви отримуєте TON, токени та NFT</string>
     <string name="widget_placeholder">Потрібно вибрати гаманець</string>
-    <string name="import_wallet_title">Введіть свою фразу для відновлення</string>
+    <string name="import_wallet_title">Введіть фразу для відновлення</string>
     <string name="import_wallet_description">Щоб відновити доступ до вашого гаманця, введіть 24 або 12 секретних слів для відновлення, наданих вам під час створення гаманця.</string>
     <string name="start_dialog_title">Налаштуймо ваш гаманець</string>
     <string name="start_dialog_description">Вам потрібен підключений гаманець для використання Tonkeeper. Створіть новий гаманець або імпортуйте існуючий.</string>

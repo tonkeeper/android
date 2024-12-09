@@ -38,7 +38,7 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
     override val viewModel: BrowserSearchViewModel by viewModel()
 
-    private val adapter = Adapter { title, url ->
+    private val adapter = Adapter { title, url, sendAnalytics ->
         val uri = url.toUriOrNull() ?: return@Adapter
         if (uri.host?.endsWith("mercuryo.io") == true) {
             BrowserHelper.open(requireContext(), url)
@@ -47,7 +47,8 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
                 wallet = screenContext.wallet,
                 title = title,
                 url = url.toUri(),
-                source = "browser_search"
+                source = "browser_search",
+                sendAnalytics = sendAnalytics,
             ))
         }
         finish()

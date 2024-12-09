@@ -54,6 +54,7 @@ open class WebViewFixed @JvmOverloads constructor(
         open fun onProgressChanged(newProgress: Int) { }
         open fun onLoadResource(url: String): Boolean { return true }
         open fun onWindowClose() { }
+        open fun onNewTab(url: String) { }
     }
 
     private var isPageLoaded = false
@@ -152,7 +153,14 @@ open class WebViewFixed @JvmOverloads constructor(
                 isDialog: Boolean,
                 isUserGesture: Boolean,
                 resultMsg: Message?
-            ) = resultMsg?.let { openNewWindow(it) } ?: false
+            ): Boolean {
+                if (isDialog) {
+                    return resultMsg?.let { openNewWindow(it) } ?: false
+                }
+                val newUrl = view?.hitTestResult?.extra ?: return false
+                callbacks.forEach { it.onNewTab(newUrl) }
+                return true
+            }
 
             override fun onCloseWindow(window: WebView) {
                 super.onCloseWindow(window)
@@ -162,6 +170,7 @@ open class WebViewFixed @JvmOverloads constructor(
 
         applyAndroidWebViewBridge()
     }
+
 
     private fun openNewWindow(resultMsg: Message): Boolean {
         val dialog = NewWindowDialog(context, getProfile().name)

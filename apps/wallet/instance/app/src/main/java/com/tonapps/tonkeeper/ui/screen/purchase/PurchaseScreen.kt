@@ -94,7 +94,6 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     private fun open(method: PurchaseMethodEntity, category: String) {
         lifecycleScope.launch {
             val currency = api.getCurrencyCodeByCountry(settingsRepository)
-            val activity = requireActivity() as NavigationActivity
             val methodWrapped = WalletPurchaseMethodEntity(
                 method = method,
                 wallet = screenContext.wallet,
@@ -106,22 +105,29 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
                     if (!showAgain) {
                         viewModel.disableConfirmDialog(screenContext.wallet, method)
                     }
-                    AnalyticsHelper.onRampClick(
-                        installId = settingsRepository.installId,
-                        type = viewModel.tabName,
-                        placement = category,
-                        location = viewModel.country,
-                        name = method.title,
-                        url = method.infoButtons.firstOrNull()?.url ?: ""
-                    )
-                    BrowserHelper.openPurchase(activity, methodWrapped)
+                    forceOpen(methodWrapped, category)
                 }
             } else {
-                BrowserHelper.openPurchase(activity, methodWrapped)
+                forceOpen(methodWrapped, category)
             }
         }
+    }
 
-
+    private fun forceOpen(method: WalletPurchaseMethodEntity, category: String) {
+        val fixedCategory = if (category != "swap" && !category.contains("_")) {
+            category + "_ton"
+        } else {
+            category
+        }
+        AnalyticsHelper.onRampClick(
+            installId = settingsRepository.installId,
+            type = viewModel.tabName,
+            placement = fixedCategory,
+            location = viewModel.country,
+            name = method.method.title,
+            url = method.uri.toString()
+        )
+        BrowserHelper.openPurchase(requireContext(), method)
     }
 
     companion object {

@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.core.SendBlockchainException
 import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.isPrintableAscii
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -656,7 +657,8 @@ class SendViewModel(
             tonProofToken = tonProofToken,
             publicKey = wallet.publicKey,
             testnet = wallet.testnet,
-            boc = message
+            boc = message,
+            safeModeEnabled = settingsRepository.isSafeModeEnabled(api)
         ) ?: return calculateFeeDefault(transfer, isSupportsGasless)
 
         sendTransferType = if (withBattery) {
@@ -729,7 +731,12 @@ class SendViewModel(
             jettonTransferAmount = TransferEntity.ONE_TON
         )
         // Emulate with higher balance to calculate fair amount to send
-        val emulated = api.emulate(message, transfer.wallet.testnet, balance = Coins.of(2).toLong())
+        val emulated = api.emulate(
+            cell = message,
+            testnet = transfer.wallet.testnet,
+            balance = Coins.of(2).toLong(),
+            safeModeEnabled = settingsRepository.isSafeModeEnabled(api)
+        )
         val extra = emulated?.event?.extra ?: 0
 
         lastRawExtra.set(extra)

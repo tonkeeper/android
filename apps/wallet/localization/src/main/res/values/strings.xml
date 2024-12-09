@@ -66,7 +66,7 @@
     <string name="open_settings">Open Settings</string>
     <string name="hide_full_collection">Hide collection</string>
     <string name="safe_mode_description">In this mode, only verified apps, NFTs, and tokens are available. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
-    <plurals name="nft_count">
+    <plurals name="nft_count" translatable="false">
         <item quantity="one">%1$d NFT</item>
         <item quantity="few">%1$d NFTs</item>
         <item quantity="many">%1$d NFTs</item>
@@ -343,7 +343,7 @@
     <string name="enable_notification_subtitle">Get notified when you receive TON, tokens and NFTs</string>
     <string name="widget_placeholder">Need to select a wallet</string>
 
-    <string name="import_wallet_title">Enter your recovery phrase</string>
+    <string name="import_wallet_title">Enter recovery phrase</string>
     <string name="import_wallet_description">To restore access to your wallet, enter the 24 or 12 secret recovery words given to you when you created your wallet.</string>
 
     <string name="start_dialog_title">Let’s set up your wallet</string>

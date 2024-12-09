@@ -11,6 +11,7 @@ import com.tonapps.network.interceptor.AcceptLanguageInterceptor
 import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.wallet.api.cronet.CronetInterceptor
 import com.tonapps.wallet.api.entity.ConfigEntity
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import org.chromium.net.CronetEngine
 import java.util.concurrent.TimeUnit
@@ -24,15 +25,19 @@ abstract class CoreAPI(private val context: Context) {
     private var cronetEngine: CronetEngine? = null
 
     val defaultHttpClient = baseOkHttpClientBuilder(
-        userAgent = userAgent,
         cronetEngine = { cronetEngine },
-        timeoutSeconds = 15
+        timeoutSeconds = 15,
+        interceptors = listOf(
+            UserAgentInterceptor(userAgent),
+        )
     ).build()
 
     val seeHttpClient = baseOkHttpClientBuilder(
-        userAgent = userAgent,
         cronetEngine = { null },
-        timeoutSeconds = 120
+        timeoutSeconds = 120,
+        interceptors = listOf(
+            UserAgentInterceptor(userAgent),
+        )
     ).build()
 
     init {
@@ -54,10 +59,20 @@ abstract class CoreAPI(private val context: Context) {
     }
 
     private companion object {
+
+        class UserAgentInterceptor(private val userAgent: String) : Interceptor {
+            override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+                val request = chain.request().newBuilder()
+                    .addHeader("User-Agent", userAgent)
+                    .build()
+                return chain.proceed(request)
+            }
+        }
+
         private fun baseOkHttpClientBuilder(
-            userAgent: String,
             cronetEngine: () -> CronetEngine?,
-            timeoutSeconds: Long = 5
+            timeoutSeconds: Long = 5,
+            interceptors: List<Interceptor> = emptyList()
         ): OkHttpClient.Builder {
             val builder = OkHttpClient().newBuilder()
                 .retryOnConnectionFailure(true)
@@ -67,36 +82,41 @@ abstract class CoreAPI(private val context: Context) {
                 .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
                 .pingInterval(timeoutSeconds, TimeUnit.SECONDS)
                 .followSslRedirects(true)
-                .addInterceptor { chain ->
-                    val request = chain.request().newBuilder()
-                        .addHeader("User-Agent", userAgent)
-                        .build()
-                    chain.proceed(request)
-                }
                 .followRedirects(true)
-                .addInterceptor { chain ->
-                    cronetEngine()?.let { engine ->
-                        CronetInterceptor.newBuilder(engine).build()
-                    }?.intercept(chain) ?: chain.proceed(chain.request())
-                }
+
+            for (interceptor in interceptors) {
+                builder.addInterceptor(interceptor)
+            }
+
+            builder.addInterceptor { chain ->
+                cronetEngine()?.let { engine ->
+                    CronetInterceptor.newBuilder(engine).build()
+                }?.intercept(chain) ?: chain.proceed(chain.request())
+            }
 
             return builder
         }
 
         private fun createTonAPIHttpClient(
-            context: Context,
             userAgent: String,
+            context: Context,
             cronetEngine: () -> CronetEngine?,
             tonApiV2Key: () -> String,
             allowDomains: () -> List<String>
         ): OkHttpClient {
-            return baseOkHttpClientBuilder(userAgent, cronetEngine)
-                .addInterceptor(AcceptLanguageInterceptor(context.locale))
-                .addInterceptor(
-                    AuthorizationInterceptor.bearer(
+            val interceptors = listOf(
+                UserAgentInterceptor(userAgent),
+                AcceptLanguageInterceptor(context.locale),
+                AuthorizationInterceptor.bearer(
                     token = tonApiV2Key,
                     allowDomains = allowDomains
-                )).build()
+                )
+            )
+
+            return baseOkHttpClientBuilder(
+                cronetEngine = cronetEngine,
+                interceptors = interceptors
+            ).build()
         }
 
         private fun requestCronet(context: Context, userAgent: String, callback: (CronetEngine) -> Unit) {

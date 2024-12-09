@@ -4,10 +4,12 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
+import android.webkit.WebView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -21,6 +23,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import com.facebook.drawee.backends.pipeline.Fresco
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.loadSquare
@@ -72,6 +75,8 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
     private val currentUrl: Uri
         get() = webView.url?.toUri() ?: args.url
 
+    private var openNewTabRunnable: Runnable? = null
+
     private val webViewCallback = object : WebViewFixed.Callback() {
         override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
             return overrideUrlLoading(request)
@@ -99,22 +104,42 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             headerDrawable.setDivider(y > 0)
             refreshView.isEnabled = y == 0
         }
+
+        override fun onNewTab(url: String) {
+            super.onNewTab(url)
+            openNewTabRunnable?.let { removeCallbacks(it) }
+            openNewTabRunnable = Runnable {
+                openNewTab(url)
+            }
+            openNewTabRunnable?.let { postDelayed(100, it) }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEventClickDApp(
-            url = args.url.toString(),
-            name = args.title ?: "unknown",
-            installId = installId,
-            source = args.source
-        )
+        if (args.sendAnalytics) {
+            AnalyticsHelper.trackEventClickDApp(
+                url = args.url.toString(),
+                name = args.title ?: "unknown",
+                installId = installId,
+                source = args.source
+            )
+        }
     }
 
     private fun applyHost(url: String) {
         url.toUri().host?.let {
             hostView.text = it
         }
+    }
+
+    private fun openNewTab(url: String) {
+        val uri = url.toUriOrNull() ?: return
+        navigation?.add(newInstance(
+            wallet = wallet,
+            url = uri,
+            source = args.source
+        ))
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -299,8 +324,9 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             title: String? = null,
             url: Uri,
             source: String,
+            sendAnalytics: Boolean = true,
         ): DAppScreen {
-            return newInstance(wallet, DAppArgs(title, url, source))
+            return newInstance(wallet, DAppArgs(title, url, source, sendAnalytics))
         }
 
         fun newInstance(

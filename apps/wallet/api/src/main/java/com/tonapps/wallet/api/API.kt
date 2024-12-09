@@ -511,17 +511,19 @@ class API(
     fun emulateWithBattery(
         tonProofToken: String,
         cell: Cell,
-        testnet: Boolean
-    ) = emulateWithBattery(tonProofToken, cell.base64(), testnet)
+        testnet: Boolean,
+        safeModeEnabled: Boolean,
+    ) = emulateWithBattery(tonProofToken, cell.base64(), testnet, safeModeEnabled)
 
     fun emulateWithBattery(
         tonProofToken: String,
         boc: String,
-        testnet: Boolean
+        testnet: Boolean,
+        safeModeEnabled: Boolean,
     ): Pair<MessageConsequences, Boolean>? {
         val host = if (testnet) config.batteryTestnetHost else config.batteryHost
         val url = "$host/wallet/emulate"
-        val data = "{\"boc\":\"$boc\"}"
+        val data = "{\"boc\":\"$boc\",\"safe_mode\":$safeModeEnabled}"
 
         val response = withRetry {
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
@@ -542,13 +544,18 @@ class API(
         boc: String,
         testnet: Boolean,
         address: String? = null,
-        balance: Long? = null
+        balance: Long? = null,
+        safeModeEnabled: Boolean,
     ): MessageConsequences? = withContext(Dispatchers.IO) {
         val params = mutableListOf<EmulateMessageToWalletRequestParamsInner>()
         if (address != null) {
             params.add(EmulateMessageToWalletRequestParamsInner(address, balance))
         }
-        val request = EmulateMessageToWalletRequest(boc, params)
+        val request = EmulateMessageToWalletRequest(
+            boc = boc,
+            params = params,
+            safeMode = safeModeEnabled
+        )
         withRetry {
             emulation(testnet).emulateMessageToWallet(request)
         }
@@ -558,9 +565,10 @@ class API(
         cell: Cell,
         testnet: Boolean,
         address: String? = null,
-        balance: Long? = null
+        balance: Long? = null,
+        safeModeEnabled: Boolean,
     ): MessageConsequences? {
-        return emulate(cell.hex(), testnet, address, balance)
+        return emulate(cell.hex(), testnet, address, balance, safeModeEnabled)
     }
 
     suspend fun sendToBlockchainWithBattery(

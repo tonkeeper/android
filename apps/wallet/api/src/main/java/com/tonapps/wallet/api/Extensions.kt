@@ -32,8 +32,8 @@ inline fun <reified T> fromJSON(json: String): T {
 }
 
 fun <R> withRetry(
-    times: Int = 3,
-    delay: Long = 100,
+    times: Int = 5,
+    delay: Long = 500,
     retryBlock: () -> R
 ): R? {
     var index = -1
@@ -50,7 +50,7 @@ fun <R> withRetry(
         } catch (e: Throwable) {
             val statusCode = e.getHttpStatusCode()
             if (statusCode == 429 || statusCode == 401 || statusCode == 502 || statusCode == 520) {
-                SystemClock.sleep(delay)
+                SystemClock.sleep(delay + 100)
                 continue
             }
             if (statusCode >= 500 || statusCode == 404 || statusCode == 400) {

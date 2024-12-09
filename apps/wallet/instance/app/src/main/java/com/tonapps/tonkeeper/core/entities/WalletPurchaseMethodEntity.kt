@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.core.entities
 
 import android.net.Uri
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity

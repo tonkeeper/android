@@ -15,6 +15,14 @@ object DevSettings {
             }
         }
 
+    var firstLaunchDate: Long = prefs.getLong("first_launch_date", 0)
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.edit().putLong("first_launch_date", value).apply()
+            }
+        }
+
     var tonConnectLogs: Boolean = prefs.getBoolean("ton_connect_logs", false)
         set(value) {
             if (field != value) {

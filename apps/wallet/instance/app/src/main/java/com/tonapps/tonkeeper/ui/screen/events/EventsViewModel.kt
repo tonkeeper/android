@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.api.AccountEventWrap
@@ -62,28 +63,14 @@ class EventsViewModel(
 
     private var autoRefreshJob: Job? = null
 
-    private val appNotifications = dAppsRepository.notificationsFlow(
-        wallet = wallet,
-        scope = viewModelScope
-    )
-
     private val _triggerFlow = MutableEffectFlow<Unit>()
     private val _loadingTriggerFlow = MutableEffectFlow<Unit>()
 
     private val _selectedFilter = MutableStateFlow<FilterItem?>(null)
     private val selectedFilter = _selectedFilter.asStateFlow()
 
-    private val _filterAppsFlow = MutableStateFlow<List<AppEntity>>(emptyList())
-    private val filterAppsFlow = _filterAppsFlow.asStateFlow()
-
-    val uiFilterItemsFlow: Flow<List<FilterItem>> = combine(
-        selectedFilter,
-        filterAppsFlow,
-    ) { selected, apps ->
+    val uiFilterItemsFlow: Flow<List<FilterItem>> = selectedFilter.map { selected ->
         val uiFilterItems = mutableListOf<FilterItem>()
-        apps.forEach { app ->
-            uiFilterItems.add(FilterItem.App(selected?.id == app.id, app))
-        }
         uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
         uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
         uiFilterItems.toList()
@@ -92,17 +79,14 @@ class EventsViewModel(
     private val isLoading: AtomicBoolean = AtomicBoolean(false)
 
     private val _eventsFlow = MutableStateFlow<Array<AccountEventWrap>?>(null)
-    private val _pushesFlow = MutableStateFlow<Array<AppPushEntity>?>(null)
 
     private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull()
-    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull()
 
     private val historyItemsFlow = combine(
         eventsFlow.map { list -> list.map { it.event } },
-        pushesFlow.map { list -> list.toMutableList() },
         _triggerFlow,
-    ) { events, pushes, _ ->
-        mapping(events, pushes)
+    ) { events, _ ->
+        mapping(events)
     }
 
     private val uiItemsFlow = combine(
@@ -124,7 +108,7 @@ class EventsViewModel(
         } else {
             historyHelper.removeLoadingItem(uiItems)
         }
-        if (actionOutStatus == ActionOutStatus.Any) {
+        if (actionOutStatus == ActionOutStatus.Any || actionOutStatus == null) {
             setCached(list)
         }
         list
@@ -160,11 +144,6 @@ class EventsViewModel(
             }
         }
 
-        appNotifications.collectFlow {
-            _filterAppsFlow.value = it.apps
-            _pushesFlow.value = it.notifications.toTypedArray()
-        }
-
         viewModelScope.launch { initialLoad(true) }
         _triggerFlow.tryEmit(Unit)
     }
@@ -190,7 +169,7 @@ class EventsViewModel(
 
     private fun resolveActionOutStatus(filter: Int): ActionOutStatus? {
         return when (filter) {
-            TX_FILTER_APP -> ActionOutStatus.App
+            // TX_FILTER_APP -> ActionOutStatus.App
             TX_FILTER_SENT -> ActionOutStatus.Send
             TX_FILTER_RECEIVED -> ActionOutStatus.Received
             else -> return null
@@ -229,9 +208,6 @@ class EventsViewModel(
             if (cached.isNotEmpty()) {
                 _eventsFlow.value = cached
             }
-            if (_pushesFlow.value.isNullOrEmpty()){
-                dAppsRepository.refreshNotifications(wallet, accountsRepository)
-            }
         }
 
         val events = loadDefault(beforeLt = null, limit = 20).toTypedArray()
@@ -262,11 +238,7 @@ class EventsViewModel(
         }
     }
 
-    private suspend fun mapping(events: List<AccountEvent>, pushes: List<AppPushEntity>): List<HistoryItem> {
-        val pushesItems = pushes.map {
-            HistoryItem.App(context, wallet, it)
-        }
-
+    private suspend fun mapping(events: List<AccountEvent>): List<HistoryItem> {
         val eventItems = historyHelper.mapping(
             wallet = wallet,
             events = events.map { it.copy() },
@@ -274,8 +246,7 @@ class EventsViewModel(
             hiddenBalances = settingsRepository.hiddenBalances,
             safeMode = settingsRepository.isSafeModeEnabled(api),
         )
-
-        return eventItems + pushesItems
+        return eventItems
     }
 
     private fun getCached(): List<HistoryItem> {

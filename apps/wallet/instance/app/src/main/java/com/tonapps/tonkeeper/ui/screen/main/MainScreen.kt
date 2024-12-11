@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.extensions.query
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.removeAllFragments
@@ -28,7 +29,6 @@ import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -42,8 +42,12 @@ import uikit.extensions.roundTop
 import uikit.extensions.scale
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 
 class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, ScreenContext.None) {
+
+    override val fragmentName: String = "MainScreen"
 
     abstract class Child(
         @LayoutRes layoutId: Int,
@@ -104,7 +108,6 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     }
 
     override val viewModel: MainViewModel by viewModel()
-
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private val fragments: MutableMap<Int, Fragment> = mutableMapOf()
@@ -135,9 +138,14 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
 
         rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().onEach {
-            val itemId = resolveId(it.link)
+            val itemId = resolveId(it.link.toString())
             bottomTabsView.selectedItemId = itemId
-            setFragment(itemId, it.wallet, it.from,true)
+            val extra = if (itemId == R.id.browser) {
+                it.link.query("category")
+            } else {
+                null
+            }
+            setFragment(itemId, it.wallet, it.from,extra, true)
             parentClearState()
         }.launchIn(lifecycleScope)
 
@@ -146,7 +154,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
         collectFlow(viewModel.selectedWalletFlow) { wallet ->
             applyWallet(wallet)
-            setFragment(bottomTabsView.selectedItemId, wallet, "wallet",false)
+            setFragment(bottomTabsView.selectedItemId, wallet, "wallet",null, false)
         }
     }
 
@@ -176,20 +184,20 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
 
         bottomTabsView.doOnClick = { itemId ->
-            setFragment(itemId, wallet, "wallet",false)
+            setFragment(itemId, wallet, "wallet",null, false)
             if (itemId == R.id.browser) {
                 AnalyticsHelper.trackEvent("browser_click", rootViewModel.installId)
             }
         }
     }
 
-    private fun getFragment(itemId: Int, wallet: WalletEntity, from: String): Fragment {
-        return fragments[itemId] ?: createFragment(itemId, wallet, from).also {
+    private fun getFragment(itemId: Int, wallet: WalletEntity): Fragment {
+        return fragments[itemId] ?: createFragment(itemId, wallet).also {
             fragments[itemId] = it
         }
     }
 
-    private fun createFragment(itemId: Int, wallet: WalletEntity, from: String): Fragment {
+    private fun createFragment(itemId: Int, wallet: WalletEntity): Fragment {
         val fragment = when(itemId) {
             R.id.wallet -> WalletScreen.newInstance(wallet)
             R.id.activity -> EventsScreen.newInstance(wallet)
@@ -200,11 +208,12 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         return fragment
     }
 
-    private fun setFragment(itemId: Int, wallet: WalletEntity, from: String, forceScrollUp: Boolean) {
-        setFragment(getFragment(itemId, wallet, from), forceScrollUp, from, 0)
+    private fun setFragment(itemId: Int, wallet: WalletEntity, from: String, extra: String?, forceScrollUp: Boolean) {
+        viewModel.setData(wallet, itemId)
+        setFragment(getFragment(itemId, wallet), forceScrollUp, from, extra, 0)
     }
 
-    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, from: String, attempt: Int) {
+    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, from: String, extra: String?, attempt: Int) {
         if (attempt > 3) {
             throw IllegalStateException("Failed to set main fragment")
         }
@@ -234,6 +243,9 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             checkBottomDivider(fragment)
             if (fragment is BrowserBaseScreen) {
                 AnalyticsHelper.trackBrowserOpen(rootViewModel.installId, from)
+                if (!extra.isNullOrBlank()) {
+                    fragment.openCategory(extra)
+                }
             }
         }
         try {
@@ -241,7 +253,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             postDelayed(1000) {
-                setFragment(fragment, forceScrollUp, from,attempt + 1)
+                setFragment(fragment, forceScrollUp, from,extra, attempt + 1)
             }
         }
     }

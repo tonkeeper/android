@@ -72,6 +72,8 @@ import java.util.UUID
 
 class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_send, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "SendScreen"
+
     private val args: SendArgs by lazy { SendArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
 
@@ -271,6 +273,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         }
 
         initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress, args.bin)
+
+        addressInput.focus()
     }
 
     private fun confirmSendAll() {

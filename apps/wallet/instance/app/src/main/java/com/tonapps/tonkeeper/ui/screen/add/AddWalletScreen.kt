@@ -25,6 +25,8 @@ import uikit.extensions.getDimensionPixelSize
 
 class AddWalletScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.Modal {
 
+    override val fragmentName: String = "AddWalletScreen"
+
     override val viewModel: AddWalletViewModel by viewModel {
         parametersOf(requireArguments().getBoolean(ARG_WITH_NEW, false))
     }

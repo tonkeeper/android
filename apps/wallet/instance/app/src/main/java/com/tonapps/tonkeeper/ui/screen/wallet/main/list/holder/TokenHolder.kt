@@ -72,7 +72,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             iconView.setImageURI(uri, null)
         } else {
             val builder = ImageRequestBuilder.newBuilderWithSource(uri)
-            builder.resizeOptions = ResizeOptions.forSquareSize(128)
+            builder.resizeOptions = ResizeOptions.forSquareSize(256)
             iconView.setImageRequest(builder.build())
         }
     }

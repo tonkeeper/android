@@ -101,7 +101,13 @@ class CountryPickerViewModel(
     }
 
     fun search(query: CharSequence?) {
-        _searchQueryFlow.value = query.toString()
+        if (query.isNullOrBlank()) {
+            _searchQueryFlow.value = ""
+        } else if (query.toString().equals("us", true) || query.toString().equals("usa", true)) {
+            _searchQueryFlow.value = "United States"
+        } else {
+            _searchQueryFlow.value = query.toString()
+        }
     }
 
     fun setCountry(country: String) {

@@ -22,6 +22,8 @@ import uikit.widget.LoadableButton
 
 class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragment.Modal {
 
+    override val fragmentName: String = "PairLedgerScreen"
+
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private val connectionViewModel: LedgerConnectionViewModel by viewModel()

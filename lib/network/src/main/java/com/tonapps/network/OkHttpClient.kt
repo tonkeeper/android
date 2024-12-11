@@ -102,14 +102,6 @@ class OkHttpError(
         get() = response.body?.string() ?: ""
 }
 
-fun OkHttpClient.getBitmap(url: String): Bitmap {
-    val request = requestBuilder(url).build()
-    val response = newCall(request).execute()
-    return response.body?.byteStream()?.use { stream ->
-        BitmapFactory.decodeStream(stream)
-    } ?: throw Exception("Empty response")
-}
-
 fun OkHttpClient.sseFactory() = EventSources.createFactory(this)
 
 fun OkHttpClient.sse(
@@ -153,7 +145,7 @@ fun OkHttpClient.sse(
             events.cancel()
         } catch (ignored: Exception) { }
     }
-}.buffer(64, BufferOverflow.DROP_OLDEST).retry { cause ->
+}.retry { cause ->
     when {
         cause is CancellationException -> false
         cause is StreamResetException && cause.errorCode == ErrorCode.CANCEL -> false

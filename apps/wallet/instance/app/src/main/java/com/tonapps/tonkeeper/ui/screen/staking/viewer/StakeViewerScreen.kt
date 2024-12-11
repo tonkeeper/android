@@ -19,6 +19,8 @@ import uikit.extensions.collectFlow
 
 class StakeViewerScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "StakeViewerScreen"
+
     override val viewModel: StakeViewerViewModel by walletViewModel { parametersOf(args.address) }
 
     private val args: StakeViewerArgs by lazy { StakeViewerArgs(requireArguments()) }

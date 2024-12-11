@@ -31,8 +31,8 @@ class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.l
             }
         }
 
-        bgView.setImageURI(item.poster, ResizeOptions.forSquareSize(256))
-        iconView.setImageURI(item.icon, ResizeOptions.forSquareSize(44))
+        bgView.setImageURI(item.poster, ResizeOptions.forSquareSize(712))
+        iconView.setImageURI(item.icon, ResizeOptions.forSquareSize(128))
 
         titleView.setTextColor(item.textColor)
         titleView.text = item.name

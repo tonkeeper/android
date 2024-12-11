@@ -49,6 +49,8 @@ import uikit.widget.webview.WebViewFixed
 
 class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragment_dapp, wallet) {
 
+    override val fragmentName: String = "DAppScreen"
+
     private lateinit var headerDrawable: HeaderDrawable
     private lateinit var headerView: View
     private lateinit var backView: View

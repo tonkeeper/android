@@ -14,6 +14,8 @@ import uikit.extensions.collectFlow
 
 class BatteryScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "BatteryScreen"
+
     private val initialPromo: String? by lazy { requireArguments().getString(ARG_PROMO) }
 
     override val viewModel: BatteryViewModel by viewModel()

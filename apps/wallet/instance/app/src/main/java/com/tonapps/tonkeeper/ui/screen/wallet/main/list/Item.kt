@@ -29,6 +29,7 @@ import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import java.math.RoundingMode
 
 sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
@@ -329,7 +330,16 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             balanceFormat = CurrencyFormatter.format(value = token.balance.value),
             fiat = token.fiat,
             fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat),
-            rate = CurrencyFormatter.formatFiat(currencyCode, token.rateNow),
+            rate = if (token.isUsdt) {
+                CurrencyFormatter.formatFiat(
+                    currency = currencyCode,
+                    value = token.rateNow,
+                    customScale = 2,
+                    roundingMode = RoundingMode.UP
+                )
+            } else {
+                CurrencyFormatter.formatFiat(currencyCode, token.rateNow)
+            },
             rateDiff24h = token.rateDiff24h,
             verified = token.verified,
             testnet = testnet,

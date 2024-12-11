@@ -20,6 +20,8 @@ import uikit.extensions.collectFlow
 
 class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wallet, wallet) {
 
+    override val fragmentName: String = "WalletScreen"
+
     override val viewModel: WalletViewModel by walletViewModel()
 
     private val adapter = WalletAdapter()

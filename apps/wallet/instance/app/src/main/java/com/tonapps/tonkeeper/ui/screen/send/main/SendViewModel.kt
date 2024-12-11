@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -228,18 +229,23 @@ class SendViewModel(
             rates.convertFromFiat(token.address, token.fiat - amount)
         }
 
-        val remainingFormat =
-            CurrencyFormatter.format(token.symbol, remainingToken, 2, RoundingMode.DOWN, false)
+        val remainingFormat = CurrencyFormatter.format(
+            currency = token.symbol,
+            value = remainingToken,
+            customScale = 2,
+            roundingMode = RoundingMode.DOWN,
+            replaceSymbol = false
+        )
 
         SendAmountState(
             remainingFormat = getString(Localization.remaining_balance, remainingFormat),
             converted = converted.stripTrailingZeros(),
             convertedFormat = CurrencyFormatter.format(
-                convertedCode,
-                converted,
-                2,
-                RoundingMode.DOWN,
-                false
+                currency = convertedCode,
+                value = converted,
+                customScale = 2,
+                roundingMode = RoundingMode.DOWN,
+                replaceSymbol = false
             ),
             insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
             currencyCode = if (amountCurrency) currencyCode else "",
@@ -484,9 +490,9 @@ class SendViewModel(
                 }
             } else {
                 val totalAmount = if (getRawExtra().multiply(BigDecimal(-1)).isNegative) {
-                    TransferEntity.BASE_FORWARD_AMOUNT
+                    TransferEntity.POINT_ONE_TON
                 } else {
-                    fee + TransferEntity.BASE_FORWARD_AMOUNT
+                    fee + TransferEntity.POINT_ONE_TON
                 }
                 if (!withRelayer && totalAmount.value > tonBalance.value) {
                     showInsufficientBalance(tonBalance, totalAmount)
@@ -557,8 +563,11 @@ class SendViewModel(
 
     private fun loadNft() {
         viewModelScope.launch(Dispatchers.IO) {
-            val nft = collectiblesRepository.getNft(wallet.accountId, wallet.testnet, nftAddress)
-                ?: return@launch
+            val nft = collectiblesRepository.getNft(
+                accountId = wallet.accountId,
+                testnet = wallet.testnet,
+                address = nftAddress
+            ) ?: return@launch
             val pref = settingsRepository.getTokenPrefs(wallet.id, nftAddress)
             userInputNft(nft.with(pref))
         }

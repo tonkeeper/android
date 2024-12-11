@@ -14,6 +14,8 @@ import uikit.extensions.collectFlow
 
 class CurrencyScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "CurrencyScreen"
+
     override val viewModel: CurrencyViewModel by viewModel()
 
     private val adapter = Adapter(::selectCurrency)

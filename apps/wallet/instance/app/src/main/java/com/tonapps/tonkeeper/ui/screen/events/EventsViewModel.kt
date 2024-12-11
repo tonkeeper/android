@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.notificationsFlow
 import com.tonapps.tonkeeper.extensions.refreshNotifications
+import com.tonapps.tonkeeper.helper.CacheHelper
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
@@ -51,14 +52,12 @@ import kotlin.time.Duration.Companion.seconds
 class EventsViewModel(
     app: Application,
     private val wallet: WalletEntity,
-    private val accountsRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val historyHelper: HistoryHelper,
-    private val screenCacheSource: ScreenCacheSource,
     private val settingsRepository: SettingsRepository,
     private val transactionManager: TransactionManager,
-    private val dAppsRepository: DAppsRepository,
     private val api: API,
+    private val cacheHelper: CacheHelper,
 ): BaseWalletVM(app) {
 
     private var autoRefreshJob: Job? = null
@@ -109,13 +108,13 @@ class EventsViewModel(
             historyHelper.removeLoadingItem(uiItems)
         }
         if (actionOutStatus == ActionOutStatus.Any || actionOutStatus == null) {
-            setCached(list)
+            cacheHelper.setEventsCached(wallet, list)
         }
         list
     }.flowOn(Dispatchers.IO)
 
     val uiStateFlow: Flow<EventsUiState> = flow {
-        val cached = getCached()
+        val cached = cacheHelper.getEventsCached(wallet)
         if (cached.isNotEmpty()) {
             emit(EventsUiState(
                 uiItems = cached,
@@ -249,18 +248,6 @@ class EventsViewModel(
         return eventItems
     }
 
-    private fun getCached(): List<HistoryItem> {
-        return screenCacheSource.get(CACHE_NAME, wallet.id) {
-            HistoryItem.createFromParcel(it)
-        }
-    }
-
-    private fun setCached(uiItems: List<HistoryItem>) {
-        if (uiItems.isNotEmpty()) {
-            screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
-        }
-    }
-
     private suspend fun updateState() {
         _triggerFlow.emit(Unit)
     }
@@ -302,8 +289,6 @@ class EventsViewModel(
     }
 
     private companion object {
-        private const val CACHE_NAME = "events"
-
         private const val TX_FILTER_NONE = 0
         private const val TX_FILTER_SENT = 1
         private const val TX_FILTER_RECEIVED = 2

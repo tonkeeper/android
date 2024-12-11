@@ -14,6 +14,8 @@ import uikit.widget.HeaderView
 
 class ChangePasscodeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_change_passcode, ScreenContext.None), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "ChangePasscodeScreen"
+
     override val viewModel: ChangePasscodeViewModel by viewModel()
 
     private lateinit var headerView: HeaderView

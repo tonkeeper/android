@@ -499,7 +499,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Story) {
             showStory(route.id, "deep-link")
         } else if (route is DeepLinkRoute.Tabs) {
-            _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri, wallet, route.from))
+            _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri.toUri(), wallet, route.from))
         } else if (route is DeepLinkRoute.Send && !wallet.isWatchOnly) {
             openScreen(SendScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.Staking && !wallet.isWatchOnly) {

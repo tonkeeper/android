@@ -28,6 +28,8 @@ import uikit.widget.SimpleRecyclerView
 
 class SendContactsScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_send_contacts, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "SendContactsScreen"
+
     private val requestKey: String by lazy { arguments?.getString(ARG_REQUEST_KEY)!! }
 
     private val adapter = Adapter( { selectContact(it) }, { item, actionId ->

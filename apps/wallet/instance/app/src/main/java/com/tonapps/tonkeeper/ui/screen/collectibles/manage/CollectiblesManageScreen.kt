@@ -14,6 +14,8 @@ import uikit.extensions.collectFlow
 
 class CollectiblesManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "CollectiblesManageScreen"
+
     private val spamDialog: CollectionSpamDialog by lazy { CollectionSpamDialog(requireContext()) }
 
     override val viewModel: CollectiblesManageViewModel by walletViewModel()

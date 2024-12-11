@@ -33,6 +33,8 @@ import java.util.concurrent.CancellationException
 
 class KeystoneSignScreen: QRSignScreen() {
 
+    override val fragmentName: String = "KeystoneSignScreen"
+
     val contract = object : ResultContract<ByteArray, BitString> {
 
         private val KEY_SIGNATURE = "signature"

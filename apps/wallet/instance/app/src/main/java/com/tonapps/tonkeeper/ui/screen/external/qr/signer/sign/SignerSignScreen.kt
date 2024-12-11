@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SignerSignScreen: QRSignScreen() {
 
+    override val fragmentName: String = "SignerSignScreen"
+
     val contract = object : ResultContract<Uri, BitString> {
 
         private val KEY_URI = "uri"

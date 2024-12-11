@@ -26,6 +26,8 @@ import uikit.widget.item.ItemSwitchView
 
 class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, ScreenContext.None), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "DevScreen"
+
     override val viewModel: DevViewModel by viewModel()
 
     private lateinit var iconsView: RecyclerView

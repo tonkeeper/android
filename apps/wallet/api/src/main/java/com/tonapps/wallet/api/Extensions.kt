@@ -44,8 +44,10 @@ fun <R> withRetry(
         } catch (e: CancellationException) {
             throw e
         } catch (e: SocketTimeoutException) {
+            SystemClock.sleep(delay + 100)
             return null
         } catch (e: IOException) {
+            SystemClock.sleep(delay + 100)
             return null
         } catch (e: Throwable) {
             val statusCode = e.getHttpStatusCode()

@@ -14,6 +14,8 @@ import uikit.extensions.collectFlow
 
 class BrowserMoreScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "BrowserMoreScreen"
+
     private val baseFragment: BrowserBaseScreen? by lazy {
         BrowserBaseScreen.from(this)
     }

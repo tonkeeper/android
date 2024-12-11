@@ -19,6 +19,8 @@ import uikit.widget.SearchInput
 
 class CountryPickerScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_country, ScreenContext.None), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "CountryPickerScreen"
+
     override val viewModel: CountryPickerViewModel by viewModel()
 
     private val requestKey: String by lazy { requireArguments().getString(ARG_REQUEST_KEY)!! }

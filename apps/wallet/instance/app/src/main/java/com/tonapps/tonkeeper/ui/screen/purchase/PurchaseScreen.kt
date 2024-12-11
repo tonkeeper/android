@@ -30,6 +30,8 @@ import uikit.navigation.NavigationActivity
 
 class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_purchase, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "PurchaseScreen"
+
     override val viewModel: PurchaseViewModel by walletViewModel()
 
     private val settingsRepository: SettingsRepository by inject()

@@ -12,6 +12,8 @@ import uikit.extensions.collectFlow
 
 class MigrationScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_migration, ScreenContext.None), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "MigrationScreen"
+
     override val viewModel: MigrationViewModel by viewModel()
 
     private lateinit var legacyStateView: AppCompatTextView

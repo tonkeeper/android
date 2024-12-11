@@ -279,7 +279,7 @@ class API(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
-        limit: Int = 20
+        limit: Int = 10
     ): AccountEvents {
         return accounts(testnet).getAccountJettonHistoryByID(
             jettonId = tokenAddress,

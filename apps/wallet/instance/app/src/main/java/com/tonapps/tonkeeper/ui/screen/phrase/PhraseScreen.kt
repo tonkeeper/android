@@ -20,6 +20,8 @@ import uikit.widget.PhraseWords
 
 class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_phrase, wallet), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "PhraseScreen"
+
     private val args: PhraseArgs by lazy { PhraseArgs(requireArguments()) }
 
     override val viewModel: BaseWalletVM.EmptyViewViewModel by viewModel()

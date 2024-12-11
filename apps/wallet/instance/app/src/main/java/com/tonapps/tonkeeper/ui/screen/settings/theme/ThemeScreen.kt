@@ -19,6 +19,8 @@ import uikit.extensions.dp
 
 class ThemeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "ThemeScreen"
+
     override val viewModel: ThemeViewModel by viewModel()
 
     private val adapter = Adapter { item ->

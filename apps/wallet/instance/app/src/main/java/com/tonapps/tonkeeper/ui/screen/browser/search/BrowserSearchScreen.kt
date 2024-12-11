@@ -36,6 +36,8 @@ import uikit.widget.HeaderView
 
 class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_search, wallet) {
 
+    override val fragmentName: String = "BrowserSearchScreen"
+
     override val viewModel: BrowserSearchViewModel by viewModel()
 
     private val adapter = Adapter { title, url, sendAnalytics ->

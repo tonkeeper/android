@@ -51,6 +51,8 @@ import uikit.widget.FrescoView
 
 class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment.Modal {
 
+    override val fragmentName: String = "TransactionScreen"
+
     companion object {
 
         private const val REPORT_SPAM_ID = 1L

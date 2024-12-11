@@ -18,6 +18,8 @@ import uikit.extensions.getDimensionPixelSize
 
 class BatterySettingsScreen(wallet: WalletEntity): BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, BatteryScreen, BatteryViewModel>(ScreenContext.Wallet(wallet)) {
 
+    override val fragmentName: String = "BatterySettingsFragment"
+
     override val viewModel: BatterySettingsViewModel by walletViewModel()
 
     private val adapter = Adapter()

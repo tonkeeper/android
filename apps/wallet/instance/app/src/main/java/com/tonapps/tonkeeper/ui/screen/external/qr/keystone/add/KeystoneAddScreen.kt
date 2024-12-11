@@ -27,6 +27,8 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "KeystoneAddScreen"
+
     private data class KeystoneData(
         val publicKey: PublicKeyEd25519,
         val xfp: String,

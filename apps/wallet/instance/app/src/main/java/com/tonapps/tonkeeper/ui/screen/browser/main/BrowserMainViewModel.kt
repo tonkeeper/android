@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.mapList
+import com.tonapps.tonkeeper.extensions.getFixedCountryCode
 import com.tonapps.tonkeeper.extensions.getLocaleCountryFlow
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -21,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class BrowserMainViewModel(
@@ -47,7 +49,7 @@ class BrowserMainViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            val code = settingsRepository.country
+            val code = settingsRepository.getFixedCountryCode(api)
             val locale = settingsRepository.getLocale()
             _uiExploreItemsFlow.value = emptyList()
             browserRepository.load(code, wallet.testnet, locale)?.let { setData(it) }

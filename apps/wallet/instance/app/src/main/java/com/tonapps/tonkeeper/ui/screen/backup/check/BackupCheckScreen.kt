@@ -31,6 +31,8 @@ import uikit.widget.WordInput
 
 class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_backup_check, wallet), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "BackupCheckScreen"
+
     private val args: BackupCheckArgs by lazy { BackupCheckArgs(requireArguments()) }
 
     override val secure: Boolean = !BuildConfig.DEBUG

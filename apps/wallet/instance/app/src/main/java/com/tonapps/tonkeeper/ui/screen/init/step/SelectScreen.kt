@@ -20,6 +20,8 @@ import uikit.extensions.getDimensionPixelSize
 
 class SelectScreen : BaseFragment(R.layout.fragment_init_select) {
 
+    override val fragmentName: String = "SelectScreen"
+
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
     private val adapter = Adapter { account, checked ->

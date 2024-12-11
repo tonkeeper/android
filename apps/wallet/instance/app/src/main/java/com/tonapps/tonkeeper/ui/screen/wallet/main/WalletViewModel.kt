@@ -81,10 +81,9 @@ class WalletViewModel(
 
     private val _stateSettingsFlow = combine(
         settingsRepository.hiddenBalancesFlow,
-        api.configFlow.filter { !it.empty },
         statusFlow,
-    ) { hiddenBalance, config, status ->
-        State.Settings(hiddenBalance, config, status)
+    ) { hiddenBalance, status ->
+        State.Settings(hiddenBalance, api.config, status)
     }.distinctUntilChanged()
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)

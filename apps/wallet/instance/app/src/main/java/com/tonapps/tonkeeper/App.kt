@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper
 
 import android.app.Application
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.StrictMode
 import android.util.Log
@@ -103,9 +104,8 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         configBuilder.setImageTranscoderType(ImageTranscoderType.JAVA_TRANSCODER)
         configBuilder.experiment().setNativeCodeDisabled(true)
         configBuilder.experiment().setPartialImageCachingEnabled(false)
-        configBuilder.experiment().setUseDownsampligRatioForResizing(true)
-        configBuilder.experiment().useBitmapPrepareToDraw = true
         configBuilder.setDownsampleMode(DownsampleMode.ALWAYS)
+        configBuilder.setBitmapsConfig(Bitmap.Config.ARGB_8888)
 
         Fresco.initialize(this, configBuilder.build())
     }

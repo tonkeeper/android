@@ -23,10 +23,34 @@ sealed class DeepLinkRoute {
     data class Unknown(val uri: Uri): DeepLinkRoute()
 
     sealed class Tabs(val tabUri: String, open val from: String): DeepLinkRoute() {
-        data class Main(override val from: String): Tabs("tonkeeper://wallet", from)
-        data class Activity(override val from: String): Tabs("tonkeeper://activity", from)
-        data class Browser(override val from: String): Tabs("tonkeeper://browser", from)
-        data class Collectibles(override val from: String): Tabs("tonkeeper://collectibles", from)
+
+        data class Main(
+            override val from: String
+        ): Tabs("tonkeeper://wallet", from)
+
+        data class Activity(
+            override val from: String
+        ): Tabs("tonkeeper://activity", from)
+
+        data class Browser(
+            override val from: String,
+            val category: String?,
+        ): Tabs(buildBrowserUri(category), from) {
+
+            private companion object {
+                private fun buildBrowserUri(category: String?): String {
+                    val builder = Uri.parse("tonkeeper://browser").buildUpon()
+                    if (!category.isNullOrBlank()) {
+                        builder.appendQueryParameter("category", category)
+                    }
+                    return builder.build().toString()
+                }
+            }
+        }
+
+        data class Collectibles(
+            override val from: String
+        ): Tabs("tonkeeper://collectibles", from)
     }
 
     sealed class Internal: DeepLinkRoute()
@@ -198,7 +222,7 @@ sealed class DeepLinkRoute {
                     "send" -> Send
                     "wallet", "main" -> Tabs.Main(from)
                     "activity", "history" -> Tabs.Activity(from)
-                    "browser" -> Tabs.Browser(from)
+                    "browser" -> Tabs.Browser(from, uri.query("category") ?: uri.lastPathSegment)
                     "collectibles" -> Tabs.Collectibles(from)
                     "settings" -> Settings
                     "pool" -> StakingPool(uri)

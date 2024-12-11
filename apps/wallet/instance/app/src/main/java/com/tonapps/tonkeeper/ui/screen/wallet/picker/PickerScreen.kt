@@ -35,6 +35,8 @@ import java.util.concurrent.CancellationException
 
 class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.Modal {
 
+    override val fragmentName: String = "PickerScreen"
+
     val contract = object : ResultContract<WalletEntity, WalletEntity?> {
 
         private val KEY_WALLET = "wallet"

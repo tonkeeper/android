@@ -45,6 +45,8 @@ import java.util.concurrent.CancellationException
 
 class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_tonconnect, ScreenContext.None), BaseFragment.Modal, BaseFragment.SingleTask {
 
+    override val fragmentName: String = "TonConnectScreen"
+
     val contract = object : ResultContract<TonConnectResponse, TonConnectResponse> {
 
         private val KEY_RESPONSE = "response"

@@ -21,6 +21,8 @@ import uikit.widget.InputView
 
 class WatchScreen: BaseFragment(R.layout.fragment_init_watch) {
 
+    override val fragmentName: String = "WatchScreen"
+
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
     private lateinit var contentView: View

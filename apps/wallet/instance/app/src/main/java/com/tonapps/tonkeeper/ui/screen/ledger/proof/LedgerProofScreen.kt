@@ -22,6 +22,8 @@ import java.math.BigInteger
 
 class LedgerProofScreen : BaseFragment(R.layout.fragment_ledger_sign), BaseFragment.Modal {
 
+    override val fragmentName: String = "LedgerProofScreen"
+
     private val args: LedgerProofArgs by lazy { LedgerProofArgs(requireArguments()) }
 
     private val connectionViewModel: LedgerConnectionViewModel by viewModel()

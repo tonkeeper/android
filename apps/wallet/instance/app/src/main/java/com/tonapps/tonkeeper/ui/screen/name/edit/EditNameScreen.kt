@@ -22,6 +22,8 @@ import uikit.widget.HeaderView
 
 class EditNameScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_name_edit, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "EditNameScreen"
+
     override val viewModel: EditNameViewModel by walletViewModel()
 
     private lateinit var editorView: LabelEditorView

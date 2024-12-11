@@ -105,6 +105,9 @@ open class BaseFragment(
         }
     }
 
+    open val fragmentName: String
+        get() = javaClass.simpleName
+
     val window: Window?
         get() = activity?.window
 

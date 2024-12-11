@@ -54,6 +54,8 @@ import uikit.widget.TextHeaderView
 // TODO Need to refactor this screen
 class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
+    override val fragmentName: String = "WordsScreen"
+
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
     override val secure: Boolean = !BuildConfig.DEBUG

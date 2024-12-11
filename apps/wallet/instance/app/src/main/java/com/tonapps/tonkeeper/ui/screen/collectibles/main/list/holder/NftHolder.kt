@@ -79,7 +79,7 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
 
     private fun loadImage(uri: Uri, blur: Boolean) {
         val builder = ImageRequestBuilder.newBuilderWithSource(uri)
-        builder.resizeOptions = ResizeOptions.forSquareSize(320)
+        builder.resizeOptions = ResizeOptions.forSquareSize(512)
         if (blur) {
             builder.setPostprocessor(BlurPostProcessor(25, context, 3))
         }

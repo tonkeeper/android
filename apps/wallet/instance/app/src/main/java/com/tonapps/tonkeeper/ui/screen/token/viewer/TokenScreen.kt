@@ -36,6 +36,8 @@ import uikit.extensions.setRightDrawable
 
 class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "TokenScreen"
+
     private val args: TokenArgs by lazy { TokenArgs(requireArguments()) }
 
     override val viewModel: TokenViewModel by walletViewModel { parametersOf(args.address) }
@@ -124,13 +126,15 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
         if (token.verified) {
             actionSheet.addItem(WIDGET_ID, Localization.widget, UIKitIcon.ic_apps_16)
         }
-        actionSheet.doOnItemClick = {
-            if (it.id == VIEWER_ID) {
-                navigation?.openURL(detailsUrl.toString())
-            } else if (it.id == BURN_ID) {
-                burn(token)
-            } else if (it.id == WIDGET_ID) {
-                WidgetManager.installRate(requireActivity(), screenContext.wallet.id, token.address)
+        actionSheet.doOnItemClick = { item ->
+            when (item.id) {
+                VIEWER_ID -> navigation?.openURL(detailsUrl.toString())
+                BURN_ID -> burn(token)
+                WIDGET_ID -> {
+                    activity?.let {
+                        WidgetManager.installRate(it, screenContext.wallet.id, token.address)
+                    }
+                }
             }
         }
         actionSheet.show(view)

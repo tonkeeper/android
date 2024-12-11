@@ -41,6 +41,8 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "CameraScreen"
+
     private val mode: CameraMode by lazy { requireArguments().getParcelableCompat(ARG_MODE)!! }
 
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->

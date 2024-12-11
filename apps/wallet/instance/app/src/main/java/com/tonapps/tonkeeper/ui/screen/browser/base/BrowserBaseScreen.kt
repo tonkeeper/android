@@ -24,6 +24,8 @@ import uikit.extensions.getDimensionPixelSize
 
 class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_base, wallet) {
 
+    override val fragmentName: String = "BrowserBaseScreen"
+
     override val viewModel: BrowserBaseViewModel by walletViewModel()
 
     private lateinit var footerDrawable: FooterDrawable
@@ -66,6 +68,11 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         childFragmentManager.commitNow {
             remove(fragment)
         }
+    }
+
+    fun openCategory(category: String) {
+        val fragment = BrowserMoreScreen.newInstance(screenContext.wallet, category)
+        addFragment(fragment)
     }
 
     override fun onBackPressed(): Boolean {

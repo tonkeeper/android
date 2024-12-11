@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -33,6 +34,8 @@ import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.BridgeWebView
 
 class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_swap, wallet), BaseFragment.BottomSheet {
+
+    override val fragmentName: String = "SwapScreen"
 
     private val args: SwapArgs by lazy { SwapArgs(requireArguments()) }
 

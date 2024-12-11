@@ -35,6 +35,8 @@ import uikit.widget.SlideBetweenView
 
 class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_main, wallet) {
 
+    override val fragmentName: String = "BrowserMainScreen"
+
     private val baseFragment: BrowserBaseScreen? by lazy {
         BrowserBaseScreen.from(this)
     }

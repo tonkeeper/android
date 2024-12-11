@@ -41,6 +41,8 @@ import uikit.widget.HeaderView
 
 class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_main_events_list, wallet) {
 
+    override val fragmentName: String = "EventsScreen"
+
     override val viewModel: EventsViewModel by walletViewModel()
 
     private val legacyAdapter = HistoryAdapter()

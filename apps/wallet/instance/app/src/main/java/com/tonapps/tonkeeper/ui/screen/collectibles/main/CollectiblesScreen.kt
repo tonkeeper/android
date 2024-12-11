@@ -27,6 +27,8 @@ import uikit.widget.HeaderView
 
 class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_main_list, wallet) {
 
+    override val fragmentName: String = "CollectiblesScreen"
+
     override val viewModel: CollectiblesViewModel by walletViewModel()
 
     private val adapter = Adapter()

@@ -4,6 +4,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import uikit.navigation.Navigation.Companion.navigation
 
 class WalletFragmentFactory: FragmentFactory() {
 
@@ -22,12 +23,18 @@ class WalletFragmentFactory: FragmentFactory() {
                 }
             }
             val parameter = parameters.first()
-            if (parameter == WalletEntity::class.java) {
-                return fragmentClass.getDeclaredConstructor(WalletEntity::class.java).newInstance(WalletEntity.EMPTY)
+            return if (parameter == WalletEntity::class.java) {
+                fragmentClass.getDeclaredConstructor(WalletEntity::class.java).newInstance(WalletEntity.EMPTY)
+            } else {
+                super.instantiate(classLoader, className)
             }
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
+            return EmptyFragment()
         }
-        return super.instantiate(classLoader, className)
+    }
+
+    private class EmptyFragment: Fragment() {
+
     }
 }

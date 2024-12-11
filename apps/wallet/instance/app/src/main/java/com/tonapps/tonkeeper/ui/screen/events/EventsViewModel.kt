@@ -209,7 +209,7 @@ class EventsViewModel(
             }
         }
 
-        val events = loadDefault(beforeLt = null, limit = 20).toTypedArray()
+        val events = loadDefault(beforeLt = null, limit = 15).toTypedArray()
 
         setLoading(loading = false, trigger = false)
 

@@ -227,7 +227,7 @@ class TokenViewModel(
         if (beforeLt == null) {
             setEvents(walletEventItems)
         } else {
-            val oldValue = (_uiHistoryFlow.value ?: emptyList()).toImmutableList().filter { it !is HistoryItem.Loader }
+            val oldValue = (_uiHistoryFlow.value).toImmutableList().filter { it !is HistoryItem.Loader }
             setEvents(oldValue + walletEventItems)
         }
     }

@@ -24,7 +24,7 @@ android {
         targetSdk = 35
         versionCode = 600
 
-        versionName = "5.0.18" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
+        versionName = "5.0.19" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (project.hasProperty("android.injected.feature.in-app-update.apk")) {

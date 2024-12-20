@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.send.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.contract.WalletFeature
@@ -55,7 +54,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -659,7 +657,7 @@ class SendViewModel(
         val message = transfer.signForEstimation(
             internalMessage = true,
             excessesAddress = excessesAddress,
-            jettonTransferAmount = TransferEntity.ONE_TON,
+            jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT,
         )
 
         val (consequences, withBattery) = batteryRepository.emulate(
@@ -705,7 +703,7 @@ class SendViewModel(
                 )
             ),
             excessesAddress = excessesAddress,
-            jettonTransferAmount = TransferEntity.POINT_ONE_TON
+            jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT
         )
 
         val commission = api.estimateGaslessCost(
@@ -737,7 +735,7 @@ class SendViewModel(
     ): Pair<Coins, Boolean> {
         val message = transfer.signForEstimation(
             internalMessage = false,
-            jettonTransferAmount = TransferEntity.ONE_TON
+            jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT
         )
         // Emulate with higher balance to calculate fair amount to send
         val emulated = api.emulate(

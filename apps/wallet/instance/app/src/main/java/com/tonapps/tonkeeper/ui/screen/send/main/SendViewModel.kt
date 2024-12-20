@@ -743,7 +743,8 @@ class SendViewModel(
         val emulated = api.emulate(
             cell = message,
             testnet = transfer.wallet.testnet,
-            balance = Coins.of(2).toLong(),
+            address = transfer.wallet.accountId,
+            balance = (Coins.ONE + Coins.ONE).toLong(),
             safeModeEnabled = settingsRepository.isSafeModeEnabled(api)
         )
         val extra = emulated?.event?.extra ?: 0
@@ -935,8 +936,8 @@ class SendViewModel(
         val token = selectedTokenFlow.value
 
         val jettonTransferAmount = when {
-            sendTransferType is SendTransferType.Gasless || extra.multiply(BigDecimal(-1)).isNegative -> TransferEntity.BASE_FORWARD_AMOUNT
-            fee.isZero -> TransferEntity.BASE_FORWARD_AMOUNT
+            sendTransferType is SendTransferType.Gasless || extra.isPositive -> TransferEntity.BASE_FORWARD_AMOUNT
+            fee.isZero -> TransferEntity.POINT_ONE_TON
             token.isRequestMinting || token.customPayloadApiUri != null -> TransferEntity.POINT_ONE_TON
             else -> fee + TransferEntity.BASE_FORWARD_AMOUNT
         }

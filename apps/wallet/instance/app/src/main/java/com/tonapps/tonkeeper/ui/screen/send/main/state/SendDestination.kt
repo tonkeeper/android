@@ -18,7 +18,7 @@ sealed class SendDestination {
         val isScam: Boolean,
         val isBounce: Boolean,
         val existing: Boolean
-    ): SendDestination() {
+    ) : SendDestination() {
 
         companion object {
             private fun isBounce(query: String, account: io.tonapi.models.Account): Boolean {
@@ -33,13 +33,18 @@ sealed class SendDestination {
             }
         }
 
+        val displayName: String?
+            get() {
+                return if (query.isValidTonAddress()) {
+                    name
+                } else {
+                    query.lowercase()
+                }
+            }
+
         val displayAddress: String
             get() {
-                return if (name.isNullOrBlank()) {
-                    query
-                } else {
-                    address.toString(userFriendly = true, bounceable = isBounce)
-                }
+                return address.toString(userFriendly = true, bounceable = isBounce)
             }
 
         constructor(
@@ -60,7 +65,7 @@ sealed class SendDestination {
         )
     }
 
-    data object Empty: SendDestination()
-    data object NotFound: SendDestination()
+    data object Empty : SendDestination()
+    data object NotFound : SendDestination()
 
 }

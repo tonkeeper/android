@@ -466,26 +466,21 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransactionAccount(destination: SendDestination.Account) {
-        var name = destination.name
-        val shortAddress = if (destination.query.isValidTonAddress()) {
-            destination.query.shortAddress
-        } else {
-            destination.query.lowercase().also {
-                if (name.isNullOrEmpty()) {
-                    name = it
-                }
+
+
+        if (destination.displayName == null) {
+            reviewRecipientView.value = destination.displayAddress.short4
+            reviewRecipientView.setOnClickListener {
+                requireContext().copyToClipboard(destination.displayAddress)
             }
-        }
 
-        reviewRecipientView.setOnClickListener {
-            requireContext().copyToClipboard(shortAddress)
-        }
-
-        if (name.isNullOrEmpty()) {
-            reviewRecipientView.value = shortAddress
             reviewRecipientAddressView.visibility = View.GONE
         } else {
-            reviewRecipientView.value = destination.name
+            reviewRecipientView.value = destination.displayName
+            reviewRecipientView.setOnClickListener {
+                requireContext().copyToClipboard(destination.displayName!!)
+            }
+
             reviewRecipientAddressView.visibility = View.VISIBLE
             reviewRecipientAddressView.value = destination.displayAddress.short4
             reviewRecipientAddressView.setOnClickListener {

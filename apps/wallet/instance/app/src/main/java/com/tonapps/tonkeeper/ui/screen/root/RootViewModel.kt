@@ -402,38 +402,37 @@ class RootViewModel(
         }
     }
 
-    fun processIntentExtras(bundle: Bundle) {
-        val link = bundle.getString("link")
+    fun processIntentExtras(bundle: Bundle): Boolean {
+        val pushType = bundle.getString("type") ?: return false
         val pushId = bundle.getStringValue("push_id", "utm_id", "utm_campaign")
         hasWalletFlow.take(1).collectFlow {
-            if (link != null) {
+            if (pushType == "console_dapp_notification") {
                 processDAppPush(bundle)
             } else {
                 val deeplink = bundle.getString("deeplink")?.toUriOrNull() ?: return@collectFlow
                 AnalyticsHelper.trackPushClick(
                     installId = installId,
-                    pushId = pushId ?: "",
+                    pushId = pushId ?: pushType,
                     payload = deeplink.toString(),
                 )
                 processDeepLinkPush(deeplink, bundle)
             }
         }
+
+        return true
     }
 
     private suspend fun processDAppPush(bundle: Bundle) {
         val accountId = bundle.getString("account") ?: return
-        val dappUrl = bundle.getString("dapp_url")?.toUriOrNull() ?: return
-        val connections = tonConnectManager.accountConnectionsFlow(accountId).firstOrNull()?.filter { it.appUrl == dappUrl } ?: return
-        if (connections.isEmpty()) {
-            return
-        }
         val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
-        val openUrl = bundle.getString("link")?.toUriOrNull() ?: dappUrl
-        openScreen(DAppScreen.newInstance(
-            wallet = wallet,
-            url = openUrl,
-            source = "push"
-        ))
+        val openUrl = bundle.getString("link")?.toUriOrNull() ?: bundle.getString("dapp_url")?.toUriOrNull()
+        if (openUrl != null) {
+            openScreen(DAppScreen.newInstance(
+                wallet = wallet,
+                url = openUrl,
+                source = "push"
+            ))
+        }
     }
 
     private suspend fun processDeepLinkPush(uri: Uri, bundle: Bundle) {

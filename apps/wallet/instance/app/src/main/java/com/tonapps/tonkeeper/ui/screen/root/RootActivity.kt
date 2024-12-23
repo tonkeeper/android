@@ -405,10 +405,13 @@ class RootActivity: BaseWalletActivity() {
         val dappDeepLink = extras?.getStringValue("dapp_deeplink")?.toUriOrNull()
         if (dappDeepLink != null) {
             viewModel.openDApp(dappDeepLink)
-        } else if (uri != null) {
+            return;
+        }
+        if (extras != null && !extras.isEmpty && viewModel.processIntentExtras(extras)) {
+            return;
+        }
+        if (uri != null) {
             processDeepLink(DeepLink.fixBadUri(uri), false, intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))
-        } else if (extras != null && !extras.isEmpty) {
-            viewModel.processIntentExtras(extras)
         }
     }
 

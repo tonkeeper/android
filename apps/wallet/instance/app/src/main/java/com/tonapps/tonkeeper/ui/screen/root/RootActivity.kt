@@ -7,24 +7,20 @@ import android.content.IntentFilter
 import android.content.res.Configuration
 import android.net.Uri
 import android.nfc.NfcAdapter
-import android.nfc.Tag
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
-import android.util.Log
 import android.view.View
-import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.postDelayed
 import androidx.core.view.updatePadding
 import com.tonapps.blockchain.ton.extensions.base64
-import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.currentTimeSeconds
-import com.tonapps.extensions.print
+import com.tonapps.extensions.getStringValue
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
@@ -34,12 +30,10 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
-import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
-import com.tonapps.tonkeeper.ui.screen.migration.MigrationScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.start.StartScreen
@@ -52,7 +46,6 @@ import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.passcode.LockScreen
-import com.tonapps.wallet.data.passcode.PasscodeBiometric
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -60,16 +53,13 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.ton.block.StateInit
 import org.ton.cell.Cell
-import org.ton.tlb.CellRef
 import uikit.base.BaseFragment
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
-import uikit.navigation.Navigation.Companion.navigation
 
 class RootActivity: BaseWalletActivity() {
 
@@ -134,6 +124,11 @@ class RootActivity: BaseWalletActivity() {
         collectFlow(viewModel.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
+
+        if (0L >= DevSettings.firstLaunchDate) {
+            AnalyticsHelper.firstLaunch(settingsRepository.installId)
+            DevSettings.firstLaunchDate = currentTimeSeconds()
+        }
     }
 
     private fun enableNfcForegroundDispatch() {
@@ -242,7 +237,7 @@ class RootActivity: BaseWalletActivity() {
         if (!theme.isSystem) {
             setTheme(theme.resId)
         } else if (isDarkMode) {
-            setTheme(uikit.R.style.Theme_App_Blue)
+            setTheme(uikit.R.style.Theme_App_Dark)
         } else {
             setTheme(uikit.R.style.Theme_App_Light)
         }
@@ -310,7 +305,7 @@ class RootActivity: BaseWalletActivity() {
                 payloadValue = bin?.base64()
             ))
             .setTestnet(wallet.testnet)
-            .build(Uri.parse("https://tonkeeper.com/"))
+            .build(Uri.parse("tonkeeper://signRaw/"))
 
         val screen = SendTransactionScreen.newInstance(wallet, request)
         add(screen)
@@ -405,15 +400,18 @@ class RootActivity: BaseWalletActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val uri = intent.data
+        val uri = intent.data ?: intent.getStringExtra("link")?.toUriOrNull()
         val extras = intent.extras
-        val dappDeepLink = extras?.getString("dapp_deeplink")?.toUriOrNull()
+        val dappDeepLink = extras?.getStringValue("dapp_deeplink")?.toUriOrNull()
         if (dappDeepLink != null) {
             viewModel.openDApp(dappDeepLink)
-        } else if (uri != null) {
+            return;
+        }
+        if (extras != null && !extras.isEmpty && viewModel.processIntentExtras(extras)) {
+            return;
+        }
+        if (uri != null) {
             processDeepLink(DeepLink.fixBadUri(uri), false, intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))
-        } else if (extras != null && !extras.isEmpty) {
-            viewModel.processIntentExtras(extras)
         }
     }
 
@@ -472,7 +470,7 @@ class RootActivity: BaseWalletActivity() {
         }
     }
 
-    private fun processDeepLink(uri: Uri, internal: Boolean, fromPackageName: String?) {
+    fun processDeepLink(uri: Uri, internal: Boolean, fromPackageName: String?) {
         viewModel.processDeepLink(uri, false, getReferrer(), internal, fromPackageName)
     }
 }

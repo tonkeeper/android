@@ -24,6 +24,8 @@ import uikit.extensions.getDimensionPixelSize
 
 class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "TokensManageScreen"
+
     override val viewModel: TokensManageViewModel by walletViewModel()
 
     private val adapter: Adapter by lazy {

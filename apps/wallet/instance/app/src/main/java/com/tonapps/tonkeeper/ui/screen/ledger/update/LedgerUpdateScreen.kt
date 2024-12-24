@@ -9,6 +9,8 @@ import uikit.base.BaseFragment
 
 class LedgerUpdateScreen : BaseFragment(R.layout.fragment_ledger_update_screen), BaseFragment.Modal {
 
+    override val fragmentName: String = "LedgerUpdateScreen"
+
     private val args: LedgerUpdateArgs by lazy { LedgerUpdateArgs(requireArguments()) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

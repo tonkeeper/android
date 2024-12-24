@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.send.transaction
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.google.common.util.concurrent.AtomicDouble
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import org.ton.contract.wallet.WalletTransfer
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 class SendTransactionViewModel(
     app: Application,
@@ -62,6 +64,8 @@ class SendTransactionViewModel(
 
     private val _stateFlow = MutableStateFlow<SendTransactionState>(SendTransactionState.Loading)
     val stateFlow = _stateFlow.asStateFlow()
+
+    private val emulationReadyDate = AtomicLong(0)
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -103,6 +107,8 @@ class SendTransactionViewModel(
                 }
 
                 val transferTotal = transferAmount + transferFee
+
+                emulationReadyDate.set(System.currentTimeMillis())
 
                 if (!emulated.withBattery && transferTotal > tonBalance) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
@@ -187,13 +193,35 @@ class SendTransactionViewModel(
             ledgerTransaction = ledgerTransaction
         ).base64()
 
-        val status = transactionManager.send(wallet, boc, isBattery)
+
+        val confirmationTimeSeconds = getConfirmationTimeMillis() / 1000.0
+
+        val source = if (request.appUri.host == "signRaw") {
+            "transfer-url"
+        } else if (request.appUri.scheme == "tonkeeper") {
+            "local"
+        } else {
+            request.appUri.host ?: "unknown"
+        }
+
+        val status = transactionManager.send(
+            wallet = wallet,
+            boc = boc,
+            withBattery = isBattery,
+            source = source,
+            confirmationTime = confirmationTimeSeconds
+        )
+
         if (status == SendBlockchainState.SUCCESS) {
             emit(boc)
         } else {
             throw IllegalStateException("Failed to send transaction to blockchain: $status")
         }
     }.flowOn(Dispatchers.IO)
+
+    private fun getConfirmationTimeMillis(): Long {
+        return emulationReadyDate.get() - System.currentTimeMillis()
+    }
 
     private suspend fun transfers(compressedTokens: List<AccountTokenEntity>, forEmulation: Boolean): List<WalletTransfer> {
         val excessesAddress = if (!forEmulation && isBattery.get()) {

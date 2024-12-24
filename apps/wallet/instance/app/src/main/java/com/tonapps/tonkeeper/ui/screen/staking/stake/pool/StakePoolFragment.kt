@@ -18,6 +18,8 @@ import uikit.extensions.collectFlow
 
 class StakePoolFragment(wallet: WalletEntity): BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, StakingScreen, StakingViewModel>(ScreenContext.Wallet(wallet)) {
 
+    override val fragmentName: String = "StakePoolFragment"
+
     private val info: PoolInfoEntity by lazy { requireArguments().getParcelableCompat(ARG_INFO)!! }
 
     private val adapter = Adapter { pool ->

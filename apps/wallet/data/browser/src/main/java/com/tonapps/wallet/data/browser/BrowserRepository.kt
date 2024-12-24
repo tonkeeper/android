@@ -7,6 +7,7 @@ import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
 import com.tonapps.wallet.data.browser.source.LocalDataSource
 import com.tonapps.wallet.data.browser.source.RemoteDataSource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
@@ -35,6 +36,15 @@ class BrowserRepository(context: Context, api: API) {
 
     suspend fun getApps(country: String, testnet: Boolean, locale: Locale): List<BrowserAppEntity> {
         return load(country, testnet, locale)?.categories?.map { it.apps }?.flatten() ?: emptyList()
+    }
+
+    fun dataFlow(
+        country: String,
+        testnet: Boolean,
+        locale: Locale
+    ) = flow {
+        loadLocal(country, locale)?.let { emit(it) }
+        loadRemote(country, testnet, locale)?.let { emit(it) }
     }
 
     suspend fun load(country: String, testnet: Boolean, locale: Locale): BrowserDataEntity? = withContext(Dispatchers.IO) {

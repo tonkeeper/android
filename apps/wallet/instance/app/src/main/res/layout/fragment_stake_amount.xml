@@ -39,7 +39,7 @@
                     android:gravity="center"
                     android:singleLine="true"
                     android:digits="0123456789.,"
-                    android:inputType="numberDecimal"
+                    android:inputType="numberDecimal|textNoSuggestions"
                     android:textCursorDrawable="@drawable/cursor"
                     android:textColor="?attr/textPrimaryColor"
                     android:textColorHint="?attr/textSecondaryColor"

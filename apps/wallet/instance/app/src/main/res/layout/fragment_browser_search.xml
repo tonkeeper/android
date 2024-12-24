@@ -3,11 +3,28 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <uikit.widget.HeaderView
-        android:id="@+id/header"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:title="@string/browser"/>
+        android:layout_height="wrap_content">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="@string/browser"/>
+
+        <Button style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/cancel_button"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="end|bottom"
+            android:layout_margin="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="0dp"
+            android:text="@string/cancel"/>
+
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/content"

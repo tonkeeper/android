@@ -26,7 +26,7 @@
             android:textColor="?attr/textSecondaryColor"/>
 
         <uikit.widget.RowLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetMedium">
 
@@ -36,6 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:paddingVertical="0dp"
+                android:paddingHorizontal="12dp"
                 android:gravity="center"
                 android:background="@drawable/bg_button_green_18"
                 android:text="@string/w5_about_button"
@@ -49,6 +50,7 @@
                 android:layout_height="36dp"
                 android:layout_marginLeft="8dp"
                 android:paddingVertical="0dp"
+                android:paddingHorizontal="12dp"
                 android:background="@drawable/bg_button_tertiary_18"
                 android:gravity="center"
                 android:text="@string/hide"

@@ -24,9 +24,14 @@ android {
         targetSdk = 35
         versionCode = 600
 
-        versionName = "5.0.16" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
+        versionName = "5.0.20" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        if (project.hasProperty("android.injected.feature.in-app-update.apk")) {
+            manifestPlaceholders["requestInstallPackagesPermission"] = "<uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\"/><uses-permission android:name=\"android.permission.FOREGROUND_SERVICE_DATA_SYNC\" />"
+        } else {
+            manifestPlaceholders["requestInstallPackagesPermission"] = ""
+        }
     }
 
     buildFeatures {
@@ -78,7 +83,7 @@ baselineProfile {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
     implementation(project(Dependence.Wallet.app))
 
     testImplementation("junit:junit:4.13.2")

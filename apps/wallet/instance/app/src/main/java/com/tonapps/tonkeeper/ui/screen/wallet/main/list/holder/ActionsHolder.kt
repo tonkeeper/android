@@ -34,7 +34,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.address, TokenEntity.TON.address))
         }
         buyOrSellView.setOnClickListener {
-            navigation?.add(PurchaseScreen.newInstance(item.wallet))
+            navigation?.add(PurchaseScreen.newInstance(item.wallet, "wallet"))
         }
         sendView.setOnClickListener {
             navigation?.add(SendScreen.newInstance(item.wallet))

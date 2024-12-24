@@ -40,5 +40,7 @@
 -keep class org.koin.** { *; }
 -keep class com.tonapps.tonkeeper.App { *; }
 
+-keepnames class com.tonapps.tonkeeper.ui.screen.** { *; }
+
 
 

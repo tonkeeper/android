@@ -79,7 +79,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Theme(
         override val position: ListCell.Position
     ): Icon(
-        titleRes = Localization.theme,
+        titleRes = Localization.appearance,
         iconRes = UIKitIcon.ic_appearance_28,
         position = position,
         secondaryIcon = false

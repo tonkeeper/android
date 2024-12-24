@@ -41,11 +41,15 @@ import uikit.widget.HeaderView
 
 class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_main_events_list, wallet) {
 
+    override val fragmentName: String = "EventsScreen"
+
     override val viewModel: EventsViewModel by walletViewModel()
 
     private val legacyAdapter = HistoryAdapter()
+
     private val filtersAdapter = FiltersAdapter {
         viewModel.clickFilter(it)
+        scrollToFirst()
     }
 
     private val paginationListener = object : ListPaginationListener() {
@@ -105,7 +109,7 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         emptyView = view.findViewById(R.id.empty)
         emptyView.doOnButtonClick = { first ->
             if (first) {
-                navigation?.add(PurchaseScreen.newInstance(screenContext.wallet))
+                navigation?.add(PurchaseScreen.newInstance(screenContext.wallet, "events"))
             } else {
                 openQRCode()
             }
@@ -132,9 +136,17 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
             setListState(state.uiItems) {
                 if (!state.loading && !state.isFooterLoading) {
                     setLoading(false)
+                } else {
+
                 }
             }
         }
+    }
+
+    private fun scrollToFirst() {
+        listView.postDelayed({
+            listView.scrollToPosition(0)
+        }, 120)
     }
 
     private fun setLoading(loading: Boolean) {
@@ -143,9 +155,6 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         } else if (!loading && refreshView.isRefreshing) {
             refreshView.isRefreshing = false
         }
-        /*if (refreshView.isRefreshing != loading) {
-            refreshView.isRefreshing = loading
-        }*/
         if (loading) {
             headerView.setSubtitle(Localization.updating)
         } else {
@@ -165,19 +174,15 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
 
     private fun setEmptyState() {
         setLoading(false)
-        if (emptyView.visibility != View.VISIBLE) {
-            headerView.setSubtitle(null)
-            emptyView.visibility = View.VISIBLE
-            refreshView.visibility = View.GONE
-        }
+        headerView.setSubtitle(null)
+        emptyView.visibility = View.VISIBLE
+        refreshView.visibility = View.GONE
     }
 
     private fun setListState(uiItems: List<HistoryItem>, commitCallback: Runnable) {
         legacyAdapter.submitList(uiItems, commitCallback)
-        if (refreshView.visibility != View.VISIBLE) {
-            emptyView.visibility = View.GONE
-            refreshView.visibility = View.VISIBLE
-        }
+        emptyView.visibility = View.GONE
+        refreshView.visibility = View.VISIBLE
     }
 
     override fun getRecyclerView(): RecyclerView? {

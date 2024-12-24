@@ -40,6 +40,8 @@ import java.util.concurrent.CancellationException
 
 class CardScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragment_card, wallet), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "CardScreen"
+
     override val viewModel: CardViewModel by walletViewModel()
 
     override lateinit var webView: TonConnectWebView

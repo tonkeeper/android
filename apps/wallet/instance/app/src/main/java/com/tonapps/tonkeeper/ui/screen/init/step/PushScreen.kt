@@ -18,6 +18,8 @@ import uikit.extensions.getDimensionPixelSize
 
 class PushScreen: BaseFragment(R.layout.fragment_notifications_enable) {
 
+    override val fragmentName: String = "PushScreen"
+
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->

@@ -10,4 +10,7 @@ class TonConnectWebView @JvmOverloads constructor(
     defStyle: Int = android.R.attr.webViewStyle,
 ) : BridgeWebView(context, attrs, defStyle) {
 
+    init {
+        isVerticalScrollBarEnabled = false
+    }
 }

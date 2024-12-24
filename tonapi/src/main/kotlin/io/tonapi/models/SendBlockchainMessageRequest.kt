@@ -33,7 +33,19 @@ data class SendBlockchainMessageRequest (
     val boc: kotlin.String? = null,
 
     @Json(name = "batch")
-    val batch: kotlin.collections.List<kotlin.String>? = null
+    val batch: kotlin.collections.List<kotlin.String>? = null,
+
+    @Json(name = "message")
+    val version: kotlin.String? = null,
+
+    @Json(name = "platform")
+    val platform: kotlin.String? = null,
+
+    @Json(name = "source")
+    val source: kotlin.String? = null,
+
+    @Json(name = "confirmation_time")
+    val confirmationTime: kotlin.Double? = null
 
 )
 

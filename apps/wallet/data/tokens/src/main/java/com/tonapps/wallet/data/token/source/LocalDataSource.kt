@@ -14,15 +14,7 @@ internal class LocalDataSource(context: Context): BlobDataSource<List<BalanceEnt
 
     private val prefs = context.prefs("tokens")
 
-    fun getLastActivity(accountId: String) = prefs.getLong(keyLastActivity(accountId), 0)
-
-    fun setLastActivity(accountId: String, time: Long) {
-        prefs.edit().putLong(keyLastActivity(accountId), time).apply()
-    }
-
     override fun onMarshall(data: List<BalanceEntity>) = data.toByteArray()
 
     override fun onUnmarshall(bytes: ByteArray) = bytes.toListParcel<BalanceEntity>()
-
-    private fun keyLastActivity(accountId: String) = "last_activity_$accountId"
 }

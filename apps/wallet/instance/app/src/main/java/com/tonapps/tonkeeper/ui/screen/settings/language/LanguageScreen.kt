@@ -13,6 +13,8 @@ import uikit.extensions.collectFlow
 
 class LanguageScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "LanguageScreen"
+
     override val viewModel: LanguageViewModel by viewModel()
 
     private val adapter = Adapter {

@@ -55,7 +55,10 @@ data class JettonInfo (
     val admin: AccountAddress? = null,
 
     @Json(name = "custom_payload_api_uri")
-    val customPayloadApiUri: kotlin.String? = null
+    val customPayloadApiUri: kotlin.String? = null,
+
+    @Json(name = "preview")
+    val preview: kotlin.String? = null
 
 )
 

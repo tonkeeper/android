@@ -180,13 +180,12 @@ class CollectiblesManageViewModel(
                 it.address.equalsAddress(address)
             }
             if (index == -1) {
-                val state = settingsRepository.getTokenPrefs(wallet.id, nft.address).state
                 items.add(Item.Collection(
                     address = address,
                     title = name,
                     imageUri = nft.thumbUri,
                     count = 1,
-                    spam = state == State.SPAM
+                    spam = isLocalSpam(nft),
                 ))
             } else {
                 items[index] = items[index].copy(
@@ -196,5 +195,28 @@ class CollectiblesManageViewModel(
         }
         return items.toList()
     }
+
+    private suspend fun isLocalSpam(nft: NftEntity): Boolean {
+        return getStates(nft).count {
+            it == State.SPAM
+        } > 0
+    }
+
+    private suspend fun isLocalTrust(nft: NftEntity): Boolean {
+        return getStates(nft).count {
+            it == State.TRUST
+        } > 0
+    }
+
+    private suspend fun getStates(nft: NftEntity): List<State> {
+        val states = mutableListOf(
+            settingsRepository.getTokenPrefs(wallet.id, nft.address).state
+        )
+        nft.collection?.let {
+            states.add(settingsRepository.getTokenPrefs(wallet.id, it.address).state)
+        }
+        return states.toList()
+    }
+
 
 }

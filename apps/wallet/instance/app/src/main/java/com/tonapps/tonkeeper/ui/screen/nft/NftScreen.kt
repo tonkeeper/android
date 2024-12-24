@@ -54,6 +54,8 @@ import uikit.widget.HeaderView
 
 class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "NftScreen"
+
     private val nftEntity: NftEntity by lazy { requireArguments().getParcelableCompat(ARG_ENTITY)!! }
 
     private val isCanSend: Boolean
@@ -125,6 +127,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
             val dAppArgs = DAppArgs(
                 url = url,
                 source = "nft",
+                sendAnalytics = true
             )
             domainLinkButton.setOnClickListener {
                 navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))

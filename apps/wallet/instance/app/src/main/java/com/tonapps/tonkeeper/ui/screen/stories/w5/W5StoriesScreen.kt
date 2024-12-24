@@ -18,6 +18,8 @@ import uikit.widget.stories.BaseStoriesScreen
 
 class W5StoriesScreen: BaseStoriesScreen() {
 
+    override val fragmentName: String = "W5StoriesScreen"
+
     val viewModel: W5StoriesViewModel by viewModel()
 
     private val showAddButton: Boolean by lazy { requireArguments().getBoolean(ARG_ADD_BUTTON) }

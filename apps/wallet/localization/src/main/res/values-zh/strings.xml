@@ -2,6 +2,7 @@
     <string name="transaction_expired">交易已过期</string>
     <string name="add_contact">添加到地址簿</string>
     <string name="add_to_home_screen">添加到主屏幕</string>
+    <string name="remind_me_later">稍后提醒我</string>
     <string name="multi_account_secret_wrong">请使用 Tonkeeper Desktop 管理多钱包账户</string>
     <string name="total">总计：%1$s</string>
     <string name="staking_ready_withdraw">%1$s 已准备就绪。点击共同收集。</string>
@@ -208,12 +209,12 @@
     <string name="passcode_new">创建新密码</string>
     <string name="import_wallet">导入钱包</string>
     <string name="import_wallet_subtitle">从以下选项中选择。</string>
-    <string name="import_wallet_words">使用24个秘密恢复词导入钱包</string>
+    <string name="import_wallet_words">使用 24 或 12 个秘密恢复词导入钱包</string>
     <string name="watch_wallet">观察账户</string>
     <string name="watch_wallet_subtitle">用于监控钱包活动而无需恢复短语</string>
     <string name="watch_wallet_add">在不需要恢复短语的情况下监控钱包活动。您将收到来自此钱包的任何交易通知。</string>
     <string name="testnet_wallet">测试网账户</string>
-    <string name="testnet_wallet_subtitle">使用24个秘密恢复词导入钱包到测试网</string>
+    <string name="testnet_wallet_subtitle">将带有 24 或 12 个秘密恢复字的钱包导入测试网</string>
     <string name="signer_wallet">与签名者配对</string>
     <string name="signer_wallet_subtitle">更高级别的控制和安全</string>
     <string name="cancel">取消</string>
@@ -226,7 +227,7 @@
     <string name="enable_notification_subtitle">在您收到TON、代币和NFT时获取通知</string>
     <string name="widget_placeholder">需要选择一个钱包</string>
     <string name="import_wallet_title">输入您的恢复短语</string>
-    <string name="import_wallet_description">要恢复对钱包的访问，请输入在创建钱包时提供给您的24个秘密恢复词。</string>
+    <string name="import_wallet_description">要恢复对钱包的访问权限，请输入您创建钱包时提供的 24 或 12 个秘密恢复词。</string>
     <string name="start_dialog_title">让我们设置你的钱包</string>
     <string name="start_dialog_description">要使用Tonkeeper，您需要连接一个钱包。您可以创建一个新钱包或导入现有的钱包。</string>
     <string name="wallet_generating">正在生成钱包…</string>
@@ -491,6 +492,30 @@
     <string name="address_prefix">地址：</string>
     <string name="your_address">您的地址：</string>
     <string name="safe_mode_tokens_footer">安全模式已启用。仅可使用经过验证的令牌。<annotation colorAttr="textAccentColor">设置</annotation></string>
+    <string name="all">全部</string>
     <string name="report_encrypted_comment">此交易的评论将与报告一起以解密形式发送。</string>
     <string name="select_from_gallery">从画廊中选择</string>
+    <string name="open">打开</string>
+    <string name="theme_light">光</string>
+    <string name="downloading">正在下载…</string>
+    <string name="update_tonkeeper">更新 Tonkeeper</string>
+    <string name="update_tonkeeper_subtitle">Tonkeeper 有新版本可用。您现在就可以下载。</string>
+    <string name="download_error">下载错误。点击重试。</string>
+    <string name="downloading_app_update">正在下载应用程序更新</string>
+    <string name="preparing_for_downloading">准备下载</string>
+    <string name="notification_channel_updates_title">更新</string>
+    <string name="notification_channel_updates_description">显示应用程序更新通知。</string>
+    <string name="download_completed">下载完成</string>
+    <string name="tap_to_install">点击安装</string>
+    <string name="tap_to_update">点击更新</string>
+    <string name="download">下载</string>
+    <string name="appearance">外貌</string>
+    <string name="color_scheme">配色方案</string>
+    <string name="app_icon">应用程序图标</string>
+    <string name="app_icon_changed">应用程序图标已更改</string>
+    <string name="default_font_size">默认字体大小</string>
+    <string name="words12">12 个字</string>
+    <string name="words24">24 个字</string>
+    <string name="theme_deep_blue">深蓝</string>
+    <string name="theme_dark">黑暗的</string>
 </resources>

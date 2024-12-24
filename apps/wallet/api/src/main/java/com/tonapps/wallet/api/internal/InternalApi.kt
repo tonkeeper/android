@@ -22,6 +22,7 @@ import java.util.Locale
 internal class InternalApi(
     private val context: Context,
     private val okHttpClient: OkHttpClient,
+    private val appVersionName: String
 ) {
 
     private fun endpoint(
@@ -39,14 +40,15 @@ internal class InternalApi(
             .appendQueryParameter("build", build)
             .appendQueryParameter("platform", platform)
             .appendQueryParameter("chainName", if (testnet) "testnet" else "mainnet")
+
         return builder.build().toString()
     }
 
     private fun request(
         path: String,
         testnet: Boolean,
-        platform: String = "android", // "android_x"
-        build: String = context.appVersionName,
+        platform: String = "android",
+        build: String = appVersionName,
         locale: Locale,
         boot: Boolean = false
     ): JSONObject {

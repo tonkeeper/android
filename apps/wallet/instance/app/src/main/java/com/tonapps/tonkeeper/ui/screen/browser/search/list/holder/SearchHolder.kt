@@ -10,14 +10,14 @@ import uikit.navigation.Navigation
 
 class SearchHolder(
     parent: ViewGroup,
-    private val onClick: (title: String, url: String) -> Unit
+    private val onClick: (title: String, url: String, sendAnalytics: Boolean) -> Unit
 ): Holder<Item.Search>(parent, R.layout.view_browser_search_query) {
 
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
 
     override fun onBind(item: Item.Search) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onClick(item.query, item.url) }
+        itemView.setOnClickListener { onClick(item.query, item.url, false) }
         titleView.text = item.query
     }
 }

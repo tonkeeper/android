@@ -1,7 +1,7 @@
 object Dependence {
 
-    const val fresco = "com.facebook.fresco:fresco:3.4.0"
-    const val guava = "com.google.guava:guava:33.2.1-android"
+    const val fresco = "com.facebook.fresco:fresco:3.5.0"
+    const val guava = "com.google.guava:guava:33.3.1-android"
     const val zxing = "com.google.zxing:core:3.5.3"
     const val j2objc = "com.google.j2objc:j2objc-annotations:3.0.0"
     const val cbor = "co.nstant.in:cbor:0.9"
@@ -30,7 +30,7 @@ object Dependence {
 
     object GooglePlay {
         const val cronet = "com.google.android.gms:play-services-cronet:18.1.0"
-        const val review = "com.google.android.play:review-ktx:2.0.1"
+        const val review = "com.google.android.play:review-ktx:2.0.2"
         const val billing = "com.android.billingclient:billing-ktx:7.1.1"
         const val update = "com.google.android.play:app-update-ktx:2.1.0"
     }

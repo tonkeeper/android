@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper
 
 import android.app.Application
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.StrictMode
 import android.util.Log
@@ -12,6 +13,9 @@ import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
+import com.tonapps.blockchain.MnemonicHelper
+import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.extensions.setLocales
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.koin.koinModel
@@ -38,6 +42,7 @@ import com.tonapps.wallet.data.purchase.purchaseModule
 import com.tonapps.wallet.data.rn.rnLegacyModule
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
+import com.tonapps.wallet.localization.Localization
 import org.koin.core.component.KoinComponent
 import org.koin.android.ext.android.inject
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -67,10 +72,7 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         }
 
         super.onCreate()
-        Theme.add("system", 0)
-        Theme.add("blue", uikit.R.style.Theme_App_Blue)
-        Theme.add("dark", uikit.R.style.Theme_App_Dark)
-        Theme.add("light", uikit.R.style.Theme_App_Light, true)
+        updateThemes()
 
         instance = this
 
@@ -83,6 +85,14 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         initFresco()
     }
 
+    fun updateThemes() {
+        Theme.clear()
+        Theme.add("blue", uikit.R.style.Theme_App_Blue, title = getString(Localization.theme_deep_blue))
+        Theme.add("dark", uikit.R.style.Theme_App_Dark, title = getString(Localization.theme_dark))
+        Theme.add("light", uikit.R.style.Theme_App_Light, true, title = getString(Localization.theme_light))
+        Theme.add("system", 0, title = getString(Localization.system))
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         applyConfiguration(newConfig)
@@ -93,9 +103,9 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         configBuilder.setMemoryChunkType(MemoryChunkType.BUFFER_MEMORY)
         configBuilder.setImageTranscoderType(ImageTranscoderType.JAVA_TRANSCODER)
         configBuilder.experiment().setNativeCodeDisabled(true)
-        configBuilder.experiment().setUseDownsampligRatioForResizing(true)
-        configBuilder.experiment().useBitmapPrepareToDraw = true
+        configBuilder.experiment().setPartialImageCachingEnabled(false)
         configBuilder.setDownsampleMode(DownsampleMode.ALWAYS)
+        configBuilder.setBitmapsConfig(Bitmap.Config.ARGB_8888)
 
         Fresco.initialize(this, configBuilder.build())
     }

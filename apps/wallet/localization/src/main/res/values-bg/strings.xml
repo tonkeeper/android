@@ -2,6 +2,7 @@
     <string name="transaction_expired">Транзакцията е изтекла</string>
     <string name="add_contact">Добавяне към адресната книга</string>
     <string name="add_to_home_screen">Добавяне към началния екран</string>
+    <string name="remind_me_later">Напомни ми по-късно</string>
     <string name="multi_account_secret_wrong">Моля, използвайте Tonkeeper Desktop за Multi-Wallet акаунт</string>
     <string name="total">Общо: %1$s</string>
     <string name="staking_ready_withdraw">%1$s готов. Докоснете съвместно събиране.</string>
@@ -256,12 +257,12 @@
     <string name="passcode_new">Създайте нов код за достъп</string>
     <string name="import_wallet">Импортиране на портфейл</string>
     <string name="import_wallet_subtitle">Изберете от опциите по-долу.</string>
-    <string name="import_wallet_words">Импортиране на портфейл с 24 тайни възстановителни думи</string>
+    <string name="import_wallet_words">Импортирайте портфейла с 24 или 12 тайни думи за възстановяване</string>
     <string name="watch_wallet">Наблюдателен акаунт</string>
     <string name="watch_wallet_subtitle">За мониторинг на активността на портфейла без възстановителна фраза</string>
     <string name="watch_wallet_add">Мониторинг на активността на портфейла без възстановителна фраза. Ще бъдете уведомявани за всички транзакции от този портфейл.</string>
     <string name="testnet_wallet">Testnet акаунт</string>
-    <string name="testnet_wallet_subtitle">Импортиране на портфейл с 24 тайни възстановителни думи към Testnet</string>
+    <string name="testnet_wallet_subtitle">Импортирайте портфейл с 24 или 12 тайни думи за възстановяване в Testnet</string>
     <string name="signer_wallet">Сдвояване със Signer</string>
     <string name="signer_wallet_subtitle">По-високо ниво на контрол и сигурност</string>
     <string name="cancel">Отказ</string>
@@ -274,9 +275,9 @@
     <string name="enable_notification_subtitle">Получавайте уведомления, когато получите TON, токени и NFTs</string>
     <string name="widget_placeholder">Трябва да изберете портфейл</string>
 
-    <string name="import_wallet_title">Въведете вашата възстановителна фраза</string>
-    <string name="import_wallet_description">За да възстановите достъпа до вашия портфейл, въведете 24-те тайни възстановителни думи, които сте получили при създаването на вашия портфейл.</string>
+    <string name="import_wallet_title">Въведете възстановителна фраза</string>
 
+    <string name="import_wallet_description">За да възстановите достъпа до портфейла си, въведете 24 или 12 тайни думи за възстановяване, дадени ви когато сте създали своя портфейл.</string>
     <string name="start_dialog_title">Нека настроим вашия портфейл</string>
     <string name="start_dialog_description">Необходим ви е свързан портфейл, за да използвате Tonkeeper. Създайте нов портфейл или импортирайте съществуващ.</string>
 
@@ -543,5 +544,29 @@
     <string name="address_prefix">Адрес:</string>
     <string name="your_address">Вашият адрес:</string>
     <string name="safe_mode_tokens_footer">Безопасният режим е активиран. Налични са само потвърдени токени. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
+    <string name="all">Всички</string>
     <string name="report_encrypted_comment">Коментарът от тази транзакция ще бъде изпратен с отчет в декриптирана форма.</string>
+    <string name="open">Отворете</string>
+    <string name="theme_light">Светлина</string>
+    <string name="downloading">Изтегля се...</string>
+    <string name="update_tonkeeper">Актуализирайте Tonkeeper</string>
+    <string name="update_tonkeeper_subtitle">Налична е нова версия на Tonkeeper. Можете да го изтеглите сега.</string>
+    <string name="download_error">Грешка при изтегляне. Докоснете за повторен опит.</string>
+    <string name="downloading_app_update">Изтегля се актуализация на приложението</string>
+    <string name="preparing_for_downloading">Подготовка за изтегляне</string>
+    <string name="notification_channel_updates_title">Актуализации</string>
+    <string name="notification_channel_updates_description">Показва известия за актуализация на приложението.</string>
+    <string name="download_completed">Изтеглянето завърши</string>
+    <string name="tap_to_install">Докоснете за инсталиране</string>
+    <string name="tap_to_update">Докоснете за актуализиране</string>
+    <string name="download">Изтегляне</string>
+    <string name="appearance">Външен вид</string>
+    <string name="color_scheme">Цветова схема</string>
+    <string name="app_icon">Икона на приложението</string>
+    <string name="app_icon_changed">Иконата на приложението е променена</string>
+    <string name="default_font_size">Размер на шрифта по подразбиране</string>
+    <string name="words12">12 думи</string>
+    <string name="words24">24 думи</string>
+    <string name="theme_deep_blue">Deep Blue</string>
+    <string name="theme_dark">Тъмно</string>
 </resources>

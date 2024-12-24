@@ -128,9 +128,10 @@ class PickerViewModel(
 
     private suspend fun loadRemoteBalances(wallets: List<WalletEntity>) {
         loadBalances(wallets) { wallet ->
-            assetsManager.getRemoteTotalBalance(
+            assetsManager.requestTotalBalance(
                 wallet = wallet,
                 currency = settingsRepository.currency,
+                refresh = false,
                 sorted = true
             )
         }

@@ -83,29 +83,36 @@ class TransactionManager(
 
     private suspend fun sendWithBattery(
         wallet: WalletEntity,
-        boc: String
+        boc: String,
+        source: String,
+        confirmationTime: Double,
     ): SendBlockchainState {
         val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return SendBlockchainState.UNKNOWN_ERROR
-        return api.sendToBlockchainWithBattery(boc, tonProofToken, wallet.testnet)
+        return api.sendToBlockchainWithBattery(boc, tonProofToken, wallet.testnet, source, confirmationTime)
     }
 
     suspend fun send(
         wallet: WalletEntity,
         boc: String,
-        withBattery: Boolean
-    ) = send(wallet, boc, withBattery, 0)
+        withBattery: Boolean,
+        source: String,
+        confirmationTime: Double,
+    ) = send(wallet, boc, withBattery, source, confirmationTime, 0)
 
     private suspend fun send(
         wallet: WalletEntity,
         boc: String,
         withBattery: Boolean,
+        source: String,
+        confirmationTime: Double,
         attempt: Int
     ): SendBlockchainState {
         val state = if (withBattery) {
-            sendWithBattery(wallet, boc)
+            sendWithBattery(wallet, boc, source, confirmationTime)
         } else {
-            api.sendToBlockchain(boc, wallet.testnet)
+            api.sendToBlockchain(boc, wallet.testnet, source, confirmationTime)
         }
+
         if (state == SendBlockchainState.SUCCESS) {
             _sendingTransactionFlow.tryEmit(SendingTransaction(wallet.copy(), boc))
             return state
@@ -114,14 +121,16 @@ class TransactionManager(
         return if (attempt > 3) {
             state
         } else {
-            delay(2.seconds)
-            send(wallet, boc, withBattery, attempt + 1)
+            delay(5.seconds)
+            send(wallet, boc, withBattery, source, confirmationTime, attempt + 1)
         }
     }
 
     suspend fun send(
         wallet: WalletEntity,
         boc: Cell,
-        withBattery: Boolean
-    ) = send(wallet, boc.base64(), withBattery)
+        withBattery: Boolean,
+        source: String,
+        confirmationTime: Double,
+    ) = send(wallet, boc.base64(), withBattery, source, confirmationTime)
 }

@@ -2,7 +2,6 @@ package com.tonapps.wallet.api
 
 import android.content.Context
 import android.util.ArrayMap
-import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -70,7 +69,7 @@ class API(
     private val scope: CoroutineScope
 ): CoreAPI(context) {
 
-    private val internalApi = InternalApi(context, defaultHttpClient)
+    private val internalApi = InternalApi(context, defaultHttpClient, appVersionName)
     private val configRepository = ConfigRepository(context, scope, internalApi)
 
     val config: ConfigEntity
@@ -280,7 +279,7 @@ class API(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
-        limit: Int = 20
+        limit: Int = 10
     ): AccountEvents {
         return accounts(testnet).getAccountJettonHistoryByID(
             jettonId = tokenAddress,
@@ -512,17 +511,19 @@ class API(
     fun emulateWithBattery(
         tonProofToken: String,
         cell: Cell,
-        testnet: Boolean
-    ) = emulateWithBattery(tonProofToken, cell.base64(), testnet)
+        testnet: Boolean,
+        safeModeEnabled: Boolean,
+    ) = emulateWithBattery(tonProofToken, cell.base64(), testnet, safeModeEnabled)
 
     fun emulateWithBattery(
         tonProofToken: String,
         boc: String,
-        testnet: Boolean
+        testnet: Boolean,
+        safeModeEnabled: Boolean,
     ): Pair<MessageConsequences, Boolean>? {
         val host = if (testnet) config.batteryTestnetHost else config.batteryHost
         val url = "$host/wallet/emulate"
-        val data = "{\"boc\":\"$boc\"}"
+        val data = "{\"boc\":\"$boc\",\"safe_mode\":$safeModeEnabled}"
 
         val response = withRetry {
             tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
@@ -543,13 +544,18 @@ class API(
         boc: String,
         testnet: Boolean,
         address: String? = null,
-        balance: Long? = null
+        balance: Long? = null,
+        safeModeEnabled: Boolean,
     ): MessageConsequences? = withContext(Dispatchers.IO) {
         val params = mutableListOf<EmulateMessageToWalletRequestParamsInner>()
         if (address != null) {
             params.add(EmulateMessageToWalletRequestParamsInner(address, balance))
         }
-        val request = EmulateMessageToWalletRequest(boc, params)
+        val request = EmulateMessageToWalletRequest(
+            boc = boc,
+            params = params,
+            safeMode = safeModeEnabled
+        )
         withRetry {
             emulation(testnet).emulateMessageToWallet(request)
         }
@@ -559,21 +565,30 @@ class API(
         cell: Cell,
         testnet: Boolean,
         address: String? = null,
-        balance: Long? = null
+        balance: Long? = null,
+        safeModeEnabled: Boolean,
     ): MessageConsequences? {
-        return emulate(cell.hex(), testnet, address, balance)
+        return emulate(cell.hex(), testnet, address, balance, safeModeEnabled)
     }
 
     suspend fun sendToBlockchainWithBattery(
         boc: String,
         tonProofToken: String,
         testnet: Boolean,
+        source: String,
+        confirmationTime: Double,
     ): SendBlockchainState = withContext(Dispatchers.IO) {
         if (!isOkStatus(testnet)) {
             return@withContext SendBlockchainState.STATUS_ERROR
         }
 
-        val request = io.batteryapi.models.EmulateMessageToWalletRequest(boc)
+        val request = io.batteryapi.models.EmulateMessageToWalletRequest(
+            boc = boc,
+            platform = "android",
+            version = appVersionName,
+            source = source,
+            confirmationTime = confirmationTime
+        )
 
         withRetry {
             battery(testnet).sendMessage(tonProofToken, request)
@@ -583,13 +598,21 @@ class API(
 
     suspend fun sendToBlockchain(
         boc: String,
-        testnet: Boolean
+        testnet: Boolean,
+        source: String,
+        confirmationTime: Double,
     ): SendBlockchainState = withContext(Dispatchers.IO) {
         if (!isOkStatus(testnet)) {
             return@withContext SendBlockchainState.STATUS_ERROR
         }
 
-        val request = SendBlockchainMessageRequest(boc)
+        val request = SendBlockchainMessageRequest(
+            boc = boc,
+            platform = "android",
+            version = appVersionName,
+            source = source,
+            confirmationTime = confirmationTime
+        )
         withRetry {
             blockchain(testnet).sendBlockchainMessage(request)
             SendBlockchainState.SUCCESS
@@ -711,7 +734,7 @@ class API(
         json.put("firebase_token", firebaseToken)
         sessionId?.let { json.put("session_id", it) }
         json.put("commercial", commercial)
-        json.put("silent", silent)
+        json.put("silent", !silent)
         val data = json.toString().replace("\\/", "/").trim()
 
         val headers = ArrayMap<String, String>().apply {
@@ -758,9 +781,11 @@ class API(
     ): JSONArray {
         return try {
             val url = "${config.tonapiMainnetHost}/v1/messages/history?account=$accountId"
-            val response = tonAPIHttpClient.get(url, ArrayMap<String, String>().apply {
-                set("X-TonConnect-Auth", token)
-            })
+            val response = withRetry {
+                tonAPIHttpClient.get(url, ArrayMap<String, String>().apply {
+                    set("X-TonConnect-Auth", token)
+                })
+            } ?: throw Exception("Empty response")
             val json = JSONObject(response)
             json.getJSONArray("items")
         } catch (e: Throwable) {

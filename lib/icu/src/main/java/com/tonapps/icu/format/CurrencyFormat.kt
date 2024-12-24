@@ -103,10 +103,15 @@ internal class CurrencyFormat(val locale: Locale) {
         customScale: Int = 0,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
+        stripTrailingZeros: Boolean,
     ): CharSequence {
         val targetScale = getScale(value.abs())
         val scale = if (targetScale > customScale) targetScale else customScale
-        val bigDecimal = value.stripTrailingZeros().setScale(scale, roundingMode).stripTrailingZeros()
+        val bigDecimal = if (stripTrailingZeros) {
+            value.stripTrailingZeros().setScale(scale, roundingMode).stripTrailingZeros()
+        } else {
+            value.setScale(scale, roundingMode)
+        }
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(bigDecimal)
         return format(currency, amount, replaceSymbol)

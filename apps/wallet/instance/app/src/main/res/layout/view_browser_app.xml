@@ -19,8 +19,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:ellipsize="end"
         android:gravity="center_horizontal"
-        android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body3"
         android:textColor="?attr/textSecondaryColor"/>
 

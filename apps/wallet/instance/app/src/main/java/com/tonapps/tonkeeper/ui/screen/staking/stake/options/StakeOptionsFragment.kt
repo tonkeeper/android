@@ -27,6 +27,8 @@ import uikit.extensions.setPaddingHorizontal
 
 class StakeOptionsFragment(wallet: WalletEntity): BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, StakingScreen, StakingViewModel>(ScreenContext.Wallet(wallet)) {
 
+    override val fragmentName: String = "StakeOptionsFragment"
+
     private val adapter = Adapter { info ->
         openPool(info)
     }

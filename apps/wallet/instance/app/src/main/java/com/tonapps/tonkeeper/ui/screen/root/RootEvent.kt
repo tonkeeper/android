@@ -15,7 +15,7 @@ import org.ton.tlb.CellRef
 
 sealed class RootEvent {
     data class OpenTab(
-        val link: String,
+        val link: Uri,
         val wallet: WalletEntity,
         val from: String,
     ): RootEvent()

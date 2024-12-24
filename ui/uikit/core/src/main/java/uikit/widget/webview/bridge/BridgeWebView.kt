@@ -7,6 +7,9 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,6 +47,12 @@ open class BridgeWebView @JvmOverloads constructor(
     private fun initBridge() {
         val value = jsBridge ?: return
         executeJS(value.jsInjection())
+
+        /*if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(this, value.jsInjection(), setOf("*"))
+        } else {
+            executeJS(value.jsInjection())
+        }*/
     }
 
     private suspend fun postMessage(

@@ -21,6 +21,8 @@ import uikit.widget.ModalHeader
 
 class EditContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_contact_edit, wallet), BaseFragment.Modal {
 
+    override val fragmentName: String = "EditContactScreen"
+
     private val contact: ContactEntity by lazy { requireArguments().getParcelableCompat(ARG_CONTACT)!! }
 
     override val viewModel: EditContactViewModel by walletViewModel {

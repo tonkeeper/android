@@ -14,6 +14,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.recordException
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.AppNotificationsEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.dapps.source.DatabaseSource
 import com.tonapps.wallet.data.rn.RNLegacy
@@ -27,8 +28,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -47,6 +50,9 @@ class DAppsRepository(
 
     private val _connectionsFlow = MutableStateFlow<List<AppConnectEntity>?>(null)
     val connectionsFlow = _connectionsFlow.shareIn(scope, SharingStarted.Eagerly, 1).filterNotNull()
+
+    private val _notificationsFlow = MutableStateFlow<List<AppNotificationsEntity>>(emptyList())
+    val notificationsFlow = _notificationsFlow.asStateFlow()
 
     private val database: DatabaseSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         DatabaseSource(context)
@@ -83,14 +89,69 @@ class DAppsRepository(
         }.flowOn(Dispatchers.IO).launchIn(scope)
     }
 
-    suspend fun getPushes(tonProof: String, accountId: String): List<AppPushEntity> {
+    suspend fun refreshPushes(
+        accountId: String,
+        tonProof: String?
+    ) = withContext(Dispatchers.IO) {
+        refreshLocalPushes(accountId)
+        tonProof?.let {
+            val remote = loadPushes(accountId, it)
+            setAppNotifications(remote)
+        }
+    }
+
+    private suspend fun refreshLocalPushes(accountId: String) {
         if (true) {
-            return emptyList()
+            return
+        }
+        val local = getPushes(accountId)
+        if (!local.isEmpty) {
+            setAppNotifications(local)
+        }
+    }
+
+    fun insertDAppNotification(body: AppPushEntity.Body) {
+        scope.launch {
+            database.insertNotification(body)
+            refreshLocalPushes(body.account.toRawAddress())
+        }
+    }
+
+    private fun setAppNotifications(entity: AppNotificationsEntity) {
+        val values = _notificationsFlow.value.toMutableList()
+        val index = values.indexOfFirst { it.accountId == entity.accountId }
+        if (index == -1) {
+            values.add(entity)
+        } else {
+            values[index] = entity
+        }
+        _notificationsFlow.value = values
+    }
+
+    private suspend fun getPushes(accountId: String): AppNotificationsEntity {
+        val pushes = database.getNotifications(accountId)
+        if (pushes.isEmpty()) {
+            return AppNotificationsEntity(accountId)
+        }
+        return createAppNotifications(accountId, pushes)
+    }
+
+    private suspend fun loadPushes(accountId: String, tonProof: String): AppNotificationsEntity {
+        if (true) {
+            return AppNotificationsEntity(accountId)
         }
         val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
+        database.insertNotifications(accountId, pushes)
         if (pushes.isEmpty()) {
-            return emptyList()
+            return AppNotificationsEntity(accountId)
         }
+        return createAppNotifications(accountId, pushes)
+    }
+
+    private suspend fun createAppNotifications(
+        accountId: String,
+        pushes: List<AppPushEntity.Body>
+    ): AppNotificationsEntity {
         val apps = getApps(pushes.map { it.dappUrl })
 
         val list = mutableListOf<AppPushEntity>()
@@ -99,7 +160,7 @@ class DAppsRepository(
             list.add(AppPushEntity(app, push))
         }
 
-        return list.toList()
+        return AppNotificationsEntity(accountId, list.toList())
     }
 
     suspend fun getConnections(

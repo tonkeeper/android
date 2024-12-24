@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
@@ -15,16 +16,41 @@ import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.tlb.CellRef
 import org.ton.tlb.asRef
+import java.io.File
 
 sealed class DeepLinkRoute {
 
     data class Unknown(val uri: Uri): DeepLinkRoute()
 
     sealed class Tabs(val tabUri: String, open val from: String): DeepLinkRoute() {
-        data class Main(override val from: String): Tabs("tonkeeper://wallet", from)
-        data class Activity(override val from: String): Tabs("tonkeeper://activity", from)
-        data class Browser(override val from: String): Tabs("tonkeeper://browser", from)
-        data class Collectibles(override val from: String): Tabs("tonkeeper://collectibles", from)
+
+        data class Main(
+            override val from: String
+        ): Tabs("tonkeeper://wallet", from)
+
+        data class Activity(
+            override val from: String
+        ): Tabs("tonkeeper://activity", from)
+
+        data class Browser(
+            override val from: String,
+            val category: String?,
+        ): Tabs(buildBrowserUri(category), from) {
+
+            private companion object {
+                private fun buildBrowserUri(category: String?): String {
+                    val builder = Uri.parse("tonkeeper://browser").buildUpon()
+                    if (!category.isNullOrBlank()) {
+                        builder.appendQueryParameter("category", category)
+                    }
+                    return builder.build().toString()
+                }
+            }
+        }
+
+        data class Collectibles(
+            override val from: String
+        ): Tabs("tonkeeper://collectibles", from)
     }
 
     sealed class Internal: DeepLinkRoute()
@@ -59,6 +85,17 @@ sealed class DeepLinkRoute {
         constructor(uri: Uri) : this(
             from = uri.query("ft") ?: "TON",
             to = uri.query("tt")
+        )
+    }
+
+    data class Install(
+        val file: File
+    ): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            file = uri.query("file")?.let {
+                File(it)
+            } ?: throw IllegalArgumentException("\"file\" query parameter is required")
         )
     }
 
@@ -185,7 +222,7 @@ sealed class DeepLinkRoute {
                     "send" -> Send
                     "wallet", "main" -> Tabs.Main(from)
                     "activity", "history" -> Tabs.Activity(from)
-                    "browser" -> Tabs.Browser(from)
+                    "browser" -> Tabs.Browser(from, uri.query("category") ?: uri.lastPathSegment)
                     "collectibles" -> Tabs.Collectibles(from)
                     "settings" -> Settings
                     "pool" -> StakingPool(uri)
@@ -213,9 +250,11 @@ sealed class DeepLinkRoute {
                     "picker", "wallets" -> WalletPicker
                     "jetton", "token" -> Jetton(uri)
                     "story", "stories" -> Story(uri)
+                    "install" -> Install(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {
+                Log.e("ApkDownloadWorker", "Failed to resolve deep link: $uri", e)
                 return Unknown(uri)
             }
         }

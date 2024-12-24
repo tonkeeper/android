@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.dapps.entities
 import android.net.Uri
 import android.os.Parcelable
 import androidx.core.net.toUri
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
 
@@ -14,9 +15,11 @@ data class AppEntity(
     val empty: Boolean
 ): Parcelable {
 
+    @IgnoredOnParcel
     val id: String
         get() = url.toString()
 
+    @IgnoredOnParcel
     val host: String
         get() = url.host ?: "unknown"
 

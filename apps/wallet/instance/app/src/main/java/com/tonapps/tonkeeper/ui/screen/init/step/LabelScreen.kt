@@ -20,6 +20,8 @@ import uikit.extensions.doKeyboardAnimation
 
 class LabelScreen: BaseFragment(R.layout.fragment_init_label) {
 
+    override val fragmentName: String = "LabelScreen"
+
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
     private lateinit var editorView: LabelEditorView

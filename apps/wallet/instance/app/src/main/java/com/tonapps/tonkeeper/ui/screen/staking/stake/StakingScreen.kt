@@ -14,6 +14,8 @@ import uikit.extensions.hideKeyboard
 
 class StakingScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "StakingScreen"
+
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
 
     override val viewModel: StakingViewModel by walletViewModel { parametersOf(poolAddress) }

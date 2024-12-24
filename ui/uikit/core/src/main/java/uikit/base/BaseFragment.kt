@@ -105,6 +105,9 @@ open class BaseFragment(
         }
     }
 
+    open val fragmentName: String
+        get() = javaClass.simpleName
+
     val window: Window?
         get() = activity?.window
 
@@ -287,7 +290,7 @@ open class BaseFragment(
         super.onDestroy()
     }
 
-    private fun finishInternal() {
+    open fun finishInternal() {
         navigation?.remove(this)
     }
 
@@ -314,9 +317,20 @@ open class BaseFragment(
         view?.postDelayed(action, delay)
     }
 
+    fun runOnUiThread(action: () -> Unit) {
+        if (Thread.currentThread() == requireActivity().mainLooper.thread) {
+            action()
+        } else {
+            post(Runnable(action))
+        }
+    }
+
     fun post(action: Runnable) {
         view?.post(action)
-        view?.postOnAnimation {  }
+    }
+
+    fun postOnAnimation(action: Runnable) {
+        view?.postOnAnimation(action)
     }
 
     @ColorInt

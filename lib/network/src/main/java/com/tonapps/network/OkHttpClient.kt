@@ -5,10 +5,12 @@ import android.graphics.BitmapFactory
 import android.util.ArrayMap
 import android.util.Log
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.retry
@@ -25,6 +27,7 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import org.json.JSONObject
+import java.io.IOException
 
 private fun requestBuilder(url: String): Request.Builder {
     val builder = Request.Builder()
@@ -99,14 +102,6 @@ class OkHttpError(
         get() = response.body?.string() ?: ""
 }
 
-fun OkHttpClient.getBitmap(url: String): Bitmap {
-    val request = requestBuilder(url).build()
-    val response = newCall(request).execute()
-    return response.body?.byteStream()?.use { stream ->
-        BitmapFactory.decodeStream(stream)
-    } ?: throw Exception("Empty response")
-}
-
 fun OkHttpClient.sseFactory() = EventSources.createFactory(this)
 
 fun OkHttpClient.sse(
@@ -116,34 +111,49 @@ fun OkHttpClient.sse(
 ): Flow<SSEvent> = callbackFlow {
     val listener = object : EventSourceListener() {
         override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
-            this@callbackFlow.trySendBlocking(SSEvent(id, type, data))
+            if (!this@callbackFlow.trySend(SSEvent(id, type, data)).isSuccess) {
+                eventSource.cancel()
+            }
         }
 
         override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-            this@callbackFlow.close(t)
+            val error = when (t) {
+                is StreamResetException -> t
+                null -> IOException("SSE connection failed with response: ${response?.code}")
+                else -> t
+            }
+            this@callbackFlow.close(error)
         }
 
         override fun onClosed(eventSource: EventSource) {
-            this@callbackFlow.close(Throwable("EventSource closed"))
+            this@callbackFlow.close(CancellationException("EventSource closed"))
         }
     }
     val builder = requestBuilder(url)
         .addHeader("Accept", "text/event-stream")
         .addHeader("Cache-Control", "no-cache")
         .addHeader("Connection", "keep-alive")
+        .addHeader("Keep-Alive", "timeout=60")
 
     if (lastEventId != null) {
         builder.addHeader("Last-Event-ID", lastEventId.toString())
     }
     val request = builder.build()
     val events = sseFactory().newEventSource(request, listener)
-    awaitClose { events.cancel() }
+    awaitClose {
+        try {
+            events.cancel()
+        } catch (ignored: Exception) { }
+    }
 }.retry { cause ->
-    if ((cause is StreamResetException && cause.errorCode == ErrorCode.CANCEL) || cause is java.util.concurrent.CancellationException) {
-        false
-    } else {
-        onFailure?.invoke(cause)
-        delay(1000)
-        true
+    when {
+        cause is CancellationException -> false
+        cause is StreamResetException && cause.errorCode == ErrorCode.CANCEL -> false
+        cause is OutOfMemoryError -> false
+        else -> {
+            onFailure?.invoke(cause)
+            delay(1000)
+            true
+        }
     }
 }.cancellable()

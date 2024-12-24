@@ -13,16 +13,23 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.webkit.CookieManager
+import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
+import android.webkit.ServiceWorkerController
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
+import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
+import androidx.webkit.Profile
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import uikit.R
@@ -47,6 +54,7 @@ open class WebViewFixed @JvmOverloads constructor(
         open fun onProgressChanged(newProgress: Int) { }
         open fun onLoadResource(url: String): Boolean { return true }
         open fun onWindowClose() { }
+        open fun onNewTab(url: String) { }
     }
 
     private var isPageLoaded = false
@@ -80,6 +88,7 @@ open class WebViewFixed @JvmOverloads constructor(
         settings.allowContentAccess = false
         settings.allowFileAccessFromFileURLs = false
         settings.allowUniversalAccessFromFileURLs = false
+        settings.textSize = WebSettings.TextSize.NORMAL
         settings.setGeolocationEnabled(false)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -144,7 +153,14 @@ open class WebViewFixed @JvmOverloads constructor(
                 isDialog: Boolean,
                 isUserGesture: Boolean,
                 resultMsg: Message?
-            ) = resultMsg?.let { openNewWindow(it) } ?: false
+            ): Boolean {
+                if (isDialog) {
+                    return resultMsg?.let { openNewWindow(it) } ?: false
+                }
+                val newUrl = view?.hitTestResult?.extra ?: return false
+                callbacks.forEach { it.onNewTab(newUrl) }
+                return true
+            }
 
             override fun onCloseWindow(window: WebView) {
                 super.onCloseWindow(window)
@@ -155,8 +171,9 @@ open class WebViewFixed @JvmOverloads constructor(
         applyAndroidWebViewBridge()
     }
 
+
     private fun openNewWindow(resultMsg: Message): Boolean {
-        val dialog = NewWindowDialog(context)
+        val dialog = NewWindowDialog(context, getProfile().name)
         dialog.show()
 
         val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
@@ -165,11 +182,12 @@ open class WebViewFixed @JvmOverloads constructor(
         return true
     }
 
-    private class NewWindowDialog(context: Context): Dialog(context, R.style.Widget_Dialog) {
+    private class NewWindowDialog(context: Context, profileName: String): Dialog(context, R.style.Widget_Dialog) {
 
         val webView = WebViewFixed(context)
 
         init {
+            webView.setProfileName(profileName)
             webView.addCallback(object : Callback() {
                 override fun onWindowClose() {
                     dismiss()
@@ -276,6 +294,35 @@ open class WebViewFixed @JvmOverloads constructor(
             callbacks.forEach { it.onElementFocused(rect) }
         }
         postOnAnimationDelayed(onElementFocusRunnable, 16)
+    }
+
+    fun setProfileName(name: String) {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)) {
+            WebViewCompat.setProfile(this, name)
+        }
+        val profile = getProfile()
+        profile.cookieManager.apply {
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(this@WebViewFixed, true)
+            flush()
+        }
+    }
+
+    fun getProfile(): Profile {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)) {
+            return WebViewCompat.getProfile(this)
+        }
+        return object : Profile {
+            override fun getName() = "default"
+
+            override fun getCookieManager() = CookieManager.getInstance()
+
+            override fun getWebStorage() = WebStorage.getInstance()
+
+            override fun getGeolocationPermissions() = GeolocationPermissions.getInstance()
+
+            override fun getServiceWorkerController() = ServiceWorkerController.getInstance()
+        }
     }
 
     inner class AndroidWebViewBridge {

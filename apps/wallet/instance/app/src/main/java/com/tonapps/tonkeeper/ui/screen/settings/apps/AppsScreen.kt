@@ -16,6 +16,8 @@ import uikit.extensions.collectFlow
 
 class AppsScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "AppsScreen"
+
     override val viewModel: AppsViewModel by walletViewModel()
 
     private val adapter = Adapter({ app -> disconnectApp(app) }, { disconnectAll() })

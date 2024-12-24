@@ -349,7 +349,7 @@ class StakingViewModel(
     ) = ledgerTransactionFlow().map { (seqno, transaction) ->
         val message = signUseCase(context, wallet, seqno, transaction)
 
-        val state = transactionManager.send(wallet, message, false)
+        val state = transactionManager.send(wallet, message, false, "", 0.0)
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)
         }
@@ -360,7 +360,7 @@ class StakingViewModel(
     ) = unsignedBodyFlow().map { message ->
         val cell = message.createUnsignedBody(false)
         val boc = signUseCase(context, wallet, cell, message.seqNo)
-        val state = transactionManager.send(wallet, boc, false)
+        val state = transactionManager.send(wallet, boc, false, "", 0.0)
         if (state != SendBlockchainState.SUCCESS) {
             throw SendBlockchainException.fromState(state)
         }

@@ -3,7 +3,8 @@ package com.tonapps.wallet.data.core
 data class Theme(
     val key: String,
     val resId: Int,
-    val light: Boolean
+    val light: Boolean,
+    val title: String
 ) {
 
     val isSystem: Boolean
@@ -13,6 +14,10 @@ data class Theme(
 
         private val supportedThemes = mutableListOf<Theme>()
 
+        fun clear() {
+            supportedThemes.clear()
+        }
+
         fun getByKey(key: String): Theme {
             return supportedThemes.firstOrNull { it.key == key } ?: supportedThemes.first()
         }
@@ -21,8 +26,8 @@ data class Theme(
             return supportedThemes.firstOrNull { it.resId == resId } ?: supportedThemes.first()
         }
 
-        fun add(key: String, resId: Int, light: Boolean = false) {
-            supportedThemes.add(Theme(key, resId, light))
+        fun add(key: String, resId: Int, light: Boolean = false, title: String, ) {
+            supportedThemes.add(Theme(key, resId, light, title))
         }
 
         fun getSupported(): List<Theme> {

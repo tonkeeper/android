@@ -9,6 +9,8 @@ import uikit.widget.HeaderView
 
 class LegalScreen: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "LegalScreen"
+
     private lateinit var headerView: HeaderView
     private lateinit var termsView: View
     private lateinit var privacyView: View

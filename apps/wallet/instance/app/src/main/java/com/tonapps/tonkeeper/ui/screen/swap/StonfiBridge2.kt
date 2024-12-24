@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.swap
 
 import android.net.Uri
+import android.util.Log
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import org.json.JSONArray
 import uikit.widget.webview.bridge.JsBridge

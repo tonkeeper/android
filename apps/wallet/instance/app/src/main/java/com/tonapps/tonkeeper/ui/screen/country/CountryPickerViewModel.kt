@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.extensions.countryName
+import com.tonapps.tonkeeper.extensions.getNormalizeCountryFlow
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.country.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -49,13 +50,15 @@ class CountryPickerViewModel(
         codes.map { Country(it) }
     }
 
+    private val countryFlow = settingsRepository.getNormalizeCountryFlow(api)
+
     private val _searchQueryFlow = MutableStateFlow("")
     private val searchQueryFlow = _searchQueryFlow.asSharedFlow()
 
     val uiItemsFlow = combine(
         countriesFlow,
         suggestFlow,
-        settingsRepository.countryFlow,
+        countryFlow,
         searchQueryFlow
     ) { countries, suggest, selectedCountry, query ->
         if (query.isEmpty()) {
@@ -98,7 +101,13 @@ class CountryPickerViewModel(
     }
 
     fun search(query: CharSequence?) {
-        _searchQueryFlow.value = query.toString()
+        if (query.isNullOrBlank()) {
+            _searchQueryFlow.value = ""
+        } else if (query.toString().equals("us", true) || query.toString().equals("usa", true)) {
+            _searchQueryFlow.value = "United States"
+        } else {
+            _searchQueryFlow.value = query.toString()
+        }
     }
 
     fun setCountry(country: String) {

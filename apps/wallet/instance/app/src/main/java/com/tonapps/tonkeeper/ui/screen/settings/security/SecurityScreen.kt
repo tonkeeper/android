@@ -27,6 +27,8 @@ import uikit.widget.item.ItemSwitchView
 
 class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_security, ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "SecurityScreen"
+
     override val viewModel: SecurityViewModel by viewModel()
 
     private val wallet: WalletEntity

@@ -82,6 +82,7 @@ platform :android do
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
                 "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+                "android.injected.feature.in-app-update.apk" => "true",
             }
         )
 

@@ -45,6 +45,8 @@ import java.util.UUID
 
 class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "BatteryRechargeScreen"
+
     override val hasApplyWindowInsets: Boolean = false
 
     private val args: RechargeArgs by lazy { RechargeArgs(requireArguments()) }

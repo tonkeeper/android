@@ -1436,7 +1436,6 @@ class BlockchainApi(basePath: kotlin.String = defaultBasePath, client: OkHttpCli
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
-
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/v2/blockchain/message",

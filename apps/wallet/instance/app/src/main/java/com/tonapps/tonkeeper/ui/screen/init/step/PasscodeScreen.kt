@@ -20,6 +20,8 @@ import uikit.widget.PinInputView
 
 class PasscodeScreen: BaseFragment(R.layout.fragment_init_passcode)  {
 
+    override val fragmentName: String = "PasscodeScreen"
+
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
     private val reEnter: Boolean by lazy { requireArguments().getBoolean(ARG_RE_ENTER) }
 

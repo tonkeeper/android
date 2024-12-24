@@ -8,10 +8,11 @@ import com.tonapps.tonkeeper.ui.screen.purchase.list.holder.TitleHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
+import com.tonapps.wallet.data.purchase.entity.PurchaseCategoryEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 
 class Adapter(
-    private val onClick: (PurchaseMethodEntity) -> Unit
+    private val onClick: (PurchaseMethodEntity, String) -> Unit
 ): BaseListAdapter() {
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {

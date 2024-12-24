@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
@@ -27,7 +28,7 @@ class SafeModeClient(
     private val scope: CoroutineScope
 ) {
 
-    private val scamDomains = ConcurrentHashMap<String, Boolean>(3, 1.0f, 2)
+    private val scamDomains = ConcurrentHashMap<String, Boolean>()
     private val blobCache = BlobDataSource.simple<BadDomainsEntity>(context, "safemode")
     private val badDomainsFlow = flow {
         getCachedBadDomains()?.let {
@@ -44,8 +45,10 @@ class SafeModeClient(
 
     init {
         badDomainsFlow.onEach {
-            for (domain in it.array) {
-                scamDomains[domain] = true
+            it.array.forEach { domain ->
+                if (domain.isNotBlank()) {
+                    scamDomains[domain] = true
+                }
             }
             _isReadyFlow.value = true
         }.launchIn(scope)

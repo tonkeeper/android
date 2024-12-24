@@ -32,6 +32,8 @@ import uikit.widget.ProcessTaskView
 
 class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_stake_withdraw, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "StakeWithdrawScreen"
+
     override val viewModel: StakeWithdrawViewModel by walletViewModel {
         parametersOf(requireArguments().getString(ARG_POOL_ADDRESS))
     }

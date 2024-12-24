@@ -11,6 +11,11 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 abstract class BaseListHolder<I: BaseListItem>(
     view: View
@@ -57,4 +62,16 @@ abstract class BaseListHolder<I: BaseListItem>(
     @ColorInt
     fun getColor(resId: Int): Int = context.getColor(resId)
 
+
+    /*fun launch(
+        context: CoroutineContext = EmptyCoroutineContext,
+        start: CoroutineStart = CoroutineStart.DEFAULT,
+        block: suspend CoroutineScope.() -> Unit
+    ) {
+        if (lifecycleScope == null) {
+            itemView.doOnLayout { launch(context, start, block) }
+            return
+        }
+        lifecycleScope?.launch(context, start, block)
+    }*/
 }

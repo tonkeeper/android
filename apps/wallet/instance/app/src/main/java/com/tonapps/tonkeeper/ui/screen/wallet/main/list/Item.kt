@@ -17,6 +17,7 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
@@ -28,6 +29,7 @@ import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import java.math.RoundingMode
 
 sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
@@ -45,6 +47,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         const val TYPE_SETUP_SWITCH = 10
         const val TYPE_SETUP_LINK = 11
         const val TYPE_STAKED = 12
+        const val TYPE_APK_STATUS = 13
 
         fun createFromParcel(parcel: Parcel): Item {
             return when (parcel.readInt()) {
@@ -59,6 +62,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
                 TYPE_SETUP_SWITCH -> SetupSwitch(parcel)
                 TYPE_SETUP_LINK -> SetupLink(parcel)
                 TYPE_STAKED -> Stake(parcel)
+                TYPE_APK_STATUS -> ApkStatus(parcel)
                 else -> throw IllegalArgumentException("Unknown type")
             }
         }
@@ -326,7 +330,16 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             balanceFormat = CurrencyFormatter.format(value = token.balance.value),
             fiat = token.fiat,
             fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat),
-            rate = CurrencyFormatter.formatFiat(currencyCode, token.rateNow),
+            rate = if (token.isUsdt) {
+                CurrencyFormatter.formatFiat(
+                    currency = currencyCode,
+                    value = token.rateNow,
+                    customScale = 2,
+                    roundingMode = RoundingMode.UP
+                )
+            } else {
+                CurrencyFormatter.formatFiat(currencyCode, token.rateNow)
+            },
             rateDiff24h = token.rateDiff24h,
             verified = token.verified,
             testnet = testnet,
@@ -421,7 +434,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
         constructor(pushes: List<AppPushEntity>) : this(
             pushes.map { it.body.message }.first(),
-            pushes.map { Uri.parse(it.iconUrl) }
+            pushes.map { Uri.parse(it.iconUrl) }.distinctBy { it }
         )
 
         constructor(parcel: Parcel) : this(
@@ -587,5 +600,28 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(blue)
             dest.writeInt(settingsType)
         }
+    }
+
+    data class ApkStatus(
+        val status: APKManager.Status
+    ): Item(TYPE_APK_STATUS) {
+
+        companion object {
+            @JvmField
+            val CREATOR = object : Parcelable.Creator<ApkStatus> {
+                override fun createFromParcel(parcel: Parcel) = ApkStatus(parcel)
+
+                override fun newArray(size: Int): Array<ApkStatus?> = arrayOfNulls(size)
+            }
+        }
+
+        constructor(parcel: Parcel) : this(
+            APKManager.Status.Default
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+
+        }
+
     }
 }

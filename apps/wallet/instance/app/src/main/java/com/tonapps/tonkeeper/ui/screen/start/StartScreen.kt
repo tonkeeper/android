@@ -14,6 +14,8 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class StartScreen: BaseFragment(R.layout.fragment_intro) {
 
+    override val fragmentName: String = "StartScreen"
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.applyNavBottomPadding()

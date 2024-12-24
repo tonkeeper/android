@@ -114,7 +114,7 @@ class EventsRepository(
         accountId: String,
         testnet: Boolean,
         beforeLt: Long? = null,
-        limit: Int = 50
+        limit: Int = 10
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             if (beforeLt != null) {

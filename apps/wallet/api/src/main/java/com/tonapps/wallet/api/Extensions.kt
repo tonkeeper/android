@@ -44,13 +44,15 @@ fun <R> withRetry(
         } catch (e: CancellationException) {
             throw e
         } catch (e: SocketTimeoutException) {
+            SystemClock.sleep(delay + 100)
             return null
         } catch (e: IOException) {
+            SystemClock.sleep(delay + 100)
             return null
         } catch (e: Throwable) {
             val statusCode = e.getHttpStatusCode()
             if (statusCode == 429 || statusCode == 401 || statusCode == 502 || statusCode == 520) {
-                SystemClock.sleep(delay)
+                SystemClock.sleep(delay + 100)
                 continue
             }
             if (statusCode >= 500 || statusCode == 404 || statusCode == 400) {

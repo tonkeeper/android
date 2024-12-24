@@ -6,8 +6,12 @@ import androidx.core.net.toUri
 import androidx.core.view.updatePadding
 import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.backgroundContentTintColor
+import com.tonapps.uikit.color.constantWhiteColor
 import uikit.extensions.dp
+import uikit.extensions.drawable
 import uikit.extensions.setPaddingHorizontal
+import uikit.extensions.withAlpha
 import uikit.widget.FrescoView
 
 class AppHolder(
@@ -23,6 +27,9 @@ class AppHolder(
             right = 14.dp
         )
         iconView.visibility = View.VISIBLE
+        iconView.setPlaceholder(context.drawable(uikit.R.drawable.bg_oval).apply {
+            setTint(context.constantWhiteColor.withAlpha(.2f))
+        })
     }
 
     override fun onBind(item: FilterItem.App) {

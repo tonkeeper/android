@@ -31,6 +31,8 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "SignerAddScreen"
+
     override lateinit var cameraView: PreviewView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -28,6 +28,8 @@ import uikit.widget.HeaderView
 
 class TokenPickerScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_token_picker, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "TokenPickerScreen"
+
     private val args: TokenPickerArgs by lazy { TokenPickerArgs(requireArguments()) }
 
     override val viewModel: TokenPickerViewModel by walletViewModel {

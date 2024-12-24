@@ -8,6 +8,8 @@ import uikit.widget.HeaderView
 
 class TokenUnverifiedScreen: BaseFragment(R.layout.fragment_token_unverified), BaseFragment.Modal {
 
+    override val fragmentName: String = "UnverifiedTokenScreen"
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<HeaderView>(R.id.header).doOnActionClick = { finish() }

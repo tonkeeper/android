@@ -9,6 +9,8 @@ import uikit.widget.stories.BaseStoriesScreen
 
 class SafeModeStoriesScreen: BaseStoriesScreen() {
 
+    override val fragmentName: String = "SafeModeStoriesScreen"
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val items = mutableListOf<Item>()

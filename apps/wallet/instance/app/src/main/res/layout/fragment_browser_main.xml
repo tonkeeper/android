@@ -11,16 +11,15 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             style="@style/Widget.App.TextTab"
-            android:id="@+id/explore"
+            android:id="@+id/explore_tab"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
             android:layout_gravity="center"
-            android:text="@string/explore"
-            android:background="@drawable/bg_button_secondary"/>
+            android:text="@string/explore"/>
 
         <androidx.appcompat.widget.AppCompatTextView
             style="@style/Widget.App.TextTab"
-            android:id="@+id/connected"
+            android:id="@+id/connected_tab"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
             android:layout_gravity="center"
@@ -40,46 +39,41 @@
             android:background="@drawable/bg_button_secondary"/>
     </uikit.widget.RowLayout>
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/browser_fragment_container"
+    <uikit.widget.SlideBetweenView
+        android:id="@+id/slide"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"/>
+        android:layout_weight="1">
 
-    <FrameLayout
-        android:id="@+id/search_container"
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_gravity="bottom"
-        android:paddingHorizontal="@dimen/offsetMedium"
-        android:paddingTop="@dimen/offsetMedium"
-        android:paddingBottom="8dp">
-        
-        <uikit.widget.RowLayout
-            android:id="@+id/search"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/explore_list"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_content">
-            
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="44dp"
-                android:layout_height="match_parent"
-                android:scaleType="centerInside"
-                android:tint="?attr/iconSecondaryColor"
-                android:src="@drawable/ic_magnifying_glass_16"/>
+            android:layout_height="match_parent"
+            android:clipToPadding="false"/>
 
-            <androidx.appcompat.widget.AppCompatTextView
+        <FrameLayout
+            android:id="@+id/connected"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <uikit.widget.TextHeaderView
+                android:id="@+id/connected_placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:visibility="gone"
+                android:title="@string/connected_placeholder_title"
+                android:description="@string/connected_placeholder_subtitle"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/connected_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:singleLine="true"
-                android:textAppearance="@style/TextAppearance.Body1"
-                android:textColor="?attr/textSecondaryColor"
-                android:gravity="center_vertical"
-                android:background="@android:color/transparent"
-                android:text="@string/search_browser"/>
+                android:clipToPadding="false"/>
 
-        </uikit.widget.RowLayout>
+        </FrameLayout>
 
-    </FrameLayout>
-
+    </uikit.widget.SlideBetweenView>
 </uikit.widget.ColumnLayout>

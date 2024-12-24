@@ -14,6 +14,8 @@ import uikit.widget.SimpleRecyclerView
 
 class NotificationsManageScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_notifications_manage, wallet), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "NotificationsManageScreen"
+
     override val viewModel: NotificationsManageViewModel by walletViewModel()
 
     private val adapter = Adapter({ wallet, enabled ->

@@ -2,6 +2,7 @@
     <string name="transaction_expired">Transacción expirada</string>
     <string name="add_contact">Agregar a la libreta de direcciones</string>
     <string name="add_to_home_screen">Agregar a la pantalla de inicio</string>
+    <string name="remind_me_later">Recuérdamelo más tarde</string>
     <string name="multi_account_secret_wrong">Utilice Tonkeeper Desktop para cuentas con múltiples billeteras</string>
     <string name="total">Total: %1$s</string>
     <string name="staking_ready_withdraw">%1$s listo. Toca para recoger.</string>
@@ -208,12 +209,12 @@
     <string name="passcode_new">Crear nuevo código de acceso</string>
     <string name="import_wallet">Importar cartera</string>
     <string name="import_wallet_subtitle">Elige entre las opciones a continuación.</string>
-    <string name="import_wallet_words">Importar billetera con 24 palabras secretas de recuperación</string>
+    <string name="import_wallet_words">Importar billetera con 24 o 12 palabras de recuperación secretas</string>
     <string name="watch_wallet">Ver Cuenta</string>
     <string name="watch_wallet_subtitle">Para monitorear la actividad de la billetera sin frase de recuperación</string>
     <string name="watch_wallet_add">Monitorea la actividad de la billetera sin frase de recuperación. Serás notificado de cualquier transacción desde esta billetera.</string>
     <string name="testnet_wallet">Cuenta de Testnet</string>
-    <string name="testnet_wallet_subtitle">Importar billetera con 24 palabras secretas de recuperación a Testnet</string>
+    <string name="testnet_wallet_subtitle">Importar billetera con 24 o 12 palabras de recuperación secretas a Testnet</string>
     <string name="signer_wallet">Emparejar con Firmante</string>
     <string name="signer_wallet_subtitle">Un mayor nivel de control y seguridad</string>
     <string name="cancel">Cancelar</string>
@@ -225,8 +226,8 @@
     <string name="enable_notification_title">Recibe notificaciones instantáneas</string>
     <string name="enable_notification_subtitle">Recibe notificaciones cuando recibas TON, tokens y NFTs</string>
     <string name="widget_placeholder">Necesitas seleccionar una cartera</string>
-    <string name="import_wallet_title">Introduce tu frase de recuperación</string>
-    <string name="import_wallet_description">Para restaurar el acceso a tu billetera, ingresa las 24 palabras secretas de recuperación que se te dieron al crear tu billetera.</string>
+    <string name="import_wallet_title">Introduce tu de recuperación</string>
+    <string name="import_wallet_description">Para restaurar el acceso a su billetera, ingrese las 24 o 12 palabras secretas de recuperación que le proporcionaron cuando creó su billetera.</string>
     <string name="start_dialog_title">Configuremos tu billetera</string>
     <string name="start_dialog_description">Necesitas una billetera conectada para usar Tonkeeper. Crea una nueva billetera o importa una existente.</string>
     <string name="wallet_generating">Generando cartera…</string>
@@ -496,7 +497,31 @@
     <string name="address_prefix">DIRECCIÓN:</string>
     <string name="your_address">Su dirección:</string>
     <string name="safe_mode_tokens_footer">El modo seguro está habilitado. Solo están disponibles los tokens verificados. <annotation colorAttr="textAccentColor">Configuración</annotation></string>
+    <string name="all">Todo</string>
     <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
     <string name="select_from_gallery">Seleccionar de la galería</string>
+    <string name="open">Abierto</string>
+    <string name="theme_light">Ligero</string>
+    <string name="downloading">Descargando…</string>
+    <string name="update_tonkeeper">Actualizar Tonkeeper</string>
+    <string name="update_tonkeeper_subtitle">Hay una nueva versión de Tonkeeper disponible. Puedes descargarla ahora.</string>
+    <string name="download_error">Error de descarga. Pulsa para volver a intentarlo.</string>
+    <string name="downloading_app_update">Descargando actualización de la aplicación</string>
+    <string name="preparing_for_downloading">Preparándose para la descarga</string>
+    <string name="notification_channel_updates_title">Actualizaciones</string>
+    <string name="notification_channel_updates_description">Muestra notificaciones de actualización de la aplicación.</string>
+    <string name="download_completed">Descarga completada</string>
+    <string name="tap_to_install">Toque para instalar</string>
+    <string name="tap_to_update">Toque para actualizar</string>
+    <string name="download">Descargar</string>
+    <string name="appearance">Apariencia</string>
+    <string name="color_scheme">Esquema de colores</string>
+    <string name="app_icon">Icono de la aplicación</string>
+    <string name="app_icon_changed">El icono de la aplicación cambió</string>
+    <string name="default_font_size">Tamaño de fuente predeterminado</string>
+    <string name="words12">12 palabras</string>
+    <string name="words24">24 palabras</string>
+    <string name="theme_deep_blue">Azul profundo</string>
+    <string name="theme_dark">Oscuro</string>
 
 </resources>

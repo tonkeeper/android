@@ -1,11 +1,10 @@
 package com.tonapps.wallet.data.account.source
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.extensions.getPrivateKey
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.extensions.getByteArray
 import com.tonapps.extensions.putByteArray
 import com.tonapps.security.Security
 import com.tonapps.security.clear
@@ -36,8 +35,8 @@ internal class VaultSource(context: Context) {
     }
 
     fun addMnemonic(mnemonic: List<String>): PublicKeyEd25519 {
-        val seed = Mnemonic.toSeed(mnemonic)
-        val privateKey = PrivateKeyEd25519(seed)
+        val privateKey = MnemonicHelper.privateKey(mnemonic)
+        val seed = privateKey.key.toByteArray()
         val publicKey = privateKey.publicKey()
 
         prefs.edit {

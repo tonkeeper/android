@@ -45,6 +45,8 @@ import java.util.concurrent.CancellationException
 
 class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_tonconnect, ScreenContext.None), BaseFragment.Modal, BaseFragment.SingleTask {
 
+    override val fragmentName: String = "TonConnectScreen"
+
     val contract = object : ResultContract<TonConnectResponse, TonConnectResponse> {
 
         private val KEY_RESPONSE = "response"
@@ -128,6 +130,8 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             setResponse(wallet, proofError = BridgeError.methodNotSupported("SignerApp version incompatible. Installed version lacks tonProof signing capability."))
         } else if (proofPayload == null) {
             setResponse(wallet)
+        } else if (!wallet.isTonConnectSupported) {
+            setResponse(wallet)
         } else {
             setLoadingState()
             lifecycleScope.launch {
@@ -159,9 +163,15 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     }
 
     private fun setResponse(response: TonConnectResponse) {
-        setSuccessState()
-        setResult(contract.createResult(response), false)
-        postDelayed(2000) {
+        if (response.wallet.isTonConnectSupported) {
+            setSuccessState()
+            setResult(contract.createResult(response), false)
+            postDelayed(2000) {
+                returnToApp()
+                finish()
+            }
+        } else {
+            setResult(contract.createResult(response), false)
             returnToApp()
             finish()
         }

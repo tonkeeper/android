@@ -153,7 +153,7 @@ data class TokenEntity(
         address = jetton.metadata.address.toRawAddress(),
         name = jetton.metadata.name,
         symbol = jetton.metadata.symbol,
-        imageUri = Uri.parse(jetton.metadata.image),
+        imageUri = Uri.parse(jetton.preview ?: jetton.metadata.image),
         decimals = jetton.metadata.decimals.toInt(),
         verification = convertVerification(jetton.verification),
         isRequestMinting = extensions?.contains(Extension.CustomPayload.value) == true,

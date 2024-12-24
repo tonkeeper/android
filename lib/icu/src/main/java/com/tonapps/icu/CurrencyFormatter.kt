@@ -59,8 +59,9 @@ object CurrencyFormatter {
         value: BigDecimal,
         customScale: Int = 2,
         roundingMode: RoundingMode = RoundingMode.DOWN,
+        stripTrailingZeros: Boolean = true,
     ): CharSequence {
-        val format = format(value = value, customScale = customScale, roundingMode = roundingMode)
+        val format = format(value = value, customScale = customScale, roundingMode = roundingMode, stripTrailingZeros = stripTrailingZeros)
         return "$format%"
     }
 
@@ -70,8 +71,9 @@ object CurrencyFormatter {
         customScale: Int = 0,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
+        stripTrailingZeros: Boolean = true,
     ): CharSequence {
-       return format.format(currency, value, customScale, roundingMode, replaceSymbol)
+       return format.format(currency, value, customScale, roundingMode, replaceSymbol, stripTrailingZeros)
     }
 
     fun format(
@@ -80,8 +82,9 @@ object CurrencyFormatter {
         customScale: Int = 0,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
+        stripTrailingZeros: Boolean = true,
     ): CharSequence {
-        return format(currency, value.value, customScale, roundingMode, replaceSymbol)
+        return format(currency, value.value, customScale, roundingMode, replaceSymbol, stripTrailingZeros)
     }
 
     fun formatFiat(
@@ -90,8 +93,9 @@ object CurrencyFormatter {
         customScale: Int = 2,
         roundingMode: RoundingMode = RoundingMode.DOWN,
         replaceSymbol: Boolean = true,
+        stripTrailingZeros: Boolean = false,
     ): CharSequence {
-        return format(currency, value, customScale, roundingMode, replaceSymbol)
+        return format(currency, value, customScale, roundingMode, replaceSymbol, stripTrailingZeros)
     }
 
     fun formatFiat(

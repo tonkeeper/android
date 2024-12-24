@@ -147,7 +147,7 @@ class WidgetUpdaterWorker(
     private suspend fun updateBalanceWidget(widget: WidgetEntity) {
         val params = widget.params as WidgetParams.Balance
         val wallet = getWallet(params.walletId) ?: throw IllegalStateException("Wallet not found params=${params}")
-        val balance = assetsManager.getRemoteTotalBalance(wallet, currency, sorted = true) ?: throw IllegalStateException("Balance not found params=${params}; wallet=${wallet}")
+        val balance = assetsManager.requestTotalBalance(wallet, currency, sorted = true, refresh = true) ?: throw IllegalStateException("Balance not found params=${params}; wallet=${wallet}")
         val balanceFormat = CurrencyFormatter.formatFiat(currency.code, balance)
         val drawable = context.drawable(R.drawable.ic_widget_logo_24, wallet.label.color)
 
@@ -200,7 +200,7 @@ class WidgetUpdaterWorker(
                 .setRequiresBatteryNotLow(true)
                 .build()
 
-            val request = PeriodicWorkRequestBuilder<WidgetUpdaterWorker>(1, TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<WidgetUpdaterWorker>(30, TimeUnit.MINUTES)
                 .setConstraints(constraints)
                 .setInputData(Data.EMPTY)
                 .build()

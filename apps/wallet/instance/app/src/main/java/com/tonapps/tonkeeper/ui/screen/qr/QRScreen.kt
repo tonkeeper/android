@@ -26,6 +26,8 @@ import uikit.widget.TextHeaderView
 
 class QRScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_qr, wallet), BaseFragment.BottomSheet {
 
+    override val fragmentName: String = "QRScreen"
+
     private val token: TokenEntity by lazy {
         arguments?.getParcelableCompat(ARG_TOKEN) ?: TokenEntity.TON
     }

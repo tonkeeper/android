@@ -31,10 +31,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.internal.toImmutableList
 
+// TODO Refactor this class
 class TokenViewModel(
     app: Application,
     private val wallet: WalletEntity,
@@ -57,7 +60,7 @@ class TokenViewModel(
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filterNotNull()
 
-    private val _uiHistoryFlow = MutableStateFlow<List<HistoryItem>?>(null)
+    private val _uiHistoryFlow = MutableStateFlow<List<HistoryItem>>(listOf(HistoryItem.Loader(0, 0)))
     val uiHistoryFlow = _uiHistoryFlow.asStateFlow().filterNotNull()
 
     private val _chartFlow = MutableStateFlow<List<ChartEntity>?>(null)
@@ -83,29 +86,28 @@ class TokenViewModel(
 
     fun setChartPeriod(period: ChartPeriod) {
         settingsRepository.chartPeriod = period
-        val tokenAddress = _tokenFlow.value?.address ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            loadChartPeriod(tokenAddress, period)
-        }
+        _tokenFlow.filterNotNull().take(1).onEach {
+            loadChartPeriod(it, period)
+        }.launchIn(viewModelScope)
     }
 
-    private suspend fun loadChartPeriod(tokenAddress: String, period: ChartPeriod) {
+    private suspend fun loadChartPeriod(token: AccountTokenEntity, period: ChartPeriod) {
         _chartFlow.value = emptyList()
 
         when (period) {
-            ChartPeriod.hour -> loadHourChart(tokenAddress)
-            ChartPeriod.day -> loadDayChart(tokenAddress)
-            ChartPeriod.week -> loadWeekChart(tokenAddress)
-            ChartPeriod.month -> loadMonthChart(tokenAddress)
-            ChartPeriod.halfYear -> load6MonthChart(tokenAddress)
-            ChartPeriod.year -> loadYearChart(tokenAddress)
+            ChartPeriod.hour -> loadHourChart(token)
+            ChartPeriod.day -> loadDayChart(token)
+            ChartPeriod.week -> loadWeekChart(token)
+            ChartPeriod.month -> loadMonthChart(token)
+            ChartPeriod.halfYear -> load6MonthChart(token)
+            ChartPeriod.year -> loadYearChart(token)
         }
     }
 
     private suspend fun load(token: AccountTokenEntity) = withContext(Dispatchers.IO) {
         if (token.verified) {
             loadHistory(token.address)
-            loadChartPeriod(token.address, settingsRepository.chartPeriod)
+            loadChartPeriod(token, settingsRepository.chartPeriod)
         } else {
             _chartFlow.value = emptyList()
             loadHistory(token.address)
@@ -163,7 +165,7 @@ class TokenViewModel(
             ))
         }
 
-        if (token.verified) {
+        if (token.verified && !token.isUsdt) {
             val period = settingsRepository.chartPeriod
             val fiatPrice: CharSequence
             val rateDiff24h: String
@@ -225,7 +227,7 @@ class TokenViewModel(
         if (beforeLt == null) {
             setEvents(walletEventItems)
         } else {
-            val oldValue = (_uiHistoryFlow.value ?: emptyList()).toImmutableList().filter { it !is HistoryItem.Loader }
+            val oldValue = (_uiHistoryFlow.value).toImmutableList().filter { it !is HistoryItem.Loader }
             setEvents(oldValue + walletEventItems)
         }
     }
@@ -266,44 +268,48 @@ class TokenViewModel(
     }
 
     private suspend fun loadChart(
-        token: String,
+        token: AccountTokenEntity,
         startDateSeconds: Long,
         endDateSeconds: Long
     ) = withContext(Dispatchers.IO) {
-        _chartFlow.value = api.loadChart(token, settingsRepository.currency.code, startDateSeconds, endDateSeconds)
+        if (token.verified && !token.isUsdt) {
+            _chartFlow.value = api.loadChart(token.address, settingsRepository.currency.code, startDateSeconds, endDateSeconds)
+        } else {
+            _chartFlow.value = emptyList()
+        }
     }
 
-    private suspend fun loadHourChart(token: String) {
+    private suspend fun loadHourChart(token: AccountTokenEntity) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60
         loadChart(token, startDateSeconds, endDateSeconds)
     }
 
-    private suspend fun loadDayChart(token: String) {
+    private suspend fun loadDayChart(token: AccountTokenEntity) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24
         loadChart(token, startDateSeconds, endDateSeconds)
     }
 
-    private suspend fun loadWeekChart(token: String) {
+    private suspend fun loadWeekChart(token: AccountTokenEntity) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 7
         loadChart(token, startDateSeconds, endDateSeconds)
     }
 
-    private suspend fun loadMonthChart(token: String) {
+    private suspend fun loadMonthChart(token: AccountTokenEntity) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 30
         loadChart(token, startDateSeconds, endDateSeconds)
     }
 
-    private suspend fun load6MonthChart(token: String) {
+    private suspend fun load6MonthChart(token: AccountTokenEntity) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 30 * 6
         loadChart(token, startDateSeconds, endDateSeconds)
     }
 
-    private suspend fun loadYearChart(token: String) {
+    private suspend fun loadYearChart(token: AccountTokenEntity) {
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 365
         loadChart(token, startDateSeconds, endDateSeconds)

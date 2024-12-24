@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.token.source
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -26,15 +27,20 @@ internal class RemoteDataSource(
         accountId: String,
         testnet: Boolean
     ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
-        api.getJettonsBalances(
-            accountId = accountId,
-            testnet = testnet,
-            currency = currency.code,
-            extensions = listOf(
-                TokenEntity.Extension.CustomPayload.value,
-                TokenEntity.Extension.NonTransferable.value
+        try {
+            api.getJettonsBalances(
+                accountId = accountId,
+                testnet = testnet,
+                currency = currency.code,
+                extensions = listOf(
+                    TokenEntity.Extension.CustomPayload.value,
+                    TokenEntity.Extension.NonTransferable.value
+                )
             )
-        )
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            null
+        }
     }
 
 }

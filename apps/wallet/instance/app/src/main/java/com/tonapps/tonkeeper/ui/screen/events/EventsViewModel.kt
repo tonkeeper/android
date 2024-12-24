@@ -9,6 +9,9 @@ import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
+import com.tonapps.tonkeeper.extensions.notificationsFlow
+import com.tonapps.tonkeeper.extensions.refreshNotifications
+import com.tonapps.tonkeeper.helper.CacheHelper
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
@@ -18,53 +21,43 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.entities.AppNotificationsEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.events.isOutTransfer
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.collectFlow
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 // TODO: Refactor this class
 class EventsViewModel(
     app: Application,
     private val wallet: WalletEntity,
-    private val accountsRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val historyHelper: HistoryHelper,
-    private val screenCacheSource: ScreenCacheSource,
     private val settingsRepository: SettingsRepository,
     private val transactionManager: TransactionManager,
-    private val dAppsRepository: DAppsRepository,
     private val api: API,
+    private val cacheHelper: CacheHelper,
 ): BaseWalletVM(app) {
 
     private var autoRefreshJob: Job? = null
@@ -75,17 +68,8 @@ class EventsViewModel(
     private val _selectedFilter = MutableStateFlow<FilterItem?>(null)
     private val selectedFilter = _selectedFilter.asStateFlow()
 
-    private val _filterAppsFlow = MutableStateFlow<List<AppEntity>>(emptyList())
-    private val filterAppsFlow = _filterAppsFlow.asStateFlow()
-
-    val uiFilterItemsFlow: Flow<List<FilterItem>> = combine(
-        selectedFilter,
-        filterAppsFlow,
-    ) { selected, apps ->
+    val uiFilterItemsFlow: Flow<List<FilterItem>> = selectedFilter.map { selected ->
         val uiFilterItems = mutableListOf<FilterItem>()
-        apps.forEach { app ->
-            uiFilterItems.add(FilterItem.App(selected?.id == app.id, app))
-        }
         uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
         uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
         uiFilterItems.toList()
@@ -94,17 +78,14 @@ class EventsViewModel(
     private val isLoading: AtomicBoolean = AtomicBoolean(false)
 
     private val _eventsFlow = MutableStateFlow<Array<AccountEventWrap>?>(null)
-    private val _pushesFlow = MutableStateFlow<Array<AppPushEntity>?>(null)
 
     private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull()
-    private val pushesFlow = _pushesFlow.asStateFlow().filterNotNull()
 
     private val historyItemsFlow = combine(
-        eventsFlow,
-        pushesFlow,
+        eventsFlow.map { list -> list.map { it.event } },
         _triggerFlow,
-    ) { events, pushes, _ ->
-        mapping(events.map { it.event }, pushes.toList())
+    ) { events, _ ->
+        mapping(events)
     }
 
     private val uiItemsFlow = combine(
@@ -115,7 +96,7 @@ class EventsViewModel(
         val actionOutStatus = resolveActionOutStatus(resolveFilter(filter))
         val uiItems = historyHelper.groupByDate(historyItems.filter {
             when (actionOutStatus) {
-                ActionOutStatus.App -> it is HistoryItem.App
+                ActionOutStatus.App -> it is HistoryItem.App && it.url == (filter as? FilterItem.App)?.url
                 ActionOutStatus.Send -> it is HistoryItem.Event && (it.actionOutStatus == ActionOutStatus.Send || it.actionOutStatus == ActionOutStatus.Any)
                 ActionOutStatus.Received -> it is HistoryItem.Event && (it.actionOutStatus == ActionOutStatus.Received || it.actionOutStatus == ActionOutStatus.Any)
                 else -> true
@@ -126,12 +107,14 @@ class EventsViewModel(
         } else {
             historyHelper.removeLoadingItem(uiItems)
         }
-        setCached(list)
+        if (actionOutStatus == ActionOutStatus.Any || actionOutStatus == null) {
+            cacheHelper.setEventsCached(wallet, list)
+        }
         list
     }.flowOn(Dispatchers.IO)
 
     val uiStateFlow: Flow<EventsUiState> = flow {
-        val cached = getCached()
+        val cached = cacheHelper.getEventsCached(wallet)
         if (cached.isNotEmpty()) {
             emit(EventsUiState(
                 uiItems = cached,
@@ -185,7 +168,7 @@ class EventsViewModel(
 
     private fun resolveActionOutStatus(filter: Int): ActionOutStatus? {
         return when (filter) {
-            TX_FILTER_APP -> ActionOutStatus.App
+            // TX_FILTER_APP -> ActionOutStatus.App
             TX_FILTER_SENT -> ActionOutStatus.Send
             TX_FILTER_RECEIVED -> ActionOutStatus.Received
             else -> return null
@@ -198,15 +181,6 @@ class EventsViewModel(
         } else {
             _selectedFilter.value = filter
         }
-    }
-
-    private suspend fun getDAppEvents(): List<AppPushEntity> {
-        if (!wallet.isTonConnectSupported) {
-            return emptyList()
-        }
-
-        val tonProof = accountsRepository.requestTonProofToken(wallet) ?: return emptyList()
-        return dAppsRepository.getPushes(tonProof, wallet.accountId)
     }
 
     private fun checkAutoRefresh() {
@@ -232,23 +206,18 @@ class EventsViewModel(
             val cached = cache().toTypedArray()
             if (cached.isNotEmpty()) {
                 _eventsFlow.value = cached
-                _pushesFlow.value = emptyArray()
             }
         }
 
-        val eventsDeferred = async { loadDefault(beforeLt = null, limit = 15).toTypedArray() }
-        val dAppNotificationsDeferred = async { getDAppEvents().toTypedArray() }
-
-        val events = eventsDeferred.await()
-        val pushes = dAppNotificationsDeferred.await()
+        val events = loadDefault(beforeLt = null, limit = 15).toTypedArray()
 
         setLoading(loading = false, trigger = false)
+
         _eventsFlow.value = events
-        _pushesFlow.value = pushes
     }
 
     fun loadMore() {
-        if (isLoading.get()) {
+        if (isLoading.get() || _selectedFilter.value is FilterItem.App) {
             return
         }
 
@@ -258,7 +227,7 @@ class EventsViewModel(
             val currentEvents = (_eventsFlow.value?.toMutableList() ?: mutableListOf())
             val beforeLtEvents = loadDefault(
                 beforeLt = lastLt,
-                limit = 25
+                limit = 35
             )
             val events = (currentEvents + beforeLtEvents).distinctBy { it.eventId }.sortedBy {
                 it.timestamp
@@ -268,11 +237,7 @@ class EventsViewModel(
         }
     }
 
-    private suspend fun mapping(events: List<AccountEvent>, pushes: List<AppPushEntity>): List<HistoryItem> {
-        val pushesItems = pushes.map {
-            HistoryItem.App(context, wallet, it)
-        }
-
+    private suspend fun mapping(events: List<AccountEvent>): List<HistoryItem> {
         val eventItems = historyHelper.mapping(
             wallet = wallet,
             events = events.map { it.copy() },
@@ -280,20 +245,7 @@ class EventsViewModel(
             hiddenBalances = settingsRepository.hiddenBalances,
             safeMode = settingsRepository.isSafeModeEnabled(api),
         )
-
-        return eventItems + pushesItems
-    }
-
-    private fun getCached(): List<HistoryItem> {
-        return screenCacheSource.get(CACHE_NAME, wallet.id) {
-            HistoryItem.createFromParcel(it)
-        }
-    }
-
-    private fun setCached(uiItems: List<HistoryItem>) {
-        if (uiItems.isNotEmpty()) {
-            screenCacheSource.set(CACHE_NAME, wallet.id, uiItems)
-        }
+        return eventItems
     }
 
     private suspend fun updateState() {
@@ -337,8 +289,6 @@ class EventsViewModel(
     }
 
     private companion object {
-        private const val CACHE_NAME = "events"
-
         private const val TX_FILTER_NONE = 0
         private const val TX_FILTER_SENT = 1
         private const val TX_FILTER_RECEIVED = 2

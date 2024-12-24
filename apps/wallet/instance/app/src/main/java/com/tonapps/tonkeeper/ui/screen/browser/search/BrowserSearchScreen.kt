@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
@@ -12,6 +13,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
@@ -26,23 +29,34 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.hideKeyboard
+import uikit.extensions.inflate
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
+import uikit.widget.HeaderView
 
 class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_search, wallet) {
 
+    override val fragmentName: String = "BrowserSearchScreen"
+
     override val viewModel: BrowserSearchViewModel by viewModel()
 
-    private val adapter = Adapter { title, url ->
-        navigation?.add(DAppScreen.newInstance(
-            wallet = screenContext.wallet,
-            title = title,
-            url = url.toUri(),
-            source = "browser_search"
-        ))
+    private val adapter = Adapter { title, url, sendAnalytics ->
+        val uri = url.toUriOrNull() ?: return@Adapter
+        if (uri.host?.endsWith("mercuryo.io") == true) {
+            BrowserHelper.open(requireContext(), url)
+        } else {
+            navigation?.add(DAppScreen.newInstance(
+                wallet = screenContext.wallet,
+                title = title,
+                url = url.toUri(),
+                source = "browser_search",
+                sendAnalytics = sendAnalytics,
+            ))
+        }
         finish()
     }
 
+    private lateinit var headerView: HeaderView
     private lateinit var footerDrawable: FooterDrawable
     private lateinit var searchContainer: View
     private lateinit var searchInput: AppCompatEditText
@@ -58,6 +72,8 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        headerView = view.findViewById(R.id.header)
+
         footerDrawable = FooterDrawable(requireContext())
         footerDrawable.setColor(requireContext().backgroundTransparentColor)
 
@@ -96,6 +112,10 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         collectFlow(viewModel.uiItemsFlow) {
             submitList(it)
             placeholderView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
+        }
+
+        view.findViewById<Button>(R.id.cancel_button).setOnClickListener {
+            finish()
         }
     }
 

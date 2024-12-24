@@ -223,18 +223,12 @@ class TokenRepository(
         accountId: String,
         testnet: Boolean
     ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
-        val tonBalance = remoteDataSource.loadTON(currency, accountId, testnet) ?: return@withContext null
-        val lastActivity = localDataSource.getLastActivity(accountId)
-        if (tonBalance.lastActivity <= lastActivity) {
-            val tokens = localDataSource.getCache(cacheKey(accountId, testnet))
-            if (!tokens.isNullOrEmpty()) {
-                updateRates(currency, tokens.map { it.token.address })
-                return@withContext tokens
-            }
-        }
+        val tonBalanceDeferred = async { remoteDataSource.loadTON(currency, accountId, testnet) }
+        val jettonsDeferred = async { remoteDataSource.loadJettons(currency, accountId, testnet) }
 
-        val jettons = remoteDataSource.loadJettons(currency, accountId, testnet)?.toMutableList() ?: return@withContext null
-        localDataSource.setLastActivity(accountId, tonBalance.lastActivity)
+        val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
+
+        val jettons = jettonsDeferred.await()?.toMutableList() ?: mutableListOf()
 
         val usdtIndex = jettons.indexOfFirst {
             it.token.address == TokenEntity.USDT.address

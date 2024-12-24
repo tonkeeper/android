@@ -29,6 +29,8 @@ import uikit.widget.HeaderView
 
 class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, ScreenContext.None), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "InitScreen"
+
     private val args: InitArgs by lazy { InitArgs(requireArguments()) }
 
     override val viewModel: InitViewModel by viewModel { parametersOf(args) }

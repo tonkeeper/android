@@ -52,6 +52,7 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         private const val LEDGER_CONNECT_DATA = "ledger_connect_data"
         private const val ENABLE_PUSH_KEY = "enable_push"
         private const val KEYSTONE_KEY = "keystone"
+        private const val WORDS_COUNT_KEY = "words_count"
     }
 
     val labelFlow = savedStateHandle.getStateFlow(LABEL_KEY, Wallet.Label("", "", Color.TRANSPARENT))
@@ -59,6 +60,10 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
     var passcode: String?
         get() = savedStateHandle[PASSCODE_KEY]
         set(value) = savedStateHandle.set(PASSCODE_KEY, value)
+
+    var wordsCount: Int
+        get() = savedStateHandle[WORDS_COUNT_KEY] ?: 24
+        set(value) = savedStateHandle.set(WORDS_COUNT_KEY, value)
 
     var label: Wallet.Label?
         get() = savedStateHandle[LABEL_KEY]

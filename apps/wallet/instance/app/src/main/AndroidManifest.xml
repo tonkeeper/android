@@ -35,6 +35,7 @@
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <uses-feature android:name="android.hardware.nfc.hce" android:required="false" />
 
+    ${requestInstallPackagesPermission}
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -54,6 +55,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="com.android.vending.BILLING"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
 
     <application
@@ -61,15 +63,16 @@
         android:fullBackupContent="false"
         android:enableOnBackInvokedCallback="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_default_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_default_launcher_round"
         android:supportsRtl="false"
         android:theme="@style/Theme.Wallet.SplashScreen"
         android:hardwareAccelerated="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:largeHeap="true"
         android:name="com.tonapps.tonkeeper.App"
+        android:manageSpaceActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
         tools:targetApi="31"
         tools:replace="android:allowBackup"
         android:localeConfig="@xml/locales_config">
@@ -78,23 +81,8 @@
             android:enabled="true"
             android:name="com.tonapps.tonkeeper.DefaultLauncherIcon"
             android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_launcher"
-            android:roundIcon="@mipmap/ic_launcher_round"
-            android:exported="true">
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:enabled="false"
-            android:name="com.tonapps.tonkeeper.GreenLauncherIcon"
-            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_green_launcher"
-            android:roundIcon="@mipmap/ic_green_launcher_round"
+            android:icon="@mipmap/ic_default_launcher"
+            android:roundIcon="@mipmap/ic_default_launcher_round"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -105,10 +93,10 @@
 
         <activity-alias
             android:enabled="false"
-            android:name="com.tonapps.tonkeeper.RedLauncherIcon"
+            android:name="com.tonapps.tonkeeper.AccentLauncherIcon"
             android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_red_launcher"
-            android:roundIcon="@mipmap/ic_red_launcher_round"
+            android:icon="@mipmap/ic_accent_launcher"
+            android:roundIcon="@mipmap/ic_accent_launcher_round"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -119,10 +107,10 @@
 
         <activity-alias
             android:enabled="false"
-            android:name="com.tonapps.tonkeeper.OrangeLauncherIcon"
+            android:name="com.tonapps.tonkeeper.DarkLauncherIcon"
             android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_orange_launcher"
-            android:roundIcon="@mipmap/ic_orange_launcher_round"
+            android:icon="@mipmap/ic_dark_launcher"
+            android:roundIcon="@mipmap/ic_dark_launcher_round"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -133,38 +121,10 @@
 
         <activity-alias
             android:enabled="false"
-            android:name="com.tonapps.tonkeeper.PurpleLauncherIcon"
+            android:name="com.tonapps.tonkeeper.LightLauncherIcon"
             android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_purple_launcher"
-            android:roundIcon="@mipmap/ic_purple_launcher_round"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:enabled="false"
-            android:name="com.tonapps.tonkeeper.BlueLauncherIcon"
-            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_blue_launcher"
-            android:roundIcon="@mipmap/ic_blue_launcher_round"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:enabled="false"
-            android:name="com.tonapps.tonkeeper.BlackLauncherIcon"
-            android:targetActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
-            android:icon="@mipmap/ic_black_launcher"
-            android:roundIcon="@mipmap/ic_black_launcher_round"
+            android:icon="@mipmap/ic_light_launcher"
+            android:roundIcon="@mipmap/ic_light_launcher_round"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -276,6 +236,23 @@
             </intent-filter>
             <meta-data android:name="photopicker_activity:0:required" android:value="" />
         </service>
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_START_FOREGROUND" />
+            </intent-filter>
+        </service>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>
         <receiver
             android:name="com.tonapps.tonkeeper.manager.widget.WidgetManager$PinnedReceiver"
             android:exported="false" />

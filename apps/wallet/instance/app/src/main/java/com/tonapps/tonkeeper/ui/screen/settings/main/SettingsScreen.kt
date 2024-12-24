@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
+import com.google.android.gms.tasks.Task
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
@@ -39,6 +40,8 @@ class SettingsScreen(
     wallet: WalletEntity
 ): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "SettingsScreen"
+
     override val viewModel: SettingsViewModel by walletViewModel()
 
     private val reviewManager: ReviewManager by lazy {
@@ -65,7 +68,7 @@ class SettingsScreen(
             is Item.Currency -> navigation?.add(CurrencyScreen.newInstance())
             is Item.Language -> navigation?.add(LanguageScreen.newInstance())
             is Item.Account -> navigation?.add(EditNameScreen.newInstance(item.wallet))
-            is Item.Theme -> navigation?.add(ThemeScreen.newInstance())
+            is Item.Theme -> navigation?.add(ThemeScreen.newInstance(screenContext.wallet))
             is Item.Widget -> installWidget()
             is Item.Security -> navigation?.add(SecurityScreen.newInstance(screenContext.wallet))
             is Item.Legal -> navigation?.add(LegalScreen.newInstance())
@@ -88,31 +91,35 @@ class SettingsScreen(
     }
 
     private fun openRate() {
-        reviewManager.requestReviewFlow().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                startReviewFlow(task.result)
-            } else {
-                openGooglePlay()
+        activity?.let {
+            reviewManager.requestReviewFlow().addOnCompleteListener(it) { task ->
+                if (task.isSuccessful) {
+                    startReviewFlow(task.result)
+                } else {
+                    openGooglePlay()
+                }
             }
         }
     }
 
     private fun startReviewFlow(reviewInfo: ReviewInfo) {
-        val flow = reviewManager.launchReviewFlow(requireActivity(), reviewInfo)
-        flow.addOnCompleteListener {
-            if (!it.isSuccessful) {
-                openGooglePlay()
+        activity?.let {
+            reviewManager.launchReviewFlow(it, reviewInfo).addOnCompleteListener(it) { task ->
+                if (!task.isSuccessful) {
+                    openGooglePlay()
+                }
             }
         }
     }
 
     private fun openGooglePlay() {
-        val context = requireContext()
-        val packageName = context.packageName.replace(".debug", "")
-        val uri = "market://details?id=$packageName"
-        val intent = Intent(Intent.ACTION_VIEW, uri.toUri())
-        if (intent.resolveActivity(context.packageManager) != null) {
-            startActivity(intent)
+        context?.let {
+            val packageName = it.packageName.replace(".debug", "")
+            val uri = "market://details?id=$packageName"
+            val intent = Intent(Intent.ACTION_VIEW, uri.toUri())
+            if (intent.resolveActivity(it.packageManager) != null) {
+                startActivity(intent)
+            }
         }
     }
 

@@ -17,6 +17,8 @@ import uikit.widget.ModalHeader
 
 class AddContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_contact_add, wallet), BaseFragment.Modal {
 
+    override val fragmentName: String = "AddContactScreen"
+
     override val viewModel: AddContactViewModel by walletViewModel()
 
     private lateinit var headerView: ModalHeader

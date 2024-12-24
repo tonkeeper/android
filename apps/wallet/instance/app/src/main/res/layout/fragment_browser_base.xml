@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/browser_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+
+    <FrameLayout
+        android:id="@+id/search_container"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_gravity="bottom"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:paddingTop="@dimen/offsetMedium"
+        android:paddingBottom="8dp">
+
+        <uikit.widget.RowLayout
+            android:id="@+id/search"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="44dp"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:tint="?attr/iconSecondaryColor"
+                android:src="@drawable/ic_magnifying_glass_16"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="?attr/textSecondaryColor"
+                android:gravity="center_vertical"
+                android:background="@android:color/transparent"
+                android:text="@string/search_browser"/>
+
+        </uikit.widget.RowLayout>
+
+    </FrameLayout>
+
+</uikit.widget.ColumnLayout>

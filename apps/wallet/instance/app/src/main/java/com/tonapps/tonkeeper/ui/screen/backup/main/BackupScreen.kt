@@ -15,6 +15,8 @@ import uikit.extensions.collectFlow
 
 class BackupScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
+    override val fragmentName: String = "BackupScreen"
+
     private val attentionDialog: BackupAttentionDialog by lazy {
         BackupAttentionDialog(requireContext())
     }

@@ -93,7 +93,8 @@ class BatteryRepository(
         publicKey: PublicKeyEd25519,
         testnet: Boolean,
         boc: Cell,
-        forceRelayer: Boolean = false
+        forceRelayer: Boolean = false,
+        safeModeEnabled: Boolean,
     ): Pair<MessageConsequences, Boolean>? = withContext(Dispatchers.IO) {
 
         val balance = getBalance(
@@ -106,7 +107,7 @@ class BatteryRepository(
             throw IllegalStateException("Zero balance")
         }
 
-        api.emulateWithBattery(tonProofToken, boc, testnet)
+        api.emulateWithBattery(tonProofToken, boc, testnet, safeModeEnabled)
     }
 
     suspend fun getAppliedPromo(

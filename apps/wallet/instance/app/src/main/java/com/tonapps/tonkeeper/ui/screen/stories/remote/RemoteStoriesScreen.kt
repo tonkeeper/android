@@ -15,6 +15,8 @@ import uikit.widget.stories.BaseStoriesScreen
 
 class RemoteStoriesScreen: BaseStoriesScreen() {
 
+    override val fragmentName: String = "RemoteStoriesScreen"
+
     private val stories: StoryEntity.Stories by lazy {
         requireArguments().getParcelableCompat(ARG_STORIES)!!
     }

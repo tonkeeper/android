@@ -22,6 +22,8 @@ import uikit.navigation.Navigation.Companion.navigation
 
 class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragment.Modal {
 
+    override val fragmentName: String = "LedgerSignScreen"
+
     private val args: LedgerSignArgs by lazy { LedgerSignArgs(requireArguments()) }
 
     private val connectionViewModel: LedgerConnectionViewModel by viewModel()

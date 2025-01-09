@@ -67,15 +67,18 @@ class SendTransactionViewModel(
 
     private val emulationReadyDate = AtomicLong(0)
 
+    var message: MessageBodyEntity? = null
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
-            val transfers = transfers(tokens.filter { it.isRequestMinting }, true)
-            val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
             val internalMessage = (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
             try {
+                val transfers = transfers(tokens.filter { it.isRequestMinting }, true)
+                message = accountRepository.messageBody(wallet, request.validUntil, transfers)
+
                 val emulated = emulationUseCase(
-                    message = message,
+                    message = message!!,
                     useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType),
                     forceRelayer = forceRelayer,
                     params = true
@@ -128,7 +131,7 @@ class SendTransactionViewModel(
                 }
             } catch (e: Throwable) {
                 FirebaseCrashlytics.getInstance().recordException(APIException.Emulation(
-                    boc = message.createSignedBody(EmptyPrivateKeyEd25519.invoke(), internalMessage).base64(),
+                    boc = message?.createSignedBody(EmptyPrivateKeyEd25519.invoke(), internalMessage)?.base64() ?: "failed",
                     sourceUri = request.appUri,
                     cause = e
                 ))

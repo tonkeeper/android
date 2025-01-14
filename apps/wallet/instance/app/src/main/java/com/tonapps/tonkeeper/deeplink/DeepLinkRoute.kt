@@ -38,6 +38,7 @@ sealed class DeepLinkRoute {
         ): Tabs(buildBrowserUri(category), from) {
 
             private companion object {
+
                 private fun buildBrowserUri(category: String?): String {
                     val builder = Uri.parse("tonkeeper://browser").buildUpon()
                     if (!category.isNullOrBlank()) {

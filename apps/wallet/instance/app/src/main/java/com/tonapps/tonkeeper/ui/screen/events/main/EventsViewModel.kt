@@ -1,28 +1,20 @@
-package com.tonapps.tonkeeper.ui.screen.events
+package com.tonapps.tonkeeper.ui.screen.events.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.api.AccountEventWrap
+import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
-import com.tonapps.tonkeeper.extensions.notificationsFlow
-import com.tonapps.tonkeeper.extensions.refreshNotifications
 import com.tonapps.tonkeeper.helper.CacheHelper
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
+import com.tonapps.tonkeeper.ui.screen.events.main.filters.FilterItem
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.ScreenCacheSource
-import com.tonapps.wallet.data.dapps.DAppsRepository
-import com.tonapps.wallet.data.dapps.entities.AppEntity
-import com.tonapps.wallet.data.dapps.entities.AppNotificationsEntity
-import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountEvent
@@ -31,7 +23,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
@@ -40,11 +31,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import uikit.extensions.collectFlow
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
@@ -72,6 +61,7 @@ class EventsViewModel(
         val uiFilterItems = mutableListOf<FilterItem>()
         uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
         uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
+        uiFilterItems.add(FilterItem.Spam())
         uiFilterItems.toList()
     }
 
@@ -116,10 +106,12 @@ class EventsViewModel(
     val uiStateFlow: Flow<EventsUiState> = flow {
         val cached = cacheHelper.getEventsCached(wallet)
         if (cached.isNotEmpty()) {
-            emit(EventsUiState(
+            emit(
+                EventsUiState(
                 uiItems = cached,
                 loading = true
-            ))
+            )
+            )
         }
 
         emitAll(uiItemsFlow.map {
@@ -241,9 +233,11 @@ class EventsViewModel(
         val eventItems = historyHelper.mapping(
             wallet = wallet,
             events = events.map { it.copy() },
-            removeDate = false,
-            hiddenBalances = settingsRepository.hiddenBalances,
-            safeMode = settingsRepository.isSafeModeEnabled(api),
+            options = ActionOptions(
+                spamFilter = ActionOptions.SpamFilter.NOT_SPAM,
+                safeMode = settingsRepository.isSafeModeEnabled(api),
+                hiddenBalances = settingsRepository.hiddenBalances
+            )
         )
         return eventItems
     }

@@ -14,6 +14,7 @@ import com.tonapps.wallet.data.events.source.LocalDataSource
 import com.tonapps.wallet.data.events.source.RemoteDataSource
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import io.tonapi.models.AccountAddress
+import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -117,17 +118,63 @@ class EventsRepository(
         limit: Int = 10
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
-            if (beforeLt != null) {
+            val accountEvents = if (beforeLt != null) {
                 remoteDataSource.get(accountId, testnet, beforeLt, limit)
             } else {
                 val events = remoteDataSource.get(accountId, testnet, null, limit)?.also {
                     localDataSource.setEvents(cacheEventsKey(accountId, testnet), it)
                 }
                 events
-            }
+            } ?: return@withContext null
+
+            localDataSource.addSpam(accountId, testnet, accountEvents.events.filter {
+                it.isScam
+            })
+
+            accountEvents
         } catch (e: Throwable) {
             null
         }
+    }
+
+    suspend fun getLocalSpam(accountId: String, testnet: Boolean) = withContext(Dispatchers.IO) {
+        localDataSource.getSpam(accountId, testnet)
+    }
+
+    suspend fun markAsSpam(
+        accountId: String,
+        testnet: Boolean,
+        eventId: String,
+    ) = withContext(Dispatchers.IO) {
+        val events = getSingle(eventId, testnet) ?: return@withContext
+        localDataSource.addSpam(accountId, testnet, events)
+    }
+
+    suspend fun getRemoteSpam(
+        accountId: String,
+        testnet: Boolean,
+        startBeforeLt: Long? = null
+    ) = withContext(Dispatchers.IO) {
+        val list = mutableListOf<AccountEvent>()
+        var beforeLt: Long? = startBeforeLt
+        for (i in 0 until 10) {
+            val events = remoteDataSource.get(
+                accountId = accountId,
+                testnet = testnet,
+                beforeLt = beforeLt,
+                limit = 50
+            )?.events ?: emptyList()
+
+            if (events.isEmpty() || events.size >= 500) {
+                break
+            }
+
+            list.addAll(events)
+            beforeLt = events.lastOrNull()?.lt ?: break
+        }
+        val spamList = list.filter { it.isScam }
+        localDataSource.addSpam(accountId, testnet, spamList)
+        spamList
     }
 
     suspend fun getLocal(

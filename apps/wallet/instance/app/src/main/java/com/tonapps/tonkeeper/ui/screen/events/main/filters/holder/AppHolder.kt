@@ -1,16 +1,13 @@
-package com.tonapps.tonkeeper.ui.screen.events.filters.holder
+package com.tonapps.tonkeeper.ui.screen.events.main.filters.holder
 
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.net.toUri
 import androidx.core.view.updatePadding
-import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
+import com.tonapps.tonkeeper.ui.screen.events.main.filters.FilterItem
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.constantWhiteColor
 import uikit.extensions.dp
 import uikit.extensions.drawable
-import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.withAlpha
 import uikit.widget.FrescoView
 

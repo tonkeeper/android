@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
@@ -18,7 +19,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesScreen
-import com.tonapps.tonkeeper.ui.screen.events.EventsScreen
+import com.tonapps.tonkeeper.ui.screen.events.main.EventsScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootEvent
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
@@ -43,7 +44,6 @@ import uikit.extensions.scale
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 
 class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, ScreenContext.None) {
 
@@ -145,7 +145,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             } else {
                 null
             }
-            setFragment(itemId, it.wallet, it.from,extra, true)
+            setFragment(itemId, it.wallet, it.from, extra, true)
             parentClearState()
         }.launchIn(lifecycleScope)
 

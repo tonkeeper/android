@@ -4,6 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.core.history.list.holder.HistoryActionHolder
 import com.tonapps.tonkeeper.core.history.list.holder.HistoryAppHolder
+import com.tonapps.tonkeeper.core.history.list.holder.HistoryEmptyHolder
 import com.tonapps.tonkeeper.core.history.list.holder.HistoryHeaderHolder
 import com.tonapps.tonkeeper.core.history.list.holder.HistoryLoaderHolder
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -37,6 +38,7 @@ open class HistoryAdapter(
             HistoryItem.TYPE_HEADER -> HistoryHeaderHolder(parent)
             HistoryItem.TYPE_LOADER -> HistoryLoaderHolder(parent)
             HistoryItem.TYPE_APP -> HistoryAppHolder(parent)
+            HistoryItem.TYPE_EMPTY -> HistoryEmptyHolder(parent)
             else -> throw IllegalArgumentException("Unknown viewType: $viewType")
         }
     }

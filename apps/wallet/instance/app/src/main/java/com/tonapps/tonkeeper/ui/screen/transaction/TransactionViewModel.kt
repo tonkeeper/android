@@ -44,6 +44,7 @@ class TransactionViewModel(
                         comment = comment,
                         recipient = wallet.accountId
                     )
+                    eventsRepository.markAsSpam(wallet.accountId, wallet.testnet, txId)
                     toast(Localization.tx_marked_as_spam)
                 }
             } catch (e: Throwable) {

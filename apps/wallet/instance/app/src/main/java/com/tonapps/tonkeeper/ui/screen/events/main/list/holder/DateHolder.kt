@@ -1,7 +1,7 @@
-package com.tonapps.tonkeeper.ui.screen.events.list.holder
+package com.tonapps.tonkeeper.ui.screen.events.main.list.holder
 
 import android.view.ViewGroup
-import com.tonapps.tonkeeper.ui.screen.events.list.Item
+import com.tonapps.tonkeeper.ui.screen.events.main.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.setPaddingVertical
 import uikit.widget.TitleView

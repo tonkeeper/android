@@ -1,9 +1,9 @@
-package com.tonapps.tonkeeper.ui.screen.events.list
+package com.tonapps.tonkeeper.ui.screen.events.main.list
 
 import android.view.ViewGroup
-import com.tonapps.tonkeeper.ui.screen.events.list.holder.ActionHolder
-import com.tonapps.tonkeeper.ui.screen.events.list.holder.DateHolder
-import com.tonapps.tonkeeper.ui.screen.events.list.holder.SpaceHolder
+import com.tonapps.tonkeeper.ui.screen.events.main.list.holder.ActionHolder
+import com.tonapps.tonkeeper.ui.screen.events.main.list.holder.DateHolder
+import com.tonapps.tonkeeper.ui.screen.events.main.list.holder.SpaceHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem

@@ -1,4 +1,4 @@
-package com.tonapps.tonkeeper.ui.screen.events
+package com.tonapps.tonkeeper.ui.screen.events.main
 
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 

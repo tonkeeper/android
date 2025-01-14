@@ -2,6 +2,7 @@ package com.tonapps.wallet.api
 
 import android.content.Context
 import android.util.ArrayMap
+import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -116,6 +117,7 @@ class API(
                 builder.addHeader(key, value)
             }
         }
+        builder.addHeader("Authorization", "Bearer ${config.tonApiV2Key}")
 
         if (methodOptions.equals("POST", ignoreCase = true)) {
             builder.post(bodyOptions.toRequestBody(contentTypeOptions.toMediaType()))

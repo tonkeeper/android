@@ -36,6 +36,7 @@ import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
+import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.deeplink.DeepLink
@@ -554,6 +555,7 @@ class RootViewModel(
                 testnet = wallet.testnet,
                 locale = context.locale
             ).find { it.url.host == dAppUri.host }
+
             if (dApp == null) {
                 toast(Localization.app_not_found)
             } else {
@@ -653,7 +655,9 @@ class RootViewModel(
         val tx = historyHelper.getEvent(
             wallet = wallet,
             eventId = hash,
-            safeMode = settingsRepository.isSafeModeEnabled(api),
+            options = ActionOptions(
+                safeMode = settingsRepository.isSafeModeEnabled(api),
+            )
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }
@@ -664,7 +668,9 @@ class RootViewModel(
         val tx = historyHelper.mapping(
             wallet = wallet,
             event = event,
-            safeMode = settingsRepository.isSafeModeEnabled(api),
+            options = ActionOptions(
+                safeMode = settingsRepository.isSafeModeEnabled(api),
+            )
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }

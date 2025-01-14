@@ -1,7 +1,7 @@
 object Dependence {
 
-    const val fresco = "com.facebook.fresco:fresco:3.5.0"
-    const val guava = "com.google.guava:guava:33.3.1-android"
+    const val fresco = "com.facebook.fresco:fresco:3.6.0"
+    const val guava = "com.google.guava:guava:33.4.0-android"
     const val zxing = "com.google.zxing:core:3.5.3"
     const val j2objc = "com.google.j2objc:j2objc-annotations:3.0.0"
     const val cbor = "co.nstant.in:cbor:0.9"
@@ -11,19 +11,20 @@ object Dependence {
     }
 
     object TON {
-        const val tvm = "org.ton:ton-kotlin-tvm:0.3.1"
-        const val crypto = "org.ton:ton-kotlin-crypto:0.3.1"
-        const val tlb = "org.ton:ton-kotlin-tlb:0.3.1"
-        const val blockTlb = "org.ton:ton-kotlin-block-tlb:0.3.1"
-        const val tonapiTl = "org.ton:ton-kotlin-tonapi-tl:0.3.1"
-        const val contract = "org.ton:ton-kotlin-contract:0.3.1"
+        const val version = "0.3.1"
+        const val tvm = "org.ton:ton-kotlin-tvm:$version"
+        const val crypto = "org.ton:ton-kotlin-crypto:$version"
+        const val tlb = "org.ton:ton-kotlin-tlb:$version"
+        const val blockTlb = "org.ton:ton-kotlin-block-tlb:$version"
+        const val tonapiTl = "org.ton:ton-kotlin-tonapi-tl:$version"
+        const val contract = "org.ton:ton-kotlin-contract:$version"
     }
 
     object KotlinX {
-        const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0"
-        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3"
-        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
-        const val serializationCBOR = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.3"
+        const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1"
+        const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0"
+        const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0"
+        const val serializationCBOR = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.0"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
         const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.6.0"
     }
@@ -41,8 +42,8 @@ object Dependence {
     }
 
     object Koin {
-        const val core = "io.insert-koin:koin-android:4.0.0"
-        const val workmanager = "io.insert-koin:koin-androidx-workmanager:4.0.0"
+        const val core = "io.insert-koin:koin-android:4.0.1"
+        const val workmanager = "io.insert-koin:koin-androidx-workmanager:4.0.1"
     }
 
     object ML {
@@ -95,7 +96,7 @@ object Dependence {
     }
 
     object Firebase {
-        const val bom = "com.google.firebase:firebase-bom:33.6.0"
+        const val bom = "com.google.firebase:firebase-bom:33.7.0"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
         const val messaging = "com.google.firebase:firebase-messaging-ktx"

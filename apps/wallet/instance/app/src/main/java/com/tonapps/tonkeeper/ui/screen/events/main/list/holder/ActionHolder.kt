@@ -1,9 +1,9 @@
-package com.tonapps.tonkeeper.ui.screen.events.list.holder
+package com.tonapps.tonkeeper.ui.screen.events.main.list.holder
 
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.tonkeeper.ui.screen.events.list.Item
+import com.tonapps.tonkeeper.ui.screen.events.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.resolveColor

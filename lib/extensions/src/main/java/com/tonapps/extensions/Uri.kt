@@ -3,6 +3,7 @@ package com.tonapps.extensions
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import java.net.URL
 import java.net.URLConnection
 
@@ -85,8 +86,8 @@ fun Uri.hasUnsupportedQuery(
     vararg supportedQuery: String
 ): Boolean {
     return queryParameterNames.any {
-        if (includingUTM) {
-            it.startsWith("utm_") || it !in supportedQuery
+        if (includingUTM && it.startsWith("utm_")) {
+            false
         } else {
             it !in supportedQuery
         }

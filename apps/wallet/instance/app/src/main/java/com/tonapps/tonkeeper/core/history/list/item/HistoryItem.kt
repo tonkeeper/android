@@ -39,6 +39,7 @@ sealed class HistoryItem(
         const val TYPE_HEADER = 2
         const val TYPE_LOADER = 3
         const val TYPE_APP = 4
+        const val TYPE_EMPTY = 5
 
         fun createFromParcel(parcel: Parcel): HistoryItem {
             return when (parcel.readInt()) {
@@ -57,6 +58,7 @@ sealed class HistoryItem(
             is Loader -> this.date
             is App -> this.timestamp
             is Header -> this.date
+            else -> 0L
         }
     }
 
@@ -66,6 +68,7 @@ sealed class HistoryItem(
             is Loader -> "loader_${this.index}"
             is App -> "app_${this.timestamp}"
             is Header -> "header_${this.title}"
+            else -> "empty"
         }
     }
 
@@ -126,6 +129,30 @@ sealed class HistoryItem(
                 return arrayOfNulls(size)
             }
         }
+    }
+
+    data class Empty(
+        val title: String
+    ): HistoryItem(TYPE_EMPTY) {
+
+        constructor(context: Context, resId: Int) : this(context.getString(resId))
+
+        constructor(parcel: Parcel) : this(
+            parcel.readString()!!
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeString(title)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Empty> {
+            override fun createFromParcel(parcel: Parcel) = Empty(parcel)
+
+            override fun newArray(size: Int): Array<Empty?> {
+                return arrayOfNulls(size)
+            }
+        }
+
     }
 
     data class App(

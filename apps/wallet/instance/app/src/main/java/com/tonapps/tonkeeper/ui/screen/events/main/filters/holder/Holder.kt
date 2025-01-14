@@ -1,8 +1,8 @@
-package com.tonapps.tonkeeper.ui.screen.events.filters.holder
+package com.tonapps.tonkeeper.ui.screen.events.main.filters.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.tonkeeper.ui.screen.events.filters.FilterItem
+import com.tonapps.tonkeeper.ui.screen.events.main.filters.FilterItem
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.buttonPrimaryBackgroundColor
 import com.tonapps.uikit.color.buttonPrimaryForegroundColor

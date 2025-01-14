@@ -1,12 +1,10 @@
-package com.tonapps.tonkeeper.ui.screen.events
+package com.tonapps.tonkeeper.ui.screen.events.main
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.facebook.shimmer.Shimmer
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
@@ -14,28 +12,25 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.applyColors
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.ui.screen.events.filters.FiltersAdapter
+import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
+import com.tonapps.tonkeeper.ui.screen.events.main.filters.FilterItem
+import com.tonapps.tonkeeper.ui.screen.events.main.filters.FiltersAdapter
+import com.tonapps.tonkeeper.ui.screen.events.spam.SpamEventsScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
-import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.list.LinearLayoutManager
 import com.tonapps.uikit.list.ListPaginationListener
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.withContext
 import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
-import uikit.extensions.withAlpha
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
 
@@ -48,6 +43,10 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     private val legacyAdapter = HistoryAdapter()
 
     private val filtersAdapter = FiltersAdapter {
+        if (it.type == FilterItem.TYPE_SPAM) {
+            navigation?.add(SpamEventsScreen.newInstance(screenContext.wallet))
+            return@FiltersAdapter
+        }
         viewModel.clickFilter(it)
         scrollToFirst()
     }

@@ -1,7 +1,6 @@
-package com.tonapps.tonkeeper.ui.screen.events.list
+package com.tonapps.tonkeeper.ui.screen.events.main.list
 
 import android.net.Uri
-import com.facebook.common.util.UriUtil
 import com.tonapps.extensions.uri
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.UIKitColor

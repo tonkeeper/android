@@ -2,20 +2,16 @@ package com.tonapps.wallet.data.events.source
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.core.content.edit
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.security.Security
-import com.tonapps.wallet.api.fromJSON
-import com.tonapps.wallet.api.toJSON
 import com.tonapps.wallet.data.core.BlobDataSource
 import io.tonapi.models.AccountAddress
+import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 
 internal class LocalDataSource(
     scope: CoroutineScope,
@@ -28,6 +24,7 @@ internal class LocalDataSource(
         private const val KEY_ALIAS = "_com_tonapps_events_master_key_"
     }
 
+    private val databaseSource: DatabaseSource = DatabaseSource(scope, context)
     private val eventsCache = BlobDataSource.simpleJSON<AccountEvents>(context, "events")
     private val latestRecipientsCache = BlobDataSource.simpleJSON<List<AccountAddress>>(context, LATEST_RECIPIENTS)
 
@@ -38,6 +35,14 @@ internal class LocalDataSource(
 
     private fun keyDecryptedComment(txId: String): String {
         return "tx_$txId"
+    }
+
+    fun addSpam(accountId: String, testnet: Boolean, events: List<AccountEvent>) {
+        databaseSource.addSpam(accountId, testnet, events)
+    }
+
+    fun getSpam(accountId: String, testnet: Boolean): List<AccountEvent> {
+        return databaseSource.getSpam(accountId, testnet)
     }
 
     fun getDecryptedComment(txId: String): String? {

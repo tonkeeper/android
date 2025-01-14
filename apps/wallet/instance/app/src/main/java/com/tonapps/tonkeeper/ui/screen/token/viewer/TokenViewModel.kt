@@ -9,6 +9,7 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.Formatter
+import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
@@ -239,9 +240,10 @@ class TokenViewModel(
         return historyHelper.mapping(
             wallet = wallet,
             events = events,
-            removeDate = false,
-            hiddenBalances = settingsRepository.hiddenBalances,
-            safeMode = settingsRepository.isSafeModeEnabled(api),
+            options = ActionOptions(
+                safeMode = settingsRepository.isSafeModeEnabled(api),
+                hiddenBalances = settingsRepository.hiddenBalances,
+            )
         )
     }
 

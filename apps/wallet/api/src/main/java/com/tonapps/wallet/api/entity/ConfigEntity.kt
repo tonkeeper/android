@@ -68,7 +68,7 @@ data class ConfigEntity(
 
     @IgnoredOnParcel
     val domains: List<String> by lazy {
-        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
+        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/", "https://tonapi.io/")
     }
 
     @IgnoredOnParcel

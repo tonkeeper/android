@@ -51,6 +51,14 @@ class BrowserRepository(context: Context, api: API) {
         loadLocal(country, locale) ?: loadRemote(country, testnet, locale)
     }
 
+    suspend fun loadCategories(
+        country: String,
+        testnet: Boolean,
+        locale: Locale
+    ): List<String> {
+        return load(country, testnet, locale)?.categories?.map { it.id } ?: emptyList()
+    }
+
     private fun loadLocal(country: String, locale: Locale): BrowserDataEntity? {
         val key = cacheKey(country, locale)
         return localDataSource.getCache(key)

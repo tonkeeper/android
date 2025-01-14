@@ -73,6 +73,12 @@
                         android:layout_marginLeft="6dp"
                         android:background="@drawable/bg_content"/>
 
+                    <View
+                        android:layout_width="92dp"
+                        android:layout_height="32dp"
+                        android:layout_marginLeft="6dp"
+                        android:background="@drawable/bg_content"/>
+
                 </uikit.widget.RowLayout>
 
                 <View

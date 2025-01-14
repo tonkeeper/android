@@ -111,6 +111,7 @@
     <string name="signer_step_1">Scan the QR code with Signer</string>
     <string name="signer_step_2">Confirm your transaction in Signer</string>
     <string name="signer_step_3">Scan signed transaction QR code from Signer</string>
+    <string name="spam_folder_empty">Spam folder is empty</string>
 
     <string name="insufficient_balance_title">Insufficient Funds</string>
     <string name="insufficient_balance_description">Enter an amount less or choose your maximum balance.</string>

@@ -126,8 +126,10 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
             } else {
                 setErrorTask(BridgeException(cause = it))
             }
-        }.onEach { boc ->
-            setSuccessTask(boc)
+        }.onEach { bocList ->
+            if (bocList.isNotEmpty()) {
+                setSuccessTask(bocList.first())
+            }
         }.launchIn(lifecycleScope)
     }
 

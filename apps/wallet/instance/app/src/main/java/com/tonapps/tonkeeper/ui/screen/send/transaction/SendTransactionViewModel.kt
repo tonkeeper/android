@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -164,20 +165,24 @@ class SendTransactionViewModel(
 
     private fun getLedgerTransaction(
         message: MessageBodyEntity
-    ): Transaction? {
+    ): List<Transaction> {
         if (!message.wallet.isLedger) {
-            return null
+            return emptyList()
         }
-        if (message.transfers.size > 1) {
+        /*if (message.transfers.size > 1) {
             throw IllegalStateException("Ledger does not support multiple messages")
         }
-        val transfer = message.transfers.firstOrNull() ?: return null
+        val transfer = message.transfers.firstOrNull() ?: return null */
+        val transactions = mutableListOf<Transaction>()
+        for ((index, transfer) in message.transfers.withIndex()) {
+            transactions.add(Transaction.fromWalletTransfer(
+                walletTransfer = transfer,
+                seqno = message.seqNo + index,
+                timeout = message.validUntil
+            ))
+        }
 
-        return Transaction.fromWalletTransfer(
-            walletTransfer = transfer,
-            seqno = message.seqNo,
-            timeout = message.validUntil
-        )
+        return transactions.toList()
     }
 
     fun send() = flow {
@@ -186,16 +191,28 @@ class SendTransactionViewModel(
         val transfers = transfers(compressedTokens, false)
         val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
         val unsignedBody = message.createUnsignedBody(isBattery)
-        val ledgerTransaction = getLedgerTransaction(message)
+        val ledgerTransactions = getLedgerTransaction(message)
 
-        val boc = signUseCase(
-            context = context,
-            wallet = wallet,
-            unsignedBody = unsignedBody,
-            seqNo = message.seqNo,
-            ledgerTransaction = ledgerTransaction
-        ).base64()
-
+        val cells = mutableListOf<Cell>()
+        if (ledgerTransactions.size >= 2) {
+            for (transaction in ledgerTransactions) {
+                val cell = signUseCase(
+                    context = context,
+                    wallet = wallet,
+                    seqNo = transaction.seqno,
+                    ledgerTransaction = transaction
+                )
+                cells.add(cell)
+            }
+        } else {
+            val cell = signUseCase(
+                context = context,
+                wallet = wallet,
+                unsignedBody = unsignedBody,
+                seqNo = message.seqNo
+            )
+            cells.add(cell)
+        }
 
         val confirmationTimeSeconds = getConfirmationTimeMillis() / 1000.0
 
@@ -207,18 +224,24 @@ class SendTransactionViewModel(
             request.appUri.host ?: "unknown"
         }
 
-        val status = transactionManager.send(
-            wallet = wallet,
-            boc = boc,
-            withBattery = isBattery,
-            source = source,
-            confirmationTime = confirmationTimeSeconds
-        )
+        val states = mutableListOf<SendBlockchainState>()
+        for (cell in cells) {
+            val boc = cell.base64()
+            val status = transactionManager.send(
+                wallet = wallet,
+                boc = boc,
+                withBattery = isBattery,
+                source = source,
+                confirmationTime = confirmationTimeSeconds
+            )
+            states.add(status)
+        }
 
-        if (status == SendBlockchainState.SUCCESS) {
-            emit(boc)
+        val isSuccessful = states.all { it == SendBlockchainState.SUCCESS }
+        if (isSuccessful) {
+            emit(cells.map { it.base64() }.toTypedArray())
         } else {
-            throw IllegalStateException("Failed to send transaction to blockchain: $status")
+            throw IllegalStateException("Failed to send transaction to blockchain: $states")
         }
     }.flowOn(Dispatchers.IO)
 

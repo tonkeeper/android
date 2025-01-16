@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events.main
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
@@ -13,6 +14,7 @@ import com.tonapps.tonkeeper.extensions.applyColors
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
+import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageScreen
 import com.tonapps.tonkeeper.ui.screen.events.main.filters.FilterItem
 import com.tonapps.tonkeeper.ui.screen.events.main.filters.FiltersAdapter
 import com.tonapps.tonkeeper.ui.screen.events.spam.SpamEventsScreen
@@ -69,11 +71,16 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.history)
+        headerView.setTitleGravity(Gravity.START)
         headerView.setSubtitle(Localization.updating)
+        headerView.hideIcon()
         if (requireContext().isLightTheme) {
             headerView.setColor(requireContext().backgroundPageColor)
         } else {
             headerView.setColor(requireContext().backgroundTransparentColor)
+        }
+        headerView.setRightButton(Localization.spam) {
+            navigation?.add(SpamEventsScreen.newInstance(screenContext.wallet))
         }
 
         refreshView = view.findViewById(R.id.refresh)

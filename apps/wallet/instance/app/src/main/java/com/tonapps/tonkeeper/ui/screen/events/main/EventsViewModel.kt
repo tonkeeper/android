@@ -61,7 +61,7 @@ class EventsViewModel(
         val uiFilterItems = mutableListOf<FilterItem>()
         uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
         uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
-        uiFilterItems.add(FilterItem.Spam())
+        // uiFilterItems.add(FilterItem.Spam())
         uiFilterItems.toList()
     }
 

@@ -5,14 +5,14 @@
         android:id="@+id/header_close"
         android:layout_width="@dimen/actionSize"
         android:layout_height="@dimen/actionSize"
-        android:layout_gravity="center"
+        android:layout_gravity="center|start"
         android:alpha="0"
         android:background="@drawable/bg_oval_button_secondary"
         android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
         android:scaleType="centerInside"
         android:tint="?attr/buttonSecondaryForegroundColor" />
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <uikit.widget.ColumnLayout
         android:id="@+id/header_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,12 +26,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:gravity="center"
             android:singleLine="true"
             android:textAppearance="@style/TextAppearance.H3"
             android:textColor="?attr/textPrimaryColor" />
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <uikit.widget.RowLayout
             android:id="@+id/subtitle_container"
             android:layout_width="wrap_content"
             android:layout_height="20dp"
@@ -59,13 +58,13 @@
                 android:layout_marginStart="@dimen/offsetExtraSmall"
                 android:visibility="gone" />
 
-        </androidx.appcompat.widget.LinearLayoutCompat>
-    </androidx.appcompat.widget.LinearLayoutCompat>
+        </uikit.widget.RowLayout>
+    </uikit.widget.ColumnLayout>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <uikit.widget.RowLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:layout_gravity="center|end">
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/header_right_content"
@@ -85,6 +84,6 @@
             android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
             android:scaleType="centerInside"
             android:tint="?attr/buttonSecondaryForegroundColor" />
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </uikit.widget.RowLayout>
 
 </merge>

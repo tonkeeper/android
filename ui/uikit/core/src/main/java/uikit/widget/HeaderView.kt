@@ -9,16 +9,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.Button
+import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import uikit.R
 import uikit.drawable.BarDrawable
 import uikit.drawable.HeaderDrawable
+import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.inflate
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.setPaddingTop
 import uikit.extensions.useAttributes
@@ -63,10 +68,10 @@ open class HeaderView @JvmOverloads constructor(
         }
 
     private val drawable = HeaderDrawable(context)
-    private val subtitleContainerView: View
+    private val subtitleContainerView: RowLayout
     val subtitleView: AppCompatTextView
     private val loaderView: LoaderView
-    private val textView: View
+    private val textView: ColumnLayout
 
     var doOnCloseClick: (() -> Unit)? = null
         set(value) {
@@ -164,6 +169,17 @@ open class HeaderView @JvmOverloads constructor(
         }
     }
 
+    fun setRightButton(@StringRes resId: Int, onClick: () -> Unit) {
+        setRightButton(context.getString(resId), onClick)
+    }
+
+    fun setRightButton(text: String, onClick: () -> Unit) {
+        val button = inflate(R.layout.view_header_right_button) as Button
+        button.text = text
+        button.setOnClickListener { onClick() }
+        setRightContent(button)
+    }
+
     fun contentMatchParent() {
         titleView.layoutParams = titleView.layoutParams.apply {
             width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -216,14 +232,26 @@ open class HeaderView @JvmOverloads constructor(
     }
 
     fun hideIcon() {
-        closeView.visibility = View.GONE
+        hideCloseIcon()
         actionView.visibility = View.GONE
     }
 
-    fun setTitleGravity(gravity: Int) {
-        val layoutParams = titleView.layoutParams as LayoutParams
-        layoutParams.gravity = gravity
-        titleView.gravity = gravity
+    fun hideCloseIcon() {
+        closeView.visibility = View.GONE
+    }
+
+    fun setTitleGravity(newGravity: Int) {
+        titleView.updateLayoutParams<LayoutParams> {
+            this.gravity = newGravity
+        }
+        titleView.gravity = newGravity
+
+        subtitleContainerView.updateLayoutParams<LayoutParams> {
+            this.gravity = newGravity
+        }
+        subtitleView.gravity = newGravity
+        subtitleContainerView.updatePadding(left = 0)
+        textView.updatePadding(left = 4.dp)
     }
 
     fun hideText() {

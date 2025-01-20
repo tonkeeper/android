@@ -12,5 +12,6 @@ class TonConnectWebView @JvmOverloads constructor(
 
     init {
         isVerticalScrollBarEnabled = false
+        settings.setSupportZoom(false)
     }
 }

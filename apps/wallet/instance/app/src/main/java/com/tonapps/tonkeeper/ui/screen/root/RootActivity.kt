@@ -10,6 +10,7 @@ import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
+import android.util.Log
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
@@ -72,10 +73,6 @@ class RootActivity: BaseWalletActivity() {
     private val settingsRepository by inject<SettingsRepository>()
     private val passcodeManager by inject<PasscodeManager>()
 
-    private val nfcAdapter: NfcAdapter? by lazy {
-        NfcAdapter.getDefaultAdapter(this)
-    }
-
     private lateinit var uiHandler: Handler
 
     private lateinit var lockView: View
@@ -131,17 +128,6 @@ class RootActivity: BaseWalletActivity() {
         }
     }
 
-    private fun enableNfcForegroundDispatch() {
-        val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
-        val filters = arrayOf(IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED))
-        nfcAdapter?.enableForegroundDispatch(this, pendingIntent, filters, null)
-    }
-
-    private fun disableNfcForegroundDispatch() {
-        nfcAdapter?.disableForegroundDispatch(this)
-    }
-
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(newBase)
         val currentConfig = newBase.resources.configuration
@@ -163,13 +149,11 @@ class RootActivity: BaseWalletActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.connectTonConnectBridge()
-        enableNfcForegroundDispatch()
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.disconnectTonConnectBridge()
-        disableNfcForegroundDispatch()
     }
 
     private suspend fun pinState(state: LockScreen.State) {

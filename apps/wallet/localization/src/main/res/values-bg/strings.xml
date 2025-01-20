@@ -43,6 +43,7 @@
     <string name="signer_step_1">Сканирайте QR кода с Signer</string>
     <string name="signer_step_2">Потвърдете транзакцията си в Signer</string>
     <string name="signer_step_3">Сканирайте QR кода на подписаната транзакция от Signer</string>
+    <string name="spam_folder_empty">Папката за спам е празна</string>
     <string name="insufficient_balance_title">Недостатъчни средства</string>
     <string name="insufficient_balance_description">Въведете по-малка сума или изберете максималния си баланс.</string>
     <string name="w5_story_title_1">Безплатни USDT трансфери</string>

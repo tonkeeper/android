@@ -39,6 +39,7 @@
     <string name="signer_step_1">Відскануйте QR-код за допомогою Signer</string>
     <string name="signer_step_2">Підтвердьте свою транзакцію в Signer</string>
     <string name="signer_step_3">Відскануйте QR-код підписаної транзакції від Signer</string>
+    <string name="spam_folder_empty">Папка спаму порожня</string>
     <string name="insufficient_balance_title">Недостатньо коштів</string>
     <string name="insufficient_balance_description">Введіть меншу суму або виберіть свій максимальний баланс.</string>
     <string name="w5_story_title_1">Безгазові перекази USDT</string>

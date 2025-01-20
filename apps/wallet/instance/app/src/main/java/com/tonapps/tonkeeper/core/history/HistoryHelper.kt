@@ -413,14 +413,15 @@ class HistoryHelper(
             var actionOutStatusAny = 0
 
             for ((actionIndex, action) in actions.withIndex()) {
-                if (options.spamFilter == ActionOptions.SpamFilter.SPAM && !event.isScam) {
+                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
+
+                if (options.spamFilter == ActionOptions.SpamFilter.SPAM && !isScam) {
                     continue
-                } else if (options.spamFilter == ActionOptions.SpamFilter.NOT_SPAM && event.isScam) {
+                } else if (options.spamFilter == ActionOptions.SpamFilter.NOT_SPAM && isScam) {
                     continue
                 }
 
                 val timestamp = if (options.removeDate) 0 else event.timestamp
-                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
 
                 val item = action(
                     index = actionIndex,

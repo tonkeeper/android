@@ -39,6 +39,7 @@
     <string name="signer_step_1">Signer ile QR kodunu tarayın</string>
     <string name="signer_step_2">İşleminizi Signer\'da onaylayın</string>
     <string name="signer_step_3">İmzalayan\'dan imzalı işlem QR kodunu tarayın</string>
+    <string name="spam_folder_empty">Spam klasörü boş</string>
     <string name="insufficient_balance_title">Yetersiz bakiye</string>
     <string name="insufficient_balance_description">Daha az bir tutar girin veya maksimum bakiyenizi seçin.</string>
     <string name="w5_story_title_1">Gazsız USDT Transferleri</string>

@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import android.webkit.WebResourceRequest
 import androidx.annotation.LayoutRes
+import androidx.camera.core.imagecapture.BundlingNode
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
@@ -82,16 +83,20 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             return false
         }
         val deeplink = DeepLink(url, false, refererUri)
+        return processDeeplink(deeplink, url.toString())
+    }
+
+    fun processDeeplink(deeplink: DeepLink, url: String): Boolean {
         return when (deeplink.route) {
             is DeepLinkRoute.TonConnect -> {
                 rootViewModel.processTonConnectDeepLink(deeplink, null)
                 true
             }
             is DeepLinkRoute.Unknown -> {
-                navigation?.openURL(url.toString())
+                navigation?.openURL(url)
                 true
             }
-            else -> rootViewModel.processDeepLink(uri = url, fromQR = false, refSource = refererUri, internal = false, fromPackageName = null)
+            else -> rootViewModel.processDeepLink(uri = url.toUri(), fromQR = false, refSource = deeplink.referrer, internal = false, fromPackageName = null)
         }
     }
 

@@ -39,6 +39,7 @@
     <string name="signer_step_1">Escanea el código QR con Signer</string>
     <string name="signer_step_2">Confirme su transacción en Signer</string>
     <string name="signer_step_3">Escanee el código QR de la transacción firmada desde el Firmante</string>
+    <string name="spam_folder_empty">La carpeta de spam está vacía</string>
     <string name="insufficient_balance_title">Fondos insuficientes</string>
     <string name="insufficient_balance_description">Introduce una cantidad menor o elige tu saldo máximo.</string>
     <string name="w5_story_title_1">Transferencias de USDT sin gas</string>

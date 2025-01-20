@@ -23,4 +23,11 @@ data class BadDomainsEntity(
     override fun hashCode(): Int {
         return array.contentHashCode()
     }
+
+    companion object {
+
+        fun BadDomainsEntity?.isNullOrEmpty(): Boolean {
+            return this == null || this.isEmpty
+        }
+    }
 }

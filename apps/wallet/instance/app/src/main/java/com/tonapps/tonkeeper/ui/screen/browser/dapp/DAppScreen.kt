@@ -25,6 +25,8 @@ import androidx.webkit.WebViewFeature
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.loadSquare
 import com.tonapps.tonkeeper.extensions.setWallet
@@ -136,6 +138,17 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
     }
 
     private fun openNewTab(url: String) {
+        if (DeepLinkRoute.isAppLink(url)) {
+            val deeplink = DeepLink(url.toUri(), false, null)
+            if (!processDeeplink(deeplink, url)) {
+                forceOpenNewTab(url)
+            }
+        } else {
+            forceOpenNewTab(url)
+        }
+    }
+
+    private fun forceOpenNewTab(url: String) {
         val uri = url.toUriOrNull() ?: return
         navigation?.add(newInstance(
             wallet = wallet,

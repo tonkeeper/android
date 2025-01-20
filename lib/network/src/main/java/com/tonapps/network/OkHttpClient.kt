@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.util.ArrayMap
 import android.util.Log
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.retry
+import kotlinx.coroutines.isActive
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -29,7 +31,7 @@ import okhttp3.sse.EventSources
 import org.json.JSONObject
 import java.io.IOException
 
-private fun requestBuilder(url: String): Request.Builder {
+fun requestBuilder(url: String): Request.Builder {
     val builder = Request.Builder()
     builder.url(url)
     return builder
@@ -83,7 +85,7 @@ fun OkHttpClient.simple(
     return execute(builder.build())
 }
 
-private fun OkHttpClient.execute(request: Request): Response {
+fun OkHttpClient.execute(request: Request): Response {
     val response = newCall(request).execute()
     if (!response.isSuccessful) {
         throw OkHttpError(response)
@@ -122,11 +124,11 @@ fun OkHttpClient.sse(
                 null -> IOException("SSE connection failed with response: ${response?.code}")
                 else -> t
             }
-            this@callbackFlow.close(error)
+            this@callbackFlow.cancel(CancellationException(error.message, error))
         }
 
         override fun onClosed(eventSource: EventSource) {
-            this@callbackFlow.close(CancellationException("EventSource closed"))
+            this@callbackFlow.cancel(CancellationException("EventSource closed"))
         }
     }
     val builder = requestBuilder(url)

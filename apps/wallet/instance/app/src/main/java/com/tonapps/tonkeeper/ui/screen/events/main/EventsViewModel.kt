@@ -61,11 +61,12 @@ class EventsViewModel(
         val uiFilterItems = mutableListOf<FilterItem>()
         uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
         uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
-        // uiFilterItems.add(FilterItem.Spam())
+        uiFilterItems.add(FilterItem.Spam())
         uiFilterItems.toList()
     }
 
     private val isLoading: AtomicBoolean = AtomicBoolean(false)
+    private val isError: AtomicBoolean = AtomicBoolean(false)
 
     private val _eventsFlow = MutableStateFlow<Array<AccountEventWrap>?>(null)
 
@@ -106,16 +107,19 @@ class EventsViewModel(
     val uiStateFlow: Flow<EventsUiState> = flow {
         val cached = cacheHelper.getEventsCached(wallet)
         if (cached.isNotEmpty()) {
-            emit(
-                EventsUiState(
+            emit(EventsUiState(
                 uiItems = cached,
-                loading = true
-            )
-            )
+                loading = true,
+                error = false
+            ))
         }
 
         emitAll(uiItemsFlow.map {
-            EventsUiState(it, isLoading.get())
+            EventsUiState(
+                uiItems = it,
+                loading = isLoading.get(),
+                error = isError.get()
+            )
         })
     }
 
@@ -201,11 +205,16 @@ class EventsViewModel(
             }
         }
 
-        val events = loadDefault(beforeLt = null, limit = 15).toTypedArray()
+        try {
+            val events = loadDefault(beforeLt = null, limit = 15).toTypedArray()
+            isError.set(false)
+            setLoading(loading = false, trigger = false)
 
-        setLoading(loading = false, trigger = false)
-
-        _eventsFlow.value = events
+            _eventsFlow.value = events
+        } catch (e: Throwable) {
+            isError.set(true)
+            setLoading(loading = false, trigger = false)
+        }
     }
 
     fun loadMore() {
@@ -217,15 +226,21 @@ class EventsViewModel(
         setLoading(loading = true, trigger = true)
         viewModelScope.launch(Dispatchers.IO) {
             val currentEvents = (_eventsFlow.value?.toMutableList() ?: mutableListOf())
-            val beforeLtEvents = loadDefault(
-                beforeLt = lastLt,
-                limit = 35
-            )
-            val events = (currentEvents + beforeLtEvents).distinctBy { it.eventId }.sortedBy {
-                it.timestamp
-            }.reversed()
-            setLoading(loading = false, trigger = false)
-            _eventsFlow.value = events.toTypedArray()
+            try {
+                val beforeLtEvents = loadDefault(
+                    beforeLt = lastLt,
+                    limit = 35
+                )
+                val events = (currentEvents + beforeLtEvents).distinctBy { it.eventId }.sortedBy {
+                    it.timestamp
+                }.reversed()
+                isError.set(false)
+                setLoading(loading = false, trigger = false)
+                _eventsFlow.value = events.toTypedArray()
+            } catch (e: Throwable) {
+                isError.set(true)
+                setLoading(loading = false, trigger = false)
+            }
         }
     }
 
@@ -265,7 +280,7 @@ class EventsViewModel(
             beforeLt = beforeLt,
             limit = limit,
         )?.events?.map(::AccountEventWrap)
-        return list ?: emptyList()
+        return list ?: throw IllegalStateException("Failed to load events")
     }
 
     private suspend fun cache(): List<AccountEventWrap> {

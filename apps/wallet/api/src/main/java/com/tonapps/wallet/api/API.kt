@@ -14,9 +14,11 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
+import com.tonapps.network.execute
 import com.tonapps.network.get
 import com.tonapps.network.post
 import com.tonapps.network.postJSON
+import com.tonapps.network.requestBuilder
 import com.tonapps.network.sse
 import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
@@ -768,10 +770,11 @@ class API(
             json.put("silent", true)
             val data = json.toString().replace("\\/", "/")
 
-            tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
-                set("X-TonConnect-Auth", token)
-                set("Connection", "close")
-            }).isSuccessful
+            val builder = requestBuilder(url)
+            builder.delete(data.toRequestBody("application/json".toMediaType()))
+            builder.addHeader("X-TonConnect-Auth", token)
+            builder.addHeader("Connection", "close")
+            tonAPIHttpClient.execute(builder.build()).isSuccessful
         } catch (e: Throwable) {
             false
         }

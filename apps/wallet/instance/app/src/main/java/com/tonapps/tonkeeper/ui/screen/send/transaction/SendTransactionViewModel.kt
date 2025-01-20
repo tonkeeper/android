@@ -194,13 +194,15 @@ class SendTransactionViewModel(
         val ledgerTransactions = getLedgerTransaction(message)
 
         val cells = mutableListOf<Cell>()
-        if (ledgerTransactions.size >= 2) {
-            for (transaction in ledgerTransactions) {
+        if (ledgerTransactions.size > 1) {
+            for ((index, transaction) in ledgerTransactions.withIndex()) {
                 val cell = signUseCase(
                     context = context,
                     wallet = wallet,
                     seqNo = transaction.seqno,
-                    ledgerTransaction = transaction
+                    ledgerTransaction = transaction,
+                    transactionIndex = index,
+                    transactionCount = ledgerTransactions.size
                 )
                 cells.add(cell)
             }
@@ -209,6 +211,7 @@ class SendTransactionViewModel(
                 context = context,
                 wallet = wallet,
                 unsignedBody = unsignedBody,
+                ledgerTransaction = ledgerTransactions.firstOrNull(),
                 seqNo = message.seqNo
             )
             cells.add(cell)

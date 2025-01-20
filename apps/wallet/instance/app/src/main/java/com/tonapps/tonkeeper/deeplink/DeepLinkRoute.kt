@@ -270,5 +270,9 @@ sealed class DeepLinkRoute {
                 .replace("///", "//")
                 .toUri()
         }
+
+        fun isAppLink(url: String): Boolean {
+            return url.startsWith(PREFIX) || url.startsWith("ton://") || url.startsWith("https://app.tonkeeper.com")
+        }
     }
 }

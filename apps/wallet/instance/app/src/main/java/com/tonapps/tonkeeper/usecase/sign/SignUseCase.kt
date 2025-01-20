@@ -44,11 +44,19 @@ class SignUseCase(
         context: Context,
         wallet: WalletEntity,
         seqNo: Int,
-        ledgerTransaction: Transaction
+        ledgerTransaction: Transaction,
+        transactionIndex: Int = 0,
+        transactionCount: Int = 1,
     ): Cell = withContext(Dispatchers.Main) {
         val contract = wallet.contract
         val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
-        val signedBody = signTransaction.ledger(activity, wallet, ledgerTransaction)
+        val signedBody = signTransaction.ledger(
+            activity = activity,
+            wallet = wallet,
+            ledgerTransaction = ledgerTransaction,
+            transactionIndex = transactionIndex,
+            transactionCount = transactionCount
+        )
 
         contract.createTransferMessageCell(
             address = contract.address,
@@ -62,13 +70,21 @@ class SignUseCase(
         wallet: WalletEntity,
         unsignedBody: Cell,
         seqNo: Int,
-        ledgerTransaction: Transaction? = null
+        ledgerTransaction: Transaction? = null,
+        transactionIndex: Int = 0,
+        transactionCount: Int = 1,
     ): Cell = withContext(Dispatchers.Main) {
         val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
         val contract = wallet.contract
 
         val signedBody = if (ledgerTransaction != null) {
-            signTransaction.ledger(activity, wallet, ledgerTransaction)
+            signTransaction.ledger(
+                activity = activity,
+                wallet = wallet,
+                ledgerTransaction = ledgerTransaction,
+                transactionIndex = transactionIndex,
+                transactionCount = transactionCount,
+            )
         } else {
             signTransaction.requestSignedMessage(activity, wallet, unsignedBody)
         }

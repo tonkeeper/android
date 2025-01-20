@@ -111,7 +111,7 @@ class InitViewModel(
         .filter { it.isNotBlank() }
         .map {
             val account = api.resolveAddressOrName(it, testnet)
-            if (account == null) {
+            if (account == null || account.walletVersion == WalletVersion.UNKNOWN) {
                 setWatchAccount(null)
                 return@map null
             }

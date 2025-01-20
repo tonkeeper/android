@@ -21,7 +21,9 @@ import android.webkit.PermissionRequest
 import android.webkit.ServiceWorkerController
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
@@ -149,7 +151,7 @@ open class WebViewFixed @JvmOverloads constructor(
             }
 
             override fun onCreateWindow(
-                view: WebView?,
+                view: WebView,
                 isDialog: Boolean,
                 isUserGesture: Boolean,
                 resultMsg: Message?
@@ -157,8 +159,9 @@ open class WebViewFixed @JvmOverloads constructor(
                 if (isDialog) {
                     return resultMsg?.let { openNewWindow(it) } ?: false
                 }
-                val newUrl = view?.hitTestResult?.extra ?: return false
-                callbacks.forEach { it.onNewTab(newUrl) }
+                getTargetUrl(view, resultMsg) { newUrl ->
+                    callbacks.forEach { it.onNewTab(newUrl) }
+                }
                 return true
             }
 
@@ -171,6 +174,54 @@ open class WebViewFixed @JvmOverloads constructor(
         applyAndroidWebViewBridge()
     }
 
+    private fun getTargetUrl(
+        view: WebView,
+        resultMsg: Message?,
+        callback: (url: String) -> Unit
+    ) {
+        val extra = view.hitTestResult.extra
+        if (extra != null) {
+            callback(extra)
+        } else {
+            getTargetUrlHack(view, resultMsg, callback)
+        }
+    }
+
+    private fun getTargetUrlHack(
+        view: WebView,
+        resultMsg: Message?,
+        callback: (url: String) -> Unit
+    ) {
+        val newWebView = WebView(view.context).apply {
+            settings.apply {
+                javaScriptEnabled = true
+                displayZoomControls = false
+                loadWithOverviewMode = true
+                setSupportMultipleWindows(true)
+            }
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    request?.url?.let {
+                        callback(it.toString())
+                        post {
+                            destroy()
+                        }
+                    }
+                    return true
+                }
+            }
+        }
+        try {
+            val transport = resultMsg?.obj as WebView.WebViewTransport
+            transport.webView = newWebView
+            resultMsg.sendToTarget()
+        } catch (e: Throwable) {
+            newWebView.destroy()
+        }
+    }
 
     private fun openNewWindow(resultMsg: Message): Boolean {
         val dialog = NewWindowDialog(context, getProfile().name)

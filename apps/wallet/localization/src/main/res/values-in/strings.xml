@@ -39,6 +39,7 @@
     <string name="signer_step_1">Pindai kode QR dengan Signer</string>
     <string name="signer_step_2">Konfirmasikan transaksi Anda di Signer</string>
     <string name="signer_step_3">Pindai kode QR transaksi yang ditandatangani dari Signer</string>
+    <string name="spam_folder_empty">Folder spam kosong</string>
     <string name="insufficient_balance_title">Dana tidak mencukupi</string>
     <string name="insufficient_balance_description">Masukkan jumlah yang lebih sedikit atau pilih saldo maksimum Anda.</string>
     <string name="w5_story_title_1">Transfer USDT Tanpa Gas</string>

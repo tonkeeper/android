@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.applyColors
 import com.tonapps.tonkeeper.extensions.isLightTheme
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.CollectiblesManageScreen
@@ -79,9 +80,9 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         } else {
             headerView.setColor(requireContext().backgroundTransparentColor)
         }
-        headerView.setRightButton(Localization.spam) {
+        /*headerView.setRightButton(Localization.spam) {
             navigation?.add(SpamEventsScreen.newInstance(screenContext.wallet))
-        }
+        }*/
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.offsetTopAndBottom(0)
@@ -132,6 +133,10 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         shimmerView.visibility = View.GONE
         refreshView.visibility = View.VISIBLE
         filtersView.visibility = View.VISIBLE
+
+        if (state.error) {
+            navigation?.toast(Localization.unknown_error)
+        }
 
         if (state.uiItems.isEmpty() && !state.loading) {
             setEmptyState()

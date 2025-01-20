@@ -500,6 +500,7 @@
     <string name="hide_and_report_collection">Hide and report</string>
     <string name="open_tonviewer">Open in Tonviewer</string>
     <string name="tx_marked_as_spam">Transaction marked as Spam</string>
+    <string name="nft_marked_as_spam">NFT marked as Spam</string>
     <string name="safe_mode_disabled">Safe mode is off for 24 hours. It will turn on automatically. <annotation colorAttr="textAccentColor">Turn off permanently</annotation></string>
 
     <string name="customize">Customize</string>
@@ -520,6 +521,7 @@
     <string name="ledger_open_ton_app">Unlock it and open TON App</string>
     <string name="ledger_install_ton_app">Install TON App</string>
     <string name="ledger_confirm_tx">Confirm your transaction on Ledger</string>
+    <string name="ledger_confirm_tx_step">Confirm transaction #%1$d on Ledger</string>
     <string name="ledger_confirm_proof">Verify domain on Ledger</string>
     <string name="ledger_operation_not_supported">The operation is not available for Ledger wallets. Select another wallet and try again.</string>
     <string name="ledger_update_title">Update TON app in Ledger to the %1$s version</string>

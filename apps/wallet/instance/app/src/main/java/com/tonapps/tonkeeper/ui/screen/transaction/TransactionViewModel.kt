@@ -34,7 +34,6 @@ class TransactionViewModel(
         callback: () -> Unit
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            loading(true)
             val state = if (spam) SpamTransactionState.SPAM else SpamTransactionState.NOT_SPAM
             settingsRepository.setSpamStateTransaction(wallet.id, txId, state)
             try {
@@ -45,17 +44,10 @@ class TransactionViewModel(
                         recipient = wallet.accountId
                     )
                     eventsRepository.markAsSpam(wallet.accountId, wallet.testnet, txId)
-                    toast(Localization.tx_marked_as_spam)
                 }
-            } catch (e: Throwable) {
-                toast(Localization.unknown_error)
-            }
-            loading(false)
+            } catch (ignored: Throwable) { }
             withContext(Dispatchers.Main) {
                 callback()
-            }
-            if (spam) {
-                finish()
             }
         }
     }

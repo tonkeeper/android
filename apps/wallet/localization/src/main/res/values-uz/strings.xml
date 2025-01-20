@@ -39,6 +39,7 @@
     <string name="signer_step_1">Signer bilan QR kodni skanerlang</string>
     <string name="signer_step_2">Signer orqali tranzaksiyani tasdiqlang</string>
     <string name="signer_step_3">Signer dan imzolangan tranzaksiya QR kodini skanerlang</string>
+    <string name="spam_folder_empty">Spam jildi bo\'sh</string>
     <string name="insufficient_balance_title">Yetarli mablag\' yo\'q</string>
     <string name="insufficient_balance_description">Kiritilgan miqdorni kamaytiring yoki maksimal balansingizni tanlang.</string>
     <string name="w5_story_title_1">Gazsiz USDT O\'tkazmalari</string>

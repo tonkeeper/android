@@ -5,8 +5,11 @@ import android.net.Uri
 import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
+import com.tonapps.tonkeeper.client.safemode.BadDomainsEntity.Companion.isNullOrEmpty
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.BlobDataSource
+import com.tonapps.wallet.data.settings.SafeModeState
+import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -25,21 +29,20 @@ import java.util.concurrent.ConcurrentHashMap
 class SafeModeClient(
     private val context: Context,
     private val api: API,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val settingsRepository: SettingsRepository,
 ) {
 
-    private val scamDomains = ConcurrentHashMap<String, Boolean>()
-    private val blobCache = BlobDataSource.simple<BadDomainsEntity>(context, "safemode")
-    private val badDomainsFlow = flow {
-        getCachedBadDomains()?.let {
-            emit(it)
-        }
+    private val scamDomains: ConcurrentHashMap<String, Boolean> by lazy {
+        ConcurrentHashMap<String, Boolean>(20, 1.0f, 2)
+    }
 
-        loadBadDomains()?.let {
-            emit(it)
-        }
-    }.distinctUntilChanged()
+    private val blobCache: BlobDataSource<BadDomainsEntity> by lazy {
+        BlobDataSource.simple<BadDomainsEntity>(context, "safemode")
+    }
 
+    private val _badDomainsFlow = MutableStateFlow<BadDomainsEntity?>(null)
+    private val badDomainsFlow = _badDomainsFlow.asStateFlow().filterNotNull()
     private val _isReadyFlow = MutableStateFlow<Boolean?>(null)
     val isReadyFlow = _isReadyFlow.asStateFlow().filterNotNull()
 
@@ -52,6 +55,15 @@ class SafeModeClient(
             }
             _isReadyFlow.value = true
         }.launchIn(scope)
+
+        settingsRepository.safeModeStateFlow.onEach { state ->
+            if (state == SafeModeState.Enabled && _badDomainsFlow.value.isNullOrEmpty()) {
+                _badDomainsFlow.value = getCachedBadDomains()
+                loadBadDomains()?.let {
+                    _badDomainsFlow.value = it
+                }
+            }
+        }.flowOn(Dispatchers.IO).launchIn(scope)
     }
 
     fun isHasScamUris(vararg uris: Uri): Boolean {
@@ -70,10 +82,10 @@ class SafeModeClient(
         return false
     }
 
-    private fun getCachedBadDomains(): BadDomainsEntity? {
+    private fun getCachedBadDomains(): BadDomainsEntity {
         val entity = blobCache.getCache("scam_domains")
         if (entity == null || entity.isEmpty) {
-            return null
+            return BadDomainsEntity(emptyArray())
         }
         return entity
     }

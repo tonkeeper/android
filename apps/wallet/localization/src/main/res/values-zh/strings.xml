@@ -39,6 +39,7 @@
     <string name="signer_step_1">使用签名器扫描二维码</string>
     <string name="signer_step_2">在 Signer 中确认您的交易</string>
     <string name="signer_step_3">从签名者扫描已签名交易的二维码</string>
+    <string name="spam_folder_empty">垃圾邮件文件夹是空的</string>
     <string name="insufficient_balance_title">资金不足</string>
     <string name="insufficient_balance_description">输入较小的金额或选择您的最大余额。</string>
     <string name="w5_story_title_1">无手续费的USDT转账</string>

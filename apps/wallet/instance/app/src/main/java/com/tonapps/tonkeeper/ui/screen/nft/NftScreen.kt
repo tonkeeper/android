@@ -18,6 +18,8 @@ import com.tonapps.extensions.short4
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.isLightTheme
+import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -327,11 +329,16 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     }
 
     private fun reportSpam(spam: Boolean) {
+        navigation?.toastLoading(true)
         setTrust(if (spam) Trust.blacklist else Trust.whitelist)
         spamView.visibility = View.GONE
         headerView.setSubtitle(null)
         viewModel.reportSpam(spam) {
-            finish()
+            navigation?.toastLoading(false)
+            if (spam) {
+                navigation?.toast(Localization.nft_marked_as_spam)
+                finish()
+            }
         }
     }
 

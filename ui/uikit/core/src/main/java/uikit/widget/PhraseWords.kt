@@ -1,6 +1,7 @@
 package uikit.widget
 
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -21,18 +22,19 @@ class PhraseWords @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        pivotY = 0f
         val isSmall = 1320 >= context.resources.displayMetrics.heightPixels
         val isVerySmall = 720 >= context.resources.displayMetrics.heightPixels
-        scale = if (isVerySmall) {
-            .4f
+        if (isVerySmall) {
+            scale = .4f
+            translationX = (measuredWidth * (1 - scale) / 2) + 32.dp
         } else if (isSmall) {
-            .7f
+            scale = .7f
+            translationX = (measuredWidth * (1 - scale) / 2) + 20.dp
         } else {
-            1f
+            scale = 1f
+            translationX = 0f
         }
-
-        pivotY = 0f
-        translationX = measuredWidth * (1 - scale) / 2
     }
 
     fun setWords(words: Array<String>) {
@@ -42,7 +44,7 @@ class PhraseWords @JvmOverloads constructor(
     fun setWords(words: List<String>) {
         removeAllViews()
 
-        val layoutParams = LinearLayout.LayoutParams(
+        val layoutParams = LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT,
             1f
@@ -50,7 +52,7 @@ class PhraseWords @JvmOverloads constructor(
 
         var row = insertWordRow()
 
-        addView(View(context), LayoutParams(72.dp, LayoutParams.MATCH_PARENT))
+        addView(View(context), LayoutParams(72.dp, LayoutParams.WRAP_CONTENT))
 
         for ((index, word) in words.withIndex()) {
             if (index == words.size / 2) {
@@ -65,7 +67,7 @@ class PhraseWords @JvmOverloads constructor(
     private fun insertWordRow(): LinearLayoutCompat {
         val row = LinearLayoutCompat(context)
         row.orientation = VERTICAL
-        addView(row, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT, 1f))
+        addView(row, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 1f))
         return row
     }
 

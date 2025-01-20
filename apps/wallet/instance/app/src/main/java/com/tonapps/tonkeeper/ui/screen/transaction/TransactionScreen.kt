@@ -20,6 +20,8 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
+import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.extensions.withVerificationIcon
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
@@ -72,17 +74,19 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
 
     private val settingsRepository: SettingsRepository by inject()
 
-    private val actionArgs: HistoryItem.Event by lazy {
-        requireArguments().getParcelableCompat(ARG_ACTION)!!
+    private val actionArgs: HistoryItem.Event? by lazy {
+        requireArguments().getParcelableCompat(ARG_ACTION)
     }
 
     private var localIsScam: Boolean? = null
 
     private val isScam: Boolean
-        get() = localIsScam ?: actionArgs.isScam
+        get() = (localIsScam ?: actionArgs?.isScam) == true
 
     private val comment: String?
-        get() = viewModel.getComment(actionArgs.txId) ?: actionArgs.comment?.body
+        get() = actionArgs?.let { action ->
+            viewModel.getComment(action.txId) ?: action.comment?.body
+        }
 
     private val historyHelper: HistoryHelper by inject()
 
@@ -119,7 +123,6 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
 
         moreView = view.findViewById(R.id.more)
-        moreView.setOnClickListener { openMore(it) }
 
         iconView = view.findViewById(R.id.icon)
         iconSwapView = view.findViewById(R.id.icon_swap)
@@ -152,17 +155,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         explorerButton = view.findViewById(R.id.open_explorer)
 
         reportSpamButton = view.findViewById(R.id.report_spam)
-        reportSpamButton.setOnClickListener { reportSpamWithDialog(true) }
-
         notSpamButton = view.findViewById(R.id.not_spam)
-        notSpamButton.setOnClickListener { reportSpamWithDialog(false) }
 
-        explorerButton.setOnClickListener { openTonViewer() }
-
-        initArgs()
+        if (actionArgs != null) {
+            initArgs(actionArgs!!)
+        } else {
+            finish()
+        }
     }
 
-    private fun initArgs() {
+    private fun initArgs(actionArgs: HistoryItem.Event) {
         spamView.visibility = if (isScam) View.VISIBLE else View.GONE
         feeView.title = if (actionArgs.refund == null) getString(Localization.fee) else getString(Localization.refund)
         unverifiedView.visibility = if (actionArgs.unverifiedToken) {
@@ -170,6 +172,11 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         } else {
             View.GONE
         }
+        moreView.setOnClickListener { openMore(it, actionArgs) }
+
+        reportSpamButton.setOnClickListener { reportSpamWithDialog(true, actionArgs) }
+        explorerButton.setOnClickListener { openTonViewer(actionArgs) }
+        notSpamButton.setOnClickListener { reportSpamWithDialog(false, actionArgs) }
 
         if (actionArgs.hiddenBalance) {
             amountView.text = HIDDEN_BALANCE
@@ -242,33 +249,34 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             iconView.visibility = View.GONE
         }
 
-        applySpamState()
+        applySpamState(actionArgs)
         updateDataView()
     }
 
-    private fun reportSpamWithDialog(spam: Boolean) {
+    private fun reportSpamWithDialog(spam: Boolean, actionArgs: HistoryItem.Event) {
         val isEncryptedComment = actionArgs.comment?.isEncrypted == true || actionArgs.comment?.type == HistoryItem.Event.Comment.Type.OriginalEncrypted
         if (isEncryptedComment && spam) {
             CommentReportDialog(requireContext()).show {
-                reportEncryptedComment()
+                reportEncryptedComment(actionArgs)
             }
         } else {
-            reportSpam(spam)
+            reportSpam(spam, actionArgs)
         }
     }
 
-    private fun reportEncryptedComment() {
+    private fun reportEncryptedComment(actionArgs: HistoryItem.Event) {
         if (actionArgs.comment?.isEncrypted == true) {
-            decryptComment(actionArgs, actionArgs.comment!!) {
-                applyComment(actionArgs, actionArgs.comment!!)
-                reportSpam(true)
+            decryptComment(actionArgs, actionArgs.comment) {
+                applyComment(actionArgs, actionArgs.comment)
+                reportSpam(true, actionArgs)
             }
         } else {
-            reportSpam(true)
+            reportSpam(true, actionArgs)
         }
     }
 
-    private fun reportSpam(spam: Boolean) {
+    private fun reportSpam(spam: Boolean, actionArgs: HistoryItem.Event) {
+        navigation?.toastLoading(true)
         viewModel.reportSpam(
             wallet = actionArgs.wallet,
             txId = actionArgs.txId,
@@ -277,11 +285,15 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         ) {
             localIsScam = spam
             spamView.visibility = if (spam) View.VISIBLE else View.GONE
-            initArgs()
+            initArgs(actionArgs)
+            navigation?.toastLoading(false)
+            if (spam) {
+                navigation?.toast(Localization.tx_marked_as_spam)
+            }
         }
     }
 
-    private fun openTonViewer() {
+    private fun openTonViewer(actionArgs: HistoryItem.Event) {
         val url = if (actionArgs.wallet.testnet) {
             "https://testnet.tonviewer.com/transaction"
         } else {
@@ -290,10 +302,10 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         navigation?.openURL("$url/${actionArgs.txId}")
     }
 
-    private fun openMore(view: View) {
+    private fun openMore(view: View, actionArgs: HistoryItem.Event) {
         val actionSheet = ActionSheet(requireContext())
         if (!actionArgs.isOut && !actionArgs.wallet.testnet && !actionArgs.wallet.isWatchOnly && actionArgs.isMaybeSpam) {
-            if (getSpamState() == SpamTransactionState.SPAM) {
+            if (getSpamState(actionArgs) == SpamTransactionState.SPAM) {
                 actionSheet.addItem(NOT_SPAM_ID, Localization.not_spam, UIKitIcon.ic_block_16)
             } else {
                 actionSheet.addItem(REPORT_SPAM_ID, Localization.report_spam, UIKitIcon.ic_block_16)
@@ -302,16 +314,16 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         actionSheet.addItem(OPEN_EXPLORER_ID, Localization.open_tonviewer, UIKitIcon.ic_globe_16)
         actionSheet.doOnItemClick = { item ->
             when (item.id) {
-                REPORT_SPAM_ID -> reportSpamWithDialog(true)
-                NOT_SPAM_ID -> reportSpamWithDialog(false)
-                OPEN_EXPLORER_ID -> openTonViewer()
+                REPORT_SPAM_ID -> reportSpamWithDialog(true, actionArgs)
+                NOT_SPAM_ID -> reportSpamWithDialog(false, actionArgs)
+                OPEN_EXPLORER_ID -> openTonViewer(actionArgs)
             }
         }
         actionSheet.show(view)
     }
 
-    private fun applySpamState() {
-        if (isCanReportSpam()) {
+    private fun applySpamState(actionArgs: HistoryItem.Event) {
+        if (isCanReportSpam(actionArgs)) {
             explorerButton.visibility = View.GONE
             reportSpamButton.visibility = View.VISIBLE
             notSpamButton.visibility = View.VISIBLE
@@ -322,12 +334,12 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
         }
     }
 
-    private fun getSpamState(): SpamTransactionState {
+    private fun getSpamState(actionArgs: HistoryItem.Event): SpamTransactionState {
         return settingsRepository.getSpamStateTransaction(actionArgs.wallet.id, actionArgs.txId)
     }
 
-    private fun isCanReportSpam(): Boolean {
-        return if (getSpamState() != SpamTransactionState.UNKNOWN || actionArgs.isOut || actionArgs.wallet.testnet || actionArgs.wallet.isWatchOnly) {
+    private fun isCanReportSpam(actionArgs: HistoryItem.Event): Boolean {
+        return if (getSpamState(actionArgs) != SpamTransactionState.UNKNOWN || actionArgs.isOut || actionArgs.wallet.testnet || actionArgs.wallet.isWatchOnly) {
             false
         } else if (actionArgs.unverifiedToken) {
             true

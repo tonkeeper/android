@@ -9,6 +9,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckScreen
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.base.BaseFragment
@@ -25,6 +26,8 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
     private val args: PhraseArgs by lazy { PhraseArgs(requireArguments()) }
 
     override val viewModel: BaseWalletVM.EmptyViewViewModel by viewModel()
+
+    override val secure: Boolean = !BuildConfig.DEBUG
 
     private lateinit var headerView: HeaderView
     private lateinit var wordsView: PhraseWords

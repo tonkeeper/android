@@ -80,14 +80,28 @@ class BackupViewModel(
 
     fun getRecoveryPhrase(
         context: Context,
-        callback: (Array<String>) -> Unit
+        callback: (Array<String>, Throwable?) -> Unit
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             val confirmed = passcodeManager.confirmation(context, getString(Localization.app_name))
             if (confirmed) {
-                val words = accountRepository.getMnemonic(wallet.id) ?: return@launch
-                withContext(Dispatchers.Main) {
-                    callback(words)
+                try {
+                    val words = accountRepository.getMnemonic(wallet.id) ?: emptyArray()
+                    if (words.isEmpty()) {
+                        val hasPrivateKey = accountRepository.getPrivateKey(wallet.id) != null
+                        if (hasPrivateKey) {
+                            throw IllegalStateException("No mnemonic but has private key")
+                        } else {
+                            throw IllegalStateException("No mnemonic and no private key")
+                        }
+                    }
+                    withContext(Dispatchers.Main) {
+                        callback(words, null)
+                    }
+                } catch (e: Throwable) {
+                    withContext(Dispatchers.Main) {
+                        callback(emptyArray(), e)
+                    }
                 }
             }
         }

@@ -405,7 +405,7 @@
     <string name="home_screen">Главный экран</string>
 
 
-
+    <string name="spam_folder_empty">Папка «Спам» пуста.</string>
     <string name="insufficient_balance_title">Недостаточно средств</string>
     <string name="insufficient_balance_description">Укажите сумму меньше или выберите максимальный свой баланс.</string>
 

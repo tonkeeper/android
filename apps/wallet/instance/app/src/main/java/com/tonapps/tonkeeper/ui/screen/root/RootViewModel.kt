@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebView
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -479,6 +480,7 @@ class RootViewModel(
 
     fun processTonConnectDeepLink(deeplink: DeepLink, fromPackageName: String?) {
         val route = deeplink.route as DeepLinkRoute.TonConnect
+
         savedState.returnUri = tonConnectManager.processDeeplink(
             context = context,
             uri = route.uri,

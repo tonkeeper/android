@@ -178,6 +178,7 @@
     <string name="wallets">Кошельки</string>
     <string name="hide_collection">Скрыть NFT</string>
     <string name="tx_marked_as_spam">Транзакция помечена как спам</string>
+    <string name="nft_marked_as_spam">NFT отмечен как спам</string>
     <string name="safe_mode_disabled">Безопасный режим отключён на 24 часа. Включится автоматически. <annotation colorAttr="textAccentColor">Отключить навсегда</annotation></string>
     <string name="hide_and_report_collection">Скрыть и пожаловаться</string>
     <string name="open_tonviewer">Открыть в Tonviewer</string>
@@ -405,7 +406,7 @@
     <string name="home_screen">Главный экран</string>
 
 
-    <string name="spam_folder_empty">Папка «Спам» пуста.</string>
+    <string name="spam_folder_empty">Папка спама пуста</string>
     <string name="insufficient_balance_title">Недостаточно средств</string>
     <string name="insufficient_balance_description">Укажите сумму меньше или выберите максимальный свой баланс.</string>
 
@@ -464,6 +465,7 @@
     <string name="ledger_open_ton_app">Разблокируйте его и откройте приложение TON</string>
     <string name="ledger_install_ton_app">Установить приложение</string>
     <string name="ledger_confirm_tx">Подтвердите транзакцию в Ledger</string>
+    <string name="ledger_confirm_tx_step">Подтвердите транзакцию #%1$d в Ledger</string>
     <string name="ledger_confirm_proof">Подпишите домен в Ledger</string>
     <string name="ledger_operation_not_supported">Операция недоступна для кошельков Ledger. Выберите другой кошелек и повторите попытку.</string>
     <string name="ledger_update_title">Обновите TON приложение в Ledger до версии %1$s</string>

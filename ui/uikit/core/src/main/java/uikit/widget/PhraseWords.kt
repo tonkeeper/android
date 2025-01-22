@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
@@ -27,10 +28,10 @@ class PhraseWords @JvmOverloads constructor(
         val isVerySmall = 720 >= context.resources.displayMetrics.heightPixels
         if (isVerySmall) {
             scale = .4f
-            translationX = (measuredWidth * (1 - scale) / 2) + 32.dp
+            // translationX = (measuredWidth * (1 - scale) / 2) + 32.dp
         } else if (isSmall) {
             scale = .7f
-            translationX = (measuredWidth * (1 - scale) / 2) + 20.dp
+            // translationX = (measuredWidth * (1 - scale) / 2) + 20.dp
         } else {
             scale = 1f
             translationX = 0f
@@ -67,7 +68,9 @@ class PhraseWords @JvmOverloads constructor(
     private fun insertWordRow(): LinearLayoutCompat {
         val row = LinearLayoutCompat(context)
         row.orientation = VERTICAL
-        addView(row, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 1f))
+        addView(row, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 1f).apply {
+            gravity = Gravity.CENTER
+        })
         return row
     }
 

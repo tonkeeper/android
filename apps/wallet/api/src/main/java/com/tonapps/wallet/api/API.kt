@@ -760,12 +760,11 @@ class API(
         firebaseToken: String,
     ): Boolean {
         return try {
-            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
+            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect?firebase_token=${firebaseToken}"
 
             val json = JSONObject()
             json.put("app_url", appUrl)
             json.put("account", accountId)
-            json.put("firebase_token", firebaseToken)
             json.put("commercial", false)
             json.put("silent", true)
             val data = json.toString().replace("\\/", "/")

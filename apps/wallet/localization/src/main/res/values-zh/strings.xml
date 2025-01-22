@@ -113,7 +113,7 @@
     <string name="delete_account_alert">刪除帳戶？</string>
     <string name="delete">删除</string>
     <string name="delete_watch_account">删除观察账户</string>
-    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\n登出所有钱包？</string>
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\n登出所有钱包？</string>
     <string name="sign_out_all_description">这将删除所有钱包的密钥。确保您已备份恢复短语。</string>
     <string name="sign_out_title">🚧 🚨 退出？ 🚨 🚧</string>
     <string name="sign_out_description">这将擦除您的钱包密钥。请确保您已备份恢复短语。</string>
@@ -159,7 +159,7 @@
     <string name="name_your_wallet_subtitle">命名您的钱包以便在使用Tonkeeper时轻松识别。这些名称存储在本地，只有您可以看到。</string>
     <string name="open_anyway">仍然打开</string>
     <string name="nft_warning_buttton_title">您确定要打开外部链接吗？</string>
-    <string name="nft_warning_buttton_subtitle">仅当您信任该收藏的作者时才访问此外部链接。\\n\\n%1$s</string>
+    <string name="nft_warning_buttton_subtitle">仅当您信任该收藏的作者时才访问此外部链接。\n\n%1$s</string>
     <string name="tokens">代币</string>
     <string name="today">今天</string>
     <string name="address">地址</string>
@@ -361,6 +361,7 @@
     <string name="hide_collection">隐藏收藏</string>
     <string name="hide_and_report_collection">隐藏并举报</string>
     <string name="open_tonviewer">在 Tonviewer 中打开</string>
+    <string name="nft_marked_as_spam">NFT 被标记为垃圾邮件</string>
     <string name="safe_mode_disabled">安全模式关闭 24 小时。它将自动开启。<annotation colorAttr="textAccentColor">永久关闭</annotation></string>
     <string name="customize">自定义</string>
     <string name="customize_wallet_title">自定义您的钱包</string>
@@ -377,6 +378,7 @@
     <string name="ledger_open_ton_app">解锁并打开TON应用程序</string>
     <string name="ledger_install_ton_app">安装TON应用</string>
     <string name="ledger_confirm_tx">在 Ledger 上确认您的交易</string>
+    <string name="ledger_confirm_tx_step">在 Ledger 上确认交易 #%1$d</string>
     <string name="ledger_confirm_proof">在Ledger上验证域名</string>
     <string name="ledger_operation_not_supported">该操作不适用于Ledger钱包。请选择其他钱包并重试。</string>
     <string name="ledger_update_title">在Ledger中将TON应用更新至%1$s版本</string>
@@ -454,8 +456,8 @@
     <string name="payment_method_not_found">付款方式不可用</string>
     <string name="app_not_found">未找到应用程序</string>
     <string name="insufficient_balance_in_wallet">钱包资金不足</string>
-    <string name="insufficient_balance_fees">区块链费用所需：%1$s。\\n您的余额：%2$s。</string>
-    <string name="insufficient_balance_default">待付款：%1$s。\\n您的余额：%2$s。</string>
+    <string name="insufficient_balance_fees">区块链费用所需：%1$s。\n您的余额：%2$s。</string>
+    <string name="insufficient_balance_default">待付款：%1$s。\n您的余额：%2$s。</string>
     <string name="buy_ton">购买 TON</string>
     <string name="recharge_battery">给电池充电</string>
     <string name="name">姓名</string>

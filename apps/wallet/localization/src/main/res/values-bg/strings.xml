@@ -82,8 +82,8 @@
     <string name="payment_method_not_found">Методът на плащане не е наличен</string>
     <string name="app_not_found">Приложението не е намерено</string>
     <string name="insufficient_balance_in_wallet">Недостатъчно средства в портфейла</string>
-    <string name="insufficient_balance_fees">Изисква се за такси за блокчейн: %1$s.\\nВашето салдо: %2$s.</string>
-    <string name="insufficient_balance_default">За плащане: %1$s.\\nВашето салдо: %2$s.</string>
+    <string name="insufficient_balance_fees">Изисква се за такси за блокчейн: %1$s.\nВашето салдо: %2$s.</string>
+    <string name="insufficient_balance_default">За плащане: %1$s.\nВашето салдо: %2$s.</string>
     <string name="staking_max_apy" translatable="false">MAX APY</string>
     <string name="staking_minimum_deposit">Минимален депозит %1$s.</string>
     <string name="staking_options">Опции</string>
@@ -429,6 +429,7 @@
     <string name="hide_collection">Скриване на колекцията</string>
     <string name="hide_and_report_collection">Скрий се и докладвай</string>
     <string name="open_tonviewer">Отворете в Tonviewer</string>
+    <string name="nft_marked_as_spam">NFT е маркиран като спам</string>
     <string name="safe_mode_disabled">Безопасният режим е изключен за 24 часа. Той ще се включи автоматично. <annotation colorAttr="textAccentColor">Изключване за постоянно</annotation></string>
     <string name="customize">Персонализиране</string>
     <string name="customize_wallet_title">Персонализирайте вашия портфейл</string>
@@ -448,6 +449,7 @@
     <string name="ledger_open_ton_app">Отключете го и отворете TON App</string>
     <string name="ledger_install_ton_app">Инсталирайте TON App</string>
     <string name="ledger_confirm_tx">Потвърдете транзакцията си на Ledger</string>
+    <string name="ledger_confirm_tx_step">Потвърдете транзакция #%1$d в Ledger</string>
     <string name="ledger_confirm_proof">Потвърдете домейна в Ledger</string>
     <string name="ledger_operation_not_supported">Операцията не е налична за Ledger портфейли. Изберете друг портфейл и опитайте отново.</string>
 

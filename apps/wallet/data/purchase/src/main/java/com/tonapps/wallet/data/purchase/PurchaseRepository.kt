@@ -46,7 +46,11 @@ class PurchaseRepository(
             } else {
                 val items = category.items.filter { methods.contains(it.id) }
                 if (items.isNotEmpty()) {
-                    list.add(category.copy(items = items))
+                    if (category.type == "buy") {
+                        list.add(category.copy(items = items.reversed()))
+                    } else {
+                        list.add(category.copy(items = items))
+                    }
                 }
             }
         }

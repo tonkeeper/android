@@ -41,6 +41,10 @@ internal class LocalDataSource(
         databaseSource.addSpam(accountId, testnet, events)
     }
 
+    fun removeSpam(accountId: String, testnet: Boolean, eventId: String) {
+        databaseSource.removeSpam(accountId, testnet, eventId)
+    }
+
     fun getSpam(accountId: String, testnet: Boolean): List<AccountEvent> {
         return databaseSource.getSpam(accountId, testnet)
     }

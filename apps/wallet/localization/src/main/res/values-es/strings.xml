@@ -361,6 +361,7 @@
     <string name="hide_collection">Ocultar colección</string>
     <string name="hide_and_report_collection">Ocultar y reportar</string>
     <string name="open_tonviewer">Abierto en Tonviewer</string>
+    <string name="tx_marked_as_not_spam">Marcada como no spam</string>
     <string name="nft_marked_as_spam">NFT marcada como spam</string>
     <string name="safe_mode_disabled">El modo seguro está desactivado durante 24 horas. Se activará automáticamente. <annotation colorAttr="textAccentColor">Desactivar permanentemente</annotation></string>
     <string name="customize">Personalizar</string>

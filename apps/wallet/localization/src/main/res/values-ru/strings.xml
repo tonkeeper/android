@@ -245,7 +245,7 @@
     <string name="all">Все</string>
     <string name="report_encrypted_comment">Комментарий из этой транзакции будет отправлен вместе с жалобой в расшифрованном виде.</string>
     <string name="report_encrypted_comment_button">Пожаловаться всё равно</string>
-
+    <string name="tx_marked_as_not_spam">Отмечено как не спам</string>
 
 
     <!-- not reviewed -->

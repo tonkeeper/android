@@ -361,6 +361,7 @@
     <string name="hide_collection">Sembunyikan koleksi</string>
     <string name="hide_and_report_collection">Sembunyikan dan laporkan</string>
     <string name="open_tonviewer">Buka di Tonviewer</string>
+    <string name="tx_marked_as_not_spam">Ditandai sebagai bukan spam</string>
     <string name="nft_marked_as_spam">NFT ditandai sebagai Spam</string>
     <string name="safe_mode_disabled">Mode aman dimatikan selama 24 jam. Mode ini akan aktif secara otomatis. <annotation colorAttr="textAccentColor">Matikan secara permanen</annotation></string>
     <string name="customize">Sesuaikan</string>

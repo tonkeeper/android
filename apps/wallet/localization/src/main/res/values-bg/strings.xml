@@ -429,6 +429,7 @@
     <string name="hide_collection">Скриване на колекцията</string>
     <string name="hide_and_report_collection">Скрий се и докладвай</string>
     <string name="open_tonviewer">Отворете в Tonviewer</string>
+    <string name="tx_marked_as_not_spam">Означено като не спам</string>
     <string name="nft_marked_as_spam">NFT е маркиран като спам</string>
     <string name="safe_mode_disabled">Безопасният режим е изключен за 24 часа. Той ще се включи автоматично. <annotation colorAttr="textAccentColor">Изключване за постоянно</annotation></string>
     <string name="customize">Персонализиране</string>

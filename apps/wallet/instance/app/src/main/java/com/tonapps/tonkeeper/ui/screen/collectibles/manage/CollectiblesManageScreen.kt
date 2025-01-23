@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.collectibles.manage
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -64,6 +65,7 @@ class CollectiblesManageScreen(wallet: WalletEntity): BaseListWalletScreen<Scree
     private fun showSpamDialog(item: Item.Collection) {
         spamDialog.show(item) {
             viewModel.notSpam(item)
+            navigation?.toast(Localization.tx_marked_as_not_spam)
         }
     }
 

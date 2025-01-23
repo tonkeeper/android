@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
+import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
 import com.squareup.moshi.JsonAdapter
@@ -760,17 +761,13 @@ class API(
         firebaseToken: String,
     ): Boolean {
         return try {
-            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect?firebase_token=${firebaseToken}"
+            val uriBuilder = Uri.parse("${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect").buildUpon()
+            uriBuilder.appendQueryParameter("firebase_token", firebaseToken)
+            uriBuilder.appendQueryParameter("app_url", appUrl)
+            uriBuilder.appendQueryParameter("account", accountId)
 
-            val json = JSONObject()
-            json.put("app_url", appUrl)
-            json.put("account", accountId)
-            json.put("commercial", false)
-            json.put("silent", true)
-            val data = json.toString().replace("\\/", "/")
-
-            val builder = requestBuilder(url)
-            builder.delete(data.toRequestBody("application/json".toMediaType()))
+            val builder = requestBuilder(uriBuilder.build().toString())
+            builder.delete()
             builder.addHeader("X-TonConnect-Auth", token)
             builder.addHeader("Connection", "close")
             tonAPIHttpClient.execute(builder.build()).isSuccessful

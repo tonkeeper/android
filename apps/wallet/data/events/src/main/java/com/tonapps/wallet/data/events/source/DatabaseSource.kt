@@ -68,6 +68,12 @@ internal class DatabaseSource(
         }
     }
 
+    fun removeSpam(accountId: String, testnet: Boolean, eventId: String) {
+        writableDatabase.withTransaction {
+            writableDatabase.delete(SPAM_TABLE_NAME, "$SPAM_TABLE_ACCOUNT_ID_COLUMN = ? AND $SPAM_TABLE_TESTNET_COLUMN = ? AND $SPAM_TABLE_EVENT_ID_COLUMN = ?", arrayOf(accountId.toRawAddress(), if (testnet) "1" else "0", eventId))
+        }
+    }
+
     fun getSpam(accountId: String, testnet: Boolean): List<AccountEvent> {
         val query = "SELECT $spamFields FROM $SPAM_TABLE_NAME WHERE $SPAM_TABLE_ACCOUNT_ID_COLUMN = ? AND $SPAM_TABLE_TESTNET_COLUMN = ? ORDER BY $SPAM_TABLE_DATE_COLUMN DESC LIMIT 25"
         val cursor = readableDatabase.rawQuery(query, arrayOf(accountId.toRawAddress(), if (testnet) "1" else "0"))

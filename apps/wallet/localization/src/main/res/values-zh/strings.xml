@@ -361,6 +361,7 @@
     <string name="hide_collection">隐藏收藏</string>
     <string name="hide_and_report_collection">隐藏并举报</string>
     <string name="open_tonviewer">在 Tonviewer 中打开</string>
+    <string name="tx_marked_as_not_spam">标记为非垃圾邮件</string>
     <string name="nft_marked_as_spam">NFT 被标记为垃圾邮件</string>
     <string name="safe_mode_disabled">安全模式关闭 24 小时。它将自动开启。<annotation colorAttr="textAccentColor">永久关闭</annotation></string>
     <string name="customize">自定义</string>

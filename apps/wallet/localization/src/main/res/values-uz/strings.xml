@@ -361,6 +361,7 @@
     <string name="hide_collection">To\'plamni yashirish</string>
     <string name="hide_and_report_collection">Yashirish va hisobot berish</string>
     <string name="open_tonviewer">Tonviewer-da oching</string>
+    <string name="tx_marked_as_not_spam">Spam emas deb belgilangan</string>
     <string name="nft_marked_as_spam">NFT Spam sifatida belgilangan</string>
     <string name="safe_mode_disabled">Xavfsiz rejim 24 soat davomida o\'chirilgan. U avtomatik ravishda yoqiladi. <annotation colorAttr="textAccentColor">Umumiy o\'chirish</annotation></string>
     <string name="customize">Moslashtirish</string>

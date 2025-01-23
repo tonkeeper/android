@@ -361,6 +361,7 @@
     <string name="hide_collection">Сховати колекцію</string>
     <string name="hide_and_report_collection">Сховати і повідомити</string>
     <string name="open_tonviewer">Відкрити в Tonviewer</string>
+    <string name="tx_marked_as_not_spam">Позначено як не спам</string>
     <string name="nft_marked_as_spam">NFT позначено як спам</string>
     <string name="safe_mode_disabled">Безпечний режим вимкнено на 24 години. Він увімкнеться автоматично. <annotation colorAttr="textAccentColor">Вимкнути назавжди</annotation></string>
     <string name="customize">Налаштувати</string>

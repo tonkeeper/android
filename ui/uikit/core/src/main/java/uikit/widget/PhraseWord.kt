@@ -1,6 +1,8 @@
 package uikit.widget
 
 import android.content.Context
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.util.AttributeSet
 import android.view.Gravity
 import androidx.appcompat.widget.AppCompatTextView
@@ -9,41 +11,25 @@ import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textSecondaryColor
 import uikit.R
 import uikit.extensions.dp
+import uikit.extensions.setColor
+import uikit.extensions.withGreenBadge
 
 class PhraseWord @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyle: Int = 0,
-) : LinearLayoutCompat(context, attrs, defStyle) {
+    defStyle: Int = android.R.attr.textViewStyle,
+) : AppCompatTextView(context, attrs, defStyle) {
 
-    private val indexView = AppCompatTextView(context).apply {
-        setTextAppearance(R.style.TextAppearance_Body1)
-        setTextColor(context.textSecondaryColor)
-        setSingleLine()
-    }
-
-    private val wordView = AppCompatTextView(context).apply {
+    init {
         setTextAppearance(R.style.TextAppearance_Body1)
         setTextColor(context.textPrimaryColor)
         setSingleLine()
     }
 
-    init {
-        orientation = HORIZONTAL
-        addView(indexView, LayoutParams(24.dp, LayoutParams.WRAP_CONTENT).apply {
-            gravity = Gravity.BOTTOM
-        })
-        addView(wordView, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 1f).apply {
-            gravity = Gravity.BOTTOM
-        })
-    }
-
     fun setData(index: Int, word: String) {
-        indexView.text = "$index."
-        wordView.text = word
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(32.dp, MeasureSpec.EXACTLY))
+        val prefixIndex = "$index.  "
+        text = SpannableString(prefixIndex + word).apply {
+            setColor(context.textSecondaryColor, 0, prefixIndex.length)
+        }
     }
 }

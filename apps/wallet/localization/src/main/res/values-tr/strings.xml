@@ -361,6 +361,7 @@
     <string name="hide_collection">Koleksiyonu gizle</string>
     <string name="hide_and_report_collection">Gizle ve bildir</string>
     <string name="open_tonviewer">Tonviewer\'da aç</string>
+    <string name="tx_marked_as_not_spam">Spam değil olarak işaretlendi</string>
     <string name="nft_marked_as_spam">NFT Spam olarak işaretlendi</string>
     <string name="safe_mode_disabled">Güvenli mod 24 saat boyunca kapalıdır. Otomatik olarak açılacaktır. <annotation colorAttr="textAccentColor">Kalıcı olarak kapat</annotation></string>
     <string name="customize">Özelleştir</string>

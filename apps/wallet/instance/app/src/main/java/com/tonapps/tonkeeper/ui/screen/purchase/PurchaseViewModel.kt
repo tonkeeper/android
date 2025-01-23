@@ -57,7 +57,7 @@ class PurchaseViewModel(
                 items.add(Item.Space)
             }
             items.add(Item.Title(category.title))
-            for ((methodIndex, method) in category.items.withIndex()) {
+            for ((methodIndex, method) in category.items.reversed().withIndex()) {
                 val position = ListCell.getPosition(category.items.size, methodIndex)
                 items.add(Item.Method(method, position, category.type))
             }

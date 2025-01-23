@@ -44,13 +44,18 @@ class PurchaseRepository(
             if (category.type == "swap") {
                 list.add(category.copy(items = category.items))
             } else {
-                val items = category.items.filter { methods.contains(it.id) }
+                val items = category.items.filter {
+                    methods.contains(it.id)
+                }
                 if (items.isNotEmpty()) {
-                    if (category.type == "buy") {
-                        list.add(category.copy(items = items.reversed()))
-                    } else {
-                        list.add(category.copy(items = items))
+                    // Sort by methods
+                    val sortedItems = items.sortedBy {
+                        methods.indexOf(it.id)
                     }
+                    val categoryEntity = category.copy(
+                        items = sortedItems
+                    )
+                    list.add(categoryEntity)
                 }
             }
         }

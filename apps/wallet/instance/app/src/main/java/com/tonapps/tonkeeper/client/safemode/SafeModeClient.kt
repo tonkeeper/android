@@ -62,6 +62,8 @@ class SafeModeClient(
                 loadBadDomains()?.let {
                     _badDomainsFlow.value = it
                 }
+            } else {
+                _isReadyFlow.value = true
             }
         }.flowOn(Dispatchers.IO).launchIn(scope)
     }

@@ -361,6 +361,8 @@
     <string name="hide_collection">Sembunyikan koleksi</string>
     <string name="hide_and_report_collection">Sembunyikan dan laporkan</string>
     <string name="open_tonviewer">Buka di Tonviewer</string>
+    <string name="tx_marked_as_not_spam">Ditandai sebagai bukan spam</string>
+    <string name="nft_marked_as_spam">NFT ditandai sebagai Spam</string>
     <string name="safe_mode_disabled">Mode aman dimatikan selama 24 jam. Mode ini akan aktif secara otomatis. <annotation colorAttr="textAccentColor">Matikan secara permanen</annotation></string>
     <string name="customize">Sesuaikan</string>
     <string name="customize_wallet_title">Sesuaikan Dompet Anda</string>
@@ -377,6 +379,7 @@
     <string name="ledger_open_ton_app">Buka kunci dan buka Aplikasi TON</string>
     <string name="ledger_install_ton_app">Pasang Aplikasi TON</string>
     <string name="ledger_confirm_tx">Konfirmasi transaksi Anda di Ledger</string>
+    <string name="ledger_confirm_tx_step">Konfirmasikan transaksi #%1$d di Ledger</string>
     <string name="ledger_confirm_proof">Verifikasi domain di Ledger</string>
     <string name="ledger_operation_not_supported">Operasi ini tidak tersedia untuk dompet Ledger. Pilih dompet lain dan coba lagi.</string>
     <string name="ledger_update_title">Perbarui aplikasi TON di Ledger ke versi %1$s</string>
@@ -454,8 +457,8 @@
     <string name="payment_method_not_found">Metode pembayaran tidak tersedia</string>
     <string name="app_not_found">Aplikasi tidak ditemukan</string>
     <string name="insufficient_balance_in_wallet">Dana tidak mencukupi di dompet</string>
-    <string name="insufficient_balance_fees">Diperlukan untuk biaya blockchain: %1$s.\\nSaldo Anda: %2$s.</string>
-    <string name="insufficient_balance_default">Yang akan dibayar: %1$s.\\nSaldo Anda: %2$s.</string>
+    <string name="insufficient_balance_fees">Diperlukan untuk biaya blockchain: %1$s.\nSaldo Anda: %2$s.</string>
+    <string name="insufficient_balance_default">Yang akan dibayar: %1$s.\nSaldo Anda: %2$s.</string>
     <string name="buy_ton">Beli TON</string>
     <string name="recharge_battery">Isi Ulang Baterai</string>
     <string name="name">Nama</string>

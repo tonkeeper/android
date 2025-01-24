@@ -276,7 +276,9 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
     }
 
     private fun reportSpam(spam: Boolean, actionArgs: HistoryItem.Event) {
-        navigation?.toastLoading(true)
+        if (spam) {
+            navigation?.toastLoading(true)
+        }
         viewModel.reportSpam(
             wallet = actionArgs.wallet,
             txId = actionArgs.txId,
@@ -286,10 +288,10 @@ class TransactionScreen: BaseFragment(R.layout.dialog_transaction), BaseFragment
             localIsScam = spam
             spamView.visibility = if (spam) View.VISIBLE else View.GONE
             initArgs(actionArgs)
-            navigation?.toastLoading(false)
             if (spam) {
-                navigation?.toast(Localization.tx_marked_as_spam)
+                navigation?.toastLoading(false)
             }
+            navigation?.toast(if (spam) Localization.tx_marked_as_spam else Localization.tx_marked_as_not_spam)
         }
     }
 

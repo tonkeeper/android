@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebView
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -155,20 +156,26 @@ class RootViewModel(
         }
     }
 
-    init {
-        pushManager.clearNotifications()
+    override fun attachHolder(holder: Holder) {
+        super.attachHolder(holder)
 
         tonConnectManager.transactionRequestFlow.map { (connection, message) ->
             val tx = RootSignTransaction(connection, message, savedState.returnUri)
             savedState.returnUri = null
             tx
-        }.filter { !ignoreTonConnectTransaction.contains(it.hash) }.collectFlow {
+        }.filter {
+            !ignoreTonConnectTransaction.contains(it.hash)
+        }.collectFlow {
             _eventFlow.tryEmit(RootEvent.CloseCurrentTonConnect)
             viewModelScope.launch {
                 ignoreTonConnectTransaction.add(it.hash)
                 signTransaction(it)
             }
         }
+    }
+
+    init {
+        pushManager.clearNotifications()
 
         settingsRepository.languageFlow.collectFlow {
             context.setLocales(settingsRepository.localeList)
@@ -479,6 +486,7 @@ class RootViewModel(
 
     fun processTonConnectDeepLink(deeplink: DeepLink, fromPackageName: String?) {
         val route = deeplink.route as DeepLinkRoute.TonConnect
+
         savedState.returnUri = tonConnectManager.processDeeplink(
             context = context,
             uri = route.uri,

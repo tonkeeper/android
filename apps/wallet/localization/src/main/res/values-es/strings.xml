@@ -113,7 +113,7 @@
     <string name="delete_account_alert">¿Eliminar cuenta?</string>
     <string name="delete">Eliminar</string>
     <string name="delete_watch_account">Eliminar cuenta de vigilancia</string>
-    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\n¿Cerrar sesión de todas las billeteras?</string>
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\n¿Cerrar sesión de todas las billeteras?</string>
     <string name="sign_out_all_description">Esto borrará las claves de todas las carteras. Asegúrate de haber guardado tus frases de recuperación.</string>
     <string name="sign_out_title">🚧 🚨 ¿Cerrar sesión? 🚨 🚧</string>
     <string name="sign_out_description">Esto borrará la clave de tu cartera. Asegúrate de haber respaldado tu frase de recuperación.</string>
@@ -159,7 +159,7 @@
     <string name="name_your_wallet_subtitle">Nombra tu billetera para identificarla fácilmente mientras usas Tonkeeper. Estos nombres se almacenan localmente y solo pueden ser vistos por ti.</string>
     <string name="open_anyway">Abrir de todos modos</string>
     <string name="nft_warning_buttton_title">¿Estás seguro de que quieres abrir un enlace externo?</string>
-    <string name="nft_warning_buttton_subtitle">Visita este enlace externo solo si confías en el autor de la colección.\\n\\n%1$s</string>
+    <string name="nft_warning_buttton_subtitle">Visita este enlace externo solo si confías en el autor de la colección.\n\n%1$s</string>
     <string name="tokens">Tokens</string>
     <string name="today">Hoy</string>
     <string name="address">Dirección</string>
@@ -361,6 +361,8 @@
     <string name="hide_collection">Ocultar colección</string>
     <string name="hide_and_report_collection">Ocultar y reportar</string>
     <string name="open_tonviewer">Abierto en Tonviewer</string>
+    <string name="tx_marked_as_not_spam">Marcada como no spam</string>
+    <string name="nft_marked_as_spam">NFT marcada como spam</string>
     <string name="safe_mode_disabled">El modo seguro está desactivado durante 24 horas. Se activará automáticamente. <annotation colorAttr="textAccentColor">Desactivar permanentemente</annotation></string>
     <string name="customize">Personalizar</string>
     <string name="customize_wallet_title">Personaliza tu Cartera</string>
@@ -377,6 +379,7 @@
     <string name="ledger_open_ton_app">Desbloquéalo y abre la aplicación TON</string>
     <string name="ledger_install_ton_app">Instalar la aplicación TON</string>
     <string name="ledger_confirm_tx">Confirma tu transacción en Ledger</string>
+    <string name="ledger_confirm_tx_step">Confirmar transacción #%1$d en Ledger</string>
     <string name="ledger_confirm_proof">Verificar dominio en Ledger</string>
     <string name="ledger_operation_not_supported">La operación no está disponible para billeteras Ledger. Seleccione otra billetera e intente de nuevo.</string>
     <string name="ledger_update_title">Actualice la aplicación TON en Ledger a la versión %1$s</string>
@@ -459,8 +462,8 @@
     <string name="payment_method_not_found">Método de pago no disponible</string>
     <string name="app_not_found">Aplicación no encontrada</string>
     <string name="insufficient_balance_in_wallet">Fondos insuficientes en la billetera</string>
-    <string name="insufficient_balance_fees">Requerido para las tarifas de blockchain: %1$s.\\nSu saldo: %2$s.</string>
-    <string name="insufficient_balance_default">A pagar: %1$s.\\nSu saldo: %2$s.</string>
+    <string name="insufficient_balance_fees">Requerido para las tarifas de blockchain: %1$s.\nSu saldo: %2$s.</string>
+    <string name="insufficient_balance_default">A pagar: %1$s.\nSu saldo: %2$s.</string>
     <string name="buy_ton">Comprar TON</string>
     <string name="recharge_battery">Recargar la batería</string>
     <string name="name">Nombre</string>

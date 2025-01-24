@@ -113,7 +113,7 @@
     <string name="delete_account_alert">Hisob o\'chirilsinmi?</string>
     <string name="delete">O\'chirish</string>
     <string name="delete_watch_account">Kuzatuv hisobini oʻchirish</string>
-    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nBarcha Hamyonlardan Chiqilsinmi?</string>
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nBarcha Hamyonlardan Chiqilsinmi?</string>
     <string name="sign_out_all_description">Bu barcha hamyonlar uchun kalitlarni o\'chiradi. Tiklash iboralaringizni zaxiralaganingizga ishonch hosil qiling.</string>
     <string name="sign_out_title">🚧 🚨 Chiqish? 🚨 🚧</string>
     <string name="sign_out_description">Bu sizning hamyon kalitingizni o\'chiradi. Qayta tiklash iborangizni zaxira qilganingizga ishonch hosil qiling.</string>
@@ -361,6 +361,8 @@
     <string name="hide_collection">To\'plamni yashirish</string>
     <string name="hide_and_report_collection">Yashirish va hisobot berish</string>
     <string name="open_tonviewer">Tonviewer-da oching</string>
+    <string name="tx_marked_as_not_spam">Spam emas deb belgilangan</string>
+    <string name="nft_marked_as_spam">NFT Spam sifatida belgilangan</string>
     <string name="safe_mode_disabled">Xavfsiz rejim 24 soat davomida o\'chirilgan. U avtomatik ravishda yoqiladi. <annotation colorAttr="textAccentColor">Umumiy o\'chirish</annotation></string>
     <string name="customize">Moslashtirish</string>
     <string name="customize_wallet_title">Hamyoningizni sozlang</string>
@@ -377,6 +379,7 @@
     <string name="ledger_open_ton_app">Qulflang va TON ilovasini oching</string>
     <string name="ledger_install_ton_app">TON ilovasini o\'rnating</string>
     <string name="ledger_confirm_tx">Ledger\'da tranzaksiyangizni tasdiqlang</string>
+    <string name="ledger_confirm_tx_step">Ledgerda #%1$d tranzaksiyani tasdiqlang</string>
     <string name="ledger_confirm_proof">Domenni Ledger’da tasdiqlang</string>
     <string name="ledger_operation_not_supported">Amal Ledger hamyonlari uchun mavjud emas. Boshqa hamyonni tanlang va qayta urinib ko\'ring.</string>
     <string name="ledger_update_title">Ledger’dagi TON ilovasini %1$s versiyasiga yangilang</string>
@@ -459,8 +462,8 @@
     <string name="payment_method_not_found">Toʻlov usuli mavjud emas</string>
     <string name="app_not_found">Ilova topilmadi</string>
     <string name="insufficient_balance_in_wallet">Hamyonda mablag\' yetarli emas</string>
-    <string name="insufficient_balance_fees">Blokcheyn to‘lovlari uchun talab qilinadi: %1$s.\\nBalansingiz: %2$s.</string>
-    <string name="insufficient_balance_default">Toʻlanishi kerak: %1$s.\\nBalansingiz: %2$s.</string>
+    <string name="insufficient_balance_fees">Blokcheyn to‘lovlari uchun talab qilinadi: %1$s.\nBalansingiz: %2$s.</string>
+    <string name="insufficient_balance_default">Toʻlanishi kerak: %1$s.\nBalansingiz: %2$s.</string>
     <string name="buy_ton">TON sotib oling</string>
     <string name="recharge_battery">Batareyani qayta zaryadlash</string>
     <string name="nothing_to_restore">Qayta tiklash uchun hech narsa yo\'q</string>

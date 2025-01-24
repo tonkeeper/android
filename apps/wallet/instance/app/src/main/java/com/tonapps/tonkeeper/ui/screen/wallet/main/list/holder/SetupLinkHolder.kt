@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
+import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
@@ -19,18 +20,31 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
 
     private val iconView = findViewById<AppCompatImageView>(R.id.icon)
     private val textView = findViewById<AppCompatTextView>(R.id.text)
+    private val buttonView = findViewById<View>(R.id.button)
+    private val chevronView = findViewById<View>(R.id.chevron)
 
     override fun onBind(item: Item.SetupLink) {
         itemView.background = item.position.drawable(context)
         iconView.setImageResource(item.iconRes)
         textView.setText(item.textRes)
-        itemView.setOnClickListener {
-            navigation?.openURL(item.link)
-            if (item.settingsType == Item.SetupLink.TYPE_TELEGRAM_CHANNEL) {
-                settingsRepository?.setTelegramChannel(item.walletId)
-            }
-        }
+        itemView.setOnClickListener { click(item) }
         setIconColor(if (item.blue) context.accentBlueColor else context.accentOrangeColor)
+        if (item.settingsType == Item.SetupLink.TYPE_TELEGRAM_CHANNEL) {
+            buttonView.visibility = View.VISIBLE
+            buttonView.setOnClickListener { click(item) }
+            chevronView.visibility = View.GONE
+        } else {
+            buttonView.visibility = View.GONE
+            buttonView.setOnClickListener(null)
+            chevronView.visibility = View.VISIBLE
+        }
+    }
+
+    private fun click(item: Item.SetupLink) {
+        navigation?.openURL(item.link)
+        if (item.settingsType == Item.SetupLink.TYPE_TELEGRAM_CHANNEL) {
+            settingsRepository?.setTelegramChannel(item.walletId)
+        }
     }
 
     private fun setIconColor(color: Int) {

@@ -150,6 +150,14 @@ class EventsRepository(
         localDataSource.addSpam(accountId, testnet, events)
     }
 
+    suspend fun removeSpam(
+        accountId: String,
+        testnet: Boolean,
+        eventId: String,
+    ) = withContext(Dispatchers.IO) {
+        localDataSource.removeSpam(accountId, testnet, eventId)
+    }
+
     suspend fun getRemoteSpam(
         accountId: String,
         testnet: Boolean,

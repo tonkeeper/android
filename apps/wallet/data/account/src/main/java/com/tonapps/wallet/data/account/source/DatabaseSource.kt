@@ -151,6 +151,7 @@ internal class DatabaseSource(
         val query = "SELECT $walletFields FROM $WALLET_TABLE_NAME LIMIT 1000;"
         val cursor = readableDatabase.rawQuery(query, null)
         if (cursor.isNullOrEmpty()) {
+            cursor.close()
             emptyList()
         } else {
             readAccounts(cursor)

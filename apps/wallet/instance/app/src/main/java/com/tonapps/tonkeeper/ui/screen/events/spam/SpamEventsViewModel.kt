@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -78,13 +79,21 @@ class SpamEventsViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            _eventsFlow.value = getLocalSpam()
+            init()
+        }
 
-            if (20 >= _eventsList.size) {
-                mergeEvents(getRemoteSpam())
-            } else {
-                _isLoadingFlow.value = false
-            }
+        settingsRepository.walletPrefsChangedFlow.drop(1).collectFlow {
+            init()
+        }
+    }
+
+    private suspend fun init() {
+        _eventsFlow.value = getLocalSpam()
+
+        if (20 >= _eventsList.size) {
+            mergeEvents(getRemoteSpam())
+        } else {
+            _isLoadingFlow.value = false
         }
     }
 
@@ -105,7 +114,7 @@ class SpamEventsViewModel(
         }
     }
 
-    private suspend fun mergeEvents(events: List<AccountEvent>) {
+    private fun mergeEvents(events: List<AccountEvent>) {
         _eventsFlow.value = (_eventsList + events).distinctBy {
             it.eventId
         }

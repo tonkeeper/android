@@ -500,6 +500,7 @@
     <string name="hide_and_report_collection">Hide and report</string>
     <string name="open_tonviewer">Open in Tonviewer</string>
     <string name="tx_marked_as_spam">Transaction marked as Spam</string>
+    <string name="tx_marked_as_not_spam">Marked as not spam</string>
     <string name="nft_marked_as_spam">NFT marked as Spam</string>
     <string name="safe_mode_disabled">Safe mode is off for 24 hours. It will turn on automatically. <annotation colorAttr="textAccentColor">Turn off permanently</annotation></string>
 

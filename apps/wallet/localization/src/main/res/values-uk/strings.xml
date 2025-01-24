@@ -113,7 +113,7 @@
     <string name="delete_account_alert">Видалити обліковий запис?</string>
     <string name="delete">Видалити</string>
     <string name="delete_watch_account">Видалити обліковий запис спостереження</string>
-    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nВийти з усіх гаманців?</string>
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nВийти з усіх гаманців?</string>
     <string name="sign_out_all_description">Це видалить ключі до всіх гаманців. Переконайтеся, що ви зробили резервну копію своїх фраз відновлення.</string>
     <string name="sign_out_title">🚧 🚨 Вийти? 🚨 🚧</string>
     <string name="sign_out_description">Це видалить ключ до вашого гаманця. Переконайтеся, що ви зберегли свою фразу для відновлення.</string>
@@ -361,6 +361,8 @@
     <string name="hide_collection">Сховати колекцію</string>
     <string name="hide_and_report_collection">Сховати і повідомити</string>
     <string name="open_tonviewer">Відкрити в Tonviewer</string>
+    <string name="tx_marked_as_not_spam">Позначено як не спам</string>
+    <string name="nft_marked_as_spam">NFT позначено як спам</string>
     <string name="safe_mode_disabled">Безпечний режим вимкнено на 24 години. Він увімкнеться автоматично. <annotation colorAttr="textAccentColor">Вимкнути назавжди</annotation></string>
     <string name="customize">Налаштувати</string>
     <string name="customize_wallet_title">Налаштуйте свій Гаманець</string>
@@ -377,6 +379,7 @@
     <string name="ledger_open_ton_app">Розблокуйте його та відкрийте додаток TON</string>
     <string name="ledger_install_ton_app">Встановіть додаток TON</string>
     <string name="ledger_confirm_tx">Підтвердіть вашу транзакцію на Ledger</string>
+    <string name="ledger_confirm_tx_step">Підтвердьте транзакцію №%1$d у Ledger</string>
     <string name="ledger_confirm_proof">Підтвердьте домен у Ledger</string>
     <string name="ledger_operation_not_supported">Операція недоступна для гаманців Ledger. Виберіть інший гаманець і спробуйте ще раз.</string>
     <string name="ledger_update_title">Оновіть додаток TON у Ledger до версії %1$s</string>
@@ -469,8 +472,8 @@
     <string name="payment_method_not_found">Спосіб оплати недоступний</string>
     <string name="app_not_found">Додаток не знайдено</string>
     <string name="insufficient_balance_in_wallet">Недостатньо коштів у гаманці</string>
-    <string name="insufficient_balance_fees">Необхідно для комісій за блокчейн: %1$s.\\nВаш баланс: %2$s.</string>
-    <string name="insufficient_balance_default">До оплати: %1$s.\\nВаш баланс: %2$s.</string>
+    <string name="insufficient_balance_fees">Необхідно для комісій за блокчейн: %1$s.\nВаш баланс: %2$s.</string>
+    <string name="insufficient_balance_default">До оплати: %1$s.\nВаш баланс: %2$s.</string>
     <string name="buy_ton">Купити TON</string>
     <string name="recharge_battery">Перезарядіть батарею</string>
     <string name="nothing_to_restore">Відновлювати нічого</string>

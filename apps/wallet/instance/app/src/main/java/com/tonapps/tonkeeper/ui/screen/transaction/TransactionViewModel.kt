@@ -36,16 +36,18 @@ class TransactionViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val state = if (spam) SpamTransactionState.SPAM else SpamTransactionState.NOT_SPAM
             settingsRepository.setSpamStateTransaction(wallet.id, txId, state)
-            try {
-                if (spam) {
+            if (spam) {
+                try {
                     api.reportTX(
                         txId = txId,
                         comment = comment,
                         recipient = wallet.accountId
                     )
                     eventsRepository.markAsSpam(wallet.accountId, wallet.testnet, txId)
-                }
-            } catch (ignored: Throwable) { }
+                } catch (ignored: Throwable) {}
+            } else {
+                eventsRepository.removeSpam(wallet.accountId, wallet.testnet, txId)
+            }
             withContext(Dispatchers.Main) {
                 callback()
             }

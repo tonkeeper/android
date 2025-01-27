@@ -380,6 +380,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     private fun onEvent(event: SendEvent) {
         when (event) {
+            is SendEvent.Canceled -> setDefault()
             is SendEvent.Failed -> setFailed(event.throwable)
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> setLoading()

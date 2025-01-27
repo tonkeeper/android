@@ -73,7 +73,7 @@ class SendTransactionViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
-            val internalMessage = (forceRelayer || settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType))
+            val useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
             try {
                 val transfers = transfers(tokens.filter { it.isRequestMinting }, true)
                 message = accountRepository.messageBody(wallet, request.validUntil, transfers)
@@ -119,7 +119,7 @@ class SendTransactionViewModel(
                         wallet = wallet,
                         balance = tonBalance,
                         required = transferTotal,
-                        withRechargeBattery = false,
+                        withRechargeBattery = forceRelayer || useBattery,
                         singleWallet = isSingleWallet()
                     )
                 } else {
@@ -132,7 +132,7 @@ class SendTransactionViewModel(
                 }
             } catch (e: Throwable) {
                 FirebaseCrashlytics.getInstance().recordException(APIException.Emulation(
-                    boc = message?.createSignedBody(EmptyPrivateKeyEd25519.invoke(), internalMessage)?.base64() ?: "failed",
+                    boc = message?.createSignedBody(EmptyPrivateKeyEd25519.invoke(), forceRelayer || useBattery)?.base64() ?: "failed",
                     sourceUri = request.appUri,
                     cause = e
                 ))
@@ -143,7 +143,7 @@ class SendTransactionViewModel(
                         wallet = wallet,
                         balance = tonBalance,
                         required = Coins.of(0.1),
-                        withRechargeBattery = false,
+                        withRechargeBattery = forceRelayer || useBattery,
                         singleWallet = isSingleWallet()
                     )
                 } else {

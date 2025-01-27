@@ -191,7 +191,7 @@ data class TransferEntity(
         }
         val builder = TransactionBuilder()
         if (isNft) {
-            builder.setCoins(coins)
+            builder.setCoins(jettonTransferAmount.toGrams())
             builder.setDestination(AddrStd.parse(nftAddress!!))
             builder.setPayload(
                 TonPayloadFormat.NftTransfer(

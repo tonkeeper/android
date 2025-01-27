@@ -961,7 +961,9 @@ class SendViewModel(
         _uiEventFlow.tryEmit(SendEvent.Loading)
         Triple(boc, transfer.wallet, internalMessage)
     }.catch {
-        if (it !is CancellationException) {
+        if (it is CancellationException) {
+            _uiEventFlow.tryEmit(SendEvent.Canceled)
+        } else {
             FirebaseCrashlytics.getInstance().recordException(Throwable("SendViewModel sign failed", it))
             _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }

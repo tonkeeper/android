@@ -59,13 +59,6 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
         collectFlow(connectionViewModel.eventFlow, ::onEvent)
     }
 
-    /*override fun onDestroy() {
-        super.onDestroy()
-        if (!requireActivity().isChangingConfigurations && !isSuccessful) {
-            navigation?.setFragmentResult(args.requestKey, Bundle())
-        }
-    }*/
-
     private fun onEvent(event: LedgerEvent) {
         when (event) {
             is LedgerEvent.Ready -> {

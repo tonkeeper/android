@@ -377,13 +377,14 @@ class TonTransport(private val transport: Transport) {
                     }
 
                     is DNSRecord.Unknown -> {
-                        bytes += LedgerWriter.putUint8(if (record.value != null) 1 else 0) + LedgerWriter.putUint8(
-                            1
-                        )
-
                         if (record.key.size != 32) {
                             throw Error("DNS record key length must be 32 bytes long")
                         }
+
+                        bytes += LedgerWriter.putUint8(if (record.value != null) 1 else 0)
+                        bytes += LedgerWriter.putUint8(1)
+                        bytes += record.key
+
                         cell = cell.storeBytes(record.key)
 
                         if (record.value != null) {

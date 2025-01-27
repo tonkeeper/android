@@ -1205,8 +1205,7 @@ class SendViewModel(
         if (it is CancellationException) {
             _uiEventFlow.tryEmit(SendEvent.Canceled)
         } else {
-            FirebaseCrashlytics.getInstance()
-                .recordException(Throwable("SendViewModel sign failed", it))
+            FirebaseCrashlytics.getInstance().recordException(Throwable("SendViewModel sign failed", it))
             _uiEventFlow.tryEmit(SendEvent.Failed(it))
         }
     }.sendTransfer()

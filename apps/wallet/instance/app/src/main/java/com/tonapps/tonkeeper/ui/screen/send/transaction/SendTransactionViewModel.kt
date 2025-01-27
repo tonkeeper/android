@@ -78,7 +78,7 @@ class SendTransactionViewModel(
         AnalyticsHelper.tcViewConfirm(settingsRepository.installId, request.appUri.toString(), request.targetAddressValue)
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
-            val useBattery = isBatteryIsEnabledTx()
+            val useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
             try {
                 val transfers = transfers(tokens.filter { it.isRequestMinting }, true, useBattery)
                 message = accountRepository.messageBody(wallet, request.validUntil, transfers)
@@ -122,11 +122,10 @@ class SendTransactionViewModel(
                 if (!emulated.withBattery && transferTotal > tonBalance) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
-                        balance = Amount(tonBalance),
-                        required = Amount(transferTotal),
+                        balance = tonBalance,
+                        required = transferTotal,
                         withRechargeBattery = forceRelayer || useBattery,
-                        singleWallet = isSingleWallet(),
-                        type = InsufficientBalanceType.InsufficientTONBalance
+                        singleWallet = isSingleWallet()
                     )
                 } else {
                     _stateFlow.value = SendTransactionState.Details(
@@ -148,11 +147,10 @@ class SendTransactionViewModel(
                 if (tonBalance == Coins.ZERO) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
-                        balance = Amount(tonBalance),
-                        required = Amount(Coins.of(0.1)),
+                        balance = tonBalance,
+                        required = Coins.of(0.1),
                         withRechargeBattery = forceRelayer || useBattery,
-                        singleWallet = isSingleWallet(),
-                        type = InsufficientBalanceType.InsufficientTONBalance
+                        singleWallet = isSingleWallet()
                     )
                 } else {
                     toast(e.getDebugMessage() ?: getString(Localization.unknown_error))

@@ -49,7 +49,7 @@ class Holder(
 
         val builder = SpannableStringBuilder()
         if (!isLedger) {
-            builder.append(walletTitle)
+            builder.append(walletVersion.title.fixW5Title())
             builder.append(DOT)
         }
         builder.append(balance.withCustomSymbol(context))

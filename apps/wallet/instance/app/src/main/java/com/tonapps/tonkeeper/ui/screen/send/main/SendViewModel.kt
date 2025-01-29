@@ -7,8 +7,6 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.isTestnetAddress
-import com.tonapps.blockchain.tron.TronTransfer
-import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
@@ -142,6 +140,16 @@ class SendViewModel(
 
     private val userInputAddressFlow = userInputFlow.map { it.address }.distinctUntilChanged()
         .debounce { if (it.isEmpty()) 0 else 600 }
+
+    private val destinationFlow = userInputAddressFlow.map { address ->
+        if (address.isEmpty()) {
+            SendDestination.Empty
+        } else if (wallet.testnet != address.isTestnetAddress()) {
+            SendDestination.NotFound
+        } else {
+            getDestinationAccount(address, wallet.testnet)
+        }
+    }.flowOn(Dispatchers.IO).state(viewModelScope)
 
     private val _tokensFlow = MutableStateFlow<List<AccountTokenEntity>?>(null)
     private val tokensFlow = _tokensFlow.asStateFlow().filterNotNull()

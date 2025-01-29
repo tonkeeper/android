@@ -367,13 +367,7 @@ class RootActivity : BaseWalletActivity() {
                 payloadValue = bin?.base64() ?: comment?.let {
                     TransferEntity.comment(it)
                 }?.base64()
-            )
-        }
-
-        val request = SignRequestEntity.Builder()
-            .setFrom(wallet.contract.address)
-            .setValidUntil(currentTimeSeconds() + 10 * 60)
-            .addMessage(message)
+            ))
             .setTestnet(wallet.testnet)
             .build(Uri.parse("tonkeeper://signRaw/"))
 
@@ -399,6 +393,18 @@ class RootActivity : BaseWalletActivity() {
     ) {
         if ((bin != null || initStateBase64 != null) && !amountNano.isPositive()) {
             toast(Localization.invalid_link)
+            return
+        }
+
+        if (targetAddress != null && amountNano > 0 && nftAddress.isNullOrBlank()) {
+            openSign(
+                wallet = wallet,
+                targetAddress = targetAddress,
+                amountNano = amountNano,
+                bin = bin,
+                initStateBase64 = initStateBase64,
+                comment = text,
+            )
             return
         }
 

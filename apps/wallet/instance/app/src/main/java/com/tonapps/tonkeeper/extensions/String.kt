@@ -80,8 +80,5 @@ fun String.isPrintableAscii(): Boolean {
 }
 
 fun String.fixW5Title(): String {
-    return replace("v5R1", "w5", true)
-        .replace("v5", "w5", true)
-        .replace("v5beta", "w5 beta", true)
-        .replace("w5beta", "w5 beta", true)
+    return replace("v5", "w5").replace("v5beta", "w5 beta")
 }

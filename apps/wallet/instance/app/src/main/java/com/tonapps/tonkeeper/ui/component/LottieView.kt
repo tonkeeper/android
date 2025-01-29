@@ -29,10 +29,9 @@ class LottieView @JvmOverloads constructor(
             builtInZoomControls = false
             setSupportZoom(false)
             setEnableSmoothTransition(false)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, true)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, true)
+            }
         }
 
         isVerticalScrollBarEnabled = false

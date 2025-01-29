@@ -10,6 +10,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
+import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.extensions.getWalletBadges
 import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
@@ -42,7 +43,7 @@ class WalletHolder(
     override fun onBind(item: Item.Wallet) {
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)
         emojiView.setEmoji(item.emoji, Color.TRANSPARENT)
-        nameView.text = item.name
+        nameView.text = item.name.fixW5Title()
         typesView.text = context.getWalletBadges(item.wallet.type, item.wallet.version)
 
         updatePosition(item)

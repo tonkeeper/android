@@ -407,5 +407,15 @@ data class TransferEntity(
                 BigInteger.ZERO
             }
         }
+
+        fun comment(text: String?): Cell? {
+            if (text.isNullOrBlank()) {
+                return null
+            }
+            return beginCell()
+                .storeUInt(0, 32)
+                .storeStringTail(text)
+                .endCell()
+        }
     }
 }

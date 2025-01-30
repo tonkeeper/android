@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.isTestnetAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
@@ -130,6 +131,8 @@ class SendViewModel(
     private val destinationFlow = userInputAddressFlow.map { address ->
         if (address.isEmpty()) {
             SendDestination.Empty
+        } else if (wallet.testnet != address.isTestnetAddress()) {
+            SendDestination.NotFound
         } else {
             getDestinationAccount(address, wallet.testnet)
         }

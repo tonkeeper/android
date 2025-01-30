@@ -23,6 +23,7 @@ import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
+import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
@@ -276,7 +277,8 @@ class RootActivity: BaseWalletActivity() {
         targetAddress: String,
         amountNano: Long,
         bin: Cell?,
-        initStateBase64: String?
+        initStateBase64: String?,
+        comment: String? = null
     ) {
 
         val request = SignRequestEntity.Builder()
@@ -286,7 +288,9 @@ class RootActivity: BaseWalletActivity() {
                 addressValue = targetAddress,
                 amount = amountNano,
                 stateInitValue = initStateBase64,
-                payloadValue = bin?.base64()
+                payloadValue = bin?.base64() ?: comment?.let {
+                    TransferEntity.comment(it)
+                }?.base64()
             ))
             .setTestnet(wallet.testnet)
             .build(Uri.parse("tonkeeper://signRaw/"))
@@ -310,13 +314,14 @@ class RootActivity: BaseWalletActivity() {
             return
         }
 
-        if (targetAddress != null && amountNano > 0 && (bin != null || initStateBase64 != null)) {
+        if (targetAddress != null && amountNano > 0 && nftAddress.isNullOrBlank()) {
             openSign(
                 wallet = wallet,
                 targetAddress = targetAddress,
                 amountNano = amountNano,
                 bin = bin,
-                initStateBase64 = initStateBase64
+                initStateBase64 = initStateBase64,
+                comment = text,
             )
             return
         }

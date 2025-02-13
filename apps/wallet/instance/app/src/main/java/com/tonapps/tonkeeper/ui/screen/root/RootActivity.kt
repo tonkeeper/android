@@ -28,6 +28,7 @@ import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
@@ -127,6 +128,8 @@ class RootActivity: BaseWalletActivity() {
             AnalyticsHelper.firstLaunch(settingsRepository.installId)
             DevSettings.firstLaunchDate = currentTimeSeconds()
         }
+
+        remoteConfig?.fetchAndActivate()
     }
 
     override fun attachBaseContext(newBase: Context) {

@@ -16,8 +16,8 @@
 
 platform :android do
     desc "Fetches the latest version code from the Play Console and increments it by 1"
-    lane :fetch_and_increment_build_number do
-        app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+    lane :fetch_and_increment_build_number do |options|
+        app_identifier = options[:app_identifier] || "com.ton_keeper"
 
         internal_version_codes = google_play_track_version_codes(
             package_name: app_identifier,
@@ -49,11 +49,12 @@ platform :android do
     end
 
     desc "Build the android aab for release"
-    lane :build_release do
+    lane :build_release do |options|
+        flavor = options[:flavor] || "default"
         gradle(task: 'clean')
 
         gradle(
-            task: ":apps:wallet:instance:main:bundle",
+            task: "bundle#{flavor.capitalize}Release",
             build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
@@ -73,9 +74,10 @@ platform :android do
     end
 
     desc "Build the android apk"
-    lane :assemble_release do
+    lane :assemble_release do |options|
+        flavor = options[:flavor] || "default"
         gradle(
-            task: ":apps:wallet:instance:main:assemble",
+            task: "assemble#{flavor.capitalize}Release",
             build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
@@ -96,9 +98,9 @@ platform :android do
     end
 
     desc "Upload to GooglePlay"
-    lane :upload_release do
+    lane :upload_release do |options|
+        app_identifier = options[:app_identifier] || "com.ton_keeper"
         aab_path = lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
-        app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 
         upload_to_play_store(
             track: "internal",
@@ -110,11 +112,20 @@ platform :android do
 
     desc "Build and upload to GooglePlay"
     lane :beta do
-        fetch_and_increment_build_number
-        build_release
-        upload_release
+        fetch_and_increment_build_number(app_identifier: "com.ton_keeper")
+        build_release(flavor: "default")
+        upload_release(app_identifier: "com.ton_keeper")
 
-        assemble_release
+        assemble_release(flavor: "default")
+    end
+    
+    desc "Build and upload to GooglePlay (UK)"
+    lane :beta_uk do
+        fetch_and_increment_build_number(app_identifier: "com.ton_keeper.uk")
+        build_release(flavor: "uk")
+        upload_release(app_identifier: "com.ton_keeper.uk")
+
+        assemble_release(flavor: "uk")
     end
 end
 

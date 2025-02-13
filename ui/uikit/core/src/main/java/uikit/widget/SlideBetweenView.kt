@@ -31,32 +31,44 @@ class SlideBetweenView @JvmOverloads constructor(
         }
     }
 
-    fun next() {
+    fun next(animated: Boolean = true) {
         getFromToView(currentIndex, currentIndex + 1) { fromView, toView ->
-            toView.visibility = VISIBLE
-            toView.translationX = measuredWidth.toFloat()
+            if (animated) {
+                toView.visibility = VISIBLE
+                toView.translationX = measuredWidth.toFloat()
 
-            playAnimators(
-                ObjectAnimator.ofFloat(fromView, "translationX", -measuredWidth.toFloat()),
-                ObjectAnimator.ofFloat(toView, "translationX", 0f)
-            ) {
-                currentIndex++
+                playAnimators(
+                    ObjectAnimator.ofFloat(fromView, "translationX", -measuredWidth.toFloat()),
+                    ObjectAnimator.ofFloat(toView, "translationX", 0f)
+                ) {
+                    currentIndex++
+                    fromView.visibility = GONE
+                }
+            } else {
                 fromView.visibility = GONE
+                toView.visibility = VISIBLE
+                currentIndex++
             }
         }
     }
 
-    fun prev() {
+    fun prev(animated: Boolean = true) {
         getFromToView(currentIndex, currentIndex - 1) { fromView, toView ->
-            toView.visibility = VISIBLE
-            toView.translationX = -measuredWidth.toFloat()
+            if (animated) {
+                toView.visibility = VISIBLE
+                toView.translationX = -measuredWidth.toFloat()
 
-            playAnimators(
-                ObjectAnimator.ofFloat(fromView, "translationX", measuredWidth.toFloat()),
-                ObjectAnimator.ofFloat(toView, "translationX", 0f)
-            ) {
-                currentIndex--
+                playAnimators(
+                    ObjectAnimator.ofFloat(fromView, "translationX", measuredWidth.toFloat()),
+                    ObjectAnimator.ofFloat(toView, "translationX", 0f)
+                ) {
+                    currentIndex--
+                    fromView.visibility = GONE
+                }
+            } else {
                 fromView.visibility = GONE
+                toView.visibility = VISIBLE
+                currentIndex--
             }
         }
     }

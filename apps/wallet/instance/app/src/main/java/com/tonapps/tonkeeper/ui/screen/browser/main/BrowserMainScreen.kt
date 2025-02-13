@@ -6,10 +6,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.extensions.flagEmoji
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
@@ -163,8 +165,12 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
             collectFlow(insets, ::onApplyWindowInsets)
         }
 
+        val isDappsDisable = requireContext().remoteConfig?.isDappsDisable == true
 
-        clickTab(exploreTabView)
+        exploreTabView.isVisible = !isDappsDisable
+        countryView.isVisible = !isDappsDisable
+
+        clickTab(if (isDappsDisable) connectedTabView else exploreTabView, animated = false)
     }
 
     private fun onApplyWindowInsets(insets: WindowInsetsCompat) {
@@ -217,18 +223,18 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         }
     }
 
-    private fun clickTab(view: AppCompatTextView) {
+    private fun clickTab(view: AppCompatTextView, animated: Boolean = true) {
         val isActive = view.background != null
         if (isActive) {
             return
         }
 
         if (view.id == R.id.connected_tab) {
-            slideView.next()
+            slideView.next(animated)
             connectedTabView.setBackgroundResource(uikit.R.drawable.bg_button_secondary)
             exploreTabView.background = null
         } else if (view.id == R.id.explore_tab) {
-            slideView.prev()
+            slideView.prev(animated)
             exploreTabView.setBackgroundResource(uikit.R.drawable.bg_button_secondary)
             connectedTabView.background = null
         }

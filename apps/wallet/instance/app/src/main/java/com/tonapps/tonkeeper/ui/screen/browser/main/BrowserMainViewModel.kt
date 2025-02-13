@@ -7,6 +7,7 @@ import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.mapList
 import com.tonapps.tonkeeper.extensions.getFixedCountryCode
 import com.tonapps.tonkeeper.extensions.getLocaleCountryFlow
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.connected.ConnectedItem
@@ -48,12 +49,16 @@ class BrowserMainViewModel(
     val uiExploreItemsFlow = _uiExploreItemsFlow.asStateFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            val code = settingsRepository.getFixedCountryCode(api)
-            val locale = settingsRepository.getLocale()
-            _uiExploreItemsFlow.value = emptyList()
-            browserRepository.load(code, wallet.testnet, locale)?.let { setData(it) }
-            browserRepository.loadRemote(code, wallet.testnet, locale)?.let { setData(it) }
+        val isDappsDisable = context.remoteConfig?.isDappsDisable == true
+
+        if (!isDappsDisable) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val code = settingsRepository.getFixedCountryCode(api)
+                val locale = settingsRepository.getLocale()
+                _uiExploreItemsFlow.value = emptyList()
+                browserRepository.load(code, wallet.testnet, locale)?.let { setData(it) }
+                browserRepository.loadRemote(code, wallet.testnet, locale)?.let { setData(it) }
+            }
         }
     }
 

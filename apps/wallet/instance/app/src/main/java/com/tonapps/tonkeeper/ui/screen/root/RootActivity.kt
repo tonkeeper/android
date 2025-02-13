@@ -134,6 +134,12 @@ class RootActivity : BaseWalletActivity() {
         collectFlow(viewModel.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
+
+        if (0L >= DevSettings.firstLaunchDate) {
+            AnalyticsHelper.firstLaunch(settingsRepository.installId)
+            DevSettings.firstLaunchDate = currentTimeSeconds()
+        }
+
         remoteConfig?.fetchAndActivate()
     }
 

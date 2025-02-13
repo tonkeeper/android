@@ -68,12 +68,6 @@ class BrowserMainViewModel(
         }
     }
 
-    fun showDisconnect(app: AppEntity) {
-        viewModelScope.launch {
-            tonConnectManager.showLogoutAppBar(wallet, context, app.url)
-        }
-    }
-
     private fun getDebugApps(): List<BrowserAppEntity> {
         val apps = mutableListOf<BrowserAppEntity>()
         apps.add(BrowserAppEntity(

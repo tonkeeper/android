@@ -40,8 +40,6 @@ data class ConfigEntity(
     val batteryMeanPriceNft: String,
     val batteryMeanPriceSwap: String,
     val batteryMeanPriceJetton: String,
-    val batteryMeanPriceTrcMin: String,
-    val batteryMeanPriceTrcMax: String,
     val disableBatteryIapModule: Boolean,
     val batteryReservedAmount: String,
     val batteryMaxInputAmount: String,

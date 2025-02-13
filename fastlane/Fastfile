@@ -54,9 +54,8 @@ platform :android do
         gradle(task: 'clean')
 
         gradle(
-            task: "bundle",
-            build_type: "release",
-            flavor: flavor,
+            task: "bundle#{flavor.capitalize}Release",
+            build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
@@ -77,11 +76,10 @@ platform :android do
 
     desc "Build the android apk"
     lane :assemble_release do |options|
-        flavor = options[:flavor] || "site"
+        flavor = options[:flavor] || "default"
         gradle(
-            task: "assemble",
-            build_type: "release",
-            flavor: flavor,
+            task: "assemble#{flavor.capitalize}Release",
+            build_type: "Release",
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
@@ -119,7 +117,7 @@ platform :android do
         build_release(flavor: "default")
         upload_release(app_identifier: "com.ton_keeper")
 
-        assemble_release(flavor: "site")
+        assemble_release(flavor: "default")
     end
     
     desc "Build and upload to GooglePlay (UK)"

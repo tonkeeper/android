@@ -93,6 +93,7 @@ dependencies {
 
     implementation(platform(Dependence.Firebase.bom))
     implementation(Dependence.Firebase.analytics)
+    implementation(Dependence.Firebase.config)
     implementation(Dependence.Firebase.crashlytics)
     implementation(Dependence.Firebase.messaging)
     implementation(Dependence.Firebase.performance)

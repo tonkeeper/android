@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.koin
 
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
@@ -48,6 +49,7 @@ val koinModel = module {
 
     single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
     singleOf(::Environment)
+    singleOf(::RemoteConfig)
 
     singleOf(::SettingsRepository)
     singleOf(::NetworkMonitor)

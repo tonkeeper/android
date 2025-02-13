@@ -21,7 +21,7 @@ import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.toastLoading
-import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
@@ -381,7 +381,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     private fun setAddress(view: View, address: String) {
         val explorerView = view.findViewById<AppCompatTextView>(R.id.open_explorer)
         explorerView.setOnClickListener {
-            val nftExplorer = context?.remoteConfig?.nftExplorer ?: return@setOnClickListener
+            val nftExplorer = context?.serverConfig?.nftExplorer ?: return@setOnClickListener
             val explorerUrl = nftExplorer.format(address)
             navigation?.openURL(explorerUrl)
         }

@@ -34,6 +34,7 @@ object Dependence {
         const val review = "com.google.android.play:review-ktx:2.0.2"
         const val billing = "com.android.billingclient:billing-ktx:7.1.1"
         const val update = "com.google.android.play:app-update-ktx:2.1.0"
+        const val installreferrer = "com.android.installreferrer:installreferrer:2.2"
     }
 
     object UI {
@@ -98,6 +99,7 @@ object Dependence {
     object Firebase {
         const val bom = "com.google.firebase:firebase-bom:33.7.0"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
+        const val config = "com.google.firebase:firebase-config-ktx:21.6.1"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
         const val messaging = "com.google.firebase:firebase-messaging-ktx"
         const val performance = "com.google.firebase:firebase-perf"

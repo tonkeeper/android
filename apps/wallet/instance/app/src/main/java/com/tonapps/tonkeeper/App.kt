@@ -13,6 +13,7 @@ import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
+import com.google.firebase.FirebaseApp
 import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
@@ -73,6 +74,8 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
 
         super.onCreate()
         updateThemes()
+
+        FirebaseApp.initializeApp(this)
 
         instance = this
 

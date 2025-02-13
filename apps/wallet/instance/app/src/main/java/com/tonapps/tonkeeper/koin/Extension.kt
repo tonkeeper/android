@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -56,7 +57,10 @@ val Context.accountRepository: AccountRepository?
 val Context.api: API?
     get() = koin?.get<API>()
 
-val Context.remoteConfig: ConfigEntity?
+val Context.remoteConfig: RemoteConfig?
+    get() = koin?.get<RemoteConfig>()
+
+val Context.serverConfig: ConfigEntity?
     get() = api?.config
 
 val Context.settingsRepository: SettingsRepository?

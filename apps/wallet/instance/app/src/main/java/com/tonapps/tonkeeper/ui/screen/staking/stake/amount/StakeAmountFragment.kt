@@ -5,7 +5,6 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
-import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
@@ -48,7 +47,7 @@ class StakeAmountFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, S
         super.onViewCreated(view, savedInstanceState)
         val headerView = view.findViewById<HeaderView>(R.id.header)
         headerView.doOnCloseClick = {
-            remoteConfig?.stakingInfoUrl?.let {
+            serverConfig?.stakingInfoUrl?.let {
                 navigation?.openURL(it)
             }
         }

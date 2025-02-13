@@ -34,6 +34,15 @@ android {
         }
     }
 
+    flavorDimensions += "version"
+
+    productFlavors {
+        create("default") {}
+        create("uk") {
+            applicationIdSuffix = ".uk"
+        }
+    }
+
     buildFeatures {
         buildConfig = true
     }

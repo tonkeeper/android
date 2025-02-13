@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.purchase
 
 import android.app.Application
 import com.tonapps.tonkeeper.extensions.getNormalizeCountryFlow
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.purchase.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -31,7 +32,9 @@ class PurchaseViewModel(
         BUY, SELL
     }
 
-    val countryFlow = settingsRepository.getNormalizeCountryFlow(api)
+    val countryFlow = settingsRepository.getNormalizeCountryFlow(api).map { country ->
+        context.remoteConfig?.hardcodedCountryCode ?: country
+    }
 
     private val _tabFlow = MutableStateFlow(Tab.BUY)
     val tabFlow = _tabFlow.asStateFlow()

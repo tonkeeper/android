@@ -1,12 +1,13 @@
 package com.tonapps.tonkeeper.ui.base
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.tonapps.tonkeeper.App
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.ConfigEntity
 import uikit.base.SimpleFragment
@@ -77,7 +78,10 @@ abstract class BaseHolderWalletScreen<C: ScreenContext>(
         val navigation: Navigation?
             get() = primaryFragment.navigation
 
-        val remoteConfig: ConfigEntity?
+        val serverConfig: ConfigEntity?
+            get() = context?.serverConfig
+
+        val remoteConfig: RemoteConfig?
             get() = context?.remoteConfig
 
         @Suppress("UNCHECKED_CAST")

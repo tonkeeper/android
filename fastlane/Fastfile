@@ -54,8 +54,9 @@ platform :android do
         gradle(task: 'clean')
 
         gradle(
-            task: "bundle#{flavor.capitalize}Release",
-            build_type: "Release",
+            task: "bundle",
+            build_type: "release",
+            flavor: flavor,
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
@@ -77,8 +78,9 @@ platform :android do
     lane :assemble_release do |options|
         flavor = options[:flavor] || "default"
         gradle(
-            task: "assemble#{flavor.capitalize}Release",
-            build_type: "Release",
+            task: "assemble",
+            build_type: "release",
+            flavor: flavor,
             properties: {
                 "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],

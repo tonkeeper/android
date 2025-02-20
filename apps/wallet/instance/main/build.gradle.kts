@@ -25,7 +25,7 @@ android {
         targetSdk = 35
         versionCode = 600
 
-        versionName = "5.1.3" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
+        versionName = "5.0.21" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -110,7 +110,7 @@ baselineProfile {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation(project(Dependence.Wallet.app))
 
     testImplementation("junit:junit:4.13.2")

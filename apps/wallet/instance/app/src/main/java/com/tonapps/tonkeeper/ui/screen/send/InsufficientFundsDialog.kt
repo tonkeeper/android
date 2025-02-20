@@ -12,7 +12,6 @@ import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
-import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
@@ -23,8 +22,7 @@ import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation
 import uikit.widget.TextHeaderView
 
-class InsufficientFundsDialog(private val fragment: BaseFragment) :
-    ModalDialog(fragment.requireContext(), R.layout.dialog_insufficient_funds) {
+class InsufficientFundsDialog(private val fragment: BaseFragment): ModalDialog(fragment.requireContext(), R.layout.dialog_insufficient_funds) {
 
     private val navigation: Navigation?
         get() = Navigation.from(context)
@@ -48,17 +46,9 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
         type: InsufficientBalanceType
     ) {
         super.show()
-        applyWalletTitle(wallet.label, singleWallet, type)
+        applyWalletTitle(wallet.label, singleWallet)
         applyDescription(balance, required, withRechargeBattery, type)
         batteryButton.visibility = if (withRechargeBattery) View.VISIBLE else View.GONE
-
-        val isBattery = type == InsufficientBalanceType.InsufficientBatteryChargesForFee
-
-        tonButton.visibility =
-            if (isBattery) View.GONE else View.VISIBLE
-        iconView.visibility = if (isBattery) View.GONE else View.VISIBLE
-        batteryView.setBatteryLevel(BatteryView.MIN_LEVEL)
-        batteryView.visibility = if (isBattery) View.VISIBLE else View.GONE
 
         tonButton.text = context.getString(Localization.buy_ton).replace("TON", required.symbol)
         tonButton.setOnClickListener {
@@ -103,25 +93,10 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
         withRechargeBattery: Boolean,
         type: InsufficientBalanceType
     ) {
-        if (type == InsufficientBalanceType.InsufficientBatteryChargesForFee) {
-            textView.descriptionView.text =
-                context.getString(
-                    Localization.insufficient_balance_charges,
-                    CurrencyFormatter.format(value = required.value),
-                    CurrencyFormatter.format(value = balance.value)
-                )
-            return
-        } else {
-            val balanceFormat =
-                CurrencyFormatter.format(balance.symbol, balance.value, balance.decimals)
-                    .withCustomSymbol(context)
-            val requiredFormat =
-                CurrencyFormatter.format(required.symbol, required.value, required.decimals)
-                    .withCustomSymbol(context)
+        val balanceFormat = CurrencyFormatter.format(balance.symbol, balance.value, balance.decimals).withCustomSymbol(context)
+        val requiredFormat = CurrencyFormatter.format(required.symbol, required.value, required.decimals).withCustomSymbol(context)
 
-            val resId =
-                if (withRechargeBattery || type == InsufficientBalanceType.InsufficientBalanceForFee) Localization.insufficient_balance_fees else Localization.insufficient_balance_default
-            textView.descriptionView.text = context.getString(resId, requiredFormat, balanceFormat)
-        }
+        val resId = if (withRechargeBattery || type == InsufficientBalanceType.InsufficientBalanceForFee) Localization.insufficient_balance_fees else Localization.insufficient_balance_default
+        textView.descriptionView.text = context.getString(resId, requiredFormat, balanceFormat)
     }
 }

@@ -106,57 +106,14 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun tcRequest(installId: String, url: String) {
-        val props = hashMapOf(
-            "firebase_user_id" to installId,
-            "dapp_url" to url
-        )
-        trackEvent("tc_request", props)
-    }
-
-    @UiThread
-    fun tcConnect(installId: String, url: String, pushEnabled: Boolean) {
-        val props = hashMapOf(
-            "firebase_user_id" to installId,
-            "dapp_url" to url,
-            "allow_notifications" to pushEnabled
-        )
-        trackEvent("tc_connect", props)
-    }
-
-    @UiThread
-    fun tcViewConfirm(installId: String, url: String, address: String) {
-        val props = hashMapOf(
-            "firebase_user_id" to installId,
-            "dapp_url" to url,
-            "address_type" to getAddressType(address)
-        )
-        trackEvent("tc_view_confirm", props)
-    }
-
-    @UiThread
-    fun tcSendSuccess(installId: String, url: String, address: String, feePaid: String) {
-        val props = hashMapOf(
-            "firebase_user_id" to installId,
-            "dapp_url" to url,
-            "address_type" to getAddressType(address),
-            "network_fee_paid" to feePaid
-        )
-        trackEvent("tc_send_success", props)
-    }
-
-    @UiThread
-    fun firstLaunch(installId: String, referrer: String?, deeplink: String?) {
+    fun firstLaunch(installId: String, referrer: String?) {
         val props = hashMapOf(
             "firebase_user_id" to installId
         )
         referrer?.let {
             props["referrer"] = it
         }
-        deeplink?.let {
-            props["deeplink"] = it
-        }
-        trackEvent("first_launch", props)
+        Aptabase.instance.trackEvent("first_launch", props)
     }
 
     @UiThread

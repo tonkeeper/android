@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.mapList
@@ -159,11 +160,10 @@ class EventsViewModel(
     val uiStateFlow: Flow<EventsUiState> = flow {
         val cached = cacheHelper.getEventsCached(wallet)
         if (cached.isNotEmpty()) {
-            emit(
-                EventsUiState(
-                    uiItems = cached, loading = true
-                )
-            )
+            emit(EventsUiState(
+                uiItems = cached,
+                loading = true
+            ))
         }
 
         emitAll(uiItemsFlow.map {
@@ -282,37 +282,10 @@ class EventsViewModel(
                 return@withContext
             }
 
-            setLoading(loading = true, trigger = true)
+            _eventsFlow.value = events
+        } catch (e: Throwable) {
+            setError()
 
-            val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && !remoteConfig.isTronDisabled) {
-                accountRepository.getTronAddress(wallet.id)
-            } else null
-            val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
-
-            if (isFirstLoad.get()) {
-                val cached = cache().toTypedArray()
-                _tronEventsFlow.value =
-                    tronAddress?.let { eventsRepository.getTronLocal(tronAddress) } ?: emptyList()
-                if (cached.isNotEmpty()) {
-                    _eventsFlow.value = cached
-                }
-
-                isFirstLoad.set(false)
-            }
-
-            try {
-                val events = loadDefault(beforeLt = null, limit = 30).toTypedArray()
-                val tronEvents =
-                    tronAddress?.let { eventsRepository.loadTronEvents(tronAddress, tonProofToken) }
-                        ?: emptyList()
-                isError.set(false)
-                setLoading(loading = false, trigger = false)
-
-                _eventsFlow.value = events
-                _tronEventsFlow.value = tronEvents
-            } catch (e: Throwable) {
-                setError()
-            }
         }
 
     fun loadMore() {
@@ -342,31 +315,6 @@ class EventsViewModel(
                 setLoading(loading = false, trigger = false)
             } catch (e: Throwable) {
                 setError()
-            }
-        }
-    }
-
-    private suspend fun loadMoreTron() {
-        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && !remoteConfig.isTronDisabled) {
-            accountRepository.getTronAddress(wallet.id)
-        } else null
-
-        if (tronAddress.isNullOrEmpty()) {
-            return
-        }
-
-        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
-        try {
-            val tronLastLt = getTronLastLt()
-            if (tronLastLt != null) {
-                val tronEvents = eventsRepository.loadTronEvents(
-                    tronAddress, tonProofToken, beforeLt = tronLastLt
-                ) ?: throw IllegalStateException("Failed to load tron events")
-
-                _tronEventsFlow.update { currentEvents ->
-                    (currentEvents + tronEvents).distinctBy { it.transactionHash }
-                        .sortedBy { it.timestamp }.reversed()
-                }
             }
         } catch (_: Throwable) {
         }

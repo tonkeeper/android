@@ -11,7 +11,6 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.Amount
-import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
@@ -78,7 +77,7 @@ class SendTransactionViewModel(
         AnalyticsHelper.tcViewConfirm(settingsRepository.installId, request.appUri.toString(), request.targetAddressValue)
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
-            val useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
+            val useBattery = isBatteryIsEnabledTx()
             try {
                 val transfers = transfers(tokens.filter { it.isRequestMinting }, true, useBattery)
                 message = accountRepository.messageBody(wallet, request.validUntil, transfers)
@@ -122,10 +121,11 @@ class SendTransactionViewModel(
                 if (!emulated.withBattery && transferTotal > tonBalance) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
-                        balance = tonBalance,
-                        required = transferTotal,
+                        balance = Amount(tonBalance),
+                        required = Amount(transferTotal),
                         withRechargeBattery = forceRelayer || useBattery,
-                        singleWallet = isSingleWallet()
+                        singleWallet = isSingleWallet(),
+                        type = InsufficientBalanceType.InsufficientTONBalance
                     )
                 } else {
                     _stateFlow.value = SendTransactionState.Details(
@@ -147,10 +147,11 @@ class SendTransactionViewModel(
                 if (tonBalance == Coins.ZERO) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
-                        balance = tonBalance,
-                        required = Coins.of(0.1),
+                        balance = Amount(tonBalance),
+                        required = Amount(Coins.of(0.1)),
                         withRechargeBattery = forceRelayer || useBattery,
-                        singleWallet = isSingleWallet()
+                        singleWallet = isSingleWallet(),
+                        type = InsufficientBalanceType.InsufficientTONBalance
                     )
                 } else {
                     toast(e.getDebugMessage() ?: getString(Localization.unknown_error))

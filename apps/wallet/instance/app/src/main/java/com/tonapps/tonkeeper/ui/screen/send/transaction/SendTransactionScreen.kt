@@ -235,14 +235,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
             is SendTransactionState.Failed -> setErrorTask(BridgeException(message = "Failed to send transaction in client"))
             is SendTransactionState.FailedEmulation -> setErrorTask(BridgeException(message = "Transaction emulation failed. Verify 'payload' and 'stateInit' field validity. Invalid message assembly detected or base64 decoding error."))
             is SendTransactionState.InsufficientBalance -> {
-                insufficientFundsDialog.show(
-                    state.wallet,
-                    state.balance,
-                    state.required,
-                    state.withRechargeBattery,
-                    state.singleWallet,
-                    state.type
-                )
+                insufficientFundsDialog.show(state.wallet, state.balance, state.required, state.withRechargeBattery, state.singleWallet, state.type)
                 finish()
             }
 

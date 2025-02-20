@@ -13,7 +13,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.currentTimeSeconds
@@ -31,6 +30,7 @@ import com.tonapps.tonkeeper.extensions.hasUtmSource
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.helper.ReferrerClientHelper
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
@@ -47,7 +47,6 @@ import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
@@ -85,6 +84,7 @@ class RootActivity : BaseWalletActivity() {
     private val accountRepository by inject<AccountRepository>()
     private val emulationUseCase by inject<EmulationUseCase>()
     private val passcodeManager by inject<PasscodeManager>()
+    private val referrerClientHelper by inject<ReferrerClientHelper>()
 
     private lateinit var uiHandler: Handler
 
@@ -135,12 +135,19 @@ class RootActivity : BaseWalletActivity() {
 
         App.applyConfiguration(resources.configuration)
 
-        if (0L >= DevSettings.firstLaunchDate) {
-            AnalyticsHelper.firstLaunch(settingsRepository.installId)
+        sendFirstLaunchEvent()
+        remoteConfig?.fetchAndActivate()
+    }
+
+    private fun sendFirstLaunchEvent() {
+        if (DevSettings.firstLaunchDate > 0) {
+            return
+        }
+        lifecycleScope.launch {
+            val referrer = referrerClientHelper.getInstallReferrer()
+            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer)
             DevSettings.firstLaunchDate = currentTimeSeconds()
         }
-
-        remoteConfig?.fetchAndActivate()
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -259,20 +266,16 @@ class RootActivity : BaseWalletActivity() {
 
     fun event(event: RootEvent) {
         when (event) {
-            is RootEvent.Singer -> add(
-                InitScreen.newInstance(
-                    if (event.qr) InitArgs.Type.SignerQR else InitArgs.Type.Signer,
-                    event.publicKey,
-                    event.name
-                )
-            )
-
-            is RootEvent.Ledger -> add(
-                InitScreen.newInstance(
-                    type = InitArgs.Type.Ledger,
-                    ledgerConnectData = event.connectData,
-                    accounts = event.accounts
-                )
+            is RootEvent.Singer -> add(InitScreen.newInstance(if (event.qr) InitArgs.Type.SignerQR else InitArgs.Type.Signer, event.publicKey, event.name))
+            is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
+            is RootEvent.Transfer -> openSend(
+                targetAddress = event.address,
+                tokenAddress = event.jettonAddress,
+                amountNano = event.amount,
+                text = event.text,
+                wallet = event.wallet,
+                bin = event.bin,
+                initStateBase64 = event.initStateBase64
             )
 
             is RootEvent.Transfer -> {
@@ -297,14 +300,12 @@ class RootActivity : BaseWalletActivity() {
 
     private fun openDAppByShortcut(wallet: WalletEntity, uri: Uri) {
         removeByClass({
-            add(
-                DAppScreen.newInstance(
-                    wallet = wallet,
-                    title = uri.host ?: "unknown",
-                    url = uri,
-                    source = "shortcut",
-                )
-            )
+            add(DAppScreen.newInstance(
+                wallet = wallet,
+                title = uri.host ?: "unknown",
+                url = uri,
+                source = "shortcut",
+            ))
         }, DAppScreen::class.java)
     }
 
@@ -343,30 +344,10 @@ class RootActivity : BaseWalletActivity() {
         initStateBase64: String?,
         comment: String? = null
     ) {
-        val message = if (tokenAddress != null) {
-            val tokens =
-                tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
-                    ?: emptyList()
-            val token = tokens.find { it.address == AddrStd(tokenAddress).toAccountId() }
-                ?: throw IllegalStateException("Token not found")
-            val message = RawMessageEntity(
-                addressValue = token.balance.walletAddress,
-                amount = TransferEntity.BASE_FORWARD_AMOUNT.toLong(),
-                stateInitValue = initStateBase64,
-                payloadValue = TonTransferHelper.jetton(
-                    coins = Coins.ofNano(amountNano),
-                    toAddress = AddrStd(targetAddress),
-                    responseAddress = wallet.contract.address,
-                    queryId = TransferEntity.newWalletQueryId(),
-                    forwardPayload = bin ?: comment?.let {
-                        TransferEntity.comment(it)
-                    },
-                ).base64()
-            )
-
-            message.copy(amount = getJettonForwardAmount(wallet, message).toLong())
-        } else {
-            RawMessageEntity(
+        val request = SignRequestEntity.Builder()
+            .setFrom(wallet.contract.address)
+            .setValidUntil(currentTimeSeconds())
+            .addMessage(RawMessageEntity(
                 addressValue = targetAddress,
                 amount = amountNano,
                 stateInitValue = initStateBase64,
@@ -387,7 +368,7 @@ class RootActivity : BaseWalletActivity() {
         }, SendScreen::class.java)
     }
 
-    private suspend fun openSend(
+    private fun openSend(
         wallet: WalletEntity,
         targetAddress: String? = null,
         tokenAddress: String?,
@@ -397,20 +378,8 @@ class RootActivity : BaseWalletActivity() {
         bin: Cell? = null,
         initStateBase64: String? = null
     ) {
-        if ((bin != null || initStateBase64 != null) && !amountNano.isPositive()) {
+        if ((bin != null || initStateBase64 != null) && amountNano.isPositive()) {
             toast(Localization.invalid_link)
-            return
-        }
-
-        if (targetAddress != null && amountNano > 0 && nftAddress.isNullOrBlank()) {
-            openSign(
-                wallet = wallet,
-                targetAddress = targetAddress,
-                amountNano = amountNano,
-                bin = bin,
-                initStateBase64 = initStateBase64,
-                comment = text,
-            )
             return
         }
 
@@ -421,21 +390,18 @@ class RootActivity : BaseWalletActivity() {
                 openSign(
                     wallet = wallet,
                     targetAddress = targetAddress,
-                    tokenAddress = tokenAddress,
                     amountNano = amountNano!!,
                     bin = bin,
                     initStateBase64 = initStateBase64,
                     comment = text,
                 )
             } else {
-                openDirectSend(
-                    SendScreen.Companion.Builder(wallet)
-                        .setTargetAddress(targetAddress)
-                        .setTokenAddress(tokenAddress)
-                        .setAmountNano(amountNano)
-                        .setText(text)
-                        .setType(SendScreen.Companion.Type.Direct)
-                )
+                openDirectSend(SendScreen.Companion.Builder(wallet)
+                    .setTargetAddress(targetAddress)
+                    .setTokenAddress(tokenAddress)
+                    .setAmountNano(amountNano)
+                    .setText(text)
+                    .setType(SendScreen.Companion.Type.Direct))
             }
         } else if (fragment == null) {
             add(
@@ -515,11 +481,7 @@ class RootActivity : BaseWalletActivity() {
         } else if (extras != null && !extras.isEmpty && viewModel.processIntentExtras(extras)) {
             return
         } else if (uri != null) {
-            processDeepLink(
-                DeepLink.fixBadUri(uri),
-                false,
-                intent.getStringExtra(Browser.EXTRA_APPLICATION_ID)
-            )
+            processDeepLink(DeepLink.fixBadUri(uri), false, intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))
         }
     }
 

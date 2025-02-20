@@ -214,7 +214,7 @@ class TokenViewModel(
             }
         }
 
-        if (token.hasRate && !token.isUsdt && !token.isTrc20) {
+        if (token.hasRate && !token.isUsdt) {
             val period = settingsRepository.chartPeriod
             val fiatPrice: CharSequence
             val rateDiff24h: String

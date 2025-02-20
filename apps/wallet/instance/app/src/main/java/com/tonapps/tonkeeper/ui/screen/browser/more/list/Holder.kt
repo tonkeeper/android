@@ -24,7 +24,16 @@ class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_brow
     override fun onBind(item: Item) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
-            item.app.openDApp(context, item.wallet, "browser_all")
+            if (item.app.useCustomTabs) {
+                BrowserHelper.open(context, item.url.toString())
+            } else {
+                open(DAppScreen.newInstance(
+                    wallet = item.wallet,
+                    title = item.name,
+                    url = item.url,
+                    source = "browser_all"
+                ))
+            }
         }
 
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(128)!!)

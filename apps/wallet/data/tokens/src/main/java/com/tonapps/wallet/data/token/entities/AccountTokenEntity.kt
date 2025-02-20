@@ -79,7 +79,7 @@ data class AccountTokenEntity(
         get() = fiatRate?.rateDiff24h ?: ""
 
     val hasRate: Boolean
-        get() = fiatRate != null && fiatRate?.fiat?.isPositive == true
+        get() = fiatRate != null
 
     val verified: Boolean
         get() = balance.token.verified

@@ -157,15 +157,13 @@ class TokenScreen(wallet: WalletEntity) :
     }
 
     private fun burn(token: AccountTokenEntity) {
-        navigation?.add(
-            SendScreen.newInstance(
-                wallet = screenContext.wallet,
-                targetAddress = viewModel.burnAddress,
-                tokenAddress = token.address,
-                amountNano = token.balance.value.toLong(),
-                type = SendScreen.Companion.Type.Default
-            )
-        )
+        navigation?.add(SendScreen.newInstance(
+            wallet = screenContext.wallet,
+            targetAddress = viewModel.burnAddress,
+            tokenAddress = token.address,
+            amountNano = token.balance.value.toLong(),
+            type = SendScreen.Companion.Type.Default
+        ))
         finish()
     }
 

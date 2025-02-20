@@ -32,8 +32,12 @@ data class NftMetadataEntity(
     val description: String?
         get() = strings["description"]
 
-    val lottie: String?
-        get() = strings["lottie"]
+    @IgnoredOnParcel
+    val lottie: String? by lazy {
+        val originalUrl = strings["lottie"] ?: return@lazy null
+        val encoded = Base64.encodeToString(originalUrl.toByteArray(), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING).trim()
+        "https://c.tonapi.io/json?url=$encoded"
+    }
 
     constructor(map: Map<String, Any>) : this(
         strings = map.filter { it.value is String }.mapValues { it.value as String } as HashMap<String, String>,

@@ -134,10 +134,6 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
         refreshView.visibility = View.VISIBLE
         filtersView.visibility = View.VISIBLE
 
-        if (state.error) {
-            navigation?.toast(Localization.unknown_error)
-        }
-
         if (state.uiItems.isEmpty() && !state.loading) {
             setEmptyState()
         } else {
@@ -176,6 +172,11 @@ class EventsScreen(wallet: WalletEntity) : MainScreen.Child(R.layout.fragment_ma
     override fun scrollUp() {
         super.scrollUp()
         listView.scrollToPosition(0)
+        viewModel.refresh()
+    }
+
+    override fun onResume() {
+        super.onResume()
         viewModel.refresh()
     }
 

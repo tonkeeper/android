@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import org.ton.mnemonic.Mnemonic
 import uikit.extensions.activity
 
@@ -27,13 +29,64 @@ class DevViewModel(
 ): BaseWalletVM(app) {
 
     fun getLegacyStorage(callback: (result: String) -> Unit) {
-        /*viewModelScope.launch(Dispatchers.IO) {
-            val json = rnLegacy.getAllKeyValuesForDebug().toString()
-            withContext(Dispatchers.Main) {
-                callback(json)
+        viewModelScope.launch(Dispatchers.IO) {
+            var value = rnLegacy.getAllKeyValuesForDebug().toString()
+            if (6 >= value.length) {
+                value = accountRepository.getVaultKeys()
             }
-        }*/
+            val oldJSON = try {
+                JSONObject(value)
+            } catch (e: Throwable) {
+                JSONObject()
+            }
+
+            val newJSON = maskValues(oldJSON)
+            withContext(Dispatchers.Main) {
+                callback(newJSON.toString())
+            }
+        }
     }
+
+    private fun maskValues(input: JSONObject): JSONObject {
+        val output = JSONObject()
+        for (key in input.keys()) {
+            when (val value = input.get(key)) {
+                is String -> output.put(key, maskTextAtIntervals(value))
+                is JSONObject -> output.put(key, maskValues(value))
+                is JSONArray -> output.put(key, maskValues(value))
+                else -> output.put(key, value)
+            }
+        }
+        return output
+    }
+
+    private fun maskValues(input: JSONArray): JSONArray {
+        val output = JSONArray()
+        for (i in 0 until input.length()) {
+            when (val value = input.get(i)) {
+                is String -> output.put(maskTextAtIntervals(value))
+                is JSONObject -> output.put(maskValues(value))
+                is JSONArray -> output.put(maskValues(value))
+                else -> output.put(value)
+            }
+        }
+        return output
+    }
+
+    private fun maskTextAtIntervals(input: String): String {
+        val interval = 4
+        val asterisks = "****"
+        val builder = StringBuilder(input)
+
+        var position = input.length - (input.length % interval) - 1
+        while (position >= 0) {
+            builder.replace(position, position + 3, asterisks)
+            position -= interval
+        }
+
+        return builder.toString()
+    }
+
 
     fun openCard() {
         accountRepository.selectedWalletFlow.take(1).onEach {

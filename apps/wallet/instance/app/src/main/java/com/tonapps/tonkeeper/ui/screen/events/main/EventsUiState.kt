@@ -5,8 +5,9 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 data class EventsUiState(
     val uiItems: List<HistoryItem>,
     val loading: Boolean,
-    val error: Boolean,
 ) {
 
     val isFooterLoading: Boolean = uiItems.lastOrNull()?.let { it is HistoryItem.Loader } ?: false
+
+    var isFooterFailed: Boolean = uiItems.lastOrNull()?.let { it is HistoryItem.Failed } ?: false
 }

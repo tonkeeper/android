@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import uikit.base.BaseArgs
 
 data class DAppArgs(
-    val title: String? = null,
+    val title: String,
     val url: Uri,
     val source: String,
     val sendAnalytics: Boolean,
@@ -23,7 +23,7 @@ data class DAppArgs(
     }
 
     constructor(bundle: Bundle) : this(
-        title = bundle.getString(ARG_TITLE),
+        title = bundle.getString(ARG_TITLE)!!,
         url = bundle.getParcelableCompat(ARG_URL)!!,
         source = bundle.getString(ARG_SOURCE) ?: "",
         sendAnalytics = bundle.getBoolean(ARG_SEND_ANALYTICS, true)

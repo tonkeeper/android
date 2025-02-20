@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.api.AccountEventWrap
@@ -93,10 +94,12 @@ class EventsViewModel(
                 else -> true
             }
         })
-        val list = if (isLoading.get()) {
+        val list = if (isError.get()) {
+            historyHelper.withFailedItem(uiItems)
+        } else if (isLoading.get()) {
             historyHelper.withLoadingItem(uiItems)
         } else {
-            historyHelper.removeLoadingItem(uiItems)
+            historyHelper.removeServiceItems(uiItems)
         }
         if (actionOutStatus == ActionOutStatus.Any || actionOutStatus == null) {
             cacheHelper.setEventsCached(wallet, list)
@@ -109,8 +112,7 @@ class EventsViewModel(
         if (cached.isNotEmpty()) {
             emit(EventsUiState(
                 uiItems = cached,
-                loading = true,
-                error = false
+                loading = true
             ))
         }
 
@@ -118,7 +120,6 @@ class EventsViewModel(
             EventsUiState(
                 uiItems = it,
                 loading = isLoading.get(),
-                error = isError.get()
             )
         })
     }
@@ -141,6 +142,16 @@ class EventsViewModel(
 
         viewModelScope.launch { initialLoad(true) }
         _triggerFlow.tryEmit(Unit)
+    }
+
+    private fun setError() {
+        isError.set(true)
+        if (_eventsFlow.value == null) {
+            _eventsFlow.value = emptyArray()
+            setLoading(loading = false, trigger = false)
+        } else {
+            setLoading(loading = false, trigger = true)
+        }
     }
 
     private fun setLoading(loading: Boolean, trigger: Boolean) {
@@ -212,8 +223,8 @@ class EventsViewModel(
 
             _eventsFlow.value = events
         } catch (e: Throwable) {
-            isError.set(true)
-            setLoading(loading = false, trigger = false)
+            setError()
+
         }
     }
 
@@ -238,8 +249,7 @@ class EventsViewModel(
                 setLoading(loading = false, trigger = false)
                 _eventsFlow.value = events.toTypedArray()
             } catch (e: Throwable) {
-                isError.set(true)
-                setLoading(loading = false, trigger = false)
+                setError()
             }
         }
     }

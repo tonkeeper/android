@@ -27,6 +27,19 @@ data class AccountTokenEntity(
                 isTransferable = true,
             )
         )
+
+        fun createEmpty(token: TokenEntity, walletAddress: String): AccountTokenEntity {
+            return AccountTokenEntity(
+                balance = BalanceEntity(
+                    token = token,
+                    value = Coins.ZERO,
+                    walletAddress = walletAddress,
+                    initializedAccount = false,
+                    isRequestMinting = false,
+                    isTransferable = true,
+                )
+            )
+        }
     }
 
     val imageUri: Uri
@@ -62,6 +75,9 @@ data class AccountTokenEntity(
     val rateDiff24h: String
         get() = fiatRate?.rateDiff24h ?: ""
 
+    val hasRate: Boolean
+        get() = fiatRate != null
+
     val verified: Boolean
         get() = balance.token.verified
 
@@ -73,5 +89,8 @@ data class AccountTokenEntity(
 
     val customPayloadApiUri: String?
         get() = balance.customPayloadApiUri
+
+    val token: TokenEntity
+        get() = balance.token
 
 }

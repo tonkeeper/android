@@ -437,8 +437,10 @@ class RootViewModel(
         if (openUrl != null) {
             openScreen(DAppScreen.newInstance(
                 wallet = wallet,
+                title = openUrl.host ?: "unknown",
                 url = openUrl,
-                source = "push"
+                source = "push",
+                sendAnalytics = true,
             ))
         }
     }
@@ -509,7 +511,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Tabs) {
             _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri.toUri(), wallet, route.from))
         } else if (route is DeepLinkRoute.Send && !wallet.isWatchOnly) {
-            openScreen(SendScreen.newInstance(wallet))
+            openScreen(SendScreen.newInstance(wallet, type = SendScreen.Companion.Type.Default))
         } else if (route is DeepLinkRoute.Staking && !wallet.isWatchOnly) {
             openScreen(StakingScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.StakingPool) {
@@ -569,8 +571,9 @@ class RootViewModel(
             } else {
                 openScreen(DAppScreen.newInstance(
                     wallet = wallet,
+                    title = dApp.name,
                     url = dAppUri,
-                    source = "deep-link"
+                    source = "deep-link",
                 ))
             }
         } else if (route is DeepLinkRoute.SettingsSecurity) {

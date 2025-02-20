@@ -22,6 +22,7 @@
         android:layout_gravity="center"
         android:paddingHorizontal="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Body2"
+        android:breakStrategy="high_quality"
         android:textColor="?attr/textPrimaryColor"/>
 
     <uikit.widget.SwitchView

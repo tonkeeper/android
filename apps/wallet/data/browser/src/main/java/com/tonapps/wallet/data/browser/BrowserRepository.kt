@@ -22,7 +22,7 @@ class BrowserRepository(context: Context, api: API) {
     suspend fun search(
         country: String,
         query: String,
-        testnet: Boolean,
+        testnet: Boolean = false,
         locale: Locale
     ): List<BrowserAppEntity> {
         val data = load(country, testnet, locale) ?: return emptyList()

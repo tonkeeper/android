@@ -25,8 +25,12 @@ data class AppEntity(
 
     constructor(json: JSONObject) : this(
         url = Uri.parse(json.getString("url").removeSuffix("/")),
-        name = json.getString("name"),
-        iconUrl = json.getString("iconUrl"),
+        name = json.getString("name").ifBlank {
+            throw IllegalArgumentException("name is empty")
+        },
+        iconUrl = json.getString("iconUrl").ifBlank {
+            throw IllegalArgumentException("iconUrl is empty")
+        },
         empty = false,
     )
 

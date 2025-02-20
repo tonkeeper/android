@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.koin.remoteConfig
@@ -38,7 +39,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(PurchaseScreen.newInstance(item.wallet, "wallet"))
         }
         sendView.setOnClickListener {
-            navigation?.add(SendScreen.newInstance(item.wallet))
+            navigation?.add(SendScreen.newInstance(item.wallet, type = SendScreen.Companion.Type.Default))
         }
         stakeView.setOnClickListener {
             navigation?.add(StakingScreen.newInstance(item.wallet))
@@ -53,8 +54,12 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         stakeView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !isStakingDisable
         buyOrSellView.isEnabled = item.walletType != Wallet.Type.Testnet
 
-        swapView.alpha = if (isSwapDisable) 0f else 1f
-        stakeView.alpha = if (isStakingDisable) 0f else 1f
+        if (isSwapDisable) {
+            swapView.alpha = 0f
+        }
+        if (isStakingDisable) {
+            stakeView.alpha = 0f
+        }
     }
 
 }

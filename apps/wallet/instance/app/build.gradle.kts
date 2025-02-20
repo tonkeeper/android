@@ -120,6 +120,7 @@ dependencies {
     implementation(Dependence.GooglePlay.review)
     implementation(Dependence.GooglePlay.billing)
     implementation(Dependence.GooglePlay.update)
+    implementation(Dependence.GooglePlay.installreferrer)
 
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)

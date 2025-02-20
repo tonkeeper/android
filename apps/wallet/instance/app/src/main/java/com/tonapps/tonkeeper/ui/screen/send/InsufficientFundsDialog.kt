@@ -7,18 +7,23 @@ import android.widget.Button
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
+import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
+import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
+import uikit.base.BaseFragment
 import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation
 import uikit.widget.TextHeaderView
 
-class InsufficientFundsDialog(context: Context): ModalDialog(context, R.layout.dialog_insufficient_funds) {
+class InsufficientFundsDialog(private val fragment: BaseFragment): ModalDialog(fragment.requireContext(), R.layout.dialog_insufficient_funds) {
 
     private val navigation: Navigation?
         get() = Navigation.from(context)
@@ -31,14 +36,27 @@ class InsufficientFundsDialog(context: Context): ModalDialog(context, R.layout.d
         findViewById<View>(R.id.close)!!.setOnClickListener { dismiss() }
     }
 
-    fun show(wallet: WalletEntity, balance: Coins, required: Coins, withRechargeBattery: Boolean, singleWallet: Boolean) {
+    fun show(
+        wallet: WalletEntity,
+        balance: Amount,
+        required: Amount,
+        withRechargeBattery: Boolean,
+        singleWallet: Boolean,
+        type: InsufficientBalanceType
+    ) {
         super.show()
         applyWalletTitle(wallet.label, singleWallet)
-        applyDescription(balance, required, withRechargeBattery)
+        applyDescription(balance, required, withRechargeBattery, type)
         batteryButton.visibility = if (withRechargeBattery) View.VISIBLE else View.GONE
 
+        tonButton.text = context.getString(Localization.buy_ton).replace("TON", required.symbol)
         tonButton.setOnClickListener {
-            navigation?.add(PurchaseScreen.newInstance(wallet, "insufficientFunds"))
+            if (required.isTon) {
+                navigation?.add(PurchaseScreen.newInstance(wallet, "insufficientFunds"))
+            } else {
+                fragment.finish()
+                navigation?.add(BrowserMoreScreen.newInstance(wallet, "defi"))
+            }
             dismiss()
         }
 
@@ -61,11 +79,16 @@ class InsufficientFundsDialog(context: Context): ModalDialog(context, R.layout.d
         }
     }
 
-    private fun applyDescription(balance: Coins, required: Coins, withRechargeBattery: Boolean) {
-        val balanceFormat = CurrencyFormatter.format("TON", balance, 9).withCustomSymbol(context)
-        val requiredFormat = CurrencyFormatter.format("TON", required, 9).withCustomSymbol(context)
+    private fun applyDescription(
+        balance: Amount,
+        required: Amount,
+        withRechargeBattery: Boolean,
+        type: InsufficientBalanceType
+    ) {
+        val balanceFormat = CurrencyFormatter.format(balance.symbol, balance.value, balance.decimals).withCustomSymbol(context)
+        val requiredFormat = CurrencyFormatter.format(required.symbol, required.value, required.decimals).withCustomSymbol(context)
 
-        val resId = if (withRechargeBattery) Localization.insufficient_balance_fees else Localization.insufficient_balance_default
+        val resId = if (withRechargeBattery || type == InsufficientBalanceType.InsufficientBalanceForFee) Localization.insufficient_balance_fees else Localization.insufficient_balance_default
         textView.descriptionView.text = context.getString(resId, requiredFormat, balanceFormat)
     }
 }

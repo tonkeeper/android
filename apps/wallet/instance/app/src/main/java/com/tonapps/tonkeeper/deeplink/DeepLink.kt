@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
+import androidx.core.net.toUri
 
 data class DeepLink(
     val route: DeepLinkRoute,
@@ -11,13 +12,13 @@ data class DeepLink(
     companion object {
 
         fun fixBadUri(uri: Uri): Uri {
-            var url = uri.toString()
+            return fixBadUrl(uri.toString()).toUri()
+        }
 
-            // fix for bad tg scheme
-            url = url.replace("tg:resolve", "tg://resolve")
-            url = url.replace("\\u0026", "&")
-
-            return Uri.parse(url)
+        fun fixBadUrl(url: String): String {
+            var fixedUrl = url.replace("tg:resolve", "tg://resolve")
+            fixedUrl = fixedUrl.replace("\\u0026", "&")
+            return fixedUrl
         }
     }
 

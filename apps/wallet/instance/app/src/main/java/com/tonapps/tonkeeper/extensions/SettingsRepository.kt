@@ -10,11 +10,12 @@ import kotlinx.coroutines.flow.map
 import java.util.Locale
 
 fun SettingsRepository.getNormalizeCountryFlow(api: API) = countryFlow.map { country ->
-    if (country.equals("AUTO", true) || country.isEmpty()) {
+    val fixedCountry = if (country.equals("AUTO", true) || country.isEmpty()) {
         api.resolveCountry() ?: getLocale().country
     } else {
         country
     }
+    if (fixedCountry.isNullOrBlank()) "UAE" else fixedCountry
 }.flowOn(Dispatchers.IO)
 
 fun SettingsRepository.getLocaleCountryFlow(api: API) = getNormalizeCountryFlow(api).map {

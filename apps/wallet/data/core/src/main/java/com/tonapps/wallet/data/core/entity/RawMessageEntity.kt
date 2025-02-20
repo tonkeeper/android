@@ -3,10 +3,12 @@ package com.tonapps.wallet.data.core.entity
 import android.os.Parcelable
 import android.util.Log
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
+import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.optStringCompat
 import com.tonapps.extensions.optStringCompatJS
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.block.AddrStd
 import org.ton.block.Coins
@@ -20,7 +22,8 @@ data class RawMessageEntity(
     val addressValue: String,
     val amount: Long,
     val stateInitValue: String?,
-    val payloadValue: String?
+    val payloadValue: String?,
+    val withBattery: Boolean = false
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -33,11 +36,12 @@ data class RawMessageEntity(
         Coins.ofNano(amount)
     }
 
-    constructor(json: JSONObject) : this(
-        json.getString("address"),
-        parseAmount(json.get("amount")),
-        json.optStringCompatJS("stateInit"),
-        json.optStringCompatJS("payload")
+    constructor(json: JSONObject, withBattery: Boolean) : this(
+        addressValue = json.getString("address"),
+        amount = parseAmount(json.get("amount")),
+        stateInitValue = json.optStringCompatJS("stateInit"),
+        payloadValue = json.optStringCompatJS("payload"),
+        withBattery = withBattery,
     ) {
         if (stateInitValue?.startsWith("{") == true) { // for dudes how try to send JS Buffer
             throw IllegalArgumentException("Invalid data format. Base64 encoding required for data transfer, JavaScript objects not supported. Received: stateInit =  $stateInitValue")
@@ -64,13 +68,32 @@ data class RawMessageEntity(
         }
     }
 
-    private companion object {
+    companion object {
 
         private fun parseAmount(value: Any): Long {
             if (value is Long) {
                 return value
             }
             return value.toString().toLong()
+        }
+
+        fun parseArray(array: JSONArray?, withBattery: Boolean): List<RawMessageEntity> {
+            val messages = mutableListOf<RawMessageEntity>()
+            if (array == null || array.length() == 0) {
+                return messages
+            }
+            for (i in 0 until array.length()) {
+                val json = array.getJSONObject(i)
+                val raw = RawMessageEntity(json, withBattery)
+                if (0 >= raw.amount) {
+                    throw IllegalArgumentException("Invalid amount: ${raw.amount}")
+                }
+                if (!raw.addressValue.isValidTonAddress()) {
+                    throw IllegalArgumentException("Invalid address: ${raw.addressValue}")
+                }
+                messages.add(raw)
+            }
+            return messages
         }
     }
 

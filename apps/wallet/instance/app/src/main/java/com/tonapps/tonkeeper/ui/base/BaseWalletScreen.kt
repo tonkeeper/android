@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
+import androidx.core.view.WindowInsetsControllerCompat
 import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.serverConfig
@@ -33,6 +34,18 @@ abstract class BaseWalletScreen<C: ScreenContext>(
 
     abstract val viewModel: BaseWalletVM
 
+    private val isBottomSheet: Boolean
+        get() = this is BottomSheet
+
+    val windowInsetsController: WindowInsetsControllerCompat? by lazy {
+        val window = window ?: return@lazy null
+        WindowInsetsControllerCompat(window, window.decorView)
+    }
+
+    private val isAppearanceLightStatusBars: Boolean by lazy {
+        windowInsetsController?.isAppearanceLightStatusBars ?: false
+    }
+
     val navigation: Navigation?
         get() = context?.let { Navigation.from(it) }
 
@@ -51,12 +64,25 @@ abstract class BaseWalletScreen<C: ScreenContext>(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        if (isBottomSheet && isAppearanceLightStatusBars) {
+            setAppearanceLight(false)
+        }
         viewModel.attachHolder(this)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        if (isBottomSheet && isAppearanceLightStatusBars) {
+            setAppearanceLight(true)
+        }
         viewModel.detachHolder()
+    }
+
+    fun setAppearanceLight(light: Boolean) {
+        windowInsetsController?.apply {
+            isAppearanceLightStatusBars = light
+            isAppearanceLightNavigationBars = light
+        }
     }
 }

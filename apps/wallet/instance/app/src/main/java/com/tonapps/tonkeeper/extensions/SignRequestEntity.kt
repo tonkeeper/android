@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.extensions
 
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
@@ -16,23 +16,29 @@ suspend fun SignRequestEntity.getTransfers(
     compressedTokens: List<AccountTokenEntity>,
     excessesAddress: AddrStd? = null,
     api: API,
+    batteryEnabled: Boolean
 ): List<WalletTransfer> = withContext(Dispatchers.IO) {
+    val transferMessages = getTransferMessages(batteryEnabled)
     val transfers = mutableListOf<WalletTransfer>()
-    for (message in messages) {
-        val jetton = compressedTokens.firstOrNull {
-            it.address.equalsAddress(message.addressValue) ||
-            it.balance.walletAddress.equalsAddress(message.addressValue)
-        }
-        val jettonCustomPayload = jetton?.let {
-            api.getJettonCustomPayload(wallet.accountId, wallet.testnet, it.address)
-        }
+    for (message in transferMessages) {
+        if (message.withBattery && batteryEnabled) {
+            transfers.add(message.getDefaultWalletTransfer())
+        } else {
+            val jetton = compressedTokens.firstOrNull {
+                it.address.equalsAddress(message.addressValue) ||
+                        it.balance.walletAddress.equalsAddress(message.addressValue)
+            }
+            val jettonCustomPayload = jetton?.let {
+                api.getJettonCustomPayload(wallet.accountId, wallet.testnet, it.address)
+            }
 
-        val transfer = message.getWalletTransfer(
-            excessesAddress = excessesAddress,
-            newStateInit = jettonCustomPayload?.stateInit,
-            newCustomPayload = jettonCustomPayload?.customPayload,
-        )
-        transfers.add(transfer)
+            val transfer = message.getWalletTransfer(
+                excessesAddress = excessesAddress,
+                newStateInit = jettonCustomPayload?.stateInit,
+                newCustomPayload = jettonCustomPayload?.customPayload,
+            )
+            transfers.add(transfer)
+        }
     }
     transfers
 }

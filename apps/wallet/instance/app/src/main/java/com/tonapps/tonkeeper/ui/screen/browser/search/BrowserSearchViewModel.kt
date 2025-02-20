@@ -4,7 +4,9 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.get
+import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -25,7 +27,8 @@ class BrowserSearchViewModel(
     app: Application,
     private val settingsRepository: SettingsRepository,
     private val browserRepository: BrowserRepository,
-    private val api: API
+    private val api: API,
+    private val safeModeClient: SafeModeClient,
 ): BaseWalletVM(app) {
 
     private val _queryFlow = MutableEffectFlow<String>()
@@ -41,13 +44,28 @@ class BrowserSearchViewModel(
         _queryFlow.tryEmit(value)
     }
 
+    fun isScamUri(url: String): Boolean {
+        return isScamUri(url.toUriOrNull())
+    }
+
+    fun isScamUri(uri: Uri?): Boolean {
+        return uri?.let {
+            safeModeClient.isHasScamUris(it)
+        } ?: false
+    }
+
     private suspend fun search(query: String): List<Item> = withContext(Dispatchers.IO) {
         if (query.isEmpty()) {
             return@withContext emptyList()
         }
 
         val uri = uri(query)
-        val apps = browserRepository.search(settingsRepository.country, query, false, settingsRepository.getLocale())
+        val apps = browserRepository.search(
+            country = settingsRepository.country,
+            query = query,
+            locale = settingsRepository.getLocale()
+        ).filter { !safeModeClient.isHasScamUris(it.url) }
+
         val appsCount = if (uri == null) {
             apps.size
         } else {
@@ -55,18 +73,22 @@ class BrowserSearchViewModel(
         }
 
         val items = mutableListOf<Item>()
-        for (index in 0 until appsCount) {
-            val position = ListCell.getPosition(appsCount, index)
-            if (index == 0 && uri != null) {
-                items.add(Item.Link(position, uri.toString(), uri.host!!))
+        if (isScamUri(uri)) {
+            items
+        } else {
+            for (index in 0 until appsCount) {
+                val position = ListCell.getPosition(appsCount, index)
+                if (index == 0 && uri != null) {
+                    items.add(Item.Link(position, uri.toString(), uri.host!!))
+                }
+                val appIndex = index - if (uri != null) 1 else 0
+                if (appIndex in apps.indices) {
+                    items.add(Item.App(position, apps[appIndex]))
+                }
             }
-            val appIndex = index - if (uri != null) 1 else 0
-            if (appIndex in apps.indices) {
-                items.add(Item.App(position, apps[appIndex]))
-            }
-        }
 
-        items + searchBy(query)
+            items + searchBy(query)
+        }
     }
 
     private fun uri(query: String): Uri? {

@@ -98,8 +98,9 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             logView.visibility = View.GONE
         }
 
-        view.findViewById<View>(R.id.import_legacy).setOnClickListener {
+        view.findViewById<View>(R.id.import_legacy).setOnLongClickListener {
             valuesFromLegacy()
+            true
         }
 
         view.findViewById<View>(R.id.card).setOnLongClickListener {

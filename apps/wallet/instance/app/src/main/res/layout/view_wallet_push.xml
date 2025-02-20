@@ -51,6 +51,7 @@
             android:layout_weight="1"
             android:paddingHorizontal="8dp"
             android:singleLine="true"
+            android:breakStrategy="high_quality"
             android:gravity="center_vertical"
             android:textAppearance="@style/TextAppearance.Body3"
             android:textColor="?attr/textPrimaryColor"/>

@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.staking.entities
 
 import android.os.Parcelable
+import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.staking.StakingPool
 import io.tonapi.models.AccountStakingInfo

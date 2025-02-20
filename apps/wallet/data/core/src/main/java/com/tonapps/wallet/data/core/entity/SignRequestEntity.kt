@@ -25,7 +25,8 @@ data class SignRequestEntity(
     private val sourceValue: String?,
     val validUntil: Long,
     val messages: List<RawMessageEntity>,
-    val network: TonNetwork
+    val network: TonNetwork,
+    val messagesVariants: MessagesVariantsEntity? = null
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -35,18 +36,31 @@ data class SignRequestEntity(
             return AddrStd.parse(value)
         }
 
+    val hasBattery: Boolean
+        get() = messagesVariants?.battery.isNullOrEmpty().not()
+
     constructor(json: JSONObject, appUri: Uri) : this(
         appUri = appUri,
         fromValue = json.optStringCompatJS("from"),
         sourceValue = json.optStringCompatJS("source"),
         validUntil = parseValidUnit(json),
-        messages = parseMessages(json.getJSONArray("messages")),
-        network = parseNetwork(json.opt("network"))
+        messages = RawMessageEntity.parseArray(json.getJSONArray("messages"), false),
+        network = parseNetwork(json.opt("network")),
+        messagesVariants = json.optJSONObject("messagesVariants")?.let {
+            MessagesVariantsEntity(it)
+        }
     )
 
     constructor(value: String, appUri: Uri) : this(JSONObject(value), appUri)
 
     constructor(value: Any, appUri: Uri) : this(value.toString(), appUri)
+
+    fun getTransferMessages(isEnabledBattery: Boolean): List<RawMessageEntity> {
+        if (isEnabledBattery) {
+            return messagesVariants?.battery ?: messages
+        }
+        return messages
+    }
 
     class Builder {
         private var from: AddrStd? = null
@@ -104,22 +118,6 @@ data class SignRequestEntity(
                 return validUnit
             }
             return 0
-        }
-
-        private fun parseMessages(array: JSONArray): List<RawMessageEntity> {
-            val messages = mutableListOf<RawMessageEntity>()
-            for (i in 0 until array.length()) {
-                val json = array.getJSONObject(i)
-                val raw = RawMessageEntity(json)
-                if (0 >= raw.amount) {
-                    throw IllegalArgumentException("Invalid amount: ${raw.amount}")
-                }
-                if (!raw.addressValue.isValidTonAddress()) {
-                    throw IllegalArgumentException("Invalid address: ${raw.addressValue}")
-                }
-                messages.add(raw)
-            }
-            return messages
         }
 
         private fun parseNetwork(value: Any?): TonNetwork {

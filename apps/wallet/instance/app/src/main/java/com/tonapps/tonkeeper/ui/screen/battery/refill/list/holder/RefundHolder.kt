@@ -27,10 +27,13 @@ class RefundHolder(
             context.activity?.onBackPressed()
             navigation?.add(DAppScreen.newInstance(
                 wallet = item.wallet,
+                title = "Battery",
                 url = item.refundUrl.toUri(),
-                source = "battery_refund"
+                source = "battery_refund",
+                sendAnalytics = false
             ))
         }
+
         refundImageView.visibility = View.VISIBLE
         titleView.text = context.getString(Localization.battery_refund_title)
         subtitleView.text = context.getString(Localization.battery_refund_subtitle)

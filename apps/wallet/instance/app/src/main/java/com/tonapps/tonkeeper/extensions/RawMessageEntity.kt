@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.extensions
 
+import android.util.Log
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.isBounceable
@@ -139,7 +140,6 @@ private fun rebuildJettonTransferWithCustomPayload(
     )
 }
 
-
 fun RawMessageEntity.getWalletTransfer(
     excessesAddress: AddrStd? = null,
     newStateInit: CellRef<StateInit>? = null,
@@ -176,5 +176,14 @@ fun RawMessageEntity.getWalletTransfer(
     } else {
         builder.coins = coins
     }
+    return builder.build()
+}
+
+fun RawMessageEntity.getDefaultWalletTransfer(): WalletTransfer {
+    val builder = WalletTransferBuilder()
+    builder.destination = address
+    builder.messageData = MessageData.Raw(getPayload(), getStateInitRef())
+    builder.bounceable = addressValue.isBounceable()
+    builder.coins = coins
     return builder.build()
 }

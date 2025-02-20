@@ -24,6 +24,7 @@ import com.tonapps.extensions.logError
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -516,7 +517,7 @@ class InitViewModel(
             val builder = StringBuilder(label.name)
             if (isMultipleVersions) {
                 builder.append(" ")
-                builder.append(account.version.title)
+                builder.append(account.version.title.fixW5Title())
             }
             if (isUsingDefaultName && !isMultipleVersions && (accounts.size > 1 || walletsCount > 1)) {
                 builder.append(" ")
@@ -569,6 +570,7 @@ class InitViewModel(
         if (!TonMnemonic.isValid(mnemonic)) {
             throw IllegalStateException("Invalid mnemonic")
         }
+
         val ids = accounts.map { AccountRepository.newWalletId() }
         saveMnemonic(context, ids, mnemonic)
 
@@ -643,16 +645,26 @@ class InitViewModel(
         walletIds: List<String>,
         mnemonic: List<String>
     ) = withContext(Dispatchers.IO) {
-        var passcode = savedState.passcode
-        if (passcode == null) {
-            passcode = withContext(Dispatchers.Main) {
-                passcodeManager.legacyGetPasscode(context)
+        if (requestSetPinCode) {
+            return@withContext
+        }
+        if (passcodeManager.hasPinCode()) {
+            val isValid = passcodeManager.confirmation(context, context.getString(Localization.app_name))
+            if (!isValid) {
+                throw IllegalStateException("wrong passcode")
             }
+        } else {
+            var passcode = savedState.passcode
+            if (passcode == null) {
+                passcode = withContext(Dispatchers.Main) {
+                    passcodeManager.legacyGetPasscode(context)
+                }
+            }
+            if (passcode.isNullOrBlank()) {
+                throw IllegalStateException("wrong passcode")
+            }
+            rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
         }
-        if (passcode.isNullOrBlank()) {
-            throw IllegalStateException("wrong passcode")
-        }
-        rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
     }
 
     override fun onCleared() {

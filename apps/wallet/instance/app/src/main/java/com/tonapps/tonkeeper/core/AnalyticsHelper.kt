@@ -27,10 +27,14 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun firstLaunch(installId: String) {
-        Aptabase.instance.trackEvent("first_launch", hashMapOf(
+    fun firstLaunch(installId: String, referrer: String?) {
+        val props = hashMapOf(
             "firebase_user_id" to installId
-        ))
+        )
+        referrer?.let {
+            props["referrer"] = it
+        }
+        Aptabase.instance.trackEvent("first_launch", props)
     }
 
     @UiThread

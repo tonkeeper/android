@@ -4,12 +4,15 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
+import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.ton.extensions.isValidTonDomain
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.hasUnsupportedQuery
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
 import com.tonapps.extensions.query
 import com.tonapps.extensions.queryBoolean
+import com.tonapps.extensions.queryLong
 import com.tonapps.extensions.queryPositiveLong
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.StateInit
@@ -101,7 +104,7 @@ sealed class DeepLinkRoute {
     }
 
     data class Transfer(
-        val exp: Long,
+        val exp: Long?,
         val address: String,
         val amount: Long?,
         val text: String?,
@@ -111,12 +114,17 @@ sealed class DeepLinkRoute {
     ): DeepLinkRoute() {
 
         val isExpired: Boolean
-            get() = exp > 0 && exp < (System.currentTimeMillis() / 1000)
+            get() {
+                if (exp == null || 0 >= exp) {
+                    return false
+                }
+                return exp < (System.currentTimeMillis() / 1000)
+            }
 
         constructor(uri: Uri) : this(
-            exp = uri.queryPositiveLong("exp") ?: 0,
+            exp = uri.queryLong("exp"),
             address = uri.pathOrNull ?: throw IllegalArgumentException("Address is required"),
-            amount = uri.queryPositiveLong("amount"),
+            amount = uri.queryLong("amount"),
             text = uri.query("text"),
             jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
             bin = uri.query("bin")?.cellFromBase64(),
@@ -126,8 +134,22 @@ sealed class DeepLinkRoute {
                 throw IllegalArgumentException("Unsupported query parameters")
             }
 
+            if (address.isNotBlank() && (!address.isValidTonAddress() && !address.isValidTonDomain())) {
+                throw IllegalArgumentException("Invalid address")
+            }
+
+            if (!jettonAddress.isNullOrBlank() && !jettonAddress.isValidTonAddress()) {
+                throw IllegalArgumentException("Invalid jetton address")
+            }
+
             if (text != null && bin != null) {
                 throw IllegalArgumentException("Text and bin are mutually exclusive")
+            }
+
+            amount?.let {
+                if (0 > it) {
+                    throw IllegalArgumentException("Amount must be positive")
+                }
             }
 
             if (amount == null && (bin != null || initStateBase64 != null)) {

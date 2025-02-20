@@ -1,16 +1,22 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
+import android.content.res.Configuration
 import android.util.Log
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
+import com.tonapps.wallet.data.settings.SettingsRepository
 
 class PasscodeHelper(
     private val context: Context,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val settingsRepository: SettingsRepository,
 ) {
 
     private val store: PasscodeStore by lazy { PasscodeStore(context) }
+
+    val isLightTheme: Boolean
+        get() = settingsRepository.isLightTheme
 
     val hasPinCode: Boolean
         get() = store.hasPinCode

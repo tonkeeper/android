@@ -26,11 +26,13 @@ class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_brow
             } else {
                 open(DAppScreen.newInstance(
                     wallet = item.wallet,
+                    title = item.name,
                     url = item.url,
                     source = "browser_all"
                 ))
             }
         }
+
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(128)!!)
         titleView.text = item.name
         subtitleView.text = item.description

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
@@ -30,6 +31,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.webkit.Profile
+import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -72,6 +74,7 @@ open class WebViewFixed @JvmOverloads constructor(
     }
 
     private val callbacks = mutableListOf<Callback>()
+    private var onNewTabRunnable: Runnable? = null
 
     private val jsExecuteQueue = LinkedList<String>()
 
@@ -93,6 +96,13 @@ open class WebViewFixed @JvmOverloads constructor(
         settings.textSize = WebSettings.TextSize.NORMAL
         settings.setGeolocationEnabled(false)
 
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+            WebSettingsCompat.setAlgorithmicDarkeningAllowed(settings, false)
+        }
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.MUTE_AUDIO)) {
+            WebViewCompat.setAudioMuted(this@WebViewFixed, true)
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
         }
@@ -108,13 +118,12 @@ open class WebViewFixed @JvmOverloads constructor(
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                var isTrue: Boolean? = null
                 for (callback in callbacks) {
                     if (callback.shouldOverrideUrlLoading(request)) {
-                        isTrue = true
+                        return true
                     }
                 }
-                return isTrue ?: super.shouldOverrideUrlLoading(view, request)
+                return false
             }
 
             override fun onPageFinished(view: WebView?, url: String) {
@@ -160,7 +169,7 @@ open class WebViewFixed @JvmOverloads constructor(
                     return resultMsg?.let { openNewWindow(it) } ?: false
                 }
                 getTargetUrl(view, resultMsg) { newUrl ->
-                    callbacks.forEach { it.onNewTab(newUrl) }
+                    onNewTab(newUrl)
                 }
                 return true
             }
@@ -172,6 +181,14 @@ open class WebViewFixed @JvmOverloads constructor(
         }
 
         applyAndroidWebViewBridge()
+    }
+
+    private fun onNewTab(url: String) {
+        onNewTabRunnable?.let { removeCallbacks(it) }
+        onNewTabRunnable = Runnable {
+            callbacks.forEach { it.onNewTab(url) }
+        }
+        onNewTabRunnable?.let { postDelayed(it, 220) }
     }
 
     private fun getTargetUrl(
@@ -255,7 +272,9 @@ open class WebViewFixed @JvmOverloads constructor(
     }
 
     fun addCallback(callback: Callback) {
-        callbacks.add(callback)
+        if (!callbacks.contains(callback)) {
+            callbacks.add(callback)
+        }
     }
 
     fun removeCallback(callback: Callback) {

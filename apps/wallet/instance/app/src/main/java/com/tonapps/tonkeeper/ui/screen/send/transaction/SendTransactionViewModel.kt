@@ -10,10 +10,12 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
+import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import java.util.concurrent.atomic.AtomicBoolean
@@ -73,14 +76,14 @@ class SendTransactionViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
-            val useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)
+            val useBattery = isBatteryIsEnabledTx()
             try {
-                val transfers = transfers(tokens.filter { it.isRequestMinting }, true)
+                val transfers = transfers(tokens.filter { it.isRequestMinting }, true, useBattery)
                 message = accountRepository.messageBody(wallet, request.validUntil, transfers)
 
                 val emulated = emulationUseCase(
                     message = message!!,
-                    useBattery = settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType),
+                    useBattery = useBattery,
                     forceRelayer = forceRelayer,
                     params = true
                 )
@@ -117,10 +120,11 @@ class SendTransactionViewModel(
                 if (!emulated.withBattery && transferTotal > tonBalance) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
-                        balance = tonBalance,
-                        required = transferTotal,
+                        balance = Amount(tonBalance),
+                        required = Amount(transferTotal),
                         withRechargeBattery = forceRelayer || useBattery,
-                        singleWallet = isSingleWallet()
+                        singleWallet = isSingleWallet(),
+                        type = InsufficientBalanceType.InsufficientTONBalance
                     )
                 } else {
                     _stateFlow.value = SendTransactionState.Details(
@@ -141,10 +145,11 @@ class SendTransactionViewModel(
                 if (tonBalance == Coins.ZERO) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
-                        balance = tonBalance,
-                        required = Coins.of(0.1),
+                        balance = Amount(tonBalance),
+                        required = Amount(Coins.of(0.1)),
                         withRechargeBattery = forceRelayer || useBattery,
-                        singleWallet = isSingleWallet()
+                        singleWallet = isSingleWallet(),
+                        type = InsufficientBalanceType.InsufficientTONBalance
                     )
                 } else {
                     toast(e.getDebugMessage() ?: getString(Localization.unknown_error))
@@ -152,6 +157,25 @@ class SendTransactionViewModel(
                 }
             }
         }
+    }
+
+    private suspend fun isBatteryIsEnabledTx(): Boolean = withContext(Dispatchers.IO) {
+        if (settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTransactionType)) {
+            getBatteryBalance().isPositive
+        } else {
+            false
+        }
+    }
+
+    private suspend fun getBatteryBalance(): Coins {
+        val tonProof = accountRepository.requestTonProofToken(wallet) ?: return Coins.ZERO
+        val entity = batteryRepository.getBalance(
+            tonProofToken = tonProof,
+            publicKey = wallet.publicKey,
+            testnet = wallet.testnet,
+            ignoreCache = true
+        )
+        return entity.balance
     }
 
     private suspend fun isSingleWallet(): Boolean {
@@ -188,7 +212,7 @@ class SendTransactionViewModel(
     fun send() = flow {
         val isBattery = isBattery.get()
         val compressedTokens = getTokens().filter { it.isRequestMinting }
-        val transfers = transfers(compressedTokens, false)
+        val transfers = transfers(compressedTokens, false, isBattery)
         val message = accountRepository.messageBody(wallet, request.validUntil, transfers)
         val unsignedBody = message.createUnsignedBody(isBattery)
         val ledgerTransactions = getLedgerTransaction(message)
@@ -252,7 +276,7 @@ class SendTransactionViewModel(
         return emulationReadyDate.get() - System.currentTimeMillis()
     }
 
-    private suspend fun transfers(compressedTokens: List<AccountTokenEntity>, forEmulation: Boolean): List<WalletTransfer> {
+    private suspend fun transfers(compressedTokens: List<AccountTokenEntity>, forEmulation: Boolean, batteryEnabled: Boolean): List<WalletTransfer> {
         val excessesAddress = if (!forEmulation && isBattery.get()) {
             batteryRepository.getConfig(wallet.testnet).excessesAddress
         } else null
@@ -261,7 +285,8 @@ class SendTransactionViewModel(
             wallet = wallet,
             compressedTokens = compressedTokens,
             excessesAddress = excessesAddress,
-            api = api
+            api = api,
+            batteryEnabled = batteryEnabled
         )
     }
 

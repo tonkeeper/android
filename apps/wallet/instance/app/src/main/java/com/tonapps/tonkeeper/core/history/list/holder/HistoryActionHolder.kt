@@ -101,7 +101,7 @@ class HistoryActionHolder(
 
         dateView.text = item.date
 
-        if (item.failed) {
+        if (item.failed && !item.pending) {
             iconView.setImageResource(UIKitIcon.ic_exclamationmark_circle_28)
             iconView.imageTintList = context.iconSecondaryColor.stateList
             warningView.visibility = View.VISIBLE

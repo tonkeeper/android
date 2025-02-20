@@ -330,17 +330,30 @@ class HistoryHelper(
         return if (loading) {
             withLoadingItem(items)
         } else {
-            removeLoadingItem(items)
+            removeServiceItems(items)
         }
+    }
+
+    fun withFailedItem(items: List<HistoryItem>): List<HistoryItem> {
+        val index = items.indexOfFirst {
+            it is HistoryItem.Failed
+        }
+        if (index > -1) {
+            return items
+        }
+        val newItems = items.toMutableList()
+        newItems.add(HistoryItem.Failed(context))
+        return newItems
     }
 
     fun withLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
         if (items.isEmpty()) {
             return emptyList()
         }
-
-        val last = items.lastOrNull()
-        if (last is HistoryItem.Loader) {
+        val index = items.indexOfFirst {
+            it is HistoryItem.Loader
+        }
+        if (index > -1) {
             return items
         }
 
@@ -349,18 +362,13 @@ class HistoryHelper(
         return newItems
     }
 
-    fun removeLoadingItem(items: List<HistoryItem>): List<HistoryItem> {
+    fun removeServiceItems(items: List<HistoryItem>): List<HistoryItem> {
         if (items.isEmpty()) {
             return emptyList()
         }
-
-        val last = items.lastOrNull()
-        if (last is HistoryItem.Loader) {
-            val newItems = items.toMutableList()
-            newItems.removeAt(newItems.size - 1)
-            return newItems
+        return items.filter {
+            it !is HistoryItem.Service
         }
-        return items
     }
 
     suspend fun mapping(
@@ -1152,7 +1160,9 @@ class HistoryHelper(
         index = index,
         txId = txId,
         action = ActionType.Unknown,
-        title = simplePreview.name,
+        iconURL = simplePreview.actionImage,
+        title = simplePreview.description,
+        coinIconUrl = simplePreview.valueImage ?: "",
         subtitle = action.simplePreview.description.max24,
         value = MINUS_SYMBOL,
         tokenCode = "TON",

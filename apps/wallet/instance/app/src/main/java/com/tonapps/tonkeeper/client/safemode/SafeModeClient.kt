@@ -24,48 +24,48 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 class SafeModeClient(
     private val context: Context,
     private val api: API,
     private val scope: CoroutineScope,
-    private val settingsRepository: SettingsRepository,
 ) {
 
-    private val scamDomains: ConcurrentHashMap<String, Boolean> by lazy {
-        ConcurrentHashMap<String, Boolean>(20, 1.0f, 2)
-    }
+    private val scamDomains = mutableListOf<String>()
 
     private val blobCache: BlobDataSource<BadDomainsEntity> by lazy {
         BlobDataSource.simple<BadDomainsEntity>(context, "safemode")
     }
 
-    private val _badDomainsFlow = MutableStateFlow<BadDomainsEntity?>(null)
-    private val badDomainsFlow = _badDomainsFlow.asStateFlow().filterNotNull()
     private val _isReadyFlow = MutableStateFlow<Boolean?>(null)
     val isReadyFlow = _isReadyFlow.asStateFlow().filterNotNull()
 
     init {
-        badDomainsFlow.onEach {
-            it.array.forEach { domain ->
-                if (domain.isNotBlank()) {
-                    scamDomains[domain] = true
-                }
-            }
-            _isReadyFlow.value = true
-        }.launchIn(scope)
+        scope.launch(Dispatchers.IO) {
+            applyCachedDomains()
+            applyRemoteDomains()
+        }
+    }
 
-        settingsRepository.safeModeStateFlow.onEach { state ->
-            if (state == SafeModeState.Enabled && _badDomainsFlow.value.isNullOrEmpty()) {
-                _badDomainsFlow.value = getCachedBadDomains()
-                loadBadDomains()?.let {
-                    _badDomainsFlow.value = it
-                }
-            } else {
-                _isReadyFlow.value = true
-            }
-        }.flowOn(Dispatchers.IO).launchIn(scope)
+    private suspend fun applyCachedDomains() {
+        val domains = getCachedBadDomains()
+        if (!domains.isEmpty) {
+            setDomains(domains)
+        }
+    }
+
+    private suspend fun applyRemoteDomains() {
+        val domains = loadBadDomains()
+        if (!domains.isEmpty) {
+            setDomains(domains)
+        }
+    }
+
+    private suspend fun setDomains(domains: BadDomainsEntity) = withContext(Dispatchers.Main) {
+        scamDomains.addAll(domains.array)
+        _isReadyFlow.value = true
     }
 
     fun isHasScamUris(vararg uris: Uri): Boolean {
@@ -77,7 +77,7 @@ class SafeModeClient(
             if (host.startsWith("www.")) {
                 host = host.substring(4)
             }
-            if (scamDomains.containsKey(host)) {
+            if (scamDomains.indexOf(host) != -1) {
                 return true
             }
         }
@@ -92,10 +92,10 @@ class SafeModeClient(
         return entity
     }
 
-    private suspend fun loadBadDomains(): BadDomainsEntity? {
+    private suspend fun loadBadDomains(): BadDomainsEntity {
         val domains = api.getScamDomains()
         if (domains.isEmpty()) {
-            return null
+            return BadDomainsEntity(emptyArray())
         }
         val entity = BadDomainsEntity(domains)
         blobCache.setCache("scam_domains", entity)

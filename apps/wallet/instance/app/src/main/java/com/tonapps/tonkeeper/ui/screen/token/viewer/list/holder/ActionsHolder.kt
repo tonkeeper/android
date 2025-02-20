@@ -23,7 +23,8 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         sendView.setOnClickListener {
             navigation?.add(SendScreen.newInstance(
                 wallet = item.wallet,
-                tokenAddress = item.tokenAddress
+                tokenAddress = item.tokenAddress,
+                type = SendScreen.Companion.Type.Default
             ))
         }
         receiveView.setOnClickListener {

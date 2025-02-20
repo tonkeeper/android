@@ -71,7 +71,7 @@ class SpamEventsViewModel(
             } else if (_eventsList.isEmpty()) {
                 listOf(HistoryItem.Empty(context, Localization.spam_folder_empty))
             } else {
-                historyHelper.removeLoadingItem(uiItems)
+                historyHelper.removeServiceItems(uiItems)
             },
             loading = isLoading
         )

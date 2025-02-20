@@ -138,7 +138,7 @@ data class ConfigEntity(
         mercuryoSecret = "",
         tonapiMainnetHost = "https://keeper.tonapi.io",
         tonapiTestnetHost = "https://testnet.tonapi.io",
-        stonfiUrl = "https://tonkeeper.ston.fi/swap",
+        stonfiUrl = "https://swap-widget.tonkeeper.com",
         tonNFTsMarketplaceEndpoint = "https://ton.diamonds",
         directSupportUrl = "https://t.me/tonkeeper_supportbot",
         tonkeeperNewsUrl = "https://t.me/tonkeeper_new",

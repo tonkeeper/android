@@ -95,7 +95,7 @@ class QRScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_qr, 
     private fun getDeepLink(): String {
         var deepLink = "ton://transfer/${wallet.address}"
         if (!token.isTon) {
-            deepLink += "?token=${token.address.toUserFriendly(
+            deepLink += "?jetton=${token.address.toUserFriendly(
                 wallet = false,
                 testnet = wallet.type == Wallet.Type.Testnet
             )}"

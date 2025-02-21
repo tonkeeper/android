@@ -34,14 +34,14 @@ class ReferrerClientHelper(context: Context, environment: Environment) {
                 continuation.invokeOnCancellation { endConnection() }
                 startConnection(object : InstallReferrerStateListener {
                     override fun onInstallReferrerSetupFinished(responseCode: Int) {
-                        endConnection()
                         if (continuation.isActive) {
-                            if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK) {
+                            if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK && isReady) {
                                 continuation.resume(installReferrer)
                             } else {
                                 continuation.resume(null)
                             }
                         }
+                        endConnection()
                     }
                     override fun onInstallReferrerServiceDisconnected() { }
                 })
